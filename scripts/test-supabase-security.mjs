@@ -71,8 +71,8 @@ async function runTests() {
   // LIVE AUTHENTICATION TEST ATTEMPT (If supported without email confirmation block)
   // --------------------------------------------------------------------------
   console.log("\nAttempting live dual-user authentication test against Supabase...");
-  const userAEmail = `test_a_${Date.now()}@bacmastery.test`;
-  const userBEmail = `test_b_${Date.now()}@bacmastery.test`;
+  const userAEmail = `test_a_${Date.now()}@bacmastery.com`;
+  const userBEmail = `test_b_${Date.now()}@bacmastery.com`;
   const testPassword = "Password123!Secure";
 
   const clientA = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
