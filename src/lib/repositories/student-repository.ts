@@ -1,6 +1,7 @@
 /**
  * BAC Mastery - Student Profile Repository
  * Handles persistence of StrategicProfile to Supabase with LocalStorage fallback & migration
+ * Canonical Identity Model: id = user_id = auth.users(id)
  */
 
 import { StrategicProfile } from "@/types/onboarding";
@@ -18,7 +19,7 @@ export const StudentRepository = {
         const { data, error } = await supabase
           .from("student_profiles")
           .select("*")
-          .eq("user_id", userId)
+          .eq("id", userId)
           .maybeSingle();
 
         if (error) {
@@ -39,6 +40,7 @@ export const StudentRepository = {
 
   /**
    * Save student profile to Supabase and keep LocalStorage in sync
+   * Always satisfies the database constraint: id = user_id
    */
   async saveProfile(profile: StrategicProfile, userId?: string): Promise<void> {
     // Always persist to local storage first for offline/fallback safety
@@ -67,7 +69,7 @@ export const StudentRepository = {
 
         const { error } = await supabase
           .from("student_profiles")
-          .upsert(payload, { onConflict: "user_id" });
+          .upsert(payload, { onConflict: "id" });
 
         if (error) {
           console.error("StudentRepository.saveProfile error:", error);
@@ -90,7 +92,7 @@ export const StudentRepository = {
         const { data } = await supabase
           .from("student_profiles")
           .select("id")
-          .eq("user_id", userId)
+          .eq("id", userId)
           .maybeSingle();
 
         // If cloud profile doesn't exist yet, upload the local one

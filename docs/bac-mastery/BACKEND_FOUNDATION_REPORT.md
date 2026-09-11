@@ -205,3 +205,13 @@ All 7 test suites passed with 100% success rate:
 ## 20. Explicit Mandatory Confirmations
 1. **SIARA Supabase was NOT modified.** (No connections, drops, alters, or queries were made to the old SIARA project).
 2. **No service_role key, database password, or management token was requested or added.** (The application uses strictly `NEXT_PUBLIC_SUPABASE_ANON_KEY` via `.env.local`).
+
+---
+
+## 21. Prompt 10.3.1 Final Hardening Status
+- **Canonical Student Identity**: Enforced `CONSTRAINT chk_student_profiles_id_matches_user CHECK (id = user_id)` and dual check in RLS write policies.
+- **errors → missions Composite Foreign Key**: Linked `(mission_id, user_id) REFERENCES missions(id, user_id)` with `ON DELETE SET NULL (mission_id)` to preserve historical learning evidence.
+- **Strict Domain CHECK Constraints**: Added `CHECK (coverage IN ('pilot', 'partial', 'complete'))` to `diagnostic_results`, bounded `confidence_score` in `skill_mastery`, and verified all 10 domain states.
+- **Composite FK Indexes**: Added composite indexes for all child foreign key relationships.
+- **Security Suite Expanded**: 12/12 automated security tests passing (TESTS A through L).
+- **Migration Readiness**: **READY FOR CONTROLLED MIGRATION**.

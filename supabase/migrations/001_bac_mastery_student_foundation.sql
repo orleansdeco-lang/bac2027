@@ -1,20 +1,25 @@
 -- ==============================================================================
 -- 001_bac_mastery_student_foundation.sql
--- BAC Mastery Dedicated Student Backend Foundation
+-- BAC Mastery Dedicated Student Backend Foundation (Prompt 10.3.1 Hardened)
 -- Database: Supabase (PostgreSQL 15+)
 -- Dedicated Project: erbvmpnxufgeinqnshzu
 -- ==============================================================================
 -- NON-NEGOTIABLE ARCHITECTURAL INVARIANTS:
--- 1. Student Data Only: Exactly 10 student-owned tables. Zero content tables.
--- 2. Clean Identity: user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE.
+-- 1. Student Data Only: Exactly 10 student-owned tables. Zero content/curriculum tables.
+-- 2. Strict Identity Integrity: 
+--    student_profiles.id = auth.users(id) ON DELETE CASCADE
+--    student_profiles.user_id = auth.users(id) ON DELETE CASCADE
+--    Enforced via CONSTRAINT chk_student_profiles_id_matches_user CHECK (id = user_id).
 -- 3. Composite Ownership-Safe Foreign Keys: Child entities enforce (parent_id, user_id)
 --    referencing parent(id, user_id) to prevent cross-user reference attacks at the DB level.
--- 4. Row Level Security: ENABLED on every table, with strict auth.uid() = user_id checks.
--- 5. Canonical States: Aligned with TypeScript domain models.
--- 6. Non-Predictive Diagnostic Terminology: observed_signal, coverage, bottleneck_candidate.
+-- 4. Durable Learning Evidence: errors.mission_id references missions(id, user_id)
+--    with ON DELETE SET NULL (mission_id), preserving student error records if a mission is cleared.
+-- 5. Row Level Security: ENABLED on every table, with strict auth.uid() = user_id checks.
+-- 6. Canonical Domain States: Aligned with TypeScript domain models and strict CHECK constraints.
+-- 7. Non-Predictive Diagnostic Terminology: observed_signal, coverage, bottleneck_candidate.
 -- ==============================================================================
 
--- Enable standard UUID generation
+-- Enable standard cryptographic extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
@@ -39,13 +44,14 @@ CREATE TABLE IF NOT EXISTS public.student_profiles (
   onboarding_completed BOOLEAN NOT NULL DEFAULT false,
   raw_draft JSONB DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CONSTRAINT chk_student_profiles_id_matches_user CHECK (id = user_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_student_profiles_user_id ON public.student_profiles(user_id);
 
 -- ==============================================================================
--- 2. DIAGNOSTIC SUBSYSTEM
+-- 2. DIAGNOSTIC SUBSYSTEM (diagnostic_sessions, diagnostic_answers, diagnostic_results)
 -- ==============================================================================
 
 -- 2a. Diagnostic Sessions
@@ -81,7 +87,7 @@ CREATE TABLE IF NOT EXISTS public.diagnostic_answers (
     ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_diagnostic_answers_session ON public.diagnostic_answers(session_id);
+CREATE INDEX IF NOT EXISTS idx_diagnostic_answers_session_user ON public.diagnostic_answers(session_id, user_id);
 CREATE INDEX IF NOT EXISTS idx_diagnostic_answers_user ON public.diagnostic_answers(user_id);
 
 -- 2c. Diagnostic Results (Composite ownership-safe FK to session)
@@ -90,7 +96,7 @@ CREATE TABLE IF NOT EXISTS public.diagnostic_results (
   session_id UUID NOT NULL UNIQUE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   observed_signal NUMERIC(5, 2) NOT NULL CHECK (observed_signal >= 0 AND observed_signal <= 100),
-  coverage TEXT NOT NULL DEFAULT 'pilot',
+  coverage TEXT NOT NULL DEFAULT 'pilot' CHECK (coverage IN ('pilot', 'partial', 'complete')),
   bottleneck_candidate TEXT, -- nullable: can be skill_id, null, or 'insufficient_evidence'
   confidence_calibration JSONB NOT NULL DEFAULT '{}'::jsonb,
   question_count INTEGER NOT NULL DEFAULT 15 CHECK (question_count >= 0),
@@ -106,6 +112,7 @@ CREATE TABLE IF NOT EXISTS public.diagnostic_results (
     ON DELETE CASCADE
 );
 
+CREATE INDEX IF NOT EXISTS idx_diagnostic_results_session_user ON public.diagnostic_results(session_id, user_id);
 CREATE INDEX IF NOT EXISTS idx_diagnostic_results_user ON public.diagnostic_results(user_id);
 
 -- ==============================================================================
@@ -153,14 +160,14 @@ CREATE TABLE IF NOT EXISTS public.practice_attempts (
     ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_practice_attempts_mission ON public.practice_attempts(mission_id);
+CREATE INDEX IF NOT EXISTS idx_practice_attempts_mission_user ON public.practice_attempts(mission_id, user_id);
 CREATE INDEX IF NOT EXISTS idx_practice_attempts_user_skill ON public.practice_attempts(user_id, skill_id);
 
 -- ==============================================================================
 -- 4. ERROR LAB (errors, error_repairs, retests)
 -- ==============================================================================
 
--- 4a. Errors
+-- 4a. Errors (Ownership-safe nullable composite FK to missions)
 CREATE TABLE IF NOT EXISTS public.errors (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -177,11 +184,16 @@ CREATE TABLE IF NOT EXISTS public.errors (
   occurrence_count INTEGER NOT NULL DEFAULT 1 CHECK (occurrence_count >= 1),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT uq_errors_id_user UNIQUE (id, user_id)
+  CONSTRAINT uq_errors_id_user UNIQUE (id, user_id),
+  CONSTRAINT fk_errors_mission_owner 
+    FOREIGN KEY (mission_id, user_id) 
+    REFERENCES public.missions(id, user_id) 
+    ON DELETE SET NULL (mission_id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_errors_user_status ON public.errors(user_id, status);
 CREATE INDEX IF NOT EXISTS idx_errors_user_skill ON public.errors(user_id, skill_id);
+CREATE INDEX IF NOT EXISTS idx_errors_mission_user ON public.errors(mission_id, user_id);
 
 -- 4b. Error Repairs (Composite ownership-safe FK to error)
 CREATE TABLE IF NOT EXISTS public.error_repairs (
@@ -199,7 +211,7 @@ CREATE TABLE IF NOT EXISTS public.error_repairs (
     ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_error_repairs_error ON public.error_repairs(error_id);
+CREATE INDEX IF NOT EXISTS idx_error_repairs_error_user ON public.error_repairs(error_id, user_id);
 CREATE INDEX IF NOT EXISTS idx_error_repairs_user ON public.error_repairs(user_id);
 
 -- 4c. Retests (Composite ownership-safe FK to error)
@@ -220,7 +232,7 @@ CREATE TABLE IF NOT EXISTS public.retests (
     ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_retests_error ON public.retests(error_id);
+CREATE INDEX IF NOT EXISTS idx_retests_error_user ON public.retests(error_id, user_id);
 CREATE INDEX IF NOT EXISTS idx_retests_user ON public.retests(user_id);
 
 -- ==============================================================================
@@ -234,7 +246,7 @@ CREATE TABLE IF NOT EXISTS public.skill_mastery (
   skill_id TEXT NOT NULL,
   subject_id TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'not_yet' CHECK (status IN ('not_yet', 'emerging', 'demonstrated')),
-  confidence_score NUMERIC(3, 2),
+  confidence_score NUMERIC(3, 2) CHECK (confidence_score IS NULL OR (confidence_score >= 0.00 AND confidence_score <= 1.00)),
   evidence_history JSONB NOT NULL DEFAULT '[]'::jsonb,
   last_verified_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -260,18 +272,18 @@ ALTER TABLE public.error_repairs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.retests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.skill_mastery ENABLE ROW LEVEL SECURITY;
 
--- 1. student_profiles policies
+-- 1. student_profiles policies (Strict identity check id = user_id = auth.uid())
 CREATE POLICY "student_profiles_select_own" ON public.student_profiles
-  FOR SELECT TO authenticated USING (auth.uid() = user_id);
+  FOR SELECT TO authenticated USING (auth.uid() = id);
 
 CREATE POLICY "student_profiles_insert_own" ON public.student_profiles
-  FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
+  FOR INSERT TO authenticated WITH CHECK (auth.uid() = id AND auth.uid() = user_id);
 
 CREATE POLICY "student_profiles_update_own" ON public.student_profiles
-  FOR UPDATE TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+  FOR UPDATE TO authenticated USING (auth.uid() = id) WITH CHECK (auth.uid() = id AND auth.uid() = user_id);
 
 CREATE POLICY "student_profiles_delete_own" ON public.student_profiles
-  FOR DELETE TO authenticated USING (auth.uid() = user_id);
+  FOR DELETE TO authenticated USING (auth.uid() = id);
 
 -- 2. diagnostic_sessions policies
 CREATE POLICY "diagnostic_sessions_select_own" ON public.diagnostic_sessions
