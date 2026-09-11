@@ -11,6 +11,8 @@ import { AppShell } from "@/components/ui/AppShell";
 import { RoadVisualizer } from "@/components/ui/RoadVisualizer";
 import { getStrategicProfile } from "@/lib/onboarding/profile";
 import { StrategicProfile } from "@/types/onboarding";
+import { getActiveMissionId, loadMasteryRecords, loadPracticeSessions } from "@/lib/mission/storage";
+import { loadDiagnosticResults } from "@/lib/diagnostic";
 import {
   Compass,
   ArrowRight,
@@ -33,10 +35,52 @@ export default function HomePage() {
   const isAr = locale === "ar";
   const Arrow = direction === "rtl" ? ArrowLeft : ArrowRight;
   const [profile, setProfile] = useState<StrategicProfile | null>(null);
+  const [smartCta, setSmartCta] = useState<{ textAr: string; textFr: string; href: string }>({
+    textAr: "ابني خريطتي",
+    textFr: "Construire ma feuille de route",
+    href: "/onboarding",
+  });
 
   useEffect(() => {
     const p = getStrategicProfile();
-    if (p) setProfile(p);
+    if (p) {
+      setProfile(p);
+      const activeMissionId = getActiveMissionId();
+      const masteryMap = loadMasteryRecords();
+      const sessionsMap = loadPracticeSessions();
+      const diagResults = loadDiagnosticResults();
+
+      const hasProgress =
+        Object.keys(masteryMap).length > 0 ||
+        Object.values(sessionsMap).some((s) => s.status === "completed") ||
+        diagResults !== null;
+
+      if (activeMissionId) {
+        setSmartCta({
+          textAr: "نكمل مهمتي",
+          textFr: "Continuer ma mission",
+          href: `/mission/${activeMissionId}`,
+        });
+      } else if (hasProgress) {
+        setSmartCta({
+          textAr: "نكمل خريطتي",
+          textFr: "Continuer ma feuille de route",
+          href: "/roadmap",
+        });
+      } else {
+        setSmartCta({
+          textAr: "شوف خريطتي",
+          textFr: "Voir ma feuille de route",
+          href: "/roadmap",
+        });
+      }
+    } else {
+      setSmartCta({
+        textAr: "ابني خريطتي",
+        textFr: "Construire ma feuille de route",
+        href: "/onboarding",
+      });
+    }
   }, []);
 
   return (
@@ -86,15 +130,15 @@ export default function HomePage() {
 
               {/* Action CTAs */}
               <div className="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4">
-                <Link href={profile ? "/roadmap" : "/onboarding"} className="w-full sm:w-auto">
-                  <Button variant="primary" size="lg" className="w-full sm:w-auto font-bold shadow-lg shadow-blue-600/25">
-                    <span>{profile ? (isAr ? "نرجع لخريطتي" : "Voir ma feuille de route") : (isAr ? "ابني خريطتي" : "Construire ma feuille de route")}</span>
+                <Link href={smartCta.href} className="w-full sm:w-auto">
+                  <Button variant="primary" size="lg" className="w-full sm:w-auto font-bold shadow-lg shadow-blue-600/25 min-h-[48px]">
+                    <span>{isAr ? smartCta.textAr : smartCta.textFr}</span>
                     <Arrow className="h-4 w-4" />
                   </Button>
                 </Link>
 
                 <a href="#how-it-works" className="w-full sm:w-auto">
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto text-slate-300 hover:text-white border-slate-700 hover:bg-slate-800/80">
+                  <Button variant="outline" size="lg" className="w-full sm:w-auto text-slate-300 hover:text-white border-slate-700 hover:bg-slate-800/80 min-h-[48px]">
                     <span>{isAr ? "كيفاش تخدم؟" : "Comment ça marche ?"}</span>
                     <ChevronDown className="h-4 w-4 text-slate-400" />
                   </Button>
@@ -105,7 +149,7 @@ export default function HomePage() {
               <div className="pt-3 flex flex-wrap items-center justify-center lg:justify-start gap-3 text-xs text-slate-400">
                 <span className="flex items-center gap-1">
                   <ShieldCheck className="h-4 w-4 text-emerald-400" />
-                  <span>{isAr ? "وفق معايير التصحيح الوزاري" : "Critères du barème officiel"}</span>
+                  <span>{isAr ? "تدريب على طريقة الحل وتحليل الأخطاء" : "Méthode de résolution et analyse des erreurs"}</span>
                 </span>
                 <span className="text-slate-600">•</span>
                 <span className="flex items-center gap-1">
@@ -125,24 +169,24 @@ export default function HomePage() {
               <div className="rounded-3xl border border-slate-800 bg-[#111827]/80 p-2 sm:p-4 backdrop-blur-sm shadow-card">
                 <div className="px-3 py-2 border-b border-slate-800/80 flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-300">
-                    {isAr ? "مسار التعلم النموذجي" : "Parcours d'apprentissage type"}
+                    {isAr ? "خريطتك التعليمية" : "Votre carte d'apprentissage"}
                   </span>
-                  <Badge variant="primary" size="sm" className="font-mono text-[10px]">
-                    Adaptive Path
+                  <Badge variant="primary" size="sm" className="font-semibold text-[10px]">
+                    {isAr ? "مسار متكيف" : "Parcours adaptatif"}
                   </Badge>
                 </div>
                 <RoadVisualizer
-                  targetScore={profile?.targetScore || 16.5}
-                  currentBaselineText={isAr ? "مستوى انطلاق: 11.8/20" : "Niveau départ : 11.8/20"}
-                  gapText={isAr ? "+4.7 نقاط" : "+4.7 points"}
+                  targetScore={profile?.targetScore || 16.0}
+                  currentBaselineText={isAr ? "مؤشر أولي: 11.8/20" : "Indicateur initial : 11.8/20"}
+                  gapText={isAr ? "حوالي 4.2 نقاط" : "environ 4.2 points"}
                   activeMission={{
                     id: "pilot-math",
                     subjectId: "math",
                     skillTitle: isAr ? "اشتقاق الدوال المركبة وقاعدة السلسلة" : "Dérivation des fonctions composées",
                     estimatedMinutes: 15,
                     reasonText: isAr
-                      ? "أظهر التشخيص نقطة اختناق في التطبيق المنهجي. نصلحوها ونكملو."
-                      : "Le diagnostic a identifié un verrou d'application. Réparation ciblée.",
+                      ? "لقينا إشارة ضعف في هذي المهارة. نصلحوها ونكملو."
+                      : "Signal de vulnérabilité identifié. Réparation ciblée.",
                   }}
                   masteredCount={2}
                   totalSkills={31}
@@ -184,8 +228,8 @@ export default function HomePage() {
               </h3>
               <p className="text-xs text-slate-400 leading-relaxed">
                 {isAr
-                  ? "استرجاع نشط وفهم الآليات، وحل نموذجي وفق معايير التصحيح الوزاري الجزائري دون حفظ عشوائي."
-                  : "Rappel actif, compréhension des mécanismes et résolution conforme aux critères d'inspection."}
+                  ? "استرجاع نشط وفهم الآليات، وتدريب منهجي على طريقة الحل وتحليل الأخطاء دون حفظ عشوائي."
+                  : "Rappel actif, compréhension des mécanismes, méthode de résolution rigoureuse et analyse des erreurs."}
               </p>
             </Card>
 
@@ -333,9 +377,9 @@ export default function HomePage() {
           </p>
 
           <div className="pt-2">
-            <Link href={profile ? "/roadmap" : "/onboarding"}>
-              <Button variant="primary" size="lg" className="font-bold shadow-xl shadow-blue-600/30 px-8">
-                <span>{profile ? (isAr ? "الانتقال إلى خريطتي" : "Aller à ma feuille de route") : (isAr ? "ابني خريطتي الآن" : "Construire ma feuille de route")}</span>
+            <Link href={smartCta.href}>
+              <Button variant="primary" size="lg" className="font-bold shadow-xl shadow-blue-600/30 px-8 min-h-[48px]">
+                <span>{isAr ? smartCta.textAr : smartCta.textFr}</span>
                 <Arrow className="h-4 w-4" />
               </Button>
             </Link>

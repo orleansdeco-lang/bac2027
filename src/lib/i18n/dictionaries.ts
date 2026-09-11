@@ -205,8 +205,13 @@ export interface Dictionary {
     subtitle: string;
     streamTag: string;
     targetLabel: string;
+    targetScoreChosen?: string;
     estimateLabel: string;
+    levelSourceDisclaimer?: string;
     gapLabel: string;
+    approximateGapPrefix?: string;
+    educationalMapLabel?: string;
+    adaptivePathLabel?: string;
     gapUnit: string;
     bottleneckTitle: string;
     firstMissionTitle: string;
@@ -427,7 +432,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       title: "الأركان الأربعة المتوازنة",
       subtitle: "نظام لا يكتفي بقول «اقرأ أكثر»، بل يبني نجاحك الأكاديمي والذهني بشكل متكامل.",
       studyTitle: "1. الدراسة (Study)",
-      studyDesc: "منهجية استرجاع نشط، فهم الآليات، وحل نموذجي وفق معايير التصحيح الوزاري الجزائري.",
+      studyDesc: "منهجية استرجاع نشط، فهم الآليات، وتدريب على طريقة الحل المنهجية وتحليل الأخطاء.",
       progressTitle: "2. التقدّم (Progress)",
       progressDesc: "تحديد نقطة الاختناق الكبرى بدقة، وتفكيك الثغرات عبر تحليل الأخطاء بدلاً من التكرار العشوائي.",
       mindTitle: "3. الراحة والذهن (Mind)",
@@ -489,13 +494,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
       },
       educationLevel: {
         question: "واش راك تحضر؟",
-        subtitle: "حدد المستوى الدراسي لتخصيص محرك المسار والمعاملات الرسمية.",
+        subtitle: "حدد المستوى الدراسي لتخصيص مسار التعلم والمعاملات القياسية.",
         bacOption: "شهادة البكالوريا (BAC)",
         bemNotice: "نظامنا مصمم لدعم شهادة التعليم المتوسط (BEM) قريباً بنفس المعايير.",
       },
       stream: {
         question: "شعبة البكالوريا تاعك؟",
-        subtitle: "اختر شعبتك بدقة لاحتساب المعاملات الرسمية والمواد الأساسية.",
+        subtitle: "اختر شعبتك بدقة لتحديد مسار التعلم والمواد الأساسية.",
         specialtyQuestion: "التخصص التقني؟",
         specialtySubtitle: "اختر فرع الهندسة الخاص بك لتطبيق المعامل 7 على المادة التخصصية.",
         specialties: {
@@ -616,8 +621,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
       subtitle: "من مستواك الحالي إلى هدفك — خطوة بخطوة وبدون تشتت.",
       streamTag: "الشعبة:",
       targetLabel: "الهدف الاستراتيجي",
-      estimateLabel: "مستواك الحالي — تقديرك",
-      gapLabel: "المسافة التقريبية نحو الهدف",
+      targetScoreChosen: "الهدف اللي اخترته",
+      estimateLabel: "مؤشر الانطلاق",
+      levelSourceDisclaimer: "مؤشر أولي مبني على بياناتك الحالية، وليس توقعاً لعلامة البكالوريا.",
+      gapLabel: "المسافة إلى هدفك",
+      approximateGapPrefix: "المسافة إلى هدفك: حوالي",
+      educationalMapLabel: "خريطتك التعليمية",
+      adaptivePathLabel: "مسار متكيف",
       gapUnit: "نقاط",
       bottleneckTitle: "أول حاجة لازم نخدمو عليها (نقطة الاختناق الكبرى)",
       firstMissionTitle: "أول مهمة في مسارك المقترح",
@@ -630,16 +640,16 @@ export const dictionaries: Record<Locale, Dictionary> = {
       secondaryBottlenecksTitle: "عوائق ثانوية في الحسبان:",
       firstMissionNotice: "مهمة أولى مقترحة لكسر حاجز البداية:",
       levelSourceObserved: "مؤشر التشخيص الأولي",
-      levelSourceEstimate: "تقدير ذاتي أولي",
+      levelSourceEstimate: "مؤشر الانطلاق الأولي",
       roadmapConfidenceInitial: "ثقة المسار: أولية (عينة تجريبية)",
       viewDiagnosticResultsCta: "عرض تفاصيل التشخيص ومعايرة الثقة",
-      currentMissionBadge: "مهمتك الموصى بها الآن",
+      currentMissionBadge: "مهمتك الآن",
       startCurrentMissionCta: "ابدأ المهمة الآن",
       errorLabLinkCta: "سجل مختبر الأخطاء والترميم",
       activeMissionTitle: "المهمة النشطة الحالية",
       repairStatusLabel: "حالة الترميم:",
       pageTitle: "هذي هي خريطتك",
-      whyThisMission: "علاش هذي المهمة بالذات؟",
+      whyThisMission: "علاش هذي المهمة؟",
       startMissionAction: "ابدأ المهمة الآن",
       noMissionsLeft: "أتممت جميع مهام المرحلة التجريبية بنجاح! أحسنت.",
       mapTitle: "موقعك الحالي في مسار التعلم",
@@ -836,7 +846,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       title: "Les 4 Piliers Équilibrés",
       subtitle: "Un système qui ne dit pas simplement « étudie plus », mais structure votre réussite globale.",
       studyTitle: "1. Étude (Study)",
-      studyDesc: "Rappel actif, compréhension des mécanismes et résolution conforme aux critères officiels du BAC.",
+      studyDesc: "Rappel actif, compréhension des mécanismes, méthode de résolution rigoureuse et analyse des erreurs.",
       progressTitle: "2. Progression (Progress)",
       progressDesc: "Identification du goulet d'étranglement majeur et réparation ciblée des erreurs.",
       mindTitle: "3. Mental & Repos (Mind)",
@@ -898,7 +908,7 @@ export const dictionaries: Record<Locale, Dictionary> = {
       },
       educationLevel: {
         question: "Que préparez-vous ?",
-        subtitle: "Sélectionnez votre examen pour calibrer les coefficients officiels.",
+        subtitle: "Sélectionnez votre examen pour adapter la feuille de route et les coefficients.",
         bacOption: "Baccalauréat Algérien (BAC)",
         bemNotice: "Notre architecture prendra bientôt en charge le Brevet (BEM) avec la même rigueur.",
       },
@@ -1025,8 +1035,13 @@ export const dictionaries: Record<Locale, Dictionary> = {
       subtitle: "De votre niveau actuel vers votre objectif — étape par étape, sans dispersion.",
       streamTag: "Filière :",
       targetLabel: "Objectif Stratégique",
-      estimateLabel: "Votre niveau actuel — estimation",
-      gapLabel: "Distance approximative vers la cible",
+      targetScoreChosen: "Objectif choisi",
+      estimateLabel: "Indicateur de départ",
+      levelSourceDisclaimer: "Indicateur préliminaire basé sur vos données actuelles, sans valeur de prédiction du BAC.",
+      gapLabel: "Distance vers la cible",
+      approximateGapPrefix: "Distance vers votre objectif : environ",
+      educationalMapLabel: "Votre carte d'apprentissage",
+      adaptivePathLabel: "Parcours adaptatif",
       gapUnit: "points",
       bottleneckTitle: "Le premier verrou à débloquer (Goulet d'étranglement majeur)",
       firstMissionTitle: "Première mission recommandée",
@@ -1038,17 +1053,17 @@ export const dictionaries: Record<Locale, Dictionary> = {
       startOnboardingCta: "Commencer le questionnaire",
       secondaryBottlenecksTitle: "Points secondaires à surveiller :",
       firstMissionNotice: "Première mission pour lancer la dynamique :",
-      levelSourceObserved: "Signal diagnostique initial",
-      levelSourceEstimate: "Auto-évaluation préliminaire",
+      levelSourceObserved: "Indicateur diagnostique initial",
+      levelSourceEstimate: "Indicateur de départ préliminaire",
       roadmapConfidenceInitial: "Confiance de la feuille de route : Initiale (échantillon pilote)",
       viewDiagnosticResultsCta: "Voir les résultats détaillés et la calibration",
-      currentMissionBadge: "Votre mission recommandée actuellement",
+      currentMissionBadge: "Votre mission maintenant",
       startCurrentMissionCta: "Démarrer la mission",
       errorLabLinkCta: "Laboratoire d'erreurs & Remédiation",
       activeMissionTitle: "Mission Active",
       repairStatusLabel: "Statut de réparation :",
       pageTitle: "Voici votre feuille de route",
-      whyThisMission: "Pourquoi cette mission en priorité ?",
+      whyThisMission: "Pourquoi cette mission ?",
       startMissionAction: "Démarrer la mission",
       noMissionsLeft: "Toutes les missions pilotes sont complétées avec succès ! Félicitations.",
       mapTitle: "Votre position actuelle dans le parcours",

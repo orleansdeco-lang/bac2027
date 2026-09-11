@@ -477,15 +477,15 @@ export function getAdaptiveRepairPlan(
       };
     case "methodology_error":
       return {
-        strategyTitle_ar: "ضبط المنهجية وصياغة الإجابة النموذجية للبكالوريا",
-        strategyTitle_fr: "Rigueur méthodologique et rédaction type BAC",
+        strategyTitle_ar: "ضبط المنهجية وصياغة الإجابة المنظمة",
+        strategyTitle_fr: "Rigueur méthodologique et rédaction structurée",
         steps_ar: [
-          "راجع هيكل الإجابة المتوقع في سلم تنقيط البكالوريا (الفرضيات، البرهان، الاستنتاج).",
+          "راجع هيكل الإجابة المنهجي المتوقع (الفرضيات، البرهان، الاستنتاج).",
           "تأكد من ذكر الشروط المسبقة (مثل: الاستمرارية وقابلية الاشتقاق قبل تطبيق المبرهنة).",
           "تجنب القفز إلى النتيجة دون تبرير رياضي أو علمي واضح ومكتوب.",
         ],
         steps_fr: [
-          "Vérifiez les critères du barème officiel du BAC (hypothèse, démonstration, conclusion).",
+          "Vérifiez les critères d'une rédaction rigoureuse (hypothèse, démonstration, conclusion).",
           "Mentionnez explicitement les conditions d'application (continuité, etc.).",
           "Ne sautez pas à la conclusion sans justification préalable.",
         ],

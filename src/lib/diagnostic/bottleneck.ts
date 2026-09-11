@@ -167,12 +167,12 @@ export function generateFirstMission(
       estimatedMinutes: 30,
       actionSteps_ar: [
         "مراجعة قاعدة اشتقاق الدالة المركبة (e^u)' = u' e^u وتدوين 3 أمثلة في دفتر الأخطاء.",
-        "التدرب على صياغة شرط الرتابة التامة في مبرهنة القيم المتوسطة وفق سلم تنقيط البكالوريا.",
+        "التدرب على صياغة شرط الرتابة التامة في مبرهنة القيم المتوسطة بدقة منهجية.",
         "حل تمرينين نموذجيين من بكالوريا 2021-2023 في دراسة إشارة الدالة المساعدة.",
       ],
       actionSteps_fr: [
         "Réviser la règle de dérivation (e^u)' = u' e^u et noter 3 cas types dans le carnet d'erreurs.",
-        "S'entraîner à rédiger la condition de stricte monotonie du TVI selon le barème officiel.",
+        "S'entraîner à rédiger la condition de stricte monotonie du TVI avec rigueur méthodologique.",
         "Résoudre 2 exercices types de BAC sur l'étude du signe d'une fonction auxiliaire.",
       ],
     };

@@ -640,8 +640,8 @@ export const SCIENCES_EXP_PRACTICE_QUESTIONS: PracticeQuestion[] = [
       },
     ],
     correctAnswerId: "opt-2",
-    explanation_ar: "شبكة التقييم الوزارية تلزم التلميذ بثلاثية: 1) تقديم الوثيقة (التعريف بمتغيراتها)، 2) التحليل المنهجي مع الاستشهاد بالأرقام وشروط التجربة، 3) الخروج باستنتاج صريح يمثل الإضافة العلمية المستخلصة.",
-    explanation_fr: "Le barème officiel exige : 1) Présentation du document, 2) Analyse méthodique chiffrée, 3) Déduction rigoureuse.",
+    explanation_ar: "المنهجية العلمية تلزم التلميذ بثلاثية: 1) تقديم الوثيقة (التعريف بمتغيراتها)، 2) التحليل المنهجي مع الاستشهاد بالأرقام وشروط التجربة، 3) الخروج باستنتاج صريح يمثل الإضافة العلمية المستخلصة.",
+    explanation_fr: "La démarche méthodologique exige : 1) Présentation du document, 2) Analyse méthodique chiffrée, 3) Déduction rigoureuse.",
     repairHint_ar: "لا تبدأ أبداً بالإجابة من حفظك دون المرور بالوثيقة وذكر أرقامها وفتراتها.",
     repairHint_fr: "Ne récitez pas le cours : appuyez-vous toujours sur les données précises du document.",
     expectedTimeSeconds: 60,
@@ -659,7 +659,7 @@ export const SCIENCES_EXP_PRACTICE_QUESTIONS: PracticeQuestion[] = [
     dimension: "methodology",
     difficulty: 2,
     type: "mcq",
-    prompt_ar: "[إعادة اختبار] عند كتابة 'الاستنتاج' في نهاية استغلال الوثيقة في العلوم الطبيعية، ما هي الصياغة المقبولة وزارياً؟",
+    prompt_ar: "[إعادة اختبار] عند كتابة 'الاستنتاج' في نهاية استغلال الوثيقة في العلوم الطبيعية، ما هي الصياغة المنهجية السليمة؟",
     prompt_fr: "[Retest] Lors de la formulation de la 'déduction' en SVT, quelle est l'exigence méthodologique ?",
     options: [
       {

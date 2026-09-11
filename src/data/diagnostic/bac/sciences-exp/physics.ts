@@ -268,8 +268,8 @@ export const PHYSICS_DIAGNOSTIC_QUESTIONS: DiagnosticQuestion[] = [
         text_ar: "1) رسم مماسين متوازيين للمنحنى من جهتي القفزة؛ 2) رسم قطعة مستقيمة عمودية عليهما؛ 3) تعيين منتصف القطعة ورسم المستقيم الموازي للمماسين والمار من المنتصف؛ 4) نقطة تقاطع هذا المستقيم مع منحنى المعايرة هي نقطة التكافؤ E.",
         text_fr: "1) Tracer deux tangentes parallèles de part et d'autre du saut ; 2) Tracer un segment perpendiculaire aux deux ; 3) Construire la médiatrice équidistante parallèle ; 4) L'intersection avec la courbe donne le point d'équivalence E.",
         isCorrect: true,
-        rationale_ar: "صحيح: هذا هو الترتيب الهندسي المنهجي المعتمد رسمياً في دليل التصحيح الوزاري لمنح العلامة الكاملة.",
-        rationale_fr: "Correct : c'est la séquence géométrique officielle prescrite par le guide de correction du BAC algérien.",
+        rationale_ar: "صحيح: هذا هو الترتيب الهندسي المنهجي الدقيق لطريقة المماسات المتوازية لتحديد نقطة التكافؤ بدقة.",
+        rationale_fr: "Correct : c'est la construction géométrique rigoureuse de la méthode des tangentes parallèles.",
       },
       {
         id: "opt-p5c",

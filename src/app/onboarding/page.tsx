@@ -234,7 +234,7 @@ export default function OnboardingPage() {
                   {isAr ? "وين حاب توصل؟" : t.onboarding.educationLevel.question}
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-400">
-                  {isAr ? "حدد المستوى الدراسي لضبط معايير التصحيح والمناهج." : t.onboarding.educationLevel.subtitle}
+                  {isAr ? "حدد المستوى الدراسي لضبط مسار التعلم والمناهج." : t.onboarding.educationLevel.subtitle}
                 </p>
               </div>
 

@@ -18,34 +18,24 @@ import { DiagnosticAnalysisResult } from "@/types/diagnostic";
 import { loadDiagnosticResults } from "@/lib/diagnostic";
 import { AdaptiveRoadmapState, QueuedMissionItem } from "@/types/roadmap";
 import { getComputedAdaptiveRoadmap } from "@/lib/roadmap";
-import {
-  saveMission,
-  setActiveMissionId,
-} from "@/lib/mission";
+import { setActiveMissionId } from "@/lib/mission";
 import { getAllTopics, getSkillsForTopic } from "@/data/curriculum";
 import {
   Compass,
   ArrowRight,
   ArrowLeft,
   Target,
-  Gauge,
-  Flame,
-  AlertTriangle,
   Play,
   RotateCcw,
   Sparkles,
   Info,
-  Layers,
   CheckCircle2,
   Brain,
   BarChart3,
-  ShieldCheck,
   BookOpen,
-  Activity,
   Clock,
   ListOrdered,
-  HelpCircle,
-  ChevronDown,
+  Map,
 } from "lucide-react";
 
 export default function RoadmapPage() {
@@ -94,7 +84,7 @@ export default function RoadmapPage() {
       <AppShell>
         <div className="min-h-[60vh] flex items-center justify-center">
           <div className="animate-pulse text-sm text-slate-400 font-medium">
-            {isAr ? "جاري استرجاع خريطتك التكيفية..." : "Chargement de votre feuille de route..."}
+            {isAr ? "جاري استرجاع خريطتك التعليمية..." : "Chargement de votre feuille de route..."}
           </div>
         </div>
       </AppShell>
@@ -118,7 +108,7 @@ export default function RoadmapPage() {
             </p>
           </div>
           <Link href="/onboarding" className="inline-block">
-            <Button variant="primary" size="lg" className="font-bold">
+            <Button variant="primary" size="lg" className="font-bold min-h-[48px]">
               <span>{t.roadmap.startOnboardingCta}</span>
               <Arrow className="h-4 w-4" />
             </Button>
@@ -134,17 +124,20 @@ export default function RoadmapPage() {
 
   return (
     <AppShell>
-      {/* 1. Header Context Bar */}
+      {/* =================================================================== */}
+      {/* 1. HEADER CONTEXT: YOUR GOAL, STARTING INDICATOR & APPROXIMATE GAP  */}
+      {/* =================================================================== */}
       <div className="border-b border-slate-800/80 bg-[#0E1526]/80 py-4 sm:py-6">
-        <Container size="lg">
+        <Container size="md">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            {/* Title & Badge */}
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <h1 className="text-xl sm:text-3xl font-black text-slate-100 tracking-tight font-sans">
                   {t.roadmap.title}
                 </h1>
-                <Badge variant="primary" size="sm" className="font-mono text-[10px] bg-blue-500/10 text-blue-400 border-blue-500/25">
-                  {t.roadmap.roadmapConfidenceInitial}
+                <Badge variant="primary" size="sm" className="font-semibold text-[10px] bg-blue-500/10 text-blue-400 border-blue-500/25">
+                  {t.roadmap.adaptivePathLabel || (isAr ? "مسار متكيف" : "Parcours adaptatif")}
                 </Badge>
               </div>
               <p className="text-xs sm:text-sm text-slate-400 leading-relaxed font-sans">
@@ -152,10 +145,12 @@ export default function RoadmapPage() {
               </p>
             </div>
 
-            {/* Quick Strategic Metrics Pill */}
+            {/* Strategic Metrics Overview */}
             <div className="flex items-center gap-2.5 self-start sm:self-auto">
-              <div className="px-3.5 py-1.5 rounded-xl border border-slate-800 bg-[#111827] text-xs">
-                <span className="text-slate-400 block text-[10px]">{t.roadmap.targetLabel}</span>
+              <div className="px-3.5 py-1.5 rounded-xl border border-amber-500/30 bg-amber-500/5 text-xs">
+                <span className="text-amber-400/90 block text-[10px] font-medium">
+                  {t.roadmap.targetScoreChosen || (isAr ? "الهدف اللي اخترته" : "Objectif choisi")}
+                </span>
                 <span className="font-bold text-amber-300 font-mono text-sm">
                   {profile.targetScore ? profile.targetScore.toFixed(2) : "16.00"}/20
                 </span>
@@ -163,7 +158,7 @@ export default function RoadmapPage() {
 
               <div className="px-3.5 py-1.5 rounded-xl border border-slate-800 bg-[#111827] text-xs">
                 <span className="text-slate-400 block text-[10px]">
-                  {isEmpirical ? t.roadmap.levelSourceObserved : t.roadmap.levelSourceEstimate}
+                  {isEmpirical ? t.roadmap.levelSourceObserved : (t.roadmap.estimateLabel || (isAr ? "مؤشر الانطلاق" : "Indicateur de départ"))}
                 </span>
                 <span className="font-bold text-slate-200 font-mono text-sm">
                   {gapResult ? gapResult.estimatedBaselineScore.toFixed(1) : "12.0"}/20
@@ -172,28 +167,37 @@ export default function RoadmapPage() {
 
               {gapResult && (
                 <div className="px-3.5 py-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 text-xs">
-                  <span className="text-blue-300 block text-[10px]">{t.roadmap.gapLabel}</span>
+                  <span className="text-blue-300 block text-[10px]">
+                    {t.roadmap.gapLabel || (isAr ? "المسافة إلى هدفك" : "Distance vers cible")}
+                  </span>
                   <span className="font-bold text-blue-400 font-mono text-sm">
-                    +{gapResult.approximateGap.toFixed(1)} {t.roadmap.gapUnit}
+                    ~{gapResult.approximateGap.toFixed(1)} {t.roadmap.gapUnit}
                   </span>
                 </div>
               )}
             </div>
           </div>
+
+          {/* Subtle Starting Indicator Helper Disclaimer */}
+          <p className="text-[11px] text-slate-400 mt-2">
+            {t.roadmap.levelSourceDisclaimer || (isAr ? "مؤشر أولي مبني على بياناتك الحالية، وليس توقعاً لعلامة البكالوريا." : "Indicateur préliminaire basé sur vos données, sans valeur de prédiction.")}
+          </p>
         </Container>
       </div>
 
-      {/* 2. Main Roadmap Flow */}
+      {/* =================================================================== */}
+      {/* MAIN ROADMAP FLOW                                                   */}
+      {/* =================================================================== */}
       <Container size="md" className="py-6 sm:py-10 space-y-8 sm:space-y-10">
 
         {/* ----------------------------------------------------------------- */}
-        {/* SECTION 1: NOW — THE HIGHEST PRIORITY MISSION                     */}
+        {/* SECTION 2: YOUR CURRENT NEXT ACTION (NOW — VISUALLY DOMINATING)   */}
         {/* ----------------------------------------------------------------- */}
         <section id="now" className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <span className="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
-              <span>{t.roadmap.currentMissionBadge}</span>
+              <span className="w-2 h-2 rounded-full bg-blue-400" />
+              <span>{t.roadmap.currentMissionBadge || (isAr ? "مهمتك الآن" : "Votre mission maintenant")}</span>
             </span>
             {nextMission && (
               <Badge
@@ -219,7 +223,7 @@ export default function RoadmapPage() {
             )}
           </div>
 
-          <Card className="p-5 sm:p-7 border-2 border-blue-500/50 bg-gradient-to-br from-[#162238] via-[#111827] to-[#111827] shadow-xl shadow-blue-950/40 space-y-5">
+          <Card className="p-5 sm:p-7 border border-blue-500/35 bg-[#131C2E] shadow-xl shadow-blue-950/30 space-y-5">
             {nextMission ? (
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-3">
@@ -243,40 +247,46 @@ export default function RoadmapPage() {
                   {locale === "ar" ? nextMission.description_ar : nextMission.description_fr}
                 </p>
 
-                {/* Structured Transparent Rationale */}
-                {rationale && (
-                  <div className="p-4 rounded-xl bg-[#0B1020]/80 border border-slate-800 text-xs space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="font-bold text-blue-300 flex items-center gap-1.5">
-                        <Brain className="h-4 w-4 text-blue-400" />
-                        <span>{t.roadmap.whyThisMission}</span>
-                      </div>
-                      <Badge variant="outline" size="sm" className="bg-[#111827] border-blue-500/30 text-blue-300 font-bold">
+                {/* ------------------------------------------------------------- */}
+                {/* SECTION 3: WHY THIS MISSION? (IN CALM, REASSURING MENTOR TONE)*/}
+                {/* ------------------------------------------------------------- */}
+                <div className="p-4 rounded-2xl bg-[#0B1020]/90 border border-slate-800 text-xs space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="font-bold text-blue-300 flex items-center gap-1.5">
+                      <Brain className="h-4 w-4 text-blue-400" />
+                      <span>{t.roadmap.whyThisMission || (isAr ? "علاش هذي المهمة؟" : "Pourquoi cette mission ?")}</span>
+                    </div>
+                    {rationale && (
+                      <Badge variant="outline" size="sm" className="bg-[#111827] border-blue-500/25 text-blue-300 font-semibold text-[10px]">
                         {locale === "ar" ? rationale.reasonLabel_ar : rationale.reasonLabel_fr}
                       </Badge>
-                    </div>
-                    <p className="text-slate-300 leading-relaxed font-sans">
-                      {locale === "ar" ? rationale.shortExplanation_ar : rationale.shortExplanation_fr}
-                    </p>
+                    )}
                   </div>
-                )}
+                  <p className="text-slate-300 leading-relaxed font-sans text-xs sm:text-sm">
+                    {rationale
+                      ? (locale === "ar" ? rationale.shortExplanation_ar : rationale.shortExplanation_fr)
+                      : (isAr
+                          ? "لقينا عندك إشارة ضعف في هذي المهارة. نصلحوها اليوم، ومن بعد نختبرو واش ثبت فعلاً."
+                          : "Signal identifié dans cette notion. Nous la réparons méthodiquement.")}
+                  </p>
+                </div>
 
-                {/* Action CTA */}
+                {/* Primary CTA Button (Dominating, 52px+ touch target) */}
                 <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
                   <Button
                     variant="primary"
                     size="lg"
                     fullWidth
                     onClick={() => handleStartMission(nextMission.id)}
-                    className="font-bold shadow-lg shadow-blue-600/30"
+                    className="font-bold shadow-lg shadow-blue-600/25 min-h-[52px] text-base"
                   >
-                    <span>{t.roadmap.startCurrentMissionCta}</span>
-                    <Arrow className="h-4 w-4" />
+                    <span>{t.roadmap.startCurrentMissionCta || (isAr ? "ابدأ المهمة الآن" : "Démarrer la mission")}</span>
+                    <Arrow className="h-5 w-5" />
                   </Button>
 
                   {nextMission.status === "repair_needed" && (
                     <Link href="/error-lab" className="w-full sm:w-auto">
-                      <Button variant="outline" size="lg" className="w-full sm:w-auto border-slate-700 text-slate-300 hover:bg-slate-800">
+                      <Button variant="outline" size="lg" className="w-full sm:w-auto border-slate-700 text-slate-300 hover:bg-slate-800 min-h-[52px]">
                         <span>{t.roadmap.errorLabLinkCta}</span>
                       </Button>
                     </Link>
@@ -295,56 +305,20 @@ export default function RoadmapPage() {
         </section>
 
         {/* ----------------------------------------------------------------- */}
-        {/* SECTION 2: MAP — 4-STAGE LEARNING PROGRESSION                     */}
-        {/* ----------------------------------------------------------------- */}
-        <section className="space-y-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 px-1">
-            {t.roadmap.mapTitle}
-          </h3>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            {[
-              { key: "fix", stage: t.roadmap.stages.fix, num: "01", active: nextMission?.status === "repair_needed" },
-              { key: "verify", stage: t.roadmap.stages.verify, num: "02", active: nextMission?.status === "retest_ready" },
-              { key: "demonstrate", stage: t.roadmap.stages.demonstrate, num: "03", active: nextMission?.status === "in_progress" },
-              { key: "move_forward", stage: t.roadmap.stages.move_forward, num: "04", active: nextMission?.status === "available" },
-            ].map((step) => (
-              <div
-                key={step.key}
-                className={`p-3.5 rounded-2xl border transition-all ${
-                  step.active
-                    ? "border-blue-500 bg-[#162238] shadow-md shadow-blue-950/40"
-                    : "border-slate-800/80 bg-[#111827]/70"
-                }`}
-              >
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className={`text-[10px] font-mono font-bold ${step.active ? "text-blue-400" : "text-slate-500"}`}>
-                    STAGE {step.num}
-                  </span>
-                  {step.active && <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-ping" />}
-                </div>
-                <h4 className={`text-xs font-bold ${step.active ? "text-slate-100" : "text-slate-300"}`}>
-                  {step.stage.title}
-                </h4>
-                <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-                  {step.stage.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* ----------------------------------------------------------------- */}
-        {/* SECTION 3: NEXT — UPCOMING QUEUED MISSIONS                        */}
+        {/* SECTION 4: WHAT COMES NEXT (بعدها)                                */}
         {/* ----------------------------------------------------------------- */}
         {roadmapState && roadmapState.queuedMissions.length > 0 && (
           <section className="space-y-3">
             <div className="px-1">
               <h3 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
                 <ListOrdered className="h-4 w-4 text-blue-400" />
-                <span>{t.roadmap.nextTitle}</span>
+                <span>{isAr ? "بعدها" : "Ensuite"}</span>
               </h3>
-              <p className="text-xs text-slate-400">{t.roadmap.nextSubtitle}</p>
+              <p className="text-xs text-slate-400">
+                {isAr
+                  ? "المهام التالية في مسارك، تتكيف تلقائياً حسب نتائجك وأخطائك."
+                  : "Les prochaines étapes dans votre file d'attente, adaptées selon vos progrès."}
+              </p>
             </div>
 
             <div className="space-y-2.5">
@@ -368,7 +342,7 @@ export default function RoadmapPage() {
                   </div>
 
                   <Badge variant="outline" size="sm" className="shrink-0 text-[10px] border-slate-700 text-slate-400">
-                    {t.roadmap.queuedBadge}
+                    {isAr ? "في الانتظار" : "En attente"}
                   </Badge>
                 </div>
               ))}
@@ -377,59 +351,93 @@ export default function RoadmapPage() {
         )}
 
         {/* ----------------------------------------------------------------- */}
-        {/* SECTION 4: PROGRESS — SKILLS & CURRICULUM COVERAGE                */}
+        {/* SECTION 5: THE ROAD & YOUR PROGRESS                               */}
         {/* ----------------------------------------------------------------- */}
-        <section id="progress" className="space-y-4">
-          <div className="flex items-center justify-between px-1">
-            <h3 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
-              <BarChart3 className="h-4 w-4 text-slate-400" />
-              <span>{t.roadmap.progressTitle}</span>
-            </h3>
-            <span className="text-xs text-slate-400 font-medium">
-              {profile.streamId === "sciences_exp" ? (locale === "ar" ? "شعبة علوم تجريبية" : "Sciences Expérimentales") : profile.streamId}
-            </span>
+        <section id="progress" className="space-y-5">
+          <div className="p-4 sm:p-6 rounded-3xl border border-slate-800 bg-[#111827] space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <h3 className="text-sm sm:text-base font-bold text-slate-100 flex items-center gap-2">
+                  <Map className="h-4 w-4 text-blue-400" />
+                  <span>{t.roadmap.educationalMapLabel || (isAr ? "خريطتك التعليمية" : "Votre carte d'apprentissage")}</span>
+                </h3>
+                <p className="text-xs text-slate-400">
+                  {isAr
+                    ? `${roadmapState?.masteredSkills.length || 0} مهارات مثبتة من أصل 31 مهارة في خريطة التعلم`
+                    : `${roadmapState?.masteredSkills.length || 0} compétences validées sur 31 dans la carte d'apprentissage`}
+                </p>
+              </div>
+              <Badge variant="outline" size="sm" className="text-slate-400 border-slate-700 text-[10px]">
+                {t.roadmap.adaptivePathLabel || (isAr ? "مسار متكيف" : "Parcours adaptatif")}
+              </Badge>
+            </div>
+
+            {/* Visual Road Tracker */}
+            <div className="pt-2 border-t border-slate-800/80">
+              <RoadVisualizer
+                targetScore={profile.targetScore || 16.0}
+                currentBaselineText={gapResult ? `${gapResult.estimatedBaselineScore.toFixed(1)}/20` : "12.0/20"}
+                gapText={gapResult ? `${gapResult.approximateGap.toFixed(1)} نقاط` : undefined}
+                activeMission={nextMission ? {
+                  id: nextMission.id,
+                  subjectId: nextMission.subjectId,
+                  skillTitle: locale === "ar" ? nextMission.title_ar : nextMission.title_fr,
+                  estimatedMinutes: nextMission.estimatedMinutes,
+                  reasonText: locale === "ar" ? rationale?.shortExplanation_ar : rationale?.shortExplanation_fr,
+                } : null}
+                masteredCount={roadmapState?.masteredSkills.length || 0}
+                totalSkills={31}
+                locale={locale}
+                onStartMission={() => nextMission && handleStartMission(nextMission.id)}
+              />
+            </div>
+
+            {/* Categorized Skills Status Chips */}
+            <div className="pt-2 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <Card className="p-3 border-emerald-500/30 bg-emerald-500/5 text-center space-y-0.5">
+                <span className="text-xl font-black text-emerald-400 font-mono">
+                  {roadmapState?.masteredSkills.length || 0}
+                </span>
+                <span className="text-[11px] font-bold text-emerald-300 block">
+                  {t.roadmap.categories.demonstrated || (locale === "ar" ? "✓ تم إثبات التحكم" : "Maîtrise démontrée")}
+                </span>
+              </Card>
+
+              <Card className="p-3 border-sky-500/30 bg-sky-500/5 text-center space-y-0.5">
+                <span className="text-xl font-black text-sky-400 font-mono">
+                  {roadmapState?.emergingSkills.length || 0}
+                </span>
+                <span className="text-[11px] font-bold text-sky-300 block">
+                  {isAr ? "مهارات ناشئة" : "Émergentes"}
+                </span>
+              </Card>
+
+              <Card className="p-3 border-amber-500/30 bg-amber-500/5 text-center space-y-0.5">
+                <span className="text-xl font-black text-amber-400 font-mono">
+                  {roadmapState?.needsMoreWorkSkills.length || 0}
+                </span>
+                <span className="text-[11px] font-bold text-amber-300 block">
+                  {t.roadmap.categories.needs_work || (locale === "ar" ? "تحتاج إلى عمل إضافي" : "needs_more_work")}
+                </span>
+              </Card>
+
+              <Card className="p-3 border-rose-500/30 bg-rose-500/5 text-center space-y-0.5">
+                <span className="text-xl font-black text-rose-400 font-mono">
+                  {roadmapState?.unresolvedErrors.length || 0}
+                </span>
+                <span className="text-[11px] font-bold text-rose-300 block">
+                  {locale === "ar" ? "عندك خطأ يحتاج إصلاح" : "repair_needed"}
+                </span>
+              </Card>
+            </div>
           </div>
+        </section>
 
-          {/* Categorized Skills Status Chips */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-            <Card className="p-3 border-emerald-500/30 bg-emerald-500/5 text-center space-y-0.5">
-              <span className="text-xl font-black text-emerald-400 font-mono">
-                {roadmapState?.masteredSkills.length || 0}
-              </span>
-              <span className="text-[11px] font-bold text-emerald-300 block">
-                {t.roadmap.categories.demonstrated || (locale === "ar" ? "✓ تم إثبات التحكم" : "Maîtrise démontrée")}
-              </span>
-            </Card>
-
-            <Card className="p-3 border-sky-500/30 bg-sky-500/5 text-center space-y-0.5">
-              <span className="text-xl font-black text-sky-400 font-mono">
-                {roadmapState?.emergingSkills.length || 0}
-              </span>
-              <span className="text-[11px] font-bold text-sky-300 block">
-                {t.roadmap.categories.emerging}
-              </span>
-            </Card>
-
-            <Card className="p-3 border-amber-500/30 bg-amber-500/5 text-center space-y-0.5">
-              <span className="text-xl font-black text-amber-400 font-mono">
-                {roadmapState?.needsMoreWorkSkills.length || 0}
-              </span>
-              <span className="text-[11px] font-bold text-amber-300 block">
-                {t.roadmap.categories.needs_work || (locale === "ar" ? "تحتاج إلى عمل إضافي" : "needs_more_work")}
-              </span>
-            </Card>
-
-            <Card className="p-3 border-rose-500/30 bg-rose-500/5 text-center space-y-0.5">
-              <span className="text-xl font-black text-rose-400 font-mono">
-                {roadmapState?.unresolvedErrors.length || 0}
-              </span>
-              <span className="text-[11px] font-bold text-rose-300 block">
-                {locale === "ar" ? "أخطاء قيد الترميم" : "Erreurs ouvertes"}
-              </span>
-            </Card>
-          </div>
-
-          {/* Stream Subjects Table/Grid */}
+        {/* ----------------------------------------------------------------- */}
+        {/* SECTION 6: SUPPORTING DETAILS & CURRICULUM EXPLORER               */}
+        {/* ----------------------------------------------------------------- */}
+        <section className="space-y-4">
+          {/* Stream Subjects Breakdown */}
           {roadmapState && (
             <Card className="p-4 sm:p-5 border-slate-800 bg-[#111827] space-y-4">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
@@ -606,44 +614,42 @@ export default function RoadmapPage() {
               </div>
             </Card>
           )}
-        </section>
 
-        {/* ----------------------------------------------------------------- */}
-        {/* SECTION 5: LIMITATIONS & TRANSPARENCY NOTICE                     */}
-        {/* ----------------------------------------------------------------- */}
-        <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 text-xs text-amber-200 space-y-1.5">
-          <div className="font-bold flex items-center gap-1.5 text-amber-300">
-            <Info className="h-4 w-4 text-amber-400 shrink-0" />
-            <span>{t.roadmap.limitationsTitle}</span>
+          {/* Limitations & Transparency Notice */}
+          <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 text-xs text-amber-200 space-y-1.5">
+            <div className="font-bold flex items-center gap-1.5 text-amber-300">
+              <Info className="h-4 w-4 text-amber-400 shrink-0" />
+              <span>{t.roadmap.limitationsTitle}</span>
+            </div>
+            <p className="leading-relaxed text-amber-200/90 font-sans">
+              {roadmapState ? (locale === "ar" ? roadmapState.limitations.ar : roadmapState.limitations.fr) : t.roadmap.limitationsText}
+            </p>
           </div>
-          <p className="leading-relaxed text-amber-200/90 font-sans">
-            {roadmapState ? (locale === "ar" ? roadmapState.limitations.ar : roadmapState.limitations.fr) : t.roadmap.limitationsText}
-          </p>
-        </div>
 
-        {/* Secondary Navigation Links */}
-        <div className="pt-2 flex flex-wrap items-center justify-between gap-3 text-xs">
-          {isEmpirical ? (
-            <>
-              <Link href="/diagnostic/results" className="text-blue-400 hover:underline flex items-center gap-1 font-semibold">
-                <BarChart3 className="h-3.5 w-3.5" />
-                <span>{t.roadmap.viewDiagnosticResultsCta}</span>
+          {/* Secondary Navigation Links */}
+          <div className="pt-2 flex flex-wrap items-center justify-between gap-3 text-xs">
+            {isEmpirical ? (
+              <>
+                <Link href="/diagnostic/results" className="text-blue-400 hover:underline flex items-center gap-1 font-semibold">
+                  <BarChart3 className="h-3.5 w-3.5" />
+                  <span>{t.roadmap.viewDiagnosticResultsCta}</span>
+                </Link>
+                <Link href="/diagnostic" className="text-slate-400 hover:text-slate-200 hover:underline flex items-center gap-1">
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  <span>{locale === "ar" ? "إعادة التشخيص الأكاديمي" : "Repasser le diagnostic"}</span>
+                </Link>
+              </>
+            ) : (
+              <Link href="/diagnostic" className="text-blue-400 hover:underline flex items-center gap-1 font-semibold">
+                <Play className="h-3.5 w-3.5" />
+                <span>{t.roadmap.startDiagnosticCta}</span>
               </Link>
-              <Link href="/diagnostic" className="text-slate-400 hover:text-slate-200 hover:underline flex items-center gap-1">
-                <RotateCcw className="h-3.5 w-3.5" />
-                <span>{locale === "ar" ? "إعادة التشخيص الأكاديمي" : "Repasser le diagnostic"}</span>
-              </Link>
-            </>
-          ) : (
-            <Link href="/diagnostic" className="text-blue-400 hover:underline flex items-center gap-1 font-semibold">
-              <Play className="h-3.5 w-3.5" />
-              <span>{t.roadmap.startDiagnosticCta}</span>
+            )}
+            <Link href="/error-lab" className="text-slate-400 hover:text-slate-200 hover:underline flex items-center gap-1">
+              <span>{t.roadmap.errorLabLinkCta}</span>
             </Link>
-          )}
-          <Link href="/error-lab" className="text-slate-400 hover:text-slate-200 hover:underline flex items-center gap-1">
-            <span>{t.roadmap.errorLabLinkCta}</span>
-          </Link>
-        </div>
+          </div>
+        </section>
 
       </Container>
     </AppShell>

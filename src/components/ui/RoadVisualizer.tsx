@@ -41,20 +41,20 @@ export function RoadVisualizer({
   return (
     <div className="relative py-4 px-2 sm:px-4 max-w-xl mx-auto">
       {/* Visual Central Pathway Spine */}
-      <div className="absolute top-12 bottom-12 left-6 sm:left-8 w-0.5 bg-gradient-to-b from-amber-500/40 via-blue-500/60 to-emerald-500/40 -translate-x-1/2 pointer-events-none" />
+      <div className="absolute top-12 bottom-12 left-6 sm:left-8 w-0.5 bg-slate-700/60 -translate-x-1/2 pointer-events-none" />
 
       {/* =================================================================== */}
       {/* NODE 1: THE TARGET GOAL (TOP DESTINATION)                           */}
       {/* =================================================================== */}
       <div className="relative flex items-start gap-4 sm:gap-6 mb-8 group">
-        <div className="relative z-10 flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-[#162032] border-2 border-amber-500/70 text-amber-400 shadow-glow/20">
+        <div className="relative z-10 flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-[#162032] border border-amber-500/50 text-amber-400">
           <Target className="h-5 w-5 sm:h-6 sm:w-6" />
         </div>
 
         <div className="flex-1 pt-1">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
-              {isAr ? "الهدف الاستراتيجي في البكالوريا" : "Objectif BAC Cible"}
+              {isAr ? "الهدف اللي اخترته" : "Objectif choisi"}
             </span>
             <span className="text-lg sm:text-xl font-black text-amber-300 font-mono">
               {targetScore > 0 ? targetScore.toFixed(2) : "16.00"}/20
@@ -77,15 +77,15 @@ export function RoadVisualizer({
         <div className="flex-1 pt-1">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-300">
-              {isAr ? "الموقع الحالي والانطلاقة" : "Position de départ"}
+              {isAr ? "مؤشر الانطلاق" : "Indicateur de départ"}
             </span>
             <Badge variant="outline" size="sm" className="text-[10px] text-slate-400 border-slate-700">
               {currentBaselineText}
             </Badge>
           </div>
           {gapText && (
-            <p className="text-xs text-blue-400/90 font-medium mt-0.5">
-              {isAr ? `الفجوة التقريبية: ${gapText}` : `Écart estimé : ${gapText}`}
+            <p className="text-xs text-slate-300 font-medium mt-0.5">
+              {isAr ? `المسافة إلى هدفك: حوالي ${gapText}` : `Distance vers l'objectif : environ ${gapText}`}
             </p>
           )}
         </div>
@@ -95,17 +95,17 @@ export function RoadVisualizer({
       {/* NODE 3: THE ACTIVE MISSION (FOCAL POINT OF THE PRODUCT)             */}
       {/* =================================================================== */}
       <div className="relative flex items-start gap-4 sm:gap-6 mb-8">
-        {/* Pulsing focal node icon */}
-        <div className="relative z-10 flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 border-2 border-blue-400 text-white shadow-lg shadow-blue-600/30 animate-pulse">
+        {/* Focal node icon - calm and clear */}
+        <div className="relative z-10 flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-600 border border-blue-400/80 text-white shadow-sm">
           <Play className="h-5 w-5 fill-current" />
         </div>
 
         <div className="flex-1">
-          <Card className="p-4 sm:p-5 border-blue-500/40 bg-gradient-to-br from-[#162238] to-[#111827] shadow-lg shadow-blue-950/40 relative overflow-hidden">
+          <Card className="p-4 sm:p-5 border-blue-500/30 bg-[#131C2E] shadow-md relative overflow-hidden">
             {/* Top Badge */}
             <div className="flex items-center justify-between mb-2">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-ping" />
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/15 text-blue-300 border border-blue-500/25">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
                 {isAr ? "مهمتك الآن" : "Mission Actuelle"}
               </span>
               {activeMission?.estimatedMinutes && (
@@ -124,7 +124,7 @@ export function RoadVisualizer({
             {activeMission?.reasonText && (
               <div className="p-2.5 rounded-xl bg-[#0B1020]/70 border border-slate-800 text-xs text-slate-300 mb-3 leading-relaxed">
                 <span className="font-semibold text-blue-400 block mb-0.5">
-                  {isAr ? "علاش هذي المهمة بالذات؟" : "Pourquoi cette mission ?"}
+                  {isAr ? "علاش هذي المهمة؟" : "Pourquoi cette mission ?"}
                 </span>
                 {activeMission.reasonText}
               </div>
@@ -133,13 +133,13 @@ export function RoadVisualizer({
             {/* Action CTA */}
             {activeMission?.id ? (
               <Link href={`/mission/${activeMission.id}`} className="block">
-                <Button variant="primary" fullWidth size="md" className="font-bold shadow-md shadow-blue-700/20">
+                <Button variant="primary" fullWidth size="lg" className="font-bold min-h-[48px] shadow-sm">
                   <span>{isAr ? "ابدأ المهمة الآن" : "Démarrer la mission"}</span>
                   <span className="text-xs">→</span>
                 </Button>
               </Link>
             ) : (
-              <Button variant="primary" fullWidth size="md" onClick={onStartMission} className="font-bold">
+              <Button variant="primary" fullWidth size="lg" onClick={onStartMission} className="font-bold min-h-[48px]">
                 <span>{isAr ? "ابدأ المهمة الآن" : "Démarrer la mission"}</span>
               </Button>
             )}
@@ -151,21 +151,23 @@ export function RoadVisualizer({
       {/* NODE 4: DEMONSTRATED EVIDENCE (FOUNDATION AT BASE)                   */}
       {/* =================================================================== */}
       <div className="relative flex items-start gap-4 sm:gap-6">
-        <div className="relative z-10 flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-[#111827] border border-emerald-500/50 text-emerald-400">
+        <div className="relative z-10 flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-[#111827] border border-emerald-500/40 text-emerald-400">
           <CheckCircle2 className="h-5 w-5" />
         </div>
 
         <div className="flex-1 pt-1">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-emerald-300">
-              {isAr ? "إتقان مُثبت بالأدلة" : "Maîtrise démontrée"}
+              {isAr ? "مهارات مثبتة" : "Compétences validées"}
             </span>
-            <span className="text-xs font-bold text-emerald-400 font-mono">
-              {masteredCount}/{totalSkills} {isAr ? "مهارة" : "compétences"}
+            <span className="text-xs font-bold text-emerald-400">
+              {isAr ? `${masteredCount} مهارات مثبتة` : `${masteredCount} validées`}
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-0.5">
-            {isAr ? "كل خطأ تم ترميمه وتأكيد فهمه باختبار توأمي ينتقل إلى رصيدك المثبت." : "Chaque erreur corrigée et validée par re-test jumeau enrichit votre socle."}
+            {isAr
+              ? `من أصل ${totalSkills} مهارة في خريطة التعلم.`
+              : `Sur ${totalSkills} compétences dans la carte d'apprentissage.`}
           </p>
         </div>
       </div>

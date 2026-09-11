@@ -58,8 +58,8 @@ export function detectStrategicBottleneck(
       title_fr: "Méthodologie et application aux exercices",
       explanation_ar: "أنت تفهم الدرس، لكن النقاط تضيع في طريقة صياغة الإجابة والتعامل مع فخاخ أسئلة البكالوريا. الحل ليس إعادة قراءة الدروس، بل التدريب المنهجي.",
       explanation_fr: "La théorie est comprise mais les points sont perdus dans la formulation et les pièges d'examen. La priorité est l'entraînement méthodologique.",
-      recommendedFirstMission_ar: "تفكيك تمرين بكالوريا نموذجي ومقارنة صياغة الحل مع سلم التنقيط الرسمي",
-      recommendedFirstMission_fr: "Décortiquer un exercice type BAC et aligner la rédaction sur le barème officiel",
+      recommendedFirstMission_ar: "تفكيك تمرين بكالوريا نموذجي ومقارنة صياغة الحل مع خطوات الحل المنهجية",
+      recommendedFirstMission_fr: "Décortiquer un exercice type BAC et aligner la rédaction sur la méthode rigoureuse",
     };
   } else if (obstacles.includes("start_and_stop") || obstacles.includes("waste_time")) {
     behavioralBottleneck = {
