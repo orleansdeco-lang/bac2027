@@ -29,6 +29,13 @@ import {
   ContentSource,
   VerificationRecord,
   Resource,
+  Lesson,
+  RepairGuide,
+  StudyMethod,
+  ExpertGuidance,
+  MotivationalPrinciple,
+  VerifiedQuote,
+  MiniExam,
 } from "./types";
 import {
   VALID_VERIFICATION_STATUSES,
@@ -51,6 +58,13 @@ export interface ContentDataset {
   sources?: ContentSource[];
   verificationRecords?: VerificationRecord[];
   resources?: Resource[];
+  lessons?: Lesson[];
+  repairGuides?: RepairGuide[];
+  studyMethods?: StudyMethod[];
+  expertGuidance?: ExpertGuidance[];
+  motivationalPrinciples?: MotivationalPrinciple[];
+  verifiedQuotes?: VerifiedQuote[];
+  miniExams?: MiniExam[];
 }
 
 export interface RuleViolation {
@@ -103,6 +117,13 @@ export function validateContentArchitecture(dataset: ContentDataset): ContentVal
     ...dataset.retestQuestions.map((rq) => ({ type: "retestQuestion", entity: rq as unknown as Record<string, unknown> })),
     ...(dataset.pastBacExamReferences || []).map((pbr) => ({ type: "pastBacExamReference", entity: pbr as unknown as Record<string, unknown> })),
     ...(dataset.resources || []).map((r) => ({ type: "resource", entity: r as unknown as Record<string, unknown> })),
+    ...(dataset.lessons || []).map((l) => ({ type: "lesson", entity: l as unknown as Record<string, unknown> })),
+    ...(dataset.repairGuides || []).map((rg) => ({ type: "repairGuide", entity: rg as unknown as Record<string, unknown> })),
+    ...(dataset.studyMethods || []).map((sm) => ({ type: "studyMethod", entity: sm as unknown as Record<string, unknown> })),
+    ...(dataset.expertGuidance || []).map((eg) => ({ type: "expertGuidance", entity: eg as unknown as Record<string, unknown> })),
+    ...(dataset.motivationalPrinciples || []).map((mp) => ({ type: "motivationalPrinciple", entity: mp as unknown as Record<string, unknown> })),
+    ...(dataset.verifiedQuotes || []).map((vq) => ({ type: "verifiedQuote", entity: vq as unknown as Record<string, unknown> })),
+    ...(dataset.miniExams || []).map((me) => ({ type: "miniExam", entity: me as unknown as Record<string, unknown> })),
   ];
 
   totalEntitiesChecked += allEntities.length;

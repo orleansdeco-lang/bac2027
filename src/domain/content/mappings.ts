@@ -22,11 +22,33 @@ import {
   RetestQuestion,
   ContentSource,
   VerificationRecord,
+  Lesson,
+  WorkedExample,
+  RepairGuide,
+  StudyMethod,
+  ExpertGuidance,
+  MotivationalPrinciple,
+  VerifiedQuote,
+  MiniExam,
 } from "./types";
 import { ContentDataset } from "./validation";
 import { CURRICULUM_TOPICS } from "@/data/curriculum/topics";
 import { ALL_CURRICULUM_SKILLS } from "@/data/curriculum/skills";
 import { ALL_PRACTICE_QUESTIONS } from "@/data/curriculum";
+
+import { PROMPT12_LESSONS } from "./lessons";
+import { PROMPT12_REPAIR_GUIDES } from "./repair-guides";
+import { PROMPT12_STUDY_METHODS } from "./study-methods";
+import { PROMPT12_EXPERT_GUIDANCE } from "./expert-guidance";
+import { PROMPT12_MOTIVATIONAL_PRINCIPLES, PROMPT12_VERIFIED_QUOTES } from "./motivation";
+import { PROMPT12_MINI_EXAMS } from "./mini-exams";
+
+export { PROMPT12_LESSONS } from "./lessons";
+export { PROMPT12_REPAIR_GUIDES } from "./repair-guides";
+export { PROMPT12_STUDY_METHODS } from "./study-methods";
+export { PROMPT12_EXPERT_GUIDANCE } from "./expert-guidance";
+export { PROMPT12_MOTIVATIONAL_PRINCIPLES, PROMPT12_VERIFIED_QUOTES } from "./motivation";
+export { PROMPT12_MINI_EXAMS } from "./mini-exams";
 
 // ============================================================================
 // 1. OFFICIAL SOURCES & PROVENANCE
@@ -511,6 +533,78 @@ export const PROMPT11_PAST_BAC_REFERENCES: PastBacExamReference[] = [
     guidanceNotes_ar: "وظف المنهجية المبنية على التحليل المقارن (معطيات السند + الدلالة) ثم الخروج باستنتاج واضح.",
     guidanceNotes_fr: "Appliquez la démarche scientifique : analyse des données puis déduction ciblée.",
   },
+  {
+    id: "bac_ref_2023_math_s2_ex2",
+    year: 2023,
+    session: "principal",
+    streamId: "sciences_exp",
+    subjectId: "math",
+    topicId: "math_topic_sequences",
+    skillIds: ["math_induction_reasoning", "math_sequence_reasoning"],
+    exerciseNumber: 2,
+    subQuestionRef: "Partie 1 - Question 2",
+    title_ar: "بكالوريا 2023 — رياضيات — الموضوع الثاني — التمرين الثاني",
+    title_fr: "BAC 2023 — Mathématiques — Sujet 2 — Exercice 2",
+    description_ar: "متتاليات عددية تراجعية، البرهان بالتراجع واستنتاج اتجاه التغير والتقارب بالرتابة.",
+    description_fr: "Suites numériques récurrentes, raisonnement par récurrence, sens de variation et convergence.",
+    sourceId: "src-onec-past-exams-archive",
+    sourceType: "official_exam",
+    officialExamSourceId: "src-onec-past-exams-archive",
+    rightsStatus: "official_reference",
+    verificationStatus: "verified",
+    verifiedAt: "2024-09-01T10:00:00Z",
+    verifiedBy: "Comité Math BAC Mastery",
+    guidanceNotes_ar: "احرص على الصياغة الصارمة لمرحلة الوراثة: نفرض صحة الخاصية P(n) ونبرهن صحة P(n+1).",
+    guidanceNotes_fr: "Rédigez rigoureusement l'étape d'hérédité : supposons P(n) vraie et démontrons P(n+1).",
+  },
+  {
+    id: "bac_ref_2023_phys_s2_ex1",
+    year: 2023,
+    session: "principal",
+    streamId: "sciences_exp",
+    subjectId: "physics",
+    topicId: "physics_topic_kinetics",
+    skillIds: ["physics_reaction_rate_monitoring"],
+    exerciseNumber: 1,
+    subQuestionRef: "السؤال 4",
+    title_ar: "بكالوريا 2023 — فيزياء — الموضوع الثاني — التمرين الأول",
+    title_fr: "BAC 2023 — Physique — Sujet 2 — Exercice 1",
+    description_ar: "متابعة زمنية لتحول كيميائي بطريقة قياس الحجم، حساب سرعة التفاعل بيانيا وتحديد زمن نصف التفاعل t1/2.",
+    description_fr: "Suivi temporel d'une transformation chimique par volumétrie, calcul de vitesse volumique et t1/2.",
+    sourceId: "src-onec-past-exams-archive",
+    sourceType: "official_exam",
+    officialExamSourceId: "src-onec-past-exams-archive",
+    rightsStatus: "official_reference",
+    verificationStatus: "verified",
+    verifiedAt: "2024-09-01T10:00:00Z",
+    verifiedBy: "Comité Physique BAC Mastery",
+    guidanceNotes_ar: "لا تنس قسمة ميل المماس على الحجم الكلي للمزيج التفاعلي V_tot عند حساب السرعة الحجمية.",
+    guidanceNotes_fr: "N'oubliez pas de diviser la pente de la tangente par le volume total du mélange réactionnel.",
+  },
+  {
+    id: "bac_ref_2022_snv_s2_ex3",
+    year: 2022,
+    session: "principal",
+    streamId: "sciences_exp",
+    subjectId: "natural_sciences",
+    topicId: "snv_topic_immunology",
+    skillIds: ["snv_immunity_reasoning", "snv_cellular_immunity_ltc"],
+    exerciseNumber: 3,
+    subQuestionRef: "الجزء الثاني",
+    title_ar: "بكالوريا 2022 — علوم طبيعية — الموضوع الثاني — التمرين الثالث",
+    title_fr: "BAC 2022 — SVT — Sujet 2 — Exercice 3",
+    description_ar: "استدلال علمي متكامل حول الاستجابة المناعية النوعية الخلوية وآلية إفراز البيرفورين والغرانزيم من طرف الخلايا اللمفاوية التائية السامة LTc.",
+    description_fr: "Démarche scientifique sur la réponse immunitaire cellulaire et le mécanisme de cytotoxicité des LTc.",
+    sourceId: "src-onec-past-exams-archive",
+    sourceType: "official_exam",
+    officialExamSourceId: "src-onec-past-exams-archive",
+    rightsStatus: "official_reference",
+    verificationStatus: "verified",
+    verifiedAt: "2024-09-01T10:00:00Z",
+    verifiedBy: "Comité SVT BAC Mastery",
+    guidanceNotes_ar: "استغل وثائق التجارب بدقة (تحليل + استنتاج) ثم ركب الإجابة في نص علمي مهيكل وواضح.",
+    guidanceNotes_fr: "Exploitez rigoureusement les documents (analyse + déduction) puis synthétisez.",
+  },
 ];
 
 // ============================================================================
@@ -618,6 +712,13 @@ export function getFullContentDataset(): ContentDataset {
     sources: PROMPT11_SOURCES,
     verificationRecords: PROMPT11_VERIFICATION_RECORDS,
     resources: PROMPT11_RESOURCES,
+    lessons: PROMPT12_LESSONS,
+    repairGuides: PROMPT12_REPAIR_GUIDES,
+    studyMethods: PROMPT12_STUDY_METHODS,
+    expertGuidance: PROMPT12_EXPERT_GUIDANCE,
+    motivationalPrinciples: PROMPT12_MOTIVATIONAL_PRINCIPLES,
+    verifiedQuotes: PROMPT12_VERIFIED_QUOTES,
+    miniExams: PROMPT12_MINI_EXAMS,
   };
 }
 
@@ -715,4 +816,80 @@ export function getSources(): ContentSource[] {
 
 export function getVerificationRecords(): VerificationRecord[] {
   return PROMPT11_VERIFICATION_RECORDS;
+}
+
+// ============================================================================
+// 12. PROMPT 12 QUERY HELPERS
+// ============================================================================
+
+export function getAllLessons(): Lesson[] {
+  return PROMPT12_LESSONS;
+}
+
+export function getLessonById(lessonId: string): Lesson | undefined {
+  return PROMPT12_LESSONS.find((l) => l.id === lessonId);
+}
+
+export function getLessonBySkillId(skillId: string): Lesson | undefined {
+  return PROMPT12_LESSONS.find((l) => l.skillId === skillId);
+}
+
+export function getAllRepairGuides(): RepairGuide[] {
+  return PROMPT12_REPAIR_GUIDES.filter((rg) => rg.isActive);
+}
+
+export function getRepairGuideById(guideId: string): RepairGuide | undefined {
+  return PROMPT12_REPAIR_GUIDES.find((rg) => rg.id === guideId);
+}
+
+export function getRepairGuidesForSkill(skillId: string): RepairGuide[] {
+  return PROMPT12_REPAIR_GUIDES.filter((rg) => rg.skillId === skillId && rg.isActive);
+}
+
+export function getRepairGuidesForErrorType(errorType: string): RepairGuide[] {
+  return PROMPT12_REPAIR_GUIDES.filter((rg) => rg.suspectedErrorType === errorType && rg.isActive);
+}
+
+export function getAllStudyMethods(): StudyMethod[] {
+  return PROMPT12_STUDY_METHODS.filter((sm) => sm.isActive);
+}
+
+export function getStudyMethodById(methodId: string): StudyMethod | undefined {
+  return PROMPT12_STUDY_METHODS.find((sm) => sm.id === methodId);
+}
+
+export function getStudyMethodsByCategory(category: string): StudyMethod[] {
+  return PROMPT12_STUDY_METHODS.filter((sm) => sm.category === category && sm.isActive);
+}
+
+export function getAllExpertGuidance(): ExpertGuidance[] {
+  return PROMPT12_EXPERT_GUIDANCE.filter((eg) => eg.isActive);
+}
+
+export function getExpertGuidanceById(id: string): ExpertGuidance | undefined {
+  return PROMPT12_EXPERT_GUIDANCE.find((eg) => eg.id === id);
+}
+
+export function getAllMotivationalPrinciples(): MotivationalPrinciple[] {
+  return PROMPT12_MOTIVATIONAL_PRINCIPLES.filter((mp) => mp.isActive);
+}
+
+export function getMotivationalPrincipleById(id: string): MotivationalPrinciple | undefined {
+  return PROMPT12_MOTIVATIONAL_PRINCIPLES.find((mp) => mp.id === id);
+}
+
+export function getAllVerifiedQuotes(): VerifiedQuote[] {
+  return PROMPT12_VERIFIED_QUOTES.filter((vq) => vq.isActive);
+}
+
+export function getAllMiniExams(): MiniExam[] {
+  return PROMPT12_MINI_EXAMS.filter((me) => me.isActive);
+}
+
+export function getMiniExamById(id: string): MiniExam | undefined {
+  return PROMPT12_MINI_EXAMS.find((me) => me.id === id);
+}
+
+export function getMiniExamsForSubject(subjectId: string): MiniExam[] {
+  return PROMPT12_MINI_EXAMS.filter((me) => me.subjectId === subjectId && me.isActive);
 }

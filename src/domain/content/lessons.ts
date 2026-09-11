@@ -1,0 +1,277 @@
+/**
+ * BAC Mastery — Production Lessons Catalog (Sciences Expérimentales 3AS)
+ * Prompt 12: High-Yield, Active, Exam-Oriented Lessons (14-Element Structure)
+ * 
+ * Invariant: Content Purity (ZERO user_id).
+ */
+
+import { Lesson } from "./types";
+
+export const PROMPT12_LESSONS: Lesson[] = [
+  // ==========================================================================
+  // LESSON 01: MATHEMATICS — DERIVATIVES CHAIN RULE
+  // ==========================================================================
+  {
+    id: "lesson_math_derivatives_chain_rule",
+    skillId: "math_derivatives_chain_rule",
+    subjectId: "math",
+    topicId: "math_topic_functions",
+    title_ar: "اشتقاق الدوال المركبة وقاعدة السلسلة",
+    title_fr: "Dérivation des fonctions composées et règle de dérivation en chaîne",
+    targetCapability_ar: "بعد نهاية هذا الدرس، ستتمكن من حساب مشتقة أي دالة أسية أو لوغاريتمية مركبة بدقة وسرعة وبدون نسيان مشتقة الدالة الداخلية u'(x).",
+    whatYouMustKnow_ar: "مشتقات الدوال المألوفة (e^x, ln(x), x^n) وقواعد العمليات على الدوال المشتقة (المجموع، الجداء، والقسمة).",
+    whyThisMatters_ar: "لا يخلو أي موضوع بكالوريا في شعبة العلوم التجريبية من دراسة دالة أسية أو لوغاريتمية. الخطأ في حساب المشتقة يؤدي حتماً إلى جدول تغيرات خاطئ، ورسم بياني غير مطابق، وخسارة 3 إلى 5 نقاط كاملة في المسألة الرئيسية.",
+    coreConcept_ar: "مشتقة الدالة المركبة f(u(x)) تساوي مشتقة الدالة الداخلية u'(x) مضروبة في مشتقة الدالة الخارجية محسوبة عند u(x): [f(u)]' = u' * f'(u).",
+    simpleExplanation_ar: "تخيل الدالة المركبة كعلبة داخل علبة. لكي تشتق، يجب أن تشتق العلبة الداخلية أولاً وتخرجها كعامل ضرب، ثم تشتق العلبة الخارجية مع ترك ما بداخلها كما هو دون تغيير.",
+    workedExample: {
+      id: "we_math_chain_01",
+      skillId: "math_derivatives_chain_rule",
+      problem_ar: "احسب الدالة المشتقة للدالة f المعرفة على R بـ: f(x) = (2x - 3) * e^(-x) + 1",
+      howToThink_ar: "الدالة f عبارة عن جداء دالتين u(x) * v(x) مضافاً إليها ثابت. سنطبق قاعدة الجداء (u'v + uv') مع الانتباه الشديد لمشتقة e^(-x) التي تتطلب قاعدة السلسلة: مشتقة -x هي -1.",
+      stepByStepSolution_ar: [
+        "الخطوة 1: نضع u(x) = 2x - 3 ومنه الدالة المشتقة u'(x) = 2.",
+        "الخطوة 2: نضع v(x) = e^(-x) ومنه بتطبيق قاعدة السلسلة v'(x) = (-1) * e^(-x) = -e^(-x).",
+        "الخطوة 3: نطبق قاعدة مشتق الجداء: f'(x) = u'(x)*v(x) + u(x)*v'(x) + 0.",
+        "الخطوة 4: نعوض العبارات: f'(x) = 2 * e^(-x) + (2x - 3) * (-e^(-x)).",
+        "الخطوة 5: نستخرج e^(-x) كعامل مشترك: f'(x) = e^(-x) * [2 - (2x - 3)] = e^(-x) * (2 - 2x + 3) = (5 - 2x) * e^(-x).",
+      ],
+      finalAnswer_ar: "f'(x) = (5 - 2x) * e^(-x)",
+      verificationTip_ar: "بما أن e^(-x) موجب تماماً دوماً على R، فإن إشارة المشتقة هي من إشارة (5 - 2x)، مما يجعل دراسة إشارة f'(x) وتحديد اتجاه التغير في غاية السهولة والوضوح.",
+    },
+    commonMistakes: [
+      {
+        id: "cm_math_chain_sign",
+        mistake_ar: "نسيان إشارة الناقص عند اشتقاق e^(-x) وكتابة المشتقة e^(-x) بدلاً من -e^(-x).",
+        whyItHappens_ar: "الاعتياد على أن مشتقة e^x هي نفسها e^x وإغفال أن مشتقة -x هي -1.",
+        correctAction_ar: "ضع دائماً مشتقة الأس بين قوسين أمام الدالة الأسية: [e^u]' = (u') * e^u.",
+        suspectedErrorType: "calculation_error",
+      },
+      {
+        id: "cm_math_chain_product",
+        mistake_ar: "اشتقاق كل طرف على حدة في الجداء: f'(x) = 2 * (-e^(-x)).",
+        whyItHappens_ar: "الخلط بين مشتقة المجموع ومشتقة الجداء تحت ضغط الوقت.",
+        correctAction_ar: "تطبيق قانون الجداء الصارم: (u * v)' = u'v + uv'.",
+        suspectedErrorType: "methodology_error",
+      },
+    ],
+    howToKnowYouUnderstood_ar: "إذا استطعت اشتقاق f(x) = e^(x^2 - 3x) واستخراج العامل (2x - 3) دون تردد وبدون خطأ في الإشارة في أقل من دقيقة واحدة.",
+    quickRecallPrompt_ar: "ما هي مشتقة الدالة g(x) = e^(-3x) على R؟",
+    quickRecallAnswer_ar: "g'(x) = -3 * e^(-3x)",
+    practiceQuestionIds: ["pq-math-chain-01"],
+    whatToDoIfYouFail_ar: "إذا أخطأت في الإشارة أو نسيت الدالة المشتقة الداخلية، افتح بطاقة تصحيح الخطأ (Repair Guide) الخاصة بقاعدة السلسلة، وقم بحل 3 مشتقات ميكرو-تدريبية قبل إعادة الاختبار.",
+    summaryCard: {
+      id: "sc_math_chain",
+      keyRule_ar: "مشتقة الدالة الأسية المركبة: [e^(u(x))]' = u'(x) * e^(u(x)).",
+      keyFormula_ar: "مشتقة الدالة اللوغاريتمية المركبة: [ln(u(x))]' = u'(x) / u(x).",
+      trapToAvoid_ar: "إياك ونسيان مشتقة ما بداخل الأس؛ e^(-x) مشتقتها -e^(-x) وليست e^(-x).",
+    },
+    retestQuestionId: "rq-math-chain-01",
+    estimatedMinutes: 15,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+
+  // ==========================================================================
+  // LESSON 02: MATHEMATICS — ASYMPTOTES AND LIMITS
+  // ==========================================================================
+  {
+    id: "lesson_math_asymptotes_limits",
+    skillId: "math_asymptotes_limits",
+    subjectId: "math",
+    topicId: "math_topic_functions",
+    title_ar: "المستقيمات المقاربة الأفقية، العمودية والمائلة وتفسير النهايات بيانياً",
+    title_fr: "Asymptotes horizontales, verticales et obliques et interprétation graphique",
+    targetCapability_ar: "بعد نهاية هذا الدرس، ستتمكن من استخراج معادلات المستقيمات المقاربة الثلاثة بدقة منهجية وتفسير كل نهاية هندسياً في ورقة إجابة البكالوريا.",
+    whatYouMustKnow_ar: "حساب النهايات عند أطراف مجالات التعريف وطرق إزالة حالات عدم التعيين الأربع.",
+    whyThisMatters_ar: "سؤال 'فسر النتيجة هندسياً' أو 'أثبت أن المنحنى يقبل مستقيماً مقارباً' سؤال ثابت في البكالوريا يضمن من 1 إلى 2 نقطة كاملة في الجزء الأول من المسألة.",
+    coreConcept_ar: "النهاية المنتهية عند اللانهاية تعطي مقارباً أفقياً (y = b)، والنهاية غير المنتهية عند عدد حقيقي تعطي مقارباً عمودياً (x = a)، ونهاية الفرق [f(x) - (ax+b)] المنعدمة عند اللانهاية تعطي مقارباً مائلاً (y = ax+b).",
+    simpleExplanation_ar: "المستقيم المقارب هو خط مستقيم يقترب منه منحنى الدالة باستمرار دون أن يلتقيا في اللانهاية، ويوجه المنحنى في أقصى اليمين أو اليسار أو بالقرب من القيم الممنوعة.",
+    workedExample: {
+      id: "we_math_asymp_01",
+      skillId: "math_asymptotes_limits",
+      problem_ar: "لتكن الدالة f(x) = (2x + 1) / (x - 1) المعرفة على R - {1}. احسب نهايات f عند أطراف مجالات التعريف وفسر النتائج بيانياً.",
+      howToThink_ar: "نحسب النهاية عند +مالانهاية و -مالانهاية بقاعدة أكبر حد على أكبر حد للحصول على المقارب الأفقي، ثم نحسب النهاية بقيم صغرى وكبرى عند القيمة الممنوعة x = 1 للحصول على المقارب العمودي.",
+      stepByStepSolution_ar: [
+        "الخطوة 1: عند +مالانهاية: lim (2x+1)/(x-1) = lim (2x/x) = 2.",
+        "الخطوة 2: التفسير البياني الأول: المنحنى (Cf) يقبل مستقيماً مقارباً أفقياً معادلته y = 2 بجوار +مالانهاية و -مالانهاية.",
+        "الخطوة 3: عند 1 بقيم صغرى: البسط يؤول إلى 3 والمقام يؤول إلى 0 سالبة، إذن النهاية تساوي -مالانهاية.",
+        "الخطوة 4: عند 1 بقيم كبرى: البسط يؤول إلى 3 والمقام يؤول إلى 0 موجبة، إذن النهاية تساوي +مالانهاية.",
+        "الخطوة 5: التفسير البياني الثاني: المنحنى (Cf) يقبل مستقيماً مقارباً عمودياً موازياً لمحور التراتيب معادلته x = 1.",
+      ],
+      finalAnswer_ar: "المقارب الأفقي: y = 2 بجوار اللانهاية، والمقارب العمودي: x = 1.",
+      verificationTip_ar: "تذكر دائماً: عدد في النهاية يعطي y = L (أفقي)، بينما اللانهاية عند عدد تعطي x = a (عمودي).",
+    },
+    commonMistakes: [
+      {
+        id: "cm_math_asymp_xy_confusion",
+        mistake_ar: "الخلط بين x و y في معادلة المستقيم المقارب وكتابة x = 2 بدلاً من y = 2 للمقارب الأفقي.",
+        whyItHappens_ar: "السرعة وعدم مراجعة اتجاه محور الفواصل والتراتيب.",
+        correctAction_ar: "المقارب الأفقي يقطع محور التراتيب فمعادلته y = const، والعمودي يقطع محور الفواصل فمعادلته x = const.",
+        suspectedErrorType: "misunderstood_concept",
+      },
+      {
+        id: "cm_math_asymp_neighborhood",
+        mistake_ar: "إغفال ذكر الجوار (بجوار +مالانهاية أو -مالانهاية) عند التصريح بوجود مستقيم مقارب مائل أو أفقي.",
+        whyItHappens_ar: "التركيز فقط على حساب النهاية ونسيان اشتراطات الصياغة النموذجية المعتمدة في تصحيح البكالوريا.",
+        correctAction_ar: "اكتب دائماً الصياغة الكاملة: '(Cf) يقبل مستقيماً مقارباً معادلته y = b بجوار (+/- مالانهاية)'.",
+        suspectedErrorType: "forgot_information",
+      },
+    ],
+    howToKnowYouUnderstood_ar: "إذا استطعت فور رؤية lim [f(x) - (3x - 1)] = 0 عند +مالانهاية أن تصرح مباشرة بأن المستقيم دلتا ذو المعادلة y = 3x - 1 مقارب مائل لـ (Cf).",
+    quickRecallPrompt_ar: "إذا كانت نهاية f(x) لما x يؤول إلى 3 بقيم كبرى هي +مالانهاية، فما هو التفسير البياني؟",
+    quickRecallAnswer_ar: "المنحنى يقبل مستقيماً مقارباً عمودياً معادلته x = 3.",
+    practiceQuestionIds: ["pq-math-asymptotes-01"],
+    whatToDoIfYouFail_ar: "راجع بطاقة مراجعة المقاربات وتدرب على التمييز البصري بين المقارب الأفقي والعمودي والمائل.",
+    summaryCard: {
+      id: "sc_math_asymp",
+      keyRule_ar: "lim f(x) = b عند اللانهاية <=> مستقيم مقارب أفقي y = b.",
+      keyFormula_ar: "lim [f(x) - (ax+b)] = 0 عند اللانهاية <=> مستقيم مقارب مائل y = ax + b.",
+      trapToAvoid_ar: "لا تنس كتابة 'بجوار +مالانهاية أو -مالانهاية' عند ذكر المستقيمات المقاربة الأفقية والمائلة.",
+    },
+    retestQuestionId: "rq-math-asymptotes-01",
+    estimatedMinutes: 15,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+
+  // ==========================================================================
+  // LESSON 03: PHYSICS-CHEMISTRY — RC TIME CONSTANT
+  // ==========================================================================
+  {
+    id: "lesson_physics_rc_time_constant",
+    skillId: "physics_rc_time_constant",
+    subjectId: "physics",
+    topicId: "physics_topic_rc_rl",
+    title_ar: "ثابت الزمن tau لدارة RC: الدلالة الفيزيائية، الاستخراج البياني، والتحليل البعدي",
+    title_fr: "Constante de temps tau du dipôle RC : signification, détermination graphique et analyse dimensionnelle",
+    targetCapability_ar: "بعد نهاية هذا الدرس، ستتمكن من إيجاد ثابت الزمن tau حسابياً وبيانياً بطريقتين (المماس وطريقة 63%)، وإثبات تجانسه مع الزمن بالتحليل البعدي بدقة 100%.",
+    whatYouMustKnow_ar: "قانون أوم للمقاومة (uR = R*i)، والعلاقة بين الشحنة والتوتر (q = C*uC)، وشدة التيار (i = dq/dt).",
+    whyThisMatters_ar: "سؤال تحديد tau والتحليل البعدي يتكرر بنسبة تتجاوز 80% في مواضيع البكالوريا الخاصة بالظواهر الكهربائية، ومنه يتم حساب سعة المكثفة C أو المقاومة R.",
+    coreConcept_ar: "ثابت الزمن tau = R * C يمثل المدة الزمنية اللازمة لبلوغ توتر المكثفة 63% من قيمته العظمى E أثناء الشحن، ويمثل بيانيا نقطة تقاطع مماس المنحنى عند المبدأ مع الخط المقارب uC = E.",
+    simpleExplanation_ar: "ثابت الزمن هو مقياس لسرعة استجابة الدارة الكهربائية. كلما كان tau صغيراً، شحنت المكثفة بسرعة أكبر، وكلما كان كبيراً، استغرقت الدارة وقتاً أطول للوصول إلى النظام الدائم.",
+    workedExample: {
+      id: "we_phys_rc_01",
+      skillId: "physics_rc_time_constant",
+      problem_ar: "دارة RC موصولة بمولد قوته المحركة E = 10 V وناقل أومي مقاومته R = 2 kOhm. أظهر المنحنى البياني لشحن المكثفة uC(t) أن المماس عند المبدأ يقطع الخط المقارب uC = 10 V عند اللحظة t = 4 ms. احسب سعة المكثفة C.",
+      howToThink_ar: "من المنحنى البياني، نقطة تقاطع المماس عند t=0 مع المقارب uC = E هي بالضبط ثابت الزمن tau. بعد إيجاد tau = 4 ms، نطبق العلاقة tau = R * C مع تحويل الوحدات إلى النظام الدولي (ms إلى s، و kOhm إلى Ohm).",
+      stepByStepSolution_ar: [
+        "الخطوة 1: بيانياً: فاصلة نقطة تقاطع المماس عند t = 0 مع الخط المقارب uC = E هي tau = 4 ms = 4 * 10^(-3) s.",
+        "الخطوة 2: العلاقة النظرية لثابت الزمن: tau = R * C.",
+        "الخطوة 3: استخراج عبارة السعة: C = tau / R.",
+        "الخطوة 4: تحويل المقاومة للنظام الدولي: R = 2 kOhm = 2 * 10^3 Ohm.",
+        "الخطوة 5: التطبيق العددي: C = (4 * 10^(-3)) / (2 * 10^3) = 2 * 10^(-6) F = 2 microFarad.",
+      ],
+      finalAnswer_ar: "C = 2 * 10^(-6) F = 2 microF",
+      verificationTip_ar: "تأكد دوماً أن سعة المكثفات في التمارين تكون برتبة الميكروفاراد (10^-6 F) أو النانوفاراد (10^-9 F). إذا وجدت السعة 2000 F، فأنت حتماً نسيت تحويل الكيلوأوم أو الميلي ثانية.",
+    },
+    commonMistakes: [
+      {
+        id: "cm_phys_rc_units",
+        mistake_ar: "التعويض المباشر بـ R = 2 و tau = 4 دون تحويل الكيلوأوم إلى الأوم والميلي ثانية إلى الثانية.",
+        whyItHappens_ar: "التسرع وعدم الانتباه للوحدات المكتوبة على محاور المنحنى البياني.",
+        correctAction_ar: "تحويل كل المقادير فوراً إلى الوحدات الدولية الأساسية (s, Ohm, F, V, A) قبل لمس الآلة الحاسبة.",
+        suspectedErrorType: "calculation_error",
+      },
+      {
+        id: "cm_phys_rc_tangent_scale",
+        mistake_ar: "القراءة الخاطئة لتقاطع المماس مع الخط المقارب بسبب إهمال سلم الرسم على محور الأزمنة.",
+        whyItHappens_ar: "أخذ عدد التدريجات مباشرة دون ضربها في القيمة الفيزيائية التي تمثلها كل تدريجة على المحور.",
+        correctAction_ar: "تحقق دائماً من سلم الرسم: القيمة الحقيقية = (عدد التدريجات) * (قيمة التدريجة الواحدة).",
+        suspectedErrorType: "misread_question",
+      },
+    ],
+    howToKnowYouUnderstood_ar: "إذا استطعت إثبات أن [RC] = [T] باستعمال قانون أوم وقانون شدة التيار في سطرين رياضيين دون تردد.",
+    quickRecallPrompt_ar: "ما هي النسبة المئوية من التوتر الأعظمي E التي تبلغها المكثفة عند اللحظة t = tau أثناء الشحن؟",
+    quickRecallAnswer_ar: "تبلغ 63% من القيمة الأعظمية E (أي uC(tau) = 0.63 * E).",
+    practiceQuestionIds: ["pq-phys-rc-01"],
+    whatToDoIfYouFail_ar: "راجع بطاقة التحليل البعدي لـ tau وتدرب على قراءة المنحنيات البيانية بمسطرة دقيقة.",
+    summaryCard: {
+      id: "sc_phys_rc",
+      keyRule_ar: "ثابت الزمن لدارة RC هو tau = R * C، وله بعد زمني [tau] = T (يقاس بالثانية).",
+      keyFormula_ar: "طريقة 63%: uC(tau) = 0.63 * E (شحن)، وطريقة 37%: uC(tau) = 0.37 * E (تفريغ).",
+      trapToAvoid_ar: "المماس عند t=0 هو المستقيم الذي يمر بالمبدأ، تقاطعه مع uC = E يعطي tau مباشرة وليس 5*tau.",
+    },
+    retestQuestionId: "rq-phys-rc-01",
+    estimatedMinutes: 20,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+
+  // ==========================================================================
+  // LESSON 04: NATURAL SCIENCES — PROTEIN SYNTHESIS & TRANSCRIPTION
+  // ==========================================================================
+  {
+    id: "lesson_snv_protein_synthesis",
+    skillId: "snv_protein_synthesis",
+    subjectId: "natural_sciences",
+    topicId: "snv_topic_protein_synthesis",
+    title_ar: "آلية الاستنساخ الحيوي: المقر، المتطلبات، ومراحل عمل أنزيم ARN بوليميراز",
+    title_fr: "Mécanisme de la transcription : localisation, conditions et étapes de l'ARN polymérase",
+    targetCapability_ar: "بعد نهاية هذا الدرس، ستتمكن من تفسير مراحل الاستنساخ بدقة علمية ومنهجية وتحديد السلسلة الناسخة وتكامل القواعد الآزوتية وفق متطلبات سلم تنقيط البكالوريا.",
+    whatYouMustKnow_ar: "بنية جزيئة الـ ADN (سلسلتان ملتفتان حلزونياً ومتكاملتان) والقواعد الآزوتية (A, T, C, G).",
+    whyThisMatters_ar: "الوحدة الأولى في مادة العلوم هي المدخل الإجباري للموضوع الأول أو الثاني في البكالوريا، والتحكم في مصطلحاتها العلمية يمنحك نقاطاً مضمونة في نص علمي أو استدلال علمي.",
+    coreConcept_ar: "الاستنساخ هو عملية تصنيع حيوي لجزيئة ARNm انطلاقاً من إحدى سلسلتي الـ ADN (السلسلة الناسخة) بفضل أنزيم ARN بوليميراز وبتوفر النكليوتيدات الحرة والطاقة ATP داخل النواة.",
+    simpleExplanation_ar: "بما أن الـ ADN ثمين وضخم ولا يخرج من النواة لحمايته، تصنع الخلية منه نسخة كربونية خفيفة تسمى ARNm تنقل الشفرة الوراثية إلى الهيولى حيث تترجم إلى بروتين.",
+    workedExample: {
+      id: "we_snv_trans_01",
+      skillId: "snv_protein_synthesis",
+      problem_ar: "إليك جزء من السلسلة غير الناسخة لقطعة ADN: 5'- ATG-CGT-TAC -3'. استنتج السلسلة الناسخة، ثم حدد تتابع النكليوتيدات في جزيئة الـ ARNm الناتجة مع تحديد الاتجاه.",
+      howToThink_ar: "السلسلة الناسخة متكاملة ومتعاكسة في الاتجاه مع السلسلة غير الناسخة (A يقابل T، و C يقابل G). أما الـ ARNm فهو مكمل للسلسلة الناسخة ومماثل للسلسلة غير الناسخة مع استبدال T بـ U، ويكون في الاتجاه 5' نحو 3'.",
+      stepByStepSolution_ar: [
+        "الخطوة 1: تحديد السلسلة الناسخة للـ ADN (مكملة ومعاكسة في الاتجاه): 3'- TAC-GCA-ATG -5'.",
+        "الخطوة 2: أنزيم ARN بوليميراز يقرأ السلسلة الناسخة في الاتجاه 3' نحو 5' ويركب الـ ARNm في الاتجاه 5' نحو 3'.",
+        "الخطوة 3: تطبيق قاعدة تكامل القواعد مع ARNm (T يقابلها A، A يقابلها U، C يقابلها G، G يقابلها C): 5'- AUG-CGU-UAC -3'.",
+        "الخطوة 4: الملاحظة المنهجية: تتابع ARNm يماثل تماماً السلسلة غير الناسخة باستبدال T بـ U.",
+      ],
+      finalAnswer_ar: "السلسلة الناسخة: 3'- TAC-GCA-ATG -5' | جزيء الـ ARNm: 5'- AUG-CGU-UAC -3'",
+      verificationTip_ar: "انتبه دوماً لتحديد نهايات السلسلة (5' و 3')؛ إغفال كتابة الاتجاه يكلفك خصم 0.25 نقطة في سلم التصحيح النموذجي للبكالوريا.",
+    },
+    commonMistakes: [
+      {
+        id: "cm_snv_trans_uracil",
+        mistake_ar: "كتابة القاعدة الآزوتية T في سلسلة الـ ARNm بدلاً من اليوراسيل U.",
+        whyItHappens_ar: "التسرع وتطبيق تكامل الـ ADN بدلاً من الـ ARN.",
+        correctAction_ar: "تذكر دائماً أن الـ ARNm لا يحتوي أبداً على الثايمين T بل يحتوي على اليوراسيل U.",
+        suspectedErrorType: "forgot_information",
+      },
+      {
+        id: "cm_snv_trans_direction",
+        mistake_ar: "الخلط بين اتجاه قراءة الأنزيم (3' -> 5') واتجاه بناء الـ ARNm (5' -> 3').",
+        whyItHappens_ar: "عدم التمييز بين حركة الأنزيم على السلسلة الناسخة وبين تركيب الجزيء الجديد.",
+        correctAction_ar: "القراءة من 3' نحو 5' على الـ ADN الناسخ، والبناء من 5' نحو 3' على الـ ARNm.",
+        suspectedErrorType: "misunderstood_concept",
+      },
+    ],
+    howToKnowYouUnderstood_ar: "إذا استطعت كتابة نص علمي من مقدمة ومشكل وعرض وخاتمة يشرح مراحل الاستنساخ الثلاث (الانطلاق، الاستطالة، النهاية) في 10 دقائق باستعمال الكلمات المفتاحية الأساسية.",
+    quickRecallPrompt_ar: "في أي اتجاه يقوم أنزيم ARN بوليميراز بقراءة السلسلة الناسخة؟",
+    quickRecallAnswer_ar: "يقوم بقراءتها في الاتجاه 3' نحو 5'.",
+    practiceQuestionIds: ["pq-snv-protein-01"],
+    whatToDoIfYouFail_ar: "أعد رسم مخطط الاستنساخ التخطيطي بيدك مع وضع البيانات والاتجاهات الوراثية بوضوح.",
+    summaryCard: {
+      id: "sc_snv_trans",
+      keyRule_ar: "الاستنساخ يتم في النواة بتوفر: ADN، 4 نكليوتيدات ريبية حرة، أنزيم ARN بوليميراز، وطاقة ATP.",
+      keyFormula_ar: "تكامل القواعد: A(ADN) يقابلها U(ARNm)، T(ADN) يقابلها A(ARNm)، C يقابلها G.",
+      trapToAvoid_ar: "لا تنس: السلسلة الناسخة هي التي تقرأ (3'->5') بينما غير الناسخة تشبه ARNm مع تبديل T بـ U.",
+    },
+    retestQuestionId: "rq-snv-protein-01",
+    estimatedMinutes: 20,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+];
