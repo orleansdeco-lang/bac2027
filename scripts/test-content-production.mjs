@@ -32,21 +32,15 @@ function loadTs(relPath) {
 
   const fn = new Function("exports", "require", "module", result.outputText);
   fn(m.exports, (reqPath) => {
-    if (reqPath.includes("topics")) return loadTs("src/data/curriculum/topics.ts");
-    if (reqPath.includes("skills")) return loadTs("src/data/curriculum/skills.ts");
-    if (reqPath.includes("practice-questions")) return loadTs("src/data/curriculum/practice-questions.ts");
-    if (reqPath.includes("sciences-exp")) return loadTs("src/data/practice/sciences-exp/index.ts");
-    if (reqPath.includes("mappings")) return loadTs("src/domain/content/mappings.ts");
-    if (reqPath.includes("types")) return loadTs("src/domain/content/types.ts");
-    if (reqPath.includes("schemas")) return loadTs("src/domain/content/schemas.ts");
-    if (reqPath.includes("validation")) return loadTs("src/domain/content/validation.ts");
-    if (reqPath.includes("curriculum")) return loadTs("src/data/curriculum/index.ts");
-    if (reqPath.includes("lessons")) return loadTs("src/domain/content/lessons.ts");
-    if (reqPath.includes("repair-guides")) return loadTs("src/domain/content/repair-guides.ts");
-    if (reqPath.includes("study-methods")) return loadTs("src/domain/content/study-methods.ts");
-    if (reqPath.includes("expert-guidance")) return loadTs("src/domain/content/expert-guidance.ts");
-    if (reqPath.includes("motivation")) return loadTs("src/domain/content/motivation.ts");
-    if (reqPath.includes("mini-exams")) return loadTs("src/domain/content/mini-exams.ts");
+    let target = reqPath;
+    if (target.startsWith("@/")) {
+      target = path.resolve(target.replace("@/", "src/"));
+    } else if (target.startsWith(".")) {
+      target = path.resolve(path.dirname(fullPath), target);
+    }
+    if (fs.existsSync(target + ".ts")) return loadTs(target + ".ts");
+    if (fs.existsSync(target + "/index.ts")) return loadTs(target + "/index.ts");
+    if (fs.existsSync(target) && fs.statSync(target).isFile()) return loadTs(target);
     return {};
   }, m);
 
@@ -186,10 +180,12 @@ runSuite("D", "Prerequisite DAG Cycle-Free Integrity", () => {
 // =============================================================================
 // SUITE E: Practice Questions Completeness & Options
 // =============================================================================
-runSuite("E", "Practice Questions Completeness & Options", () => {
-  assert.strictEqual(dataset.practiceQuestions.length, 31, "Expected 31 practice questions");
+runSuite("E", "Practice Questions Completeness & Options (>=62 questions, >=2 per skill)", () => {
+  assert(dataset.practiceQuestions.length >= 62, "Expected >= 62 practice questions");
 
+  const countBySkill = new Map();
   for (const q of dataset.practiceQuestions) {
+    countBySkill.set(q.skillId, (countBySkill.get(q.skillId) || 0) + 1);
     assert([1, 2, 3].includes(q.difficulty), `Invalid difficulty ${q.difficulty} in ${q.id}`);
     assert(q.options.length >= 3, `Question ${q.id} must have >= 3 options`);
     const optionIds = q.options.map((o) => o.id);
@@ -197,6 +193,11 @@ runSuite("E", "Practice Questions Completeness & Options", () => {
     assert.strictEqual(q.isRetestVariant, false);
     assert(q.prompt_ar && q.prompt_ar.length > 5);
     assert(q.prompt_fr && q.prompt_fr.length > 5);
+  }
+
+  for (const s of dataset.skills) {
+    const count = countBySkill.get(s.id) || 0;
+    assert(count >= 2, `Skill ${s.id} has only ${count} practice questions (expected >= 2)`);
   }
 });
 
@@ -237,8 +238,8 @@ runSuite("G", "Distractor Error Taxonomy Linkage", () => {
 // =============================================================================
 // SUITE H: Active 14-Element Lessons Structure
 // =============================================================================
-runSuite("H", "Active 14-Element Lessons Structure", () => {
-  assert(dataset.lessons && dataset.lessons.length >= 4, "Expected >= 4 pilot lessons");
+runSuite("H", "Active 14-Element Lessons Structure (31 Lessons)", () => {
+  assert(dataset.lessons && dataset.lessons.length === 31, "Expected 31 lessons");
 
   for (const l of dataset.lessons) {
     assert(l.id && l.skillId && l.subjectId && l.topicId, `Missing core identifiers in lesson ${l.id}`);
@@ -273,8 +274,8 @@ runSuite("I", "Worked Examples Procedural Completeness", () => {
 // =============================================================================
 // SUITE J: Targeted Error Repair Guides (5-15 min)
 // =============================================================================
-runSuite("J", "Targeted Error Repair Guides (5-15 min)", () => {
-  assert(dataset.repairGuides && dataset.repairGuides.length >= 6, "Expected >= 6 repair guides");
+runSuite("J", "Targeted Error Repair Guides (5-15 min, 31 Guides)", () => {
+  assert(dataset.repairGuides && dataset.repairGuides.length === 31, "Expected 31 repair guides");
 
   for (const rg of dataset.repairGuides) {
     assert(rg.id && rg.skillId && rg.suspectedErrorType, `Missing core identifiers in repair guide ${rg.id}`);
@@ -377,11 +378,11 @@ runSuite("O", "Calibrated Mini-Exams", () => {
 // =============================================================================
 // SUITE P: Past BAC Official Exam References
 // =============================================================================
-runSuite("P", "Past BAC Official Exam References", () => {
-  assert(dataset.pastBacExamReferences && dataset.pastBacExamReferences.length >= 6, "Expected >= 6 past BAC references");
+runSuite("P", "Past BAC Official Exam References (31 References)", () => {
+  assert(dataset.pastBacExamReferences && dataset.pastBacExamReferences.length === 31, "Expected 31 past BAC references");
 
   for (const ref of dataset.pastBacExamReferences) {
-    assert([2022, 2023].includes(ref.year), `Expected 2022 or 2023 year in ${ref.id}`);
+    assert(ref.year >= 2018 && ref.year <= 2024, `Expected 2018-2024 year in ${ref.id}`);
     assert.strictEqual(ref.rightsStatus, "official_reference");
     assert(ref.exerciseNumber > 0, `exerciseNumber must be > 0 in ${ref.id}`);
     assert(ref.skillIds && ref.skillIds.length > 0, `skillIds must not be empty in ${ref.id}`);
@@ -491,12 +492,13 @@ runSuite("U", "Automated Dataset Validation Integration (12 Rules)", () => {
 });
 
 // =============================================================================
+// =============================================================================
 // SUITE V: Backward Compatibility & Engine Independence
 // =============================================================================
 runSuite("V", "Backward Compatibility & Engine Independence", () => {
   const curriculumModule = loadTs("src/data/curriculum/index.ts");
   assert(curriculumModule.ALL_PRACTICE_QUESTIONS, "ALL_PRACTICE_QUESTIONS must exist in curriculum module");
-  assert.strictEqual(curriculumModule.ALL_PRACTICE_QUESTIONS.length, 62, "Expected 62 practice + retest questions in curriculum index");
+  assert(curriculumModule.ALL_PRACTICE_QUESTIONS.length >= 62, "Expected >= 62 questions in curriculum index");
 
   const skillsModule = loadTs("src/data/curriculum/skills.ts");
   assert(skillsModule.ALL_CURRICULUM_SKILLS, "ALL_CURRICULUM_SKILLS must exist");
@@ -523,9 +525,33 @@ runSuite("W", "Remote Database Invariant & Supabase Contract (0 Content Migratio
 });
 
 // =============================================================================
+// SUITE X: 100% Mastery-Ready Architecture for All 31 Skills
+// =============================================================================
+runSuite("X", "100% Mastery-Ready Status Across All 31 Skills", () => {
+  const readinessMap = mappingsModule.getAllSkillContentReadiness();
+  const reports = mappingsModule.getAllSkillReadinessReports();
+  assert.strictEqual(reports.length, 31, "Expected 31 readiness reports");
+
+  for (const report of reports) {
+    assert.strictEqual(report.hasLesson, true, `Skill ${report.skillId} missing active lesson`);
+    assert.strictEqual(report.hasWorkedExample, true, `Skill ${report.skillId} missing valid worked example`);
+    assert(report.practiceQuestionCount >= 2, `Skill ${report.skillId} has < 2 practice questions`);
+    assert.strictEqual(report.hasRetest, true, `Skill ${report.skillId} missing retest twin`);
+    assert.strictEqual(report.hasRepairGuide, true, `Skill ${report.skillId} missing 5-15 min repair guide`);
+    assert.strictEqual(report.hasCommonErrorCard, true, `Skill ${report.skillId} missing common error card`);
+    assert.strictEqual(report.hasMiniExamCoverage, true, `Skill ${report.skillId} missing mini exam coverage`);
+    assert.strictEqual(report.hasPastBacRef, true, `Skill ${report.skillId} missing past BAC reference`);
+    assert.strictEqual(report.hasProvenance, true, `Skill ${report.skillId} missing provenance`);
+    assert.strictEqual(report.isVerified, true, `Skill ${report.skillId} is not verified`);
+    assert.strictEqual(report.status, "MASTERY_READY", `Skill ${report.skillId} is not MASTERY_READY`);
+    assert.strictEqual(readinessMap[report.skillId], "MASTERY_READY");
+  }
+});
+
+// =============================================================================
 // FINAL SUMMARY
 // =============================================================================
 console.log("\n==================================================================");
-console.log(`  RESULTS: ${passedCount}/23 SUITES (A-W) PASSED (0 FAILURES)`);
-console.log("  ALL 23/23 CONTENT PRODUCTION SUITES PASSED WITH 100% SUCCESS!");
+console.log(`  RESULTS: ${passedCount}/24 SUITES (A-X) PASSED (0 FAILURES)`);
+console.log("  ALL 24/24 CONTENT PRODUCTION SUITES PASSED WITH 100% SUCCESS!");
 console.log("==================================================================\n");

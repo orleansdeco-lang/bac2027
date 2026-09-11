@@ -14,15 +14,17 @@
 | **Official Curriculum Topics** | 14 | 14 Topics audited & certified | 100% |
 | **Atomic Skills Mapped** | 31 | 31 High-yield core skills | 100% |
 | **Official Ministerial Alignment** | 100% | Arrêté n° 54 / MEN Syllabi verified | 100% |
-| **Pedagogical Practice Bank** | >= 31 | 31 Diagnostic + 31 Retest Twins (= 62 items) | 100% |
-| **Active 14-Element Lessons** | High-Yield Pilot | 4 Exhaustive production lessons | 100% |
-| **Worked Example Walkthroughs** | Pilot High-Yield | 4 Step-by-step verified models | 100% |
-| **Targeted Repair Guides (5-15m)**| Pilot High-Yield | 6 Multi-step remediation protocols | 100% |
-| **Calibrated Mini-Exams** | 6 Tiers | 6 Multi-tier assessment vehicles | 100% |
-| **Past BAC Official References** | 6 Years | 6 Authoritative ONEC exam references | 100% |
+| **Pedagogical Practice Bank** | >= 62 | 62 Practice (>=2/skill) + 31 Retest Twins (= 93 items) | 100% |
+| **Active 14-Element Lessons** | 31 Skills | 31 Exhaustive production lessons | 100% |
+| **Worked Example Walkthroughs** | 31 Skills | 31 Step-by-step verified models (>=3 steps + verification tip) | 100% |
+| **Targeted Repair Guides (5-15m)**| 31 Skills | 31 Targeted error repair guides (5-15 min) | 100% |
+| **Common Error Cards** | 31 Skills | 31 Error cards with Error Lab taxonomy links | 100% |
+| **Calibrated Mini-Exams** | 14 Topics | 16 Assessment vehicles (14 topic tests + 2 checkpoints) | 100% |
+| **Past BAC Official References** | 31 Skills | 31 Authoritative ONEC exam references | 100% |
 | **Evidence-Based Expert Guidance**| Tier 1 Citations | 7 Verified cognitive principles | 100% |
 | **Actionable Study Methods** | Operational | 13 Step-by-step practical protocols | 100% |
 | **Mindset & Energy States** | 6 States | 7 Principles + 4 Verified historical quotes | 100% |
+| **Mastery Readiness Status** | 31 Skills | **31/31 MASTERY READY (100%)** | **100%** |
 
 ---
 

@@ -1,0 +1,260 @@
+/**
+ * BAC Mastery — Natural & Life Sciences (SNV) Error Repair Guides (Sciences Expérimentales 3AS)
+ * Prompt 13: Targeted 5-15 minute remediation guides mapped to Error Lab taxonomy
+ * 
+ * 10 Skills covered.
+ * Invariant: Content Purity (ZERO user_id).
+ */
+
+import { RepairGuide } from "../types";
+
+export const SNV_REPAIR_GUIDES: RepairGuide[] = [
+  // 22. snv_protein_synthesis
+  {
+    id: "repair_snv_transcription_orientation",
+    skillId: "snv_protein_synthesis",
+    suspectedErrorType: "forgot_information",
+    title_ar: "إصلاح خطأ تحديد الاتجاه 3' و 5' واستبدال الثيمين باليوراسيل في الاستنساخ",
+    whyItHappens_ar: "النسخ الآلي من السلسلة الناسخة دون مراعاة تعاكس قطبية الشريطين، أو نقل قاعدة الثيمين (T) كما هي إلى شريط ARNm.",
+    diagnosis_ar: "إذا كتبت سلسلة ARNm تبدأ بـ 3' أو تحتوي على قاعدة T، فبناء الجزيء خاطئ وراثياً ومجهرياً.",
+    repairSteps_ar: [
+      "الخطوة 1: حدد السلسلة الناسخة: اتجاه قراءتها دوماً من 3' نحو 5'.",
+      "الخطوة 2: اكتب اتجاه جزيء ARNm المتمم لها فوراً: يبدأ حتماً بـ 5' وينتهي بـ 3'.",
+      "الخطوة 3: قابل القواعد النيوكليوتيدية: كل A في السلسلة الناسخة تقابله U في ARNm، وكل T تقابله A، وكل C يقابله G.",
+      "الخطوة 4: افحص شريط ARNm الناتج: تأكد من خلوه التام من أي قاعدة T.",
+    ],
+    microPracticePrompt_ar: "استنسخ قطعة الـ ADN الناسخة التالية: 3'-TAC GTA CGT-5' واكتب قطبية الناتج.",
+    microPracticeSolution_ar: "الناتج في الاتجاه 5' نحو 3' هو: 5'-AUG CAU GCA-3'.",
+    estimatedMinutes: 8,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+
+  // 23. snv_genetic_code_translation
+  {
+    id: "repair_snv_translation_stop_codon",
+    skillId: "snv_genetic_code_translation",
+    suspectedErrorType: "misunderstood_concept",
+    title_ar: "إصلاح سوء فهم دور رامزة التوقف (Codon Stop) في مرحلة نهاية الترجمة",
+    whyItHappens_ar: "الاعتقاد الخاطئ بأن رامزة التوقف تعين حمضاً أمينياً أخيراً في السلسلة الببتيدية، أو حسابها كحمض أميني في طول السلسلة.",
+    diagnosis_ar: "إذا كان شريط ARNm يضم 30 رامزة تنتهي بـ UGA وحسبت أن عدد أحماض البروتين هو 30 بدلاً من 29، فأنت تخطئ في رامزة التوقف.",
+    repairSteps_ar: [
+      "الخطوة 1: رامزات التوقف الثلاث هي: UAA و UAG و UGA.",
+      "الخطوة 2: تذكر المفهوم العلمي: رامزة التوقف لا تشفر لأي حمض أميني ولا يوجد لها أي ARNt مكمل.",
+      "الخطوة 3: عند وصول الريبوزوم لرامزة التوقف، يرتبط بها بروتين يسمى 'عامل التحرير' (Facteur de libération) يفكك المعقد ويفصل السلسلة.",
+      "الخطوة 4: عدد الأحماض الأمينية في السلسلة المتشكلة = (عدد الرامزات الكلي - 1).",
+    ],
+    microPracticePrompt_ar: "شريط ARNm يبدأ بـ AUG وينتهي بـ UAA ويضم 60 رامزة إجمالاً. كم عدد الأحماض الأمينية للبروتين الناتج قبل إزالة الميثيونين الأولي؟",
+    microPracticeSolution_ar: "عدد الأحماض الأمينية هو 59 حمضاً أمينياً (لأن رامزة التوقف UAA لا تشفر لأي حمض أميني).",
+    estimatedMinutes: 8,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+
+  // 24. snv_protein_structure_ionization
+  {
+    id: "repair_snv_amino_pole_confusion",
+    skillId: "snv_protein_structure_ionization",
+    suspectedErrorType: "misunderstood_concept",
+    title_ar: "إصلاح تحديد شحنة الحمض الأميني وجهة هجرته الكهربائية وفق الـ pH و pHi",
+    whyItHappens_ar: "الخلط بين سلوك الحمض والأساس، والاعتقاد الخاطئ بأن الشحنة الموجبة تذهب للمصعد الموجب.",
+    diagnosis_ar: "إذا قلت إن الحمض الأميني في وسط ذي pH = 1 يكون سالباً أو يهاجر نحو المصعد، فمفهوم الهجرة الأيونية لديك يحتاج تصحيحاً.",
+    repairSteps_ar: [
+      "الخطوة 1: قارن دائماً pH الوسط بنقطة التعادل pHi:",
+      "الخطوة 2: إذا كان pH < pHi (وسط حامضي غني بالبروتونات): يسلك سلوك أساس ويكتسب H+ وتصبح شحنته موجبة (+)، وينجذب نحو القطب السالب (المهبط Cathode).",
+      "الخطوة 3: إذا كان pH > pHi (وسط قاعدي فقير بالبروتونات): يسلك سلوك حمض ويفقد H+ وتصبح شحنته سالبة (-)، وينجذب نحو القطب الموجب (المصعد Anode).",
+      "الخطوة 4: إذا كان pH = pHi: شحنة معدومة (0) ويبقى في منتصف الشريط دون هجرة.",
+    ],
+    microPracticePrompt_ar: "حمض أميني pHi = 5.6 وُضع في وسط pH = 8.0. ما هي شحنته الإجمالية وجهة هجرته؟",
+    microPracticeSolution_ar: "بما أن pH = 8.0 > pHi فإنه يسلك سلوك حمض ويفقد بروتوناً وتكون شحنته سالبة (-)، ويهاجر نحو القطب الموجب (المصعد).",
+    estimatedMinutes: 8,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+
+  // 25. snv_enzyme_kinetics_active_site
+  {
+    id: "repair_snv_enzyme_cold_vs_hot",
+    skillId: "snv_enzyme_kinetics_active_site",
+    suspectedErrorType: "misunderstood_concept",
+    title_ar: "إصلاح التمييز بين أثر الحرارة المنخفضة (تثبيط عكوس) والحرارة المرتفعة (تخريب غير عكوس)",
+    whyItHappens_ar: "استعمال مصطلح 'تخريب الإنزيم' للتعبير عن توقف النشاط في درجات الحرارة المنخفضة (0°C).",
+    diagnosis_ar: "إذا سُئلت عن سبب توقف النشاط عند 0°C وأجبت بـ 'تخرب الموقع الفعال وتكسرت الروابط'، فإجابتك غير علمية.",
+    repairSteps_ar: [
+      "الخطوة 1: الحرارة المرتفعة (أكبر من 50°C): تزيد الطاقة الحركية بصورة مفرطة فتكسر الروابط الضعيفة (الهيدروجينية والشاردية) وتخرب البنية الفراغية نهائياً (تخريب غير عكوس).",
+      "الخطوة 2: الحرارة المنخفضة (0°C إلى 10°C): تقلل الطاقة الحركية للجزيئات وتجمد حركتها التصادمية فقط دون أن تمس الروابط أو شكل الموقع الفعال (تثبيط مؤقت عكوس).",
+      "الخطوة 3: التحقق التجريبي: عند إعادة الإنزيم من 0°C إلى 37°C يستعيد كامل نشاطه، بينما بعد 70°C يبقى نشاطه منعدماً للأبد.",
+    ],
+    microPracticePrompt_ar: "إنزيم تم تبريده إلى 0°C ثم أُعيد تدريجياً إلى 37°C. ماذا يحدث لنشاطه ولماذا؟",
+    microPracticeSolution_ar: "يستعيد الإنزيم نشاطه الطبيعي كاملاً، لأن التبريد يثبط الحركة الجزيئية مؤقتاً دون تخريب بنيته الفراغية (تثبيط عكوس).",
+    estimatedMinutes: 8,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+
+  // 26. snv_immunity_reasoning
+  {
+    id: "repair_snv_ab_destroys_antigen",
+    skillId: "snv_immunity_reasoning",
+    suspectedErrorType: "misunderstood_concept",
+    title_ar: "إصلاح الاعتقاد الخاطئ بأن الجسم المضاد يقوم بتدمير وهضم المستضد بنفسه",
+    whyItHappens_ar: "الخلط بين دور الأجسام المضادة النوعي في الارتباط والتحييد وبين دور البلعميات الكبيرة في الهضم والبلعمة.",
+    diagnosis_ar: "إذا كتبت أن 'الأجسام المضادة تقضي على البكتيريا وتقتلها'، فالتوصيف المناعي غير دقيق وزارياً.",
+    repairSteps_ar: [
+      "الخطوة 1: الأجسام المضادة بروتينات سارية تفرزها البلازموسيت ولها وظيفة واحدة: الارتباط النوعي بمحددات المستضد.",
+      "الخطوة 2: تشكل المعقد المناعي يحقق: إبطال مفعول وسمية المستضد ومنع انتشاره في السوائل البيولوجية وتثفيله.",
+      "الخطوة 3: التخلص النهائي والبلعمة يتم بواسطة البلعميات الكبيرة (Macrophages) بفضل تثبت الجزء الثابت Fc للجسم المضاد على مستقبلات غشاء البالعة.",
+      "الخطوة 4: اكتب الصياغة النموذجية: 'الأجسام المضادة تبطل مفعول المستضد وتسهل بلعمته'.",
+    ],
+    microPracticePrompt_ar: "ما هو الدور الحقيقي للجسم المضاد عند تشكيل معقد مناعي مع توكسين بكتيري؟",
+    microPracticeSolution_ar: "إبطال المفعول السام للتوكسين ومنع انتشاره وتثبيته لتسهيل بلعمته بواسطة البالعات الكبيرة دون هدمه ذاتياً.",
+    estimatedMinutes: 8,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+
+  // 27. snv_cellular_immunity_ltc
+  {
+    id: "repair_snv_ltc_hla_class_mix",
+    skillId: "snv_cellular_immunity_ltc",
+    suspectedErrorType: "misunderstood_concept",
+    title_ar: "إصلاح التمييز بين جزيئات HLA-I المعروضة للخلايا LT8 و HLA-II المعروضة للخلايا LT4",
+    whyItHappens_ar: "الخلط بين صنفي معقد التوافق النسيجي الرئيسي ومستقبلات الخلايا اللمفاوية التائية في الاستجابتين الخلطية والخلوية.",
+    diagnosis_ar: "إذا كتبت أن الخلايا التائية LT8 تتعرف على HLA-II أو أن الخلية المصابة تعرض على HLA-II، فالتصنيف النسيجي غير صحيح.",
+    repairSteps_ar: [
+      "الخطوة 1: قاعدة التوافق النسيجي: HLA-I يوجد على سطح جميع الخلايا ذات النواة في العضوية.",
+      "الخطوة 2: الخلايا التائية السامة المسبقة LT8 ومؤشرها CD8 تتعرف حصراً وبشكل مزدوج على ببتيد المستضد المعروض على HLA-I للخلية المصابة.",
+      "الخطوة 3: HLA-II يوجد فقط على أسطح الخلايا المناعية العارضة للمستضد (CPA كالبالعات الكبيرة وخلايا LB).",
+      "الخطوة 4: الخلايا التائية المساعدة LT4 ومؤشرها CD4 تتعرف حصراً على ببتيد المستضد المعروض على HLA-II.",
+    ],
+    microPracticePrompt_ar: "خلية كبدية مصابة بفيروس تعرض ببتيد الفيروس. على أي صنف من HLA تعرضه وأي لمفاوية تتعرف عليها؟",
+    microPracticeSolution_ar: "تعرضه على جزيئات HLA-I (لأنها خلية ذات نواة مصابة)، وتتعرف عليها الخلايا اللمفاوية التائية LT8 (المتمايزة إلى LTc) عبر CD8 و TCR.",
+    estimatedMinutes: 8,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+
+  // 28. snv_hiv_immune_deficiency
+  {
+    id: "repair_snv_hiv_direct_lb_infection",
+    skillId: "snv_hiv_immune_deficiency",
+    suspectedErrorType: "misunderstood_concept",
+    title_ar: "إصلاح تفسير سبب انهيار المناعة الخلطية في مرض السيدا وعلاقتها بالخلايا LT4",
+    whyItHappens_ar: "افتراض أن فيروس السيدا يدخل مباشرة ويخرب الخلايا البائية LB لأن إنتاج الأجسام المضادة ينهار في المرحلة الأخيرة.",
+    diagnosis_ar: "إذا عللت غياب الأجسام المضادة في السيدا بـ 'إصابة وتخريب اللمفاويات LB بفيروس VIH'، فآلية الإصابة لديك خاطئة.",
+    repairSteps_ar: [
+      "الخطوة 1: فيروس VIH يتثبت نوعياً ببروتينه gp120 فقط على الخلايا التي تحمل مؤشر CD4 (وهي LT4 والبالعات). خلايا LB لا تملك CD4 ولا يصيبها الفيروس.",
+      "الخطوة 2: الخلايا البائية LB لكي تتكاثر وتتمايز إلى خلايا بلازمية مفرزة تحتاج إجبارياً إلى التحفيز بواسطة المبلغ الكيميائي إنترلوكين 2 (IL-2).",
+      "الخطوة 3: المصدر الرئيسي لـ IL-2 هو الخلايا التائية المساعدة LTh الناتجة عن تمايز LT4.",
+      "الخطوة 4: عندما يخرب الفيروس خلايا LT4 ينعدم إفراز IL-2، فتصاب خلايا LB بالعجز عن التكاثر والتمايز، ويتوقف إنتاج الأجسام المضادة بصورة غير مباشرة.",
+    ],
+    microPracticePrompt_ar: "لماذا لا يمكن للخلايا البائية LB المنتقاة أن تفرز أجساماً مضادة في مرحلة السيدا المتقدمة رغم سلامتها من الإصابة المباشرة؟",
+    microPracticeSolution_ar: "لأن تخريب الخلايا LT4 يقطع مصدر المبلغ الكيميائي إنترلوكين 2 (IL-2) الضروري لتحفيز تكاثرها وتمايزها إلى خلايا بلازمية.",
+    estimatedMinutes: 8,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+
+  // 29. snv_synaptic_transmission
+  {
+    id: "repair_snv_synapse_channel_type_confusion",
+    skillId: "snv_synaptic_transmission",
+    suspectedErrorType: "misunderstood_concept",
+    title_ar: "إصلاح الخلط بين القنوات المرتبطة بالفولطية والقنوات المبوبة كيميائياً في المشبك",
+    whyItHappens_ar: "عدم التمييز بين سبب انفتاح قنوات الكالسيوم قبل المشبكية (تغير الكمون الكهربائي) وسبب انفتاح قنوات الصوديوم بعد المشبكية (تثبت الأستيل كولين).",
+    diagnosis_ar: "إذا قلت إن قنوات الغشاء بعد المشبكي تنفتح بوصول كمون العمل أو تيار كهربائي، فأنت تلغي الطبيعة الكيميائية للمشبك.",
+    repairSteps_ar: [
+      "الخطوة 1: الغشاء قبل المشبكي يحتوي على قنوات فولطية: قنوات Ca2+ الفولطية تفتح حصراً عند وصول زوال الاستقطاب (كمون العمل).",
+      "الخطوة 2: الشق المشبكي يمثل فاصلاً عازلاً كهربائياً لا تعبره التيارات الكهربائية مباشرة.",
+      "الخطوة 3: الغشاء بعد المشبكي يحتوي على مستقبلات قنوية مبوبة كيميائياً: تنفتح حصراً بتثبت المبلغ الكيميائي (مثل الأستيل كولين على المشبك التنبيهي أو GABA على التثبيطي).",
+      "الخطوة 4: انفتاح القنوات الكيميائية يسمح بتدفق الشوارد (Na+ أو Cl-) لتوليد كمون بعد مشبكي (PPSE أو PPSI).",
+    ],
+    microPracticePrompt_ar: "ما هو العامل الفيزيائي أو الكيميائي المسؤول عن فتح قنوات الكالسيوم قبل المشبكية، وقنوات الصوديوم بعد المشبكية؟",
+    microPracticeSolution_ar: "قنوات الكالسيوم قبل المشبكية تفتح بوصول التغير الكهربائي (الفولطي) لكمون العمل. وقنوات الصوديوم بعد المشبكية تفتح بتثبت الوسيط الكيميائي (الأستيل كولين).",
+    estimatedMinutes: 8,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+
+  // 30. snv_action_potential_ionic_basis
+  {
+    id: "repair_snv_pot_hyperpolarization_ion",
+    skillId: "snv_action_potential_ionic_basis",
+    suspectedErrorType: "misunderstood_concept",
+    title_ar: "إصلاح تفسير مرحلة فرط الاستقطاب وتحديد الشوارد المسؤولة في كمون العمل",
+    whyItHappens_ar: "الاعتقاد بأن فرط الاستقطاب (نزول الكمون إلى -80 mV) ناتج عن دخول شوارد سالبة، ونسيان حركة شوارد البوتاسيوم الموجبة K+.",
+    diagnosis_ar: "إذا عللت فرط استقطاب كمون العمل بتدفق شوارد الكلور Cl- في المحور العصبي العادي، فأنت تخلط بين كمون العمل ومشبك GABA.",
+    repairSteps_ar: [
+      "الخطوة 1: زوال الاستقطاب (-70 إلى +30 mV): تدفق سريع لشوارد الصوديوم الموجبة Na+ نحو الداخل عبر قنوات Na+ الفولطية.",
+      "الخطوة 2: عودة الاستقطاب (+30 إلى -70 mV): انغلاق قنوات Na+ الفولطية وتدفق شوارد البوتاسيوم الموجبة K+ نحو الخارج عبر قنوات K+ الفولطية.",
+      "الخطوة 3: فرط الاستقطاب (-70 إلى -80 mV): ناتج حصراً عن تأخر انغلاق قنوات K+ الفولطية وخروج كمية إضافية من الشحنات الموجبة K+ للوسط الخارجي.",
+      "الخطوة 4: العودة لكمون الراحة: تتكفل بها مضخة Na+/K+ الأنزيمية بطرد 3 Na+ وإدخال 2 K+ باستهلاك ATP.",
+    ],
+    microPracticePrompt_ar: "ما هي الظاهرة الشاردية المسببة لفرط الاستقطاب في كمون العمل لليف العصبي؟",
+    microPracticeSolution_ar: "تأخر انغلاق قنوات البوتاسيوم K+ المرتبطة بالفولطية، مما يسمح باستمرار خروج شوارد K+ نحو الخارج لبرهة وجيزة.",
+    estimatedMinutes: 8,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+
+  // 31. snv_scientific_analysis_method
+  {
+    id: "repair_snv_method_analysis_mix_interpretation",
+    skillId: "snv_scientific_analysis_method",
+    suspectedErrorType: "methodology_error",
+    title_ar: "إصلاح منهجية معالجة الوثائق العلمية والفصل بين التحليل والتفسير والاستنتاج",
+    whyItHappens_ar: "الخلط بين قراءة معطيات التجربة (ماذا نلاحظ؟) وبين شرح آلياتها وأسبابها (لماذا حدث ذلك؟)، وإغفال الاستنتاج المستقل.",
+    diagnosis_ar: "إذا بدأت إجابة سؤال 'استغل الوثيقة' بسرد معلومات الحفظ النظرية مباشرة دون وصف أرقام ومنحنيات الوثيقة، فأنت تخسر نقاط التحليل والاستدلال.",
+    repairSteps_ar: [
+      "الخطوة 1: تقديم الوثيقة: 'تمثل الوثيقة (نوع السند: منحنى، جدول، رسم) لـ (الموضوع المدروس) بدلالة (المتغير) حيث نلاحظ:'.",
+      "الخطوة 2: التحليل المنظم: قسم المنحنى إلى فترات زمنية أو قارن أعمدة الجدول بالأرقام والنسب: 'في البداية نسجل... ثم نلاحظ تزايد/تناقص... لتبلغ قيمة... مما يدل على...'.",
+      "الخطوة 3: التفسير: 'ويفسر ذلك بـ...' واشرح الآلية الجزيئية المسببة للظاهرة.",
+      "الخطوة 4: الاستنتاج الصريح: اكتب كلمة 'الاستنتاج:' في سطر مستقل واجب عن السؤال الأساسي للتجربة في جملة أو جملتين مركزتين.",
+    ],
+    microPracticePrompt_ar: "ما هي العناصر الثلاثة التي يجب أن تتضمنها إجابة استغلال أي وثيقة تجريبية في العلوم؟",
+    microPracticeSolution_ar: "1) تقديم الوثيقة والتعريف بها، 2) التحليل الوصفي المقارن للمعطيات مع الدلالة، 3) الاستنتاج المستخلص لحل المشكل العلمي.",
+    estimatedMinutes: 10,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+];

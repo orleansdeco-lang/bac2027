@@ -12,8 +12,13 @@ console.log("==================================================================\
 // HELPER: Transpile and load TypeScript module in pure Node.js
 // -----------------------------------------------------------------------------
 
+const moduleCache = new Map();
+
 function loadTs(relPath) {
   const fullPath = path.resolve(relPath);
+  if (moduleCache.has(fullPath)) {
+    return moduleCache.get(fullPath);
+  }
   const code = fs.readFileSync(fullPath, "utf8");
   const result = ts.transpileModule(code, {
     compilerOptions: {
@@ -22,17 +27,19 @@ function loadTs(relPath) {
     },
   });
   const m = { exports: {} };
+  moduleCache.set(fullPath, m.exports);
+
   const fn = new Function("exports", "require", "module", result.outputText);
   fn(m.exports, (reqPath) => {
-    if (reqPath.includes("topics")) return loadTs("src/data/curriculum/topics.ts");
-    if (reqPath.includes("skills")) return loadTs("src/data/curriculum/skills.ts");
-    if (reqPath.includes("practice-questions")) return loadTs("src/data/curriculum/practice-questions.ts");
-    if (reqPath.includes("sciences-exp")) return loadTs("src/data/practice/sciences-exp/index.ts");
-    if (reqPath.includes("mappings")) return loadTs("src/domain/content/mappings.ts");
-    if (reqPath.includes("types")) return loadTs("src/domain/content/types.ts");
-    if (reqPath.includes("schemas")) return loadTs("src/domain/content/schemas.ts");
-    if (reqPath.includes("validation")) return loadTs("src/domain/content/validation.ts");
-    if (reqPath.includes("curriculum")) return loadTs("src/data/curriculum/index.ts");
+    let target = reqPath;
+    if (target.startsWith("@/")) {
+      target = path.resolve(target.replace("@/", "src/"));
+    } else if (target.startsWith(".")) {
+      target = path.resolve(path.dirname(fullPath), target);
+    }
+    if (fs.existsSync(target + ".ts")) return loadTs(target + ".ts");
+    if (fs.existsSync(target + "/index.ts")) return loadTs(target + "/index.ts");
+    if (fs.existsSync(target) && fs.statSync(target).isFile()) return loadTs(target);
     return {};
   }, m);
   return m.exports;
@@ -107,8 +114,8 @@ runSuite("B", "Learning Objective Mapping & Bloom Taxonomy", () => {
 // =============================================================================
 // SUITE C: Practice vs Retest Distinct Separation (31 + 31 = 62)
 // =============================================================================
-runSuite("C", "Practice vs Retest Distinct Separation (31 + 31 = 62 questions)", () => {
-  assert.strictEqual(dataset.practiceQuestions.length, 31, "Expected 31 practice questions");
+runSuite("C", "Practice vs Retest Distinct Separation (>=62 practice + 31 retest questions)", () => {
+  assert(dataset.practiceQuestions.length >= 62, "Expected >= 62 practice questions");
   assert.strictEqual(dataset.retestQuestions.length, 31, "Expected 31 retest questions");
 
   for (const pq of dataset.practiceQuestions) {
@@ -361,7 +368,7 @@ runSuite("O", "Backward Compatibility with Existing Pilot Datasets", () => {
 
   assert.strictEqual(allTopics.length, 14, "Must maintain 14 topics in curriculum index");
   assert.strictEqual(allSkills.length, 31, "Must maintain 31 skills in curriculum index");
-  assert.strictEqual(allQuestions.length, 62, "Must maintain 62 questions in curriculum index");
+  assert(allQuestions.length >= 62, "Must maintain >= 62 questions in curriculum index");
 });
 
 // =============================================================================

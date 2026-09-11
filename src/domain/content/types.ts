@@ -311,6 +311,7 @@ export interface PastBacExamReference {
   officialExamSourceId: string;
   rightsStatus: "official_reference";
   verificationStatus: VerificationStatus;
+  academicYear?: string;
   verifiedAt?: string;
   verifiedBy?: string;
   guidanceNotes_ar?: string;

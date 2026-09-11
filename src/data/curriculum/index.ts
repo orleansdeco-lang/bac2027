@@ -9,17 +9,20 @@ import { PracticeQuestion } from "@/types/mission";
 import { CURRICULUM_TOPICS } from "./topics";
 import { ALL_CURRICULUM_SKILLS } from "./skills";
 import { EXPANDED_PRACTICE_QUESTIONS } from "./practice-questions";
+import { EXPANDED_PRACTICE_QUESTIONS_SET2 } from "./practice-questions-set2";
 import { SCIENCES_EXP_PRACTICE_QUESTIONS } from "@/data/practice/sciences-exp";
 
 // Re-export core datasets
 export { CURRICULUM_TOPICS } from "./topics";
 export { ALL_CURRICULUM_SKILLS } from "./skills";
 export { EXPANDED_PRACTICE_QUESTIONS } from "./practice-questions";
+export { EXPANDED_PRACTICE_QUESTIONS_SET2 } from "./practice-questions-set2";
 
-// Combine all practice questions across pilot (18) and expanded (44)
+// Combine all practice questions across pilot (18), expanded set 1 (44), and expanded set 2 (31)
 export const ALL_PRACTICE_QUESTIONS: PracticeQuestion[] = [
   ...SCIENCES_EXP_PRACTICE_QUESTIONS,
   ...EXPANDED_PRACTICE_QUESTIONS,
+  ...EXPANDED_PRACTICE_QUESTIONS_SET2,
 ];
 
 // --- Topic Queries ---

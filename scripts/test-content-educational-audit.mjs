@@ -32,21 +32,15 @@ function loadTs(relPath) {
 
   const fn = new Function("exports", "require", "module", result.outputText);
   fn(m.exports, (reqPath) => {
-    if (reqPath.includes("topics")) return loadTs("src/data/curriculum/topics.ts");
-    if (reqPath.includes("skills")) return loadTs("src/data/curriculum/skills.ts");
-    if (reqPath.includes("practice-questions")) return loadTs("src/data/curriculum/practice-questions.ts");
-    if (reqPath.includes("sciences-exp")) return loadTs("src/data/practice/sciences-exp/index.ts");
-    if (reqPath.includes("mappings")) return loadTs("src/domain/content/mappings.ts");
-    if (reqPath.includes("types")) return loadTs("src/domain/content/types.ts");
-    if (reqPath.includes("schemas")) return loadTs("src/domain/content/schemas.ts");
-    if (reqPath.includes("validation")) return loadTs("src/domain/content/validation.ts");
-    if (reqPath.includes("curriculum")) return loadTs("src/data/curriculum/index.ts");
-    if (reqPath.includes("lessons")) return loadTs("src/domain/content/lessons.ts");
-    if (reqPath.includes("repair-guides")) return loadTs("src/domain/content/repair-guides.ts");
-    if (reqPath.includes("study-methods")) return loadTs("src/domain/content/study-methods.ts");
-    if (reqPath.includes("expert-guidance")) return loadTs("src/domain/content/expert-guidance.ts");
-    if (reqPath.includes("motivation")) return loadTs("src/domain/content/motivation.ts");
-    if (reqPath.includes("mini-exams")) return loadTs("src/domain/content/mini-exams.ts");
+    let target = reqPath;
+    if (target.startsWith("@/")) {
+      target = path.resolve(target.replace("@/", "src/"));
+    } else if (target.startsWith(".")) {
+      target = path.resolve(path.dirname(fullPath), target);
+    }
+    if (fs.existsSync(target + ".ts")) return loadTs(target + ".ts");
+    if (fs.existsSync(target + "/index.ts")) return loadTs(target + "/index.ts");
+    if (fs.existsSync(target) && fs.statSync(target).isFile()) return loadTs(target);
     return {};
   }, m);
 
@@ -131,11 +125,11 @@ runAuditSuite("Curriculum Hierarchy & Stream Coefficients", () => {
 // 3. ALL 31 PRACTICE & RETEST TWIN PAIRS AUDIT
 // =============================================================================
 runAuditSuite("31 Practice & Retest Problem Pairs (100% VALID_TWIN)", () => {
-  assert.strictEqual(dataset.practiceQuestions.length, 31, "Expected 31 practice questions");
+  assert(dataset.practiceQuestions.length >= 62, "Expected >= 62 practice questions");
   assert.strictEqual(dataset.retestQuestions.length, 31, "Expected 31 retest questions");
 
-  const practiceBySkill = new Map();
-  dataset.practiceQuestions.forEach(q => practiceBySkill.set(q.skillId, q));
+  const practiceById = new Map();
+  dataset.practiceQuestions.forEach(q => practiceById.set(q.id, q));
 
   const retestBySkill = new Map();
   dataset.retestQuestions.forEach(q => retestBySkill.set(q.skillId, q));
@@ -143,11 +137,10 @@ runAuditSuite("31 Practice & Retest Problem Pairs (100% VALID_TWIN)", () => {
   let validTwinsCount = 0;
 
   for (const skill of dataset.skills) {
-    const pq = practiceBySkill.get(skill.id);
     const rq = retestBySkill.get(skill.id);
-
-    assert(pq, `Missing practice question for skill: ${skill.id}`);
     assert(rq, `Missing retest question for skill: ${skill.id}`);
+    const pq = practiceById.get(rq.retestForQuestionId);
+    assert(pq, `Missing paired practice question ${rq.retestForQuestionId} for skill: ${skill.id}`);
 
     // Twin verification checks
     assert.strictEqual(rq.isRetestVariant, true, `Question ${rq.id} must be marked as retest variant`);
@@ -192,7 +185,7 @@ runAuditSuite("Distractor Error Taxonomy Linkage", () => {
 // 5. ACTIVE 14-ELEMENT LESSON ARCHITECTURE
 // =============================================================================
 runAuditSuite("Active 14-Element Lessons Structure & Worked Examples", () => {
-  assert(dataset.lessons.length >= 4, "Expected at least 4 pilot lessons");
+  assert.strictEqual(dataset.lessons.length, 31, "Expected exactly 31 lessons");
 
   const practicedSkillIds = new Set(dataset.practiceQuestions.map(q => q.skillId));
 
@@ -225,7 +218,7 @@ runAuditSuite("Active 14-Element Lessons Structure & Worked Examples", () => {
 // 6. TARGETED ERROR REPAIR GUIDES
 // =============================================================================
 runAuditSuite("Targeted 5-15 Minute Error Repair Guides", () => {
-  assert(dataset.repairGuides.length >= 6, "Expected at least 6 repair guides");
+  assert.strictEqual(dataset.repairGuides.length, 31, "Expected exactly 31 repair guides");
 
   const validTaxonomy = schemasModule.VALID_ERROR_TAXONOMY;
 
@@ -289,7 +282,7 @@ runAuditSuite("Verified Quotes Attribution & Anti-Hype Motivation Principles", (
 // 9. CALIBRATED MINI-EXAMS
 // =============================================================================
 runAuditSuite("Calibrated Mini-Exams Assessment Vehicles", () => {
-  assert.strictEqual(dataset.miniExams.length, 6, "Expected 6 mini exams");
+  assert(dataset.miniExams.length >= 6, "Expected >= 6 mini exams");
 
   for (const me of dataset.miniExams) {
     assert.ok(me.id && me.title_ar && me.title_fr);
@@ -319,7 +312,7 @@ runAuditSuite("Content Purity Invariant (ZERO user_id across entire content data
 // =============================================================================
 // 11. TRUE COVERAGE REALITY METRIC CHECK
 // =============================================================================
-runAuditSuite("Strict Coverage Reality Metric Invariant", () => {
+runAuditSuite("Strict Coverage Reality Metric Invariant (100% Mastery-Ready Coverage)", () => {
   const totalSkills = dataset.skills.length;
   const practiceSkills = new Set(dataset.practiceQuestions.map(q => q.skillId));
   const retestSkills = new Set(dataset.retestQuestions.map(q => q.skillId));
@@ -329,12 +322,12 @@ runAuditSuite("Strict Coverage Reality Metric Invariant", () => {
   assert.strictEqual(totalSkills, 31, "Total skills must be 31");
   assert.strictEqual(practiceSkills.size, 31, "Practice questions must cover exactly 31 skills (100%)");
   assert.strictEqual(retestSkills.size, 31, "Retest questions must cover exactly 31 skills (100%)");
-  assert.strictEqual(repairSkills.size, 5, "Repair guides cover 5 target skills with 6 specialized guides");
-  assert.strictEqual(lessonSkills.size, 4, "Active 14-element lessons cover exactly 4 pilot skills (12.9%)");
+  assert.strictEqual(repairSkills.size, 31, "Repair guides cover all 31 skills (100%)");
+  assert.strictEqual(lessonSkills.size, 31, "Active 14-element lessons cover all 31 skills (100%)");
 
   // Closed-loop mastery skills possess: Lesson + Practice + Retest + Repair
   const closedLoopSkills = [...lessonSkills].filter(s => practiceSkills.has(s) && retestSkills.has(s) && repairSkills.has(s));
-  assert.strictEqual(closedLoopSkills.length, 4, "Expected exactly 4 fully closed-loop mastery-ready skills");
+  assert.strictEqual(closedLoopSkills.length, 31, "Expected exactly 31 fully closed-loop mastery-ready skills (100%)");
 });
 
 // =============================================================================

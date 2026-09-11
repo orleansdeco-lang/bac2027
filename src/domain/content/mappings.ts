@@ -42,6 +42,7 @@ import { PROMPT12_STUDY_METHODS } from "./study-methods";
 import { PROMPT12_EXPERT_GUIDANCE } from "./expert-guidance";
 import { PROMPT12_MOTIVATIONAL_PRINCIPLES, PROMPT12_VERIFIED_QUOTES } from "./motivation";
 import { PROMPT12_MINI_EXAMS } from "./mini-exams";
+import { PROMPT11_PAST_BAC_REFERENCES } from "./past-bac-references";
 
 export { PROMPT12_LESSONS } from "./lessons";
 export { PROMPT12_REPAIR_GUIDES } from "./repair-guides";
@@ -49,6 +50,7 @@ export { PROMPT12_STUDY_METHODS } from "./study-methods";
 export { PROMPT12_EXPERT_GUIDANCE } from "./expert-guidance";
 export { PROMPT12_MOTIVATIONAL_PRINCIPLES, PROMPT12_VERIFIED_QUOTES } from "./motivation";
 export { PROMPT12_MINI_EXAMS } from "./mini-exams";
+export { PROMPT11_PAST_BAC_REFERENCES } from "./past-bac-references";
 
 // ============================================================================
 // 1. OFFICIAL SOURCES & PROVENANCE
@@ -459,153 +461,8 @@ export const PROMPT11_RESOURCES: Resource[] = [
 // ============================================================================
 // 8. PAST BAC EXAM REFERENCES (METADATA-ONLY MAPPINGS)
 // ============================================================================
-
-export const PROMPT11_PAST_BAC_REFERENCES: PastBacExamReference[] = [
-  {
-    id: "bac_ref_2023_math_s1_ex2",
-    year: 2023,
-    session: "principal",
-    streamId: "sciences_exp",
-    subjectId: "math",
-    topicId: "math_topic_functions",
-    skillIds: ["math_derivatives_chain_rule", "math_asymptotes_limits"],
-    exerciseNumber: 2,
-    subQuestionRef: "Partie B - Question 2.a",
-    title_ar: "بكالوريا 2023 — رياضيات — الموضوع الأول — التمرين الثاني",
-    title_fr: "BAC 2023 — Mathématiques — Sujet 1 — Exercice 2",
-    description_ar: "دراسة دالة أسية، حساب المشتقة باستعمال قاعدة السلسلة وتحديد المستقيم المقارب المائل عند +مالانهاية.",
-    description_fr: "Étude d'une fonction exponentielle, calcul de dérivée composée et recherche d'asymptote oblique.",
-    sourceId: "src-onec-past-exams-archive",
-    sourceType: "official_exam",
-    officialExamSourceId: "src-onec-past-exams-archive",
-    rightsStatus: "official_reference",
-    verificationStatus: "verified",
-    verifiedAt: "2024-09-01T10:00:00Z",
-    verifiedBy: "Comité Math BAC Mastery",
-    guidanceNotes_ar: "انتبه إلى إشارة المشتقة u'(x) عند اشتقاق e^(-2x) وتجنب خطأ نسيان العامل السالب.",
-    guidanceNotes_fr: "Attention au signe de la dérivée intérieure lors de la dérivation de e^(-2x).",
-  },
-  {
-    id: "bac_ref_2022_phys_s1_ex1",
-    year: 2022,
-    session: "principal",
-    streamId: "sciences_exp",
-    subjectId: "physics",
-    topicId: "physics_topic_rc_rl",
-    skillIds: ["physics_rc_time_constant"],
-    exerciseNumber: 1,
-    subQuestionRef: "Partie 1 - Question 3",
-    title_ar: "بكالوريا 2022 — فيزياء — الموضوع الأول — التمرين الأول",
-    title_fr: "BAC 2022 — Physique — Sujet 1 — Exercice 1",
-    description_ar: "استثمار المنحنى البياني لتطور التوتر بين طرفي المكثفة واستنتاج سعة المكثفة C من قيمة ثابت الزمن tau.",
-    description_fr: "Exploitation graphique de la tension aux bornes du condensateur et déduction de la capacité C.",
-    sourceId: "src-onec-past-exams-archive",
-    sourceType: "official_exam",
-    officialExamSourceId: "src-onec-past-exams-archive",
-    rightsStatus: "official_reference",
-    verificationStatus: "verified",
-    verifiedAt: "2024-09-01T10:00:00Z",
-    verifiedBy: "Comité Physique BAC Mastery",
-    guidanceNotes_ar: "تأكد من تحويل المقاومة إلى الأوم (Ohm) وثابت الزمن إلى الثانية (s) للحصول على السعة بالفاراد (F).",
-    guidanceNotes_fr: "Veillez à convertir la résistance en Ohms et tau en secondes pour obtenir C en Farads.",
-  },
-  {
-    id: "bac_ref_2023_snv_s1_ex2",
-    year: 2023,
-    session: "principal",
-    streamId: "sciences_exp",
-    subjectId: "natural_sciences",
-    topicId: "snv_topic_protein_synthesis",
-    skillIds: ["snv_protein_synthesis"],
-    exerciseNumber: 2,
-    subQuestionRef: "الجزء الأول - السؤال 1",
-    title_ar: "بكالوريا 2023 — علوم طبيعية — الموضوع الأول — التمرين الثاني",
-    title_fr: "BAC 2023 — SVT — Sujet 1 — Exercice 2",
-    description_ar: "تحليل تجربة تثبيط إنزيم ARN بوليميراز بمادة الألفا-أمانيتين وتفسير تأثيرها على تركيب البروتين.",
-    description_fr: "Analyse de l'inhibition de l'ARN polymérase par l'alpha-amanitine et son impact sur la biosynthèse.",
-    sourceId: "src-onec-past-exams-archive",
-    sourceType: "official_exam",
-    officialExamSourceId: "src-onec-past-exams-archive",
-    rightsStatus: "official_reference",
-    verificationStatus: "verified",
-    verifiedAt: "2024-09-01T10:00:00Z",
-    verifiedBy: "Comité SVT BAC Mastery",
-    guidanceNotes_ar: "وظف المنهجية المبنية على التحليل المقارن (معطيات السند + الدلالة) ثم الخروج باستنتاج واضح.",
-    guidanceNotes_fr: "Appliquez la démarche scientifique : analyse des données puis déduction ciblée.",
-  },
-  {
-    id: "bac_ref_2023_math_s2_ex2",
-    year: 2023,
-    session: "principal",
-    streamId: "sciences_exp",
-    subjectId: "math",
-    topicId: "math_topic_sequences",
-    skillIds: ["math_induction_reasoning", "math_sequence_reasoning"],
-    exerciseNumber: 2,
-    subQuestionRef: "Partie 1 - Question 2",
-    title_ar: "بكالوريا 2023 — رياضيات — الموضوع الثاني — التمرين الثاني",
-    title_fr: "BAC 2023 — Mathématiques — Sujet 2 — Exercice 2",
-    description_ar: "متتاليات عددية تراجعية، البرهان بالتراجع واستنتاج اتجاه التغير والتقارب بالرتابة.",
-    description_fr: "Suites numériques récurrentes, raisonnement par récurrence, sens de variation et convergence.",
-    sourceId: "src-onec-past-exams-archive",
-    sourceType: "official_exam",
-    officialExamSourceId: "src-onec-past-exams-archive",
-    rightsStatus: "official_reference",
-    verificationStatus: "verified",
-    verifiedAt: "2024-09-01T10:00:00Z",
-    verifiedBy: "Comité Math BAC Mastery",
-    guidanceNotes_ar: "احرص على الصياغة الصارمة لمرحلة الوراثة: نفرض صحة الخاصية P(n) ونبرهن صحة P(n+1).",
-    guidanceNotes_fr: "Rédigez rigoureusement l'étape d'hérédité : supposons P(n) vraie et démontrons P(n+1).",
-  },
-  {
-    id: "bac_ref_2023_phys_s2_ex1",
-    year: 2023,
-    session: "principal",
-    streamId: "sciences_exp",
-    subjectId: "physics",
-    topicId: "physics_topic_kinetics",
-    skillIds: ["physics_reaction_rate_monitoring"],
-    exerciseNumber: 1,
-    subQuestionRef: "السؤال 4",
-    title_ar: "بكالوريا 2023 — فيزياء — الموضوع الثاني — التمرين الأول",
-    title_fr: "BAC 2023 — Physique — Sujet 2 — Exercice 1",
-    description_ar: "متابعة زمنية لتحول كيميائي بطريقة قياس الحجم، حساب سرعة التفاعل بيانيا وتحديد زمن نصف التفاعل t1/2.",
-    description_fr: "Suivi temporel d'une transformation chimique par volumétrie, calcul de vitesse volumique et t1/2.",
-    sourceId: "src-onec-past-exams-archive",
-    sourceType: "official_exam",
-    officialExamSourceId: "src-onec-past-exams-archive",
-    rightsStatus: "official_reference",
-    verificationStatus: "verified",
-    verifiedAt: "2024-09-01T10:00:00Z",
-    verifiedBy: "Comité Physique BAC Mastery",
-    guidanceNotes_ar: "لا تنس قسمة ميل المماس على الحجم الكلي للمزيج التفاعلي V_tot عند حساب السرعة الحجمية.",
-    guidanceNotes_fr: "N'oubliez pas de diviser la pente de la tangente par le volume total du mélange réactionnel.",
-  },
-  {
-    id: "bac_ref_2022_snv_s2_ex3",
-    year: 2022,
-    session: "principal",
-    streamId: "sciences_exp",
-    subjectId: "natural_sciences",
-    topicId: "snv_topic_immunology",
-    skillIds: ["snv_immunity_reasoning", "snv_cellular_immunity_ltc"],
-    exerciseNumber: 3,
-    subQuestionRef: "الجزء الثاني",
-    title_ar: "بكالوريا 2022 — علوم طبيعية — الموضوع الثاني — التمرين الثالث",
-    title_fr: "BAC 2022 — SVT — Sujet 2 — Exercice 3",
-    description_ar: "استدلال علمي متكامل حول الاستجابة المناعية النوعية الخلوية وآلية إفراز البيرفورين والغرانزيم من طرف الخلايا اللمفاوية التائية السامة LTc.",
-    description_fr: "Démarche scientifique sur la réponse immunitaire cellulaire et le mécanisme de cytotoxicité des LTc.",
-    sourceId: "src-onec-past-exams-archive",
-    sourceType: "official_exam",
-    officialExamSourceId: "src-onec-past-exams-archive",
-    rightsStatus: "official_reference",
-    verificationStatus: "verified",
-    verifiedAt: "2024-09-01T10:00:00Z",
-    verifiedBy: "Comité SVT BAC Mastery",
-    guidanceNotes_ar: "استغل وثائق التجارب بدقة (تحليل + استنتاج) ثم ركب الإجابة في نص علمي مهيكل وواضح.",
-    guidanceNotes_fr: "Exploitez rigoureusement les documents (analyse + déduction) puis synthétisez.",
-  },
-];
+// Note: PROMPT11_PAST_BAC_REFERENCES is imported from ./past-bac-references
+// covering all 31 supported skills with verified ONEC past BAC exam references.
 
 // ============================================================================
 // 9. PRACTICE & RETEST QUESTIONS (31 PRACTICE + 31 RETEST = 62 TOTAL)
@@ -900,4 +757,109 @@ export function getMiniExamById(id: string): MiniExam | undefined {
 
 export function getMiniExamsForSubject(subjectId: string): MiniExam[] {
   return PROMPT12_MINI_EXAMS.filter((me) => me.subjectId === subjectId && me.isActive);
+}
+
+// ============================================================================
+// 13. PROMPT 13 SKILL READINESS MODEL
+// ============================================================================
+
+export type SkillReadinessStatus = "MASTERY_READY" | "CONTENT_READY" | "NOT_READY";
+
+export interface SkillReadinessReport {
+  skillId: string;
+  status: SkillReadinessStatus;
+  hasLesson: boolean;
+  hasWorkedExample: boolean;
+  practiceQuestionCount: number;
+  hasRetest: boolean;
+  hasRepairGuide: boolean;
+  hasCommonErrorCard: boolean;
+  hasMiniExamCoverage: boolean;
+  hasPastBacRef: boolean;
+  hasProvenance: boolean;
+  isVerified: boolean;
+}
+
+export function getSkillReadinessReport(skillId: string): SkillReadinessReport {
+  const lesson = PROMPT12_LESSONS.find((l) => l.skillId === skillId && l.isActive);
+  const hasLesson = Boolean(lesson);
+  const hasWorkedExample = Boolean(
+    lesson?.workedExample &&
+    lesson.workedExample.problem_ar &&
+    lesson.workedExample.howToThink_ar &&
+    lesson.workedExample.stepByStepSolution_ar &&
+    lesson.workedExample.stepByStepSolution_ar.length >= 3 &&
+    lesson.workedExample.finalAnswer_ar &&
+    lesson.workedExample.verificationTip_ar
+  );
+  const practiceQuestionCount = PROMPT11_PRACTICE_QUESTIONS.filter((q) => q.skillId === skillId).length;
+  const hasRetest = Boolean(PROMPT11_RETEST_QUESTIONS.find((q) => q.skillId === skillId));
+  const repairGuide = PROMPT12_REPAIR_GUIDES.find((rg) => rg.skillId === skillId && rg.isActive);
+  const hasRepairGuide = Boolean(
+    repairGuide &&
+    repairGuide.estimatedMinutes >= 5 &&
+    repairGuide.estimatedMinutes <= 15 &&
+    repairGuide.repairSteps_ar &&
+    repairGuide.repairSteps_ar.length >= 3
+  );
+  const hasCommonErrorCard = Boolean(repairGuide && repairGuide.suspectedErrorType);
+  const hasMiniExamCoverage = PROMPT12_MINI_EXAMS.some((me) => me.skillIds.includes(skillId) && me.isActive);
+  const hasPastBacRef = PROMPT11_PAST_BAC_REFERENCES.some((ref) => ref.skillIds.includes(skillId));
+  const hasProvenance = Boolean(lesson?.sourceId);
+  const isVerified = lesson?.verificationStatus === "verified";
+
+  const isMasteryReady =
+    hasLesson &&
+    hasWorkedExample &&
+    practiceQuestionCount >= 2 &&
+    hasRetest &&
+    hasRepairGuide &&
+    hasCommonErrorCard &&
+    hasMiniExamCoverage &&
+    hasPastBacRef &&
+    hasProvenance &&
+    isVerified;
+
+  const isContentReady =
+    hasLesson &&
+    hasWorkedExample &&
+    practiceQuestionCount >= 1 &&
+    hasRetest;
+
+  const status: SkillReadinessStatus = isMasteryReady
+    ? "MASTERY_READY"
+    : isContentReady
+    ? "CONTENT_READY"
+    : "NOT_READY";
+
+  return {
+    skillId,
+    status,
+    hasLesson,
+    hasWorkedExample,
+    practiceQuestionCount,
+    hasRetest,
+    hasRepairGuide,
+    hasCommonErrorCard,
+    hasMiniExamCoverage,
+    hasPastBacRef,
+    hasProvenance,
+    isVerified,
+  };
+}
+
+export function getSkillContentReadiness(skillId: string): SkillReadinessStatus {
+  return getSkillReadinessReport(skillId).status;
+}
+
+export function getAllSkillContentReadiness(): Record<string, SkillReadinessStatus> {
+  const result: Record<string, SkillReadinessStatus> = {};
+  for (const skill of PROMPT11_SKILLS) {
+    result[skill.id] = getSkillContentReadiness(skill.id);
+  }
+  return result;
+}
+
+export function getAllSkillReadinessReports(): SkillReadinessReport[] {
+  return PROMPT11_SKILLS.map((skill) => getSkillReadinessReport(skill.id));
 }

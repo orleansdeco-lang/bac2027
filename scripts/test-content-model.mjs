@@ -12,8 +12,13 @@ console.log("==================================================================\
 // HELPER: Transpile and load TypeScript module in pure Node.js
 // -----------------------------------------------------------------------------
 
+const moduleCache = new Map();
+
 function loadTs(relPath) {
   const fullPath = path.resolve(relPath);
+  if (moduleCache.has(fullPath)) {
+    return moduleCache.get(fullPath);
+  }
   const code = fs.readFileSync(fullPath, "utf8");
   const result = ts.transpileModule(code, {
     compilerOptions: {
@@ -22,13 +27,19 @@ function loadTs(relPath) {
     },
   });
   const m = { exports: {} };
+  moduleCache.set(fullPath, m.exports);
+
   const fn = new Function("exports", "require", "module", result.outputText);
   fn(m.exports, (reqPath) => {
-    // Resolve relative or alias imports if needed
-    if (reqPath.includes("topics")) return loadTs("src/data/curriculum/topics.ts");
-    if (reqPath.includes("skills")) return loadTs("src/data/curriculum/skills.ts");
-    if (reqPath.includes("practice-questions")) return loadTs("src/data/curriculum/practice-questions.ts");
-    if (reqPath.includes("sciences-exp")) return loadTs("src/data/practice/sciences-exp/index.ts");
+    let target = reqPath;
+    if (target.startsWith("@/")) {
+      target = path.resolve(target.replace("@/", "src/"));
+    } else if (target.startsWith(".")) {
+      target = path.resolve(path.dirname(fullPath), target);
+    }
+    if (fs.existsSync(target + ".ts")) return loadTs(target + ".ts");
+    if (fs.existsSync(target + "/index.ts")) return loadTs(target + "/index.ts");
+    if (fs.existsSync(target) && fs.statSync(target).isFile()) return loadTs(target);
     return {};
   }, m);
   return m.exports;
