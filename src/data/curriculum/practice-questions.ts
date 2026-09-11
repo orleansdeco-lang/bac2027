@@ -1170,7 +1170,7 @@ export const EXPANDED_PRACTICE_QUESTIONS: PracticeQuestion[] = [
     options: [
       {
         id: "opt-1",
-        text_ar: "الهيليوم 4He لأن طاقة الربط لكل نكليون E_l/A = 7.07 MeV/nucléon أكبر من 235U (7.59 MeV/nucléon)",
+        text_ar: "اليورانيوم 235U لأن طاقة الربط لكل نكليون E_l/A = 7.59 MeV/nucléon أكبر من 4He (7.07 MeV/nucléon)",
         text_fr: "L'uranium 235 car E_l/A = 7.59 MeV/nucléon > 7.07 MeV/nucléon pour l'hélium 4",
       },
       {
