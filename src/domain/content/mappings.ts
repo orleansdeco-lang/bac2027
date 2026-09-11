@@ -611,18 +611,25 @@ export const PROMPT11_PAST_BAC_REFERENCES: PastBacExamReference[] = [
 // 9. PRACTICE & RETEST QUESTIONS (31 PRACTICE + 31 RETEST = 62 TOTAL)
 // ============================================================================
 
+export const SKILL_ID_CANONICAL_MAP: Record<string, string> = {
+  physics_newton_projections: "physics_newton_second_law",
+  physics_decay_half_life: "physics_nuclear_decay_law",
+  snv_document_exploitation: "snv_scientific_analysis_method",
+};
+
 const rawPractice = ALL_PRACTICE_QUESTIONS.filter((q) => !q.isRetestVariant);
 const rawRetest = ALL_PRACTICE_QUESTIONS.filter((q) => q.isRetestVariant);
 
 export const PROMPT11_PRACTICE_QUESTIONS: PracticeQuestion[] = rawPractice.map((q) => {
-  const skill = ALL_CURRICULUM_SKILLS[q.skillId];
+  const canonicalSkillId = SKILL_ID_CANONICAL_MAP[q.skillId] || q.skillId;
+  const skill = ALL_CURRICULUM_SKILLS[canonicalSkillId];
   return {
     id: q.id,
     educationLevel: "secondary",
     examType: "bac",
     streamId: q.streamId,
     subjectId: q.subjectId,
-    skillId: q.skillId,
+    skillId: canonicalSkillId,
     topicId: skill?.topicId,
     dimension: q.dimension,
     difficulty: q.difficulty,
@@ -655,14 +662,15 @@ export const PROMPT11_PRACTICE_QUESTIONS: PracticeQuestion[] = rawPractice.map((
 });
 
 export const PROMPT11_RETEST_QUESTIONS: RetestQuestion[] = rawRetest.map((q) => {
-  const skill = ALL_CURRICULUM_SKILLS[q.skillId];
+  const canonicalSkillId = SKILL_ID_CANONICAL_MAP[q.skillId] || q.skillId;
+  const skill = ALL_CURRICULUM_SKILLS[canonicalSkillId];
   return {
     id: q.id,
     educationLevel: "secondary",
     examType: "bac",
     streamId: q.streamId,
     subjectId: q.subjectId,
-    skillId: q.skillId,
+    skillId: canonicalSkillId,
     topicId: skill?.topicId,
     dimension: q.dimension,
     difficulty: q.difficulty,
