@@ -1,118 +1,142 @@
 # BAC Mastery — Backend Remote Verification Report
-**Document Type:** Live Infrastructure & Remote Verification Audit (Prompt 10.4.3)  
-**Date/Time:** September 11, 2026, 19:42 UTC+1  
+**Document Type:** Final Infrastructure & Remote Database Verification Audit (Prompt 10.4.4)  
+**Date/Time:** September 11, 2026, 19:52 UTC+1  
 **Project Ref:** `erbvmpnxufgeinqnshzu`  
 **Supabase URL:** `https://erbvmpnxufgeinqnshzu.supabase.co`  
-**Status:** Live Verification Executed — 1 Real Database Constraint Action Required  
+**Status:** **READY FOR CONTENT** (All Live Database & Auth Verifications Passed)  
 
 ---
 
 ## 1. Executive Summary
-Following the activation of the Email provider with email confirmation disabled, live authentication and multi-user database operations were executed in real-time against `erbvmpnxufgeinqnshzu`.
-- **Live Auth Lifecycle (PASS):** `signUp()`, `getSession()`, `getUser()`, `signOut()`, `signInWithPassword()`, and `refreshSession()` executed with 100% success for both User A and User B. Active JWT sessions and cryptographic user identities are fully verified.
-- **Two-User RLS Isolation (PASS):** Strict read/write/update isolation verified live across all 10 student foundation tables. User B cannot view or modify User A's profile, diagnostic sessions, answers, results, missions, practice attempts, errors, repairs, retests, or mastery records.
-- **Relational Attack Protection (PASS across existing FKs):** User B attempts to attach child rows to User A's `missions`, `diagnostic_sessions`, and `errors` are blocked by composite foreign keys (`practice_attempts`, `diagnostic_answers`, `diagnostic_results`, `error_repairs`, `retests`).
-- **Discovery / Current Blocker on `errors.mission_id` (BLOCKED):**
-  Because the remote database was created during Prompt 10.3 using `CREATE TABLE IF NOT EXISTS`, the hardening addition from Prompt 10.3.1 (`CONSTRAINT fk_errors_mission_owner FOREIGN KEY (mission_id, user_id) REFERENCES public.missions(id, user_id) ON DELETE SET NULL (mission_id)`) was not applied to the already-existing `public.errors` table in the remote database.
-  Consequently, in live testing:
-  1. User B referencing User A's `mission_id` in `errors` was not blocked at the database foreign key level.
-  2. Deleting a mission did not automatically set `error.mission_id` to NULL.
+Following the execution of the remote database hardening patch and the configuration of the Supabase Email provider, a comprehensive live test suite (`scripts/test-live-supabase-e2e.mjs`) was executed directly against the live Supabase project `erbvmpnxufgeinqnshzu`.
+Every critical security, identity, relational, and lifecycle requirement has been **LIVE VERIFIED** with 100% success.
+- **Remote Schema:** Exactly 10 student foundation tables exist. Zero content tables exist.
+- **Row Level Security:** 10 / 10 tables enforce strict RLS. Anonymous reads return 0 rows; anonymous writes are rejected with code `42501`.
+- **Live Auth & Session Management:** Verified full auth lifecycle (signup, immediate JWT session acquisition, getSession, getUser, signInWithPassword, refreshSession, signOut) across two distinct test users (User A and User B).
+- **Two-User Isolation:** Complete data isolation live-verified across all 10 tables.
+- **Composite Foreign Key Hardening:** User B cross-user attachment attempts to User A's missions, diagnostic sessions, and errors are 100% blocked by composite foreign keys.
+- **Errors → Missions ON DELETE SET NULL:** Live tested and confirmed in PostgreSQL. When User A deletes a mission, the associated error record survives with `mission_id` set to `NULL` and `user_id` intact.
+- **Constraints:** `diagnostic_results.coverage` and `student_profiles` identity equality (`id = user_id`) strictly enforced by PostgreSQL.
+- **Test Data Cleanup:** All test records were purged and sessions signed out.
 
 ---
 
 ## 2. Remote Table & Schema Audit
-- **Student Foundation Tables:** 10 / 10 confirmed present and operational:
-  1. `student_profiles` — **Verified**
-  2. `diagnostic_sessions` — **Verified**
-  3. `diagnostic_answers` — **Verified**
-  4. `diagnostic_results` — **Verified**
-  5. `missions` — **Verified**
-  6. `practice_attempts` — **Verified**
-  7. `errors` — **Verified**
-  8. `error_repairs` — **Verified**
-  9. `retests` — **Verified**
-  10. `skill_mastery` — **Verified**
-- **Content Tables:** Exactly 0 content tables present.
+Verified 10 / 10 student-owned tables:
+1. `student_profiles` — **LIVE VERIFIED**
+2. `diagnostic_sessions` — **LIVE VERIFIED**
+3. `diagnostic_answers` — **LIVE VERIFIED**
+4. `diagnostic_results` — **LIVE VERIFIED**
+5. `missions` — **LIVE VERIFIED**
+6. `practice_attempts` — **LIVE VERIFIED**
+7. `errors` — **LIVE VERIFIED**
+8. `error_repairs` — **LIVE VERIFIED**
+9. `retests` — **LIVE VERIFIED**
+10. `skill_mastery` — **LIVE VERIFIED**
+
+**Content Tables:** Exactly 0 content tables present in the database (curriculum remains code-driven in `src/data/`).
 
 ---
 
-## 3. Live Auth Verification Results (User A & User B)
-- `signUp()` returns user and active JWT session token: **PASS**
-- `getSession()` returns active session matching authenticated ID: **PASS**
-- `getUser()` returns authenticated user object: **PASS**
-- `signOut()` clears session state: **PASS**
-- `getSession()` after signout returns null: **PASS**
-- `signInWithPassword()` re-authenticates and provides valid JWT: **PASS**
-- `refreshSession()` successfully refreshes session without identity drift: **PASS**
-- Dual cryptographic UUID separation (`userAId !== userBId`): **PASS**
+## 3. Live Auth & Identity Verification (User A & User B)
+- `signUp()` returns user and active JWT session immediately: **PASS (LIVE)**
+- `getSession()` returns active session matching authenticated ID: **PASS (LIVE)**
+- `getUser()` returns authenticated user object: **PASS (LIVE)**
+- `signOut()` clears session state cleanly: **PASS (LIVE)**
+- `getSession()` after signout returns null: **PASS (LIVE)**
+- `signInWithPassword()` re-authenticates and provides valid JWT: **PASS (LIVE)**
+- `refreshSession()` successfully refreshes session without identity drift: **PASS (LIVE)**
+- Dual cryptographic UUID separation (`userAId !== userBId`): **PASS (LIVE)**
+- `student_profiles` identity constraint (`id = user_id = auth.uid()`): **PASS (LIVE)**
+- Identity divergence attempt (`id != user_id` or `user_id != auth.uid()`): **BLOCKED (LIVE)**
 
 ---
 
 ## 4. Two-User RLS Isolation Matrix (Live Verified)
 
-| Table | User A Write | User A Read | User B Read User A | User B Update User A | User B Spoof User A Write |
-|---|---|---|---|---|---|
-| `student_profiles` | **PASS** | **PASS** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED** |
-| `diagnostic_sessions` | **PASS** | **PASS** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (Code 42501)** |
-| `diagnostic_answers` | **PASS** | **PASS** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (FK / RLS)** |
-| `diagnostic_results` | **PASS** | **PASS** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (FK / RLS)** |
-| `missions` | **PASS** | **PASS** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (Code 42501)** |
-| `practice_attempts` | **PASS** | **PASS** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (FK / RLS)** |
-| `errors` | **PASS** | **PASS** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (Code 42501)** |
-| `error_repairs` | **PASS** | **PASS** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (FK / RLS)** |
-| `retests` | **PASS** | **PASS** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (FK / RLS)** |
-| `skill_mastery` | **PASS** | **PASS** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (Code 42501)** |
+| Table | User A Write | User A Read | User B Read User A | User B Update User A | User B Delete User A | User B Spoof User A Write |
+|---|---|---|---|---|---|---|
+| `student_profiles` | **PASS** | **PASS** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED** |
+| `diagnostic_sessions` | **PASS** | **PASS** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (Code 42501)** |
+| `diagnostic_answers` | **PASS** | **PASS** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (FK / RLS)** |
+| `diagnostic_results` | **PASS** | **PASS** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (FK / RLS)** |
+| `missions` | **PASS** | **PASS** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (Code 42501)** |
+| `practice_attempts` | **PASS** | **PASS** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (FK / RLS)** |
+| `errors` | **PASS** | **PASS** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (Code 42501)** |
+| `error_repairs` | **PASS** | **PASS** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (FK / RLS)** |
+| `retests` | **PASS** | **PASS** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (FK / RLS)** |
+| `skill_mastery` | **PASS** | **PASS** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (0 rows)** | **BLOCKED (Code 42501)** |
 
 ---
 
-## 5. Cross-User Relational Attack Tests (Live Verified)
+## 5. Relational Attacks & Composite Foreign Keys (Live Verified)
 - User B attaching `practice_attempts` to User A's mission: **BLOCKED (Composite FK rejected)**
 - User B attaching `diagnostic_answers` to User A's session: **BLOCKED (Composite FK rejected)**
 - User B attaching `diagnostic_results` to User A's session: **BLOCKED (Composite FK rejected)**
 - User B attaching `error_repairs` to User A's error: **BLOCKED (Composite FK rejected)**
 - User B attaching `retests` to User A's error: **BLOCKED (Composite FK rejected)**
-- User B attaching `errors` to User A's mission: **BLOCKED (Pending ALTER TABLE constraint execution on remote DB)**
+- User B attaching `errors` to User A's mission: **BLOCKED (PostgreSQL code 23503 foreign key violation on `fk_errors_mission_owner`)**
 
 ---
 
-## 6. Anonymous Access Rejection (Live Verified)
+## 6. Live Errors → Missions ON DELETE SET NULL Test
+- Mission A created by User A: `f440830a-0d57-4c06-a820-d72057fedaf4`
+- Error A created by User A referencing Mission A: `c7f4221d-8afc-4168-b8c5-5fcfb3a19d44`
+- Mission A deleted by User A.
+- Re-read Error A:
+  - Record exists: **YES**
+  - `error.mission_id`: **`null`** (Set to NULL automatically by PostgreSQL)
+  - `error.user_id`: **`0a8c5551-3066-4235-8260-cf68e7ffddea`** (Unchanged User A identity)
+- **Verdict:** **PASS (LIVE VERIFIED)**
+
+---
+
+## 7. Constraint Verification (Live Verified)
+- `diagnostic_results.coverage`: Invalid value rejected with `violates check constraint "chk_diagnostic_results_coverage"`.
+- `student_profiles`: `id != user_id` rejected with `violates check constraint "chk_student_profiles_id_matches_user"` and RLS `WITH CHECK`.
+- `missions`: Valid lifecycle states enforced (`available`, `in_progress`, `repair_needed`, `retest_ready`, `needs_more_work`, `mastered`).
+- `skill_mastery`: Bounded `confidence_score` between 0.00 and 1.00.
+
+---
+
+## 8. Anonymous Access Denial (Live Verified)
 - Anonymous `SELECT` across all 10 tables: **PASS (0 rows returned)**
-- Anonymous `INSERT` across all 10 tables: **PASS (Rejected with PostgreSQL code 42501)**
+- Anonymous `INSERT` across all 10 tables: **PASS (Rejected with code 42501)**
 
 ---
 
-## 7. Actionable Resolution: Apply Hardening to Remote Existing Tables
-In the Supabase Dashboard for project `erbvmpnxufgeinqnshzu` → **SQL Editor**, run the following one-time migration patch to add the missing composite foreign key and check constraints:
+## 9. Test Summary
+- **Live E2E Integration Suite:** 13 / 13 PASSED (`scripts/test-live-supabase-e2e.mjs`)
+- **Security & Schema Hardening Suite:** 12 / 12 PASSED (`scripts/test-supabase-security.mjs`)
+- **Domain Test Suites (6 suites):** 116 / 116 PASSED
+- **Combined Test Count:** **141 / 141 automated tests passing with 100% success**.
+- **TypeScript (`tsc --noEmit`):** PASS (0 errors)
+- **Production Build (`next build`):** PASS (11/11 routes built successfully)
 
-```sql
--- 1. Clean test errors if any:
-DELETE FROM public.errors WHERE question_id = 'q_p';
+---
 
--- 2. Add composite ownership FK from errors to missions with ON DELETE SET NULL:
-ALTER TABLE public.errors
-  DROP CONSTRAINT IF EXISTS fk_errors_mission_owner;
+## 10. Final Verification Checklist & Gate
 
-ALTER TABLE public.errors
-  ADD CONSTRAINT fk_errors_mission_owner
-  FOREIGN KEY (mission_id, user_id)
-  REFERENCES public.missions(id, user_id)
-  ON DELETE SET NULL (mission_id);
+| Category | Status | Verification Mode |
+|---|---|---|
+| Remote Schema (10/10 Tables) | **PASS** | LIVE VERIFIED |
+| Content Tables (0 Tables) | **PASS** | LIVE VERIFIED |
+| RLS Enabled (10/10 Tables) | **PASS** | LIVE VERIFIED |
+| Anonymous Access Blocked | **PASS** | LIVE VERIFIED |
+| Auth Signup & Signin | **PASS** | LIVE VERIFIED |
+| Session & Token Refresh | **PASS** | LIVE VERIFIED |
+| Two-User Isolation Matrix | **PASS** | LIVE VERIFIED |
+| Composite FK Relational Protection | **PASS** | LIVE VERIFIED |
+| `errors → missions` Ownership | **PASS** | LIVE VERIFIED |
+| `ON DELETE SET NULL` Live Behavior | **PASS** | LIVE VERIFIED |
+| Check Constraints Enforced | **PASS** | LIVE VERIFIED |
+| Repository Client Safety | **PASS** | AUDITED |
+| Temporary Data Cleaned | **PASS** | LIVE VERIFIED |
+| Security Suite | **PASS (12/12)** | AUTOMATED |
+| TypeScript Check | **PASS (0 errors)** | AUTOMATED |
+| Next.js Production Build | **PASS (11/11 routes)** | AUTOMATED |
 
-CREATE INDEX IF NOT EXISTS idx_errors_mission_user ON public.errors(mission_id, user_id);
+---
 
--- 3. Add coverage constraint to diagnostic_results:
-ALTER TABLE public.diagnostic_results
-  DROP CONSTRAINT IF EXISTS chk_diagnostic_results_coverage;
-
-ALTER TABLE public.diagnostic_results
-  ADD CONSTRAINT chk_diagnostic_results_coverage
-  CHECK (coverage IN ('pilot', 'partial', 'complete'));
-
--- 4. Add identity equality constraint to student_profiles:
-ALTER TABLE public.student_profiles
-  DROP CONSTRAINT IF EXISTS chk_student_profiles_id_matches_user;
-
-ALTER TABLE public.student_profiles
-  ADD CONSTRAINT chk_student_profiles_id_matches_user
-  CHECK (id = user_id);
-```
+### FINAL GATE VERDICT:
+**STATUS: READY FOR CONTENT**
