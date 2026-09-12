@@ -7,10 +7,10 @@ import { useTranslation } from "@/lib/i18n/context";
 import { Container } from "./Container";
 import { Logo } from "./Logo";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { ThemeSelector } from "./ThemeSelector";
 import { Badge } from "./Badge";
 import { getStrategicProfile } from "@/lib/onboarding/profile";
 import { StrategicProfile } from "@/types/onboarding";
-import { Compass, Sparkles } from "lucide-react";
 
 export function TopBar() {
   const pathname = usePathname();
@@ -31,13 +31,17 @@ export function TopBar() {
   ];
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-800/80 bg-[#0B1020]/90 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-theme bg-surface/90 backdrop-blur-md transition-colors duration-200">
       <Container size="lg" className="flex h-16 items-center justify-between">
-        {/* Left: Logo */}
+        {/* Left: Logo + Optional Profile Badge */}
         <div className="flex items-center gap-3">
           <Logo size="md" showTagline={false} />
           {profile && (
-            <Badge variant="outline" size="sm" className="hidden sm:inline-flex text-[10px] border-slate-700/60 bg-slate-900/60 text-slate-300">
+            <Badge
+              variant="outline"
+              size="sm"
+              className="hidden sm:inline-flex text-[10px] border-theme bg-card text-theme-secondary"
+            >
               {profile.streamId === "sciences_exp"
                 ? (locale === "ar" ? "علوم تجريبية" : "Sciences Exp.")
                 : profile.streamId}
@@ -54,10 +58,10 @@ export function TopBar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all ${
                   isActive
-                    ? "bg-blue-600/15 text-blue-400 border border-blue-500/25"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                    ? "bg-[var(--color-primary-muted)] text-[var(--color-primary)] border border-[var(--color-primary)]/25 shadow-sm"
+                    : "text-theme-secondary hover:text-theme-text hover:bg-card-hover"
                 }`}
               >
                 {link.label}
@@ -66,11 +70,9 @@ export function TopBar() {
           })}
         </nav>
 
-        {/* Right Action: Language Switcher + Badge */}
-        <div className="flex items-center gap-2.5">
-          <Badge variant="primary" size="sm" className="hidden lg:inline-flex text-[10px] font-mono">
-            {locale === "ar" ? "المرحلة التجريبية" : "Version Pilote"}
-          </Badge>
+        {/* Right Action: Theme Selector + Language Switcher + Badge */}
+        <div className="flex items-center gap-2">
+          <ThemeSelector variant="compact" />
           <LanguageSwitcher />
         </div>
       </Container>

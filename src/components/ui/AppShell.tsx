@@ -20,7 +20,7 @@ export function AppShell({
   showFooter = true,
 }: AppShellProps) {
   return (
-    <div className="min-h-screen bg-[#0B1020] text-slate-100 flex flex-col selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-canvas text-theme-text flex flex-col selection:bg-[var(--color-primary)] selection:text-[var(--color-primary-text)] transition-colors duration-200">
       {showTopBar && <TopBar />}
 
       <div className="flex-1 pb-20 md:pb-10">
@@ -28,7 +28,7 @@ export function AppShell({
       </div>
 
       {showFooter && (
-        <footer className="hidden md:block py-6 border-t border-slate-800/60 text-center text-xs text-slate-500">
+        <footer className="hidden md:block py-6 border-t border-theme text-center text-xs text-theme-muted transition-colors duration-200">
           BAC Mastery © {new Date().getFullYear()} — ماشي واش تقرا. كيفاش توصل.
         </footer>
       )}

@@ -9,13 +9,32 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        canvas: "#0B1020",
+        canvas: "var(--color-bg-base)",
+        surface: "var(--color-bg-surface)",
+        card: "var(--color-bg-card)",
+        "card-hover": "var(--color-bg-card-hover)",
+        "card-muted": "var(--color-bg-card-muted)",
+        "card-elevated": "var(--color-bg-elevated)",
+
+        "theme-border": "var(--color-border-subtle)",
+        "theme-border-hover": "var(--color-border-hover)",
+        "theme-border-strong": "var(--color-border-strong)",
+
+        "theme-text": "var(--color-text-primary)",
+        "theme-secondary": "var(--color-text-secondary)",
+        "theme-muted": "var(--color-text-muted)",
+
+        "theme-primary": "var(--color-primary)",
+        "theme-primary-hover": "var(--color-primary-hover)",
+        "theme-primary-active": "var(--color-primary-active)",
+        "theme-accent": "var(--color-accent)",
+
         dark: {
-          bg: "#0B1020",
-          surface: "#111827",
-          card: "#162032",
-          elevated: "#1E293B",
-          border: "rgba(148, 163, 184, 0.12)",
+          bg: "var(--color-bg-base)",
+          surface: "var(--color-bg-surface)",
+          card: "var(--color-bg-card)",
+          elevated: "var(--color-bg-elevated)",
+          border: "var(--color-border-subtle)",
         },
         primary: {
           50: "#EFF6FF",
@@ -23,7 +42,7 @@ const config: Config = {
           200: "#BFDBFE",
           300: "#93C5FD",
           400: "#60A5FA",
-          500: "#3B82F6", // Primary Action Blue
+          500: "#3B82F6",
           600: "#2563EB",
           700: "#1D4ED8",
           800: "#1E40AF",
@@ -42,11 +61,11 @@ const config: Config = {
           navy: "#0F172A",
           slate: "#334155",
           muted: "#94A3B8",
-          border: "#1E293B",
+          border: "var(--color-border-subtle)",
         },
         mind: {
           good: "#22C55E",
-          normal: "#3B82F6",
+          normal: "var(--color-primary)",
           tired: "#FACC15",
           stressed: "#EF4444",
         },
@@ -67,8 +86,8 @@ const config: Config = {
         "3xl": "20px",
       },
       boxShadow: {
-        card: "0 4px 20px -2px rgba(0, 0, 0, 0.35)",
-        glow: "0 0 25px -5px rgba(59, 130, 246, 0.25)",
+        card: "var(--shadow-card)",
+        glow: "var(--shadow-glow)",
       },
     },
   },

@@ -12,18 +12,18 @@ export function Card({
   ...props
 }: CardProps) {
   const variantStyles = {
-    default: "bg-[#111827] border-slate-800/80 text-slate-100 shadow-card",
-    muted: "bg-[#0F172A]/70 border-slate-800/60 text-slate-200",
-    highlight: "bg-[#162032] border-blue-500/30 text-slate-100 shadow-glow/10",
-    elevated: "bg-[#182338] border-slate-700/70 text-slate-100 shadow-card",
+    default: "bg-card border-theme text-theme-text shadow-theme-card",
+    muted: "bg-card-muted border-theme text-theme-secondary",
+    highlight: "bg-card border-[var(--color-primary)]/40 text-theme-text shadow-theme-glow/15 ring-1 ring-[var(--color-primary)]/20",
+    elevated: "bg-card-elevated border-theme text-theme-text shadow-theme-card",
     interactive:
-      "bg-[#111827] border-slate-800/80 hover:border-slate-700 hover:bg-[#162032] active:bg-[#141C2D] transition-all cursor-pointer text-slate-100",
+      "bg-card border-theme hover:border-[var(--color-border-hover)] hover:bg-card-hover active:scale-[0.99] transition-all duration-200 cursor-pointer text-theme-text shadow-sm hover:shadow-theme-card",
   };
 
   return (
     <div
       className={cn(
-        "rounded-2xl border p-5 transition-all duration-150",
+        "rounded-2xl border p-4 sm:p-5 transition-all duration-200",
         variantStyles[variant],
         className
       )}

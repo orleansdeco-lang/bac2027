@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Logo } from "@/components/ui/Logo";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import { ThemeSelector } from "@/components/ui/ThemeSelector";
 import {
   AvailableTimeRange,
   FutureObjectivePreset,
@@ -170,27 +171,28 @@ export default function OnboardingPage() {
     : [];
 
   return (
-    <main className="min-h-screen flex flex-col justify-between bg-[#0B1020] text-slate-100 selection:bg-blue-600 selection:text-white">
+    <main className="min-h-screen flex flex-col justify-between bg-canvas text-theme-text selection:bg-[var(--color-primary)] selection:text-[var(--color-primary-text)] transition-colors duration-200">
       {/* 1. Onboarding Top Bar */}
-      <header className="sticky top-0 z-30 border-b border-slate-800/80 bg-[#0B1020]/95 backdrop-blur-md">
+      <header className="sticky top-0 z-30 border-b border-theme bg-surface/95 backdrop-blur-md">
         <Container size="md" className="flex h-14 items-center justify-between">
           <Logo size="sm" showTagline={false} />
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {draft.currentStep !== "welcome" && (
-              <span className="text-[11px] font-mono text-slate-400">
+              <span className="text-[11px] font-mono text-theme-muted me-1">
                 {currentStepIndex}/{ONBOARDING_STEPS.length - 1}
               </span>
             )}
+            <ThemeSelector variant="compact" />
             <LanguageSwitcher />
           </div>
         </Container>
 
         {/* Subtle Top Progress Bar */}
         {draft.currentStep !== "welcome" && (
-          <div className="w-full h-0.5 bg-slate-800 overflow-hidden">
+          <div className="w-full h-0.5 bg-card-muted overflow-hidden">
             <div
-              className="h-full bg-blue-500 transition-all duration-300 ease-out"
+              className="h-full bg-[var(--color-primary)] transition-all duration-300 ease-out"
               style={{ width: `${progressPercentage}%` }}
             />
           </div>
@@ -818,9 +820,9 @@ export default function OnboardingPage() {
 
       {/* 3. Bottom Step Navigation */}
       {draft.currentStep !== "welcome" && draft.currentStep !== "summary" && (
-        <footer className="sticky bottom-0 z-30 border-t border-slate-800 bg-[#0B1020]/95 backdrop-blur-md py-3.5">
+        <footer className="sticky bottom-0 z-30 border-t border-theme bg-surface/95 backdrop-blur-md py-3.5 transition-colors duration-200">
           <Container size="sm" className="flex items-center justify-between gap-3 max-w-lg">
-            <Button variant="outline" size="md" onClick={handleBack} className="text-slate-300 border-slate-700">
+            <Button variant="outline" size="md" onClick={handleBack}>
               <BackArrow className="h-4 w-4" />
               <span>{t.onboarding.nav.back}</span>
             </Button>
