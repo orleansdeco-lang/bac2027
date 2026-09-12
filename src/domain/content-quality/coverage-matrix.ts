@@ -31,6 +31,9 @@ import { CoverageSkillItem } from "@/domain/curriculum/types";
 import { CANONICAL_EXEMPLAR_VISUAL_ASSETS } from "@/domain/learning-ecosystem/visual-assets";
 import { CANONICAL_EXEMPLAR_EXTERNAL_RESOURCES } from "@/domain/learning-ecosystem/external-resources";
 
+import { MATH_BATCH_01_VISUAL_ASSETS } from "@/domain/content-factory/math-visual-registry";
+import { MATH_BATCH_01_EXTERNAL_RESOURCES } from "@/domain/content-factory/math-resource-registry";
+
 export type CoverageStageKey =
   | "MAPPED"
   | "SOURCE_VERIFIED"
@@ -105,8 +108,8 @@ export interface Coverage16StageStats {
 export function auditSkillCoverageStages(
   item: CoverageSkillItem
 ): SkillCoverage16StageRecord {
-  const hasVisual = CANONICAL_EXEMPLAR_VISUAL_ASSETS.some((v) => v.skillId === item.skillId);
-  const hasResource = CANONICAL_EXEMPLAR_EXTERNAL_RESOURCES.some((r) => r.skillId === item.skillId);
+  const hasVisual = CANONICAL_EXEMPLAR_VISUAL_ASSETS.some((v) => v.skillId === item.skillId) || Boolean(MATH_BATCH_01_VISUAL_ASSETS[item.skillId]);
+  const hasResource = CANONICAL_EXEMPLAR_EXTERNAL_RESOURCES.some((r) => r.skillId === item.skillId) || Boolean(MATH_BATCH_01_EXTERNAL_RESOURCES[item.skillId]);
 
   const isPublished = item.lifecycleState === "PUBLISHED" && item.status === "PUBLISHED";
   const isVerified = item.verificationDimensions?.structuralVerification && item.verificationDimensions?.factualVerification;

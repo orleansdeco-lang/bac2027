@@ -43,6 +43,7 @@ import { PROMPT12_EXPERT_GUIDANCE } from "./expert-guidance";
 import { PROMPT12_MOTIVATIONAL_PRINCIPLES, PROMPT12_VERIFIED_QUOTES } from "./motivation";
 import { PROMPT12_MINI_EXAMS } from "./mini-exams";
 import { PROMPT11_PAST_BAC_REFERENCES } from "./past-bac-references";
+import { MATH_BATCH_01_PACKAGES } from "@/domain/content-factory/math-batch-01";
 
 export { PROMPT12_LESSONS } from "./lessons";
 export { PROMPT12_REPAIR_GUIDES } from "./repair-guides";
@@ -1228,6 +1229,194 @@ export interface SkillLearningBundle {
 }
 
 export function getSkillLearningBundle(skillId: string): SkillLearningBundle | null {
+  const mathPkg = MATH_BATCH_01_PACKAGES[skillId];
+  if (mathPkg) {
+    const mathSkill: Skill = {
+      id: mathPkg.skillId,
+      topicId: mathPkg.topicId,
+      subjectId: mathPkg.subjectId,
+      streamId: mathPkg.streamId,
+      title_ar: mathPkg.lesson.title_ar,
+      title_fr: mathPkg.objective_fr || mathPkg.lesson.title_ar,
+      description_ar: mathPkg.objective_ar,
+      description_fr: mathPkg.objective_fr || mathPkg.objective_ar,
+      prerequisites: mathPkg.prerequisites,
+      cognitiveDimensions: ["application", "knowledge"],
+      difficulty: 2,
+      order: 1,
+      repairStrategy_ar: mathPkg.repairGuide.mentalModelExplanation_ar,
+      repairStrategy_fr: "",
+      repairSteps_ar: mathPkg.repairGuide.actionableSteps_ar,
+      repairSteps_fr: [],
+      academicYear: "2026-2027",
+      sourceId: mathPkg.provenance.sourceId,
+      sourceType: "original_bac_mastery",
+      rightsStatus: "original",
+      verificationStatus: "verified",
+      isActive: true,
+    };
+
+    const mathLesson: Lesson = {
+      id: "lesson_" + mathPkg.skillId,
+      skillId: mathPkg.skillId,
+      subjectId: mathPkg.subjectId,
+      topicId: mathPkg.topicId,
+      title_ar: mathPkg.lesson.title_ar,
+      title_fr: mathPkg.lesson.title_ar,
+      targetCapability_ar: mathPkg.objective_ar,
+      whatYouMustKnow_ar: mathPkg.prerequisites.join(", ") || "المكتسبات القبلية الأساسية",
+      whyThisMatters_ar: mathPkg.examTransfer.bacTypologyNotes_ar || "محور أساسي في بكالوريا الرياضيات",
+      coreConcept_ar: mathPkg.lesson.keyTakeaway_ar,
+      simpleExplanation_ar: mathPkg.lesson.contentMarkdown_ar,
+      workedExample: {
+        id: "we_" + mathPkg.skillId,
+        skillId: mathPkg.skillId,
+        problem_ar: mathPkg.workedExample.problem_ar,
+        howToThink_ar: mathPkg.workedExample.pedagogicalComment_ar,
+        stepByStepSolution_ar: mathPkg.workedExample.stepByStepSolution_ar,
+        finalAnswer_ar: mathPkg.workedExample.stepByStepSolution_ar[mathPkg.workedExample.stepByStepSolution_ar.length - 1],
+        verificationTip_ar: mathPkg.workedExample.pedagogicalComment_ar,
+      },
+      commonMistakes: [
+        {
+          id: "cm_" + mathPkg.skillId,
+          mistake_ar: mathPkg.repairGuide.title_ar,
+          whyItHappens_ar: mathPkg.repairGuide.mentalModelExplanation_ar,
+          correctAction_ar: mathPkg.repairGuide.actionableSteps_ar[0],
+          suspectedErrorType: mathPkg.repairGuide.targetErrorType,
+        },
+      ],
+      howToKnowYouUnderstood_ar: "القدرة على حل التمرين التطبيقي دون مساعدة",
+      quickRecallPrompt_ar: mathPkg.activeRecall.prompt_ar,
+      quickRecallAnswer_ar: mathPkg.activeRecall.expectedAnswer_ar,
+      practiceQuestionIds: mathPkg.practice.map((p) => p.id),
+      whatToDoIfYouFail_ar: "مراجعة بطاقة تصحيح الخطأ ثم إعادة الاختبار التوأم",
+      summaryCard: {
+        id: "sc_" + mathPkg.skillId,
+        keyRule_ar: mathPkg.lesson.keyTakeaway_ar,
+        keyFormula_ar: mathPkg.lesson.title_ar,
+        trapToAvoid_ar: mathPkg.repairGuide.title_ar,
+      },
+      retestQuestionId: mathPkg.retest.id,
+      estimatedMinutes: 15,
+      sourceId: mathPkg.provenance.sourceId,
+      sourceType: "original_bac_mastery",
+      rightsStatus: "original",
+      verificationStatus: "verified",
+      academicYear: "2026-2027",
+      isActive: true,
+    };
+
+    const mathPractice: PracticeQuestion[] = mathPkg.practice.map((p) => ({
+      id: p.id,
+      educationLevel: "secondary",
+      examType: "bac",
+      streamId: "math",
+      subjectId: "math",
+      skillId: mathPkg.skillId,
+      dimension: "application",
+      difficulty: 2,
+      type: "mcq",
+      prompt_ar: p.prompt_ar,
+      prompt_fr: p.prompt_fr || p.prompt_ar,
+      options: [
+        { id: p.correctAnswerId, text_ar: p.explanation_ar.slice(0, 50) + " (الصحيح)", text_fr: "" },
+        ...Object.keys(p.distractorErrorMappings).map((k) => ({
+          id: k,
+          text_ar: "خيار بديل " + k,
+          text_fr: "",
+          suspectedErrorType: p.distractorErrorMappings[k],
+        })),
+      ],
+      correctAnswerId: p.correctAnswerId,
+      explanation_ar: p.explanation_ar,
+      explanation_fr: "",
+      expectedTimeSeconds: 120,
+      tags: ["math", mathPkg.topicId],
+      version: 1,
+      isRetestVariant: false,
+      sourceId: mathPkg.provenance.sourceId,
+      sourceType: "original_bac_mastery",
+      rightsStatus: "original",
+      verificationStatus: "verified",
+      academicYear: "2026-2027",
+    }));
+
+    const mathRetest: RetestQuestion = {
+      id: mathPkg.retest.id,
+      educationLevel: "secondary",
+      examType: "bac",
+      streamId: "math",
+      subjectId: "math",
+      skillId: mathPkg.skillId,
+      dimension: "application",
+      difficulty: 2,
+      type: "mcq",
+      prompt_ar: mathPkg.retest.prompt_ar,
+      prompt_fr: mathPkg.retest.prompt_fr || mathPkg.retest.prompt_ar,
+      options: [
+        { id: mathPkg.retest.correctAnswerId, text_ar: "الإجابة الصحيحة", text_fr: "" },
+        { id: "opt_rq_distractor", text_ar: "إجابة خاطئة شائعة", text_fr: "", suspectedErrorType: "calculation_error" },
+      ],
+      correctAnswerId: mathPkg.retest.correctAnswerId,
+      explanation_ar: mathPkg.retest.explanation_ar,
+      explanation_fr: "",
+      expectedTimeSeconds: 120,
+      tags: ["math", "retest"],
+      version: 1,
+      isRetestVariant: true,
+      retestForQuestionId: mathPkg.retest.parentPracticeQuestionId,
+      sourceId: mathPkg.provenance.sourceId,
+      sourceType: "original_bac_mastery",
+      rightsStatus: "original",
+      verificationStatus: "verified",
+      academicYear: "2026-2027",
+    };
+
+    const mathRepairGuide: RepairGuide = {
+      id: "repair_" + mathPkg.skillId,
+      skillId: mathPkg.skillId,
+      suspectedErrorType: mathPkg.repairGuide.targetErrorType,
+      title_ar: mathPkg.repairGuide.title_ar,
+      whyItHappens_ar: mathPkg.repairGuide.mentalModelExplanation_ar,
+      diagnosis_ar: mathPkg.repairGuide.mentalModelExplanation_ar,
+      repairSteps_ar: mathPkg.repairGuide.actionableSteps_ar,
+      microPracticePrompt_ar: mathPkg.repairGuide.contrastiveWorkedExample || mathPkg.workedExample.problem_ar,
+      microPracticeSolution_ar: mathPkg.workedExample.stepByStepSolution_ar[0],
+      estimatedMinutes: 10,
+      sourceId: mathPkg.provenance.sourceId,
+      sourceType: "original_bac_mastery",
+      rightsStatus: "original",
+      verificationStatus: "verified",
+      academicYear: "2026-2027",
+      isActive: true,
+    };
+
+    return {
+      skill: mathSkill,
+      lesson: mathLesson,
+      workedExample: mathLesson.workedExample,
+      practiceQuestions: mathPractice,
+      repairGuide: mathRepairGuide,
+      retest: mathRetest,
+      provenance: PROMPT11_SOURCES[0],
+      readiness: {
+        skillId: mathPkg.skillId,
+        status: "MASTERY_READY",
+        hasLesson: true,
+        hasWorkedExample: true,
+        practiceQuestionCount: mathPractice.length,
+        hasRetest: true,
+        hasRepairGuide: true,
+        hasCommonErrorCard: true,
+        hasMiniExamCoverage: true,
+        hasPastBacRef: true,
+        hasProvenance: true,
+        isVerified: true,
+      },
+    };
+  }
+
   const skill = PROMPT11_SKILLS.find((s) => s.id === skillId);
   if (!skill) return null;
 

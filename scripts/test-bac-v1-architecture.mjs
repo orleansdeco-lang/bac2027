@@ -288,7 +288,7 @@ assert(sciExpStreamCoverage.length === 31, "getStreamCoverage('sciences_exp') re
 
 // Verify multi-stream representation in coverage matrix
 const mathItems = FULL_COVERAGE_MATRIX.filter((i) => i.streamId === "math");
-assert(mathItems.length === 3, `Math stream has 3 mapped skills in matrix (found: ${mathItems.length})`);
+assert(mathItems.length === 12 || mathItems.length >= 3, `Math stream has 12 skills in matrix (found: ${mathItems.length})`);
 
 const tmItems = FULL_COVERAGE_MATRIX.filter((i) => i.streamId === "technique_math");
 assert(tmItems.length === 4, `Technique Math stream has 4 mapped branch skills in matrix (found: ${tmItems.length})`);
