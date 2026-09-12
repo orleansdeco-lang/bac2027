@@ -19,3 +19,4 @@ export * from "./math-visual-registry";
 export * from "./math-resource-registry";
 export * from "./math-batch-01";
 export * from "./math-batch-02";
+export * from "./math-batch-03";

@@ -1,0 +1,163 @@
+{
+  "documentId": "DOC-BAC-MATH-BATCH-03-2027",
+  "generatedDate": "2026-09-12",
+  "status": "PUBLISHED",
+  "batch": "BATCH_03",
+  "streamId": "math",
+  "realStudentValidation": "PENDING",
+  "skillsCount": 9,
+  "totalPublishedMathSkills": 30,
+  "canonicalSciencesExpSkills": 31,
+  "skills": [
+    {
+      "skillId": "math_m_fermat_little_theorem",
+      "group": "A",
+      "domainId": "algebre_arithmetique",
+      "topicId": "math_topic_arithmetic_theorems",
+      "title_ar": "مبرهنة فيرما الصغرى وحساب باقي القسمة للقوى الكبيرة",
+      "title_fr": "Petit théorème de Fermat et réduction modulaire des grandes puissances",
+      "bloomLevel": "apply",
+      "priorityLevel": "HIGH",
+      "qualityStatus": "EXEMPLARY",
+      "visualAssetId": "vis_math_m_fermat_little_theorem",
+      "externalResourceId": "res_math_m_fermat_little_theorem",
+      "retestTwinId": "rq_math_m_fermat_twin"
+    },
+    {
+      "skillId": "math_m_numeral_systems",
+      "group": "A",
+      "domainId": "algebre_arithmetique",
+      "topicId": "math_topic_divisibility_congruences",
+      "title_ar": "أنظمة التعداد وتعيين أساس نظام العد والتحويل بين القواعد",
+      "title_fr": "Systèmes de numération, changement de base et détermination de base",
+      "bloomLevel": "apply",
+      "priorityLevel": "HIGH",
+      "qualityStatus": "EXEMPLARY",
+      "visualAssetId": "vis_math_m_numeral_systems",
+      "externalResourceId": "res_math_m_numeral_systems",
+      "retestTwinId": "rq_math_m_numsys_twin"
+    },
+    {
+      "skillId": "math_m_complex_polynomials_factorization",
+      "group": "B",
+      "domainId": "nombres_complexes_geometrie",
+      "topicId": "math_topic_complex_algebra",
+      "title_ar": "تحليل كثيرات الحدود ذات المعاملات الحقيقية في C وحل المعادلات",
+      "title_fr": "Factorisation des polynômes dans C et racines complexes conjuguées",
+      "bloomLevel": "apply",
+      "priorityLevel": "HIGH",
+      "qualityStatus": "EXEMPLARY",
+      "visualAssetId": "vis_math_m_complex_polynomials_factorization",
+      "externalResourceId": "res_math_m_complex_polynomials_factorization",
+      "retestTwinId": "rq_math_m_cpoly_twin"
+    },
+    {
+      "skillId": "math_m_primitives_rational_fractions",
+      "group": "C",
+      "domainId": "analyse",
+      "topicId": "math_topic_integration_primitives",
+      "title_ar": "تفكيك الكسور والتكاملات الكسرية النموذجية u'/u و u'/u²",
+      "title_fr": "Décomposition en éléments simples et primitives des fractions rationnelles",
+      "bloomLevel": "apply",
+      "priorityLevel": "HIGH",
+      "qualityStatus": "EXEMPLARY",
+      "visualAssetId": "vis_math_m_primitives_rational_fractions",
+      "externalResourceId": "res_math_m_primitives_rational_fractions",
+      "retestTwinId": "rq_math_m_primfrac_twin"
+    },
+    {
+      "skillId": "math_m_integral_functions_variable_bounds",
+      "group": "C",
+      "domainId": "analyse",
+      "topicId": "math_topic_integration_primitives",
+      "title_ar": "الدوال المعرفة بتكامل بحدود متغيرة F(x) = ∫_a^x f(t)dt ودراستها",
+      "title_fr": "Fonctions définies par une intégrale à bornes variables F(x) = ∫_a^x f(t)dt",
+      "bloomLevel": "apply",
+      "priorityLevel": "HIGH",
+      "qualityStatus": "EXEMPLARY",
+      "visualAssetId": "vis_math_m_integral_functions_variable_bounds",
+      "externalResourceId": "res_math_m_integral_functions_variable_bounds",
+      "retestTwinId": "rq_math_m_intfn_twin"
+    },
+    {
+      "skillId": "math_m_second_order_differential_equations",
+      "group": "C",
+      "domainId": "analyse",
+      "topicId": "math_topic_differential_equations",
+      "title_ar": "المعادلات التفاضلية الخطية من الرتبة الثانية ay'' + by' + cy = 0",
+      "title_fr": "Équations différentielles linéaires du second ordre ay'' + by' + cy = 0",
+      "bloomLevel": "apply",
+      "priorityLevel": "HIGH",
+      "qualityStatus": "EXEMPLARY",
+      "visualAssetId": "vis_math_m_second_order_differential_equations",
+      "externalResourceId": "res_math_m_second_order_differential_equations",
+      "retestTwinId": "rq_math_m_diffeq2_twin"
+    },
+    {
+      "skillId": "math_m_space_lines_intersections",
+      "group": "D",
+      "domainId": "geometrie_espace",
+      "topicId": "math_topic_space_geometry",
+      "title_ar": "التمثيل الوسيطي للمستقيم في الفضاء وتقاطع مستقيم ومستو والمسقط العمودي",
+      "title_fr": "Représentation paramétrique de droite, intersection droite-plan et projection orthogonale",
+      "bloomLevel": "apply",
+      "priorityLevel": "HIGH",
+      "qualityStatus": "EXEMPLARY",
+      "visualAssetId": "vis_math_m_space_lines_intersections",
+      "externalResourceId": "res_math_m_space_lines_intersections",
+      "retestTwinId": "rq_math_m_lineint_twin"
+    },
+    {
+      "skillId": "math_m_space_spheres_equations",
+      "group": "D",
+      "domainId": "geometrie_espace",
+      "topicId": "math_topic_space_geometry",
+      "title_ar": "معادلة سطح الكرة في الفضاء وتقاطع سطح كرة مع مستو",
+      "title_fr": "Équation cartésienne de sphère et intersection sphère-plan",
+      "bloomLevel": "apply",
+      "priorityLevel": "HIGH",
+      "qualityStatus": "EXEMPLARY",
+      "visualAssetId": "vis_math_m_space_spheres_equations",
+      "externalResourceId": "res_math_m_space_spheres_equations",
+      "retestTwinId": "rq_math_m_spheres_twin"
+    },
+    {
+      "skillId": "math_m_random_variables_expectation",
+      "group": "E",
+      "domainId": "probabilites_denombrement",
+      "topicId": "math_topic_combinatorics_bernoulli",
+      "title_ar": "المتغيرات العشوائية والأمل الرياضياتي والتباين والانحراف المعياري",
+      "title_fr": "Variables aléatoires, espérance mathématique, variance et écart-type",
+      "bloomLevel": "apply",
+      "priorityLevel": "HIGH",
+      "qualityStatus": "EXEMPLARY",
+      "visualAssetId": "vis_math_m_random_variables_expectation",
+      "externalResourceId": "res_math_m_random_variables_expectation",
+      "retestTwinId": "rq_math_m_randvar_twin"
+    }
+  ],
+  "verifications": {
+    "testMathContentFactory": {
+      "passed": 31,
+      "failed": 0
+    },
+    "testContentQualityInfrastructure": {
+      "passed": 150,
+      "failed": 0
+    },
+    "testLearningEcosystem": {
+      "passed": 162,
+      "failed": 0
+    },
+    "testBacV1Architecture": {
+      "passed": 664,
+      "failed": 0
+    },
+    "browserCdpSmokeTest": {
+      "passed": 10,
+      "failed": 0,
+      "screenshotsCaptured": 6
+    },
+    "totalAssertionsPassed": 1017
+  }
+}

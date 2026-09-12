@@ -334,7 +334,137 @@ export const MATH_BATCH_02_FACTOR_INPUTS: Record<string, PriorityFactorInputs> =
   },
 };
 
+
+export const MATH_BATCH_03_FACTOR_INPUTS: Record<string, PriorityFactorInputs> = {
+  // 1. Petit théorème de Fermat (Arithmétique)
+  math_m_fermat_little_theorem: {
+    studentDemandPotential: 5,
+    examRelevance: 5,
+    curriculumCentrality: 5,
+    prerequisiteImportance: 4,
+    crossTopicDependency: 4,
+    difficultyLevel: 3,
+    currentContentGap: true,
+    trustworthySourcesAvailable: true,
+    errorFrequencyPotential: 5,
+    educationalRoi: 5,
+  },
+
+  // 2. Systèmes de numération (Arithmétique)
+  math_m_numeral_systems: {
+    studentDemandPotential: 5,
+    examRelevance: 5,
+    curriculumCentrality: 4,
+    prerequisiteImportance: 4,
+    crossTopicDependency: 4,
+    difficultyLevel: 3,
+    currentContentGap: true,
+    trustworthySourcesAvailable: true,
+    errorFrequencyPotential: 4,
+    educationalRoi: 5,
+  },
+
+  // 3. Polynômes dans C (Complexes)
+  math_m_complex_polynomials_factorization: {
+    studentDemandPotential: 5,
+    examRelevance: 5,
+    curriculumCentrality: 5,
+    prerequisiteImportance: 5,
+    crossTopicDependency: 4,
+    difficultyLevel: 2,
+    currentContentGap: true,
+    trustworthySourcesAvailable: true,
+    errorFrequencyPotential: 4,
+    educationalRoi: 5,
+  },
+
+  // 4. Primitives de fractions rationnelles (Analyse)
+  math_m_primitives_rational_fractions: {
+    studentDemandPotential: 5,
+    examRelevance: 5,
+    curriculumCentrality: 5,
+    prerequisiteImportance: 5,
+    crossTopicDependency: 5,
+    difficultyLevel: 3,
+    currentContentGap: true,
+    trustworthySourcesAvailable: true,
+    errorFrequencyPotential: 5,
+    educationalRoi: 5,
+  },
+
+  // 5. Fonctions intégrales à bornes variables (Analyse)
+  math_m_integral_functions_variable_bounds: {
+    studentDemandPotential: 5,
+    examRelevance: 5,
+    curriculumCentrality: 5,
+    prerequisiteImportance: 5,
+    crossTopicDependency: 5,
+    difficultyLevel: 3,
+    currentContentGap: true,
+    trustworthySourcesAvailable: true,
+    errorFrequencyPotential: 5,
+    educationalRoi: 5,
+  },
+
+  // 6. Équations différentielles du second ordre (Analyse)
+  math_m_second_order_differential_equations: {
+    studentDemandPotential: 5,
+    examRelevance: 5,
+    curriculumCentrality: 4,
+    prerequisiteImportance: 4,
+    crossTopicDependency: 4,
+    difficultyLevel: 3,
+    currentContentGap: true,
+    trustworthySourcesAvailable: true,
+    errorFrequencyPotential: 4,
+    educationalRoi: 4,
+  },
+
+  // 7. Droites dans l'espace (Géométrie Espace)
+  math_m_space_lines_intersections: {
+    studentDemandPotential: 5,
+    examRelevance: 5,
+    curriculumCentrality: 5,
+    prerequisiteImportance: 5,
+    crossTopicDependency: 4,
+    difficultyLevel: 2,
+    currentContentGap: true,
+    trustworthySourcesAvailable: true,
+    errorFrequencyPotential: 4,
+    educationalRoi: 5,
+  },
+
+  // 8. Sphères dans l'espace (Géométrie Espace)
+  math_m_space_spheres_equations: {
+    studentDemandPotential: 5,
+    examRelevance: 5,
+    curriculumCentrality: 5,
+    prerequisiteImportance: 4,
+    crossTopicDependency: 4,
+    difficultyLevel: 2,
+    currentContentGap: true,
+    trustworthySourcesAvailable: true,
+    errorFrequencyPotential: 4,
+    educationalRoi: 5,
+  },
+
+  // 9. Variables aléatoires et espérance (Probabilités)
+  math_m_random_variables_expectation: {
+    studentDemandPotential: 5,
+    examRelevance: 5,
+    curriculumCentrality: 5,
+    prerequisiteImportance: 5,
+    crossTopicDependency: 4,
+    difficultyLevel: 2,
+    currentContentGap: true,
+    trustworthySourcesAvailable: true,
+    errorFrequencyPotential: 4,
+    educationalRoi: 5,
+  },
+};
+
 export const ALL_MATH_FACTOR_INPUTS: Record<string, PriorityFactorInputs> = {
+  ...MATH_BATCH_03_FACTOR_INPUTS,
   ...MATH_BATCH_01_FACTOR_INPUTS,
   ...MATH_BATCH_02_FACTOR_INPUTS,
 };

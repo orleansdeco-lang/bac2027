@@ -31,6 +31,7 @@ import { ALL_MATH_EXTERNAL_RESOURCES } from "./math-resource-registry";
 import { ALL_MATH_FACTOR_INPUTS } from "./math-priority-ranking";
 import { evaluateExpansionPriority } from "@/domain/content-quality/priority-engine";
 import { evaluateContentQualityScore } from "@/domain/content-quality/quality-scorer";
+import { getMathBatch03SkillDossier } from "./math-batch-03";
 
 // =============================================================================
 // 1. CONTENT PACKAGES FOR THE 9 BATCH 02 SKILLS
@@ -1223,7 +1224,7 @@ export const MATH_BATCH_02_SPACED_REVIEWS: Record<string, MathSpacedReviewSchedu
 
 export function getMathBatch02SkillDossier(skillId: string): MathSkillDossier | null {
   const pkg = MATH_BATCH_02_PACKAGES[skillId];
-  if (!pkg) return null;
+  if (!pkg) return getMathBatch03SkillDossier(skillId);
 
   const visualAsset = ALL_MATH_VISUAL_ASSETS[skillId];
   const externalResource = ALL_MATH_EXTERNAL_RESOURCES[skillId];
