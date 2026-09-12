@@ -1,0 +1,251 @@
+{
+  "auditDate": "2026-09-12",
+  "academicYear": "2026-2027",
+  "streamId": "math",
+  "auditStatus": "CURRICULUM_AUDIT_COMPLETE — BATCH_04_JUSTIFIED",
+  "realStudentValidation": "PENDING",
+  "evidenceClasses": {
+    "levelA": "OFFICIAL_CURRENT",
+    "levelB": "OFFICIAL_HISTORICAL",
+    "levelC": "AUTHENTIC_BAC_ONEC",
+    "levelD": "BAC_MASTERY_DERIVED",
+    "levelE": "RESEARCH_SUPPORTED",
+    "levelF": "UNVERIFIED"
+  },
+  "regulatoryBaseline": {
+    "foundationalDecree": "Executive Decree No. 07-142 (19 May 2007)",
+    "ministerialDecision": "Decision 36 (10 September 2026) cancelling Decision 20 (28 July 2026)",
+    "coefficientClassification": "OFFICIAL_HISTORICAL",
+    "levelAEvidenceStatus": "CURRENT OFFICIAL EVIDENCE INSUFFICIENT AT MICRO-SKILL LEVEL; FULLY GROUNDED AT LEVEL B AND C"
+  },
+  "curriculumDomains": [
+    {
+      "id": "algebre_arithmetique",
+      "title_ar": "الجبر والحساب",
+      "title_fr": "Algèbre et Arithmétique",
+      "totalCompetencies": 10,
+      "fullyCovered": 8,
+      "partiallyCovered": 1,
+      "notCovered": 1
+    },
+    {
+      "id": "nombres_complexes_geometrie",
+      "title_ar": "الأعداد المركبة والتحويلات النقطية",
+      "title_fr": "Nombres Complexes et Transformations Planes",
+      "totalCompetencies": 8,
+      "fullyCovered": 5,
+      "partiallyCovered": 2,
+      "notCovered": 1
+    },
+    {
+      "id": "analyse",
+      "title_ar": "التحليل الرياضي",
+      "title_fr": "Analyse Mathématique",
+      "totalCompetencies": 22,
+      "fullyCovered": 10,
+      "partiallyCovered": 4,
+      "notCovered": 6
+    },
+    {
+      "id": "geometrie_espace",
+      "title_ar": "الهندسة في الفضاء",
+      "title_fr": "Géométrie dans l'Espace",
+      "totalCompetencies": 5,
+      "fullyCovered": 2,
+      "partiallyCovered": 1,
+      "notCovered": 2
+    },
+    {
+      "id": "probabilites_denombrement",
+      "title_ar": "الاحتمالات والتحليل التوفيقي",
+      "title_fr": "Probabilités et Dénombrement",
+      "totalCompetencies": 5,
+      "fullyCovered": 3,
+      "partiallyCovered": 1,
+      "notCovered": 1
+    }
+  ],
+  "competencyMetrics": {
+    "totalCanonicalCompetencies": 50,
+    "fullyCoveredCount": 28,
+    "fullyCoveredPercentage": 56,
+    "partiallyCoveredCount": 9,
+    "partiallyCoveredPercentage": 18,
+    "indirectlyCoveredCount": 3,
+    "indirectlyCoveredPercentage": 6,
+    "notCoveredCount": 10,
+    "notCoveredPercentage": 20,
+    "coreBacTotal": 42,
+    "coreBacFullyCovered": 28,
+    "coreBacFullPercentage": 66.7,
+    "coreBacPartiallyCovered": 9,
+    "coreBacCriticalGaps": 5,
+    "extensionsCount": 4
+  },
+  "skillMappingsCount": 30,
+  "gapsBreakdown": {
+    "p0MajorGaps": [
+      {
+        "id": "GAP-01",
+        "name": "Suites récurrentes u_{n+1} = f(u_n) & Point fixe f(l) = l",
+        "domain": "analyse",
+        "bacRelevance": "CORE_BAC",
+        "priority": "P0",
+        "score": 99,
+        "proposedSkillId": "math_m_sequences_recurrence_function"
+      },
+      {
+        "id": "GAP-02",
+        "name": "Calcul d'aires planes délimitées par des courbes & unités graphiques",
+        "domain": "analyse",
+        "bacRelevance": "CORE_BAC",
+        "priority": "P0",
+        "score": 99,
+        "proposedSkillId": "math_m_integral_areas_plane"
+      }
+    ],
+    "p1Gaps": [
+      {
+        "id": "GAP-03",
+        "name": "Inégalité des Accroissements Finis (IAF)",
+        "domain": "analyse",
+        "priority": "P1",
+        "score": 97,
+        "proposedSkillId": "math_m_iaf_finite_increments"
+      },
+      {
+        "id": "GAP-04",
+        "name": "Convexité, concavité & points d'inflexion",
+        "domain": "analyse",
+        "priority": "P1",
+        "score": 96,
+        "proposedSkillId": "math_m_function_convexity_inflection"
+      },
+      {
+        "id": "GAP-05",
+        "name": "Théorème de la bijection & fonction réciproque f^{-1}",
+        "domain": "analyse",
+        "priority": "P1",
+        "score": 96,
+        "proposedSkillId": "math_m_function_bijections_reciprocal"
+      },
+      {
+        "id": "GAP-06",
+        "name": "Composition de similitudes directes",
+        "domain": "nombres_complexes_geometrie",
+        "priority": "P1",
+        "score": 95,
+        "proposedSkillId": "math_m_complex_transformations_composition"
+      },
+      {
+        "id": "GAP-07",
+        "name": "Positions relatives de 2 droites dans l'espace",
+        "domain": "geometrie_espace",
+        "priority": "P1",
+        "score": 95,
+        "proposedSkillId": "math_m_space_lines_relative_positions"
+      },
+      {
+        "id": "GAP-08",
+        "name": "Schéma de Bernoulli & loi binomiale B(n,p)",
+        "domain": "probabilites_denombrement",
+        "priority": "P1",
+        "score": 94,
+        "proposedSkillId": "math_m_bernoulli_binomial_distribution"
+      },
+      {
+        "id": "GAP-09",
+        "name": "Systèmes de congruences simultanées dans Z",
+        "domain": "algebre_arithmetique",
+        "priority": "P1",
+        "score": 94,
+        "proposedSkillId": "math_m_simultaneous_congruence_systems"
+      }
+    ],
+    "p2Gaps": [
+      {
+        "id": "GAP-10",
+        "name": "Intersection de deux plans sécants",
+        "domain": "geometrie_espace",
+        "priority": "P2",
+        "score": 88
+      },
+      {
+        "id": "GAP-11",
+        "name": "Primitives des formes usuelles composées",
+        "domain": "analyse",
+        "priority": "P2",
+        "score": 86
+      },
+      {
+        "id": "GAP-12",
+        "name": "Configurations géométriques dans le plan complexe",
+        "domain": "nombres_complexes_geometrie",
+        "priority": "P2",
+        "score": 85
+      }
+    ]
+  },
+  "extensions": [
+    {
+      "skillId": "math_m_fermat_little_theorem",
+      "domain": "algebre_arithmetique",
+      "priorityClass": "P3",
+      "rationale": "Modular power reduction shortcut"
+    },
+    {
+      "skillId": "math_m_numeral_systems",
+      "domain": "algebre_arithmetique",
+      "priorityClass": "P3",
+      "rationale": "Base b conversion & digit constraints"
+    },
+    {
+      "skillId": "math_m_second_order_differential_equations",
+      "domain": "analyse",
+      "priorityClass": "P3",
+      "rationale": "Complete general quadratic ODE solutions"
+    },
+    {
+      "skillId": "math_m_space_spheres_equations",
+      "domain": "geometrie_espace",
+      "priorityClass": "P3",
+      "rationale": "Quadratic surfaces and sphere-plane circles"
+    }
+  ],
+  "priorityModel": {
+    "name": "BAC_MASTERY_DERIVED_MULTI_FACTOR",
+    "weights": {
+      "examRecurrence": 0.35,
+      "dependencyCentrality": 0.25,
+      "errorFrequency": 0.2,
+      "educationalRoi": 0.2
+    }
+  },
+  "historicalBacEvidence": {
+    "sessionsAudited": [
+      "BAC 2020",
+      "BAC 2021",
+      "BAC 2022",
+      "BAC 2023",
+      "BAC 2024"
+    ],
+    "sourcePublisher": "Office National des Examens et Concours (ONEC)",
+    "classification": "AUTHENTIC_BAC_ONEC"
+  },
+  "batch04Gate": {
+    "verdict": "BATCH_04_JUSTIFIED",
+    "requiredSkillCount": 9,
+    "targetCompetencies": [
+      "Suites récurrentes u_{n+1} = f(u_n) & Point fixe",
+      "Calcul d'aires planes & unités graphiques",
+      "Inégalité des Accroissements Finis (IAF)",
+      "Convexité, concavité & points d'inflexion",
+      "Théorème de la bijection & fonction réciproque",
+      "Composition de similitudes directes",
+      "Positions relatives de 2 droites dans l'espace",
+      "Schéma de Bernoulli & loi binomiale B(n, p)",
+      "Systèmes de congruences simultanées"
+    ],
+    "productionStatus": "NOT_STARTED_AUDIT_ONLY"
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "metadata": {
+    "title": "3AS Mathematics Curriculum Gap Matrix (50 Competencies)",
+    "academicYear": "2026-2027",
+    "streamId": "math",
+    "generationDate": "2026-09-12",
+    "auditStatus": "CURRICULUM_AUDIT_COMPLETE — BATCH_04_JUSTIFIED"
+  },
+  "summary": {
+    "totalCompetencies": 50,
+    "fullyCovered": 28,
+    "partiallyCovered": 9,
+    "indirectlyCovered": 3,
+    "notCovered": 10,
+    "extensions": 4,
+    "coreBacTotal": 42,
+    "coreBacFullyCovered": 28,
+    "coreBacPartiallyCovered": 9,
+    "coreBacCriticalGaps": 5
+  },
+  "priorityGapsSummary": {
+    "p0": 2,
+    "p1": 7,
+    "p2": 3,
+    "p3": 4
+  },
+  "targetBatch04Skills": [
+    {
+      "skillId": "math_m_sequences_recurrence_function",
+      "priority": "P0",
+      "targetCompetency": "C-25: Suites récurrentes u_{n+1} = f(u_n) & Point fixe"
+    },
+    {
+      "skillId": "math_m_integral_areas_plane",
+      "priority": "P0",
+      "targetCompetency": "C-39: Calcul d'aires planes & unités graphiques"
+    },
+    {
+      "skillId": "math_m_iaf_finite_increments",
+      "priority": "P1",
+      "targetCompetency": "C-33: Inégalité des Accroissements Finis (IAF)"
+    },
+    {
+      "skillId": "math_m_function_convexity_inflection",
+      "priority": "P1",
+      "targetCompetency": "C-32: Convexité, concavité & points d'inflexion"
+    },
+    {
+      "skillId": "math_m_function_bijections_reciprocal",
+      "priority": "P1",
+      "targetCompetency": "C-34: Théorème de la bijection & fonction réciproque"
+    },
+    {
+      "skillId": "math_m_complex_transformations_composition",
+      "priority": "P1",
+      "targetCompetency": "C-18: Composition de similitudes directes"
+    },
+    {
+      "skillId": "math_m_space_lines_relative_positions",
+      "priority": "P1",
+      "targetCompetency": "C-45: Positions relatives de 2 droites dans l'espace"
+    },
+    {
+      "skillId": "math_m_bernoulli_binomial_distribution",
+      "priority": "P1",
+      "targetCompetency": "C-50: Schéma de Bernoulli & loi binomiale B(n, p)"
+    },
+    {
+      "skillId": "math_m_simultaneous_congruence_systems",
+      "priority": "P1",
+      "targetCompetency": "C-10: Systèmes de congruences simultanées"
+    }
+  ]
+}
