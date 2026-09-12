@@ -120,12 +120,12 @@ $$a^p \\equiv a \\pmod{p}$$
     retest: {
       id: "rq_math_m_fermat_twin",
       parentPracticeQuestionId: "pq_math_m_fermat_01",
-      prompt_ar: "باستعمال مبرهنة فيرما الصغرى، احسب باقي قسمة 3^2027 على العدد الأولي 5.",
+      prompt_ar: "باستعمال مبرهنة فيرما الصغرى، احسب باقي قسمة 3^2026 على العدد الأولي 5.",
       isIsomorphicTwin: true,
       altersSurfaceContext: true,
       testsIdenticalConcept: true,
-      correctAnswerId: "opt_rq_fermat_rem_2",
-      explanation_ar: "بما أن 5 أولي و PGCD(3, 5) = 1، فإن 3^4 ≡ 1 [5]. لدينا 2027 = 4*506 + 3. إذن 3^2027 ≡ 3^3 ≡ 27 ≡ 2 [5].",
+      correctAnswerId: "opt_rq_fermat_rem_4",
+      explanation_ar: "بما أن 5 أولي و PGCD(3, 5) = 1، فإن 3^4 ≡ 1 [5]. لدينا 2026 = 4*506 + 2. إذن 3^2026 ≡ 3^2 ≡ 9 ≡ 4 [5].",
     },
     repairGuide: {
       targetErrorType: "misunderstood_concept",
@@ -585,12 +585,12 @@ $$m(x - a) \\le F(x) \\le M(x - a)$$
     retest: {
       id: "rq_math_m_intfn_twin",
       parentPracticeQuestionId: "pq_math_m_intfn_01",
-      prompt_ar: "لتكن الدالة K(x) = integral_0^x e^(-t^2) dt المعرفة على R. احسب مشتقتها K'(x) واستنتج اتجاه تغيرها.",
+      prompt_ar: "لتكن الدالة K(x) = integral_0^x e^(-t^2) dt المعرفة على R. ما هي المشتقة K'(x) على R؟",
       isIsomorphicTwin: true,
       altersSurfaceContext: true,
       testsIdenticalConcept: true,
-      correctAnswerId: "opt_rq_intfn_inc",
-      explanation_ar: "K'(x) = e^(-x^2). بما أن الدالة الأسية موجبة تماماً على R، فإن K'(x) > 0، والدالة K متزايدة تماماً على R مع K(0) = 0.",
+      correctAnswerId: "opt_rq_intfn_exp",
+      explanation_ar: "بما أن الدالة t -> e^(-t^2) مستمرة على R، فإن مشتقة الدالة التكاملية هي مباشرة K'(x) = e^(-x^2).",
     },
     repairGuide: {
       targetErrorType: "misunderstood_concept",
@@ -705,12 +705,12 @@ $$a r^2 + b r + c = 0$$
     retest: {
       id: "rq_math_m_ode2_twin",
       parentPracticeQuestionId: "pq_math_m_ode2_01",
-      prompt_ar: "حل في R المعادلة التفاضلية: y'' - 2y' + 5y = 0.",
+      prompt_ar: "حل في R المعادلة التفاضلية: y'' - 7y' + 12y = 0.",
       isIsomorphicTwin: true,
       altersSurfaceContext: true,
       testsIdenticalConcept: true,
-      correctAnswerId: "opt_rq_ode2_complex",
-      explanation_ar: "المعادلة المميزة r^2 - 2r + 5 = 0 مميزها Delta = 4 - 20 = -16 = (4i)^2. جذراها r = 1 ± 2i (alpha = 1, beta = 2). الحل العام هو y(x) = e^x * [C_1*cos(2x) + C_2*sin(2x)].",
+      correctAnswerId: "opt_rq_ode2_real_roots",
+      explanation_ar: "المعادلة المميزة r^2 - 7r + 12 = 0 تعطي الجذرين الحقيقيين r_1 = 3 و r_2 = 4. الحل العام هو y(x) = C_1*e^(3x) + C_2*e^(4x).",
     },
     repairGuide: {
       targetErrorType: "calculation_error",

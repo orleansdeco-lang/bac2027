@@ -91,7 +91,7 @@
       "qualityStatus": "EXEMPLARY",
       "visualAssetId": "vis_math_m_second_order_differential_equations",
       "externalResourceId": "res_math_m_second_order_differential_equations",
-      "retestTwinId": "rq_math_m_diffeq2_twin"
+      "retestTwinId": "rq_math_m_ode2_twin"
     },
     {
       "skillId": "math_m_space_lines_intersections",
