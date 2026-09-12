@@ -1,0 +1,144 @@
+{
+  "timestamp": "2026-09-12T10:48:44.797Z",
+  "viewportsTested": [
+    "390x844",
+    "1440x900"
+  ],
+  "checks": {
+    "landing_new_cta": true,
+    "profile_persisted": true,
+    "dynamic_cta_updated": true,
+    "diagnostic_completed": true,
+    "dashboard_now_panel": true,
+    "roadmap_rendered": true,
+    "critical_language_separation": true,
+    "active_recall_prompt": true,
+    "retest_twin_verified": true,
+    "mastery_demonstrated": true,
+    "telemetry_verified": true,
+    "feedback_verified": true,
+    "zero_overflows": true,
+    "zero_console_errors": true
+  },
+  "screenshots": [
+    {
+      "name": "01_landing_new_mobile",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\01_landing_new_mobile.png"
+    },
+    {
+      "name": "02_onboarding_welcome_mobile",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\02_onboarding_welcome_mobile.png"
+    },
+    {
+      "name": "03_onboarding_completed_mobile",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\03_onboarding_completed_mobile.png"
+    },
+    {
+      "name": "04_landing_returning_mobile",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\04_landing_returning_mobile.png"
+    },
+    {
+      "name": "05_diagnostic_start_mobile",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\05_diagnostic_start_mobile.png"
+    },
+    {
+      "name": "06_diagnostic_results_mobile",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\06_diagnostic_results_mobile.png"
+    },
+    {
+      "name": "07_dashboard_mobile",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\07_dashboard_mobile.png"
+    },
+    {
+      "name": "08_roadmap_mobile",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\08_roadmap_mobile.png"
+    },
+    {
+      "name": "09_mission_learn_mobile",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\09_mission_learn_mobile.png"
+    },
+    {
+      "name": "10_mission_active_recall_revealed_mobile",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\10_mission_active_recall_revealed_mobile.png"
+    },
+    {
+      "name": "11_mission_worked_example_mobile",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\11_mission_worked_example_mobile.png"
+    },
+    {
+      "name": "12_mission_worked_example_revealed_mobile",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\12_mission_worked_example_revealed_mobile.png"
+    },
+    {
+      "name": "13_mission_practice_mobile",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\13_mission_practice_mobile.png"
+    },
+    {
+      "name": "14_mission_practice_feedback_mobile",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\14_mission_practice_feedback_mobile.png"
+    },
+    {
+      "name": "15_mission_repair_guide_mobile",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\15_mission_repair_guide_mobile.png"
+    },
+    {
+      "name": "16_mission_retest_mobile",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\16_mission_retest_mobile.png"
+    },
+    {
+      "name": "17_mission_mastery_summary_mobile",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\17_mission_mastery_summary_mobile.png"
+    },
+    {
+      "name": "18_mission_feedback_submitted_mobile",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\18_mission_feedback_submitted_mobile.png"
+    },
+    {
+      "name": "19_dashboard_desktop",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\19_dashboard_desktop.png"
+    },
+    {
+      "name": "20_roadmap_desktop",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\20_roadmap_desktop.png"
+    },
+    {
+      "name": "21_error_lab_desktop",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\21_error_lab_desktop.png"
+    },
+    {
+      "name": "22_progress_desktop",
+      "path": "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\prompt-17\\22_progress_desktop.png"
+    }
+  ],
+  "consoleErrors": [],
+  "overflows": [],
+  "telemetryEventsFound": [
+    "landing_view",
+    "onboarding_started",
+    "onboarding_started",
+    "onboarding_completed",
+    "landing_view",
+    "diagnostic_started",
+    "diagnostic_completed",
+    "dashboard_viewed",
+    "roadmap_viewed",
+    "first_mission_started",
+    "lesson_viewed",
+    "active_recall_answer_revealed",
+    "practice_completed",
+    "error_created",
+    "retest_completed",
+    "mastery_demonstrated",
+    "pilot_feedback_submitted"
+  ],
+  "feedbackStored": [
+    {
+      "id": "fb_1789210196027_23nak",
+      "missionId": "math_exponential_properties_equations",
+      "skillId": "math_exponential_properties_equations",
+      "rating": "easy",
+      "feedbackNote": "الشرح والتطبيق منظمين وواضحين بزاف.",
+      "createdAt": "2026-09-12T10:49:56.027Z"
+    }
+  ]
+}

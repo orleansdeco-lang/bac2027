@@ -172,6 +172,7 @@ export interface Subject {
   code: string;
   title_ar: string;
   title_fr: string;
+  contentLanguage?: "ar" | "fr" | "en" | "es";
   coefficientProvenance: CoefficientProvenance;
   order: number;
   sourceId: string;

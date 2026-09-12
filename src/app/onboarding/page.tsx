@@ -35,6 +35,7 @@ import {
 } from "@/lib/onboarding/profile";
 import { useAuth } from "@/lib/auth/context";
 import { StudentService } from "@/lib/services";
+import { trackEvent } from "@/lib/analytics";
 import {
   ArrowLeft,
   ArrowRight,
@@ -92,6 +93,7 @@ export default function OnboardingPage() {
 
   // Restore saved draft on mount
   useEffect(() => {
+    trackEvent("onboarding_started");
     const saved = getOnboardingDraft();
     if (saved) {
       setDraft(saved);
@@ -146,6 +148,10 @@ export default function OnboardingPage() {
     try {
       const profile = buildStrategicProfile(draft);
       saveStrategicProfile(profile);
+      trackEvent("onboarding_completed", {
+        streamId: profile.streamId,
+        targetScore: profile.targetScore,
+      });
       if (user) {
         await StudentService.saveProfile(profile, user.id);
         router.push("/dashboard");

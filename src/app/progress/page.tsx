@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { ProgressService } from "@/lib/services";
+import { trackEvent } from "@/lib/analytics";
 import {
   CheckCircle2,
   Brain,
@@ -36,6 +37,11 @@ export default function ProgressPage() {
       try {
         const data = await ProgressService.getProgressReport();
         setReport(data);
+        trackEvent("progress_viewed", {
+          demonstratedCount: data?.demonstratedSkills?.length,
+          emergingCount: data?.emergingSkills?.length,
+          completedCount: data?.completedMissionsCount,
+        });
       } catch (e) {
         console.error("Failed to load progress report:", e);
       } finally {

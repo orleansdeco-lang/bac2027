@@ -13,6 +13,7 @@ import { RoadVisualizer } from "@/components/ui/RoadVisualizer";
 import { DashboardService } from "@/lib/services";
 import { getStrategicProfile } from "@/lib/onboarding/profile";
 import { StrategicProfile } from "@/types/onboarding";
+import { trackEvent } from "@/lib/analytics";
 import {
   Sparkles,
   Target,
@@ -48,6 +49,7 @@ export default function DashboardPage() {
         if (p) setProfile(p);
         const dashData = await DashboardService.getDashboardData();
         setData(dashData);
+        trackEvent("dashboard_viewed", { hasProfile: Boolean(p) });
       } catch (err) {
         console.error("Failed to load dashboard data:", err);
       } finally {

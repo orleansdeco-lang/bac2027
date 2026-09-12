@@ -15,6 +15,12 @@ import { DashboardService } from "@/lib/services/dashboard-service";
 import { SkillLearningBundle } from "@/domain/content";
 import { PracticeQuestion } from "@/domain/content/types";
 import {
+  resolveEducationalContentLanguage,
+  resolveContentDirection,
+} from "@/domain/content/language";
+import { trackEvent } from "@/lib/analytics";
+import { submitPilotFeedback, PilotFeedbackRating } from "@/lib/feedback";
+import {
   Compass,
   ArrowRight,
   ArrowLeft,
@@ -105,7 +111,24 @@ export default function MissionPage() {
   // Adaptive next mission
   const [nextMissionId, setNextMissionId] = useState<string | null>(null);
 
+  // Pilot qualitative feedback state
+  const [feedbackRating, setFeedbackRating] = useState<PilotFeedbackRating | null>(null);
+  const [feedbackNote, setFeedbackNote] = useState("");
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const handleFeedbackSubmit = () => {
+    if (!feedbackRating) return;
+    submitPilotFeedback({
+      missionId,
+      skillId: bundle?.skill.id,
+      rating: feedbackRating,
+      feedbackNote: feedbackNote.trim() || undefined,
+      userId: user?.id,
+    });
+    setFeedbackSubmitted(true);
+  };
 
   // Load mission & bundle
   useEffect(() => {
@@ -130,6 +153,18 @@ export default function MissionPage() {
             } else if (res.mission.status === "repair_needed") {
               setCurrentStep("repair");
             }
+          }
+
+          if (res.bundle?.skill) {
+            trackEvent("first_mission_started", {
+              missionId,
+              skillId: res.bundle.skill.id,
+              subjectId: res.bundle.skill.subjectId,
+            });
+            trackEvent("lesson_viewed", {
+              missionId,
+              skillId: res.bundle.skill.id,
+            });
           }
         }
 
@@ -209,6 +244,9 @@ export default function MissionPage() {
   const repairGuide = bundle.repairGuide;
   const retest = bundle.retest;
 
+  const educationalLang = resolveEducationalContentLanguage(bundle.skill.subjectId);
+  const educationalDir = resolveContentDirection(educationalLang);
+
   const formatTime = (secs: number) => {
     const mins = Math.floor(secs / 60);
     const rem = secs % 60;
@@ -237,7 +275,18 @@ export default function MissionPage() {
         userId: user?.id,
       });
 
+      trackEvent("practice_completed", {
+        missionId: mission.id,
+        skillId: bundle.skill.id,
+        isCorrect,
+        confidence: confidenceRating,
+      });
+
       if (!isCorrect) {
+        trackEvent("error_created", {
+          missionId: mission.id,
+          skillId: bundle.skill.id,
+        });
         // Record error automatically in background
         const errRec = await MissionService.recordError({
           missionId: mission.id,
@@ -271,6 +320,10 @@ export default function MissionPage() {
     try {
       const updated = await MissionService.startRepair(activeErrorRecord.id, activeErrorRecord, user?.id);
       setActiveErrorRecord(updated);
+      trackEvent("repair_started", {
+        missionId: mission.id,
+        skillId: bundle.skill.id,
+      });
       setCurrentStep("repair");
     } catch (err) {
       console.error("Error confirming attribution:", err);
@@ -294,6 +347,14 @@ export default function MissionPage() {
         user?.id
       );
       setActiveErrorRecord(completed);
+      trackEvent("repair_completed", {
+        missionId: mission.id,
+        skillId: bundle.skill.id,
+      });
+      trackEvent("retest_started", {
+        missionId: mission.id,
+        skillId: bundle.skill.id,
+      });
       setCurrentStep("retest");
     } catch (err) {
       console.error("Error completing repair:", err);
@@ -325,6 +386,20 @@ export default function MissionPage() {
         confidence: retestConfidence,
         userId: user?.id,
       });
+
+      trackEvent("retest_completed", {
+        missionId: mission.id,
+        skillId: bundle.skill.id,
+        isCorrect: isPassed,
+        confidence: retestConfidence,
+      });
+
+      if (isPassed) {
+        trackEvent("mastery_demonstrated", {
+          missionId: mission.id,
+          skillId: bundle.skill.id,
+        });
+      }
 
       setCurrentStep("summary");
     } catch (err) {
@@ -474,7 +549,7 @@ export default function MissionPage() {
         {/* STEP 1: MICRO-LESSON (14 PEDAGOGICAL ELEMENTS)                    */}
         {/* ================================================================= */}
         {currentStep === "learn" && lesson && (
-          <div className="space-y-6 animate-fade-in">
+          <div dir={educationalDir} className="space-y-6 animate-fade-in">
             {/* Target Capability (بعد ما نكمل الدرس) */}
             <Card className="border-blue-500/30 bg-blue-950/20 p-5 space-y-2">
               <div className="flex items-center gap-2 text-xs font-bold text-blue-400 uppercase tracking-wider">
@@ -575,7 +650,13 @@ export default function MissionPage() {
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => setShowQuickRecallAnswer(true)}
+                      onClick={() => {
+                        setShowQuickRecallAnswer(true);
+                        trackEvent("active_recall_answer_revealed", {
+                          missionId,
+                          skillId: bundle?.skill?.id,
+                        });
+                      }}
                       className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/20 text-xs shrink-0 h-8"
                     >
                       <Eye className="h-3.5 w-3.5" />
@@ -654,7 +735,7 @@ export default function MissionPage() {
         {/* STEP 2: WORKED EXAMPLE (THINK BEFORE LOOKING)                     */}
         {/* ================================================================= */}
         {currentStep === "worked_example" && workedExample && (
-          <div className="space-y-6 animate-fade-in">
+          <div dir={educationalDir} className="space-y-6 animate-fade-in">
             <Card className="border-slate-800 bg-[#0e1628]/80 p-6 sm:p-7 space-y-6">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
@@ -760,7 +841,13 @@ export default function MissionPage() {
               <Button
                 variant="primary"
                 size="lg"
-                onClick={() => setCurrentStep("practice")}
+                onClick={() => {
+                  trackEvent("practice_started", {
+                    missionId: mission.id,
+                    skillId: bundle.skill.id,
+                  });
+                  setCurrentStep("practice");
+                }}
                 className="font-bold shadow-lg shadow-blue-600/25"
               >
                 <span>{isAr ? "فهمت المثال، نبدأ التطبيق" : "Commencer la pratique"}</span>
@@ -774,7 +861,7 @@ export default function MissionPage() {
         {/* STEP 3: PRACTICE QUESTION & CONFIDENCE RATING                     */}
         {/* ================================================================= */}
         {currentStep === "practice" && activeQuestion && (
-          <div className="space-y-6 animate-fade-in">
+          <div dir={educationalDir} className="space-y-6 animate-fade-in">
             <Card className="border-slate-800 bg-[#0e1628]/80 p-6 sm:p-7 space-y-6">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-blue-400">
@@ -858,6 +945,7 @@ export default function MissionPage() {
 
             <div className="flex justify-end pt-2">
               <Button
+                data-testid="practice-submit-button"
                 variant="primary"
                 size="lg"
                 disabled={!selectedOptionId || !confidenceRating || isSubmitting}
@@ -1136,7 +1224,7 @@ export default function MissionPage() {
         {/* STEP 7: RETEST TWIN                                               */}
         {/* ================================================================= */}
         {currentStep === "retest" && retest && (
-          <div className="space-y-6 animate-fade-in">
+          <div dir={educationalDir} className="space-y-6 animate-fade-in">
             <Card className="border-cyan-500/40 bg-[#0e1628]/80 p-6 sm:p-7 space-y-6">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2 text-xs font-bold text-cyan-400 uppercase tracking-wider">
@@ -1216,6 +1304,7 @@ export default function MissionPage() {
 
             <div className="flex justify-end pt-2">
               <Button
+                data-testid="retest-submit-button"
                 variant="primary"
                 size="lg"
                 disabled={!retestSelectedOptionId || !retestConfidence || isSubmitting}
@@ -1287,6 +1376,77 @@ export default function MissionPage() {
                   </p>
                 </div>
               )}
+
+              {/* PILOT FEEDBACK CARD */}
+              <div className="p-4 sm:p-5 rounded-2xl border border-blue-500/30 bg-slate-900/80 space-y-3.5">
+                <div className="flex items-center gap-2 text-xs font-bold text-blue-300">
+                  <Sparkles className="h-4 w-4 text-blue-400" />
+                  <span>{isAr ? "تقييم تجربة المهمة (ملاحظات التلميذ)" : "Retour d'expérience (Pilote)"}</span>
+                </div>
+
+                {!feedbackSubmitted ? (
+                  <div className="space-y-3">
+                    <p className="text-xs sm:text-sm text-slate-200 font-semibold">
+                      {isAr ? "كيف كانت هذي المهمة؟" : "Comment s'est passée cette mission ?"}
+                    </p>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {(
+                        [
+                          { id: "easy", label_ar: "سهلة", label_fr: "Facile" },
+                          { id: "normal", label_ar: "عادية", label_fr: "Normale" },
+                          { id: "hard", label_ar: "صعبة", label_fr: "Difficile" },
+                          { id: "unclear", label_ar: "ما فهمتش واش ندير", label_fr: "Consignes peu claires" },
+                        ] as const
+                      ).map((opt) => (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setFeedbackRating(opt.id)}
+                          className={`p-2 rounded-xl text-xs font-semibold border transition-all ${
+                            feedbackRating === opt.id
+                              ? "border-blue-500 bg-blue-950/60 text-blue-300 ring-1 ring-blue-500/40"
+                              : "border-slate-800 bg-slate-900/40 text-slate-400 hover:text-slate-200"
+                          }`}
+                        >
+                          {isAr ? opt.label_ar : opt.label_fr}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] text-slate-400 block">
+                        {isAr ? "واش اللي ما عجبكش؟ (اختياري)" : "Qu'est-ce qui pourrait être amélioré ? (optionnel)"}
+                      </label>
+                      <input
+                        type="text"
+                        value={feedbackNote}
+                        onChange={(e) => setFeedbackNote(e.target.value)}
+                        placeholder={isAr ? "ملاحظة قصيرة لمساعدتنا في تحسين التجربة..." : "Votre remarque..."}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div className="flex justify-end pt-1">
+                      <Button
+                        data-testid="pilot-feedback-submit-btn"
+                        size="sm"
+                        variant="primary"
+                        disabled={!feedbackRating}
+                        onClick={handleFeedbackSubmit}
+                        className="text-xs font-bold"
+                      >
+                        <span>{isAr ? "إرسال الملاحظة" : "Envoyer"}</span>
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-xs text-emerald-300 flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                    <span>{isAr ? "شكراً لك! وصلت ملاحظتك وستساعدنا في تحسين المنصة." : "Merci pour votre retour !"}</span>
+                  </div>
+                )}
+              </div>
 
               {/* Next Steps CTA */}
               <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 border-t border-slate-800">

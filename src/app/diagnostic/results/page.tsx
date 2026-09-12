@@ -255,7 +255,7 @@ export default function DiagnosticResultsPage() {
               <span>{t.diagnostic.results.discrepancyTitle}</span>
             </div>
 
-            <div className="flex items-center justify-between text-xs sm:text-sm py-2 border-y border-slate-800">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm py-2 border-y border-slate-800">
               <div>
                 <span className="text-slate-400">{locale === "ar" ? "تقديرك الذاتي السابق:" : "Auto-évaluation :"}</span>{" "}
                 <strong className="text-white font-mono">{results.selfEstimateScore}/20</strong>

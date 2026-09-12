@@ -13,6 +13,7 @@ import { getStrategicProfile } from "@/lib/onboarding/profile";
 import { StrategicProfile } from "@/types/onboarding";
 import { getActiveMissionId, loadMasteryRecords, loadPracticeSessions } from "@/lib/mission/storage";
 import { loadDiagnosticResults } from "@/lib/diagnostic";
+import { trackEvent } from "@/lib/analytics";
 import {
   Compass,
   ArrowRight,
@@ -43,6 +44,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const p = getStrategicProfile();
+    trackEvent("landing_view", { hasProfile: Boolean(p) });
     if (p) {
       setProfile(p);
       const activeMissionId = getActiveMissionId();
@@ -63,15 +65,15 @@ export default function HomePage() {
         });
       } else if (hasProgress) {
         setSmartCta({
-          textAr: "لوحة التحكم ومهمة اليوم",
-          textFr: "Tableau de bord & Mission",
+          textAr: "نكمل خريطتي",
+          textFr: "Continuer ma feuille de route",
           href: "/dashboard",
         });
       } else {
         setSmartCta({
-          textAr: "لوحة التحكم",
-          textFr: "Tableau de bord",
-          href: "/dashboard",
+          textAr: "شوف خريطتي",
+          textFr: "Voir ma feuille de route",
+          href: "/roadmap",
         });
       }
     } else {
@@ -130,7 +132,7 @@ export default function HomePage() {
 
               {/* Action CTAs */}
               <div className="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4">
-                <Link href={smartCta.href} className="w-full sm:w-auto">
+                <Link id="hero-smart-cta-link" href={smartCta.href} className="w-full sm:w-auto">
                   <Button variant="primary" size="lg" className="w-full sm:w-auto font-bold shadow-lg shadow-blue-600/25 min-h-[48px]">
                     <span>{isAr ? smartCta.textAr : smartCta.textFr}</span>
                     <Arrow className="h-4 w-4" />

@@ -40,6 +40,7 @@ import {
   saveDiagnosticResults,
   clearDiagnosticSession,
 } from "@/lib/diagnostic";
+import { trackEvent } from "@/lib/analytics";
 
 export default function DiagnosticPage() {
   const router = useRouter();
@@ -122,6 +123,7 @@ export default function DiagnosticPage() {
   }, [session, currentIndex]);
 
   const handleStartSession = () => {
+    trackEvent("diagnostic_started", { streamId });
     const newSession = createDiagnosticSession(streamId, specialty);
     setSession(newSession);
     setCurrentIndex(0);
@@ -190,6 +192,10 @@ export default function DiagnosticPage() {
         selfEstimateScore
       );
       saveDiagnosticResults(analysis);
+      trackEvent("diagnostic_completed", {
+        score: analysis.observedDiagnosticScore,
+        dimensions: Object.keys(analysis.dimensionScores).length,
+      });
       router.push("/diagnostic/results");
     }
   };
@@ -377,6 +383,7 @@ export default function DiagnosticPage() {
                     return (
                       <button
                         key={option.id}
+                        data-testid="diagnostic-option"
                         type="button"
                         onClick={() => handleSelectOption(option.id)}
                         className={`w-full min-h-[50px] text-start p-4 rounded-xl border transition-all text-sm leading-relaxed flex items-start gap-3 active:scale-[0.99] ${
@@ -416,6 +423,7 @@ export default function DiagnosticPage() {
                         return (
                           <button
                             key={lvl}
+                            data-testid="diagnostic-conf-btn"
                             type="button"
                             onClick={() => handleSelectConfidence(lvl)}
                             className={`min-h-[46px] p-2 sm:p-2.5 rounded-xl border text-center transition-all flex flex-col items-center justify-center active:scale-95 ${
@@ -450,6 +458,7 @@ export default function DiagnosticPage() {
                 </Button>
 
                 <Button
+                  data-testid="diagnostic-next-btn"
                   size="md"
                   onClick={handleNext}
                   disabled={!selectedOptionId || !confidenceRating}

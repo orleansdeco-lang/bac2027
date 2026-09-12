@@ -1,0 +1,174 @@
+/**
+ * BAC Mastery — Essential Pilot Analytics Instrumentation
+ * Prompt 17 § 14 & 15: Minimal Event Instrumentation for Pilot Learning
+ * 
+ * DESIGN PRINCIPLES:
+ * 1. Minimal non-sensitive telemetry only (Where do students stop? How long until first mission?
+ *    How many reach repair/retest? Do they return?).
+ * 2. ZERO PII, ZERO passwords, ZERO private messages, ZERO answer text leaks.
+ * 3. Works offline and in guest mode via local buffer, with optional remote logging.
+ */
+
+export type PilotAnalyticsEventName =
+  | "landing_view"
+  | "onboarding_started"
+  | "onboarding_completed"
+  | "diagnostic_started"
+  | "diagnostic_completed"
+  | "dashboard_viewed"
+  | "first_mission_started"
+  | "mission_started"
+  | "lesson_viewed"
+  | "active_recall_started"
+  | "active_recall_answer_revealed"
+  | "practice_started"
+  | "practice_completed"
+  | "error_created"
+  | "repair_started"
+  | "repair_completed"
+  | "retest_started"
+  | "retest_completed"
+  | "mastery_demonstrated"
+  | "roadmap_viewed"
+  | "roadmap_mission_selected"
+  | "progress_viewed"
+  | "error_lab_viewed"
+  | "recovery_viewed"
+  | "returned_next_day"
+  | "pilot_feedback_submitted"
+  | "pilot_session_started"
+  | "pilot_session_ended"
+  | "pilot_resume_success";
+
+export interface PilotAnalyticsProperties {
+  userId?: string | null;
+  sessionId?: string;
+  educationLevel?: string;
+  streamId?: string;
+  subjectId?: string;
+  skillId?: string;
+  missionId?: string;
+  eventSource?: string;
+  timeSpentSeconds?: number;
+  confidence?: number;
+  isCorrect?: boolean;
+  step?: string;
+  [key: string]: unknown;
+}
+
+export interface StoredPilotEvent {
+  id: string;
+  name: PilotAnalyticsEventName;
+  timestamp: string;
+  properties: PilotAnalyticsProperties;
+}
+
+export const PILOT_EVENTS_STORAGE_KEY = "bac_mastery_pilot_events";
+export const PILOT_SESSION_ID_KEY = "bac_mastery_analytics_session_id";
+
+/**
+ * Returns a persistent anonymous session ID for pilot telemetry
+ */
+export function getOrCreateSessionId(): string {
+  if (typeof window === "undefined") return "server_session";
+  try {
+    let sid = localStorage.getItem(PILOT_SESSION_ID_KEY);
+    if (!sid) {
+      sid = `pilot_ses_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      localStorage.setItem(PILOT_SESSION_ID_KEY, sid);
+    }
+    return sid;
+  } catch {
+    return `pilot_ses_${Date.now()}`;
+  }
+}
+
+/**
+ * Sanitizes event properties to eliminate tokens, passwords, and private secrets (Prompt 17 § 15)
+ */
+function sanitizeProperties(props: PilotAnalyticsProperties): PilotAnalyticsProperties {
+  const sanitized: PilotAnalyticsProperties = {};
+  const forbiddenKeys = new Set([
+    "token",
+    "jwt",
+    "password",
+    "secret",
+    "auth_secret",
+    "access_token",
+    "refresh_token",
+    "apikey",
+    "bearer",
+  ]);
+
+  for (const [k, v] of Object.entries(props)) {
+    if (forbiddenKeys.has(k.toLowerCase())) continue;
+    if (typeof v === "string") {
+      // Scrub tokens or bearer headers
+      if (/bearer\s+[A-Za-z0-9-_=.]+/i.test(v)) continue;
+      if (/^[A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*$/.test(v) && v.length > 30) {
+        continue;
+      }
+    }
+    sanitized[k] = v;
+  }
+  return sanitized;
+}
+
+/**
+ * Core event tracking function
+ */
+export function trackEvent(
+  name: PilotAnalyticsEventName,
+  properties: PilotAnalyticsProperties = {}
+): StoredPilotEvent {
+  const sessionId = properties.sessionId || getOrCreateSessionId();
+  const cleanProps = sanitizeProperties(properties);
+  const event: StoredPilotEvent = {
+    id: `evt_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    name,
+    timestamp: new Date().toISOString(),
+    properties: {
+      ...cleanProps,
+      sessionId,
+    },
+  };
+
+  if (typeof window !== "undefined") {
+    try {
+      const raw = localStorage.getItem(PILOT_EVENTS_STORAGE_KEY);
+      const existing: StoredPilotEvent[] = raw ? JSON.parse(raw) : [];
+      // Keep most recent 500 events to manage storage footprint
+      const updated = [...existing.slice(-499), event];
+      localStorage.setItem(PILOT_EVENTS_STORAGE_KEY, JSON.stringify(updated));
+    } catch {
+      // Gracefully ignore local storage quota / access issues
+    }
+  }
+
+  return event;
+}
+
+/**
+ * Retrieve all buffered pilot events
+ */
+export function getStoredPilotEvents(): StoredPilotEvent[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(PILOT_EVENTS_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as StoredPilotEvent[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Purge buffered events (e.g. for testing cleanup)
+ */
+export function clearStoredPilotEvents(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(PILOT_EVENTS_STORAGE_KEY);
+  } catch {
+    // Ignore
+  }
+}

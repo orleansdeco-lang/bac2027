@@ -27,6 +27,7 @@ import {
 import { AdaptiveRoadmapState, QueuedMissionItem } from "@/types/roadmap";
 import { buildAdaptiveRoadmap, getComputedAdaptiveRoadmap } from "@/lib/roadmap";
 import { setActiveMissionId } from "@/lib/mission";
+import { trackEvent } from "@/lib/analytics";
 import { getAllTopics, getSkillsForTopic } from "@/data/curriculum";
 import {
   Compass,
@@ -93,6 +94,11 @@ export default function RoadmapPage() {
             energyState: stored.studyEnergy,
           });
           setRoadmapState(computed);
+          trackEvent("roadmap_viewed", {
+            hasProfile: Boolean(stored),
+            hasDiagnostic: Boolean(diag),
+            totalMissions: computed.queuedMissions.length,
+          });
         }
       } catch (err) {
         console.error("Error loading roadmap state:", err);
@@ -107,6 +113,7 @@ export default function RoadmapPage() {
   }, [user, authLoading]);
 
   const handleStartMission = (missionId: string) => {
+    trackEvent("roadmap_mission_selected", { missionId });
     setActiveMissionId(missionId);
     router.push(`/mission/${missionId}`);
   };

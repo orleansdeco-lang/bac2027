@@ -28,6 +28,7 @@ import {
 import { useAuth } from "@/lib/auth/context";
 import { ErrorRepository } from "@/lib/repositories/error-repository";
 import { ErrorRecord, Skill } from "@/types/mission";
+import { trackEvent } from "@/lib/analytics";
 import {
   getAllErrorsList,
   getRecurringErrors,
@@ -62,6 +63,11 @@ export default function ErrorLabPage() {
         setRemediatedCount(
           list.filter((e) => e.repairStatus === "retest_passed" || e.repairStatus === "repair_completed").length
         );
+        trackEvent("error_lab_viewed", {
+          totalErrors: list.length,
+          openErrors: list.filter((e) => e.repairStatus === "identified" || e.repairStatus === "repair_started").length,
+          recurringErrors: list.filter((e) => e.isRecurring).length,
+        });
       } catch (err) {
         console.error("Error loading error lab:", err);
       } finally {

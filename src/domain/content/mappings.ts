@@ -188,6 +188,7 @@ export const SCIENCES_EXP_SUBJECTS: Subject[] = [
     code: "MATH-3AS-SE",
     title_ar: "الرياضيات",
     title_fr: "Mathématiques",
+    contentLanguage: "ar",
     coefficientProvenance: {
       value: 7,
       status: "verified",
@@ -211,6 +212,7 @@ export const SCIENCES_EXP_SUBJECTS: Subject[] = [
     code: "PHYS-3AS-SE",
     title_ar: "العلوم الفيزيائية",
     title_fr: "Physique-Chimie",
+    contentLanguage: "ar",
     coefficientProvenance: {
       value: 6,
       status: "verified",
@@ -234,6 +236,7 @@ export const SCIENCES_EXP_SUBJECTS: Subject[] = [
     code: "SNV-3AS-SE",
     title_ar: "علوم الطبيعة والحياة",
     title_fr: "Sciences de la Nature et de la Vie",
+    contentLanguage: "ar",
     coefficientProvenance: {
       value: 6,
       status: "verified",
