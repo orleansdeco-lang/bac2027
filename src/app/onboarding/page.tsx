@@ -32,6 +32,8 @@ import {
   saveOnboardingDraft,
   saveStrategicProfile,
 } from "@/lib/onboarding/profile";
+import { useAuth } from "@/lib/auth/context";
+import { StudentService } from "@/lib/services";
 import {
   ArrowLeft,
   ArrowRight,
@@ -82,6 +84,7 @@ export default function OnboardingPage() {
   const BackArrow = isRtl ? ArrowRight : ArrowLeft;
   const NextArrow = isRtl ? ArrowLeft : ArrowRight;
 
+  const { user } = useAuth();
   const [draft, setDraft] = useState<OnboardingDraft>(INITIAL_DRAFT);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isClientLoaded, setIsClientLoaded] = useState(false);
@@ -138,11 +141,16 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
     try {
       const profile = buildStrategicProfile(draft);
       saveStrategicProfile(profile);
-      router.push("/roadmap");
+      if (user) {
+        await StudentService.saveProfile(profile, user.id);
+        router.push("/dashboard");
+      } else {
+        router.push("/auth?from=onboarding");
+      }
     } catch (err) {
       setErrorMessage(isAr ? "يرجى التحقق من ملء جميع الحقول المطلوبة." : "Veuillez vérifier que tous les champs obligatoires sont remplis.");
     }

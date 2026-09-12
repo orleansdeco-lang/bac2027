@@ -5,18 +5,19 @@
 
 import { PracticeSession } from "@/types/mission";
 import { supabase, isSupabaseConfigured } from "../supabase/client";
-import { loadPracticeSessions, savePracticeSession as saveLocalPracticeSession } from "../mission/storage";
+import { loadPracticeSessions, savePracticeSession as saveLocalPracticeSession, loadMissions } from "../mission/storage";
 
 export const PracticeRepository = {
-  async savePracticeSession(session: PracticeSession, userId?: string): Promise<void> {
+  async savePracticeSession(session: PracticeSession, userId?: string, skillId?: string): Promise<void> {
     saveLocalPracticeSession(session);
 
     if (isSupabaseConfigured && supabase && userId && session.responses.length > 0) {
       try {
+        const resolvedSkillId = skillId || loadMissions()[session.missionId]?.skillId || "general_practice";
         const rows = session.responses.map((r) => ({
           mission_id: session.missionId,
           user_id: userId,
-          skill_id: "general_practice",
+          skill_id: resolvedSkillId,
           question_id: r.questionId,
           attempt_type: session.isRetest ? "retest" : "practice",
           selected_answer: r.selectedAnswer,

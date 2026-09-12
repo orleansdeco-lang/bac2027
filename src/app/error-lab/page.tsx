@@ -25,6 +25,8 @@ import {
   Wrench,
   HelpCircle,
 } from "lucide-react";
+import { useAuth } from "@/lib/auth/context";
+import { ErrorRepository } from "@/lib/repositories/error-repository";
 import { ErrorRecord, Skill } from "@/types/mission";
 import {
   getAllErrorsList,
@@ -35,6 +37,7 @@ import {
 } from "@/lib/mission";
 
 export default function ErrorLabPage() {
+  const { user, isLoading: authLoading } = useAuth();
   const { t, locale, direction } = useTranslation();
   const isRtl = direction === "rtl";
   const NextArrow = isRtl ? ArrowLeft : ArrowRight;
@@ -47,13 +50,29 @@ export default function ErrorLabPage() {
   const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
-    const list = getAllErrorsList();
-    setErrors(list);
-    setOpenCount(getOpenErrors().length);
-    setRecurringCount(getRecurringErrors().length);
-    setRemediatedCount(getRemediatedErrors().length);
-    setHasLoaded(true);
-  }, []);
+    async function loadErrors() {
+      try {
+        const errorMap = await ErrorRepository.getErrors(user?.id);
+        const list = Object.values(errorMap);
+        setErrors(list);
+        setOpenCount(
+          list.filter((e) => e.repairStatus === "identified" || e.repairStatus === "repair_started").length
+        );
+        setRecurringCount(list.filter((e) => e.isRecurring).length);
+        setRemediatedCount(
+          list.filter((e) => e.repairStatus === "retest_passed" || e.repairStatus === "repair_completed").length
+        );
+      } catch (err) {
+        console.error("Error loading error lab:", err);
+      } finally {
+        setHasLoaded(true);
+      }
+    }
+
+    if (!authLoading) {
+      loadErrors();
+    }
+  }, [user, authLoading]);
 
   if (!hasLoaded) {
     return (

@@ -63,15 +63,15 @@ export default function HomePage() {
         });
       } else if (hasProgress) {
         setSmartCta({
-          textAr: "نكمل خريطتي",
-          textFr: "Continuer ma feuille de route",
-          href: "/roadmap",
+          textAr: "لوحة التحكم ومهمة اليوم",
+          textFr: "Tableau de bord & Mission",
+          href: "/dashboard",
         });
       } else {
         setSmartCta({
-          textAr: "شوف خريطتي",
-          textFr: "Voir ma feuille de route",
-          href: "/roadmap",
+          textAr: "لوحة التحكم",
+          textFr: "Tableau de bord",
+          href: "/dashboard",
         });
       }
     } else {

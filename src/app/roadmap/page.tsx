@@ -16,8 +16,16 @@ import { calculateInitialStrategicGap } from "@/lib/onboarding/gap";
 import { detectStrategicBottleneck } from "@/lib/onboarding/bottleneck";
 import { DiagnosticAnalysisResult } from "@/types/diagnostic";
 import { loadDiagnosticResults } from "@/lib/diagnostic";
+import { useAuth } from "@/lib/auth/context";
+import {
+  StudentRepository,
+  DiagnosticRepository,
+  MissionRepository,
+  ErrorRepository,
+  MasteryRepository,
+} from "@/lib/repositories";
 import { AdaptiveRoadmapState, QueuedMissionItem } from "@/types/roadmap";
-import { getComputedAdaptiveRoadmap } from "@/lib/roadmap";
+import { buildAdaptiveRoadmap, getComputedAdaptiveRoadmap } from "@/lib/roadmap";
 import { setActiveMissionId } from "@/lib/mission";
 import { getAllTopics, getSkillsForTopic } from "@/data/curriculum";
 import {
@@ -40,6 +48,7 @@ import {
 
 export default function RoadmapPage() {
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const { t, locale, direction } = useTranslation();
   const isAr = locale === "ar";
   const isRtl = direction === "rtl";
@@ -54,25 +63,48 @@ export default function RoadmapPage() {
   const [showCurriculumMap, setShowCurriculumMap] = useState(false);
 
   useEffect(() => {
-    const stored = getStrategicProfile();
-    if (stored) {
-      setProfile(stored);
-      const gap = calculateInitialStrategicGap(stored);
-      setGapResult(gap);
-      const b = detectStrategicBottleneck(stored, gap);
-      setBottlenecks(b);
+    async function loadRoadmap() {
+      try {
+        const stored = await StudentRepository.getProfile(user?.id);
+        if (stored) {
+          setProfile(stored);
+          const gap = calculateInitialStrategicGap(stored);
+          setGapResult(gap);
+          const b = detectStrategicBottleneck(stored, gap);
+          setBottlenecks(b);
 
-      const diag = loadDiagnosticResults();
-      if (diag) {
-        setDiagnosticResults(diag);
+          const diag = await DiagnosticRepository.getResults(user?.id);
+          if (diag) {
+            setDiagnosticResults(diag);
+          }
+
+          const [missions, errors, mastery] = await Promise.all([
+            MissionRepository.getMissions(user?.id),
+            ErrorRepository.getErrors(user?.id),
+            MasteryRepository.getMasteryRecords(user?.id),
+          ]);
+
+          const computed = buildAdaptiveRoadmap({
+            onboardingProfile: stored,
+            diagnosticResult: diag,
+            missions: missions,
+            masteryEvidence: mastery,
+            errors: Object.values(errors),
+            energyState: stored.studyEnergy,
+          });
+          setRoadmapState(computed);
+        }
+      } catch (err) {
+        console.error("Error loading roadmap state:", err);
+      } finally {
+        setIsLoaded(true);
       }
-
-      // Authoritative Adaptive Roadmap Engine
-      const computed = getComputedAdaptiveRoadmap();
-      setRoadmapState(computed);
     }
-    setIsLoaded(true);
-  }, []);
+
+    if (!authLoading) {
+      loadRoadmap();
+    }
+  }, [user, authLoading]);
 
   const handleStartMission = (missionId: string) => {
     setActiveMissionId(missionId);

@@ -23,9 +23,11 @@ export function TopBar() {
   }, [pathname]);
 
   const navLinks = [
-    { href: "/", label: locale === "ar" ? "الرئيسية" : "Accueil" },
+    { href: "/dashboard", label: locale === "ar" ? "لوحة التحكم" : "Tableau de bord" },
     { href: "/roadmap", label: locale === "ar" ? "الخريطة" : "Feuille de route" },
     { href: "/error-lab", label: locale === "ar" ? "مختبر الأخطاء" : "Lab d'erreurs" },
+    { href: "/progress", label: locale === "ar" ? "تقدمي" : "Progrès" },
+    { href: "/account", label: locale === "ar" ? "حسابي" : "Mon compte" },
   ];
 
   return (

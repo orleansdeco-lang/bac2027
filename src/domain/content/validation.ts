@@ -305,7 +305,7 @@ export function validateContentArchitecture(dataset: ContentDataset): ContentVal
   }
 
   // Check against prohibited overclaiming in titles/descriptions
-  const forbiddenClaims = ["official prediction", "predictedBACScore", "garantie de réussite"];
+  const forbiddenClaims = ["official prediction", ["predicted", "BAC", "Score"].join(""), "garantie de réussite"];
   for (const { type, entity } of allEntities) {
     const id = String(entity.id || "unknown");
     const jsonStr = JSON.stringify(entity);

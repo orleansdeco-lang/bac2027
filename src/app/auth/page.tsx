@@ -12,8 +12,11 @@ import { Badge } from "@/components/ui/Badge";
 import { Logo } from "@/components/ui/Logo";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { Lock, Mail, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
+import { StudentService } from "@/lib/services";
+import { syncAllLocalStorageToCloud } from "@/lib/repositories";
+import { useSearchParams } from "next/navigation";
 
-export default function AuthPage() {
+function AuthContent() {
   const router = useRouter();
   const { direction, locale } = useTranslation();
   const isRTL = direction === "rtl";
@@ -26,10 +29,26 @@ export default function AuthPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // If already logged in, redirect to roadmap
+  const searchParams = useSearchParams();
+
+  // Initialize mode from query param if provided
+  React.useEffect(() => {
+    const qMode = searchParams.get("mode");
+    if (qMode === "signup" || qMode === "login") {
+      setMode(qMode);
+    }
+  }, [searchParams]);
+
+  // If already logged in, redirect to dashboard or onboarding
   React.useEffect(() => {
     if (!isLoading && user) {
-      router.push("/roadmap");
+      StudentService.getProfile(user.id).then((p) => {
+        if (!p || !p.streamId) {
+          router.push("/onboarding");
+        } else {
+          router.push("/dashboard");
+        }
+      });
     }
   }, [user, isLoading, router]);
 
@@ -59,29 +78,43 @@ export default function AuthPage() {
     setSubmitting(true);
     try {
       if (mode === "login") {
-        const { error } = await signIn(email, password);
+        const { user: loggedInUser, error } = await signIn(email, password);
         if (error) {
           setErrorMsg(
             locale === "fr"
               ? "Identifiants incorrects ou compte introuvable."
               : "بيانات الدخول غير صحيحة أو الحساب غير موجود."
           );
-        } else {
-          router.push("/roadmap");
+        } else if (loggedInUser) {
+          await StudentService.handleAuthSessionMigration(loggedInUser.id);
+          await syncAllLocalStorageToCloud(loggedInUser.id);
+          const profile = await StudentService.getProfile(loggedInUser.id);
+          if (!profile || !profile.streamId) {
+            router.push("/onboarding");
+          } else {
+            router.push("/dashboard");
+          }
         }
       } else {
         const { user: newUser, error } = await signUp(email, password);
         if (error) {
           setErrorMsg(error.message);
         } else if (newUser) {
+          await StudentService.handleAuthSessionMigration(newUser.id);
+          await syncAllLocalStorageToCloud(newUser.id);
           setSuccessMsg(
             locale === "fr"
               ? "Compte créé avec succès ! Vous pouvez maintenant accéder à votre parcours."
               : "تم إنشاء حسابك بنجاح! يمكنك الآن متابعة مسارك التعليمي."
           );
-          setTimeout(() => {
-            router.push("/onboarding");
-          }, 1200);
+          setTimeout(async () => {
+            const profile = await StudentService.getProfile(newUser.id);
+            if (!profile || !profile.streamId) {
+              router.push("/onboarding");
+            } else {
+              router.push("/dashboard");
+            }
+          }, 1000);
         }
       }
     } catch {
@@ -271,5 +304,19 @@ export default function AuthPage() {
         <p>BAC Mastery &copy; 2026 — {locale === "fr" ? "Plateforme d'Apprentissage Adaptatif" : "منصة التعلم التكيفي الذكي"}</p>
       </footer>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <React.Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-[#0B1020]">
+          <div className="animate-pulse text-sm text-blue-400 font-mono">BAC MASTERY...</div>
+        </div>
+      }
+    >
+      <AuthContent />
+    </React.Suspense>
   );
 }

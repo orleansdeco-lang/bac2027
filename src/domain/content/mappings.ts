@@ -863,3 +863,50 @@ export function getAllSkillContentReadiness(): Record<string, SkillReadinessStat
 export function getAllSkillReadinessReports(): SkillReadinessReport[] {
   return PROMPT11_SKILLS.map((skill) => getSkillReadinessReport(skill.id));
 }
+
+// ============================================================================
+// 14. PROMPT 14 LEARNING BUNDLE SELECTOR
+// ============================================================================
+
+export interface SkillLearningBundle {
+  skill: Skill;
+  lesson?: Lesson;
+  workedExample?: WorkedExample;
+  practiceQuestions: PracticeQuestion[];
+  miniCheck?: MiniExam;
+  repairGuide?: RepairGuide;
+  retest?: RetestQuestion;
+  examApplication?: PastBacExamReference;
+  provenance?: ContentSource;
+  readiness: SkillReadinessReport;
+}
+
+export function getSkillLearningBundle(skillId: string): SkillLearningBundle | null {
+  const skill = PROMPT11_SKILLS.find((s) => s.id === skillId);
+  if (!skill) return null;
+
+  const lesson = PROMPT12_LESSONS.find((l) => l.skillId === skillId && l.isActive);
+  const workedExample = lesson?.workedExample;
+  const practiceQuestions = PROMPT11_PRACTICE_QUESTIONS.filter((q) => q.skillId === skillId);
+  const miniCheck = PROMPT12_MINI_EXAMS.find((me) => me.skillIds.includes(skillId) && me.isActive);
+  const repairGuide = PROMPT12_REPAIR_GUIDES.find((rg) => rg.skillId === skillId && rg.isActive);
+  const retest = PROMPT11_RETEST_QUESTIONS.find((q) => q.skillId === skillId);
+  const examApplication = PROMPT11_PAST_BAC_REFERENCES.find((ref) => ref.skillIds.includes(skillId));
+  const provenance = lesson?.sourceId
+    ? PROMPT11_SOURCES.find((src) => src.id === lesson.sourceId)
+    : undefined;
+  const readiness = getSkillReadinessReport(skillId);
+
+  return {
+    skill,
+    lesson,
+    workedExample,
+    practiceQuestions,
+    miniCheck,
+    repairGuide,
+    retest,
+    examApplication,
+    provenance,
+    readiness,
+  };
+}

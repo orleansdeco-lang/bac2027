@@ -12,10 +12,10 @@ export function BottomNav() {
 
   const navItems = [
     {
-      href: "/",
+      href: "/dashboard",
       label: locale === "ar" ? "الرئيسية" : "Accueil",
       icon: Compass,
-      matches: (p: string) => p === "/",
+      matches: (p: string) => p === "/" || p === "/dashboard",
     },
     {
       href: "/roadmap",
@@ -30,10 +30,10 @@ export function BottomNav() {
       matches: (p: string) => p.startsWith("/mission"),
     },
     {
-      href: "/error-lab",
+      href: "/progress",
       label: locale === "ar" ? "تقدمي" : "Progrès",
       icon: BarChart3,
-      matches: (p: string) => p.startsWith("/error-lab"),
+      matches: (p: string) => p.startsWith("/progress") || p.startsWith("/error-lab"),
     },
   ];
 
