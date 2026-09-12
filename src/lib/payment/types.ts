@@ -49,3 +49,32 @@ export interface PaymentProvider {
   getPaymentStatus(userId: string): Promise<PaymentStatusResult>;
   handlePaymentConfirmation(userId: string, confirmationToken: string): Promise<boolean>;
 }
+
+/**
+ * Prompt 19 § 16: Clean internal commercial state model
+ */
+export type PilotPaymentState =
+  | "PAYMENT_NOT_STARTED"
+  | "PAYMENT_REQUESTED"
+  | "PAYMENT_PENDING_VERIFICATION"
+  | "PAYMENT_CONFIRMED"
+  | "PAYMENT_REJECTED"
+  | "PAYMENT_CANCELLED";
+
+/**
+ * Prompt 19 § 17: Auditable payment request record
+ */
+export interface PilotPaymentRecord {
+  requestId: string;
+  userId: string;
+  planId: string;
+  amountDZD: number;
+  currency: "DZD";
+  state: PilotPaymentState;
+  createdAt: string;
+  updatedAt: string;
+  confirmedAt?: string;
+  verificationActor?: string;
+  studentEmail?: string;
+}
+

@@ -47,6 +47,7 @@ export type PilotAnalyticsEventName =
   | "conversion_viewed"
   | "conversion_cta_clicked"
   | "payment_started"
+  | "payment_pending_verification"
   | "payment_confirmed";
 
 export interface PilotAnalyticsProperties {

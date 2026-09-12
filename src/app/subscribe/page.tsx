@@ -10,7 +10,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { getStudentAccess } from "@/lib/access";
-import { getPaymentProvider, PaymentPlan, CheckoutResult } from "@/lib/payment";
+import { getPaymentProvider, PaymentPlan, CheckoutResult, markPaymentPendingVerification } from "@/lib/payment";
 import { StudentService } from "@/lib/services";
 import {
   DiagnosticRepository,
@@ -28,6 +28,10 @@ import {
   Info,
   Clock,
   Zap,
+  HelpCircle,
+  ShieldAlert,
+  Phone,
+  Mail,
 } from "lucide-react";
 
 export default function SubscribePage() {
@@ -44,6 +48,11 @@ export default function SubscribePage() {
   const [plan, setPlan] = useState<PaymentPlan | null>(null);
   const [checkoutData, setCheckoutData] = useState<CheckoutResult | null>(null);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [paymentState, setPaymentState] = useState<string>("PAYMENT_REQUESTED");
+
+  const supportWhatsApp = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP;
+  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
+  const hasSupportContact = Boolean(supportWhatsApp || supportEmail);
 
   useEffect(() => {
     trackEvent("conversion_viewed", { userId: user?.id || null });
@@ -89,7 +98,17 @@ export default function SubscribePage() {
       studentEmail: user?.email || undefined,
     });
     setCheckoutData(res);
+    setPaymentState("PAYMENT_REQUESTED");
     setShowCheckoutModal(true);
+  };
+
+  const handleNotifySupervisor = () => {
+    if (!checkoutData?.referenceId) return;
+    markPaymentPendingVerification(checkoutData.referenceId);
+    setPaymentState("PAYMENT_PENDING_VERIFICATION");
+    trackEvent("payment_pending_verification", {
+      userId: user?.id || null,
+    });
   };
 
   const access = getStudentAccess(profile);
@@ -246,6 +265,83 @@ export default function SubscribePage() {
           </Card>
         )}
 
+        {/* Commercial Transparency FAQ Section (5 Core Questions) */}
+        <div data-testid="commercial-faq-section" className="space-y-4 pt-2">
+          <div className="flex items-center gap-2 border-b border-slate-800 pb-2">
+            <HelpCircle className="w-4 h-4 text-blue-400" />
+            <h3 className="text-sm font-bold text-white">
+              {isAr ? "كل ما تحتاج معرفته بكل وضوح وشفافية" : "Transparence & fonctionnement"}
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3">
+            {/* Q1: واش راح نربح؟ */}
+            <Card className="p-4 bg-[#111827] border-slate-800/80 space-y-1.5">
+              <h4 className="text-xs sm:text-sm font-bold text-blue-300 flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 inline-flex items-center justify-center text-[10px] font-mono">1</span>
+                <span>{isAr ? "واش راح نربح؟" : "Qu'est-ce que je gagne ?"}</span>
+              </h4>
+              <p className="text-xs text-slate-300 leading-relaxed ps-7">
+                {isAr
+                  ? "تتحصل على خريطة تعلم مخصصة مبنية على تشخيصك الحقيقي، معالجة استباقية لأكبر ثغرة تعيق معدلك، وتدريب دقيق على 31 مهارة أساسية في العلوم التجريبية لضمان عدم تكرار الأخطاء يوم الامتحان."
+                  : "Une roadmap sur-mesure issue de votre diagnostic réel, la résolution de votre point de blocage principal, et la maîtrise des 31 compétences clés sans pièges le jour J."}
+              </p>
+            </Card>
+
+            {/* Q2: واش راح نستعمل؟ */}
+            <Card className="p-4 bg-[#111827] border-slate-800/80 space-y-1.5">
+              <h4 className="text-xs sm:text-sm font-bold text-blue-300 flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 inline-flex items-center justify-center text-[10px] font-mono">2</span>
+                <span>{isAr ? "واش راح نستعمل؟" : "Qu'est-ce que je vais utiliser ?"}</span>
+              </h4>
+              <p className="text-xs text-slate-300 leading-relaxed ps-7">
+                {isAr
+                  ? "حلقة تعلم متكاملة: مهام تكيفية، تدريب مصحوب، معمل أخطاء ذكي يحلل سبب الخطأ (مفاهيمي أو منهجي أو حسابي)، تمارين توأم لإعادة الاختبار، وتثبيت الإتقان خطوة بخطوة."
+                  : "Une boucle complète : missions adaptatives, labo d'analyse des erreurs (conceptuelles, méthodologiques ou de calcul), retests jumeaux et validation de maîtrise."}
+              </p>
+            </Card>
+
+            {/* Q3: بقداه؟ */}
+            <Card className="p-4 bg-[#111827] border-slate-800/80 space-y-1.5">
+              <h4 className="text-xs sm:text-sm font-bold text-blue-300 flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 inline-flex items-center justify-center text-[10px] font-mono">3</span>
+                <span>{isAr ? "بقداه؟" : "Combien ça coûte ?"}</span>
+              </h4>
+              <p className="text-xs text-slate-300 leading-relaxed ps-7">
+                {isAr
+                  ? "3,900 دج فقط للموسم الدراسي 2026 كاملاً حتى يوم امتحان البكالوريا. دفع لمرة واحدة دون أي رسوم إضافية، ودون أي تجديد تلقائي خفي."
+                  : "3 900 DA pour toute la saison 2026 jusqu'au jour de l'épreuve du BAC. Paiement unique sans frais cachés ni abonnement récurrent."}
+              </p>
+            </Card>
+
+            {/* Q4: كيفاش نخلص؟ */}
+            <Card className="p-4 bg-[#111827] border-slate-800/80 space-y-1.5">
+              <h4 className="text-xs sm:text-sm font-bold text-blue-300 flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 inline-flex items-center justify-center text-[10px] font-mono">4</span>
+                <span>{isAr ? "كيفاش نخلص؟" : "Comment payer ?"}</span>
+              </h4>
+              <p className="text-xs text-slate-300 leading-relaxed ps-7">
+                {isAr
+                  ? "في المرحلة التجريبية المضبوطة الحالية، يتم الدفع يدوياً عبر تحويل بريدي موب (BaridiMob) أو حوالة بريدية (CCP). بمجرد طلب التفعيل، ستحصل على رمز مرجعي خاص بحسابك ترسل به الوصل للمشرف."
+                  : "Durant cette phase pilote contrôlée, le règlement s'effectue manuellement par BaridiMob ou virement postal CCP avec votre code de référence élève unique."}
+              </p>
+            </Card>
+
+            {/* Q5: واش يصرا من بعد؟ */}
+            <Card className="p-4 bg-[#111827] border-slate-800/80 space-y-1.5">
+              <h4 className="text-xs sm:text-sm font-bold text-blue-300 flex items-center gap-2">
+                <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 inline-flex items-center justify-center text-[10px] font-mono">5</span>
+                <span>{isAr ? "واش يصرا من بعد؟" : "Que se passe-t-il après ?"}</span>
+              </h4>
+              <p className="text-xs text-slate-300 leading-relaxed ps-7">
+                {isAr
+                  ? "يتحقق المشرف من وصل التحويل ويقوم بتفعيل حسابك الكامل في النظام من الخادم. تواصل تدريبك مباشرة من النقطة التي توقفت عندها مع بقاء جميع بياناتك وتقدمك السابق محفوظاً بنسبة 100%."
+                  : "Le superviseur vérifie votre justificatif et active votre accès complet depuis le serveur. Vous reprenez instantanément votre parcours là où vous vous étiez arrêté."}
+              </p>
+            </Card>
+          </div>
+        </div>
+
         {/* Modal: Honest Pilot Activation Placeholder */}
         {showCheckoutModal && checkoutData && (
           <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -253,7 +349,7 @@ export default function SubscribePage() {
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                 <div className="flex items-center gap-2 text-sm font-bold text-white">
                   <Zap className="w-4 h-4 text-amber-400" />
-                  <span>{isAr ? "التفعيل متاح حالياً بشكل تجريبي" : "Activation en phase pilote"}</span>
+                  <span>{isAr ? "طلب تفعيل اشتراك تجريبي" : "Demande d'activation pilote"}</span>
                 </div>
                 <button
                   data-testid="subscribe-modal-close"
@@ -265,9 +361,25 @@ export default function SubscribePage() {
                 </button>
               </div>
 
+              {/* Payment state badge */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-400">{isAr ? "حالة الطلب:" : "Statut de la demande :"}</span>
+                <Badge
+                  data-testid="payment-status-badge"
+                  variant={paymentState === "PAYMENT_PENDING_VERIFICATION" ? "warning" : "outline"}
+                  size="sm"
+                  className={paymentState === "PAYMENT_PENDING_VERIFICATION" ? "bg-amber-500/20 text-amber-300 border-amber-500/40" : "text-blue-400 border-blue-500/40"}
+                >
+                  {paymentState === "PAYMENT_PENDING_VERIFICATION"
+                    ? isAr ? "بانتظار تأكيد المشرف" : "En attente de vérification"
+                    : isAr ? "تم تسجيل الطلب" : "Demande enregistrée"}
+                </Badge>
+              </div>
+
+              {/* Reference ID display */}
               <div className="p-3.5 rounded-xl bg-blue-950/40 border border-blue-500/30 space-y-1 text-xs text-blue-200">
                 <span className="text-[11px] font-mono text-blue-300 uppercase block tracking-wider">
-                  {isAr ? "الرمز المرجعي للتلميذ:" : "Référence élève :"}
+                  {isAr ? "الرمز المرجعي للطلب:" : "Référence élève :"}
                 </span>
                 <span className="font-mono font-bold text-white text-sm block select-all">
                   {checkoutData.referenceId}
@@ -278,16 +390,78 @@ export default function SubscribePage() {
                 {isAr ? checkoutData.instructions_ar : checkoutData.instructions_fr}
               </p>
 
-              <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-slate-400 space-y-1">
-                <span className="font-semibold text-slate-300 block">
-                  {isAr ? "حالة الدفع الإلكتروني:" : "Statut de paiement :"}
+              {/* Support contact section */}
+              <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+                <span className="text-[11px] font-semibold text-slate-300 block">
+                  {isAr ? "قناة التواصل لإرسال وصل التحويل:" : "Canal de transmission du justificatif :"}
                 </span>
-                <span>
-                  {isAr
-                    ? "بوابة الدفع الإلكتروني المباشر قيد الربط والتدقيق التقني. لا يتم خصم أو احتساب أي اشتراك تلقائي دون تأكيد يدوي موثق."
-                    : "L'intégration de la passerelle de paiement est en cours de validation technique. Aucun prélèvement automatique sans confirmation vérifiée."}
-                </span>
+                {hasSupportContact ? (
+                  <div className="space-y-1.5 text-xs">
+                    {supportWhatsApp && (
+                      <a
+                        href={`https://wa.me/${supportWhatsApp.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`السلام عليكم، قمت بطلب تفعيل BAC Mastery بالرمز: ${checkoutData.referenceId}`)}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-2 text-emerald-400 hover:text-emerald-300 transition-colors"
+                      >
+                        <Phone className="w-3.5 h-3.5" />
+                        <span dir="ltr">{supportWhatsApp} (WhatsApp)</span>
+                      </a>
+                    )}
+                    {supportEmail && (
+                      <a
+                        href={`mailto:${supportEmail}?subject=${encodeURIComponent(`BAC Mastery Activation - ${checkoutData.referenceId}`)}`}
+                        className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors"
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                        <span>{supportEmail}</span>
+                      </a>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-xs text-amber-300 bg-amber-950/40 p-2 rounded-lg border border-amber-500/20">
+                    <ShieldAlert className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                    <span>
+                      {isAr
+                        ? "SUPPORT_CONTACT_REQUIRED: يرجى التواصل مع المشرف المباشر للدفعة التجريبية لتأكيد التحويل."
+                        : "SUPPORT_CONTACT_REQUIRED: Veuillez contacter le superviseur du projet pilote."}
+                    </span>
+                  </div>
+                )}
               </div>
+
+              {/* Safe state progression */}
+              {paymentState === "PAYMENT_REQUESTED" ? (
+                <div className="space-y-2 pt-1">
+                  <Button
+                    data-testid="payment-notify-supervisor-btn"
+                    size="md"
+                    variant="primary"
+                    fullWidth
+                    onClick={handleNotifySupervisor}
+                    className="text-xs font-bold bg-amber-600 hover:bg-amber-500 border-amber-500 text-white"
+                  >
+                    <span>{isAr ? "أرسلت التأكيد للمشرف (دفعت)" : "J'ai envoyé le justificatif"}</span>
+                  </Button>
+                  <span className="text-[10px] text-slate-400 block text-center">
+                    {isAr
+                      ? "الضغط هنا يسجل إشعارك فقط. التفعيل النهائي يتم حصراً من الخادم بعد التحقق."
+                      : "Cette action enregistre votre notification. L'activation finale est strictement effectuée par le serveur."}
+                  </span>
+                </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-500/30 text-xs text-amber-200 text-center space-y-1">
+                  <CheckCircle2 className="w-4 h-4 text-amber-400 mx-auto" />
+                  <span className="font-semibold block">
+                    {isAr ? "تم تسجيل إشعارك بنجاح" : "Notification enregistrée"}
+                  </span>
+                  <span className="text-[11px] text-slate-300 block">
+                    {isAr
+                      ? "طلبك الآن قيد التحقق اليدوي من قبل المشرف. سيتم التفعيل تلقائياً بمجرد مطابقة الوصل."
+                      : "Votre demande est en cours de vérification par le superviseur."}
+                  </span>
+                </div>
+              )}
 
               <div className="pt-2 flex justify-end">
                 <Button
@@ -296,7 +470,7 @@ export default function SubscribePage() {
                   onClick={() => setShowCheckoutModal(false)}
                   className="text-xs"
                 >
-                  <span>{isAr ? "فهمت" : "Compris"}</span>
+                  <span>{isAr ? "إغلاق" : "Fermer"}</span>
                 </Button>
               </div>
             </Card>

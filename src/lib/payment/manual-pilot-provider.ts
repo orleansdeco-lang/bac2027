@@ -8,7 +8,15 @@
  * - Provides honest pilot activation instructions
  */
 
-import { PaymentProvider, PaymentPlan, CheckoutRequest, CheckoutResult, PaymentStatusResult } from "./types";
+import {
+  PaymentProvider,
+  PaymentPlan,
+  CheckoutRequest,
+  CheckoutResult,
+  PaymentStatusResult,
+  PilotPaymentRecord,
+  PilotPaymentState,
+} from "./types";
 
 export const PILOT_BAC_PLAN: PaymentPlan = {
   id: "bac_season_pass_pilot",
@@ -34,6 +42,51 @@ export const PILOT_BAC_PLAN: PaymentPlan = {
   ],
 };
 
+export const PILOT_PAYMENT_RECORDS_KEY = "bac_mastery_pilot_payment_records";
+
+export function getStoredPaymentRecords(userId?: string): PilotPaymentRecord[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(PILOT_PAYMENT_RECORDS_KEY);
+    const records: PilotPaymentRecord[] = raw ? JSON.parse(raw) : [];
+    if (userId) {
+      return records.filter((r) => r.userId === userId);
+    }
+    return records;
+  } catch {
+    return [];
+  }
+}
+
+export function savePaymentRecord(record: PilotPaymentRecord): void {
+  if (typeof window === "undefined") return;
+  try {
+    const existing = getStoredPaymentRecords();
+    const updated = [record, ...existing.filter((r) => r.requestId !== record.requestId)].slice(0, 50);
+    localStorage.setItem(PILOT_PAYMENT_RECORDS_KEY, JSON.stringify(updated));
+  } catch {
+    // Ignore storage issues
+  }
+}
+
+export function markPaymentPendingVerification(requestId: string): PilotPaymentRecord | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const existing = getStoredPaymentRecords();
+    const target = existing.find((r) => r.requestId === requestId);
+    if (!target) return null;
+    const updatedRecord: PilotPaymentRecord = {
+      ...target,
+      state: "PAYMENT_PENDING_VERIFICATION",
+      updatedAt: new Date().toISOString(),
+    };
+    savePaymentRecord(updatedRecord);
+    return updatedRecord;
+  } catch {
+    return null;
+  }
+}
+
 export class ManualPilotPaymentProvider implements PaymentProvider {
   readonly id = "manual_pilot";
   readonly name = "تفعيل تجريبي يدوي (بوابة الدفع قيد الربط)";
@@ -46,23 +99,61 @@ export class ManualPilotPaymentProvider implements PaymentProvider {
   async createCheckout(req: CheckoutRequest): Promise<CheckoutResult> {
     const referenceId = `PILOT-BAC-${req.userId.slice(0, 8).toUpperCase()}-${Date.now().toString().slice(-4)}`;
 
+    const record: PilotPaymentRecord = {
+      requestId: referenceId,
+      userId: req.userId,
+      planId: req.planId || PILOT_BAC_PLAN.id,
+      amountDZD: PILOT_BAC_PLAN.priceDZD,
+      currency: "DZD",
+      state: "PAYMENT_REQUESTED",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      studentEmail: req.studentEmail,
+    };
+    savePaymentRecord(record);
+
     return {
       status: "READY",
       provider: this.id,
       referenceId,
       instructions_ar:
-        "التفعيل متاح حالياً بشكل تجريبي للدفعة الأولى من تلاميذ البكالوريا. يرجى إرسال الرمز المرجعي إلى فريق الدعم البيداغوجي لتأكيد تفعيل الحساب يدوياً بعد التحقق.",
+        "تم تسجيل طلب التفعيل بنجاح. يرجى إرسال الرمز المرجعي إلى فريق الدعم البيداغوجي لتأكيد العملية والتحقق منها وتفعيل اشتراكك يدويّاً.",
       instructions_fr:
-        "L'activation est actuellement en phase pilote pour la première cohorte d'élèves. Veuillez transmettre votre référence au support pédagogique pour activation après vérification manuelle.",
+        "Demande d'activation enregistrée. Veuillez transmettre votre référence au support pédagogique pour vérification manuelle et activation de votre compte.",
       requiresManualVerification: true,
     };
   }
 
   async getPaymentStatus(userId: string): Promise<PaymentStatusResult> {
-    // Strictly honest: in pilot mode, client queries cannot falsely report VERIFIED
+    const userRecords = getStoredPaymentRecords(userId);
+    const latest = userRecords[0];
+
+    if (!latest || latest.state === "PAYMENT_NOT_STARTED" || latest.state === "PAYMENT_CANCELLED") {
+      return { status: "UNPAID" };
+    }
+
+    if (latest.state === "PAYMENT_CONFIRMED") {
+      return {
+        status: "VERIFIED",
+        paidAt: latest.confirmedAt,
+        amountDZD: latest.amountDZD,
+        providerReference: latest.requestId,
+      };
+    }
+
+    if (latest.state === "PAYMENT_REJECTED") {
+      return {
+        status: "FAILED",
+        amountDZD: latest.amountDZD,
+        providerReference: latest.requestId,
+      };
+    }
+
+    // Default for PAYMENT_REQUESTED and PAYMENT_PENDING_VERIFICATION
     return {
       status: "PENDING_VERIFICATION",
-      providerReference: `REF-${userId.slice(0, 8)}`,
+      providerReference: latest.requestId,
+      amountDZD: latest.amountDZD,
     };
   }
 
@@ -72,3 +163,4 @@ export class ManualPilotPaymentProvider implements PaymentProvider {
     return false;
   }
 }
+

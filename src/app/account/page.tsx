@@ -14,6 +14,7 @@ import { getStrategicProfile } from "@/lib/onboarding/profile";
 import { StrategicProfile } from "@/types/onboarding";
 import { StudentService } from "@/lib/services";
 import { getStudentAccess } from "@/lib/access";
+import { getStoredPaymentRecords, PilotPaymentRecord } from "@/lib/payment";
 import {
   User,
   ShieldCheck,
@@ -31,6 +32,7 @@ import {
   Sparkles,
   Download,
   Check,
+  AlertCircle,
 } from "lucide-react";
 import { exportAnonymizedPilotData } from "@/lib/analytics";
 
@@ -42,6 +44,7 @@ export default function AccountPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncSuccess, setSyncSuccess] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
+  const [paymentRecord, setPaymentRecord] = useState<PilotPaymentRecord | null>(null);
 
   const access = getStudentAccess(profile);
 
@@ -70,6 +73,14 @@ export default function AccountPage() {
     async function fetchAccProfile() {
       const p = user ? await StudentService.getProfile(user.id) : getStrategicProfile();
       if (p) setProfile(p);
+      const records = getStoredPaymentRecords();
+      const currentUid = user?.id || "guest_pilot";
+      const userRecord = records.find(
+        (r) => r.userId === currentUid || (user?.email && r.studentEmail === user.email)
+      ) || (records.length > 0 ? records[records.length - 1] : null);
+      if (userRecord) {
+        setPaymentRecord(userRecord);
+      }
     }
     fetchAccProfile();
   }, [user]);
@@ -268,6 +279,61 @@ export default function AccountPage() {
               </div>
             )}
           </div>
+
+          {/* Honest Trial Status / Countdown banner */}
+          <div data-testid="account-trial-countdown" className="p-3 rounded-xl bg-card-muted border border-theme text-xs space-y-1">
+            {access.status === "TRIAL_ACTIVE" && (
+              <div className="flex items-center gap-2 text-cyan-400">
+                <Clock className="w-4 h-4 shrink-0 text-cyan-400" />
+                <span>
+                  {isAr
+                    ? `تجربتك المجانية تنتهي في ${new Date(access.trialExpiresAt!).toLocaleString("ar-DZ")} (باقي ${access.remainingHours} ساعة).`
+                    : `Votre essai gratuit se termine le ${new Date(access.trialExpiresAt!).toLocaleString("fr-FR")} (${access.remainingHours}h restantes).`}
+                </span>
+              </div>
+            )}
+            {access.status === "TRIAL_EXPIRED" && (
+              <div className="flex items-center gap-2 text-rose-400">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                <span>
+                  {isAr
+                    ? "انتهت تجربتك المجانية (48 ساعة). جميع بياناتك ومكتسباتك محفوظة."
+                    : "Votre essai gratuit de 48h est terminé. Vos acquis restent sauvegardés."}
+                </span>
+              </div>
+            )}
+            {access.status === "PAID_ACTIVE" && (
+              <div className="flex items-center gap-2 text-emerald-400">
+                <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-400" />
+                <span>
+                  {isAr
+                    ? "حسابك مفعل باشتراك كامل (Pass BAC 2026) حتى يوم الامتحان."
+                    : "Accès intégral activé jusqu'au jour de l'épreuve du BAC."}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Pending Payment Record Display */}
+          {paymentRecord && paymentRecord.state !== "PAYMENT_CONFIRMED" && (
+            <div data-testid="account-payment-record" className="p-3 rounded-xl bg-amber-950/20 border border-amber-500/30 text-xs space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-amber-400 font-bold flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>{isAr ? "طلب اشتراك قيد المعالجة" : "Demande de paiement"}</span>
+                </span>
+                <Badge variant="warning" size="sm" className="text-[10px] uppercase">
+                  {paymentRecord.state === "PAYMENT_PENDING_VERIFICATION"
+                    ? isAr ? "بانتظار تأكيد المشرف" : "En vérification"
+                    : isAr ? "طلب مسجل" : "Demandé"}
+                </Badge>
+              </div>
+              <div className="font-mono text-[11px] text-slate-300">
+                <span>{isAr ? "الرمز المرجعي: " : "Réf : "}</span>
+                <span className="text-white font-bold">{paymentRecord.requestId}</span>
+              </div>
+            </div>
+          )}
 
           {access.status !== "PAID_ACTIVE" && (
             <Link href="/subscribe">

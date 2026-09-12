@@ -61,21 +61,21 @@ export default function HomePage() {
 
       if (access.status === "TRIAL_EXPIRED") {
         setSmartCta({
-          textAr: "كمّل BAC Mastery",
-          textFr: "Continuer avec BAC Mastery",
+          textAr: "شوف الحل",
+          textFr: "Voir la solution",
           href: "/subscribe",
+        });
+      } else if (access.status === "PAID_ACTIVE") {
+        setSmartCta({
+          textAr: "كمّل مهمتك",
+          textFr: "Continuer ma mission",
+          href: "/dashboard",
         });
       } else if (activeMissionId) {
         setSmartCta({
           textAr: "كمّل مهمتك",
           textFr: "Continuer ma mission",
           href: `/mission/${activeMissionId}`,
-        });
-      } else if (hasProgress) {
-        setSmartCta({
-          textAr: "نكمل خريطتي",
-          textFr: "Continuer ma feuille de route",
-          href: "/dashboard",
         });
       } else {
         setSmartCta({
