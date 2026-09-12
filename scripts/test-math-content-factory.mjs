@@ -345,16 +345,21 @@ console.log("\n[GATE 13] Visual Learning Assets");
   let visualsValid = true;
   for (const id of ALL_MATH_SKILL_IDS) {
     const va = factory.MATH_BATCH_01_VISUAL_ASSETS[id];
+    const pkg = factory.MATH_BATCH_01_PACKAGES[id];
     if (!va || !va.id || !va.title_ar || !va.accessibilityMetadata?.description || !va.accessibilityMetadata?.screenReaderSummary) {
       visualsValid = false;
       console.error(`Visual asset invalid for ${id}`);
+    }
+    if (!pkg || pkg.visualAssetIds[0] !== va.id) {
+      visualsValid = false;
+      console.error(`Visual asset ID mismatch in package for ${id}: pkg=${pkg?.visualAssetIds[0]} vs registry=${va?.id}`);
     }
     if (!va?.accessibilityMetadata?.nonColorDependentCues || !va?.accessibilityMetadata?.highContrastAvailable) {
       visualsValid = false;
       console.error(`Visual accessibility requirements not met for ${id}`);
     }
   }
-  assert(visualsValid, "All 12 visual assets pass full accessibility audits (alt text, screen-reader summaries, non-color cues)");
+  assert(visualsValid, "All 12 visual assets pass full accessibility audits and link 1-to-1 with packages");
 }
 
 // =============================================================================
