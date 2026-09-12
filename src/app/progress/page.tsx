@@ -60,14 +60,14 @@ export default function ProgressPage() {
     );
   }
 
-  const demonstratedCount = report?.overallMetrics.demonstratedSkillsCount || 0;
-  const emergingCount = report?.overallMetrics.emergingSkillsCount || 0;
-  const repairedCount = report?.overallMetrics.repairedErrorsCount || 0;
-  const completedMissions = report?.overallMetrics.completedMissionsCount || 0;
+  const demonstratedCount = report?.overallMetrics?.demonstratedSkillsCount || 0;
+  const emergingCount = report?.overallMetrics?.emergingSkillsCount || 0;
+  const repairedCount = report?.overallMetrics?.repairedErrorsCount || 0;
+  const completedMissions = report?.overallMetrics?.completedMissionsCount || 0;
 
-  const math = report?.subjectBreakdown.mathematics || { demonstrated: 0, emerging: 0, total: 10 };
-  const physics = report?.subjectBreakdown.physics || { demonstrated: 0, emerging: 0, total: 11 };
-  const svt = report?.subjectBreakdown.natural_sciences || { demonstrated: 0, emerging: 0, total: 10 };
+  const math = report?.subjectBreakdown?.mathematics || { demonstrated: 0, emerging: 0, total: 10 };
+  const physics = report?.subjectBreakdown?.physics || { demonstrated: 0, emerging: 0, total: 11 };
+  const svt = report?.subjectBreakdown?.natural_sciences || { demonstrated: 0, emerging: 0, total: 10 };
 
   return (
     <AppShell activeNav="progress">

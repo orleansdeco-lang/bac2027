@@ -1,0 +1,65 @@
+{
+  "chromeLaunched": true,
+  "cdpConnected": true,
+  "viewportConfigured": true,
+  "checks": {
+    "mission_learn_rendered": true,
+    "mission_learn_rtl": true,
+    "mission_learn_no_overflow": true,
+    "mission_we_rendered": true,
+    "mission_we_no_overflow": true,
+    "mission_practice_rendered": true,
+    "mission_practice_no_overflow": true,
+    "retest_has_new_equation": true,
+    "retest_no_old_duplicate": true,
+    "retest_has_option1_correct": true,
+    "retest_has_distractors": true,
+    "retest_no_overflow": true,
+    "retest_mastery_achieved": true,
+    "route_landing_no_overflow": true,
+    "route_dashboard_no_overflow": true,
+    "route_roadmap_no_overflow": true,
+    "route_errorlab_no_overflow": true,
+    "route_progress_no_overflow": true
+  },
+  "screenshots": [
+    "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\01_mobile_mission_learn.png",
+    "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\02_mobile_mission_worked_example.png",
+    "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\03_mobile_mission_practice.png",
+    "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\04_mobile_practice_feedback.png",
+    "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\05_mobile_error_diagnosis.png",
+    "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\06_mobile_repair_guide.png",
+    "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\07_mobile_new_retest_rendered.png",
+    "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\08_mobile_mastery_achieved.png",
+    "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\09_mobile_landing.png",
+    "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\10_mobile_dashboard.png",
+    "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\11_mobile_roadmap.png",
+    "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\12_mobile_error_lab.png",
+    "C:\\Users\\dina\\Desktop\\BAC & BEM\\docs\\bac-mastery\\screenshots\\13_mobile_progress.png"
+  ],
+  "consoleErrors": [],
+  "networkErrors": [
+    {
+      "requestId": "20916.156",
+      "timestamp": 146127.773758,
+      "type": "Fetch",
+      "errorText": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "requestId": "20916.245",
+      "timestamp": 146133.534449,
+      "type": "Fetch",
+      "errorText": "net::ERR_ABORTED",
+      "canceled": true
+    },
+    {
+      "requestId": "20916.409",
+      "timestamp": 146138.590704,
+      "type": "Fetch",
+      "errorText": "net::ERR_ABORTED",
+      "canceled": true
+    }
+  ],
+  "overflows": []
+}
