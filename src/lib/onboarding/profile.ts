@@ -93,3 +93,67 @@ export function clearStrategicProfile(): void {
     // Ignore
   }
 }
+
+/**
+ * LocalStorage Helpers for Registration Draft (V1 Progressive Flow)
+ */
+export const REGISTRATION_DRAFT_KEY = "bac_mastery_registration_draft";
+export const ACADEMIC_PROFILE_DRAFT_KEY = "bac_mastery_academic_draft";
+
+export function saveRegistrationDraft(draft: any): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(REGISTRATION_DRAFT_KEY, JSON.stringify(draft));
+  } catch (err) {
+    console.warn("Failed to persist registration draft to localStorage", err);
+  }
+}
+
+export function getRegistrationDraft(): any | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(REGISTRATION_DRAFT_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+export function clearRegistrationDraft(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(REGISTRATION_DRAFT_KEY);
+  } catch {
+    // Ignore
+  }
+}
+
+export function saveAcademicProfileDraft(draft: any): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(ACADEMIC_PROFILE_DRAFT_KEY, JSON.stringify(draft));
+  } catch (err) {
+    console.warn("Failed to persist academic profile draft to localStorage", err);
+  }
+}
+
+export function getAcademicProfileDraft(): any | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(ACADEMIC_PROFILE_DRAFT_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+export function clearAcademicProfileDraft(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(ACADEMIC_PROFILE_DRAFT_KEY);
+  } catch {
+    // Ignore
+  }
+}

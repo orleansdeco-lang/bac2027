@@ -8,3 +8,4 @@ export * from "./mind-rest";
 export * from "./progress";
 export * from "./ai-bridge";
 export * from "./onboarding";
+export * from "./registration";

@@ -1,12 +1,26 @@
 /**
  * BAC Mastery - Student Profile Repository
- * Handles persistence of StrategicProfile to Supabase with LocalStorage fallback & migration
+ * Handles persistence of StrategicProfile, StudentRegistrationData, and AcademicProfileData
+ * to Supabase with LocalStorage fallback & migration
  * Canonical Identity Model: id = user_id = auth.users(id)
  */
 
 import { StrategicProfile } from "@/types/onboarding";
+import {
+  StudentRegistrationData,
+  AcademicProfileData,
+  CompleteStudentProfile,
+} from "@/types/registration";
 import { supabase, isSupabaseConfigured } from "../supabase/client";
-import { getStrategicProfile, saveStrategicProfile } from "../onboarding/profile";
+import {
+  getStrategicProfile,
+  saveStrategicProfile,
+  getRegistrationDraft,
+  saveRegistrationDraft,
+  getAcademicProfileDraft,
+  saveAcademicProfileDraft,
+} from "../onboarding/profile";
+import { normalizeAlgerianPhone } from "@/domain/administrative/phone-validation";
 
 export const StudentRepository = {
   /**
@@ -79,7 +93,6 @@ export const StudentRepository = {
    * Always satisfies the database constraint: id = user_id
    */
   async saveProfile(profile: StrategicProfile, userId?: string): Promise<void> {
-    // Always persist to local storage first for offline/fallback safety
     saveStrategicProfile(profile);
 
     if (isSupabaseConfigured && supabase && userId) {
@@ -150,23 +163,242 @@ export const StudentRepository = {
   },
 
   /**
+   * Save registration data (Step 1 to 6)
+   */
+  async saveRegistrationData(data: StudentRegistrationData, userId?: string): Promise<void> {
+    // 1. Normalize phone numbers
+    const normalizedStudentPhone = normalizeAlgerianPhone(data.studentPhone);
+    const normalizedParentPhone = data.parentPhone ? normalizeAlgerianPhone(data.parentPhone) : undefined;
+    
+    // 2. Enforce free candidate rule: schoolName MUST be null
+    const finalSchoolName = data.studentStatus === "free" ? null : (data.schoolName?.trim() || null);
+
+    const sanitizedData: StudentRegistrationData = {
+      ...data,
+      studentPhone: normalizedStudentPhone,
+      parentPhone: normalizedParentPhone,
+      schoolName: finalSchoolName,
+      registrationCompletedAt: data.registrationCompletedAt || new Date().toISOString(),
+    };
+
+    // Save to LocalStorage draft
+    saveRegistrationDraft(sanitizedData);
+
+    // Sync baseline StrategicProfile for backward compatibility
+    const existingProfile = getStrategicProfile();
+    const updatedProfile: StrategicProfile = {
+      id: userId || existingProfile?.id || `profile_${Date.now()}`,
+      educationLevel: "secondary",
+      examType: "BAC",
+      streamId: sanitizedData.streamId,
+      techniqueMathSpecialty: sanitizedData.techniqueMathSpecialty,
+      targetScore: existingProfile?.targetScore || 16.0,
+      subjectEstimates: (existingProfile?.subjectEstimates || {}) as any,
+      availableTime: existingProfile?.availableTime || "12_to_18",
+      futureObjective: existingProfile?.futureObjective || { preset: "higher_school_ens_esi", customText: "" },
+      obstacles: existingProfile?.obstacles || [],
+      studyEnergy: existingProfile?.studyEnergy || "normal",
+      createdAt: existingProfile?.createdAt || new Date().toISOString(),
+    };
+    saveStrategicProfile(updatedProfile);
+
+    // Persist to Supabase if authenticated
+    if (isSupabaseConfigured && supabase && userId) {
+      try {
+        const payload: Record<string, any> = {
+          id: userId,
+          user_id: userId,
+          first_name: sanitizedData.firstName.trim(),
+          last_name: sanitizedData.lastName.trim(),
+          student_phone: sanitizedData.studentPhone,
+          parent_phone: sanitizedData.parentPhone || null,
+          student_status: sanitizedData.studentStatus,
+          stream_id: sanitizedData.streamId,
+          specialty_id: sanitizedData.techniqueMathSpecialty || null,
+          wilaya_code: sanitizedData.wilayaCode,
+          wilaya_name: sanitizedData.wilayaName,
+          commune_code: sanitizedData.communeCode,
+          commune_name: sanitizedData.communeName,
+          school_name: sanitizedData.schoolName,
+          registration_completed_at: sanitizedData.registrationCompletedAt,
+          updated_at: new Date().toISOString(),
+        };
+
+        const { error } = await supabase
+          .from("student_profiles")
+          .upsert(payload, { onConflict: "id" });
+
+        if (error) {
+          console.error("StudentRepository.saveRegistrationData error:", error);
+          // Fallback: save inside raw_draft
+          await this.saveProfile(updatedProfile, userId);
+        }
+      } catch (err) {
+        console.error("StudentRepository.saveRegistrationData exception:", err);
+      }
+    }
+  },
+
+  /**
+   * Save Academic Profile Data
+   */
+  async saveAcademicProfileData(data: AcademicProfileData, userId?: string): Promise<void> {
+    const sanitizedData: AcademicProfileData = {
+      ...data,
+      targetScore: Math.min(20, Math.max(0, Number(data.targetScore) || 16.0)),
+      annualAverageYear1: data.annualAverageYear1 !== undefined && data.annualAverageYear1 !== null
+        ? Math.min(20, Math.max(0, Number(data.annualAverageYear1)))
+        : null,
+      annualAverageYear2: data.annualAverageYear2 !== undefined && data.annualAverageYear2 !== null
+        ? Math.min(20, Math.max(0, Number(data.annualAverageYear2)))
+        : null,
+      targetSpecialty: data.hasTargetSpecialty === true ? data.targetSpecialty?.trim() || null : null,
+      academicProfileCompletedAt: data.academicProfileCompletedAt || new Date().toISOString(),
+    };
+
+    // Save to LocalStorage
+    saveAcademicProfileDraft(sanitizedData);
+
+    // Update targetScore on strategic profile mirror
+    const existingProfile = getStrategicProfile();
+    if (existingProfile) {
+      existingProfile.targetScore = sanitizedData.targetScore;
+      if (sanitizedData.targetSpecialty) {
+        existingProfile.futureObjective = {
+          preset: "specific_university_field",
+          customText: sanitizedData.targetSpecialty,
+        };
+      }
+      saveStrategicProfile(existingProfile);
+    }
+
+    // Persist to Supabase if authenticated
+    if (isSupabaseConfigured && supabase && userId) {
+      try {
+        const payload: Record<string, any> = {
+          id: userId,
+          user_id: userId,
+          target_score: sanitizedData.targetScore,
+          annual_average_year_1: sanitizedData.annualAverageYear1,
+          annual_average_year_2: sanitizedData.annualAverageYear2,
+          has_target_specialty: sanitizedData.hasTargetSpecialty === true,
+          target_specialty: sanitizedData.targetSpecialty,
+          study_methods: sanitizedData.studyMethods || [],
+          current_self_assessment: sanitizedData.currentSelfAssessment,
+          academic_profile_completed_at: sanitizedData.academicProfileCompletedAt,
+          updated_at: new Date().toISOString(),
+        };
+
+        const { error } = await supabase
+          .from("student_profiles")
+          .upsert(payload, { onConflict: "id" });
+
+        if (error) {
+          console.error("StudentRepository.saveAcademicProfileData error:", error);
+        }
+      } catch (err) {
+        console.error("StudentRepository.saveAcademicProfileData exception:", err);
+      }
+    }
+  },
+
+  /**
+   * Get registration data from Supabase or LocalStorage
+   */
+  async getRegistrationData(userId?: string): Promise<StudentRegistrationData | null> {
+    if (isSupabaseConfigured && supabase && userId) {
+      try {
+        const { data, error } = await supabase
+          .from("student_profiles")
+          .select("first_name, last_name, student_phone, parent_phone, student_status, stream_id, specialty_id, wilaya_code, wilaya_name, commune_code, commune_name, school_name, registration_completed_at")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (!error && data && data.first_name) {
+          return {
+            firstName: data.first_name,
+            lastName: data.last_name,
+            studentPhone: data.student_phone,
+            parentPhone: data.parent_phone || undefined,
+            studentStatus: data.student_status as any,
+            streamId: data.stream_id as any,
+            techniqueMathSpecialty: data.specialty_id || undefined,
+            wilayaCode: data.wilaya_code,
+            wilayaName: data.wilaya_name,
+            communeCode: data.commune_code,
+            communeName: data.commune_name,
+            schoolName: data.school_name,
+            registrationCompletedAt: data.registration_completed_at,
+          };
+        }
+      } catch (err) {
+        console.error("StudentRepository.getRegistrationData error:", err);
+      }
+    }
+
+    return getRegistrationDraft();
+  },
+
+  /**
+   * Get academic profile data from Supabase or LocalStorage
+   */
+  async getAcademicProfileData(userId?: string): Promise<AcademicProfileData | null> {
+    if (isSupabaseConfigured && supabase && userId) {
+      try {
+        const { data, error } = await supabase
+          .from("student_profiles")
+          .select("target_score, annual_average_year_1, annual_average_year_2, has_target_specialty, target_specialty, study_methods, current_self_assessment, academic_profile_completed_at")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (!error && data && data.academic_profile_completed_at) {
+          return {
+            targetScore: Number(data.target_score) || 16.0,
+            annualAverageYear1: data.annual_average_year_1 !== null ? Number(data.annual_average_year_1) : null,
+            annualAverageYear1Remembered: data.annual_average_year_1 !== null,
+            annualAverageYear2: data.annual_average_year_2 !== null ? Number(data.annual_average_year_2) : null,
+            annualAverageYear2Remembered: data.annual_average_year_2 !== null,
+            hasTargetSpecialty: data.has_target_specialty,
+            targetSpecialty: data.target_specialty,
+            studyMethods: Array.isArray(data.study_methods) ? data.study_methods : [],
+            currentSelfAssessment: data.current_self_assessment as any,
+            academicProfileCompletedAt: data.academic_profile_completed_at,
+          };
+        }
+      } catch (err) {
+        console.error("StudentRepository.getAcademicProfileData error:", err);
+      }
+    }
+
+    return getAcademicProfileDraft();
+  },
+
+  /**
    * Safely migrate existing LocalStorage profile to Supabase on first sign in
    */
   async syncLocalToCloud(userId: string): Promise<void> {
     const localProfile = getStrategicProfile();
-    if (!localProfile) return;
+    const localReg = getRegistrationDraft();
+    const localAcad = getAcademicProfileDraft();
 
-    if (isSupabaseConfigured && supabase) {
+    if (isSupabaseConfigured && supabase && userId) {
       try {
         const { data } = await supabase
           .from("student_profiles")
-          .select("id")
+          .select("id, registration_completed_at")
           .eq("id", userId)
           .maybeSingle();
 
-        // If cloud profile doesn't exist yet, upload the local one
-        if (!data) {
+        if (!data && localProfile) {
           await this.saveProfile(localProfile, userId);
+        }
+
+        if (localReg && (!data || !data.registration_completed_at)) {
+          await this.saveRegistrationData(localReg, userId);
+        }
+
+        if (localAcad) {
+          await this.saveAcademicProfileData(localAcad, userId);
         }
       } catch (err) {
         console.error("StudentRepository.syncLocalToCloud error:", err);

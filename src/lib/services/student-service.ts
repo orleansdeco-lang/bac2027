@@ -96,4 +96,32 @@ export const StudentService = {
 
     return localProfile;
   },
+
+  /**
+   * Save registration data (Step 1-6)
+   */
+  async saveRegistration(data: any, userId?: string): Promise<void> {
+    await StudentRepository.saveRegistrationData(data, userId);
+  },
+
+  /**
+   * Get registration data
+   */
+  async getRegistration(userId?: string): Promise<any | null> {
+    return StudentRepository.getRegistrationData(userId);
+  },
+
+  /**
+   * Save academic profile data
+   */
+  async saveAcademicProfile(data: any, userId?: string): Promise<void> {
+    await StudentRepository.saveAcademicProfileData(data, userId);
+  },
+
+  /**
+   * Get academic profile data
+   */
+  async getAcademicProfile(userId?: string): Promise<any | null> {
+    return StudentRepository.getAcademicProfileData(userId);
+  },
 };
