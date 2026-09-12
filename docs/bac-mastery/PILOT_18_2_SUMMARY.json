@@ -1,0 +1,41 @@
+{
+  "status": "PILOT_PENDING",
+  "pilot_type": "controlled_real_student_pilot",
+  "cohort_size": 0,
+  "target_cohort_size": "5-10",
+  "real_students_tested": 0,
+  "qa_students_tested": 3,
+  "product_version": "v1.2.0-pilot",
+  "learning_system_version": "v1.1.0-los",
+  "core_questions": {
+    "where_am_i": null,
+    "what_is_missing": null,
+    "what_do_i_do_now": null,
+    "how_do_i_know_i_learned": null
+  },
+  "learning_loop": {
+    "learn": null,
+    "recall": null,
+    "practice": null,
+    "error": null,
+    "repair": null,
+    "retest": null,
+    "mastery": null
+  },
+  "pilot_return_signal": null,
+  "conversion_signal": null,
+  "security_status": "SECURITY_HARDENING_REQUIRED (Supabase Auth Leaked Password Protection disabled on remote instance)",
+  "critical_bugs": 0,
+  "major_bugs": 0,
+  "minor_bugs": 0,
+  "student_feedback_collected": false,
+  "telemetry_aggregated": false,
+  "technical_readiness": "GREEN",
+  "human_validation_status": "PENDING_REAL_STUDENTS",
+  "limitations": [
+    "No real human students tested in this automated engineering environment",
+    "Telemetry is device-local (localStorage) and requires manual export via /account",
+    "Supabase Auth Leaked Password Protection is disabled on remote project erbvmpnxufgeinqnshzu",
+    "BAC stream coefficients remain provisional benchmarks pending official circular validation"
+  ]
+}

@@ -29,7 +29,10 @@ import {
   CloudOff,
   Palette,
   Sparkles,
+  Download,
+  Check,
 } from "lucide-react";
+import { exportAnonymizedPilotData } from "@/lib/analytics";
 
 export default function AccountPage() {
   const { t, locale } = useTranslation();
@@ -38,10 +41,30 @@ export default function AccountPage() {
   const [profile, setProfile] = useState<StrategicProfile | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncSuccess, setSyncSuccess] = useState(false);
+  const [exportSuccess, setExportSuccess] = useState(false);
 
   const access = getStudentAccess(profile);
 
   const NextArrow = isAr ? ArrowLeft : ArrowRight;
+
+  const handleExportPilotData = () => {
+    try {
+      const data = exportAnonymizedPilotData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bac_mastery_pilot_data_${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setExportSuccess(true);
+      setTimeout(() => setExportSuccess(false), 3000);
+    } catch (err) {
+      console.error("Export failed:", err);
+    }
+  };
 
   useEffect(() => {
     async function fetchAccProfile() {
@@ -314,6 +337,45 @@ export default function AccountPage() {
               ? "بياناتك الأكاديمية محمية بسياسات RLS الصارمة على Supabase. لا يتم استخدام أي ذكاء اصطناعي خارجي أو مشارقة بياناتك مع أطراف ثالثة."
               : "Vos données sont protégées par les politiques RLS strictes sur Supabase."}
           </p>
+        </Card>
+
+        {/* 5. Pilot Telemetry & Safe Export (Prompt 18.2 § 25) */}
+        <Card className="p-5 space-y-3 text-xs border border-theme">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-theme-secondary font-bold">
+              <Download className="h-4 w-4 text-[var(--color-primary)]" />
+              <span>{isAr ? "بيانات التجربة الميدانية (Pilot Export)" : "Export des données du pilote"}</span>
+            </div>
+            <Badge variant="outline" className="text-[10px] font-mono">
+              v1.0.0
+            </Badge>
+          </div>
+          <p className="text-theme-muted leading-relaxed">
+            {isAr
+              ? "يمكنك تصدير سجل أحداث التعلم الميدانية والتقييمات مجهولة المصدر (Zero PII) لتوثيق التجربة بدون أي معلومات شخصية أو كلمات مرور."
+              : "Exportez les événements d'apprentissage et retours d'expérience anonymes (sans PII ni mot de passe)."}
+          </p>
+          <div className="pt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full flex items-center justify-center gap-2 text-xs"
+              onClick={handleExportPilotData}
+              data-testid="pilot-export-btn"
+            >
+              {exportSuccess ? (
+                <>
+                  <Check className="h-3.5 w-3.5 text-emerald-400" />
+                  <span className="text-emerald-400 font-bold">{isAr ? "تم تحميل ملف JSON بنجاح" : "Fichier téléchargé"}</span>
+                </>
+              ) : (
+                <>
+                  <Download className="h-3.5 w-3.5" />
+                  <span>{isAr ? "تحميل سجل التجربة المجهول (JSON)" : "Télécharger les données anonymes (JSON)"}</span>
+                </>
+              )}
+            </Button>
+          </div>
         </Card>
       </Container>
     </AppShell>

@@ -181,3 +181,80 @@ export function clearStoredPilotEvents(): void {
     // Ignore
   }
 }
+
+export interface AnonymizedPilotExport {
+  schemaVersion: "1.0.0";
+  exportedAt: string;
+  totalEvents: number;
+  events: StoredPilotEvent[];
+  totalFeedback: number;
+  feedback: Array<{
+    id?: string;
+    missionId?: string;
+    skillId?: string;
+    rating: string;
+    feedbackNote?: string;
+    userId?: string | null;
+    createdAt?: string;
+  }>;
+}
+
+/**
+ * Prompt 18.2 § 25: Anonymized Pilot Data Exporter
+ * Bundles buffered pilot events and qualitative feedback records with zero PII,
+ * zero tokens, and pseudonymized user identifiers.
+ */
+export function exportAnonymizedPilotData(): AnonymizedPilotExport {
+  const rawEvents = getStoredPilotEvents();
+  let rawFeedback: Array<{
+    id?: string;
+    missionId?: string;
+    skillId?: string;
+    rating: string;
+    feedbackNote?: string;
+    userId?: string | null;
+    createdAt?: string;
+  }> = [];
+
+  if (typeof window !== "undefined") {
+    try {
+      const fbStr = localStorage.getItem("bac_mastery_pilot_feedback");
+      rawFeedback = fbStr ? JSON.parse(fbStr) : [];
+    } catch {
+      rawFeedback = [];
+    }
+  }
+
+  // Scrub and pseudonymize
+  const events = rawEvents.map((evt) => {
+    const cleanProps = sanitizeProperties(evt.properties);
+    if (cleanProps.userId) {
+      cleanProps.userId = `anon_${String(cleanProps.userId).substring(0, 8)}`;
+    }
+    delete cleanProps.email;
+    return {
+      ...evt,
+      properties: cleanProps,
+    };
+  });
+
+  const feedback = rawFeedback.map((fb) => ({
+    id: fb.id,
+    missionId: fb.missionId,
+    skillId: fb.skillId,
+    rating: fb.rating,
+    feedbackNote: fb.feedbackNote,
+    userId: fb.userId ? `anon_${String(fb.userId).substring(0, 8)}` : null,
+    createdAt: fb.createdAt,
+  }));
+
+  return {
+    schemaVersion: "1.0.0",
+    exportedAt: new Date().toISOString(),
+    totalEvents: events.length,
+    events,
+    totalFeedback: feedback.length,
+    feedback,
+  };
+}
+
