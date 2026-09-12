@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Logo } from "@/components/ui/Logo";
 import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
 import { ThemeSelector } from "@/components/ui/ThemeSelector";
-import { Lock, Mail, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
+import { Lock, Mail, ArrowRight, ArrowLeft, CheckCircle2, AlertCircle, Sparkles, UserPlus } from "lucide-react";
 import { StudentService } from "@/lib/services";
 import { syncAllLocalStorageToCloud } from "@/lib/repositories";
 import { useSearchParams } from "next/navigation";
@@ -212,14 +212,28 @@ function AuthContent() {
               </p>
             </div>
 
-            {!isConfigured && (
-              <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-400 flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>
+            {mode === "signup" && (
+              <div className="mb-4 p-3.5 bg-blue-500/10 border border-blue-500/30 rounded-xl text-xs space-y-2">
+                <div className="flex items-center gap-2 font-bold text-blue-400">
+                  <Sparkles className="w-4 h-4 shrink-0" />
+                  <span>
+                    {locale === "fr"
+                      ? "Nouveau : Inscription BAC simplifiée"
+                      : "التسجيل المدرسي المباشر للبكالوريا"}
+                  </span>
+                </div>
+                <p className="text-theme-secondary text-[11px] leading-relaxed">
                   {locale === "fr"
-                    ? "Mode local actif. Configurez les identifiants Supabase pour activer la synchronisation cloud."
-                    : "الوضع المحلي نشط. قم بضبط إعدادات Supabase لتفعيل المزامنة السحابية."}
-                </span>
+                    ? "Inscrivez-vous en quelques clics avec votre filière et wilaya (sans e-mail obligatoire)."
+                    : "سجّل مباشرة بشعبتك وولايتك بدون الحاجة لحساب بريد إلكتروني."}
+                </p>
+                <Link
+                  href="/auth/register"
+                  className="flex items-center justify-center gap-1.5 w-full py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white rounded-lg font-bold text-xs transition-colors"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>{locale === "fr" ? "Accéder à l'inscription rapide" : "الانتقال للتسجيل المدرسي السريع"}</span>
+                </Link>
               </div>
             )}
 
@@ -331,8 +345,21 @@ function AuthContent() {
               </Button>
             </form>
 
+            <div className="pt-4 border-t border-theme text-center space-y-2">
+              <p className="text-xs text-theme-secondary">
+                {locale === "fr" ? "Nouveau sur BAC Mastery ?" : "تلميذ جديد في BAC Mastery؟"}
+              </p>
+              <Link
+                href="/auth/register"
+                className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-[var(--color-primary)] hover:underline"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>{locale === "fr" ? "Créer un compte élève gratuit" : "تسجيل حساب تلميذ جديد (سريع ومجاني)"}</span>
+              </Link>
+            </div>
+
             {/* Back link */}
-            <div className="mt-6 text-center">
+            <div className="mt-4 text-center">
               <Link
                 href="/"
                 className="text-xs text-theme-muted hover:text-theme-text transition-colors inline-flex items-center gap-1"

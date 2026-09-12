@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "@/lib/i18n/context";
-import { Compass, Map, Target, BarChart3 } from "lucide-react";
+import { Compass, Map, Target, BarChart3, User } from "lucide-react";
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -35,6 +35,16 @@ export function BottomNav() {
       icon: BarChart3,
       matches: (p: string) => p.startsWith("/progress") || p.startsWith("/error-lab"),
     },
+    {
+      href: "/account",
+      label: locale === "ar" ? "حسابي" : "Mon compte",
+      icon: User,
+      matches: (p: string) =>
+        p.startsWith("/account") ||
+        p.startsWith("/auth") ||
+        p.startsWith("/register") ||
+        p.startsWith("/profile"),
+    },
   ];
 
   return (
@@ -42,7 +52,7 @@ export function BottomNav() {
       aria-label="Mobile Navigation"
       className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-surface/95 backdrop-blur-lg border-t border-theme px-2 py-1 transition-colors duration-200"
     >
-      <div className="grid grid-cols-4 items-center justify-around max-w-md mx-auto">
+      <div className="grid grid-cols-5 items-center justify-around max-w-md mx-auto">
         {navItems.map((item) => {
           const isActive = item.matches(pathname);
           const Icon = item.icon;

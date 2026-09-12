@@ -86,9 +86,9 @@ export default function HomePage() {
       }
     } else {
       setSmartCta({
-        textAr: "ابني خريطتي",
-        textFr: "Construire ma feuille de route",
-        href: "/onboarding",
+        textAr: "ابدأ الآن وسجّل مجاناً",
+        textFr: "Commencer gratuitement",
+        href: "/auth/register",
       });
     }
   }, []);

@@ -10,17 +10,19 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ThemeSelector } from "@/components/ui/ThemeSelector";
-import { getStrategicProfile } from "@/lib/onboarding/profile";
+import { getStrategicProfile, getRegistrationDraft } from "@/lib/onboarding/profile";
 import { StrategicProfile } from "@/types/onboarding";
+import { StudentRegistrationData } from "@/types/registration";
 import { StudentService } from "@/lib/services";
 import { getStudentAccess } from "@/lib/access";
 import { getStoredPaymentRecords, PilotPaymentRecord } from "@/lib/payment";
 import {
   User,
+  UserPlus,
   ShieldCheck,
   RefreshCw,
-  LogOut,
   LogIn,
+  LogOut,
   Target,
   Clock,
   Compass,
@@ -41,6 +43,7 @@ export default function AccountPage() {
   const isAr = locale === "ar";
   const { user, isLoading: authLoading, signOut } = useAuth();
   const [profile, setProfile] = useState<StrategicProfile | null>(null);
+  const [regDraft, setRegDraft] = useState<StudentRegistrationData | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncSuccess, setSyncSuccess] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
@@ -73,6 +76,8 @@ export default function AccountPage() {
     async function fetchAccProfile() {
       const p = user ? await StudentService.getProfile(user.id) : getStrategicProfile();
       if (p) setProfile(p);
+      const reg = getRegistrationDraft();
+      if (reg) setRegDraft(reg);
       const records = getStoredPaymentRecords();
       const currentUid = user?.id || "guest_pilot";
       const userRecord = records.find(
@@ -215,18 +220,26 @@ export default function AccountPage() {
               )}
             </div>
           ) : (
-            <div className="pt-3 border-t border-theme space-y-2">
+            <div className="pt-3 border-t border-theme space-y-3">
               <p className="text-xs text-theme-secondary leading-relaxed">
                 {isAr
-                  ? "أنت تستخدم حالياً الوضع المحلي. يمكنك تسجيل حساب لحفظ تقدمك السحابي ومتابعته من أي جهاز."
-                  : "Connectez-vous pour synchroniser votre progression dans le cloud."}
+                  ? "أنت تستخدم حالياً جلسة محلية. يمكنك تسجيل حساب طالب رسمي لحفظ تقدمك السحابي ومتابعته من أي هاتف أو حاسوب."
+                  : "Vous utilisez actuellement une session locale. Créez un compte élève officiel pour synchroniser votre progression."}
               </p>
-              <Link href="/auth">
-                <Button variant="primary" size="sm">
-                  <LogIn className="h-3.5 w-3.5" />
-                  <span>{isAr ? "تسجيل الدخول / إنشاء حساب" : "Connexion"}</span>
-                </Button>
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Link href="/auth/register" className="flex-1">
+                  <Button variant="primary" size="sm" className="w-full font-bold">
+                    <UserPlus className="h-3.5 w-3.5" />
+                    <span>{isAr ? "تسجيل حساب تلميذ جديد" : "Créer un compte élève"}</span>
+                  </Button>
+                </Link>
+                <Link href="/auth" className="flex-1">
+                  <Button variant="outline" size="sm" className="w-full">
+                    <LogIn className="h-3.5 w-3.5" />
+                    <span>{isAr ? "تسجيل الدخول" : "Se connecter"}</span>
+                  </Button>
+                </Link>
+              </div>
             </div>
           )}
         </Card>
@@ -382,10 +395,34 @@ export default function AccountPage() {
             </div>
           </div>
 
-          <div className="pt-2">
-            <Link href="/onboarding">
+          {regDraft && (
+            <div className="p-3.5 rounded-xl bg-card-muted/60 border border-theme space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-theme-muted">{isAr ? "بيانات التلميذ:" : "Informations élève :"}</span>
+                <span className="font-bold text-theme-text">{regDraft.firstName} {regDraft.lastName}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-theme-muted">{isAr ? "الوضعية والموقع:" : "Statut & Lieu :"}</span>
+                <span className="text-theme-secondary font-medium">
+                  {regDraft.studentStatus === "schooled"
+                    ? `${isAr ? "متمدرس" : "Scolarisé"}${regDraft.schoolName ? ` (${regDraft.schoolName})` : ""}`
+                    : (isAr ? "مترشح حر" : "Candidat libre")}
+                  {regDraft.wilayaName ? ` · ${regDraft.wilayaName}` : ""}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Link href="/profile/academic">
+              <Button variant="primary" size="sm" className="w-full text-xs font-bold">
+                <span>{isAr ? "الملف الدراسي والأهداف" : "Profil Académique"}</span>
+                <NextArrow className="h-3.5 w-3.5" />
+              </Button>
+            </Link>
+            <Link href="/auth/register">
               <Button variant="outline" size="sm" className="w-full text-xs">
-                <span>{isAr ? "تعديل تفاصيل الخطة (Onboarding)" : "Modifier le profil"}</span>
+                <span>{isAr ? "تعديل بيانات التسجيل" : "Modifier l'inscription"}</span>
                 <NextArrow className="h-3.5 w-3.5" />
               </Button>
             </Link>
