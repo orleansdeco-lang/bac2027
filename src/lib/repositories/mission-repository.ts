@@ -32,6 +32,36 @@ export const MissionRepository = {
         if (data && data.length > 0) {
           const local = loadMissions();
           if (Object.keys(local).length > 0) return local;
+
+          const map: Record<string, Mission> = {};
+          for (const row of data) {
+            map[row.id] = {
+              id: row.id,
+              educationLevel: "secondary",
+              examType: "bac",
+              streamId: "sciences_exp",
+              skillId: row.skill_id,
+              subjectId: row.subject_id,
+              title: "مهمة دراسية",
+              description: "مهمة تدريبية مخصصة",
+              reason: "أولوية تعليمية",
+              title_ar: "مهمة دراسية",
+              title_fr: "Mission d'apprentissage",
+              description_ar: "مهمة تدريبية مخصصة",
+              description_fr: "Mission personnalisée",
+              reason_ar: "أولوية تعليمية",
+              reason_fr: "Priorité pédagogique",
+              priority: (row.priority as any) || "medium",
+              source: "diagnostic_bottleneck",
+              status: (row.status as any) || "available",
+              practiceQuestionIds: [],
+              retestQuestionIds: [],
+              estimatedMinutes: 25,
+              createdAt: row.created_at || new Date().toISOString(),
+              updatedAt: row.updated_at || new Date().toISOString(),
+            };
+          }
+          return map;
         }
       } catch (err) {
         console.error("MissionRepository.getMissions exception:", err);

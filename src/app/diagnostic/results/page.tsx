@@ -363,48 +363,50 @@ export default function DiagnosticResultsPage() {
           </Card>
 
           {/* 6. First Recommended Mission */}
-          <Card className="p-5 sm:p-6 bg-[#0d271f] border border-emerald-500/40 shadow-xl space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Target className="h-5 w-5 text-emerald-400" />
-                <span className="text-sm font-bold text-white">
-                  {t.diagnostic.results.missionTitle}
-                </span>
-              </div>
-              <div className="flex items-center gap-1 text-xs text-emerald-300 font-semibold">
-                <Clock className="h-3.5 w-3.5 text-emerald-400" />
-                <span>{results.firstRecommendedMission.estimatedMinutes} {locale === "ar" ? "دقيقة" : "min"}</span>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-base font-bold text-white">
-                {locale === "ar" ? results.firstRecommendedMission.title_ar : results.firstRecommendedMission.title_fr}
-              </h3>
-              <p className="text-xs text-emerald-300 mt-1">
-                {locale === "ar" ? results.firstRecommendedMission.focusTopic_ar : results.firstRecommendedMission.focusTopic_fr}
-              </p>
-            </div>
-
-            <div className="space-y-2 text-xs sm:text-sm text-slate-200 pt-1">
-              {(locale === "ar"
-                ? results.firstRecommendedMission.actionSteps_ar
-                : results.firstRecommendedMission.actionSteps_fr
-              ).map((step, sIdx) => (
-                <div key={sIdx} className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
-                  <span>{step}</span>
+          {results.firstRecommendedMission && (
+            <Card className="p-5 sm:p-6 bg-[#0d271f] border border-emerald-500/40 shadow-xl space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-emerald-400" />
+                  <span className="text-sm font-bold text-white">
+                    {t.diagnostic.results.missionTitle}
+                  </span>
                 </div>
-              ))}
-            </div>
+                <div className="flex items-center gap-1 text-xs text-emerald-300 font-semibold">
+                  <Clock className="h-3.5 w-3.5 text-emerald-400" />
+                  <span>{results.firstRecommendedMission.estimatedMinutes} {locale === "ar" ? "دقيقة" : "min"}</span>
+                </div>
+              </div>
 
-            <div className="pt-2">
-              <Button size="lg" fullWidth onClick={handleUpdateRoadmap}>
-                <span>{t.diagnostic.results.updateRoadmapCta}</span>
-                <NextArrow className="h-4 w-4" />
-              </Button>
-            </div>
-          </Card>
+              <div>
+                <h3 className="text-base font-bold text-white">
+                  {locale === "ar" ? results.firstRecommendedMission.title_ar : results.firstRecommendedMission.title_fr}
+                </h3>
+                <p className="text-xs text-emerald-300 mt-1">
+                  {locale === "ar" ? results.firstRecommendedMission.focusTopic_ar : results.firstRecommendedMission.focusTopic_fr}
+                </p>
+              </div>
+
+              <div className="space-y-2 text-xs sm:text-sm text-slate-200 pt-1">
+                {(locale === "ar"
+                  ? results.firstRecommendedMission.actionSteps_ar
+                  : results.firstRecommendedMission.actionSteps_fr
+                ).map((step, sIdx) => (
+                  <div key={sIdx} className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                    <span>{step}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="pt-2">
+                <Button size="lg" fullWidth onClick={handleUpdateRoadmap}>
+                  <span>{t.diagnostic.results.updateRoadmapCta}</span>
+                  <NextArrow className="h-4 w-4" />
+                </Button>
+              </div>
+            </Card>
+          )}
 
           {/* 7. Subject & Dimension Breakdown */}
           <div className="grid sm:grid-cols-2 gap-4">
@@ -457,6 +459,7 @@ export default function DiagnosticResultsPage() {
                 {Object.entries(results.dimensionScores).map(([dimKey, dimScore]) => {
                   const dName = dimensionNames[dimKey as DiagnosticDimension] || { ar: dimKey, fr: dimKey };
                   const qCount = results.dimensionQuestionCounts?.[dimKey as DiagnosticDimension];
+                  const percentage = typeof dimScore === "number" ? dimScore : typeof dimScore === "object" && dimScore !== null ? (dimScore as any).percentage ?? 0 : 0;
                   return (
                     <div key={dimKey} className="space-y-1">
                       <div className="flex items-center justify-between text-xs">
@@ -467,13 +470,13 @@ export default function DiagnosticResultsPage() {
                           {qCount !== undefined && (
                             <span className="text-[10px] text-slate-500">({qCount} {locale === "ar" ? "أسئلة" : "q"})</span>
                           )}
-                          <span className="font-bold text-white font-mono">{dimScore}%</span>
+                          <span className="font-bold text-white font-mono">{percentage}%</span>
                         </div>
                       </div>
                       <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-cyan-500 rounded-full"
-                          style={{ width: `${dimScore}%` }}
+                          style={{ width: `${percentage}%` }}
                         />
                       </div>
                     </div>

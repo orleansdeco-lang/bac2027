@@ -27,8 +27,27 @@ export const StudentRepository = {
           return getStrategicProfile();
         }
 
-        if (data && data.raw_draft) {
-          return data.raw_draft as StrategicProfile;
+        if (data) {
+          if (data.raw_draft && Object.keys(data.raw_draft).length > 0) {
+            saveStrategicProfile(data.raw_draft as StrategicProfile);
+            return data.raw_draft as StrategicProfile;
+          }
+          const reconstructed: StrategicProfile = {
+            id: data.id || userId,
+            educationLevel: (data.education_level as any) || "secondary",
+            examType: ((data.exam_type || "bac").toUpperCase() as any),
+            streamId: data.stream_id,
+            techniqueMathSpecialty: data.specialty_id || undefined,
+            targetScore: Number(data.target_score) || 16.0,
+            subjectEstimates: {} as any,
+            availableTime: "12_to_18",
+            futureObjective: { preset: "higher_school_ens_esi", customText: data.future_objective || "" },
+            obstacles: data.biggest_obstacle ? [data.biggest_obstacle as any] : [],
+            studyEnergy: (data.energy_state as any) || "normal",
+            createdAt: data.created_at || new Date().toISOString(),
+          };
+          saveStrategicProfile(reconstructed);
+          return reconstructed;
         }
       } catch (err) {
         console.error("StudentRepository.getProfile exception:", err);

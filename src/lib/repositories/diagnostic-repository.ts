@@ -92,9 +92,37 @@ export const DiagnosticRepository = {
         }
 
         if (data) {
-          // Fall back to local full structured object or rehydrate
           const local = loadDiagnosticResults();
           if (local) return local;
+
+          const reconstructed: DiagnosticAnalysisResult = {
+            sessionId: data.session_id,
+            streamId: "sciences_exp",
+            totalQuestions: data.question_count || 15,
+            answeredQuestions: data.question_count || 15,
+            observedDiagnosticScore: Number(data.observed_signal) || 0,
+            coreDiagnosticSignal: Number(data.observed_signal) || 0,
+            coverage: data.coverage || "pilot",
+            subjectScores: data.subject_signals || {},
+            dimensionScores: data.dimension_signals || {},
+            calibration: data.confidence_calibration || { category: "well_calibrated" },
+            primaryBottleneck: {
+              subjectId: data.bottleneck_candidate || "natural_sciences",
+              dimension: "understanding",
+              severity: "moderate",
+              observedScore: 0,
+              title_ar: "نقص التحكم في المفاهيم الأساسية",
+              title_fr: "Faiblesse sur les concepts fondamentaux",
+              rationale_ar: "الأولوية الموصى بها لمعالجة الفجوة المعرفية الأكبر.",
+              rationale_fr: "Priorité recommandée selon le diagnostic.",
+            },
+            misconceptionTraps: data.misconceptions || [],
+            limitations: data.limitations || ["pilot_scope"],
+            source: "diagnostic",
+            completedAt: data.created_at,
+          } as any;
+          saveDiagnosticResults(reconstructed);
+          return reconstructed;
         }
       } catch (err) {
         console.error("DiagnosticRepository.getResults exception:", err);

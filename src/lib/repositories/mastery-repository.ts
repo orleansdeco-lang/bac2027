@@ -24,6 +24,24 @@ export const MasteryRepository = {
         if (data && data.length > 0) {
           const local = loadMasteryRecords();
           if (Object.keys(local).length > 0) return local;
+
+          const map: Record<string, MasteryEvidence> = {};
+          for (const row of data) {
+            map[row.skill_id] = {
+              missionId: "mission_" + row.skill_id,
+              skillId: row.skill_id,
+              subjectId: row.subject_id,
+              evidenceType: "repair_retest_success",
+              practiceAttempts: 1,
+              correctAttempts: 1,
+              retestAttempts: 1,
+              successfulRetests: 1,
+              confidenceSignals: [5],
+              masteryStatus: (row.status as any) || "demonstrated",
+              achievedAt: row.last_verified_at || row.updated_at,
+            };
+          }
+          return map;
         }
       } catch (err) {
         console.error("MasteryRepository.getMasteryRecords exception:", err);

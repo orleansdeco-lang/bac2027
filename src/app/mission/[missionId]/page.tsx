@@ -121,12 +121,14 @@ export default function MissionPage() {
           }
 
           // If mission has already been mastered
-          if (res.mission.status === "mastered") {
-            setCurrentStep("summary");
-          } else if (res.mission.status === "retest_ready") {
-            setCurrentStep("retest");
-          } else if (res.mission.status === "repair_needed") {
-            setCurrentStep("repair");
+          if (res.mission) {
+            if (res.mission.status === "mastered") {
+              setCurrentStep("summary");
+            } else if (res.mission.status === "retest_ready") {
+              setCurrentStep("retest");
+            } else if (res.mission.status === "repair_needed") {
+              setCurrentStep("repair");
+            }
           }
         }
 

@@ -137,7 +137,7 @@ export default function AccountPage() {
             </div>
             <div>
               <span className="text-xs text-slate-400 block">{isAr ? "البريد الإلكتروني" : "E-mail"}</span>
-              <span className="text-sm font-bold text-white font-mono">
+              <span className="text-sm font-bold text-white font-mono break-all">
                 {user?.email || (isAr ? "جلسة محلية (بدون تسجيل)" : "Session locale (invité)")}
               </span>
             </div>
