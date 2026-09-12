@@ -103,8 +103,8 @@ export const DashboardService = {
         case "next_subject_skill":
         case "next_core_subject":
         case "delayed_needs_more_work":
-          whyAr = "المهارة المنطقية التالية حسب تسلسل المنهاج الوزاري لشعبتك.";
-          whyFr = "Compétence suivante logique selon la progression officielle du Ministère.";
+          whyAr = "المهارة المنطقية التالية حسب التدرج التعلمي المعتمد لشعبتك.";
+          whyFr = "Compétence suivante logique selon la progression pédagogique recommandée pour votre filière.";
           break;
       }
     }

@@ -173,7 +173,7 @@ export const PROMPT11_PAST_BAC_REFERENCES: PastBacExamReference[] = [
     subQuestionRef: "السؤال 1",
     title_ar: "بكالوريا 2023 — رياضيات — الموضوع الثاني — التمرين الثاني",
     title_fr: "BAC 2023 — Mathématiques — Sujet 2 — Exercice 2",
-    description_ar: "البرهان بالتراجع على حصر متتالية عددية تراجعية وفق الصياغة المنهجية الرسمية.",
+    description_ar: "البرهان بالتراجع على حصر متتالية عددية تراجعية وفق الصياغة المنهجية المعتمدة.",
     description_fr: "Démonstration par récurrence d'un encadrement de suite récurrente.",
     sourceId: "src-onec-past-exams-archive",
     sourceType: "official_exam",

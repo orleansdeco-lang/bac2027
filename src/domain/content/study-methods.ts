@@ -146,7 +146,7 @@ export const PROMPT12_STUDY_METHODS: StudyMethod[] = [
   },
   {
     id: "sm_07_error_repair",
-    title_ar: "بروتوكول تصحيح الخطأ وتحويله إلى علامة مضمونة",
+    title_ar: "بروتوكول تصحيح الخطأ وترسيخ الفهم المنهجي",
     title_fr: "Protocole de remédiation d'erreur et capitalisation d'apprentissage",
     category: "error_repair",
     problemAddressed_ar: "تكرار نفس الأخطاء الحسابية والمنهجية في كل اختبار رسمي.",
@@ -289,7 +289,7 @@ export const PROMPT12_STUDY_METHODS: StudyMethod[] = [
       "صياغة خطة العمل المباشرة: إذا كانت الأخطاء حسابية، فالحل هو التدرب تحت ضغط الوقت مع مراجعة الحسابات.",
       "تحديث قائمة الأولويات في خريطة التعلم في BAC Mastery.",
     ],
-    exampleScenario_ar: "خسارة 6 نقاط في الفيزياء: 1 نقطة معرفية، 1 نقطة منهجية، 4 نقاط في تحويل الوحدات وإشارة؛ التركيز القادم يكون على دقة الإنجاز.",
+    exampleScenario_ar: "تحليل نتائج الاختبار التجريبي: رصد الأخطاء المعرفية والمنهجية والحسابية؛ وتوجيه التركيز القادم نحو دقة الحساب وضبط الوحدات.",
     commonTrap_ar: "القول بأن 'الامتحان كان صعباً والأسئلة تعجيزية' دون تفكيك سلم التصحيح نقطة بنقطة.",
     estimatedMinutes: 30,
     sourceId: "src-bac-mastery-pedagogy",

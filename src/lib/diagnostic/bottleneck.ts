@@ -31,7 +31,7 @@ const DIMENSION_NAMES: Record<DiagnosticDimension, { ar: string; fr: string }> =
   knowledge: { ar: "استرجاع المعارف الأساسية", fr: "Restitution des connaissances" },
   understanding: { ar: "الفهم والتعليل المفاهيمي", fr: "Compréhension conceptuelle" },
   application: { ar: "التطبيق والحساب العددي", fr: "Application et calcul" },
-  methodology: { ar: "المنهجية الرسمية وصياغة الإجابة", fr: "Méthodologie et rédaction" },
+  methodology: { ar: "المنهجية المعتمدة وصياغة الإجابة", fr: "Méthodologie et rédaction conforme" },
   speed: { ar: "إدارة الوقت والسرعة", fr: "Gestion du temps" },
   confidence: { ar: "معايرة اليقين وتجنب التسرع", fr: "Calibration de la certitude" },
 };
@@ -57,8 +57,8 @@ export function detectEmpiricalBottlenecks(
       observedScore: 50,
       title_ar: "المنهجية العامة في المواد العلمية",
       title_fr: "Méthodologie générale des matières scientifiques",
-      rationale_ar: "نقطة انطلاق عامة لتثبيت منهجية الإجابة الرسمية في البكالوريا.",
-      rationale_fr: "Point de départ général pour consolider la méthodologie officielle au BAC.",
+      rationale_ar: "نقطة انطلاق عامة لتثبيت منهجية الإجابة المعتمدة في مواضيع البكالوريا.",
+      rationale_fr: "Point de départ général pour consolider la méthodologie de référence au BAC.",
     };
     return { primaryBottleneck: fallback, secondaryBottlenecks: [] };
   }

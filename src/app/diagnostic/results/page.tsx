@@ -125,7 +125,7 @@ export default function DiagnosticResultsPage() {
     knowledge: { ar: "استرجاع المعارف", fr: "Connaissances" },
     understanding: { ar: "الفهم والتعليل", fr: "Compréhension" },
     application: { ar: "التطبيق والحساب", fr: "Application" },
-    methodology: { ar: "المنهجية الرسمية", fr: "Méthodologie" },
+    methodology: { ar: "المنهجية المعتمدة", fr: "Méthodologie" },
     speed: { ar: "إدارة الوقت", fr: "Vitesse" },
     confidence: { ar: "ثقة التلميذ", fr: "Confiance" },
   };
