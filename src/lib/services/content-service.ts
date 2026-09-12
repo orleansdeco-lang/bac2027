@@ -10,6 +10,8 @@ import {
   getAllSkillContentReadiness,
   SkillReadinessStatus,
   PROMPT11_SKILLS,
+  PROMPT12_MINI_EXAMS,
+  MiniExam,
 } from "@/domain/content";
 import { Skill } from "@/domain/content/types";
 
@@ -33,5 +35,26 @@ export const ContentService = {
    */
   getAllReadiness(): Record<string, SkillReadinessStatus> {
     return getAllSkillContentReadiness();
+  },
+
+  /**
+   * Get all mini-exams and topic assessments
+   */
+  getMiniExams(): MiniExam[] {
+    return PROMPT12_MINI_EXAMS;
+  },
+
+  /**
+   * Get mini-exam by ID
+   */
+  getMiniExamById(id: string): MiniExam | undefined {
+    return PROMPT12_MINI_EXAMS.find((e: MiniExam) => e.id === id);
+  },
+
+  /**
+   * Get multi-subject weekly checkpoints
+   */
+  getWeeklyCheckpoints(): MiniExam[] {
+    return PROMPT12_MINI_EXAMS.filter((e: MiniExam) => e.type === "weekly_checkpoint");
   },
 };

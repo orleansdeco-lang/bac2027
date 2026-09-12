@@ -79,11 +79,17 @@ export const ProgressService = {
       (m) => m.status === "mastered"
     ).length;
 
-    // Subject breakdown
+    // Subject breakdown with alias normalization (math / mathematics)
+    const normalizeSubj = (subj: string) => {
+      if (subj === "mathematics" || subj === "math") return ["math", "mathematics"];
+      return [subj];
+    };
+
     const getCountForSubject = (subj: string) => {
-      const dem = demonstratedSkills.filter((s) => s.subjectId === subj).length;
-      const em = emergingSkills.filter((s) => s.subjectId === subj).length;
-      const tot = allSkills.filter((s) => s.subjectId === subj).length;
+      const aliases = normalizeSubj(subj);
+      const dem = demonstratedSkills.filter((s) => aliases.includes(s.subjectId)).length;
+      const em = emergingSkills.filter((s) => aliases.includes(s.subjectId)).length;
+      const tot = allSkills.filter((s) => aliases.includes(s.subjectId)).length;
       return { demonstrated: dem, emerging: em, total: tot };
     };
 

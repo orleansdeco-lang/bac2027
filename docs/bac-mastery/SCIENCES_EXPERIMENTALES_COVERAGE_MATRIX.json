@@ -1,0 +1,464 @@
+{
+  "streamId": "sciences_exp",
+  "streamName_ar": "علوم تجريبية",
+  "streamName_fr": "Sciences Expérimentales",
+  "legalClassification": "OFFICIAL_HISTORICAL",
+  "statutoryReference": "Décret Exécutif n° 07-142 du 19 mai 2007 fixant les règles de délivrance du diplôme du Baccalauréat",
+  "ministerialDecision36Status": "CURRENT_OFFICIAL_MICRO_EVIDENCE_INSUFFICIENT (Decision No. 36 cancels Decision No. 20)",
+  "academicYear": "2026-2027",
+  "totalSubjects": 9,
+  "totalCoefficients": 29,
+  "coreSubjectsSummary": {
+    "count": 3,
+    "totalCoefficients": 16,
+    "weightPercentage": 55.17,
+    "subjects": [
+      "natural_sciences",
+      "physics",
+      "math"
+    ]
+  },
+  "supportingSubjectsSummary": {
+    "count": 6,
+    "totalCoefficients": 13,
+    "weightPercentage": 44.83,
+    "subjects": [
+      "arabic",
+      "philosophy",
+      "french",
+      "english",
+      "islamic_studies",
+      "history_geography"
+    ]
+  },
+  "subjects": [
+    {
+      "subjectId": "natural_sciences",
+      "title_ar": "علوم الطبيعة والحياة",
+      "title_fr": "Sciences de la Nature et de la Vie (SNV)",
+      "coefficient": 6,
+      "weeklyHours": 6,
+      "examWeight": "20.69%",
+      "role": "CORE_ENGINE",
+      "status": "PUBLISHED",
+      "canonicalSkillsCount": 10,
+      "pedagogicalMethodology": "Investigative reasoning, structured document analysis (المصادقة والتفسير), rigorous biological schema production."
+    },
+    {
+      "subjectId": "physics",
+      "title_ar": "العلوم الفيزيائية",
+      "title_fr": "Sciences Physiques (Physique-Chimie)",
+      "coefficient": 5,
+      "weeklyHours": 5,
+      "examWeight": "17.24%",
+      "role": "CORE_ENGINE",
+      "status": "PUBLISHED",
+      "canonicalSkillsCount": 11,
+      "pedagogicalMethodology": "Differential equation formulation, dimensional analysis, experimental titration interpretation, Newton/Kepler vector mechanics."
+    },
+    {
+      "subjectId": "math",
+      "title_ar": "الرياضيات",
+      "title_fr": "Mathématiques",
+      "coefficient": 5,
+      "weeklyHours": 5,
+      "examWeight": "17.24%",
+      "role": "CORE_ENGINE",
+      "status": "PUBLISHED",
+      "canonicalSkillsCount": 10,
+      "pedagogicalMethodology": "Rigorous function study, intermediate value theorems, composite derivation, recurrent sequences with mathematical induction, conditional probability."
+    },
+    {
+      "subjectId": "arabic",
+      "title_ar": "اللغة العربية وآدابها",
+      "title_fr": "Langue Arabe et Littérature",
+      "coefficient": 3,
+      "weeklyHours": 3,
+      "examWeight": "10.34%",
+      "role": "SUPPORTING",
+      "status": "METHODOLOGY_ALIGNED",
+      "canonicalSkillsCount": 4,
+      "pedagogicalMethodology": "Textual analysis (بناء فكري), linguistic critique (بناء لغوي), poetic and prose analysis."
+    },
+    {
+      "subjectId": "philosophy",
+      "title_ar": "الفلسفة",
+      "title_fr": "Philosophie",
+      "coefficient": 2,
+      "weeklyHours": 2,
+      "examWeight": "6.90%",
+      "role": "HUMANITIES",
+      "status": "METHODOLOGY_ALIGNED",
+      "canonicalSkillsCount": 4,
+      "pedagogicalMethodology": "Dialectical argumentation (جدلية), comparative synthesis (مقارنة), philosophical text explication (استقصاء بالوضع وتحليل نص)."
+    },
+    {
+      "subjectId": "french",
+      "title_ar": "اللغة الفرنسية",
+      "title_fr": "Français",
+      "coefficient": 2,
+      "weeklyHours": 3,
+      "examWeight": "6.90%",
+      "role": "LANGUAGE",
+      "status": "METHODOLOGY_ALIGNED",
+      "canonicalSkillsCount": 4,
+      "pedagogicalMethodology": "Objective text summary (compte-rendu objectif), argumentative essay, historical/scientific document comprehension."
+    },
+    {
+      "subjectId": "english",
+      "title_ar": "اللغة الإنجليزية",
+      "title_fr": "Anglais",
+      "coefficient": 2,
+      "weeklyHours": 3,
+      "examWeight": "6.90%",
+      "role": "LANGUAGE",
+      "status": "METHODOLOGY_ALIGNED",
+      "canonicalSkillsCount": 4,
+      "pedagogicalMethodology": "Reading comprehension, grammatical transformation, guided writing and paragraph composition."
+    },
+    {
+      "subjectId": "islamic_studies",
+      "title_ar": "العلوم الإسلامية",
+      "title_fr": "Sciences Islamiques",
+      "coefficient": 2,
+      "weeklyHours": 2,
+      "examWeight": "6.90%",
+      "role": "HUMANITIES",
+      "status": "METHODOLOGY_ALIGNED",
+      "canonicalSkillsCount": 4,
+      "pedagogicalMethodology": "Quranic text analysis, juridical extraction of rulings (الأحكام والفوائد), theological ethics and maqasid."
+    },
+    {
+      "subjectId": "history_geography",
+      "title_ar": "التاريخ والجغرافيا",
+      "title_fr": "Histoire et Géographie",
+      "coefficient": 2,
+      "weeklyHours": 3,
+      "examWeight": "6.90%",
+      "role": "HUMANITIES",
+      "status": "METHODOLOGY_ALIGNED",
+      "canonicalSkillsCount": 4,
+      "pedagogicalMethodology": "Historical document analysis, international relations chronology, geographic chart and map interpretation, socio-economic synthesis."
+    }
+  ],
+  "publishedCanonicalSkills": [
+    {
+      "id": "math_derivatives_chain_rule",
+      "subjectId": "math",
+      "topic": "math_topic_functions",
+      "title_ar": "اشتقاق الدوال المركبة وقاعدة السلسلة",
+      "title_fr": "Dérivation des fonctions composées",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "math_intermediate_value_method",
+      "subjectId": "math",
+      "topic": "math_topic_functions",
+      "title_ar": "مبرهنة القيم المتوسطة والتمييز بين الوجود والوحدانية",
+      "title_fr": "TVI : Existence vs Unicité",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "math_asymptotes_limits",
+      "subjectId": "math",
+      "topic": "math_topic_functions",
+      "title_ar": "حساب النهايات وتفسير المستقيمات المقاربة",
+      "title_fr": "Limites et asymptotes",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "math_tangent_convexity",
+      "subjectId": "math",
+      "topic": "math_topic_functions",
+      "title_ar": "معادلة المماس ونقاط الانعطاف والوضعية النسبية",
+      "title_fr": "Tangente, convexité et position relative",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "math_exponential_properties_equations",
+      "subjectId": "math",
+      "topic": "math_topic_exp_ln",
+      "title_ar": "حل المعادلات والمتراجحات الأسية والتبسيط الجبري",
+      "title_fr": "Équations exponentielles",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "math_logarithm_domain_limits",
+      "subjectId": "math",
+      "topic": "math_topic_exp_ln",
+      "title_ar": "مجموعة تعريف الدالة اللوغاريتمية والنهايات الشهيرة",
+      "title_fr": "Domaine et limites du logarithme",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "math_induction_reasoning",
+      "subjectId": "math",
+      "topic": "math_topic_sequences",
+      "title_ar": "البرهان بالتراجع في المتتاليات",
+      "title_fr": "Raisonnement par récurrence",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "math_sequence_reasoning",
+      "subjectId": "math",
+      "topic": "math_topic_sequences",
+      "title_ar": "نهايات المتتاليات التراجعية والتقارب بالرتابة",
+      "title_fr": "Convergence des suites récurrentes",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "math_arithmetic_geometric_auxiliary",
+      "subjectId": "math",
+      "topic": "math_topic_sequences",
+      "title_ar": "المتتاليات الهندسية المساعدة وحساب المجموع",
+      "title_fr": "Suites géométriques auxiliaires",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "math_conditional_probability_tree",
+      "subjectId": "math",
+      "topic": "math_topic_probability",
+      "title_ar": "الاحتمال الشرطي وشجرة الاحتمالات وقانون الاحتمال الكلي",
+      "title_fr": "Probabilités conditionnelles et arbres pondérés",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "physics_reaction_rate_monitoring",
+      "subjectId": "physics",
+      "topic": "phys_topic_chemical_kinetics",
+      "title_ar": "سرعة التفاعل وزمن نصف التفاعل t1/2",
+      "title_fr": "Vitesse de réaction et demi-réaction t1/2",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "physics_redox_titration",
+      "subjectId": "physics",
+      "topic": "phys_topic_chemical_kinetics",
+      "title_ar": "المعايرة اللونية وتحديد نقطة التكافؤ",
+      "title_fr": "Titrage colorimétrique redox",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "physics_rc_time_constant",
+      "subjectId": "physics",
+      "topic": "phys_topic_electricity_rc_rl",
+      "title_ar": "التحليل البعدي وثابت الزمن في دارة RC",
+      "title_fr": "Analyse dimensionnelle RC",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "physics_rc_differential_equation",
+      "subjectId": "physics",
+      "topic": "phys_topic_electricity_rc_rl",
+      "title_ar": "المعادلة التفاضلية لدارة RC واستنتاج الحل التحليلي",
+      "title_fr": "Équation différentielle circuit RC",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "physics_rl_circuit_response",
+      "subjectId": "physics",
+      "topic": "phys_topic_electricity_rc_rl",
+      "title_ar": "الدارة الكهربائية RL وسلوك الوشيعة وثابت الزمن L/R",
+      "title_fr": "Circuit RL et rôle de la bobine",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "physics_nuclear_decay_law",
+      "subjectId": "physics",
+      "topic": "phys_topic_nuclear_physics",
+      "title_ar": "قانون التناقص الإشعاعي وثابت النشاطية ونصف العمر",
+      "title_fr": "Loi de décroissance radioactive",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "physics_mass_defect_binding_energy",
+      "subjectId": "physics",
+      "topic": "phys_topic_nuclear_physics",
+      "title_ar": "النقص الكتلي وطاقة الربط النووي وحصيلة الطاقة",
+      "title_fr": "Défaut de masse et énergie de liaison",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "physics_newton_second_law",
+      "subjectId": "physics",
+      "topic": "phys_topic_mechanics_newton",
+      "title_ar": "القانون الثاني لنيوتن وإسقاط القوى على المستوي المائل",
+      "title_fr": "Deuxième loi de Newton",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "physics_satellite_kepler",
+      "subjectId": "physics",
+      "topic": "phys_topic_mechanics_newton",
+      "title_ar": "حركة الأقمار الاصطناعية وقوانين كبلر والسرعة المدارية",
+      "title_fr": "Satellites et lois de Kepler",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "physics_acid_base_ph_ka",
+      "subjectId": "physics",
+      "topic": "phys_topic_acid_base_equilibrium",
+      "title_ar": "التوازنات الحمضية القاعدية والـ pH وثابت الحموضة Ka",
+      "title_fr": "Équilibres acido-basiques et Ka",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "physics_esterification_equilibrium",
+      "subjectId": "physics",
+      "topic": "phys_topic_esterification",
+      "title_ar": "تفاعل الأسترة والحلمأة ومردود التحول الكيميائي",
+      "title_fr": "Estérification-hydrolyse et rendement",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "snv_protein_synthesis",
+      "subjectId": "natural_sciences",
+      "topic": "snv_topic_protein_synthesis",
+      "title_ar": "آليات التعبير المورثي والربط بين الاستنساخ والترجمة",
+      "title_fr": "Mécanismes de la synthèse protéique",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "snv_genetic_code_translation",
+      "subjectId": "natural_sciences",
+      "topic": "snv_topic_protein_synthesis",
+      "title_ar": "مراحل الترجمة ودور تنشيط الأحماض الأمينية",
+      "title_fr": "Étapes de la traduction et ARNt",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "snv_protein_structure_ionization",
+      "subjectId": "natural_sciences",
+      "topic": "snv_topic_protein_synthesis",
+      "title_ar": "السلوك الأمفوتيري وتأثير pH على شحنة الأحماض الأمينية",
+      "title_fr": "Comportement amphotère des acides aminés",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "snv_enzyme_kinetics_active_site",
+      "subjectId": "natural_sciences",
+      "topic": "snv_topic_enzymology",
+      "title_ar": "الموقع الفعال للإنزيم والتكامل المحفز والمثبطات",
+      "title_fr": "Site actif et cinétique enzymatique",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "snv_immunity_reasoning",
+      "subjectId": "natural_sciences",
+      "topic": "snv_topic_immunology",
+      "title_ar": "الاستدلال المناعي ودور الأجسام المضادة والمعقدات المناعية",
+      "title_fr": "Raisonnement immunitaire et anticorps",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "snv_cellular_immunity_ltc",
+      "subjectId": "natural_sciences",
+      "topic": "snv_topic_immunology",
+      "title_ar": "الاستجابة المناعية الخلوية وتدخل الخلايا اللمفاوية LTc",
+      "title_fr": "Immunité cellulaire et lymphocytes LTc",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "snv_hiv_immune_deficiency",
+      "subjectId": "natural_sciences",
+      "topic": "snv_topic_immunology",
+      "title_ar": "آلية استهداف فيروس السيدا (VIH) للخلايا LT4 والعجز المناعي",
+      "title_fr": "Pathogenèse du VIH et effondrement LT4",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "snv_synaptic_transmission",
+      "subjectId": "natural_sciences",
+      "topic": "snv_topic_neurophysiology",
+      "title_ar": "انتقال الرسالة العصبية على مستوى المشبك الكيميائي",
+      "title_fr": "Transmission synaptique et neurotransmetteurs",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "snv_action_potential_ionic_basis",
+      "subjectId": "natural_sciences",
+      "topic": "snv_topic_neurophysiology",
+      "title_ar": "الآلية الشاردية لكمون الراحة وكمون العمل في الليف العصبي",
+      "title_fr": "Bases ioniques du potentiel d'action",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    },
+    {
+      "id": "snv_scientific_analysis_method",
+      "subjectId": "natural_sciences",
+      "topic": "snv_topic_scientific_investigation",
+      "title_ar": "منهجية الاستدلال العلمي واستغلال الوثائق في العلوم",
+      "title_fr": "Démarche d'investigation scientifique",
+      "status": "PUBLISHED",
+      "bundleElements": 14
+    }
+  ],
+  "crossSubjectTransferLinks": [
+    {
+      "id": "transfer_math_physics_diff_eq",
+      "sourceSubjectId": "math",
+      "targetSubjectId": "physics",
+      "sourceSkillId": "math_derivatives_chain_rule",
+      "targetSkillId": "physics_rc_differential_equation",
+      "concept": "Differential Equations and Exponential Decay Functions",
+      "transferUtility": "High - Mastering composite derivative (e^-t/tau)' is mandatory for solving and verifying circuit differential equations without algebraic error."
+    },
+    {
+      "id": "transfer_math_physics_decay_log",
+      "sourceSubjectId": "math",
+      "targetSubjectId": "physics",
+      "sourceSkillId": "math_logarithm_domain_limits",
+      "targetSkillId": "physics_nuclear_decay_law",
+      "concept": "Natural Logarithm Properties in Half-Life Inversion",
+      "transferUtility": "High - Derivation of half-life t1/2 = ln(2)/lambda requires fluent manipulation of ln(1/2) = -ln(2)."
+    },
+    {
+      "id": "transfer_math_snv_tvi_kinetics",
+      "sourceSubjectId": "math",
+      "targetSubjectId": "natural_sciences",
+      "sourceSkillId": "math_intermediate_value_method",
+      "targetSkillId": "snv_enzyme_kinetics_active_site",
+      "concept": "Intermediate Value Theorem, Monotonicity & Asymptotic Plateau Thresholds",
+      "transferUtility": "Medium-High - Reading saturation plateaus and threshold concentrations in biological graphs requires monotonic function reasoning."
+    },
+    {
+      "id": "transfer_snv_physics_experimental_curves",
+      "sourceSubjectId": "natural_sciences",
+      "targetSubjectId": "physics",
+      "sourceSkillId": "snv_scientific_analysis_method",
+      "targetSkillId": "physics_reaction_rate_monitoring",
+      "concept": "Rigorous Experimental Curve Reading and Hypothesis Testing",
+      "transferUtility": "High - The structured scientific exploitation method (Observation -> Deduction) mirrors experimental kinetic curves in physics."
+    }
+  ],
+  "realStudentValidation": "PENDING"
+}

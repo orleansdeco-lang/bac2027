@@ -8,3 +8,5 @@ export { StudentService } from "./student-service";
 export { MissionService } from "./mission-service";
 export { DashboardService } from "./dashboard-service";
 export { ProgressService } from "./progress-service";
+export { WellbeingService } from "./wellbeing-service";
+export { ExamModeService } from "./exam-mode-service";

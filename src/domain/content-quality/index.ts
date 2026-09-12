@@ -12,3 +12,4 @@ export * from "./source-health";
 export * from "./authoring-contract";
 export * from "./curriculum-audit-2027";
 export * from "./coverage-matrix";
+export * from "./sciences-exp-curriculum-audit";

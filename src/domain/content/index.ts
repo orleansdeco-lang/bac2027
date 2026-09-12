@@ -8,3 +8,4 @@ export * from "./schemas";
 export * from "./validation";
 export * from "./mappings";
 export * from "./language";
+export * from "./mini-exams";
