@@ -15,6 +15,8 @@ import {
 } from "@/domain/content";
 import { Skill } from "@/domain/content/types";
 
+import { GESTION_ECO_SKILLS } from "@/data/skills/gestion-economie";
+
 export const ContentService = {
   /**
    * Retrieve the full 14-element learning bundle for a canonical skill
@@ -24,10 +26,11 @@ export const ContentService = {
   },
 
   /**
-   * Get all 31 canonical skills
+   * Get all canonical skills across streams
    */
   getAllSkills(): Skill[] {
-    return PROMPT11_SKILLS;
+    const gestionList = Object.values(GESTION_ECO_SKILLS) as unknown as Skill[];
+    return [...PROMPT11_SKILLS, ...gestionList];
   },
 
   /**

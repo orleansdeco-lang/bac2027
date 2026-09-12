@@ -1,0 +1,50 @@
+{
+  "streamId": "gestion_eco",
+  "streamName_ar": "شعبة التسيير والاقتصاد",
+  "streamName_fr": "Série Gestion & Économie",
+  "academicYear": "2026-2027",
+  "reportGeneratedAt": "2026-09-12T22:30:00Z",
+  "statutoryBaseline": {
+    "decree": "Décret Exécutif n° 07-142 du 19 mai 2007",
+    "classification": "OFFICIAL_HISTORICAL",
+    "ministerialDecision36Status": "CURRENT_OFFICIAL_MICRO_EVIDENCE_INSUFFICIENT"
+  },
+  "curriculumAudit": {
+    "totalSubjects": 10,
+    "totalWeeklyHours": 30,
+    "canonicalSkillsCount": 33,
+    "interdisciplinaryTransferLinksCount": 6
+  },
+  "learningModesValidated": [
+    "Mode A (Procedural Accounting & Quantitative Math)",
+    "Mode B (Conceptual Economics & Strategic Management)",
+    "Mode C (Case-based Syllogistic Law & Islamic Jurisprudence)",
+    "Mode D (Document-based Statistical History-Geography)",
+    "Mode E (Argumentative Synthesis & Languages)"
+  ],
+  "diagnosticBattery": {
+    "totalQuestions": 15,
+    "accountingQuestions": 4,
+    "economicsQuestions": 4,
+    "lawQuestions": 3,
+    "mathematicsQuestions": 4,
+    "cognitiveDimensionsCovered": [
+      "knowledge",
+      "understanding",
+      "application",
+      "methodology"
+    ]
+  },
+  "studentPilot": {
+    "personaName": "Yasmine Belkacem",
+    "highSchool": "Lycée Frères Hamia, Kouba, Alger",
+    "targetScore": 15,
+    "baselineEstimatedScore": 12.2,
+    "postLoopEstimatedScore": 15.4,
+    "primaryBottleneck": "accounting_finance",
+    "secondaryBottleneck": "math",
+    "learningLoopStatus": "COMPLETED"
+  },
+  "verdict": "FULL_STREAM_PILOT_READY",
+  "realStudentValidation": "PENDING"
+}

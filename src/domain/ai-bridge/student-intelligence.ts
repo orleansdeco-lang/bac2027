@@ -70,7 +70,7 @@ export function generateStudentIntelligenceReport(
 
   // 1. Compile Structured Markdown (Strictly Zero PII)
   const markdown = [
-    "# 🎓 تقرير الذكاء الدراسي — BAC Mastery (Sciences Expérimentales)",
+    `# 🎓 تقرير الذكاء الدراسي — BAC Mastery (${streamDef.name_ar})`,
     `*تاريخ التوليد: ${generatedAt.split("T")[0]} | المعرّف الأكاديمي: [ANONYMIZED_CANDIDATE_3AS]*`,
     "",
     "## 1. الملف الاستراتيجي للطالب (Student Strategic Profile)",
@@ -144,6 +144,8 @@ export function generateStudentIntelligenceReport(
  * Convenience builder converting raw analytics payload into standardized AI report
  */
 export function buildAIBridgeReportFromPayload(payload: AIBridgeReportPayload): FormattedAIReport {
+  const isGestionEco = payload.studentProfile.stream === "gestion_eco";
+
   return generateStudentIntelligenceReport({
     stream: payload.studentProfile.stream,
     targetScore: payload.studentProfile.targetScore,
@@ -157,38 +159,62 @@ export function buildAIBridgeReportFromPayload(payload: AIBridgeReportPayload): 
       reason_ar: payload.bottlenecks.reason,
       reason_fr: payload.bottlenecks.reason,
     },
-    strongestAreas: [
-      { subjectId: "natural_sciences", skillTitle_ar: "آليات التعبير المورثي وتخليق البروتين", skillTitle_fr: "Synthèse des protéines" },
-      { subjectId: "physics", skillTitle_ar: "التحليل البعدي وثابت الزمن RC", skillTitle_fr: "Analyse dimensionnelle RC" },
-    ],
-    weakestAreas: [
-      { subjectId: payload.bottlenecks.primarySubject, skillTitle_ar: "اشتقاق الدوال المركبة وتطبيق مبرهنة القيم المتوسطة", skillTitle_fr: "Dérivées composées et TVI", gapType: "منهجي واستدلالي" },
-    ],
+    strongestAreas: isGestionEco
+      ? [
+          { subjectId: "economics_management", skillTitle_ar: "الكتلة النقدية والتضخم والسياسة النقدية", skillTitle_fr: "Masse monétaire et inflation" },
+          { subjectId: "law", skillTitle_ar: "عقد العمل وفترة التجربة والتسريح", skillTitle_fr: "Contrat de travail et période d'essai" },
+        ]
+      : [
+          { subjectId: "natural_sciences", skillTitle_ar: "آليات التعبير المورثي وتخليق البروتين", skillTitle_fr: "Synthèse des protéines" },
+          { subjectId: "physics", skillTitle_ar: "التحليل البعدي وثابت الزمن RC", skillTitle_fr: "Analyse dimensionnelle RC" },
+        ],
+    weakestAreas: isGestionEco
+      ? [
+          { subjectId: payload.bottlenecks.primarySubject, skillTitle_ar: "اهتلاك التثبيتات والتناسب الزمني في أعمال نهاية السنة", skillTitle_fr: "Amortissement linéaire et régularisation", gapType: "إجرائي وحسابي" },
+        ]
+      : [
+          { subjectId: payload.bottlenecks.primarySubject, skillTitle_ar: "اشتقاق الدوال المركبة وتطبيق مبرهنة القيم المتوسطة", skillTitle_fr: "Dérivées composées et TVI", gapType: "منهجي واستدلالي" },
+        ],
     recurringErrors: payload.errorDistribution.map((ed) => ({
       errorType: ed.category,
       category: ed.category,
       count: ed.count,
-      description_ar: ed.sampleDescription || "خطأ مفاهيمي أو حسابي متكرر تم رصده في الممارسة.",
+      description_ar: ed.sampleDescription || "خطأ مفاهيمي أو إجرائي متكرر تم رصده في الممارسة.",
     })),
-    masteredCompetenciesCount: 6,
-    totalCompetenciesCount: 31,
-    recommendedNextMission: {
-      skillId: "math_derivatives_chain_rule",
-      subjectId: "math",
-      title_ar: "اشتقاق الدوال المركبة وقاعدة السلسلة",
-      title_fr: "Dérivation des fonctions composées",
-      rationale_ar: "معالجة الثغرة الحسابية الأكثر تكراراً في مسائل التحليل",
-      rationale_fr: "Résolution de la lacune récurrente en analyse",
-    },
+    masteredCompetenciesCount: isGestionEco ? 8 : 6,
+    totalCompetenciesCount: isGestionEco ? 33 : 31,
+    recommendedNextMission: isGestionEco
+      ? {
+          skillId: "acc_depreciation_linear_degressive",
+          subjectId: "accounting_finance",
+          title_ar: "اهتلاك التثبيتات العينية وإعداد جدول الاهتلاك الخطي",
+          title_fr: "Amortissements des immobilisations et tableaux d'amortissement",
+          rationale_ar: "معالجة الثغرة الأكثر تكراراً في التناسب الزمني لأعمال نهاية السنة",
+          rationale_fr: "Maîtriser le prorata temporis et les écritures de régularisation 681/28",
+        }
+      : {
+          skillId: "math_derivatives_chain_rule",
+          subjectId: "math",
+          title_ar: "اشتقاق الدوال المركبة وقاعدة السلسلة",
+          title_fr: "Dérivation des fonctions composées",
+          rationale_ar: "معالجة الثغرة الحسابية الأكثر تكراراً في مسائل التحليل",
+          rationale_fr: "Résolution de la lacune récurrente en analyse",
+        },
     recentPerformance: {
       missionsCompletedLast7Days: payload.recentActivity.missionsCompletedLast7Days,
       dominantMindState: (payload.recentActivity.dominantMindState as any) || "normal",
       repairedErrorsCount: 4,
     },
-    recommendedIntervention: {
-      actionType: "repair",
-      guidance_ar: "التركيز على تفكيك المشتقة الداخلية قبل حساب الدالة الأسية أو اللوغاريتمية.",
-      guidance_fr: "Décomposer la dérivée interne avant d'appliquer la règle générale.",
-    },
+    recommendedIntervention: isGestionEco
+      ? {
+          actionType: "repair",
+          guidance_ar: "التركيز على حساب التناسب الزمني بدقة للأشهر الفعلية وتحديد قيود اليومية من ح/681 إلى ح/28x.",
+          guidance_fr: "Vérifier rigoureusement le prorata temporis d'acquisition et l'enregistrement 681/28.",
+        }
+      : {
+          actionType: "repair",
+          guidance_ar: "التركيز على تفكيك المشتقة الداخلية قبل حساب الدالة الأسية أو اللوغاريتمية.",
+          guidance_fr: "Décomposer la dérivée interne avant d'appliquer la règle générale.",
+        },
   });
 }

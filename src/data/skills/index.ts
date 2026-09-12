@@ -231,14 +231,33 @@ export const SCIENCES_EXP_SKILLS: Record<string, Skill> = {
 };
 
 import { ALL_CURRICULUM_SKILLS } from "@/data/curriculum/skills";
+import { GESTION_ECO_SKILLS } from "./gestion-economie";
+
+export { GESTION_ECO_SKILLS };
 
 export function getSkillById(skillId: string): Skill | undefined {
-  return ALL_CURRICULUM_SKILLS[skillId] || SCIENCES_EXP_SKILLS[skillId];
+  return (
+    (GESTION_ECO_SKILLS as unknown as Record<string, Skill>)[skillId] ||
+    (ALL_CURRICULUM_SKILLS as unknown as Record<string, Skill>)[skillId] ||
+    SCIENCES_EXP_SKILLS[skillId]
+  );
 }
 
-export function getSkillsForSubject(subjectId: string): Skill[] {
+export function getSkillsForSubject(subjectId: string, streamId?: string): Skill[] {
+  if (streamId === "gestion_eco") {
+    const gestionSkills = Object.values(GESTION_ECO_SKILLS).filter((s) => s.subjectId === subjectId);
+    if (gestionSkills.length > 0) return gestionSkills as unknown as Skill[];
+  }
+  if (streamId === "sciences_exp") {
+    const curriculumSkills = Object.values(ALL_CURRICULUM_SKILLS).filter((s) => s.subjectId === subjectId);
+    if (curriculumSkills.length > 0) return curriculumSkills as unknown as Skill[];
+    return Object.values(SCIENCES_EXP_SKILLS).filter((s) => s.subjectId === subjectId);
+  }
+  // Default / backward compatibility: check ALL_CURRICULUM_SKILLS first, then GESTION_ECO_SKILLS
   const curriculumSkills = Object.values(ALL_CURRICULUM_SKILLS).filter((s) => s.subjectId === subjectId);
-  if (curriculumSkills.length > 0) return curriculumSkills;
+  if (curriculumSkills.length > 0) return curriculumSkills as unknown as Skill[];
+  const gestionSkills = Object.values(GESTION_ECO_SKILLS).filter((s) => s.subjectId === subjectId);
+  if (gestionSkills.length > 0) return gestionSkills as unknown as Skill[];
   return Object.values(SCIENCES_EXP_SKILLS).filter((s) => s.subjectId === subjectId);
 }
 

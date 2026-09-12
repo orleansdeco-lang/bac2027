@@ -1,0 +1,138 @@
+{
+  "streamId": "gestion_eco",
+  "streamName_ar": "شعبة التسيير والاقتصاد",
+  "streamName_fr": "Série Gestion & Économie",
+  "academicYear": "2026-2027",
+  "statutoryAnchor": "Décret Exécutif n° 07-142 du 19 mai 2007",
+  "totalSubjects": 10,
+  "totalOfficialWeeklyHours": 30,
+  "totalCanonicalSkills": 33,
+  "subjects": [
+    {
+      "subjectId": "accounting_finance",
+      "name_ar": "التسيير المحاسبي والمالي",
+      "name_fr": "Comptabilité et Finance",
+      "coefficient": 6,
+      "weeklyHours": 5,
+      "learningMode": "Mode A (Procedural)",
+      "skillsCount": 8,
+      "diagnosticQuestionsCount": 4,
+      "practiceRetestPairsCount": 2,
+      "curriculumStatus": "AUDITED_CANONICAL"
+    },
+    {
+      "subjectId": "economics_management",
+      "name_ar": "الاقتصاد والمناجمنت",
+      "name_fr": "Économie et Management",
+      "coefficient": 5,
+      "weeklyHours": 4,
+      "learningMode": "Mode B (Conceptual / Decision)",
+      "skillsCount": 8,
+      "diagnosticQuestionsCount": 4,
+      "practiceRetestPairsCount": 1,
+      "curriculumStatus": "AUDITED_CANONICAL"
+    },
+    {
+      "subjectId": "math",
+      "name_ar": "الرياضيات",
+      "name_fr": "Mathématiques",
+      "coefficient": 5,
+      "weeklyHours": 4,
+      "learningMode": "Mode A (Applied Quantitative)",
+      "skillsCount": 4,
+      "diagnosticQuestionsCount": 4,
+      "practiceRetestPairsCount": 1,
+      "curriculumStatus": "AUDITED_CANONICAL"
+    },
+    {
+      "subjectId": "history_geography",
+      "name_ar": "التاريخ والجغرافيا",
+      "name_fr": "Histoire-Géographie",
+      "coefficient": 4,
+      "weeklyHours": 4,
+      "learningMode": "Mode D (Document-based / Statistical)",
+      "skillsCount": 2,
+      "diagnosticQuestionsCount": 0,
+      "practiceRetestPairsCount": 0,
+      "curriculumStatus": "AUDITED_CANONICAL"
+    },
+    {
+      "subjectId": "arabic",
+      "name_ar": "اللغة العربية وآدابها",
+      "name_fr": "Langue et Littérature Arabes",
+      "coefficient": 3,
+      "weeklyHours": 3,
+      "learningMode": "Mode E (Argumentative Essay)",
+      "skillsCount": 1,
+      "diagnosticQuestionsCount": 0,
+      "practiceRetestPairsCount": 0,
+      "curriculumStatus": "AUDITED_CANONICAL"
+    },
+    {
+      "subjectId": "law",
+      "name_ar": "القانون",
+      "name_fr": "Droit",
+      "coefficient": 2,
+      "weeklyHours": 2,
+      "learningMode": "Mode C (Case-based Syllogism)",
+      "skillsCount": 6,
+      "diagnosticQuestionsCount": 3,
+      "practiceRetestPairsCount": 1,
+      "curriculumStatus": "AUDITED_CANONICAL"
+    },
+    {
+      "subjectId": "philosophy",
+      "name_ar": "الفلسفة",
+      "name_fr": "Philosophie",
+      "coefficient": 2,
+      "weeklyHours": 2,
+      "learningMode": "Mode E (Comparative Dissertation)",
+      "skillsCount": 1,
+      "diagnosticQuestionsCount": 0,
+      "practiceRetestPairsCount": 0,
+      "curriculumStatus": "AUDITED_CANONICAL"
+    },
+    {
+      "subjectId": "french",
+      "name_ar": "اللغة الفرنسية",
+      "name_fr": "Langue Française",
+      "coefficient": 2,
+      "weeklyHours": 2,
+      "learningMode": "Mode E (Compte-rendu Objectif)",
+      "skillsCount": 1,
+      "diagnosticQuestionsCount": 0,
+      "practiceRetestPairsCount": 0,
+      "curriculumStatus": "AUDITED_CANONICAL"
+    },
+    {
+      "subjectId": "english",
+      "name_ar": "اللغة الإنجليزية",
+      "name_fr": "Langue Anglaise",
+      "coefficient": 2,
+      "weeklyHours": 2,
+      "learningMode": "Mode E (Reading & Synthesis)",
+      "skillsCount": 1,
+      "diagnosticQuestionsCount": 0,
+      "practiceRetestPairsCount": 0,
+      "curriculumStatus": "AUDITED_CANONICAL"
+    },
+    {
+      "subjectId": "islamic_studies",
+      "name_ar": "العلوم الإسلامية",
+      "name_fr": "Sciences Islamiques",
+      "coefficient": 2,
+      "weeklyHours": 2,
+      "learningMode": "Mode C (Transactions Jurisprudence)",
+      "skillsCount": 1,
+      "diagnosticQuestionsCount": 0,
+      "practiceRetestPairsCount": 0,
+      "curriculumStatus": "AUDITED_CANONICAL"
+    }
+  ],
+  "interdisciplinaryTransferLinksCount": 6,
+  "verificationSummary": {
+    "status": "PASS",
+    "allGatesPassing": true,
+    "realStudentValidation": "PENDING"
+  }
+}

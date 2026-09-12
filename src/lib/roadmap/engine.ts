@@ -262,12 +262,13 @@ export function getNextBestMission(input: AdaptiveRoadmapInput): {
   // ---------------------------------------------------------------------------
   // PRIORITY 6: Next Unmastered Skill in Current Subject
   // ---------------------------------------------------------------------------
+  const streamId = input.onboardingProfile?.streamId || "sciences_exp";
   let currentSubjectId: SubjectId = "math";
   if (diag?.preliminaryBottleneck?.subjectId) {
     currentSubjectId = diag.preliminaryBottleneck.subjectId;
   }
 
-  const subjectSkills = getSkillsForSubject(currentSubjectId);
+  const subjectSkills = getSkillsForSubject(currentSubjectId, streamId);
   const unmasteredSubjectSkill = subjectSkills.find(
     (s) =>
       !isSkillDemonstrated(s.id, evidenceMap) &&
@@ -294,7 +295,6 @@ export function getNextBestMission(input: AdaptiveRoadmapInput): {
   // ---------------------------------------------------------------------------
   // PRIORITY 7: Next Supported Subject (Ordered by coefficient rules)
   // ---------------------------------------------------------------------------
-  const streamId = input.onboardingProfile?.streamId || "sciences_exp";
   const specialty = input.onboardingProfile?.techniqueMathSpecialty;
   const streamRules = getStreamSubjects(streamId, specialty);
 
@@ -302,7 +302,7 @@ export function getNextBestMission(input: AdaptiveRoadmapInput): {
   const sortedSubjects = [...streamRules].sort((a, b) => b.coefficient - a.coefficient);
 
   for (const rule of sortedSubjects) {
-    const skillsInSubj = getSkillsForSubject(rule.subjectId);
+    const skillsInSubj = getSkillsForSubject(rule.subjectId, streamId);
     const unmastered = skillsInSubj.find(
       (s) =>
         !isSkillDemonstrated(s.id, evidenceMap) &&
@@ -530,7 +530,7 @@ export function buildAdaptiveRoadmap(input: AdaptiveRoadmapInput): AdaptiveRoadm
         coefficient: rule.coefficient,
       };
     } else {
-      const subjSkills = getSkillsForSubject(rule.subjectId);
+      const subjSkills = getSkillsForSubject(rule.subjectId, streamId);
       const demonstratedInSubj = subjSkills.filter((s) => isSkillDemonstrated(s.id, evidenceMap)).length;
       const emergingInSubj = subjSkills.filter((s) => evidenceMap[s.id]?.masteryStatus === "emerging" && !isSkillDemonstrated(s.id, evidenceMap)).length;
       const needsWorkInSubj = subjSkills.filter((s) =>

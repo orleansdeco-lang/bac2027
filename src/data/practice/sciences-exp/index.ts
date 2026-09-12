@@ -898,20 +898,25 @@ export const SCIENCES_EXP_PRACTICE_QUESTIONS: PracticeQuestion[] = [
 ];
 
 import { EXPANDED_PRACTICE_QUESTIONS } from "@/data/curriculum/practice-questions";
+import { GESTION_ECO_PRACTICE_QUESTIONS } from "../gestion-eco";
 
 export function getPracticeQuestionById(id: string): PracticeQuestion | undefined {
-  return SCIENCES_EXP_PRACTICE_QUESTIONS.find((q) => q.id === id) ||
+  return GESTION_ECO_PRACTICE_QUESTIONS.find((q) => q.id === id) ||
+    SCIENCES_EXP_PRACTICE_QUESTIONS.find((q) => q.id === id) ||
     EXPANDED_PRACTICE_QUESTIONS.find((q) => q.id === id);
 }
 
 export function getPracticeQuestionsForSkill(skillId: string): PracticeQuestion[] {
+  const gestion = GESTION_ECO_PRACTICE_QUESTIONS.filter((q) => q.skillId === skillId && !q.isRetestVariant);
+  if (gestion.length > 0) return gestion;
   const pilot = SCIENCES_EXP_PRACTICE_QUESTIONS.filter((q) => q.skillId === skillId && !q.isRetestVariant);
   if (pilot.length > 0) return pilot;
   return EXPANDED_PRACTICE_QUESTIONS.filter((q) => q.skillId === skillId && !q.isRetestVariant);
 }
 
 export function getRetestQuestionForSkill(skillId: string): PracticeQuestion | undefined {
-  return SCIENCES_EXP_PRACTICE_QUESTIONS.find((q) => q.skillId === skillId && q.isRetestVariant) ||
+  return GESTION_ECO_PRACTICE_QUESTIONS.find((q) => q.skillId === skillId && q.isRetestVariant) ||
+    SCIENCES_EXP_PRACTICE_QUESTIONS.find((q) => q.skillId === skillId && q.isRetestVariant) ||
     EXPANDED_PRACTICE_QUESTIONS.find((q) => q.skillId === skillId && q.isRetestVariant);
 }
 

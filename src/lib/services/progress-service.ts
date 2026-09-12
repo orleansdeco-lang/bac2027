@@ -20,6 +20,11 @@ export interface ProgressReport {
     mathematics: { demonstrated: number; emerging: number; total: number };
     physics: { demonstrated: number; emerging: number; total: number };
     natural_sciences: { demonstrated: number; emerging: number; total: number };
+    accounting_finance?: { demonstrated: number; emerging: number; total: number };
+    economics_management?: { demonstrated: number; emerging: number; total: number };
+    law?: { demonstrated: number; emerging: number; total: number };
+    history_geography?: { demonstrated: number; emerging: number; total: number };
+    [key: string]: { demonstrated: number; emerging: number; total: number } | undefined;
   };
 }
 
@@ -104,6 +109,10 @@ export const ProgressService = {
         mathematics: getCountForSubject("mathematics"),
         physics: getCountForSubject("physics"),
         natural_sciences: getCountForSubject("natural_sciences"),
+        accounting_finance: getCountForSubject("accounting_finance"),
+        economics_management: getCountForSubject("economics_management"),
+        law: getCountForSubject("law"),
+        history_geography: getCountForSubject("history_geography"),
       },
     };
   },

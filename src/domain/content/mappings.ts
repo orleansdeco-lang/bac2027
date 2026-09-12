@@ -821,8 +821,8 @@ export const SKILL_ID_CANONICAL_MAP: Record<string, string> = {
   snv_document_exploitation: "snv_scientific_analysis_method",
 };
 
-const rawPractice = ALL_PRACTICE_QUESTIONS.filter((q) => !q.isRetestVariant);
-const rawRetest = ALL_PRACTICE_QUESTIONS.filter((q) => q.isRetestVariant);
+const rawPractice = ALL_PRACTICE_QUESTIONS.filter((q) => !q.isRetestVariant && q.streamId !== "gestion_eco");
+const rawRetest = ALL_PRACTICE_QUESTIONS.filter((q) => q.isRetestVariant && q.streamId !== "gestion_eco");
 
 export const PROMPT11_PRACTICE_QUESTIONS: PracticeQuestion[] = rawPractice.map((q) => {
   const canonicalSkillId = SKILL_ID_CANONICAL_MAP[q.skillId] || q.skillId;
@@ -1228,14 +1228,16 @@ export interface SkillLearningBundle {
   readiness: SkillReadinessReport;
 }
 
+import { getGestionEcoContentPackage } from "./gestion-eco-mappings";
+
 export function getSkillLearningBundle(skillId: string): SkillLearningBundle | null {
-  const mathPkg = MATH_BATCH_01_PACKAGES[skillId];
+  const mathPkg = MATH_BATCH_01_PACKAGES[skillId] || getGestionEcoContentPackage(skillId);
   if (mathPkg) {
     const mathSkill: Skill = {
       id: mathPkg.skillId,
       topicId: mathPkg.topicId,
-      subjectId: mathPkg.subjectId,
-      streamId: mathPkg.streamId,
+      subjectId: mathPkg.subjectId as any,
+      streamId: mathPkg.streamId as any,
       title_ar: mathPkg.lesson.title_ar,
       title_fr: mathPkg.objective_fr || mathPkg.lesson.title_ar,
       description_ar: mathPkg.objective_ar,
@@ -1259,13 +1261,13 @@ export function getSkillLearningBundle(skillId: string): SkillLearningBundle | n
     const mathLesson: Lesson = {
       id: "lesson_" + mathPkg.skillId,
       skillId: mathPkg.skillId,
-      subjectId: mathPkg.subjectId,
+      subjectId: mathPkg.subjectId as any,
       topicId: mathPkg.topicId,
       title_ar: mathPkg.lesson.title_ar,
       title_fr: mathPkg.lesson.title_ar,
       targetCapability_ar: mathPkg.objective_ar,
       whatYouMustKnow_ar: mathPkg.prerequisites.join(", ") || "المكتسبات القبلية الأساسية",
-      whyThisMatters_ar: mathPkg.examTransfer.bacTypologyNotes_ar || "محور أساسي في بكالوريا الرياضيات",
+      whyThisMatters_ar: mathPkg.examTransfer.bacTypologyNotes_ar || "محور أساسي في بكالوريا الشعبة",
       coreConcept_ar: mathPkg.lesson.keyTakeaway_ar,
       simpleExplanation_ar: mathPkg.lesson.contentMarkdown_ar,
       workedExample: {
@@ -1311,8 +1313,8 @@ export function getSkillLearningBundle(skillId: string): SkillLearningBundle | n
       id: p.id,
       educationLevel: "secondary",
       examType: "bac",
-      streamId: "math",
-      subjectId: "math",
+      streamId: mathPkg.streamId as any,
+      subjectId: mathPkg.subjectId as any,
       skillId: mathPkg.skillId,
       dimension: "application",
       difficulty: 2,
@@ -1332,7 +1334,7 @@ export function getSkillLearningBundle(skillId: string): SkillLearningBundle | n
       explanation_ar: p.explanation_ar,
       explanation_fr: "",
       expectedTimeSeconds: 120,
-      tags: ["math", mathPkg.topicId],
+      tags: [mathPkg.subjectId, mathPkg.topicId],
       version: 1,
       isRetestVariant: false,
       sourceId: mathPkg.provenance.sourceId,
@@ -1346,8 +1348,8 @@ export function getSkillLearningBundle(skillId: string): SkillLearningBundle | n
       id: mathPkg.retest.id,
       educationLevel: "secondary",
       examType: "bac",
-      streamId: "math",
-      subjectId: "math",
+      streamId: mathPkg.streamId as any,
+      subjectId: mathPkg.subjectId as any,
       skillId: mathPkg.skillId,
       dimension: "application",
       difficulty: 2,
@@ -1362,7 +1364,7 @@ export function getSkillLearningBundle(skillId: string): SkillLearningBundle | n
       explanation_ar: mathPkg.retest.explanation_ar,
       explanation_fr: "",
       expectedTimeSeconds: 120,
-      tags: ["math", "retest"],
+      tags: [mathPkg.subjectId, "retest"],
       version: 1,
       isRetestVariant: true,
       retestForQuestionId: mathPkg.retest.parentPracticeQuestionId,
@@ -1392,6 +1394,19 @@ export function getSkillLearningBundle(skillId: string): SkillLearningBundle | n
       isActive: true,
     };
 
+    const pkgProvenance: ContentSource = {
+      id: mathPkg.provenance.sourceId,
+      type: "official_curriculum",
+      name: mathPkg.provenance.sourceTitle,
+      title_ar: mathPkg.provenance.sourceTitle,
+      title_fr: mathPkg.provenance.sourceTitle,
+      publisher: "Ministère de l'Éducation Nationale (Algérie)",
+      publicationDate: "2026-09-01",
+      documentRef: "MEN-BAC-CURRICULUM",
+      rightsStatus: "official_reference",
+      notes: "Audited BAC Mastery curriculum package baseline",
+    };
+
     return {
       skill: mathSkill,
       lesson: mathLesson,
@@ -1399,7 +1414,7 @@ export function getSkillLearningBundle(skillId: string): SkillLearningBundle | n
       practiceQuestions: mathPractice,
       repairGuide: mathRepairGuide,
       retest: mathRetest,
-      provenance: PROMPT11_SOURCES[0],
+      provenance: pkgProvenance,
       readiness: {
         skillId: mathPkg.skillId,
         status: "MASTERY_READY",

@@ -11,16 +11,19 @@ import { ALL_CURRICULUM_SKILLS } from "./skills";
 import { EXPANDED_PRACTICE_QUESTIONS } from "./practice-questions";
 import { EXPANDED_PRACTICE_QUESTIONS_SET2 } from "./practice-questions-set2";
 import { SCIENCES_EXP_PRACTICE_QUESTIONS } from "@/data/practice/sciences-exp";
+import { GESTION_ECO_PRACTICE_QUESTIONS } from "@/data/practice/gestion-eco";
 
 // Re-export core datasets
 export { CURRICULUM_TOPICS } from "./topics";
 export { ALL_CURRICULUM_SKILLS } from "./skills";
 export { EXPANDED_PRACTICE_QUESTIONS } from "./practice-questions";
 export { EXPANDED_PRACTICE_QUESTIONS_SET2 } from "./practice-questions-set2";
+export { GESTION_ECO_PRACTICE_QUESTIONS } from "@/data/practice/gestion-eco";
 
-// Combine all practice questions across pilot (18), expanded set 1 (44), and expanded set 2 (31)
+// Combine all practice questions across pilot (18), expanded set 1 (44), expanded set 2 (31), and gestion-eco
 export const ALL_PRACTICE_QUESTIONS: PracticeQuestion[] = [
   ...SCIENCES_EXP_PRACTICE_QUESTIONS,
+  ...GESTION_ECO_PRACTICE_QUESTIONS,
   ...EXPANDED_PRACTICE_QUESTIONS,
   ...EXPANDED_PRACTICE_QUESTIONS_SET2,
 ];
