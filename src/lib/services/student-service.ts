@@ -44,19 +44,51 @@ export const StudentService = {
         }
 
         // Case 1: Server profile already exists and is authoritative
-        if (data && data.raw_draft) {
-          const serverProfile = data.raw_draft as StrategicProfile;
-          saveStrategicProfile(serverProfile); // update local mirror
-          clearOnboardingDraft();
-          return serverProfile;
+        if (data) {
+          const serverProfile = await StudentRepository.getProfile(userId);
+          if (serverProfile) {
+            saveStrategicProfile(serverProfile); // update local mirror
+            clearOnboardingDraft();
+            return serverProfile;
+          }
         }
 
-        // Case 2: No server profile exists, but local profile exists -> migrate up
+        // Case 2: No server profile exists, but local profile exists -> migrate up with 48h trial
         if (localProfile) {
-          await StudentRepository.saveProfile(localProfile, userId);
+          const now = new Date();
+          const trialExpires = new Date(now.getTime() + 48 * 3600 * 1000);
+          const trialProfile = {
+            ...localProfile,
+            trial_started_at: (localProfile as any).trial_started_at || now.toISOString(),
+            trial_expires_at: (localProfile as any).trial_expires_at || trialExpires.toISOString(),
+            access_status: (localProfile as any).access_status || "TRIAL",
+            plan: (localProfile as any).plan || "PILOT_TRIAL",
+          };
+          await StudentRepository.saveProfile(trialProfile, userId);
           clearOnboardingDraft();
-          return localProfile;
+          return trialProfile;
         }
+
+        // Case 3: Fresh registration without local profile -> create initial trial profile
+        const freshNow = new Date();
+        const freshExpires = new Date(freshNow.getTime() + 48 * 3600 * 1000);
+        const defaultProfile: any = {
+          id: userId,
+          educationLevel: "secondary",
+          examType: "BAC",
+          streamId: "sciences_exp",
+          targetScore: 16.0,
+          subjectEstimates: {},
+          availableTime: "12_to_18",
+          studyEnergy: "normal",
+          createdAt: freshNow.toISOString(),
+          trial_started_at: freshNow.toISOString(),
+          trial_expires_at: freshExpires.toISOString(),
+          access_status: "TRIAL",
+          plan: "PILOT_TRIAL",
+        };
+        await StudentRepository.saveProfile(defaultProfile, userId);
+        return defaultProfile;
       } catch (err) {
         console.error("StudentService.handleAuthSessionMigration exception:", err);
       }

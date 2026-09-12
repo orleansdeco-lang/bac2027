@@ -20,8 +20,11 @@ import {
 } from "@/domain/content/language";
 import { trackEvent } from "@/lib/analytics";
 import { submitPilotFeedback, PilotFeedbackRating } from "@/lib/feedback";
+import { StudentService } from "@/lib/services/student-service";
+import { getStudentAccess } from "@/lib/access";
 import {
   Compass,
+  Lock,
   ArrowRight,
   ArrowLeft,
   CheckCircle2,
@@ -115,6 +118,7 @@ export default function MissionPage() {
   const [feedbackRating, setFeedbackRating] = useState<PilotFeedbackRating | null>(null);
   const [feedbackNote, setFeedbackNote] = useState("");
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -135,7 +139,11 @@ export default function MissionPage() {
     async function loadData() {
       if (!missionId) return;
       try {
-        const res = await MissionService.getMissionWithBundle(missionId, user?.id);
+        const [res, p] = await Promise.all([
+          MissionService.getMissionWithBundle(missionId, user?.id),
+          StudentService.getProfile(user?.id),
+        ]);
+        if (p) setProfile(p);
         if (res) {
           setMission(res.mission);
           setBundle(res.bundle);
@@ -211,6 +219,44 @@ export default function MissionPage() {
             </p>
           </div>
         </div>
+      </AppShell>
+    );
+  }
+
+  const access = getStudentAccess(profile);
+
+  if (access.status === "TRIAL_EXPIRED") {
+    return (
+      <AppShell>
+        <Container size="sm" className="py-12 sm:py-16 text-center space-y-6">
+          <div data-testid="mission-trial-expired-gate" className="p-6 sm:p-8 rounded-2xl bg-[#111827] border border-amber-500/40 space-y-5 shadow-2xl animate-fade-in">
+            <div className="h-12 w-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto">
+              <Lock className="h-6 w-6" />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-xl sm:text-2xl font-bold text-white">
+                {isAr ? "انتهت فترة التجربة المجانية (48 ساعة)" : "Votre essai gratuit de 48h a expiré"}
+              </h1>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-md mx-auto">
+                {isAr
+                  ? "جميع مهامك وتقدمك الدراسي محفوظان بدقة. لتتمكن من حل التمارين وإجراء الاختبارات، يرجى تفعيل اشتراكك."
+                  : "Votre historique et progression restent intacts. Activez votre pass pour débloquer les exercices et retests."}
+              </p>
+            </div>
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link href="/subscribe" className="w-full sm:w-auto">
+                <Button data-testid="expired-gate-subscribe-btn" size="lg" variant="primary" fullWidth className="font-bold text-sm">
+                  <span>{isAr ? "كمّل BAC Mastery" : "Continuer avec BAC Mastery"}</span>
+                </Button>
+              </Link>
+              <Link href="/dashboard" className="w-full sm:w-auto">
+                <Button size="lg" variant="outline" fullWidth className="text-xs text-slate-300">
+                  <span>{isAr ? "العودة للوحة التحكم" : "Tableau de bord"}</span>
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </Container>
       </AppShell>
     );
   }

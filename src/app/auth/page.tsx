@@ -26,6 +26,7 @@ function AuthContent() {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -76,6 +77,15 @@ function AuthContent() {
       return;
     }
 
+    if (mode === "signup" && password !== passwordConfirmation) {
+      setErrorMsg(
+        locale === "fr"
+          ? "Les mots de passe ne correspondent pas."
+          : "كلمات المرور غير متطابقة."
+      );
+      return;
+    }
+
     setSubmitting(true);
 
     try {
@@ -87,6 +97,8 @@ function AuthContent() {
           await StudentService.handleAuthSessionMigration(loggedInUser.id);
           await syncAllLocalStorageToCloud(loggedInUser.id);
           const profile = await StudentService.getProfile(loggedInUser.id);
+          const { trackEvent } = await import("@/lib/analytics");
+          trackEvent("login_completed", { userId: loggedInUser.id });
           if (!profile || !profile.streamId) {
             router.push("/onboarding");
           } else {
@@ -100,10 +112,13 @@ function AuthContent() {
         } else if (newUser) {
           await StudentService.handleAuthSessionMigration(newUser.id);
           await syncAllLocalStorageToCloud(newUser.id);
+          const { trackEvent } = await import("@/lib/analytics");
+          trackEvent("registration_completed", { userId: newUser.id });
+          trackEvent("trial_started", { userId: newUser.id, durationHours: 48 });
           setSuccessMsg(
             locale === "fr"
-              ? "Compte créé avec succès ! Vous pouvez maintenant accéder à votre parcours."
-              : "تم إنشاء حسابك بنجاح! يمكنك الآن متابعة مسارك التعليمي."
+              ? "Compte créé avec succès ! Votre essai gratuit de 48h a débuté."
+              : "تم إنشاء حسابك بنجاح! بدأت تجربتك المجانية لمدة 48 ساعة."
           );
           setTimeout(async () => {
             const profile = await StudentService.getProfile(newUser.id);
@@ -112,7 +127,7 @@ function AuthContent() {
             } else {
               router.push("/dashboard");
             }
-          }, 1000);
+          }, 800);
         }
       }
     } catch {
@@ -146,6 +161,7 @@ function AuthContent() {
             {/* Mode Switcher Tabs */}
             <div className="grid grid-cols-2 gap-1 p-1 bg-card-muted border border-theme rounded-xl mb-6">
               <button
+                data-testid="auth-mode-login"
                 type="button"
                 onClick={() => {
                   setMode("login");
@@ -161,6 +177,7 @@ function AuthContent() {
                 {locale === "fr" ? "Connexion" : "تسجيل الدخول"}
               </button>
               <button
+                data-testid="auth-mode-signup"
                 type="button"
                 onClick={() => {
                   setMode("signup");
@@ -231,6 +248,7 @@ function AuthContent() {
                 <div className="relative">
                   <Mail className={`w-4 h-4 text-theme-muted absolute top-3.5 ${isRTL ? "right-3.5" : "left-3.5"}`} />
                   <input
+                    data-testid="auth-email-input"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -250,6 +268,7 @@ function AuthContent() {
                 <div className="relative">
                   <Lock className={`w-4 h-4 text-theme-muted absolute top-3.5 ${isRTL ? "right-3.5" : "left-3.5"}`} />
                   <input
+                    data-testid="auth-password-input"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -262,7 +281,30 @@ function AuthContent() {
                 </div>
               </div>
 
+              {mode === "signup" && (
+                <div className="animate-fade-in">
+                  <label className="block text-xs font-semibold text-theme-secondary mb-1.5">
+                    {locale === "fr" ? "Confirmer le mot de passe" : "تأكيد كلمة المرور"}
+                  </label>
+                  <div className="relative">
+                    <Lock className={`w-4 h-4 text-theme-muted absolute top-3.5 ${isRTL ? "right-3.5" : "left-3.5"}`} />
+                    <input
+                      data-testid="auth-confirm-password-input"
+                      type="password"
+                      value={passwordConfirmation}
+                      onChange={(e) => setPasswordConfirmation(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      className={`w-full bg-card-muted border border-theme rounded-xl py-2.5 text-sm text-theme-text placeholder:text-theme-muted focus:outline-none focus:border-[var(--color-primary)] focus:ring-1 focus:ring-[var(--color-primary)] transition-colors ${
+                        isRTL ? "pr-10 pl-3" : "pl-10 pr-3"
+                      }`}
+                    />
+                  </div>
+                </div>
+              )}
+
               <Button
+                data-testid="auth-submit-button"
                 type="submit"
                 variant="primary"
                 fullWidth

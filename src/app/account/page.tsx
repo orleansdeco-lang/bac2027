@@ -13,6 +13,7 @@ import { ThemeSelector } from "@/components/ui/ThemeSelector";
 import { getStrategicProfile } from "@/lib/onboarding/profile";
 import { StrategicProfile } from "@/types/onboarding";
 import { StudentService } from "@/lib/services";
+import { getStudentAccess } from "@/lib/access";
 import {
   User,
   ShieldCheck,
@@ -27,6 +28,7 @@ import {
   Cloud,
   CloudOff,
   Palette,
+  Sparkles,
 } from "lucide-react";
 
 export default function AccountPage() {
@@ -37,12 +39,17 @@ export default function AccountPage() {
   const [syncing, setSyncing] = useState(false);
   const [syncSuccess, setSyncSuccess] = useState(false);
 
+  const access = getStudentAccess(profile);
+
   const NextArrow = isAr ? ArrowLeft : ArrowRight;
 
   useEffect(() => {
-    const p = getStrategicProfile();
-    if (p) setProfile(p);
-  }, []);
+    async function fetchAccProfile() {
+      const p = user ? await StudentService.getProfile(user.id) : getStrategicProfile();
+      if (p) setProfile(p);
+    }
+    fetchAccProfile();
+  }, [user]);
 
   const handleSync = async () => {
     if (!user) return;
@@ -190,7 +197,66 @@ export default function AccountPage() {
           )}
         </Card>
 
-        {/* 3. Academic Profile Details */}
+        {/* 3. Subscription & Trial Card */}
+        <Card className="p-5 space-y-4" data-testid="account-subscription-card">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-bold text-theme-text">
+              <Clock className="h-4 w-4 text-cyan-400" />
+              <span>{isAr ? "الاشتراك والوصول" : "Abonnement & Accès"}</span>
+            </div>
+            {access.status === "PAID_ACTIVE" ? (
+              <Badge variant="success" size="sm">
+                {isAr ? "اشتراك كامل مفعل" : "Actif"}
+              </Badge>
+            ) : access.status === "TRIAL_ACTIVE" ? (
+              <Badge variant="warning" size="sm">
+                {isAr ? `تجربة مجانية (${access.remainingHours} سا متبقية)` : `Essai (${access.remainingHours}h)`}
+              </Badge>
+            ) : (
+              <Badge variant="outline" size="sm" className="text-rose-400 border-rose-500/30">
+                {isAr ? "فترة التجربة منتهية" : "Essai expiré"}
+              </Badge>
+            )}
+          </div>
+
+          <div className="p-4 rounded-xl bg-card-muted border border-theme space-y-2">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-theme-muted">{isAr ? "نوع الخطة الحالية:" : "Plan actuel :"}</span>
+              <span className="font-bold text-theme-text">
+                {access.plan === "PAID" 
+                  ? (isAr ? "Pass BAC كامل (موسم 2026)" : "Pass BAC Intégral") 
+                  : (isAr ? "تجربة مجانية استكشافية (48 ساعة)" : "Essai Découverte (48h)")}
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-theme-muted">{isAr ? "حالة الوصول:" : "Statut :"}</span>
+              <span className={`font-bold ${access.canUseProduct ? "text-emerald-400" : "text-amber-400"}`}>
+                {access.canUseProduct 
+                  ? (isAr ? "وصول كامل متاح" : "Accès complet") 
+                  : (isAr ? "الوصول مقفل (مطلوب التفعيل)" : "Accès restreint")}
+              </span>
+            </div>
+            {access.trialExpiresAt && (
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-theme-muted">{isAr ? "نهاية فترة التجربة:" : "Fin de l'essai :"}</span>
+                <span className="font-mono text-theme-secondary text-[11px]">
+                  {new Date(access.trialExpiresAt).toLocaleString(isAr ? "ar-DZ" : "fr-FR")}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {access.status !== "PAID_ACTIVE" && (
+            <Link href="/subscribe">
+              <Button variant="primary" size="sm" className="w-full">
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>{isAr ? "تفعيل اشتراك BAC Mastery الكامل" : "Passer au Pass BAC Complet"}</span>
+              </Button>
+            </Link>
+          )}
+        </Card>
+
+        {/* 4. Academic Profile Details */}
         <Card className="p-5 space-y-4">
           <h2 className="text-sm font-bold text-theme-text flex items-center gap-2">
             <Target className="h-4 w-4 text-cyan-400" />

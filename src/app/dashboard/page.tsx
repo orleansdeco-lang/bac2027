@@ -14,6 +14,7 @@ import { DashboardService } from "@/lib/services";
 import { getStrategicProfile } from "@/lib/onboarding/profile";
 import { StrategicProfile } from "@/types/onboarding";
 import { trackEvent } from "@/lib/analytics";
+import { getStudentAccess } from "@/lib/access";
 import {
   Sparkles,
   Target,
@@ -109,9 +110,47 @@ export default function DashboardPage() {
     }
   };
 
+  const access = getStudentAccess(profile);
+
   return (
     <AppShell activeNav="home">
       <Container size="lg" className="py-6 sm:py-10 space-y-8">
+        {/* Subtle 48h Trial Status Banner */}
+        {access.status === "TRIAL_EXPIRED" ? (
+          <div data-testid="dashboard-trial-banner" className="p-4 rounded-2xl bg-amber-950/40 border border-amber-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md animate-fade-in">
+            <div className="flex items-center gap-3">
+              <Clock className="w-5 h-5 text-amber-400 shrink-0" />
+              <div className="text-xs sm:text-sm">
+                <span className="font-bold text-white block">
+                  {isAr ? "التجربة انتهت • تقدمك وخريطتك محفوظان" : "Essai terminé • Progression sauvegardée"}
+                </span>
+                <span className="text-amber-200/90 text-xs">
+                  {isAr ? "قم بتفعيل اشتراكك لمتابعة المهام والتصحيح الذكي." : "Activez votre pass pour continuer vos missions ciblées."}
+                </span>
+              </div>
+            </div>
+            <Link href="/subscribe">
+              <Button size="sm" variant="primary" className="text-xs font-bold shrink-0">
+                <span>{isAr ? "كمّل BAC Mastery" : "Continuer"}</span>
+              </Button>
+            </Link>
+          </div>
+        ) : access.status === "TRIAL_ACTIVE" && profile ? (
+          <div data-testid="dashboard-trial-banner" className="px-4 py-2.5 rounded-xl bg-blue-950/30 border border-blue-500/20 flex items-center justify-between text-xs text-slate-300">
+            <div className="flex items-center gap-2">
+              <Clock className="w-4 h-4 text-blue-400 shrink-0" />
+              <span>
+                {access.isExpiringSoon
+                  ? isAr ? "باقي أقل من 6 ساعات في تجربتك المجانية" : "Moins de 6 heures restantes sur votre essai"
+                  : isAr ? `تجربتك المجانية مازالت فعالة • باقي ${access.remainingHours} ساعة` : `Essai gratuit actif • reste ${access.remainingHours}h`}
+              </span>
+            </div>
+            <Link href="/subscribe" className="text-blue-400 hover:text-blue-300 font-semibold underline underline-offset-4 text-[11px]">
+              {isAr ? "تفاصيل التفعيل" : "Détails"}
+            </Link>
+          </div>
+        ) : null}
+
         {/* ================================================================= */}
         {/* 1. STUDENT HEADER & STRATEGIC CONTEXT                             */}
         {/* ================================================================= */}

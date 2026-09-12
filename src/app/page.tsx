@@ -14,6 +14,7 @@ import { StrategicProfile } from "@/types/onboarding";
 import { getActiveMissionId, loadMasteryRecords, loadPracticeSessions } from "@/lib/mission/storage";
 import { loadDiagnosticResults } from "@/lib/diagnostic";
 import { trackEvent } from "@/lib/analytics";
+import { getStudentAccess } from "@/lib/access";
 import {
   Compass,
   ArrowRight,
@@ -47,6 +48,7 @@ export default function HomePage() {
     trackEvent("landing_view", { hasProfile: Boolean(p) });
     if (p) {
       setProfile(p);
+      const access = getStudentAccess(p);
       const activeMissionId = getActiveMissionId();
       const masteryMap = loadMasteryRecords();
       const sessionsMap = loadPracticeSessions();
@@ -57,9 +59,15 @@ export default function HomePage() {
         Object.values(sessionsMap).some((s) => s.status === "completed") ||
         diagResults !== null;
 
-      if (activeMissionId) {
+      if (access.status === "TRIAL_EXPIRED") {
         setSmartCta({
-          textAr: "نكمل مهمتي",
+          textAr: "كمّل BAC Mastery",
+          textFr: "Continuer avec BAC Mastery",
+          href: "/subscribe",
+        });
+      } else if (activeMissionId) {
+        setSmartCta({
+          textAr: "كمّل مهمتك",
           textFr: "Continuer ma mission",
           href: `/mission/${activeMissionId}`,
         });

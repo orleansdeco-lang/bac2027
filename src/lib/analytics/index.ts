@@ -38,7 +38,16 @@ export type PilotAnalyticsEventName =
   | "pilot_feedback_submitted"
   | "pilot_session_started"
   | "pilot_session_ended"
-  | "pilot_resume_success";
+  | "pilot_resume_success"
+  | "trial_started"
+  | "registration_completed"
+  | "login_completed"
+  | "trial_expiring"
+  | "trial_expired"
+  | "conversion_viewed"
+  | "conversion_cta_clicked"
+  | "payment_started"
+  | "payment_confirmed";
 
 export interface PilotAnalyticsProperties {
   userId?: string | null;

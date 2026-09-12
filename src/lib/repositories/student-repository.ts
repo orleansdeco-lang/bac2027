@@ -28,11 +28,23 @@ export const StudentRepository = {
         }
 
         if (data) {
+          const trialStarted = data.trial_started_at || data.raw_draft?.trial_started_at || data.created_at || new Date().toISOString();
+          const trialExpires = data.trial_expires_at || data.raw_draft?.trial_expires_at || new Date(new Date(trialStarted).getTime() + 48 * 3600 * 1000).toISOString();
+          const accessStatus = data.access_status || data.raw_draft?.access_status || "TRIAL";
+          const plan = data.plan || data.raw_draft?.plan || "PILOT_TRIAL";
+
           if (data.raw_draft && Object.keys(data.raw_draft).length > 0) {
-            saveStrategicProfile(data.raw_draft as StrategicProfile);
-            return data.raw_draft as StrategicProfile;
+            const draft = { ...(data.raw_draft as StrategicProfile) } as any;
+            draft.trial_started_at = trialStarted;
+            draft.trial_expires_at = trialExpires;
+            draft.access_status = accessStatus;
+            draft.plan = plan;
+            draft.created_at = data.created_at;
+            saveStrategicProfile(draft);
+            return draft;
           }
-          const reconstructed: StrategicProfile = {
+
+          const reconstructed: any = {
             id: data.id || userId,
             educationLevel: (data.education_level as any) || "secondary",
             examType: ((data.exam_type || "bac").toUpperCase() as any),
@@ -45,6 +57,11 @@ export const StudentRepository = {
             obstacles: data.biggest_obstacle ? [data.biggest_obstacle as any] : [],
             studyEnergy: (data.energy_state as any) || "normal",
             createdAt: data.created_at || new Date().toISOString(),
+            created_at: data.created_at,
+            trial_started_at: trialStarted,
+            trial_expires_at: trialExpires,
+            access_status: accessStatus,
+            plan: plan,
           };
           saveStrategicProfile(reconstructed);
           return reconstructed;
@@ -67,7 +84,20 @@ export const StudentRepository = {
 
     if (isSupabaseConfigured && supabase && userId) {
       try {
-        const payload = {
+        const trialStarted = (profile as any).trial_started_at || new Date().toISOString();
+        const trialExpires = (profile as any).trial_expires_at || new Date(new Date(trialStarted).getTime() + 48 * 3600 * 1000).toISOString();
+        const accessStatus = (profile as any).access_status || "TRIAL";
+        const plan = (profile as any).plan || "PILOT_TRIAL";
+
+        const enrichedProfile = {
+          ...profile,
+          trial_started_at: trialStarted,
+          trial_expires_at: trialExpires,
+          access_status: accessStatus,
+          plan: plan,
+        };
+
+        const basePayload: Record<string, any> = {
           id: userId,
           user_id: userId,
           education_level: profile.educationLevel || "secondary",
@@ -82,16 +112,36 @@ export const StudentRepository = {
           energy_state: profile.studyEnergy || "normal",
           language: "ar",
           onboarding_completed: true,
-          raw_draft: profile,
+          raw_draft: enrichedProfile,
           updated_at: new Date().toISOString(),
         };
 
-        const { error } = await supabase
+        // Attempt upsert with trial columns first
+        const { error: fullError } = await supabase
           .from("student_profiles")
-          .upsert(payload, { onConflict: "id" });
+          .upsert(
+            {
+              ...basePayload,
+              trial_started_at: trialStarted,
+              trial_expires_at: trialExpires,
+              access_status: accessStatus,
+              plan: plan,
+            },
+            { onConflict: "id" }
+          );
 
-        if (error) {
-          console.error("StudentRepository.saveProfile error:", error);
+        // If trial columns not yet in DB schema, fallback to base payload with enriched raw_draft
+        if (fullError) {
+          if (fullError.message?.includes("column") || fullError.code === "PGRST204") {
+            const { error: fallbackError } = await supabase
+              .from("student_profiles")
+              .upsert(basePayload, { onConflict: "id" });
+            if (fallbackError) {
+              console.error("StudentRepository.saveProfile fallback error:", fallbackError);
+            }
+          } else {
+            console.error("StudentRepository.saveProfile error:", fullError);
+          }
         }
       } catch (err) {
         console.error("StudentRepository.saveProfile exception:", err);
