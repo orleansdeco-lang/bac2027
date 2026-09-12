@@ -463,12 +463,12 @@ $$\arg\left(\frac{z - a}{z - b}\right) = (\vec{MB}, \vec{MA}) \pmod{2\pi}$$
     retest: {
       id: "rq_math_m_loci_twin",
       parentPracticeQuestionId: "pq_math_m_loci_01",
-      prompt_ar: "لتكن النقطتان C(4) و D(1). عيّن مجموعة النقط M(z) بحيث: arg((z - 4)/(z - 1)) = pi [2pi].",
+      prompt_ar: "لتكن النقطتان C(3i) و D(-2i). عيّن طبيعة المجموعة النقطية للنقط M(z) بحيث: arg((z - 3i)/(z + 2i)) = pi [2pi].",
       isIsomorphicTwin: true,
       altersSurfaceContext: true,
       testsIdenticalConcept: true,
-      correctAnswerId: "opt_rq_loci_res",
-      explanation_ar: "الزاوية (MD, MC) = pi [2pi] تقتضي أن M تقع بين النقطتين C و D، إذن المجموعة هي القطعة المستقيمة المفتوحة ]CD[.",
+      correctAnswerId: "opt_rq_loci_segment_cd",
+      explanation_ar: "الزاوية (MD, MC) = pi [2pi] تقتضي أن الشعاعين MD و MC متعاكسان في الاتجاه، وبالتالي تنتمي النقطة M إلى القطعة المستقيمة المفتوحة ]CD[ الواقعة على محور التخيل (باستثناء النقطتين C و D).",
     },
     repairGuide: {
       targetErrorType: "forgot_information",
@@ -531,7 +531,10 @@ $$f'(x) = f(x) \cdot [\ln(f(x))]'$$
    $$f'(x) = [u(x)]^{v(x)} \cdot \left[ v'(x) \ln(u(x)) + \frac{v(x) u'(x)}{u(x)} \right]$$
 
 ### شرط الأمان الرياضي
-لا يمكن تطبيق اللوغاريتم إلا على مقادير موجبة تماماً قطيعاً ($u(x) > 0$)؛ وفي حال وجود إشارات سالبة يجب دراسة القيمة المطلقة $\ln|u(x)|$.`,
+لا يمكن تطبيق اللوغاريتم إلا على مقادير موجبة تماماً قطيعاً ($u(x) > 0$)؛ وفي حال وجود إشارات سالبة يجب دراسة القيمة المطلقة $\ln|u(x)|$.
+
+### المعيار المنهجي في البكالوريا الرسمية
+في نماذج تصحيح البكالوريا، الصياغة النموذجية المعتمدة هي التحويل الأسي الصريح $f(x) = e^{v(x) \ln(u(x))}$ مع تبرير قابلية الاشتقاق وإيجابية الأساس $u(x) > 0$. وتعتبر طريقة الاشتقاق اللوغاريتمي $\frac{f'(x)}{f(x)} = [\ln f(x)]'$ أداة مساعدة ممتازة للتحقق وتسريع الحساب.`,
       keyTakeaway_ar: "لاشتقاق u(x)^v(x) نكتبها بالصيغة الأسية e^(v(x)*ln(u(x))) مع اشتراط u(x) > 0، أو نطبق الاشتقاق اللوغاريتمي f'(x)/f(x) = [v*ln(u)]'.",
     },
     workedExample: {
@@ -602,7 +605,7 @@ $$f'(x) = f(x) \cdot [\ln(f(x))]'$$
     externalResourceIds: ["res_math_m_logarithmic_differentiation"],
     examTransfer: {
       status: "AVAILABLE",
-      bacTypologyNotes_ar: "توظف هذه التقنية لتبسيط اشتقاق الدوال الأسية المعقدة أو دوال القوى في المسألة الرئيسية لشعبة الرياضيات.",
+      bacTypologyNotes_ar: "المعيار الرسمي النموذجي في البكالوريا هو تحويل العبارة إلى الشكل الأسي الصريح e^(v(x)*ln(u(x))) مع شرط u(x)>0، وتعتبر طريقة الاشتقاق اللوغاريتمي تقنية مساعدة فعالة للتحقق وتسريع الحساب.",
       commonPitfalls_ar: ["نسيان الضرب في f(x) في الخطوة النهائية", "إهمال شرط f(x) > 0 قبل تطبيق اللوغاريتم"],
       officialBacPastRefIds: ["bac_m_2023_s1_ex4", "bac_m_2021_s1_ex4"],
     },
@@ -807,12 +810,12 @@ $$m(b - a) \le \int_{a}^{b} f(x) \, dx \le M(b - a)$$
     retest: {
       id: "rq_math_m_bound_twin",
       parentPracticeQuestionId: "pq_math_m_bound_01",
-      prompt_ar: "احصر التكامل J = integral_0^1 (1 / (1 + x^3) dx).",
+      prompt_ar: "احصر التكامل J = integral_0^1 (1 / (2 + x^2) dx).",
       isIsomorphicTwin: true,
       altersSurfaceContext: true,
       testsIdenticalConcept: true,
-      correctAnswerId: "opt_rq_bound_half_1",
-      explanation_ar: "على المجال [0, 1] لدينا 0 <= x^3 <= 1 إذن 1 <= 1 + x^3 <= 2. بالمقلوب نجد 1/2 <= 1/(1+x^3) <= 1. بالتكامل على مجال طوله 1 - 0 = 1 نجد حتماً: 1/2 <= J <= 1.",
+      correctAnswerId: "opt_rq_bound_third_half",
+      explanation_ar: "على المجال [0, 1] لدينا 0 <= x^2 <= 1 إذن 2 <= 2 + x^2 <= 3. بأخذ المقلوب وترتيب الأطراف نجد: 1/3 <= 1/(2+x^2) <= 1/2. وبما أن طول المجال هو 1 - 0 = 1، فإن بالتكامل نجد حتماً: 1/3 <= J <= 1/2.",
     },
     repairGuide: {
       targetErrorType: "misunderstood_concept",
@@ -987,7 +990,9 @@ $$P(B) = P(A) \cdot P_A(B) + P(\bar{A}) \cdot P_{\bar{A}}(B)$$
 
 ### مبرهنة بايز للاحتمال البعدي (Théorème de Bayes)
 تسمح بحساب احتمال 'السبب' $A_k$ علماً أن 'النتيجة' $B$ قد وقعت:
-$$P_B(A_k) = \frac{P(A_k \cap B)}{P(B)} = \frac{P(A_k) \cdot P_{A_k}(B)}{\sum_{i=1}^{n} P(A_i) \cdot P_{A_i}(B)}$$`,
+$$P_B(A_k) = \frac{P(A_k \cap B)}{P(B)} = \frac{P(A_k) \cdot P_{A_k}(B)}{\sum_{i=1}^{n} P(A_i) \cdot P_{A_i}(B)}$$
+
+*تنبيه منهاجي*: في مواضيع البكالوريا الرسمية، يُصاغ هذا السؤال عادة بعبارة: «احسب الاحتمال الشرطي $P_B(A_k)$» أو «علماً أن النتيجة $B$ قد تحققت، ما احتمال أنها ناتجة عن السبب $A_k$؟». وتعتبر مبرهنة بايز تأطيراً منهجياً تركيبياً ناتجاً عن تعريف الاحتمال الشرطي مقسوماً على قانون الاحتمالات الكلية.`,
       keyTakeaway_ar: "قانون الاحتمالات الكلية P(B) يجمع كل المسارات المنتهية بالحادثة B في شجرة الاحتمالات، ومجموع الاحتمال الإجمالي محصور دوماً في [0, 1].",
     },
     workedExample: {
@@ -1057,7 +1062,7 @@ $$P_B(A_k) = \frac{P(A_k \cap B)}{P(B)} = \frac{P(A_k) \cdot P_{A_k}(B)}{\sum_{i
     externalResourceIds: ["res_math_m_total_probability"],
     examTransfer: {
       status: "AVAILABLE",
-      bacTypologyNotes_ar: "قانون الاحتمالات الكلية ومبرهنة بايز يردان كاستنتاج إلزامي بعد رسم شجرة الاحتمالات في كل مواضيع البكالوريا الرسمية تقريباً.",
+      bacTypologyNotes_ar: "قانون الاحتمالات الكلية يرد بانتظام بعد شجرة الاحتمالات، ويُطلب الاحتمال البعدي (صيغة بايز) بصياغة 'احسب الاحتمال الشرطي... علماً أن...' مقسوماً على الاحتمال الكلي.",
       commonPitfalls_ar: ["نسيان ضرب الحادثة العكسية في احتمالها المتمم", "خطأ توحيد المقامات في جمع المسارات"],
       officialBacPastRefIds: ["bac_m_2023_s1_ex2", "bac_m_2021_s1_ex2"],
     },
