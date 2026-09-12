@@ -6,9 +6,12 @@
  * Executive Decree No. 07-142 of May 19, 2007 (المرسوم التنفيذي رقم 07-142 المؤرخ في 19 مايو 2007)
  * establishing the evaluation rules, certification, and stream structures of secondary education.
  * 
- * Note on Coefficients:
- * Classified as OFFICIAL_HISTORICAL. In accordance with Prompt 20 Section 3, no coefficient
- * is labeled as OFFICIAL_CURRENT without an explicit annual circular citation for 2026-2027.
+ * Note on Coefficients & 2026-2027 Academic Year:
+ * Classified as OFFICIAL_HISTORICAL (Decree No. 07-142).
+ * The Ministry announced that the 2026-2027 school year remains under the existing secondary organization.
+ * Crucially, a Ministerial decision published on 10 September 2026 officially CANCELLED the previous
+ * decision regarding secondary schedules and coefficients.
+ * Therefore, NO historical coefficients may be represented as current official BAC 2027 data.
  */
 
 import { StreamId, TechniqueMathSpecialty } from "@/types/education";
