@@ -82,6 +82,7 @@ export default function MissionPage() {
   // Worked example toggle ("Think before looking")
   const [showWorkedSolution, setShowWorkedSolution] = useState(false);
   const [showQuickRecallAnswer, setShowQuickRecallAnswer] = useState(false);
+  const [quickRecallReflection, setQuickRecallReflection] = useState<"remembered" | "needs_review" | null>(null);
 
   // Practice state
   const [activeQuestion, setActiveQuestion] = useState<PracticeQuestion | null>(null);
@@ -544,27 +545,91 @@ export default function MissionPage() {
                 </div>
               )}
 
-              {/* Quick Recall Test */}
-              <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-4 space-y-3">
+              {/* Quick Recall Test (Active Recall UX - DEF-002 Resolved) */}
+              <div className="rounded-xl border border-cyan-800/40 bg-gradient-to-b from-slate-900/90 to-slate-900/60 p-4 sm:p-5 space-y-3.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
-                    <Brain className="h-4 w-4" />
-                    <span>{isAr ? "اختبار التذكر السريع (بدون النظر)" : "Test de rappel actif"}</span>
+                    <Brain className="h-4 w-4 text-cyan-400" />
+                    <span>{isAr ? "اختبار الاسترجاع النشط (Active Recall)" : "Test de rappel actif"}</span>
                   </span>
-                  <button
-                    onClick={() => setShowQuickRecallAnswer(!showQuickRecallAnswer)}
-                    className="text-xs text-blue-400 hover:underline flex items-center gap-1"
-                  >
-                    {showQuickRecallAnswer ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-                    <span>{showQuickRecallAnswer ? (isAr ? "إخفاء" : "Cacher") : (isAr ? "كشف الإجابة" : "Vérifier")}</span>
-                  </button>
+                  <Badge variant="outline" size="sm" className="border-cyan-500/30 text-cyan-300 text-[10px]">
+                    {isAr ? "فكر في رأسك أولاً" : "Réfléchissez d'abord"}
+                  </Badge>
                 </div>
-                <p className="text-xs text-slate-200">
-                  {lesson.quickRecallPrompt_ar}
-                </p>
-                {showQuickRecallAnswer && (
-                  <div className="p-3 rounded-lg bg-cyan-950/30 border border-cyan-800/40 text-xs text-cyan-200 leading-relaxed animate-fade-in">
-                    {lesson.quickRecallAnswer_ar}
+
+                <div className="p-3.5 rounded-lg bg-slate-950/70 border border-slate-800">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                    {isAr ? "السؤال لاختبار فهمك:" : "Question d'auto-évaluation :"}
+                  </span>
+                  <p className="text-xs sm:text-sm font-semibold text-white leading-relaxed">
+                    {lesson.quickRecallPrompt_ar}
+                  </p>
+                </div>
+
+                {!showQuickRecallAnswer ? (
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded-lg bg-cyan-950/20 border border-cyan-800/30">
+                    <span className="text-xs text-cyan-200/90">
+                      {isAr ? "فكر وحدك وحاول استحضار الجواب في ذهنك قبل ما تكشف الإجابة." : "Formulez votre réponse mentale avant de vérifier."}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowQuickRecallAnswer(true)}
+                      className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/20 text-xs shrink-0 h-8"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      <span>{isAr ? "أظهِر الإجابة" : "Afficher la réponse"}</span>
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3 pt-1 animate-fade-in">
+                    <div className="p-3.5 rounded-lg bg-cyan-950/40 border border-cyan-700/50 text-xs sm:text-sm text-cyan-100 leading-relaxed">
+                      <div className="flex items-center justify-between mb-1.5 border-b border-cyan-800/40 pb-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">
+                          {isAr ? "الإجابة النموذجية المركزة:" : "Réponse attendue :"}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShowQuickRecallAnswer(false)}
+                          className="text-[11px] text-cyan-400/80 hover:text-cyan-300 underline"
+                        >
+                          {isAr ? "إخفاء" : "Masquer"}
+                        </button>
+                      </div>
+                      {lesson.quickRecallAnswer_ar}
+                    </div>
+
+                    {/* Metacognitive Reflection */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-lg bg-slate-950/50 border border-slate-800 text-xs">
+                      <span className="text-slate-300 text-xs">
+                        {isAr ? "واش قدرت تجاوب قبل ما تكشفها؟" : "Avez-vous réussi à répondre mentalement ?"}
+                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setQuickRecallReflection("remembered")}
+                          className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors ${
+                            quickRecallReflection === "remembered"
+                              ? "bg-emerald-600 text-white"
+                              : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                          }`}
+                        >
+                          {isAr ? "نعم، تذكرتها بدقة ✓" : "Oui, parfaitement"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setQuickRecallReflection("needs_review")}
+                          className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors ${
+                            quickRecallReflection === "needs_review"
+                              ? "bg-amber-600 text-white"
+                              : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                          }`}
+                        >
+                          {isAr ? "نحتاج نثبتها أكثر" : "À consolider"}
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
@@ -869,12 +934,12 @@ export default function MissionPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-amber-300">
-                      {isAr ? "الإجابة غير دقيقة — فرصة ممتازة للتعلم" : "Réponse incorrecte — Opportunité d'apprentissage"}
+                      {isAr ? "الخطأ معلومة • عرفنا وين الخلل بالضبط" : "L'erreur est une information • Point de blocage ciblé"}
                     </h3>
                     <p className="text-xs text-slate-300 mt-0.5">
                       {isAr
-                        ? "الخطأ الآن أفضل من البكالوريا. نصلحوه درك باش نضمنوا النقاط."
-                        : "Identifions la cause pour sécuriser vos points au BAC."}
+                        ? "ماشي مشكل. الخطأ هنا فرصة ذهبية لنصلحوا المفهوم ونثبتوا الفكرة."
+                        : "Identifions la cause racine pour consolider la méthode."}
                     </p>
                   </div>
                 </div>
@@ -896,7 +961,7 @@ export default function MissionPage() {
                     onClick={() => setCurrentStep("error_diagnosis")}
                     className="bg-amber-600 hover:bg-amber-500 font-bold"
                   >
-                    <span>{isAr ? "تشخيص سبب الخطأ في مختبر الأخطاء" : "Diagnostiquer l'erreur"}</span>
+                    <span>{isAr ? "تشخيص سبب الخطأ وبدء الإصلاح" : "Diagnostiquer l'erreur"}</span>
                     <NextArrow className="h-4 w-4" />
                   </Button>
                 </div>

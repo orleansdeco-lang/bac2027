@@ -25,7 +25,7 @@ export function detectStrategicBottleneck(
       title_fr: `${topSubjectMeta.name_fr} — Écart coefficient et niveau`,
       explanation_ar: isAcute
         ? `مستواك التقديري في ${topSubjectMeta.name_ar} (ضعيف) يشكل أكبر عائق للوصول إلى معدل ${profile.targetScore}، نظراً لمعاملها العالي (${topSubjectGap.coefficient}). رفع هذه المادة يعطيك أعلى قفزة في المعدل.`
-        : `تمثل ${topSubjectMeta.name_ar} الفرصة الكبرى لتقليص المسافة نحو هدفك (${profile.targetScore}). التركيز عليها يضمن أكبر مردودية للوقت المستثمر.`,
+        : `تمثل ${topSubjectMeta.name_ar} الفرصة الكبرى لتقليص المسافة نحو هدفك (${profile.targetScore}). التركيز عليها يساعدك على تحقيق أفضل عائد للوقت المستثمر.`,
       explanation_fr: isAcute
         ? `Votre estimation en ${topSubjectMeta.name_fr} représente le principal obstacle pour atteindre ${profile.targetScore}, vu son coefficient élevé (${topSubjectGap.coefficient}).`
         : `${topSubjectMeta.name_fr} offre le plus fort levier pour combler l'écart vers votre objectif (${profile.targetScore}).`,

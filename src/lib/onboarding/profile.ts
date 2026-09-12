@@ -77,7 +77,7 @@ export function saveStrategicProfile(profile: StrategicProfile): void {
 export function getStrategicProfile(): StrategicProfile | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = localStorage.getItem(STRATEGIC_PROFILE_KEY);
+    const raw = localStorage.getItem(STRATEGIC_PROFILE_KEY) || localStorage.getItem("bac_mastery_student_profile");
     if (!raw) return null;
     return JSON.parse(raw) as StrategicProfile;
   } catch {

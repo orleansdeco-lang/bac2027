@@ -131,16 +131,16 @@ export default function DiagnosticResultsPage() {
   };
 
   const calibrationBadgeVariant =
-    results.calibration.category === "well_calibrated"
+    results.calibration?.category === "well_calibrated"
       ? "success"
-      : results.calibration.category === "uncalibrated_severe"
+      : results.calibration?.category === "uncalibrated_severe"
       ? "danger"
       : "warning";
 
   const bottleneckSeverityVariant =
-    results.primaryBottleneck.severity === "critical"
+    results.primaryBottleneck?.severity === "critical"
       ? "danger"
-      : results.primaryBottleneck.severity === "high"
+      : results.primaryBottleneck?.severity === "high"
       ? "warning"
       : "default";
 
@@ -294,21 +294,21 @@ export default function DiagnosticResultsPage() {
                 </span>
               </div>
               <Badge
-                variant={results.misconceptionTraps.length > 0 ? "danger" : "success"}
+                variant={(results.misconceptionTraps?.length || 0) > 0 ? "danger" : "success"}
                 size="sm"
               >
-                {results.misconceptionTraps.length} {locale === "ar" ? "إشارات محتملة" : "signaux détectés"}
+                {results.misconceptionTraps?.length || 0} {locale === "ar" ? "إشارات محتملة" : "signaux détectés"}
               </Badge>
             </div>
 
-            {results.misconceptionTraps.length === 0 ? (
+            {(results.misconceptionTraps?.length || 0) === 0 ? (
               <div className="p-4 rounded-xl bg-[#0d271f] border border-emerald-500/40 text-xs sm:text-sm text-emerald-300 flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
                 <span>{t.diagnostic.results.noMisconceptions}</span>
               </div>
             ) : (
               <div className="space-y-3">
-                {results.misconceptionTraps.map((trap, idx) => (
+                {results.misconceptionTraps?.map((trap, idx) => (
                   <div
                     key={idx}
                     className="p-3.5 rounded-xl bg-[#241217] border border-rose-900/60 space-y-1.5 text-xs text-rose-200 shadow-sm"
@@ -316,7 +316,7 @@ export default function DiagnosticResultsPage() {
                     <div className="flex items-center justify-between font-bold">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <span className="text-white">{locale === "ar" ? trap.topic_ar : trap.topic_fr}</span>
-                        {trap.trapDetails.suspectedErrorType && (
+                        {trap.trapDetails?.suspectedErrorType && (
                           <Badge variant="outline" size="sm" className="text-[10px] py-0 bg-[#111827] border-rose-800 text-rose-300">
                             {trap.trapDetails.suspectedErrorType}
                           </Badge>
@@ -327,7 +327,7 @@ export default function DiagnosticResultsPage() {
                       </span>
                     </div>
                     <div className="text-rose-200/90 leading-relaxed text-[12px]">
-                      {locale === "ar" ? trap.trapDetails.description_ar : trap.trapDetails.description_fr}
+                      {locale === "ar" ? trap.trapDetails?.description_ar : trap.trapDetails?.description_fr}
                     </div>
                   </div>
                 ))}
@@ -336,31 +336,33 @@ export default function DiagnosticResultsPage() {
           </Card>
 
           {/* 5. Primary Preliminary Bottleneck Candidate */}
-          <Card className="p-5 sm:p-6 bg-[#281c11] border border-amber-500/40 shadow-xl space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Flame className="h-5 w-5 text-amber-400" />
-                <span className="text-sm font-bold text-white">
-                  {t.diagnostic.results.bottleneckTitle}
-                </span>
+          {results.primaryBottleneck && (
+            <Card className="p-5 sm:p-6 bg-[#281c11] border border-amber-500/40 shadow-xl space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Flame className="h-5 w-5 text-amber-400" />
+                  <span className="text-sm font-bold text-white">
+                    {t.diagnostic.results.bottleneckTitle}
+                  </span>
+                </div>
+                <Badge variant={bottleneckSeverityVariant} size="sm">
+                  {locale === "ar" ? "مرشح أولي" : "Candidat initial"}
+                </Badge>
               </div>
-              <Badge variant={bottleneckSeverityVariant} size="sm">
-                {locale === "ar" ? "مرشح أولي" : "Candidat initial"}
-              </Badge>
-            </div>
 
-            <div className="p-2.5 rounded-lg bg-[#111827]/80 border border-amber-500/30 text-amber-200 text-xs leading-relaxed">
-              {t.diagnostic.results.bottleneckCandidateNotice}
-            </div>
+              <div className="p-2.5 rounded-lg bg-[#111827]/80 border border-amber-500/30 text-amber-200 text-xs leading-relaxed">
+                {t.diagnostic.results.bottleneckCandidateNotice}
+              </div>
 
-            <div className="text-base font-bold text-white">
-              {locale === "ar" ? results.primaryBottleneck.title_ar : results.primaryBottleneck.title_fr}
-            </div>
+              <div className="text-base font-bold text-white">
+                {locale === "ar" ? results.primaryBottleneck.title_ar : results.primaryBottleneck.title_fr}
+              </div>
 
-            <p className="text-xs sm:text-sm text-amber-200/90 leading-relaxed">
-              {locale === "ar" ? results.primaryBottleneck.rationale_ar : results.primaryBottleneck.rationale_fr}
-            </p>
-          </Card>
+              <p className="text-xs sm:text-sm text-amber-200/90 leading-relaxed">
+                {locale === "ar" ? results.primaryBottleneck.rationale_ar : results.primaryBottleneck.rationale_fr}
+              </p>
+            </Card>
+          )}
 
           {/* 6. First Recommended Mission */}
           {results.firstRecommendedMission && (

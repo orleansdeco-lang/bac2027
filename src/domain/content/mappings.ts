@@ -167,7 +167,7 @@ export const CURRICULUM_SCIENCES_EXP: Curriculum = {
   academicYear: "2024-2025",
   title_ar: "منهاج البكالوريا — شعبة علوم تجريبية (3 ثانوي)",
   title_fr: "Curriculum BAC — Filière Sciences Expérimentales (3AS)",
-  description_ar: "المنهاج البيداغوجي المعتمد رسمياً لاجتياز شهادة البكالوريا الجزائرية في المواد العلمية الأساسية: الرياضيات، العلوم الفيزيائية، وعلوم الطبيعة والحياة.",
+  description_ar: "المنهاج البيداغوجي المرجعي لاجتياز شهادة البكالوريا الجزائرية في المواد العلمية الأساسية: الرياضيات، العلوم الفيزيائية، وعلوم الطبيعة والحياة.",
   description_fr: "Curriculum pédagogique officiel pour le Baccalauréat Algérien dans les matières scientifiques fondamentales : Mathématiques, Physique-Chimie, et Sciences de la Nature et de la Vie.",
   subjectIds: ["math", "physics", "natural_sciences"],
   sourceId: "src-ministry-curriculum-3as",
