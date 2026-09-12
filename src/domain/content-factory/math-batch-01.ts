@@ -34,6 +34,7 @@ import { MATH_EXAM_TRANSFER_REGISTRY } from "./math-exam-transfer";
 import { evaluateExpansionPriority } from "@/domain/content-quality/priority-engine";
 import { evaluateContentQualityScore } from "@/domain/content-quality/quality-scorer";
 import { MATH_BATCH_01_FACTOR_INPUTS } from "./math-priority-ranking";
+import { getMathBatch02SkillDossier } from "./math-batch-02";
 
 // =============================================================================
 // 1. THE 12 AUTHORED CONTENT PACKAGES (3AS MATHÉMATIQUES)
@@ -1573,7 +1574,7 @@ export const MATH_BATCH_01_SPACED_REVIEWS: Record<string, MathSpacedReviewSchedu
  */
 export function getMathSkillDossier(skillId: string): MathSkillDossier | null {
   const pkg = MATH_BATCH_01_PACKAGES[skillId];
-  if (!pkg) return null;
+  if (!pkg) return getMathBatch02SkillDossier(skillId);
 
   const visualAsset = MATH_BATCH_01_VISUAL_ASSETS[skillId];
   const externalResource = MATH_BATCH_01_EXTERNAL_RESOURCES[skillId];

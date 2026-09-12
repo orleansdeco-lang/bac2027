@@ -1,0 +1,396 @@
+{
+  "batchId": "MATH_BATCH_02",
+  "subject": "math",
+  "stream": "math",
+  "grade": "3AS",
+  "generatedAt": "2026-09-12T19:55:00.000Z",
+  "status": "PUBLISHED",
+  "realStudentValidation": "PENDING",
+  "skillsCount": 9,
+  "cumulativeMathSkillsCount": 21,
+  "baselineCoefficientsPolicy": "OFFICIAL_HISTORICAL_ONLY",
+  "ministerialCancellationDate": "2026-09-10",
+  "legalBaseline": "Executive Decree No. 07-142 of 19 May 2007",
+  "competencyGroups": [
+    {
+      "group": "A",
+      "name_fr": "Suites Numériques",
+      "name_ar": "المتتاليات العددية",
+      "skills": [
+        "math_m_sequences_comparison_limits",
+        "math_m_geometric_sequences"
+      ]
+    },
+    {
+      "group": "B",
+      "name_fr": "Nombres Complexes",
+      "name_ar": "الأعداد المركبة",
+      "skills": [
+        "math_m_roots_of_unity",
+        "math_m_complex_argument_loci"
+      ]
+    },
+    {
+      "group": "C",
+      "name_fr": "Fonctions / Analyse",
+      "name_ar": "التحليل والدوال",
+      "skills": [
+        "math_m_logarithmic_differentiation",
+        "math_m_function_study",
+        "math_m_bounded_functions"
+      ]
+    },
+    {
+      "group": "D",
+      "name_fr": "Probabilités",
+      "name_ar": "الاحتمالات",
+      "skills": [
+        "math_m_conditional_probability_trees",
+        "math_m_total_probability"
+      ]
+    }
+  ],
+  "skills": [
+    {
+      "skillId": "math_m_sequences_comparison_limits",
+      "group": "A",
+      "domainId": "analyse",
+      "topicId": "math_topic_sequences_convergence",
+      "title_ar": "نهايات المتتاليات بمبرهنات المقارنة والحصر (مبرهنة الدرك)",
+      "title_fr": "Limites de suites par comparaison et encadrement (théorème des gendarmes)",
+      "bloomLevel": "apply",
+      "estimatedDurationMinutes": 20,
+      "priorityLevel": "HIGH",
+      "qualityScore": "EXEMPLARY",
+      "visualAssetId": "vis_math_m_sequences_comparison_limits",
+      "externalResourceId": "res_math_m_sequences_comparison_limits",
+      "errorTypesCovered": [
+        "misunderstood_concept",
+        "calculation_error",
+        "methodology_error",
+        "forgot_information"
+      ],
+      "pastBacCitations": [
+        {
+          "year": 2023,
+          "session": "principal",
+          "exerciseNumber": 3,
+          "points": 4.5
+        },
+        {
+          "year": 2020,
+          "session": "principal",
+          "exerciseNumber": 3,
+          "points": 4.5
+        }
+      ]
+    },
+    {
+      "skillId": "math_m_geometric_sequences",
+      "group": "A",
+      "domainId": "analyse",
+      "topicId": "math_topic_sequences_convergence",
+      "title_ar": "المتتاليات الهندسية وسلوك الأساس ومجموع الحدود المتتابعة",
+      "title_fr": "Suites géométriques, comportement de q^n et somme de termes",
+      "bloomLevel": "apply",
+      "estimatedDurationMinutes": 20,
+      "priorityLevel": "HIGH",
+      "qualityScore": "EXEMPLARY",
+      "visualAssetId": "vis_math_m_geometric_sequences",
+      "externalResourceId": "res_math_m_geometric_sequences",
+      "errorTypesCovered": [
+        "calculation_error",
+        "forgot_information",
+        "misunderstood_concept",
+        "methodology_error"
+      ],
+      "pastBacCitations": [
+        {
+          "year": 2024,
+          "session": "principal",
+          "exerciseNumber": 1,
+          "points": 5
+        },
+        {
+          "year": 2022,
+          "session": "principal",
+          "exerciseNumber": 3,
+          "points": 4.5
+        }
+      ]
+    },
+    {
+      "skillId": "math_m_roots_of_unity",
+      "group": "B",
+      "domainId": "nombres_complexes_geometrie",
+      "topicId": "math_topic_complex_algebra",
+      "title_ar": "الجذور النونية للوحدة والمضلعات المنتظمة في المستوي المركب",
+      "title_fr": "Racines n-ièmes de l'unité et polygones réguliers dans C",
+      "bloomLevel": "apply",
+      "estimatedDurationMinutes": 25,
+      "priorityLevel": "HIGH",
+      "qualityScore": "EXEMPLARY",
+      "visualAssetId": "vis_math_m_roots_of_unity",
+      "externalResourceId": "res_math_m_roots_of_unity",
+      "errorTypesCovered": [
+        "misunderstood_concept",
+        "calculation_error",
+        "forgot_information",
+        "methodology_error"
+      ],
+      "pastBacCitations": [
+        {
+          "year": 2023,
+          "session": "catchup",
+          "exerciseNumber": 2,
+          "points": 4.5
+        },
+        {
+          "year": 2019,
+          "session": "principal",
+          "exerciseNumber": 2,
+          "points": 4.5
+        }
+      ]
+    },
+    {
+      "skillId": "math_m_complex_argument_loci",
+      "group": "B",
+      "domainId": "nombres_complexes_geometrie",
+      "topicId": "math_topic_complex_algebra",
+      "title_ar": "المجموعات النقطية للزوايا الموجهة وعمدة كسر مركب",
+      "title_fr": "Lieux géométriques associés à l'argument d'un quotient complexe",
+      "bloomLevel": "apply",
+      "estimatedDurationMinutes": 25,
+      "priorityLevel": "HIGH",
+      "qualityScore": "EXEMPLARY",
+      "visualAssetId": "vis_math_m_complex_argument_loci",
+      "externalResourceId": "res_math_m_complex_argument_loci",
+      "errorTypesCovered": [
+        "misunderstood_concept",
+        "forgot_information",
+        "methodology_error",
+        "calculation_error"
+      ],
+      "pastBacCitations": [
+        {
+          "year": 2024,
+          "session": "principal",
+          "exerciseNumber": 2,
+          "points": 4.5
+        },
+        {
+          "year": 2021,
+          "session": "principal",
+          "exerciseNumber": 2,
+          "points": 4.5
+        }
+      ]
+    },
+    {
+      "skillId": "math_m_logarithmic_differentiation",
+      "group": "C",
+      "domainId": "analyse",
+      "topicId": "math_topic_exp_log_croissances",
+      "title_ar": "الاشتقاق اللوغاريتمي والدوال الأسية العامة f(x)^g(x)",
+      "title_fr": "Dérivation logarithmique et puissances de fonctions",
+      "bloomLevel": "apply",
+      "estimatedDurationMinutes": 20,
+      "priorityLevel": "HIGH",
+      "qualityScore": "EXEMPLARY",
+      "visualAssetId": "vis_math_m_logarithmic_differentiation",
+      "externalResourceId": "res_math_m_logarithmic_differentiation",
+      "errorTypesCovered": [
+        "misunderstood_concept",
+        "calculation_error",
+        "forgot_information",
+        "methodology_error"
+      ],
+      "pastBacCitations": [
+        {
+          "year": 2022,
+          "session": "principal",
+          "exerciseNumber": 4,
+          "points": 6
+        },
+        {
+          "year": 2018,
+          "session": "catchup",
+          "exerciseNumber": 4,
+          "points": 5.5
+        }
+      ]
+    },
+    {
+      "skillId": "math_m_function_study",
+      "group": "C",
+      "domainId": "analyse",
+      "topicId": "math_topic_continuity_derivatives",
+      "title_ar": "الدراسة الشاملة وتعيين المقاربات ورسم منحنيات الدوال",
+      "title_fr": "Étude complète, asymptotes et tracé rigoureux de courbes",
+      "bloomLevel": "apply",
+      "estimatedDurationMinutes": 30,
+      "priorityLevel": "HIGH",
+      "qualityScore": "EXEMPLARY",
+      "visualAssetId": "vis_math_m_function_study",
+      "externalResourceId": "res_math_m_function_study",
+      "errorTypesCovered": [
+        "calculation_error",
+        "misunderstood_concept",
+        "methodology_error",
+        "forgot_information"
+      ],
+      "pastBacCitations": [
+        {
+          "year": 2024,
+          "session": "principal",
+          "exerciseNumber": 4,
+          "points": 7
+        },
+        {
+          "year": 2023,
+          "session": "principal",
+          "exerciseNumber": 4,
+          "points": 7
+        }
+      ]
+    },
+    {
+      "skillId": "math_m_bounded_functions",
+      "group": "C",
+      "domainId": "analyse",
+      "topicId": "math_topic_continuity_derivatives",
+      "title_ar": "الدوال المحدودة والحصر وتطبيقات المتراجحات التكاملية",
+      "title_fr": "Fonctions bornées, encadrement et inégalités intégrales",
+      "bloomLevel": "apply",
+      "estimatedDurationMinutes": 20,
+      "priorityLevel": "HIGH",
+      "qualityScore": "EXEMPLARY",
+      "visualAssetId": "vis_math_m_bounded_functions",
+      "externalResourceId": "res_math_m_bounded_functions",
+      "errorTypesCovered": [
+        "forgot_information",
+        "calculation_error",
+        "misunderstood_concept",
+        "methodology_error"
+      ],
+      "pastBacCitations": [
+        {
+          "year": 2023,
+          "session": "principal",
+          "exerciseNumber": 3,
+          "points": 4.5
+        },
+        {
+          "year": 2021,
+          "session": "catchup",
+          "exerciseNumber": 3,
+          "points": 4
+        }
+      ]
+    },
+    {
+      "skillId": "math_m_conditional_probability_trees",
+      "group": "D",
+      "domainId": "probabilites_denombrement",
+      "topicId": "math_topic_combinatorics_bernoulli",
+      "title_ar": "الأشجار الاحتمالية الموزونة وحساب الاحتمال الشرطي والتقاطع",
+      "title_fr": "Arbres pondérés, probabilités conditionnelles et intersections",
+      "bloomLevel": "apply",
+      "estimatedDurationMinutes": 20,
+      "priorityLevel": "HIGH",
+      "qualityScore": "EXEMPLARY",
+      "visualAssetId": "vis_math_m_conditional_probability_trees",
+      "externalResourceId": "res_math_m_conditional_probability_trees",
+      "errorTypesCovered": [
+        "misunderstood_concept",
+        "calculation_error",
+        "forgot_information",
+        "methodology_error"
+      ],
+      "pastBacCitations": [
+        {
+          "year": 2024,
+          "session": "principal",
+          "exerciseNumber": 2,
+          "points": 4.5
+        },
+        {
+          "year": 2021,
+          "session": "principal",
+          "exerciseNumber": 1,
+          "points": 4.5
+        }
+      ]
+    },
+    {
+      "skillId": "math_m_total_probability",
+      "group": "D",
+      "domainId": "probabilites_denombrement",
+      "topicId": "math_topic_combinatorics_bernoulli",
+      "title_ar": "قانون الاحتمالات الكلية وتجزئة فضاء العينة ومبرهنة بايز",
+      "title_fr": "Formule des probabilités totales, partition et théorème de Bayes",
+      "bloomLevel": "apply",
+      "estimatedDurationMinutes": 20,
+      "priorityLevel": "HIGH",
+      "qualityScore": "EXEMPLARY",
+      "visualAssetId": "vis_math_m_total_probability",
+      "externalResourceId": "res_math_m_total_probability",
+      "errorTypesCovered": [
+        "forgot_information",
+        "calculation_error",
+        "misunderstood_concept",
+        "methodology_error"
+      ],
+      "pastBacCitations": [
+        {
+          "year": 2023,
+          "session": "principal",
+          "exerciseNumber": 2,
+          "points": 4.5
+        },
+        {
+          "year": 2020,
+          "session": "principal",
+          "exerciseNumber": 2,
+          "points": 4.5
+        }
+      ]
+    }
+  ],
+  "verificationSummary": {
+    "typeCheck": "PASSED",
+    "typeCheckErrors": 0,
+    "productionBuild": "PASSED",
+    "staticRoutesCount": 18,
+    "mathFactoryTestGates": 18,
+    "mathFactoryChecksPassed": 30,
+    "mathFactoryChecksFailed": 0,
+    "contentQualityChecksPassed": 150,
+    "contentQualityChecksFailed": 0,
+    "learningEcosystemChecksPassed": 162,
+    "learningEcosystemChecksFailed": 0,
+    "architectureChecksPassed": 637,
+    "architectureChecksFailed": 0,
+    "chromeCdpBrowserSmokeTest": "PASSED",
+    "browserChecksPassed": 10,
+    "browserChecksFailed": 0,
+    "screenshotsCaptured": 6,
+    "horizontalScrollOverflow": "0px",
+    "fatalConsoleErrors": 0
+  },
+  "invariantsAudit": {
+    "zeroDatabaseMigrations": true,
+    "zeroAiLlmRuntimeDependency": true,
+    "sciencesExpCanonicalSkillsUntouched": true,
+    "sciencesExpCanonicalSkillsCount": 31,
+    "batch01SkillsIntact": true,
+    "batch01SkillsCount": 12,
+    "totalMathPublishedSkills": 21,
+    "isomorphicRetestTwinsVerified": true,
+    "allDistractorsMappedToCanonicalErrorTypes": true,
+    "allVisualAssetsAccessible": true,
+    "allExternalResourcesHaveReturnTickets": true,
+    "zeroCommercialMarketplaceCode": true
+  }
+}

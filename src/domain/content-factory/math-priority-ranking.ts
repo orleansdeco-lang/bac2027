@@ -205,3 +205,151 @@ export function getRankedMathBatch01Skills(): RankedSkillPriorityEntry[] {
 
   return entries;
 }
+
+export const MATH_BATCH_02_FACTOR_INPUTS: Record<string, PriorityFactorInputs> = {
+  // 1. Limites de suites par comparaison (Suites)
+  math_m_sequences_comparison_limits: {
+    studentDemandPotential: 5,
+    examRelevance: 5,
+    curriculumCentrality: 5,
+    prerequisiteImportance: 5,
+    crossTopicDependency: 4,
+    difficultyLevel: 2,
+    currentContentGap: true,
+    trustworthySourcesAvailable: true,
+    errorFrequencyPotential: 4,
+    educationalRoi: 5,
+  },
+
+  // 2. Suites géométriques et sommes (Suites)
+  math_m_geometric_sequences: {
+    studentDemandPotential: 5,
+    examRelevance: 5,
+    curriculumCentrality: 5,
+    prerequisiteImportance: 5,
+    crossTopicDependency: 4,
+    difficultyLevel: 2,
+    currentContentGap: true,
+    trustworthySourcesAvailable: true,
+    errorFrequencyPotential: 4,
+    educationalRoi: 5,
+  },
+
+  // 3. Racines n-ièmes de l'unité (Complexes)
+  math_m_roots_of_unity: {
+    studentDemandPotential: 5,
+    examRelevance: 5,
+    curriculumCentrality: 5,
+    prerequisiteImportance: 4,
+    crossTopicDependency: 4,
+    difficultyLevel: 3,
+    currentContentGap: true,
+    trustworthySourcesAvailable: true,
+    errorFrequencyPotential: 5,
+    educationalRoi: 5,
+  },
+
+  // 4. Lieux géométriques complexes (Complexes)
+  math_m_complex_argument_loci: {
+    studentDemandPotential: 5,
+    examRelevance: 5,
+    curriculumCentrality: 5,
+    prerequisiteImportance: 4,
+    crossTopicDependency: 4,
+    difficultyLevel: 3,
+    currentContentGap: true,
+    trustworthySourcesAvailable: true,
+    errorFrequencyPotential: 5,
+    educationalRoi: 5,
+  },
+
+  // 5. Dérivation logarithmique (Analyse)
+  math_m_logarithmic_differentiation: {
+    studentDemandPotential: 5,
+    examRelevance: 5,
+    curriculumCentrality: 4,
+    prerequisiteImportance: 4,
+    crossTopicDependency: 4,
+    difficultyLevel: 3,
+    currentContentGap: true,
+    trustworthySourcesAvailable: true,
+    errorFrequencyPotential: 4,
+    educationalRoi: 4,
+  },
+
+  // 6. Étude et tracé de fonctions (Analyse)
+  math_m_function_study: {
+    studentDemandPotential: 5,
+    examRelevance: 5,
+    curriculumCentrality: 5,
+    prerequisiteImportance: 5,
+    crossTopicDependency: 5,
+    difficultyLevel: 3,
+    currentContentGap: true,
+    trustworthySourcesAvailable: true,
+    errorFrequencyPotential: 5,
+    educationalRoi: 5,
+  },
+
+  // 7. Fonctions bornées (Analyse)
+  math_m_bounded_functions: {
+    studentDemandPotential: 4,
+    examRelevance: 5,
+    curriculumCentrality: 4,
+    prerequisiteImportance: 4,
+    crossTopicDependency: 4,
+    difficultyLevel: 2,
+    currentContentGap: true,
+    trustworthySourcesAvailable: true,
+    errorFrequencyPotential: 4,
+    educationalRoi: 4,
+  },
+
+  // 8. Arbres pondérés (Probabilités)
+  math_m_conditional_probability_trees: {
+    studentDemandPotential: 5,
+    examRelevance: 5,
+    curriculumCentrality: 5,
+    prerequisiteImportance: 4,
+    crossTopicDependency: 3,
+    difficultyLevel: 2,
+    currentContentGap: true,
+    trustworthySourcesAvailable: true,
+    errorFrequencyPotential: 4,
+    educationalRoi: 5,
+  },
+
+  // 9. Probabilités totales & Bayes (Probabilités)
+  math_m_total_probability: {
+    studentDemandPotential: 5,
+    examRelevance: 5,
+    curriculumCentrality: 5,
+    prerequisiteImportance: 4,
+    crossTopicDependency: 4,
+    difficultyLevel: 2,
+    currentContentGap: true,
+    trustworthySourcesAvailable: true,
+    errorFrequencyPotential: 4,
+    educationalRoi: 5,
+  },
+};
+
+export const ALL_MATH_FACTOR_INPUTS: Record<string, PriorityFactorInputs> = {
+  ...MATH_BATCH_01_FACTOR_INPUTS,
+  ...MATH_BATCH_02_FACTOR_INPUTS,
+};
+
+export function getAllRankedMathSkills(): RankedSkillPriorityEntry[] {
+  const entries: RankedSkillPriorityEntry[] = Object.entries(ALL_MATH_FACTOR_INPUTS).map(
+    ([skillId, factors], index) => {
+      const evaluation = evaluateExpansionPriority(factors);
+      return {
+        skillId,
+        rank: index + 1,
+        factors,
+        evaluation,
+      };
+    }
+  );
+  return entries;
+}

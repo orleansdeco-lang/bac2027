@@ -1,52 +1,51 @@
 /**
- * BAC Mastery — Mathematics Content Factory Verification Suite
+ * BAC Mastery — Mathematical Content Factory Comprehensive Test Suite
  * 
- * Verifies All 18 Factory Gates for 3AS Mathématiques (streamId: "math"):
- * Gate 1:  Curriculum & Syllabus Alignment (5 Domains, 11 Topics, Official MEN Source Records)
- * Gate 2:  Skill Uniqueness, ID Formatting & Registry Consistency
- * Gate 3:  Priority Engine Evaluation (Determinism, High Priority Validation)
- * Gate 4:  Bilingual Pedagogical Objectives (Arabic & French, Active Verbs, BAC Criteria)
- * Gate 5:  Diagnostic Signal Profiles (Prerequisites, Misconceptions, Procedural Weaknesses)
- * Gate 6:  Authoring Contract Validation (validateContentPackage on all 12 packages)
- * Gate 7:  Cognitive Worked Examples (Problem, >=3 Step Solution, Pedagogical Comment)
- * Gate 8:  Active Recall Prompts & Expected Answers
- * Gate 9:  Guided & Independent Practice Micro-Drills
- * Gate 10: Error Taxonomy Rigor (Strict SuspectedErrorType Adherence, Zero Unmapped Errors)
- * Gate 11: Actionable Repair Guides (Mental Model, >=3 Steps, Target Error Type)
- * Gate 12: Isomorphic Retest Twins (Structural Isomorphism, Distinct Numerical Inputs)
- * Gate 13: Mastery Determination Criteria
- * Gate 14: BAC Exam Transfer Layer (Task Forms, Pitfalls, Rubrics, ONEC Archive Citations)
- * Gate 15: Visual Learning Assets (Accessibility Metadata, WCAG Alt Texts, Non-color Cues)
- * Gate 16: External Learning Resources with Mandatory Return-Action Tickets
- * Gate 17: Claim & Regulatory Audit (0 Blockers, No Fake 2027 Coefficients, Decree 07-142 Historical)
- * Gate 18: Spaced Review Schedule (Day 1, 3, 7, and Exam Application Prompts)
- * Gate 19: Complete Integrated Math Skill Dossier Resolution
+ * Production Batch 01 (12 skills) + Production Batch 02 (9 skills) = 21 Published Skills
+ * 
+ * Verifies all 18 Factory Quality Gates across all 21 published 3AS Mathematics skills:
+ * 1. Official Curriculum & Syllabus Alignment (5 Domains, 11 Topics, Ministerial Citations)
+ * 2. Skill Uniqueness & Canonical ID Formatting (21 Unique skills, math_m_*)
+ * 3. Deterministic Priority Engine (10 Pedagogical Factors -> All 21 evaluate strictly to HIGH)
+ * 4. Bilingual Pedagogical Objectives (Arabic & French)
+ * 5. Diagnostic Signal Profiles (Misconceptions, Prerequisites, Procedural Weaknesses)
+ * 6. Authoring Contract Compliance (validateContentPackage() passes 100%)
+ * 7. Cognitive Worked Examples (3+ Step solutions, pedagogical comments)
+ * 8. Active Recall Prompts & Expected Answers
+ * 9. Practice Micro-Drills (>= 2 per package)
+ * 10. Error Taxonomy Rigor (100% adherence to SuspectedErrorType)
+ * 11. Actionable Repair Guides (Mental model explanations, 3+ actionable steps, contrastive examples)
+ * 12. Isomorphic Retest Twins (Altered surface parameters, identical cognitive demand)
+ * 13. Visual Learning Assets (1-to-1 links, full accessibility compliance, non-color cues)
+ * 14. External Learning Resources (Safe HTTPS URLs, official providers, return-action tickets)
+ * 15. BAC Exam Transfer Layer (Task forms, common traps, rubric guidelines, past ONEC citations)
+ * 16. Spaced Review Schedules (Day 1, 3, 7, and Later Exam Prompts)
+ * 17. Claim & Regulatory Audit (0 promotional blockers, 21 PUBLISHED skills in curriculum matrix)
+ * 18. Complete Integrated Skill Dossier Resolution (All 21 resolve clean dossiers)
  */
 
-import fs from "node:fs";
-import path from "node:path";
+import fs from "fs";
+import path from "path";
 import ts from "typescript";
 
-console.log("==================================================================");
-console.log("  BAC MASTERY — MATHEMATICS CONTENT FACTORY QA SUITE (18 GATES)");
-console.log("==================================================================\n");
-
-// Robust CommonJS TS module loader
+// Lightweight TypeScript in-memory transpiler for domain modules
 const moduleCache = new Map();
-function loadTs(relPath) {
-  const fullPath = path.resolve(relPath);
+
+function loadTs(relativeFilePath) {
+  const fullPath = path.resolve(relativeFilePath);
   if (moduleCache.has(fullPath)) {
     return moduleCache.get(fullPath);
   }
 
-  const code = fs.readFileSync(fullPath, "utf8");
-  const result = ts.transpileModule(code, {
+  const source = fs.readFileSync(fullPath, "utf8");
+  const result = ts.transpileModule(source, {
     compilerOptions: {
       module: ts.ModuleKind.CommonJS,
       target: ts.ScriptTarget.ES2022,
       esModuleInterop: true,
     },
   });
+
   const m = { exports: {} };
   moduleCache.set(fullPath, m.exports);
 
@@ -90,7 +89,47 @@ function assert(condition, message) {
   }
 }
 
-const ALL_MATH_SKILL_IDS = Object.keys(factory.MATH_BATCH_01_PACKAGES || {});
+const BATCH_01_PACKAGES = factory.MATH_BATCH_01_PACKAGES || {};
+const BATCH_02_PACKAGES = factory.MATH_BATCH_02_PACKAGES || {};
+
+const ALL_PACKAGES = {
+  ...BATCH_01_PACKAGES,
+  ...BATCH_02_PACKAGES,
+};
+
+const BATCH_01_SKILL_IDS = Object.keys(BATCH_01_PACKAGES);
+const BATCH_02_SKILL_IDS = Object.keys(BATCH_02_PACKAGES);
+const ALL_MATH_SKILL_IDS = Object.keys(ALL_PACKAGES);
+
+const ALL_SIGNALS = {
+  ...(factory.MATH_BATCH_01_DIAGNOSTIC_SIGNALS || {}),
+  ...(factory.MATH_BATCH_02_DIAGNOSTIC_SIGNALS || {}),
+};
+
+const ALL_SPACED_REVIEWS = {
+  ...(factory.MATH_BATCH_01_SPACED_REVIEWS || {}),
+  ...(factory.MATH_BATCH_02_SPACED_REVIEWS || {}),
+};
+
+const ALL_VISUAL_ASSETS = factory.ALL_MATH_VISUAL_ASSETS || {
+  ...(factory.MATH_BATCH_01_VISUAL_ASSETS || {}),
+  ...(factory.MATH_BATCH_02_VISUAL_ASSETS || {}),
+};
+
+const ALL_EXTERNAL_RESOURCES = factory.ALL_MATH_EXTERNAL_RESOURCES || {
+  ...(factory.MATH_BATCH_01_EXTERNAL_RESOURCES || {}),
+  ...(factory.MATH_BATCH_02_EXTERNAL_RESOURCES || {}),
+};
+
+const ALL_EXAM_TRANSFER = factory.ALL_MATH_EXAM_TRANSFER_REGISTRY || {
+  ...(factory.MATH_EXAM_TRANSFER_REGISTRY || {}),
+  ...(factory.MATH_BATCH_02_EXAM_TRANSFER_REGISTRY || {}),
+};
+
+const ALL_FACTOR_INPUTS = factory.ALL_MATH_FACTOR_INPUTS || {
+  ...(factory.MATH_BATCH_01_FACTOR_INPUTS || {}),
+  ...(factory.MATH_BATCH_02_FACTOR_INPUTS || {}),
+};
 
 // =============================================================================
 // GATE 1: OFFICIAL CURRICULUM & SYLLABUS ALIGNMENT
@@ -117,9 +156,12 @@ console.log("\n[GATE 1] Official Curriculum & Syllabus Alignment");
 // =============================================================================
 console.log("\n[GATE 2] Skill Uniqueness & ID Formatting");
 {
-  assert(ALL_MATH_SKILL_IDS.length === 12, `Batch contains exactly 12 high-priority skills (found ${ALL_MATH_SKILL_IDS.length})`);
+  assert(BATCH_01_SKILL_IDS.length === 12, `Batch 01 contains exactly 12 skills (found ${BATCH_01_SKILL_IDS.length})`);
+  assert(BATCH_02_SKILL_IDS.length === 9, `Batch 02 contains exactly 9 skills (found ${BATCH_02_SKILL_IDS.length})`);
+  assert(ALL_MATH_SKILL_IDS.length === 21, `Total math skills equals exactly 21 (found ${ALL_MATH_SKILL_IDS.length})`);
+
   const uniqueIds = new Set(ALL_MATH_SKILL_IDS);
-  assert(uniqueIds.size === ALL_MATH_SKILL_IDS.length, "All 12 math skill IDs are unique");
+  assert(uniqueIds.size === 21, "All 21 math skill IDs are mutually unique across batches");
   
   let idFormatValid = true;
   for (const id of ALL_MATH_SKILL_IDS) {
@@ -128,7 +170,7 @@ console.log("\n[GATE 2] Skill Uniqueness & ID Formatting");
       console.error(`Invalid ID prefix: ${id}`);
     }
   }
-  assert(idFormatValid, "All skill IDs follow canonical 'math_m_*' convention");
+  assert(idFormatValid, "All 21 skill IDs follow canonical 'math_m_*' convention");
 }
 
 // =============================================================================
@@ -136,17 +178,21 @@ console.log("\n[GATE 2] Skill Uniqueness & ID Formatting");
 // =============================================================================
 console.log("\n[GATE 3] Priority Engine Evaluation");
 {
-  const rankedSkills = factory.getRankedMathBatch01Skills();
-  assert(rankedSkills.length === 12, `Ranked all 12 skills (found ${rankedSkills.length})`);
-  
   let allHigh = true;
-  for (const entry of rankedSkills) {
-    if (entry.evaluation.level !== "HIGH") {
+  for (const id of ALL_MATH_SKILL_IDS) {
+    const factors = ALL_FACTOR_INPUTS[id];
+    if (!factors) {
       allHigh = false;
-      console.error(`Skill ${entry.skillId} evaluated to level ${entry.evaluation.level}`);
+      console.error(`Missing factor inputs for skill ${id}`);
+      continue;
+    }
+    const evaluation = contentQuality.evaluateExpansionPriority(factors);
+    if (evaluation.level !== "HIGH") {
+      allHigh = false;
+      console.error(`Skill ${id} evaluated to level ${evaluation.level}`);
     }
   }
-  assert(allHigh, "All 12 math batch skills evaluate strictly to HIGH priority");
+  assert(allHigh, "All 21 math skills evaluate strictly to HIGH priority via deterministic priority engine");
 }
 
 // =============================================================================
@@ -156,13 +202,13 @@ console.log("\n[GATE 4] Bilingual Pedagogical Objectives");
 {
   let allObjectivesValid = true;
   for (const id of ALL_MATH_SKILL_IDS) {
-    const pkg = factory.MATH_BATCH_01_PACKAGES[id];
+    const pkg = ALL_PACKAGES[id];
     if (!pkg || !pkg.objective_ar || !pkg.objective_fr || pkg.objective_ar.length < 15 || pkg.objective_fr.length < 15) {
       allObjectivesValid = false;
       console.error(`Incomplete objectives for ${id}`);
     }
   }
-  assert(allObjectivesValid, "All 12 skills have high-quality Arabic & French pedagogical objectives");
+  assert(allObjectivesValid, "All 21 skills have high-quality Arabic & French pedagogical objectives");
 }
 
 // =============================================================================
@@ -172,7 +218,7 @@ console.log("\n[GATE 5] Diagnostic Signal Profiles");
 {
   let allSignalsValid = true;
   for (const id of ALL_MATH_SKILL_IDS) {
-    const signal = factory.MATH_BATCH_01_DIAGNOSTIC_SIGNALS[id];
+    const signal = ALL_SIGNALS[id];
     if (
       !signal ||
       !signal.missingPrerequisiteIndicators_ar || signal.missingPrerequisiteIndicators_ar.length === 0 ||
@@ -183,7 +229,7 @@ console.log("\n[GATE 5] Diagnostic Signal Profiles");
       console.error(`Diagnostic signal invalid for ${id}`);
     }
   }
-  assert(allSignalsValid, "All 12 skills have calibrated diagnostic signal profiles targeting specific misconceptions & prerequisites");
+  assert(allSignalsValid, "All 21 skills have calibrated diagnostic signal profiles targeting misconceptions & prerequisites");
 }
 
 // =============================================================================
@@ -193,14 +239,14 @@ console.log("\n[GATE 6] Authoring Contract Validation (validateContentPackage)")
 {
   let packagesContractValid = true;
   for (const id of ALL_MATH_SKILL_IDS) {
-    const pkg = factory.MATH_BATCH_01_PACKAGES[id];
+    const pkg = ALL_PACKAGES[id];
     const validation = contentQuality.validateContentPackage(pkg);
     if (!validation.isValid) {
       packagesContractValid = false;
       console.error(`Package contract failure for ${id}:`, validation.errors);
     }
   }
-  assert(packagesContractValid, "All 12 ContentPackages pass validateContentPackage with 0 errors");
+  assert(packagesContractValid, "All 21 ContentPackages pass validateContentPackage with 0 errors");
 }
 
 // =============================================================================
@@ -210,7 +256,7 @@ console.log("\n[GATE 7] Cognitive Worked Examples");
 {
   let workedExamplesValid = true;
   for (const id of ALL_MATH_SKILL_IDS) {
-    const we = factory.MATH_BATCH_01_PACKAGES[id]?.workedExample;
+    const we = ALL_PACKAGES[id]?.workedExample;
     if (
       !we ||
       !we.problem_ar ||
@@ -222,7 +268,7 @@ console.log("\n[GATE 7] Cognitive Worked Examples");
       console.error(`Worked example incomplete for ${id}`);
     }
   }
-  assert(workedExamplesValid, "All 12 worked examples feature explicit problem, >=3 cognitive steps, and pedagogical comments");
+  assert(workedExamplesValid, "All 21 worked examples feature explicit problem, >=3 cognitive steps, and pedagogical comments");
 }
 
 // =============================================================================
@@ -232,13 +278,13 @@ console.log("\n[GATE 8] Active Recall Prompts & Expected Answers");
 {
   let recallValid = true;
   for (const id of ALL_MATH_SKILL_IDS) {
-    const ar = factory.MATH_BATCH_01_PACKAGES[id]?.activeRecall;
+    const ar = ALL_PACKAGES[id]?.activeRecall;
     if (!ar || !ar.prompt_ar || !ar.expectedAnswer_ar || ar.expectedAnswer_ar.length < 10) {
       recallValid = false;
       console.error(`Active recall incomplete for ${id}`);
     }
   }
-  assert(recallValid, "All 12 skills have active recall prompts with substantive expected answer criteria");
+  assert(recallValid, "All 21 skills have active recall prompts with substantive expected answer criteria");
 }
 
 // =============================================================================
@@ -248,13 +294,13 @@ console.log("\n[GATE 9] Guided & Independent Practice Micro-Drills");
 {
   let practiceValid = true;
   for (const id of ALL_MATH_SKILL_IDS) {
-    const practice = factory.MATH_BATCH_01_PACKAGES[id]?.practice;
+    const practice = ALL_PACKAGES[id]?.practice;
     if (!practice || practice.length < 2) {
       practiceValid = false;
       console.error(`Practice items insufficient for ${id}`);
     }
   }
-  assert(practiceValid, "All 12 skills provide multiple structured practice micro-drills");
+  assert(practiceValid, "All 21 skills provide multiple structured practice micro-drills");
 }
 
 // =============================================================================
@@ -277,7 +323,7 @@ console.log("\n[GATE 10] Error Taxonomy Rigor (Strict SuspectedErrorType)");
 
   let allErrorsCompliant = true;
   for (const id of ALL_MATH_SKILL_IDS) {
-    const pkg = factory.MATH_BATCH_01_PACKAGES[id];
+    const pkg = ALL_PACKAGES[id];
     for (const p of pkg.practice) {
       for (const [distractorKey, errorType] of Object.entries(p.distractorErrorMappings || {})) {
         if (!CANONICAL_ERROR_TYPES.has(errorType)) {
@@ -301,7 +347,7 @@ console.log("\n[GATE 11] Actionable Repair Guides");
 {
   let repairGuidesValid = true;
   for (const id of ALL_MATH_SKILL_IDS) {
-    const rg = factory.MATH_BATCH_01_PACKAGES[id]?.repairGuide;
+    const rg = ALL_PACKAGES[id]?.repairGuide;
     if (
       !rg ||
       !rg.title_ar ||
@@ -313,7 +359,7 @@ console.log("\n[GATE 11] Actionable Repair Guides");
       console.error(`Repair guide invalid for ${id}`);
     }
   }
-  assert(repairGuidesValid, "All 12 repair guides offer mental model explanation and 3+ actionable steps");
+  assert(repairGuidesValid, "All 21 repair guides offer mental model explanation and 3+ actionable steps");
 }
 
 // =============================================================================
@@ -323,7 +369,7 @@ console.log("\n[GATE 12] Isomorphic Retest Twins");
 {
   let retestsValid = true;
   for (const id of ALL_MATH_SKILL_IDS) {
-    const pkg = factory.MATH_BATCH_01_PACKAGES[id];
+    const pkg = ALL_PACKAGES[id];
     const retest = pkg?.retest;
     if (!retest || !retest.prompt_ar || !retest.isIsomorphicTwin || !retest.testsIdenticalConcept) {
       retestsValid = false;
@@ -334,7 +380,7 @@ console.log("\n[GATE 12] Isomorphic Retest Twins");
       console.error(`Retest twin for ${id} is a verbatim duplicate of practice question!`);
     }
   }
-  assert(retestsValid, "All 12 skills have genuine isomorphic retest twins (distinct numerical parameters, identical cognitive depth)");
+  assert(retestsValid, "All 21 skills have genuine isomorphic retest twins (distinct numerical parameters, identical cognitive depth)");
 }
 
 // =============================================================================
@@ -344,13 +390,13 @@ console.log("\n[GATE 13] Visual Learning Assets");
 {
   let visualsValid = true;
   for (const id of ALL_MATH_SKILL_IDS) {
-    const va = factory.MATH_BATCH_01_VISUAL_ASSETS[id];
-    const pkg = factory.MATH_BATCH_01_PACKAGES[id];
+    const va = ALL_VISUAL_ASSETS[id];
+    const pkg = ALL_PACKAGES[id];
     if (!va || !va.id || !va.title_ar || !va.accessibilityMetadata?.description || !va.accessibilityMetadata?.screenReaderSummary) {
       visualsValid = false;
       console.error(`Visual asset invalid for ${id}`);
     }
-    if (!pkg || pkg.visualAssetIds[0] !== va.id) {
+    if (!pkg || pkg.visualAssetIds[0] !== va?.id) {
       visualsValid = false;
       console.error(`Visual asset ID mismatch in package for ${id}: pkg=${pkg?.visualAssetIds[0]} vs registry=${va?.id}`);
     }
@@ -359,7 +405,7 @@ console.log("\n[GATE 13] Visual Learning Assets");
       console.error(`Visual accessibility requirements not met for ${id}`);
     }
   }
-  assert(visualsValid, "All 12 visual assets pass full accessibility audits and link 1-to-1 with packages");
+  assert(visualsValid, "All 21 visual assets pass full accessibility audits and link 1-to-1 with packages");
 }
 
 // =============================================================================
@@ -369,7 +415,7 @@ console.log("\n[GATE 14] External Learning Resources with Return Tickets");
 {
   let resourcesValid = true;
   for (const id of ALL_MATH_SKILL_IDS) {
-    const res = factory.MATH_BATCH_01_EXTERNAL_RESOURCES[id];
+    const res = ALL_EXTERNAL_RESOURCES[id];
     const val = learningEcosystem.validateExternalResourceContract(res);
     if (!val.isValid) {
       resourcesValid = false;
@@ -380,7 +426,7 @@ console.log("\n[GATE 14] External Learning Resources with Return Tickets");
       console.error(`External resource missing return action for ${id}`);
     }
   }
-  assert(resourcesValid, "All 12 external resources pass validation and provide mandatory return-action tickets");
+  assert(resourcesValid, "All 21 external resources pass validation and provide mandatory return-action tickets");
 }
 
 // =============================================================================
@@ -390,7 +436,7 @@ console.log("\n[GATE 15] BAC Exam Transfer Layer");
 {
   let examTransferValid = true;
   for (const id of ALL_MATH_SKILL_IDS) {
-    const et = factory.MATH_EXAM_TRANSFER_REGISTRY[id];
+    const et = ALL_EXAM_TRANSFER[id];
     if (
       !et ||
       !et.typicalTaskForms_ar || et.typicalTaskForms_ar.length === 0 ||
@@ -402,7 +448,7 @@ console.log("\n[GATE 15] BAC Exam Transfer Layer");
       console.error(`Exam transfer incomplete for ${id}`);
     }
   }
-  assert(examTransferValid, "All 12 skills include official BAC task forms, pitfall warnings, rubric breakdowns and ONEC citations");
+  assert(examTransferValid, "All 21 skills include official BAC task forms, pitfall warnings, rubric breakdowns and ONEC citations");
 }
 
 // =============================================================================
@@ -412,7 +458,7 @@ console.log("\n[GATE 16] Spaced Review Schedule");
 {
   let spacedReviewValid = true;
   for (const id of ALL_MATH_SKILL_IDS) {
-    const sr = factory.MATH_BATCH_01_SPACED_REVIEWS[id];
+    const sr = ALL_SPACED_REVIEWS[id];
     if (
       !sr ||
       !sr.day1InitialEvidence_ar ||
@@ -424,7 +470,7 @@ console.log("\n[GATE 16] Spaced Review Schedule");
       console.error(`Spaced review schedule invalid for ${id}`);
     }
   }
-  assert(spacedReviewValid, "All 12 skills have configured spaced review schedules with Day 1, 3, 7, and Exam Application prompts");
+  assert(spacedReviewValid, "All 21 skills have configured spaced review schedules with Day 1, 3, 7, and Exam Application prompts");
 }
 
 // =============================================================================
@@ -434,7 +480,7 @@ console.log("\n[GATE 17] Claim & Regulatory Audit");
 {
   let allClaimsClean = true;
   for (const id of ALL_MATH_SKILL_IDS) {
-    const pkg = factory.MATH_BATCH_01_PACKAGES[id];
+    const pkg = ALL_PACKAGES[id];
     const rLesson = contentQuality.auditClaimString(pkg.lesson.contentMarkdown_ar);
     const rTakeaway = contentQuality.auditClaimString(pkg.lesson.keyTakeaway_ar);
     const rObjective = contentQuality.auditClaimString(pkg.objective_ar);
@@ -452,10 +498,10 @@ console.log("\n[GATE 17] Claim & Regulatory Audit");
   // Verify Decree 07-142 classification & multi-stream matrix
   const matrixItems = curriculumMatrix.FULL_COVERAGE_MATRIX;
   const mathItems = matrixItems.filter(i => i.streamId === "math");
-  assert(mathItems.length === 12, `Curriculum matrix contains all 12 math skills (found ${mathItems.length})`);
+  assert(mathItems.length === 21, `Curriculum matrix contains all 21 math skills (found ${mathItems.length})`);
   
   const publishedCount = mathItems.filter(i => i.status === "PUBLISHED").length;
-  assert(publishedCount === 12, "All 12 math skills are marked PUBLISHED in curriculum matrix");
+  assert(publishedCount === 21, "All 21 math skills are marked PUBLISHED in curriculum matrix");
 }
 
 // =============================================================================
@@ -471,7 +517,7 @@ console.log("\n[GATE 18] Integrated Skill Dossier Verification");
       console.error(`Dossier resolution failed for ${id}`);
     }
   }
-  assert(dossiersValid, "All 12 skills resolve complete dossiers with 13-element pedagogical packages");
+  assert(dossiersValid, "All 21 skills resolve complete dossiers with 13-element pedagogical packages");
 }
 
 // =============================================================================
@@ -484,6 +530,6 @@ console.log("==================================================================\
 if (failCount > 0) {
   process.exit(1);
 } else {
-  console.log("  >>> ALL 18 MATHEMATICS FACTORY GATES VERIFIED CLEANLY <<<\n");
+  console.log("  >>> ALL 18 MATHEMATICS FACTORY GATES VERIFIED CLEANLY (21 SKILLS) <<<\n");
   process.exit(0);
 }
