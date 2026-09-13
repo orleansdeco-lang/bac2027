@@ -7,7 +7,6 @@ import { useTranslation } from "@/lib/i18n/context";
 import { Container } from "./Container";
 import { Logo } from "./Logo";
 import { LanguageSwitcher } from "./LanguageSwitcher";
-import { ThemeSelector } from "./ThemeSelector";
 import { Badge } from "./Badge";
 import { getStrategicProfile, getRegistrationDraft } from "@/lib/onboarding/profile";
 import { StrategicProfile } from "@/types/onboarding";
@@ -114,7 +113,7 @@ export function TopBar() {
             <Badge
               variant="outline"
               size="sm"
-              className="hidden sm:inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold border-cyan-500/40 bg-cyan-500/10 text-cyan-400"
+              className="hidden sm:inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold border-[var(--color-border-subtle)] bg-[var(--color-primary-soft)] text-[var(--color-primary)] rounded-full px-2.5"
             >
               <span>{streamLabel}</span>
             </Badge>
@@ -128,7 +127,7 @@ export function TopBar() {
                   ? `فترة تجريبية 72 ساعة (متبقي ${trialRemainingHours} ساعة)`
                   : `Essai 72h actif (${trialRemainingHours}h restantes)`
               }
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] sm:text-xs font-mono font-bold whitespace-nowrap"
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[var(--color-success-soft)] border border-[var(--color-success)]/30 text-[var(--color-success)] text-[10px] sm:text-xs font-mono font-bold whitespace-nowrap"
             >
               <Clock className="w-3 h-3 shrink-0 animate-pulse" />
               <span className="hidden md:inline">{isAr ? "تجربة 72 سا:" : "Essai 72h:"}</span>
@@ -139,7 +138,7 @@ export function TopBar() {
           {isTrialExpired && (
             <div
               title={isAr ? "انتهت الفترة التجريبية (72 ساعة)" : "Période d'essai 72h expirée"}
-              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] sm:text-xs font-mono font-bold whitespace-nowrap"
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[var(--color-warning-soft)] border border-[var(--color-warning)]/30 text-[var(--color-warning)] text-[10px] sm:text-xs font-mono font-bold whitespace-nowrap"
             >
               <AlertTriangle className="w-3 h-3 shrink-0" />
               <span>{isAr ? "انتهت التجربة" : "Essai expiré"}</span>
@@ -210,12 +209,11 @@ export function TopBar() {
             className="hidden sm:inline-flex relative p-2 rounded-full border border-theme bg-card hover:bg-card-hover text-theme-secondary hover:text-theme-text transition-all shadow-sm"
           >
             <Bell className="w-3.5 h-3.5" />
-            <span className="absolute -top-0.5 -end-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-rose-500 text-white text-[8px] font-bold">
+            <span className="absolute -top-0.5 -end-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[var(--color-accent)] text-white text-[8px] font-bold">
               3
             </span>
           </Link>
 
-          <ThemeSelector variant="compact" />
           <div className="hidden sm:block">
             <LanguageSwitcher />
           </div>

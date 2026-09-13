@@ -79,13 +79,8 @@ export function Sidebar({ className }: SidebarProps) {
   const isTrial = access.status === "TRIAL_ACTIVE";
   const isPaid = access.status === "PAID_ACTIVE";
 
-  // Avatar image matching the active theme personality
-  const avatarSrc =
-    theme === "boys"
-      ? "/illustrations/hero-edge.jpg"
-      : theme === "girls"
-      ? "/illustrations/hero-bloom.jpg"
-      : "/illustrations/hero-focus.jpg";
+  // Signature 3D Editorial Avatar for the unified BAC Mastery identity
+  const avatarSrc = "/illustrations/bac-hero.jpg";
 
   const navLinks = [
     {

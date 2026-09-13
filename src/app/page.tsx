@@ -114,14 +114,14 @@ export default function HomePage() {
                 {isAr ? (
                   <>
                     ماشي واش تقرا. <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary)] via-sky-500 to-[var(--color-secondary)]">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary)] via-[var(--color-accent)] to-[var(--color-secondary)]">
                       كيفاش توصل.
                     </span>
                   </>
                 ) : (
                   <>
                     Pas seulement quoi étudier. <br />
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary)] via-sky-500 to-[var(--color-secondary)]">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary)] via-[var(--color-accent)] to-[var(--color-secondary)]">
                       Comment y arriver.
                     </span>
                   </>
@@ -228,7 +228,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Pillar 1: Study */}
             <Card className="p-5 border-theme bg-card hover:border-[var(--color-primary)]/40 transition-colors space-y-3 shadow-sm rounded-3xl">
-              <div className="h-10 w-10 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
+              <div className="h-10 w-10 rounded-2xl bg-[var(--color-primary-soft)] border border-[var(--color-primary)]/20 flex items-center justify-center text-[var(--color-primary)]">
                 <Brain className="h-5 w-5" />
               </div>
               <h3 className="font-bold text-theme-text text-base">
@@ -242,8 +242,8 @@ export default function HomePage() {
             </Card>
 
             {/* Pillar 2: Progress */}
-            <Card className="p-5 border-theme bg-card hover:border-cyan-500/40 transition-colors space-y-3 shadow-sm rounded-3xl">
-              <div className="h-10 w-10 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-500">
+            <Card className="p-5 border-theme bg-card hover:border-[var(--color-accent)]/40 transition-colors space-y-3 shadow-sm rounded-3xl">
+              <div className="h-10 w-10 rounded-2xl bg-[var(--color-accent-soft)] border border-[var(--color-accent)]/20 flex items-center justify-center text-[var(--color-accent)]">
                 <Target className="h-5 w-5" />
               </div>
               <h3 className="font-bold text-theme-text text-base">
@@ -257,8 +257,8 @@ export default function HomePage() {
             </Card>
 
             {/* Pillar 3: Mind */}
-            <Card className="p-5 border-theme bg-card hover:border-amber-500/40 transition-colors space-y-3 shadow-sm rounded-3xl">
-              <div className="h-10 w-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
+            <Card className="p-5 border-theme bg-card hover:border-[var(--color-warning)]/40 transition-colors space-y-3 shadow-sm rounded-3xl">
+              <div className="h-10 w-10 rounded-2xl bg-[var(--color-warning-soft)] border border-[var(--color-warning)]/20 flex items-center justify-center text-[var(--color-warning)]">
                 <Heart className="h-5 w-5" />
               </div>
               <h3 className="font-bold text-theme-text text-base">
@@ -272,8 +272,8 @@ export default function HomePage() {
             </Card>
 
             {/* Pillar 4: Future */}
-            <Card className="p-5 border-theme bg-card hover:border-emerald-500/40 transition-colors space-y-3 shadow-sm rounded-3xl">
-              <div className="h-10 w-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500">
+            <Card className="p-5 border-theme bg-card hover:border-[var(--color-success)]/40 transition-colors space-y-3 shadow-sm rounded-3xl">
+              <div className="h-10 w-10 rounded-2xl bg-[var(--color-success-soft)] border border-[var(--color-success)]/20 flex items-center justify-center text-[var(--color-success)]">
                 <Compass className="h-5 w-5" />
               </div>
               <h3 className="font-bold text-theme-text text-base">
@@ -310,19 +310,19 @@ export default function HomePage() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-4xl mx-auto text-center">
             <div className="p-4 rounded-3xl border border-theme bg-card shadow-sm space-y-1">
-              <span className="text-xs font-bold text-blue-500 block font-mono">01 DIAGNOSTIC</span>
+              <span className="text-xs font-bold text-[var(--color-primary)] block font-mono">01 DIAGNOSTIC</span>
               <span className="font-bold text-theme-text text-sm">{isAr ? "كشف الاختناق" : "Diagnostic ciblé"}</span>
             </div>
             <div className="p-4 rounded-3xl border border-theme bg-card shadow-sm space-y-1">
-              <span className="text-xs font-bold text-cyan-500 block font-mono">02 MISSION</span>
+              <span className="text-xs font-bold text-[var(--color-accent)] block font-mono">02 MISSION</span>
               <span className="font-bold text-theme-text text-sm">{isAr ? "مهمة مركزة" : "Mission 15 min"}</span>
             </div>
             <div className="p-4 rounded-3xl border border-theme bg-card shadow-sm space-y-1">
-              <span className="text-xs font-bold text-amber-500 block font-mono">03 ERROR LAB</span>
+              <span className="text-xs font-bold text-[var(--color-warning)] block font-mono">03 ERROR LAB</span>
               <span className="font-bold text-theme-text text-sm">{isAr ? "مختبر الترميم" : "Lab d'erreurs"}</span>
             </div>
             <div className="p-4 rounded-3xl border border-theme bg-card shadow-sm space-y-1">
-              <span className="text-xs font-bold text-emerald-500 block font-mono">04 RETEST</span>
+              <span className="text-xs font-bold text-[var(--color-success)] block font-mono">04 RETEST</span>
               <span className="font-bold text-theme-text text-sm">{isAr ? "إثبات التمكن" : "Validation jumeau"}</span>
             </div>
           </div>
@@ -342,12 +342,12 @@ export default function HomePage() {
             {isAr ? (
               <>
                 الغلط ماشي فشل. <br />
-                <span className="text-amber-500">الغلط معلومة.</span>
+                <span className="text-[var(--color-accent)]">الغلط معلومة.</span>
               </>
             ) : (
               <>
                 L'erreur n'est pas un échec. <br />
-                <span className="text-amber-500">L'erreur est une information.</span>
+                <span className="text-[var(--color-accent)]">L'erreur est une information.</span>
               </>
             )}
           </h2>
@@ -360,7 +360,7 @@ export default function HomePage() {
 
           <div className="pt-2">
             <Link href="/error-lab">
-              <Button variant="outline" size="md" className="rounded-full border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10">
+              <Button variant="outline" size="md" className="rounded-full border-[var(--color-accent)]/40 text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)]">
                 <span>{isAr ? "استكشف مختبر الأخطاء" : "Découvrir le lab d'erreurs"}</span>
                 <Arrow className="h-4 w-4" />
               </Button>

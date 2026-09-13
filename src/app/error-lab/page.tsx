@@ -82,8 +82,8 @@ export default function ErrorLabPage() {
 
   if (!hasLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0B1020]">
-        <div className="animate-pulse text-sm text-blue-400 font-mono tracking-wider">
+      <div className="min-h-screen flex items-center justify-center bg-canvas">
+        <div className="animate-pulse text-sm text-[var(--color-primary)] font-mono tracking-wider">
           BAC MASTERY...
         </div>
       </div>
@@ -98,7 +98,7 @@ export default function ErrorLabPage() {
         return <Badge variant="warning" size="sm">{t.errorLab.statusBadges.repair_started}</Badge>;
       case "repair_completed":
         return (
-          <Badge variant="outline" size="sm" className="border-cyan-500/40 bg-cyan-950/40 text-cyan-300 font-bold">
+          <Badge variant="outline" size="sm" className="border-[var(--color-primary)]/40 bg-[var(--color-primary-soft)] text-[var(--color-primary)] font-bold">
             {t.errorLab.statusBadges.repair_completed}
           </Badge>
         );
@@ -131,14 +131,14 @@ export default function ErrorLabPage() {
         <Container size="md" className="space-y-6">
           {/* Header Banner */}
           <div className="space-y-2 text-center sm:text-start">
-            <div className="inline-flex items-center gap-1.5 rounded-full border border-rose-500/30 bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-300">
-              <Sparkles className="h-3.5 w-3.5 text-rose-400" />
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-accent)]/30 bg-[var(--color-accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--color-accent)]">
+              <Sparkles className="h-3.5 w-3.5 text-[var(--color-accent)]" />
               <span>{t.errorLab.badge}</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-theme-text tracking-tight">
               {t.errorLab.title}
             </h1>
-            <p className="text-xs sm:text-sm text-slate-400 max-w-xl">
+            <p className="text-xs sm:text-sm text-theme-secondary max-w-xl">
               {locale === "ar"
                 ? "الغلط ماشي فشل. الغلط معلومة. كل خطأ مرصود هنا هو فرصة مباشرة لتثبيت نقطة في البكالوريا."
                 : t.errorLab.subtitle}
@@ -147,23 +147,23 @@ export default function ErrorLabPage() {
 
           {/* Summary Stats Cards */}
           <div className="grid grid-cols-3 gap-3">
-            <Card className="p-4 border-rose-900/40 bg-[#241217] text-center space-y-1 shadow-md">
-              <span className="text-2xl sm:text-3xl font-black text-rose-400 font-mono">{openCount}</span>
-              <span className="text-[11px] sm:text-xs font-semibold text-rose-200 block">
+            <Card className="p-4 border-[var(--color-error)]/30 bg-[var(--color-error)]/10 text-center space-y-1 shadow-sm">
+              <span className="text-2xl sm:text-3xl font-black text-[var(--color-error)] font-mono">{openCount}</span>
+              <span className="text-[11px] sm:text-xs font-semibold text-[var(--color-error)] block">
                 {t.errorLab.stats.open}
               </span>
             </Card>
 
-            <Card className="p-4 border-amber-900/40 bg-[#281c11] text-center space-y-1 shadow-md">
-              <span className="text-2xl sm:text-3xl font-black text-amber-400 font-mono">{recurringCount}</span>
-              <span className="text-[11px] sm:text-xs font-semibold text-amber-200 block">
+            <Card className="p-4 border-[var(--color-accent)]/30 bg-[var(--color-accent-soft)] text-center space-y-1 shadow-sm">
+              <span className="text-2xl sm:text-3xl font-black text-[var(--color-accent)] font-mono">{recurringCount}</span>
+              <span className="text-[11px] sm:text-xs font-semibold text-[var(--color-accent)] block">
                 {t.errorLab.stats.recurring}
               </span>
             </Card>
 
-            <Card className="p-4 border-emerald-900/40 bg-[#0d271f] text-center space-y-1 shadow-md">
-              <span className="text-2xl sm:text-3xl font-black text-emerald-400 font-mono">{remediatedCount}</span>
-              <span className="text-[11px] sm:text-xs font-semibold text-emerald-200 block">
+            <Card className="p-4 border-[var(--color-success)]/30 bg-[var(--color-success-soft)] text-center space-y-1 shadow-sm">
+              <span className="text-2xl sm:text-3xl font-black text-[var(--color-success)] font-mono">{remediatedCount}</span>
+              <span className="text-[11px] sm:text-xs font-semibold text-[var(--color-success)] block">
                 {t.errorLab.stats.remediated}
               </span>
             </Card>
@@ -171,15 +171,15 @@ export default function ErrorLabPage() {
 
           {/* Recurring Error Alert Banner */}
           {recurringCount > 0 && (
-            <div className="p-4 rounded-2xl bg-[#281c11] border border-amber-500/40 shadow-lg flex items-start gap-3.5">
-              <div className="h-10 w-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-md shadow-amber-500/20">
+            <div className="p-4 rounded-2xl bg-[var(--color-accent-soft)] border border-[var(--color-accent)]/40 shadow-sm flex items-start gap-3.5">
+              <div className="h-10 w-10 rounded-xl bg-[var(--color-accent)] text-white flex items-center justify-center shrink-0 shadow-sm">
                 <Flame className="h-5 w-5 fill-current" />
               </div>
               <div className="space-y-1 text-xs">
-                <strong className="text-sm font-bold text-white block">
+                <strong className="text-sm font-bold text-theme-text block">
                   {t.errorLab.recurringBannerTitle}
                 </strong>
-                <p className="text-amber-200/90 leading-relaxed">
+                <p className="text-theme-secondary leading-relaxed">
                   {t.errorLab.recurringBannerDesc}
                 </p>
               </div>
@@ -188,15 +188,15 @@ export default function ErrorLabPage() {
 
           {/* Errors List */}
           {errors.length === 0 ? (
-            <Card className="p-10 sm:p-12 text-center space-y-4 border-slate-800 bg-[#111827] shadow-xl">
-              <div className="h-14 w-14 rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center mx-auto">
+            <Card className="p-10 sm:p-12 text-center space-y-4 border-theme bg-card shadow-card">
+              <div className="h-14 w-14 rounded-2xl bg-[var(--color-success-soft)] text-[var(--color-success)] border border-[var(--color-success)]/20 flex items-center justify-center mx-auto">
                 <CheckCircle2 className="h-7 w-7" />
               </div>
               <div className="space-y-1.5 max-w-sm mx-auto">
-                <h3 className="text-base sm:text-lg font-bold text-white">
+                <h3 className="text-base sm:text-lg font-bold text-theme-text">
                   {t.errorLab.emptyErrorsNotice}
                 </h3>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-theme-muted leading-relaxed">
                   {locale === "ar"
                     ? "عندما تحل تمارين المهام اليومية، سيتم رصد وتصنيف أي خطأ ترتكبه هنا لتحويله إلى تمكن دائم."
                     : "Lors de vos entraînements, toute erreur sera enregistrée et analysée ici pour la réparer avec méthode."}
@@ -213,7 +213,7 @@ export default function ErrorLabPage() {
             </Card>
           ) : (
             <div className="space-y-4">
-              <div className="flex items-center justify-between text-xs font-semibold text-slate-400 px-1">
+              <div className="flex items-center justify-between text-xs font-semibold text-theme-muted px-1">
                 <span>{t.errorLab.historyTitle} ({errors.length})</span>
                 <span>{t.roadmap.repairStatusLabel}</span>
               </div>
@@ -227,29 +227,29 @@ export default function ErrorLabPage() {
                   return (
                     <Card
                       key={err.id}
-                      className={`p-4 sm:p-5 transition-all space-y-3.5 ${
+                      className={`p-4 sm:p-5 transition-all space-y-3.5 border-theme bg-card shadow-sm ${
                         err.isRecurring
-                          ? "border-amber-500/40 bg-[#281c11]/40 shadow-lg shadow-amber-950/20"
-                          : "border-slate-800 bg-[#111827] hover:border-slate-700"
+                          ? "border-[var(--color-accent)]/50 ring-1 ring-[var(--color-accent)]/30"
+                          : "hover:border-[var(--color-primary)]/40"
                       }`}
                     >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-theme pb-3">
                         <div className="flex items-center gap-2 flex-wrap">
                           <Badge variant="primary" size="sm">
                             {getSubjectName(skill)}
                           </Badge>
-                          <span className="text-xs font-bold text-white">
+                          <span className="text-xs font-bold text-theme-text">
                             {skill ? (locale === "ar" ? skill.title_ar : skill.title_fr) : err.skillId}
                           </span>
                           {err.isRecurring && (
-                            <Badge variant="warning" size="sm" className="bg-amber-500/20 text-amber-300 border-amber-500/30 font-bold">
+                            <Badge variant="warning" size="sm" className="font-bold">
                               🔥 {locale === "ar" ? "متكرر" : "Récurrent"}
                             </Badge>
                           )}
                         </div>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(err.repairStatus)}
-                          <span className="text-[11px] text-slate-500 font-mono">
+                          <span className="text-[11px] text-theme-muted font-mono">
                             {new Date(err.createdAt).toLocaleDateString(
                               locale === "ar" ? "ar-DZ" : "fr-FR"
                             )}
@@ -258,20 +258,20 @@ export default function ErrorLabPage() {
                       </div>
 
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                        <div className="p-3 rounded-xl bg-[#162032] border border-slate-800 space-y-1">
-                          <span className="text-[11px] font-bold text-slate-400 block">
+                        <div className="p-3 rounded-xl bg-surface-soft border border-theme space-y-1">
+                          <span className="text-[11px] font-bold text-theme-muted block">
                             {locale === "ar" ? "نوع الخلل المرصود:" : "Cause diagnostiquée :"}
                           </span>
-                          <span className="font-semibold text-white">
+                          <span className="font-semibold text-theme-text">
                             {errorLabel}
                           </span>
                         </div>
 
-                        <div className="p-3 rounded-xl bg-[#162032] border border-slate-800 space-y-1">
-                          <span className="text-[11px] font-bold text-slate-400 block">
+                        <div className="p-3 rounded-xl bg-surface-soft border border-theme space-y-1">
+                          <span className="text-[11px] font-bold text-theme-muted block">
                             {locale === "ar" ? "حالة المعالجة والتحقق:" : "État de remédiation :"}
                           </span>
-                          <span className="font-semibold text-white">
+                          <span className="font-semibold text-theme-text">
                             {err.repairStatus === "retest_passed"
                               ? (locale === "ar"
                                   ? "تم التمكن واجتياز إعادة الاختبار بنجاح ✓"

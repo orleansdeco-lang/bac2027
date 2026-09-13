@@ -134,15 +134,15 @@ export default function ProgressPage() {
 
         {/* 4 Core Evidence KPI Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="border-emerald-500/30 bg-card p-5 space-y-2">
+          <Card className="border-[var(--color-success)]/30 bg-card p-5 space-y-2 shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+              <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-success)]">
                 {isAr ? "مهارات مثبتة" : "Validées"}
               </span>
-              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+              <CheckCircle2 className="h-4 w-4 text-[var(--color-success)]" />
             </div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-black text-emerald-400 font-mono">
+              <span className="text-3xl font-black text-[var(--color-success)] font-mono">
                 {demonstratedCount}
               </span>
               <span className="text-xs text-theme-muted font-mono">/{totalStreamSkills}</span>
@@ -152,7 +152,7 @@ export default function ProgressPage() {
             </span>
           </Card>
 
-          <Card className="border-[var(--color-primary)]/35 bg-card p-5 space-y-2">
+          <Card className="border-[var(--color-primary)]/35 bg-card p-5 space-y-2 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-primary)]">
                 {isAr ? "قيد التثبيت" : "En consolidation"}
@@ -170,15 +170,15 @@ export default function ProgressPage() {
             </span>
           </Card>
 
-          <Card className="border-amber-500/30 bg-card p-5 space-y-2">
+          <Card className="border-[var(--color-accent)]/30 bg-card p-5 space-y-2 shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
+              <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-accent)]">
                 {isAr ? "أخطاء تم إصلاحها" : "Erreurs Réparées"}
               </span>
-              <Wrench className="h-4 w-4 text-amber-400" />
+              <Wrench className="h-4 w-4 text-[var(--color-accent)]" />
             </div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-black text-amber-400 font-mono">
+              <span className="text-3xl font-black text-[var(--color-accent)] font-mono">
                 {repairedCount}
               </span>
             </div>
@@ -187,15 +187,15 @@ export default function ProgressPage() {
             </span>
           </Card>
 
-          <Card className="border-[var(--color-accent)]/35 bg-card p-5 space-y-2">
+          <Card className="border-[var(--color-primary)]/35 bg-card p-5 space-y-2 shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-accent)]">
+              <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-primary)]">
                 {isAr ? "مهمات مكتملة" : "Missions Terminées"}
               </span>
-              <Target className="h-4 w-4 text-[var(--color-accent)]" />
+              <Target className="h-4 w-4 text-[var(--color-primary)]" />
             </div>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-black text-[var(--color-accent)] font-mono">
+              <span className="text-3xl font-black text-[var(--color-primary)] font-mono">
                 {completedMissions}
               </span>
             </div>

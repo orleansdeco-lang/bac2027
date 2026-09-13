@@ -215,10 +215,10 @@ export default function MissionPage() {
       <AppShell>
         <div className="min-h-[70vh] flex flex-col items-center justify-center">
           <div className="animate-pulse flex flex-col items-center gap-3">
-            <div className="h-10 w-10 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+            <div className="h-10 w-10 rounded-2xl bg-[var(--color-primary-soft)] border border-[var(--color-primary)]/30 flex items-center justify-center text-[var(--color-primary)]">
               <Compass className="h-5 w-5 animate-spin" />
             </div>
-            <p className="text-sm font-mono text-slate-400">
+            <p className="text-sm font-mono text-theme-muted">
               {isAr ? "جاري تحميل المهمة..." : "Chargement de la mission..."}
             </p>
           </div>
@@ -233,15 +233,15 @@ export default function MissionPage() {
     return (
       <AppShell>
         <Container size="sm" className="py-12 sm:py-16 text-center space-y-6">
-          <div data-testid="mission-trial-expired-gate" className="p-6 sm:p-8 rounded-2xl bg-[#111827] border border-amber-500/40 space-y-5 shadow-2xl animate-fade-in">
-            <div className="h-12 w-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mx-auto">
+          <div data-testid="mission-trial-expired-gate" className="p-6 sm:p-8 rounded-3xl bg-card border border-theme space-y-5 shadow-clay animate-fade-in">
+            <div className="h-12 w-12 rounded-2xl bg-[var(--color-accent-soft)] border border-[var(--color-accent)]/30 flex items-center justify-center text-[var(--color-accent)] mx-auto">
               <Lock className="h-6 w-6" />
             </div>
             <div className="space-y-2">
-              <h1 className="text-xl sm:text-2xl font-bold text-white">
+              <h1 className="text-xl sm:text-2xl font-bold text-theme-text">
                 {isAr ? "انتهت فترة التجربة المجانية (48 ساعة)" : "Votre essai gratuit de 48h a expiré"}
               </h1>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-md mx-auto">
+              <p className="text-xs sm:text-sm text-theme-secondary leading-relaxed max-w-md mx-auto">
                 {isAr
                   ? "جميع مهامك وتقدمك الدراسي محفوظان بدقة. لتتمكن من حل التمارين وإجراء الاختبارات، يرجى تفعيل اشتراكك."
                   : "Votre historique et progression restent intacts. Activez votre pass pour débloquer les exercices et retests."}
@@ -249,12 +249,12 @@ export default function MissionPage() {
             </div>
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link href="/subscribe" className="w-full sm:w-auto">
-                <Button data-testid="expired-gate-subscribe-btn" size="lg" variant="primary" fullWidth className="font-bold text-sm">
+                <Button data-testid="expired-gate-subscribe-btn" size="lg" variant="primary" fullWidth className="font-bold text-sm shadow-clay">
                   <span>{isAr ? "كمّل BAC Mastery" : "Continuer avec BAC Mastery"}</span>
                 </Button>
               </Link>
               <Link href="/dashboard" className="w-full sm:w-auto">
-                <Button size="lg" variant="outline" fullWidth className="text-xs text-slate-300">
+                <Button size="lg" variant="outline" fullWidth className="text-xs">
                   <span>{isAr ? "العودة للوحة التحكم" : "Tableau de bord"}</span>
                 </Button>
               </Link>
@@ -269,11 +269,11 @@ export default function MissionPage() {
     return (
       <AppShell>
         <Container size="sm" className="py-20 text-center space-y-4">
-          <AlertTriangle className="h-10 w-10 text-amber-400 mx-auto" />
-          <h1 className="text-xl font-bold text-white">
+          <AlertTriangle className="h-10 w-10 text-[var(--color-accent)] mx-auto" />
+          <h1 className="text-xl font-bold text-theme-text">
             {isAr ? "المهمة غير موجودة" : "Mission introuvable"}
           </h1>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-theme-muted">
             {isAr
               ? "لم نتمكن من العثور على محتوى هذه المهمة. يمكنك العودة إلى لوحة التحكم."
               : "Impossible de charger le contenu de cette mission."}
@@ -500,11 +500,11 @@ export default function MissionPage() {
         {/* ================================================================= */}
         {/* TOP MISSION HEADER & STEPS BREADCRUMB                             */}
         {/* ================================================================= */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-800/80 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-theme pb-4">
           <div className="flex items-center gap-3">
             <Link href="/dashboard">
-              <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-xl border-slate-800">
-                <BackArrow className="h-4 w-4 text-slate-400" />
+              <Button variant="outline" size="sm" className="h-9 w-9 p-0 rounded-xl">
+                <BackArrow className="h-4 w-4 text-theme-muted" />
               </Button>
             </Link>
             <div>
@@ -516,11 +516,11 @@ export default function MissionPage() {
                     ? isAr ? "فيزياء" : "Physique"
                     : isAr ? "علوم طبيعية" : "SVT"}
                 </Badge>
-                <span className="text-xs text-slate-400 font-mono">
+                <span className="text-xs text-theme-muted font-mono">
                   {bundle.skill.id}
                 </span>
               </div>
-              <h1 className="text-base sm:text-lg font-bold text-white mt-1">
+              <h1 className="text-base sm:text-lg font-bold text-theme-text mt-1">
                 {isAr ? bundle.skill.title_ar : bundle.skill.title_fr}
               </h1>
             </div>
@@ -532,8 +532,8 @@ export default function MissionPage() {
               onClick={() => setCurrentStep("learn")}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-colors shrink-0 ${
                 currentStep === "learn"
-                  ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-[var(--color-primary)] text-white shadow-sm"
+                  : "text-theme-muted hover:text-theme-text hover:bg-card-hover"
               }`}
             >
               {isAr ? "1. الدرس" : "1. Leçon"}
@@ -542,8 +542,8 @@ export default function MissionPage() {
               onClick={() => setCurrentStep("worked_example")}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-colors shrink-0 ${
                 currentStep === "worked_example"
-                  ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-[var(--color-primary)] text-white shadow-sm"
+                  : "text-theme-muted hover:text-theme-text hover:bg-card-hover"
               }`}
             >
               {isAr ? "2. مثال محلول" : "2. Exemple"}
@@ -552,8 +552,8 @@ export default function MissionPage() {
               onClick={() => setCurrentStep("practice")}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-colors shrink-0 ${
                 currentStep === "practice" || currentStep === "practice_feedback"
-                  ? "bg-blue-600/20 text-blue-400 border border-blue-500/30"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-[var(--color-primary)] text-white shadow-sm"
+                  : "text-theme-muted hover:text-theme-text hover:bg-card-hover"
               }`}
             >
               {isAr ? "3. التطبيق" : "3. Pratique"}
@@ -564,8 +564,8 @@ export default function MissionPage() {
                   onClick={() => setCurrentStep("repair")}
                   className={`px-3 py-1.5 rounded-lg font-semibold transition-colors shrink-0 ${
                     currentStep === "repair" || currentStep === "error_diagnosis"
-                      ? "bg-amber-600/20 text-amber-400 border border-amber-500/30"
-                      : "text-slate-400 hover:text-slate-200"
+                      ? "bg-[var(--color-accent)] text-white shadow-sm"
+                      : "text-theme-muted hover:text-theme-text hover:bg-card-hover"
                   }`}
                 >
                   {isAr ? "4. الإصلاح" : "4. Réparation"}
@@ -574,8 +574,8 @@ export default function MissionPage() {
                   onClick={() => setCurrentStep("retest")}
                   className={`px-3 py-1.5 rounded-lg font-semibold transition-colors shrink-0 ${
                     currentStep === "retest"
-                      ? "bg-cyan-600/20 text-cyan-400 border border-cyan-500/30"
-                      : "text-slate-400 hover:text-slate-200"
+                      ? "bg-[var(--color-primary)] text-white shadow-sm"
+                      : "text-theme-muted hover:text-theme-text hover:bg-card-hover"
                   }`}
                 >
                   {isAr ? "5. إعادة الاختبار" : "5. Retest"}
@@ -586,8 +586,8 @@ export default function MissionPage() {
               onClick={() => setCurrentStep("summary")}
               className={`px-3 py-1.5 rounded-lg font-semibold transition-colors shrink-0 ${
                 currentStep === "summary"
-                  ? "bg-emerald-600/20 text-emerald-400 border border-emerald-500/30"
-                  : "text-slate-400 hover:text-slate-200"
+                  ? "bg-[var(--color-success)] text-white shadow-sm"
+                  : "text-theme-muted hover:text-theme-text hover:bg-card-hover"
               }`}
             >
               {isAr ? "الخلاصة" : "Bilan"}
@@ -601,44 +601,44 @@ export default function MissionPage() {
         {currentStep === "learn" && lesson && (
           <div dir={educationalDir} className="space-y-6 animate-fade-in">
             {/* Target Capability (بعد ما نكمل الدرس) */}
-            <Card className="border-blue-500/30 bg-blue-950/20 p-5 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-blue-400 uppercase tracking-wider">
+            <Card className="border-[var(--color-primary)]/30 bg-[var(--color-primary-soft)] p-5 space-y-2 shadow-sm">
+              <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-primary)] uppercase tracking-wider">
                 <Target className="h-4 w-4" />
                 <span>{isAr ? "الهدف العملي من هذا الدرس" : "Capacité ciblée"}</span>
               </div>
-              <p className="text-sm font-semibold text-white leading-relaxed">
+              <p className="text-sm font-semibold text-theme-text leading-relaxed">
                 {lesson.targetCapability_ar}
               </p>
             </Card>
 
             {/* Core Idea & Simple Explanation */}
-            <Card className="border-slate-800 bg-[#0e1628]/80 p-6 space-y-5">
+            <Card className="border-theme bg-card shadow-card p-6 space-y-5">
               <div className="space-y-2">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--color-primary)] flex items-center gap-1.5">
                   <Sparkles className="h-4 w-4" />
                   <span>{isAr ? "1. الفكرة الأساسية" : "Concept Fondamental"}</span>
                 </h3>
-                <p className="text-sm sm:text-base font-bold text-slate-100 leading-relaxed bg-slate-900/60 p-3.5 rounded-xl border border-slate-800">
+                <p className="text-sm sm:text-base font-bold text-theme-text leading-relaxed bg-surface-soft p-3.5 rounded-xl border border-theme">
                   {lesson.coreConcept_ar}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--color-primary)] flex items-center gap-1.5">
                   <BookOpen className="h-4 w-4" />
                   <span>{isAr ? "2. الشرح المبسط والمباشر" : "Explication Simple"}</span>
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed whitespace-pre-line">
+                <p className="text-xs sm:text-sm text-theme-secondary leading-relaxed whitespace-pre-line">
                   {lesson.simpleExplanation_ar}
                 </p>
               </div>
 
               {/* Why this matters for BAC */}
-              <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4 space-y-1.5">
-                <span className="text-xs font-bold text-amber-400 block">
+              <div className="rounded-xl border border-[var(--color-accent)]/30 bg-[var(--color-accent-soft)] p-4 space-y-1.5">
+                <span className="text-xs font-bold text-[var(--color-accent)] block">
                   {isAr ? "💡 علاش هذا مهم في البكالوريا؟" : "Importance pour le BAC"}
                 </span>
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <p className="text-xs text-theme-secondary leading-relaxed">
                   {lesson.whyThisMatters_ar}
                 </p>
               </div>
@@ -646,22 +646,22 @@ export default function MissionPage() {
               {/* Common Mistakes Warning */}
               {lesson.commonMistakes && lesson.commonMistakes.length > 0 && (
                 <div className="space-y-3 pt-2">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-rose-400 flex items-center gap-1.5">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--color-error)] flex items-center gap-1.5">
                     <AlertTriangle className="h-4 w-4" />
                     <span>{isAr ? "3. أخطاء شائعة يقع فيها الطلبة" : "Pièges Fréquents"}</span>
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {lesson.commonMistakes.map((m, idx) => (
-                      <div key={idx} className="p-3.5 rounded-xl bg-rose-950/20 border border-rose-900/40 space-y-1.5">
-                        <span className="text-xs font-bold text-rose-300 block">
+                      <div key={idx} className="p-3.5 rounded-xl bg-surface-soft border border-theme space-y-1.5">
+                        <span className="text-xs font-bold text-[var(--color-error)] block">
                           ⚠️ {m.mistake_ar}
                         </span>
-                        <p className="text-[11px] text-slate-300 leading-relaxed">
-                          <strong className="text-slate-200">{isAr ? "السبب: " : "Cause : "}</strong>
+                        <p className="text-[11px] text-theme-secondary leading-relaxed">
+                          <strong className="text-theme-text">{isAr ? "السبب: " : "Cause : "}</strong>
                           {m.whyItHappens_ar}
                         </p>
-                        <p className="text-[11px] text-emerald-300 leading-relaxed">
-                          <strong className="text-emerald-400">{isAr ? "التصحيح: " : "Action : "}</strong>
+                        <p className="text-[11px] text-[var(--color-success)] leading-relaxed">
+                          <strong className="text-[var(--color-success)]">{isAr ? "التصحيح: " : "Action : "}</strong>
                           {m.correctAction_ar}
                         </p>
                       </div>
@@ -671,29 +671,29 @@ export default function MissionPage() {
               )}
 
               {/* Quick Recall Test (Active Recall UX - DEF-002 Resolved) */}
-              <div className="rounded-xl border border-cyan-800/40 bg-gradient-to-b from-slate-900/90 to-slate-900/60 p-4 sm:p-5 space-y-3.5">
+              <div className="rounded-xl border border-[var(--color-primary)]/30 bg-surface-soft p-4 sm:p-5 space-y-3.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-cyan-300 flex items-center gap-1.5">
-                    <Brain className="h-4 w-4 text-cyan-400" />
+                  <span className="text-xs font-bold text-[var(--color-primary)] flex items-center gap-1.5">
+                    <Brain className="h-4 w-4 text-[var(--color-primary)]" />
                     <span>{isAr ? "اختبار الاسترجاع النشط (Active Recall)" : "Test de rappel actif"}</span>
                   </span>
-                  <Badge variant="outline" size="sm" className="border-cyan-500/30 text-cyan-300 text-[10px]">
+                  <Badge variant="outline" size="sm" className="border-[var(--color-primary)]/30 text-[var(--color-primary)] text-[10px]">
                     {isAr ? "فكر في رأسك أولاً" : "Réfléchissez d'abord"}
                   </Badge>
                 </div>
 
-                <div className="p-3.5 rounded-lg bg-slate-950/70 border border-slate-800">
-                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                <div className="p-3.5 rounded-lg bg-card border border-theme">
+                  <span className="text-[11px] font-bold text-theme-muted uppercase tracking-wider block mb-1">
                     {isAr ? "السؤال لاختبار فهمك:" : "Question d'auto-évaluation :"}
                   </span>
-                  <p className="text-xs sm:text-sm font-semibold text-white leading-relaxed">
+                  <p className="text-xs sm:text-sm font-semibold text-theme-text leading-relaxed">
                     {lesson.quickRecallPrompt_ar}
                   </p>
                 </div>
 
                 {!showQuickRecallAnswer ? (
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded-lg bg-cyan-950/20 border border-cyan-800/30">
-                    <span className="text-xs text-cyan-200/90">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded-lg bg-[var(--color-primary-soft)] border border-[var(--color-primary)]/30">
+                    <span className="text-xs text-theme-secondary">
                       {isAr ? "فكر وحدك وحاول استحضار الجواب في ذهنك قبل ما تكشف الإجابة." : "Formulez votre réponse mentale avant de vérifier."}
                     </span>
                     <Button
@@ -707,7 +707,7 @@ export default function MissionPage() {
                           skillId: bundle?.skill?.id,
                         });
                       }}
-                      className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/20 text-xs shrink-0 h-8"
+                      className="border-[var(--color-primary)]/40 text-[var(--color-primary)] hover:bg-[var(--color-primary-soft)] text-xs shrink-0 h-8"
                     >
                       <Eye className="h-3.5 w-3.5" />
                       <span>{isAr ? "أظهِر الإجابة" : "Afficher la réponse"}</span>
@@ -715,15 +715,15 @@ export default function MissionPage() {
                   </div>
                 ) : (
                   <div className="space-y-3 pt-1 animate-fade-in">
-                    <div className="p-3.5 rounded-lg bg-cyan-950/40 border border-cyan-700/50 text-xs sm:text-sm text-cyan-100 leading-relaxed">
-                      <div className="flex items-center justify-between mb-1.5 border-b border-cyan-800/40 pb-1">
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400">
+                    <div className="p-3.5 rounded-lg bg-[var(--color-primary-soft)] border border-[var(--color-primary)]/30 text-xs sm:text-sm text-theme-text leading-relaxed">
+                      <div className="flex items-center justify-between mb-1.5 border-b border-[var(--color-primary)]/20 pb-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--color-primary)]">
                           {isAr ? "الإجابة النموذجية المركزة:" : "Réponse attendue :"}
                         </span>
                         <button
                           type="button"
                           onClick={() => setShowQuickRecallAnswer(false)}
-                          className="text-[11px] text-cyan-400/80 hover:text-cyan-300 underline"
+                          className="text-[11px] text-[var(--color-primary)] hover:underline"
                         >
                           {isAr ? "إخفاء" : "Masquer"}
                         </button>
@@ -732,8 +732,8 @@ export default function MissionPage() {
                     </div>
 
                     {/* Metacognitive Reflection */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-lg bg-slate-950/50 border border-slate-800 text-xs">
-                      <span className="text-slate-300 text-xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 rounded-lg bg-card border border-theme text-xs">
+                      <span className="text-theme-secondary text-xs">
                         {isAr ? "واش قدرت تجاوب قبل ما تكشفها؟" : "Avez-vous réussi à répondre mentalement ?"}
                       </span>
                       <div className="flex items-center gap-1.5 shrink-0">
@@ -742,8 +742,8 @@ export default function MissionPage() {
                           onClick={() => setQuickRecallReflection("remembered")}
                           className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors ${
                             quickRecallReflection === "remembered"
-                              ? "bg-emerald-600 text-white"
-                              : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                              ? "bg-[var(--color-success)] text-white"
+                              : "bg-surface-soft text-theme-muted hover:bg-card-muted"
                           }`}
                         >
                           {isAr ? "نعم، تذكرتها بدقة ✓" : "Oui, parfaitement"}
@@ -753,8 +753,8 @@ export default function MissionPage() {
                           onClick={() => setQuickRecallReflection("needs_review")}
                           className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors ${
                             quickRecallReflection === "needs_review"
-                              ? "bg-amber-600 text-white"
-                              : "bg-slate-800 text-slate-300 hover:bg-slate-700"
+                              ? "bg-[var(--color-accent)] text-white"
+                              : "bg-surface-soft text-theme-muted hover:bg-card-muted"
                           }`}
                         >
                           {isAr ? "نحتاج نثبتها أكثر" : "À consolider"}
@@ -772,7 +772,7 @@ export default function MissionPage() {
                 variant="primary"
                 size="lg"
                 onClick={() => setCurrentStep("worked_example")}
-                className="font-bold shadow-lg shadow-blue-600/25"
+                className="font-bold shadow-clay"
               >
                 <span>{isAr ? "فهمت الفكرة، نروح للمثال المحلول" : "Passer à l'exemple résolu"}</span>
                 <NextArrow className="h-4 w-4" />
@@ -786,39 +786,39 @@ export default function MissionPage() {
         {/* ================================================================= */}
         {currentStep === "worked_example" && workedExample && (
           <div dir={educationalDir} className="space-y-6 animate-fade-in">
-            <Card className="border-slate-800 bg-[#0e1628]/80 p-6 sm:p-7 space-y-6">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+            <Card className="border-theme bg-card shadow-card p-6 sm:p-7 space-y-6">
+              <div className="flex items-center justify-between border-b border-theme pb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-primary)] flex items-center gap-1.5">
                   <FileText className="h-4 w-4" />
                   <span>{isAr ? "مثال نموذجي محلول خطوة بخطوة" : "Exemple Résolu"}</span>
                 </span>
-                <Badge variant="outline" size="sm" className="text-slate-400 border-slate-700">
+                <Badge variant="outline" size="sm">
                   {isAr ? "تفكير منهجي" : "Méthodologie"}
                 </Badge>
               </div>
 
               {/* Problem Statement */}
               <div className="space-y-2">
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <h3 className="text-xs font-bold text-theme-muted uppercase tracking-wider">
                   {isAr ? "نص المسألة / التمرين" : "Énoncé"}
                 </h3>
-                <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 text-sm sm:text-base font-semibold text-white leading-relaxed">
+                <div className="p-4 rounded-xl bg-surface-soft border border-theme text-sm sm:text-base font-semibold text-theme-text leading-relaxed">
                   {workedExample.problem_ar}
                 </div>
               </div>
 
               {/* Think Before Looking Callout */}
-              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 space-y-2">
+              <div className="p-4 rounded-xl bg-[var(--color-accent-soft)] border border-[var(--color-accent)]/30 space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
-                    <Brain className="h-4 w-4 text-amber-400" />
+                  <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-accent)]">
+                    <Brain className="h-4 w-4 text-[var(--color-accent)]" />
                     <span>{isAr ? "خمّم وحدك قبل ما تشوف الحل" : "Réfléchissez avant de regarder"}</span>
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setShowWorkedSolution(!showWorkedSolution)}
-                    className="border-amber-500/40 text-amber-300 hover:bg-amber-500/20 text-xs h-8"
+                    className="border-[var(--color-accent)]/40 text-[var(--color-accent)] hover:bg-[var(--color-accent-soft)] text-xs h-8"
                   >
                     {showWorkedSolution ? (
                       <>
@@ -833,26 +833,26 @@ export default function MissionPage() {
                     )}
                   </Button>
                 </div>
-                <p className="text-xs text-amber-200/80 leading-relaxed">
+                <p className="text-xs text-theme-secondary leading-relaxed">
                   {workedExample.howToThink_ar}
                 </p>
               </div>
 
               {/* Step by Step Solution (Revealed on click) */}
               {showWorkedSolution && (
-                <div className="space-y-4 pt-2 border-t border-slate-800 animate-fade-in">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                <div className="space-y-4 pt-2 border-t border-theme animate-fade-in">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-[var(--color-success)] flex items-center gap-1.5">
                     <CheckCircle2 className="h-4 w-4" />
                     <span>{isAr ? "خطوات الحل المنهجي بالتفصيل" : "Étapes de résolution"}</span>
                   </h3>
 
                   <div className="space-y-3">
                     {workedExample.stepByStepSolution_ar.map((step, idx) => (
-                      <div key={idx} className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-start gap-3">
-                        <span className="h-6 w-6 rounded-lg bg-blue-600/20 border border-blue-500/30 text-blue-300 flex items-center justify-center text-xs font-mono font-bold shrink-0 mt-0.5">
+                      <div key={idx} className="p-3.5 rounded-xl bg-surface-soft border border-theme flex items-start gap-3">
+                        <span className="h-6 w-6 rounded-lg bg-[var(--color-primary-soft)] border border-[var(--color-primary)]/20 text-[var(--color-primary)] flex items-center justify-center text-xs font-mono font-bold shrink-0 mt-0.5">
                           {idx + 1}
                         </span>
-                        <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                        <p className="text-xs sm:text-sm text-theme-text leading-relaxed">
                           {step}
                         </p>
                       </div>
@@ -860,16 +860,16 @@ export default function MissionPage() {
                   </div>
 
                   {/* Final Answer & Verification Tip */}
-                  <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-900/40 space-y-2">
-                    <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
+                  <div className="p-4 rounded-xl bg-[var(--color-success-soft)] border border-[var(--color-success)]/30 space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-success)]">
                       <Award className="h-4 w-4" />
                       <span>{isAr ? "النتيجة النهائية وصياغة الإجابة" : "Réponse finale"}</span>
                     </div>
-                    <p className="text-sm font-bold text-white font-mono">
+                    <p className="text-sm font-bold text-theme-text font-mono">
                       {workedExample.finalAnswer_ar}
                     </p>
-                    <p className="text-xs text-slate-300 leading-relaxed pt-1 border-t border-emerald-900/30">
-                      <strong className="text-emerald-300">{isAr ? "طريقة التحقق: " : "Vérification : "}</strong>
+                    <p className="text-xs text-theme-secondary leading-relaxed pt-1 border-t border-[var(--color-success)]/20">
+                      <strong className="text-[var(--color-success)]">{isAr ? "طريقة التحقق: " : "Vérification : "}</strong>
                       {workedExample.verificationTip_ar}
                     </p>
                   </div>
@@ -882,7 +882,7 @@ export default function MissionPage() {
                 variant="outline"
                 size="md"
                 onClick={() => setCurrentStep("learn")}
-                className="text-slate-400"
+                className="text-theme-muted hover:text-theme-text"
               >
                 <BackArrow className="h-4 w-4" />
                 <span>{isAr ? "مراجعة الدرس" : "Revoir la leçon"}</span>
@@ -898,7 +898,7 @@ export default function MissionPage() {
                   });
                   setCurrentStep("practice");
                 }}
-                className="font-bold shadow-lg shadow-blue-600/25"
+                className="font-bold shadow-clay"
               >
                 <span>{isAr ? "فهمت المثال، نبدأ التطبيق" : "Commencer la pratique"}</span>
                 <NextArrow className="h-4 w-4" />
@@ -912,19 +912,19 @@ export default function MissionPage() {
         {/* ================================================================= */}
         {currentStep === "practice" && activeQuestion && (
           <div dir={educationalDir} className="space-y-6 animate-fade-in">
-            <Card className="border-slate-800 bg-[#0e1628]/80 p-6 sm:p-7 space-y-6">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-blue-400">
+            <Card className="border-theme bg-card shadow-card p-6 sm:p-7 space-y-6">
+              <div className="flex items-center justify-between border-b border-theme pb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-primary)]">
                   {isAr ? "تطبيق تطبيقي لقياس التمكن" : "Pratique d'évaluation"}
                 </span>
-                <div className="flex items-center gap-1.5 text-xs text-slate-400 font-mono">
-                  <Clock className="h-3.5 w-3.5 text-blue-400" />
+                <div className="flex items-center gap-1.5 text-xs text-theme-muted font-mono">
+                  <Clock className="h-3.5 w-3.5 text-[var(--color-primary)]" />
                   <span>{formatTime(timeSpentSeconds)}</span>
                 </div>
               </div>
 
               {/* Prompt */}
-              <div className="text-sm sm:text-base font-semibold text-white leading-relaxed">
+              <div className="text-sm sm:text-base font-semibold text-theme-text leading-relaxed">
                 {isAr ? activeQuestion.prompt_ar : activeQuestion.prompt_fr}
               </div>
 
@@ -940,15 +940,15 @@ export default function MissionPage() {
                       onClick={() => setSelectedOptionId(opt.id)}
                       className={`w-full min-h-[52px] text-start p-4 rounded-xl border-2 transition-all flex items-center gap-3.5 active:scale-[0.99] ${
                         isSelected
-                          ? "border-blue-500 bg-blue-950/30 text-white shadow-lg shadow-blue-500/10"
-                          : "border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700 hover:bg-slate-900"
+                          ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-theme-text shadow-sm"
+                          : "border-theme bg-surface-soft text-theme-secondary hover:border-[var(--color-primary)]/40 hover:bg-card-hover"
                       }`}
                     >
                       <span
                         className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
                           isSelected
-                            ? "bg-blue-600 text-white"
-                            : "bg-slate-800 text-slate-400 border border-slate-700"
+                            ? "bg-[var(--color-primary)] text-white"
+                            : "bg-card border border-theme text-theme-muted"
                         }`}
                       >
                         {letter}
@@ -962,9 +962,9 @@ export default function MissionPage() {
               </div>
 
               {/* Metacognitive Confidence Rating */}
-              <div className="pt-4 border-t border-slate-800 space-y-3">
-                <div className="flex items-center gap-2 text-xs font-bold text-cyan-300">
-                  <Brain className="h-4 w-4 text-cyan-400" />
+              <div className="pt-4 border-t border-theme space-y-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-primary)]">
+                  <Brain className="h-4 w-4 text-[var(--color-primary)]" />
                   <span>
                     {isAr
                       ? "قبل ما تشوف النتيجة... قداش راك واثق من إجابتك؟"
@@ -981,8 +981,8 @@ export default function MissionPage() {
                         onClick={() => setConfidenceRating(lvl)}
                         className={`py-2 rounded-lg text-xs font-mono font-bold border transition-all ${
                           isSelected
-                            ? "border-cyan-500 bg-cyan-950/40 text-cyan-300"
-                            : "border-slate-800 bg-slate-900/40 text-slate-400 hover:text-slate-200"
+                            ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-[var(--color-primary)]"
+                            : "border-theme bg-surface-soft text-theme-muted hover:text-theme-text hover:bg-card-muted"
                         }`}
                       >
                         {lvl}/5
@@ -1000,7 +1000,7 @@ export default function MissionPage() {
                 size="lg"
                 disabled={!selectedOptionId || !confidenceRating || isSubmitting}
                 onClick={handlePracticeSubmit}
-                className="font-bold shadow-lg shadow-blue-600/25"
+                className="font-bold shadow-clay"
               >
                 <span>{isSubmitting ? (isAr ? "جاري التحقق..." : "Vérification...") : (isAr ? "تحقق من الإجابة" : "Valider")}</span>
                 <NextArrow className="h-4 w-4" />
@@ -1015,16 +1015,16 @@ export default function MissionPage() {
         {currentStep === "practice_feedback" && activeQuestion && (
           <div className="space-y-6 animate-fade-in">
             {isPracticeCorrect ? (
-              <Card className="border-emerald-500/40 bg-emerald-950/20 p-6 sm:p-7 space-y-5">
+              <Card className="border-[var(--color-success)]/40 bg-[var(--color-success-soft)] p-6 sm:p-7 space-y-5 shadow-card">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                  <div className="h-10 w-10 rounded-2xl bg-white/80 border border-[var(--color-success)]/40 flex items-center justify-center text-[var(--color-success)] shadow-sm">
                     <CheckCircle2 className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-emerald-300">
+                    <h3 className="text-lg font-bold text-[var(--color-success)]">
                       {isAr ? "إجابة صحيحة ومثبتة! 🎉" : "Excellente réponse ! 🎉"}
                     </h3>
-                    <p className="text-xs text-slate-300 mt-0.5">
+                    <p className="text-xs text-theme-secondary mt-0.5">
                       {isAr
                         ? "أظهرت استيعاباً دقيقاً للمفهوم وطريقة التطبيق."
                         : "Vous avez appliqué la méthode avec succès."}
@@ -1033,11 +1033,11 @@ export default function MissionPage() {
                 </div>
 
                 {/* Explanation */}
-                <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                <div className="p-4 rounded-xl bg-card border border-theme space-y-2">
+                  <span className="text-xs font-bold text-theme-muted uppercase tracking-wider block">
                     {isAr ? "الشرح والتعليل النموذجي" : "Explication"}
                   </span>
-                  <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-theme-text leading-relaxed">
                     {isAr ? activeQuestion.explanation_ar : activeQuestion.explanation_fr}
                   </p>
                 </div>
@@ -1047,7 +1047,7 @@ export default function MissionPage() {
                     variant="outline"
                     size="md"
                     onClick={() => setCurrentStep("practice")}
-                    className="text-slate-400"
+                    className="text-theme-muted hover:text-theme-text"
                   >
                     <RotateCcw className="h-4 w-4" />
                     <span>{isAr ? "إعادة السؤال" : "Refaire"}</span>
@@ -1057,7 +1057,7 @@ export default function MissionPage() {
                     variant="primary"
                     size="lg"
                     onClick={() => setCurrentStep("summary")}
-                    className="bg-emerald-600 hover:bg-emerald-500 font-bold"
+                    className="bg-[var(--color-success)] text-white hover:opacity-90 font-bold shadow-clay"
                   >
                     <span>{isAr ? "تثبيت المهارة وعرض الخلاصة" : "Voir le bilan de maîtrise"}</span>
                     <NextArrow className="h-4 w-4" />
@@ -1065,16 +1065,16 @@ export default function MissionPage() {
                 </div>
               </Card>
             ) : (
-              <Card className="border-amber-500/40 bg-amber-950/20 p-6 sm:p-7 space-y-5">
+              <Card className="border-[var(--color-accent)]/40 bg-[var(--color-accent-soft)] p-6 sm:p-7 space-y-5 shadow-card">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                  <div className="h-10 w-10 rounded-2xl bg-white/80 border border-[var(--color-accent)]/40 flex items-center justify-center text-[var(--color-accent)] shadow-sm">
                     <AlertTriangle className="h-6 w-6" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-amber-300">
+                    <h3 className="text-lg font-bold text-[var(--color-accent)]">
                       {isAr ? "الخطأ معلومة • عرفنا وين الخلل بالضبط" : "L'erreur est une information • Point de blocage ciblé"}
                     </h3>
-                    <p className="text-xs text-slate-300 mt-0.5">
+                    <p className="text-xs text-theme-secondary mt-0.5">
                       {isAr
                         ? "ماشي مشكل. الخطأ هنا فرصة ذهبية لنصلحوا المفهوم ونثبتوا الفكرة."
                         : "Identifions la cause racine pour consolider la méthode."}
@@ -1083,11 +1083,11 @@ export default function MissionPage() {
                 </div>
 
                 {/* Explanation of Why the Answer was wrong */}
-                <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+                <div className="p-4 rounded-xl bg-card border border-theme space-y-2">
+                  <span className="text-xs font-bold text-theme-muted uppercase tracking-wider block">
                     {isAr ? "التعليل النموذجي للإجابة الصحيحة" : "Explication du corrigé"}
                   </span>
-                  <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-theme-text leading-relaxed">
                     {isAr ? activeQuestion.explanation_ar : activeQuestion.explanation_fr}
                   </p>
                 </div>
@@ -1097,7 +1097,7 @@ export default function MissionPage() {
                     variant="primary"
                     size="lg"
                     onClick={() => setCurrentStep("error_diagnosis")}
-                    className="bg-amber-600 hover:bg-amber-500 font-bold"
+                    className="bg-[var(--color-accent)] text-white hover:opacity-90 font-bold shadow-clay"
                   >
                     <span>{isAr ? "تشخيص سبب الخطأ وبدء الإصلاح" : "Diagnostiquer l'erreur"}</span>
                     <NextArrow className="h-4 w-4" />
@@ -1113,17 +1113,17 @@ export default function MissionPage() {
         {/* ================================================================= */}
         {currentStep === "error_diagnosis" && (
           <div className="space-y-6 animate-fade-in">
-            <Card className="border-slate-800 bg-[#0e1628]/80 p-6 sm:p-7 space-y-6">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-400">
+            <Card className="border-theme bg-card shadow-card p-6 sm:p-7 space-y-6">
+              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[var(--color-accent)]">
                 <Wrench className="h-4 w-4" />
                 <span>{isAr ? "مختبر الأخطاء • التشخيص الذاتي" : "Error Lab • Diagnostic"}</span>
               </div>
 
               <div className="space-y-2">
-                <h3 className="text-base font-bold text-white">
+                <h3 className="text-base font-bold text-theme-text">
                   {isAr ? "واش هو السبب الحقيقي اللي خلاك تغلط؟" : "Quelle est la cause de cette erreur ?"}
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-theme-muted">
                   {isAr
                     ? "التحديد الصادق للسبب يساعد النظام على إعطائك دليل إصلاح موجه بدقة."
                     : "Votre auto-diagnostic permet d'activer le bon protocole de remédiation."}
@@ -1140,14 +1140,14 @@ export default function MissionPage() {
                       onClick={() => setSelectedAttribution(cat.type)}
                       className={`w-full p-3.5 rounded-xl border text-start transition-all flex items-center justify-between ${
                         isSelected
-                          ? "border-amber-500 bg-amber-950/30 text-white"
-                          : "border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700"
+                          ? "border-[var(--color-accent)] bg-[var(--color-accent-soft)] text-theme-text shadow-sm"
+                          : "border-theme bg-surface-soft text-theme-secondary hover:border-[var(--color-accent)]/40 hover:bg-card-hover"
                       }`}
                     >
                       <span className="text-xs sm:text-sm font-sans">
                         {isAr ? cat.label_ar : cat.label_fr}
                       </span>
-                      {isSelected && <Check className="h-4 w-4 text-amber-400" />}
+                      {isSelected && <Check className="h-4 w-4 text-[var(--color-accent)]" />}
                     </button>
                   );
                 })}
@@ -1160,7 +1160,7 @@ export default function MissionPage() {
                 size="lg"
                 disabled={isSubmitting}
                 onClick={handleConfirmAttribution}
-                className="bg-amber-600 hover:bg-amber-500 font-bold"
+                className="bg-[var(--color-accent)] text-white hover:opacity-90 font-bold shadow-clay"
               >
                 <span>{isAr ? "تأكيد وبدء دليل الإصلاح" : "Ouvrir le guide de réparation"}</span>
                 <NextArrow className="h-4 w-4" />
@@ -1174,9 +1174,9 @@ export default function MissionPage() {
         {/* ================================================================= */}
         {currentStep === "repair" && repairGuide && (
           <div className="space-y-6 animate-fade-in">
-            <Card className="border-amber-500/30 bg-[#0e1628]/80 p-6 sm:p-7 space-y-6">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+            <Card className="border-theme bg-card shadow-card p-6 sm:p-7 space-y-6">
+              <div className="flex items-center justify-between border-b border-theme pb-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-accent)] flex items-center gap-1.5">
                   <Wrench className="h-4 w-4" />
                   <span>{isAr ? "دليل الإصلاح المركز (5-10 دقائق)" : "Guide de Réparation"}</span>
                 </span>
@@ -1186,37 +1186,37 @@ export default function MissionPage() {
               </div>
 
               <div>
-                <h3 className="text-base sm:text-lg font-bold text-white">
+                <h3 className="text-base sm:text-lg font-bold text-theme-text">
                   {repairGuide.title_ar}
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-300 mt-2 leading-relaxed">
-                  <strong className="text-amber-300">{isAr ? "علاش وقع الخطأ؟ " : "Pourquoi cette erreur ? "}</strong>
+                <p className="text-xs sm:text-sm text-theme-secondary mt-2 leading-relaxed">
+                  <strong className="text-[var(--color-accent)]">{isAr ? "علاش وقع الخطأ؟ " : "Pourquoi cette erreur ? "}</strong>
                   {repairGuide.whyItHappens_ar}
                 </p>
               </div>
 
               {/* Diagnosis */}
-              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1.5">
-                <span className="text-xs font-bold text-cyan-300 block">
+              <div className="p-4 rounded-xl bg-surface-soft border border-theme space-y-1.5">
+                <span className="text-xs font-bold text-[var(--color-primary)] block">
                   {isAr ? "🔍 التشخيص الدقيق" : "Diagnostic Précis"}
                 </span>
-                <p className="text-xs text-slate-300 leading-relaxed">
+                <p className="text-xs text-theme-secondary leading-relaxed">
                   {repairGuide.diagnosis_ar}
                 </p>
               </div>
 
               {/* Repair Steps */}
               <div className="space-y-3">
-                <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider block">
+                <span className="text-xs font-bold text-[var(--color-success)] uppercase tracking-wider block">
                   {isAr ? "📋 خطوات المعالجة والتصحيح" : "Protocole de Correction"}
                 </span>
                 <div className="space-y-2.5">
                   {repairGuide.repairSteps_ar.map((step, idx) => (
-                    <div key={idx} className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 flex items-start gap-3">
-                      <span className="h-6 w-6 rounded-lg bg-amber-600/20 border border-amber-500/30 text-amber-300 flex items-center justify-center text-xs font-mono font-bold shrink-0 mt-0.5">
+                    <div key={idx} className="p-3.5 rounded-xl bg-surface-soft border border-theme flex items-start gap-3">
+                      <span className="h-6 w-6 rounded-lg bg-[var(--color-accent-soft)] border border-[var(--color-accent)]/30 text-[var(--color-accent)] flex items-center justify-center text-xs font-mono font-bold shrink-0 mt-0.5">
                         {idx + 1}
                       </span>
-                      <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                      <p className="text-xs sm:text-sm text-theme-text leading-relaxed">
                         {step}
                       </p>
                     </div>
@@ -1226,23 +1226,23 @@ export default function MissionPage() {
 
               {/* Micro-Practice prompt */}
               {repairGuide.microPracticePrompt_ar && (
-                <div className="p-4 rounded-xl bg-blue-950/25 border border-blue-800/40 space-y-2">
-                  <span className="text-xs font-bold text-blue-300 block">
+                <div className="p-4 rounded-xl bg-[var(--color-primary-soft)] border border-[var(--color-primary)]/30 space-y-2">
+                  <span className="text-xs font-bold text-[var(--color-primary)] block">
                     ⚡ {isAr ? "تطبيق فوري مصغر للتثبيت" : "Micro-Exercice d'application"}
                   </span>
-                  <p className="text-xs text-slate-200">
+                  <p className="text-xs text-theme-text">
                     {repairGuide.microPracticePrompt_ar}
                   </p>
-                  <p className="text-xs text-emerald-300 pt-1 border-t border-blue-900/30">
-                    <strong className="text-emerald-400">{isAr ? "الحل: " : "Solution : "}</strong>
+                  <p className="text-xs text-[var(--color-success)] pt-1 border-t border-[var(--color-primary)]/20">
+                    <strong className="text-[var(--color-success)]">{isAr ? "الحل: " : "Solution : "}</strong>
                     {repairGuide.microPracticeSolution_ar}
                   </p>
                 </div>
               )}
 
               {/* Optional student reflection */}
-              <div className="space-y-2 pt-2 border-t border-slate-800">
-                <label className="text-xs font-bold text-slate-300 block">
+              <div className="space-y-2 pt-2 border-t border-theme">
+                <label className="text-xs font-bold text-theme-secondary block">
                   {isAr ? "واش هي الملاحظة اللي لازم تشفا عليها باش ما تعاودش هذي الغلطة؟" : "Note personnelle de mémorisation"}
                 </label>
                 <input
@@ -1250,7 +1250,7 @@ export default function MissionPage() {
                   value={repairReflection}
                   onChange={(e) => setRepairReflection(e.target.value)}
                   placeholder={isAr ? "مثال: نتأكد دايماً من مشتقة الدالة الداخلية قبل الضرب..." : "Ex: Toujours vérifier..."}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-surface-soft border border-theme text-xs text-theme-text placeholder:text-theme-muted focus:outline-none focus:border-[var(--color-primary)]"
                 />
               </div>
             </Card>
@@ -1261,7 +1261,7 @@ export default function MissionPage() {
                 size="lg"
                 disabled={isSubmitting}
                 onClick={handleCompleteRepair}
-                className="bg-cyan-600 hover:bg-cyan-500 font-bold"
+                className="bg-[var(--color-primary)] text-white hover:opacity-90 font-bold shadow-clay"
               >
                 <span>{isAr ? "أكملت المراجعة • ننتقل لاختبار التوأم (Retest)" : "Passer au Retest Jumeau"}</span>
                 <NextArrow className="h-4 w-4" />
@@ -1275,19 +1275,19 @@ export default function MissionPage() {
         {/* ================================================================= */}
         {currentStep === "retest" && retest && (
           <div dir={educationalDir} className="space-y-6 animate-fade-in">
-            <Card className="border-cyan-500/40 bg-[#0e1628]/80 p-6 sm:p-7 space-y-6">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <div className="flex items-center gap-2 text-xs font-bold text-cyan-400 uppercase tracking-wider">
+            <Card className="border-theme bg-card shadow-card p-6 sm:p-7 space-y-6">
+              <div className="flex items-center justify-between border-b border-theme pb-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-primary)] uppercase tracking-wider">
                   <Sparkles className="h-4 w-4" />
                   <span>{isAr ? "سؤال جديد • نفس المهارة (اختبار التوأم)" : "Retest Jumeau • Même Compétence"}</span>
                 </div>
-                <Badge variant="outline" size="sm" className="border-cyan-500/30 text-cyan-300">
+                <Badge variant="outline" size="sm">
                   {isAr ? "تثبيت نهائي" : "Validation"}
                 </Badge>
               </div>
 
               {/* Prompt */}
-              <div className="text-sm sm:text-base font-semibold text-white leading-relaxed">
+              <div className="text-sm sm:text-base font-semibold text-theme-text leading-relaxed">
                 {isAr ? retest.prompt_ar : retest.prompt_fr}
               </div>
 
@@ -1303,15 +1303,15 @@ export default function MissionPage() {
                       onClick={() => setRetestSelectedOptionId(opt.id)}
                       className={`w-full min-h-[52px] text-start p-4 rounded-xl border-2 transition-all flex items-center gap-3.5 active:scale-[0.99] ${
                         isSelected
-                          ? "border-cyan-500 bg-cyan-950/30 text-white shadow-lg shadow-cyan-500/10"
-                          : "border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700"
+                          ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-theme-text shadow-sm"
+                          : "border-theme bg-surface-soft text-theme-secondary hover:border-[var(--color-primary)]/40 hover:bg-card-hover"
                       }`}
                     >
                       <span
                         className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
                           isSelected
-                            ? "bg-cyan-600 text-white"
-                            : "bg-slate-800 text-slate-400 border border-slate-700"
+                            ? "bg-[var(--color-primary)] text-white"
+                            : "bg-card border border-theme text-theme-muted"
                         }`}
                       >
                         {letter}
@@ -1325,9 +1325,9 @@ export default function MissionPage() {
               </div>
 
               {/* Confidence */}
-              <div className="pt-4 border-t border-slate-800 space-y-3">
-                <div className="flex items-center gap-2 text-xs font-bold text-cyan-300">
-                  <Brain className="h-4 w-4 text-cyan-400" />
+              <div className="pt-4 border-t border-theme space-y-3">
+                <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-primary)]">
+                  <Brain className="h-4 w-4 text-[var(--color-primary)]" />
                   <span>{isAr ? "مدى ثقتك في حل السؤال التوأم:" : "Confiance dans votre réponse :"}</span>
                 </div>
                 <div className="grid grid-cols-5 gap-2">
@@ -1340,8 +1340,8 @@ export default function MissionPage() {
                         onClick={() => setRetestConfidence(lvl)}
                         className={`py-2 rounded-lg text-xs font-mono font-bold border transition-all ${
                           isSelected
-                            ? "border-cyan-500 bg-cyan-950/40 text-cyan-300"
-                            : "border-slate-800 bg-slate-900/40 text-slate-400"
+                            ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-[var(--color-primary)]"
+                            : "border-theme bg-surface-soft text-theme-muted hover:text-theme-text hover:bg-card-muted"
                         }`}
                       >
                         {lvl}/5
@@ -1359,7 +1359,7 @@ export default function MissionPage() {
                 size="lg"
                 disabled={!retestSelectedOptionId || !retestConfidence || isSubmitting}
                 onClick={handleRetestSubmit}
-                className="bg-cyan-600 hover:bg-cyan-500 font-bold"
+                className="bg-[var(--color-primary)] text-white hover:opacity-90 font-bold shadow-clay"
               >
                 <span>{isSubmitting ? (isAr ? "جاري التقييم..." : "Évaluation...") : (isAr ? "تقييم اختبار التوأم" : "Valider le retest")}</span>
                 <NextArrow className="h-4 w-4" />
@@ -1374,16 +1374,16 @@ export default function MissionPage() {
         {currentStep === "summary" && (
           <div className="space-y-6 animate-fade-in">
             {isRetestPassed === false ? (
-              <Card className="border-amber-500/40 bg-gradient-to-br from-[#1c150e] to-[#0f1118] p-6 sm:p-8 space-y-6 shadow-xl">
+              <Card className="border-[var(--color-accent)]/40 bg-[var(--color-accent-soft)] p-6 sm:p-8 space-y-6 shadow-card">
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                  <div className="h-12 w-12 rounded-2xl bg-white/80 border border-[var(--color-accent)]/40 flex items-center justify-center text-[var(--color-accent)] shadow-sm">
                     <AlertTriangle className="h-7 w-7" />
                   </div>
                   <div>
-                    <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                    <h2 className="text-xl sm:text-2xl font-bold text-theme-text tracking-tight">
                       {isAr ? "نتيجة الاختبار التوأم • نحتاج دعماً وتثبيتاً إضافياً" : "Retest non validé • Consolidation requise"}
                     </h2>
-                    <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                    <p className="text-xs sm:text-sm text-theme-secondary mt-1">
                       {isAr
                         ? "لم يتم تثبيت المهارة هذه المرة بنجاح. لا تقلق، هذا جزء طبيعي من مسار التعلم وسنوجهك للمورد الأنسب لترميمها."
                         : "Cette compétence nécessite encore de la pratique. Consultez la ressource ci-dessous."}
@@ -1401,12 +1401,12 @@ export default function MissionPage() {
                 </div>
 
                 {/* Teacher Help Callout */}
-                <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="p-4 rounded-xl bg-card border border-theme flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
                   <div className="space-y-0.5">
-                    <span className="text-xs font-bold text-white block">
+                    <span className="text-xs font-bold text-theme-text block">
                       {isAr ? "تحتاج مساعدة إضافية من أستاذ متخصص؟" : "Besoin de l'aide d'un enseignant ?"}
                     </span>
-                    <span className="text-[11px] text-slate-400">
+                    <span className="text-[11px] text-theme-muted">
                       {isAr
                         ? "يمكنك استخراج بطاقة التوجيه البيداغوجي (Zero-PII) لتقديمها لأستاذك في الثانوية."
                         : "Générez la fiche diagnostic confidentielle pour votre professeur."}
@@ -1416,23 +1416,23 @@ export default function MissionPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => setIsTeacherModalOpen(true)}
-                    className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10 text-xs shrink-0"
+                    className="border-[var(--color-primary)]/30 text-[var(--color-primary)] hover:bg-[var(--color-primary-soft)] text-xs shrink-0"
                   >
                     <span>{isAr ? "تجهيز بطاقة التوجيه" : "Préparer la fiche"}</span>
                   </Button>
                 </div>
               </Card>
             ) : (
-              <Card className="border-emerald-500/40 bg-gradient-to-br from-[#0e1c2e] to-[#0b1424] p-6 sm:p-8 space-y-6 shadow-xl">
+              <Card className="border-[var(--color-success)]/40 bg-[var(--color-success-soft)] p-6 sm:p-8 space-y-6 shadow-card">
                 <div className="flex items-center gap-3">
-                  <div className="h-12 w-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                  <div className="h-12 w-12 rounded-2xl bg-white/80 border border-[var(--color-success)]/40 flex items-center justify-center text-[var(--color-success)] shadow-sm">
                     <Award className="h-7 w-7" />
                   </div>
                   <div>
-                    <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                    <h2 className="text-xl sm:text-2xl font-bold text-theme-text tracking-tight">
                       {isAr ? "وش ثبت اليوم؟ • تم إثبات التمكن" : "Bilan de Maîtrise Validée"}
                     </h2>
-                    <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                    <p className="text-xs sm:text-sm text-theme-secondary mt-1">
                       {isAr
                         ? "تم تسجيل هذه المهارة كمهارة مثبتة (Demonstrated) في رصيدك الأكاديمي."
                         : "Cette compétence est désormais validée dans votre profil."}
@@ -1441,21 +1441,21 @@ export default function MissionPage() {
                 </div>
 
               {/* What was proven */}
-              <div className="space-y-3 border-t border-slate-800 pt-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <div className="space-y-3 border-t border-theme pt-4">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-theme-muted">
                   {isAr ? "تفاصيل الإثبات الأكاديمي" : "Détails de la validation"}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
-                    <span className="text-[11px] text-slate-400 block">{isAr ? "المهارة" : "Compétence"}</span>
-                    <span className="text-xs sm:text-sm font-bold text-white block">
+                  <div className="p-3.5 rounded-xl bg-card border border-theme space-y-1 shadow-sm">
+                    <span className="text-[11px] text-theme-muted block">{isAr ? "المهارة" : "Compétence"}</span>
+                    <span className="text-xs sm:text-sm font-bold text-theme-text block">
                       {isAr ? bundle.skill.title_ar : bundle.skill.title_fr}
                     </span>
                   </div>
 
-                  <div className="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-1">
-                    <span className="text-[11px] text-slate-400 block">{isAr ? "نوع الدليل" : "Preuve"}</span>
-                    <span className="text-xs sm:text-sm font-bold text-emerald-400 block">
+                  <div className="p-3.5 rounded-xl bg-card border border-theme space-y-1 shadow-sm">
+                    <span className="text-[11px] text-theme-muted block">{isAr ? "نوع الدليل" : "Preuve"}</span>
+                    <span className="text-xs sm:text-sm font-bold text-[var(--color-success)] block">
                       {activeErrorRecord
                         ? (isAr ? "إصلاح خطأ + نجاح في الاختبار التوأم" : "Réparation + Retest réussi")
                         : (isAr ? "حل صحيح من المحاولة الأولى مع ثقة عالية" : "Pratique réussie")}
@@ -1466,12 +1466,12 @@ export default function MissionPage() {
 
                 {/* Past BAC connection */}
                 {bundle.examApplication && (
-                  <div className="p-4 rounded-xl bg-blue-950/20 border border-blue-800/40 space-y-1.5">
-                    <div className="flex items-center gap-2 text-xs font-bold text-blue-300">
-                      <ShieldCheck className="h-4 w-4 text-blue-400" />
+                  <div className="p-4 rounded-xl bg-[var(--color-primary-soft)] border border-[var(--color-primary)]/30 space-y-1.5">
+                    <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-primary)]">
+                      <ShieldCheck className="h-4 w-4 text-[var(--color-primary)]" />
                       <span>{isAr ? "ورود هذه المهارة في البكالوريات السابقة" : "Présence aux sessions antérieures du BAC"}</span>
                     </div>
-                    <p className="text-xs text-slate-300 leading-relaxed">
+                    <p className="text-xs text-theme-secondary leading-relaxed">
                       {bundle.examApplication.year} • {bundle.examApplication.session === "principal" ? (isAr ? "دورة عادية" : "Session normale") : (isAr ? "دورة استثنائية" : "Session rattrapage")} • {isAr ? `تمرين ${bundle.examApplication.exerciseNumber}` : `Exercice ${bundle.examApplication.exerciseNumber}`}
                     </p>
                   </div>
@@ -1480,15 +1480,15 @@ export default function MissionPage() {
             )}
 
             {/* PILOT FEEDBACK CARD */}
-            <div className="p-4 sm:p-5 rounded-2xl border border-blue-500/30 bg-slate-900/80 space-y-3.5">
-              <div className="flex items-center gap-2 text-xs font-bold text-blue-300">
-                <Sparkles className="h-4 w-4 text-blue-400" />
+            <div className="p-4 sm:p-5 rounded-2xl border border-theme bg-card shadow-card space-y-3.5">
+              <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-primary)]">
+                <Sparkles className="h-4 w-4 text-[var(--color-primary)]" />
                 <span>{isAr ? "تقييم تجربة المهمة (ملاحظات التلميذ)" : "Retour d'expérience (Pilote)"}</span>
               </div>
 
               {!feedbackSubmitted ? (
                 <div className="space-y-3">
-                  <p className="text-xs sm:text-sm text-slate-200 font-semibold">
+                  <p className="text-xs sm:text-sm text-theme-text font-semibold">
                     {isAr ? "كيف كانت هذي المهمة؟" : "Comment s'est passée cette mission ?"}
                   </p>
 
@@ -1507,8 +1507,8 @@ export default function MissionPage() {
                         onClick={() => setFeedbackRating(opt.id)}
                         className={`p-2 rounded-xl text-xs font-semibold border transition-all ${
                           feedbackRating === opt.id
-                            ? "border-blue-500 bg-blue-950/60 text-blue-300 ring-1 ring-blue-500/40"
-                            : "border-slate-800 bg-slate-900/40 text-slate-400 hover:text-slate-200"
+                            ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-[var(--color-primary)] ring-1 ring-[var(--color-primary)]/40"
+                            : "border-theme bg-surface-soft text-theme-muted hover:text-theme-text hover:bg-card-muted"
                         }`}
                       >
                         {isAr ? opt.label_ar : opt.label_fr}
@@ -1517,7 +1517,7 @@ export default function MissionPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[11px] text-slate-400 block">
+                    <label className="text-[11px] text-theme-muted block">
                       {isAr ? "واش اللي ما عجبكش؟ (اختياري)" : "Qu'est-ce qui pourrait être amélioré ? (optionnel)"}
                     </label>
                     <input
@@ -1525,7 +1525,7 @@ export default function MissionPage() {
                       value={feedbackNote}
                       onChange={(e) => setFeedbackNote(e.target.value)}
                       placeholder={isAr ? "ملاحظة قصيرة لمساعدتنا في تحسين التجربة..." : "Votre remarque..."}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                      className="w-full bg-surface-soft border border-theme rounded-xl px-3 py-1.5 text-xs text-theme-text placeholder:text-theme-muted focus:outline-none focus:border-[var(--color-primary)]"
                     />
                   </div>
 
@@ -1536,32 +1536,32 @@ export default function MissionPage() {
                       variant="primary"
                       disabled={!feedbackRating}
                       onClick={handleFeedbackSubmit}
-                      className="text-xs font-bold"
+                      className="text-xs font-bold shadow-clay"
                     >
                       <span>{isAr ? "إرسال الملاحظة" : "Envoyer"}</span>
                     </Button>
                   </div>
                 </div>
               ) : (
-                <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-xs text-emerald-300 flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                <div className="p-3 rounded-xl bg-[var(--color-success-soft)] border border-[var(--color-success)]/40 text-xs text-[var(--color-success)] flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-[var(--color-success)] shrink-0" />
                   <span>{isAr ? "شكراً لك! وصلت ملاحظتك وستساعدنا في تحسين المنصة." : "Merci pour votre retour !"}</span>
                 </div>
               )}
             </div>
 
             {/* Next Steps CTA */}
-            <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 border-t border-slate-800">
+            <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 border-t border-theme">
               {nextMissionId ? (
                 <Link href={`/mission/${nextMissionId}`} className="w-full sm:w-auto">
-                  <Button variant="primary" size="lg" className="w-full sm:w-auto font-bold shadow-lg shadow-blue-600/25">
+                  <Button variant="primary" size="lg" className="w-full sm:w-auto font-bold shadow-clay">
                     <span>{isAr ? "الانتقال إلى المهمة التالية" : "Mission suivante"}</span>
                     <NextArrow className="h-4 w-4" />
                   </Button>
                 </Link>
               ) : (
                 <Link href="/dashboard" className="w-full sm:w-auto">
-                  <Button variant="primary" size="lg" className="w-full sm:w-auto font-bold">
+                  <Button variant="primary" size="lg" className="w-full sm:w-auto font-bold shadow-clay">
                     <span>{isAr ? "العودة إلى لوحة التحكم" : "Retour au tableau de bord"}</span>
                     <NextArrow className="h-4 w-4" />
                   </Button>
@@ -1569,7 +1569,7 @@ export default function MissionPage() {
               )}
 
               <Link href="/roadmap" className="w-full sm:w-auto">
-                <Button variant="outline" size="lg" className="w-full sm:w-auto text-slate-300 border-slate-700">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto">
                   <span>{isAr ? "عرض الخريطة التكيفية" : "Voir la feuille de route"}</span>
                 </Button>
               </Link>

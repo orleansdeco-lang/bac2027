@@ -119,22 +119,22 @@ export default function ExamModePage() {
       case "distinction_level":
         return {
           label: isAr ? "مستوى امتياز وتفوق (16-20)" : "Niveau Distinction (16-20)",
-          color: "bg-emerald-500/15 border-emerald-500/40 text-emerald-400",
+          color: "bg-[var(--color-success-soft)] border-[var(--color-success)]/30 text-[var(--color-success)]",
         };
       case "exam_ready":
         return {
           label: isAr ? "جاهز للامتحان الرسمي" : "Prêt pour le BAC",
-          color: "bg-blue-500/15 border-blue-500/40 text-blue-400",
+          color: "bg-[var(--color-primary-soft)] border-[var(--color-primary)]/30 text-[var(--color-primary)]",
         };
       case "emerging_readiness":
         return {
           label: isAr ? "جاهزية قيد التكوين" : "Préparation en cours",
-          color: "bg-amber-500/15 border-amber-500/40 text-amber-400",
+          color: "bg-[var(--color-accent-soft)] border-[var(--color-accent)]/30 text-[var(--color-accent)]",
         };
       default:
         return {
           label: isAr ? "في بداية مسار التحضير" : "Début de préparation",
-          color: "bg-slate-500/15 border-slate-500/40 text-slate-300",
+          color: "bg-surface-soft border-theme text-theme-muted",
         };
     }
   };
@@ -199,19 +199,19 @@ export default function ExamModePage() {
         {/* ================================================================= */}
         {/* 1. AUTHENTIC READINESS INDEX HERO                                 */}
         {/* ================================================================= */}
-        <section className="rounded-3xl border border-blue-500/30 bg-gradient-to-br from-[#0c1424] via-[#0f1b33] to-[#0a1120] p-6 sm:p-8 shadow-xl text-white relative overflow-hidden">
+        <section className="rounded-3xl border border-[#E4DED2] bg-gradient-to-br from-[#EFE9DC] via-[#F7F3EA] to-[#FFFCF7] p-6 sm:p-8 shadow-clay text-theme-text relative overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
             <div className="lg:col-span-7 space-y-4">
-              <div className="flex items-center gap-2 text-xs font-mono text-cyan-300">
-                <Sparkles className="h-4 w-4 text-cyan-400" />
+              <div className="flex items-center gap-2 text-xs font-bold text-[var(--color-primary)]">
+                <Sparkles className="h-4 w-4 text-[var(--color-primary)]" />
                 <span>{isAr ? "مؤشر الجاهزية الأكاديمي المثبت" : "Indice de Préparation Validé"}</span>
               </div>
 
               <div className="flex items-baseline gap-3">
-                <span className="text-5xl sm:text-6xl font-black font-mono tracking-tight text-white">
+                <span className="text-5xl sm:text-6xl font-black font-mono tracking-tight text-theme-text">
                   {metrics?.readinessIndex || 0}%
                 </span>
-                <span className="text-xs sm:text-sm text-slate-300 font-sans">
+                <span className="text-xs sm:text-sm text-theme-secondary font-sans font-medium">
                   {isAr
                     ? "جاهزية فعلية مبنية على مهارات مثبتة وأخطاء تم إصلاحها"
                     : "Basé sur les compétences et réparations validées"}
@@ -225,7 +225,7 @@ export default function ExamModePage() {
                 className="max-w-md"
               />
 
-              <p className="text-xs text-slate-300 leading-relaxed max-w-xl">
+              <p className="text-xs text-theme-muted leading-relaxed max-w-xl">
                 {isAr
                   ? "كلما أنجزت مهمة واجتزت اختبار التوأم بنجاح، يرتفع هذا المؤشر تلقائياً بناءً على وزن المادة في معامل شعبتك الرسمي."
                   : "Cet indice progresse au rythme de vos réussites au retest jumeau, pondérées par les coefficients officiels."}
@@ -233,36 +233,36 @@ export default function ExamModePage() {
             </div>
 
             <div className="lg:col-span-5 grid grid-cols-2 gap-3">
-              <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-1">
-                <span className="text-[11px] text-slate-400 block">{isAr ? "مهارات مثبتة" : "Validées"}</span>
-                <span className="text-2xl font-black text-emerald-400 font-mono">
+              <div className="p-4 rounded-2xl bg-white/90 border border-[#E4DED2] shadow-sm space-y-1">
+                <span className="text-[11px] text-theme-muted block font-medium">{isAr ? "مهارات مثبتة" : "Validées"}</span>
+                <span className="text-2xl font-black text-[var(--color-success)] font-mono">
                   {report?.overallMetrics?.demonstratedSkillsCount || 0}
                 </span>
-                <span className="text-[10px] text-slate-400 block">{isAr ? "تم إثباتها بالدليل" : "Par preuve"}</span>
+                <span className="text-[10px] text-theme-muted block">{isAr ? "تم إثباتها بالدليل" : "Par preuve"}</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-1">
-                <span className="text-[11px] text-slate-400 block">{isAr ? "أخطاء أُصلحت" : "Réparées"}</span>
-                <span className="text-2xl font-black text-amber-400 font-mono">
+              <div className="p-4 rounded-2xl bg-white/90 border border-[#E4DED2] shadow-sm space-y-1">
+                <span className="text-[11px] text-theme-muted block font-medium">{isAr ? "أخطاء أُصلحت" : "Réparées"}</span>
+                <span className="text-2xl font-black text-[var(--color-accent)] font-mono">
                   {report?.overallMetrics?.repairedErrorsCount || 0}
                 </span>
-                <span className="text-[10px] text-slate-400 block">{isAr ? "أغلقت في مختبر الأخطاء" : "Au Lab"}</span>
+                <span className="text-[10px] text-theme-muted block">{isAr ? "أغلقت في مختبر الأخطاء" : "Au Lab"}</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-1">
-                <span className="text-[11px] text-slate-400 block">{isAr ? "مراجع البكالوريا" : "Annales"}</span>
-                <span className="text-2xl font-black text-blue-400 font-mono">
+              <div className="p-4 rounded-2xl bg-white/90 border border-[#E4DED2] shadow-sm space-y-1">
+                <span className="text-[11px] text-theme-muted block font-medium">{isAr ? "مراجع البكالوريا" : "Annales"}</span>
+                <span className="text-2xl font-black text-[var(--color-primary)] font-mono">
                   {PROMPT11_PAST_BAC_REFERENCES.length}
                 </span>
-                <span className="text-[10px] text-slate-400 block">{isAr ? "تمرين رسمي مرتبط" : "Sujets liés"}</span>
+                <span className="text-[10px] text-theme-muted block">{isAr ? "تمرين رسمي مرتبط" : "Sujets liés"}</span>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-1">
-                <span className="text-[11px] text-slate-400 block">{isAr ? "الهدف المقرر" : "Objectif"}</span>
-                <span className="text-2xl font-black text-cyan-300 font-mono">
+              <div className="p-4 rounded-2xl bg-white/90 border border-[#E4DED2] shadow-sm space-y-1">
+                <span className="text-[11px] text-theme-muted block font-medium">{isAr ? "الهدف المقرر" : "Objectif"}</span>
+                <span className="text-2xl font-black text-theme-text font-mono">
                   {profile.targetScore ? profile.targetScore.toFixed(1) : "16.0"}/20
                 </span>
-                <span className="text-[10px] text-slate-400 block">{isAr ? "معدل البكالوريا" : "Moyenne"}</span>
+                <span className="text-[10px] text-theme-muted block">{isAr ? "معدل البكالوريا" : "Moyenne"}</span>
               </div>
             </div>
           </div>
@@ -276,7 +276,7 @@ export default function ExamModePage() {
             onClick={() => setActiveTab("strategy")}
             className={`px-4 py-2 rounded-xl transition-all shrink-0 ${
               activeTab === "strategy"
-                ? "bg-[var(--color-primary)] text-white shadow-md shadow-blue-500/20"
+                ? "bg-[var(--color-primary)] text-white shadow-clay"
                 : "text-theme-secondary hover:text-theme-text hover:bg-card-hover"
             }`}
           >
@@ -286,7 +286,7 @@ export default function ExamModePage() {
             onClick={() => setActiveTab("readiness")}
             className={`px-4 py-2 rounded-xl transition-all shrink-0 ${
               activeTab === "readiness"
-                ? "bg-[var(--color-primary)] text-white shadow-md shadow-blue-500/20"
+                ? "bg-[var(--color-primary)] text-white shadow-clay"
                 : "text-theme-secondary hover:text-theme-text hover:bg-card-hover"
             }`}
           >
@@ -296,7 +296,7 @@ export default function ExamModePage() {
             onClick={() => setActiveTab("archives")}
             className={`px-4 py-2 rounded-xl transition-all shrink-0 ${
               activeTab === "archives"
-                ? "bg-[var(--color-primary)] text-white shadow-md shadow-blue-500/20"
+                ? "bg-[var(--color-primary)] text-white shadow-clay"
                 : "text-theme-secondary hover:text-theme-text hover:bg-card-hover"
             }`}
           >
@@ -307,9 +307,9 @@ export default function ExamModePage() {
         {/* TAB 1: 30-MINUTE GOLDEN RULE */}
         {activeTab === "strategy" && (
           <div className="space-y-6 animate-fade-in">
-            <Card className="p-6 sm:p-7 space-y-5 border-amber-500/30 bg-card">
+            <Card className="p-6 sm:p-7 space-y-5 border-theme bg-card shadow-card">
               <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                <div className="h-10 w-10 rounded-2xl bg-[var(--color-accent-soft)] text-[var(--color-accent)] flex items-center justify-center shrink-0">
                   <Clock className="h-5 w-5" />
                 </div>
                 <div>
@@ -326,7 +326,7 @@ export default function ExamModePage() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                 <div className="p-4 rounded-2xl bg-card-muted border border-theme space-y-2">
-                  <span className="h-6 w-6 rounded-lg bg-blue-600/20 text-blue-400 flex items-center justify-center text-xs font-mono font-bold">
+                  <span className="h-6 w-6 rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center text-xs font-mono font-bold">
                     1
                   </span>
                   <h4 className="text-xs sm:text-sm font-bold text-theme-text">
@@ -340,7 +340,7 @@ export default function ExamModePage() {
                 </div>
 
                 <div className="p-4 rounded-2xl bg-card-muted border border-theme space-y-2">
-                  <span className="h-6 w-6 rounded-lg bg-blue-600/20 text-blue-400 flex items-center justify-center text-xs font-mono font-bold">
+                  <span className="h-6 w-6 rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center text-xs font-mono font-bold">
                     2
                   </span>
                   <h4 className="text-xs sm:text-sm font-bold text-theme-text">
@@ -354,7 +354,7 @@ export default function ExamModePage() {
                 </div>
 
                 <div className="p-4 rounded-2xl bg-card-muted border border-theme space-y-2">
-                  <span className="h-6 w-6 rounded-lg bg-blue-600/20 text-blue-400 flex items-center justify-center text-xs font-mono font-bold">
+                  <span className="h-6 w-6 rounded-lg bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center text-xs font-mono font-bold">
                     3
                   </span>
                   <h4 className="text-xs sm:text-sm font-bold text-theme-text">
@@ -416,7 +416,7 @@ export default function ExamModePage() {
             <Card className="p-6 sm:p-7 space-y-5">
               <div className="flex items-center justify-between border-b border-theme pb-4">
                 <div className="flex items-center gap-2">
-                  <ShieldCheck className="h-5 w-5 text-emerald-400" />
+                  <ShieldCheck className="h-5 w-5 text-[var(--color-success)]" />
                   <h3 className="text-base font-bold text-theme-text">
                     {isAr ? "تمارين البكالوريا السابقة المرتبطة بالمهارات" : "Annales Officielles ONEC"}
                   </h3>
@@ -434,7 +434,7 @@ export default function ExamModePage() {
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <Badge variant="outline" size="sm" className="font-mono text-[10px] border-blue-500/30 text-blue-400">
+                        <Badge variant="outline" size="sm" className="font-mono text-[10px] border-[var(--color-primary)]/30 text-[var(--color-primary)]">
                           BAC {ref.year}
                         </Badge>
                         <span className="text-xs sm:text-sm font-bold text-theme-text">

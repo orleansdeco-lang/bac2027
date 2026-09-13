@@ -48,16 +48,16 @@ export function RoadVisualizer({
       {/* NODE 1: THE TARGET GOAL (TOP DESTINATION)                           */}
       {/* =================================================================== */}
       <div className="relative flex items-start gap-4 sm:gap-6 mb-8 group">
-        <div className="relative z-10 flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-card border border-amber-500/40 text-amber-400 shadow-sm transition-colors duration-200">
+        <div className="relative z-10 flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-accent-soft)] border border-[var(--color-accent)]/40 text-[var(--color-accent)] shadow-sm transition-colors duration-200">
           <Target className="h-5 w-5 sm:h-6 sm:w-6" />
         </div>
 
         <div className="flex-1 pt-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-accent)]">
               {isAr ? "الهدف المحدد" : "Objectif choisi"}
             </span>
-            <span className="text-lg sm:text-xl font-black text-amber-400 font-mono">
+            <span className="text-lg sm:text-xl font-black text-[var(--color-accent)] font-mono">
               {targetScore > 0 ? targetScore.toFixed(2) : "16.00"}/20
             </span>
           </div>
@@ -153,16 +153,16 @@ export function RoadVisualizer({
       {/* NODE 4: DEMONSTRATED EVIDENCE (FOUNDATION AT BASE)                   */}
       {/* =================================================================== */}
       <div className="relative flex items-start gap-4 sm:gap-6">
-        <div className="relative z-10 flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-card border border-emerald-500/40 text-emerald-400 shadow-sm transition-colors duration-200">
+        <div className="relative z-10 flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl bg-[var(--color-success-soft)] border border-[var(--color-success)]/40 text-[var(--color-success)] shadow-sm transition-colors duration-200">
           <CheckCircle2 className="h-5 w-5" />
         </div>
 
         <div className="flex-1 pt-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-emerald-400">
+            <span className="text-xs font-semibold text-[var(--color-success)]">
               {isAr ? "مهارات مثبتة" : "Compétences validées"}
             </span>
-            <span className="text-xs font-bold text-emerald-400 font-mono">
+            <span className="text-xs font-bold text-[var(--color-success)] font-mono">
               {isAr ? `${masteredCount} مهارات مثبتة` : `${masteredCount} validées`}
             </span>
           </div>

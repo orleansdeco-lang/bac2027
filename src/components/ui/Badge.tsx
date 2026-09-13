@@ -15,10 +15,10 @@ export function Badge({
 }: BadgeProps) {
   const variantStyles = {
     default: "bg-card border-theme text-theme-secondary",
-    primary: "bg-[var(--color-primary-muted)] text-[var(--color-primary)] border-[var(--color-primary)]/30",
-    success: "bg-emerald-500/10 text-emerald-400 border-emerald-500/25",
-    warning: "bg-amber-500/10 text-amber-400 border-amber-500/25",
-    danger: "bg-rose-500/10 text-rose-400 border-rose-500/25",
+    primary: "bg-[var(--color-primary-soft)] text-[var(--color-primary)] border-[var(--color-primary)]/30",
+    success: "bg-[var(--color-success-soft)] text-[var(--color-success)] border-[var(--color-success)]/30",
+    warning: "bg-[var(--color-warning-soft)] text-[var(--color-warning)] border-[var(--color-warning)]/30",
+    danger: "bg-[var(--color-error-soft)] text-[var(--color-error)] border-[var(--color-error)]/30",
     outline: "bg-transparent text-theme-secondary border-theme",
   };
 

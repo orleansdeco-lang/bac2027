@@ -123,7 +123,7 @@ export default function RoadmapPage() {
     return (
       <AppShell>
         <div className="min-h-[60vh] flex items-center justify-center">
-          <div className="animate-pulse text-sm text-slate-400 font-medium">
+          <div className="animate-pulse text-sm text-theme-muted font-medium">
             {isAr ? "جاري استرجاع خريطتك التعليمية..." : "Chargement de votre feuille de route..."}
           </div>
         </div>
@@ -146,50 +146,50 @@ export default function RoadmapPage() {
       {/* =================================================================== */}
       {/* 1. HEADER CONTEXT: YOUR GOAL, STARTING INDICATOR & APPROXIMATE GAP  */}
       {/* =================================================================== */}
-      <div className="border-b border-slate-800/80 bg-[#0E1526]/80 py-4 sm:py-6">
+      <div className="border-b border-theme bg-surface-soft/60 py-4 sm:py-6">
         <Container size="md">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             {/* Title & Badge */}
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-3xl font-black text-slate-100 tracking-tight font-sans">
+                <h1 className="text-xl sm:text-3xl font-black text-theme-text tracking-tight font-sans">
                   {t.roadmap.title}
                 </h1>
-                <Badge variant="primary" size="sm" className="font-semibold text-[10px] bg-blue-500/10 text-blue-400 border-blue-500/25">
+                <Badge variant="primary" size="sm" className="font-semibold text-[10px]">
                   {t.roadmap.adaptivePathLabel || (isAr ? "مسار متكيف" : "Parcours adaptatif")}
                 </Badge>
               </div>
-              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed font-sans">
+              <p className="text-xs sm:text-sm text-theme-secondary leading-relaxed font-sans">
                 {t.roadmap.subtitle}
               </p>
             </div>
 
             {/* Strategic Metrics Overview */}
             <div className="flex items-center gap-2.5 self-start sm:self-auto">
-              <div className="px-3.5 py-1.5 rounded-xl border border-amber-500/30 bg-amber-500/5 text-xs">
-                <span className="text-amber-400/90 block text-[10px] font-medium">
+              <div className="px-3.5 py-1.5 rounded-xl border border-[var(--color-accent)]/30 bg-[var(--color-accent-soft)] text-xs">
+                <span className="text-[var(--color-accent)] block text-[10px] font-medium">
                   {t.roadmap.targetScoreChosen || (isAr ? "الهدف اللي اخترته" : "Objectif choisi")}
                 </span>
-                <span className="font-bold text-amber-300 font-mono text-sm">
+                <span className="font-bold text-theme-text font-mono text-sm">
                   {profile.targetScore ? profile.targetScore.toFixed(2) : "16.00"}/20
                 </span>
               </div>
 
-              <div className="px-3.5 py-1.5 rounded-xl border border-slate-800 bg-[#111827] text-xs">
-                <span className="text-slate-400 block text-[10px]">
+              <div className="px-3.5 py-1.5 rounded-xl border border-theme bg-card text-xs shadow-sm">
+                <span className="text-theme-muted block text-[10px]">
                   {isEmpirical ? t.roadmap.levelSourceObserved : (t.roadmap.estimateLabel || (isAr ? "مؤشر الانطلاق" : "Indicateur de départ"))}
                 </span>
-                <span className="font-bold text-slate-200 font-mono text-sm">
+                <span className="font-bold text-theme-text font-mono text-sm">
                   {gapResult ? gapResult.estimatedBaselineScore.toFixed(1) : "12.0"}/20
                 </span>
               </div>
 
               {gapResult && (
-                <div className="px-3.5 py-1.5 rounded-xl border border-blue-500/30 bg-blue-500/10 text-xs">
-                  <span className="text-blue-300 block text-[10px]">
+                <div className="px-3.5 py-1.5 rounded-xl border border-[var(--color-primary)]/30 bg-[var(--color-primary-soft)] text-xs">
+                  <span className="text-[var(--color-primary)] block text-[10px]">
                     {t.roadmap.gapLabel || (isAr ? "المسافة إلى هدفك" : "Distance vers cible")}
                   </span>
-                  <span className="font-bold text-blue-400 font-mono text-sm">
+                  <span className="font-bold text-[var(--color-primary)] font-mono text-sm">
                     ~{gapResult.approximateGap.toFixed(1)} {t.roadmap.gapUnit}
                   </span>
                 </div>
@@ -198,7 +198,7 @@ export default function RoadmapPage() {
           </div>
 
           {/* Subtle Starting Indicator Helper Disclaimer */}
-          <p className="text-[11px] text-slate-400 mt-2">
+          <p className="text-[11px] text-theme-muted mt-2">
             {t.roadmap.levelSourceDisclaimer || (isAr ? "مؤشر أولي مبني على بياناتك الحالية، وليس توقعاً لعلامة البكالوريا." : "Indicateur préliminaire basé sur vos données, sans valeur de prédiction.")}
           </p>
         </Container>
@@ -214,8 +214,8 @@ export default function RoadmapPage() {
         {/* ----------------------------------------------------------------- */}
         <section id="now" className="space-y-3">
           <div className="flex items-center justify-between px-1">
-            <span className="text-xs font-bold uppercase tracking-wider text-blue-400 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-blue-400" />
+            <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-primary)] flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[var(--color-primary)]" />
               <span>{t.roadmap.currentMissionBadge || (isAr ? "مهمتك الآن" : "Votre mission maintenant")}</span>
             </span>
             {nextMission && (
@@ -242,46 +242,46 @@ export default function RoadmapPage() {
             )}
           </div>
 
-          <Card className="p-5 sm:p-7 border border-blue-500/35 bg-[#131C2E] shadow-xl shadow-blue-950/30 space-y-5">
+          <Card className="p-5 sm:p-7 border border-theme bg-card shadow-clay space-y-5">
             {nextMission ? (
               <div className="space-y-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1">
-                    <span className="text-xs font-semibold text-blue-400">
+                    <span className="text-xs font-semibold text-[var(--color-primary)]">
                       {nextMission.subjectId === "math" ? (isAr ? "الرياضيات" : "Mathématiques")
                         : nextMission.subjectId === "physics" ? (isAr ? "العلوم الفيزيائية" : "Physique-Chimie")
                         : (isAr ? "علوم الطبيعة والحياة" : "Sciences de la Nature et de la Vie")}
                     </span>
-                    <h2 className="text-xl sm:text-2xl font-black text-slate-100 tracking-tight font-sans">
+                    <h2 className="text-xl sm:text-2xl font-black text-theme-text tracking-tight font-sans">
                       {locale === "ar" ? nextMission.title_ar : nextMission.title_fr}
                     </h2>
                   </div>
-                  <span className="text-xs font-semibold text-slate-400 font-mono flex items-center gap-1 shrink-0 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700/80">
-                    <Clock className="h-3.5 w-3.5 text-slate-400" />
+                  <span className="text-xs font-semibold text-theme-muted font-mono flex items-center gap-1 shrink-0 bg-surface-soft px-2.5 py-1 rounded-lg border border-theme">
+                    <Clock className="h-3.5 w-3.5 text-[var(--color-primary)]" />
                     <span>{nextMission.estimatedMinutes || 15} min</span>
                   </span>
                 </div>
 
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-sans">
+                <p className="text-xs sm:text-sm text-theme-secondary leading-relaxed font-sans">
                   {locale === "ar" ? nextMission.description_ar : nextMission.description_fr}
                 </p>
 
                 {/* ------------------------------------------------------------- */}
                 {/* SECTION 3: WHY THIS MISSION? (IN CALM, REASSURING MENTOR TONE)*/}
                 {/* ------------------------------------------------------------- */}
-                <div className="p-4 rounded-2xl bg-[#0B1020]/90 border border-slate-800 text-xs space-y-2">
+                <div className="p-4 rounded-2xl bg-surface-soft border border-theme text-xs space-y-2">
                   <div className="flex items-center justify-between">
-                    <div className="font-bold text-blue-300 flex items-center gap-1.5">
-                      <Brain className="h-4 w-4 text-blue-400" />
+                    <div className="font-bold text-[var(--color-primary)] flex items-center gap-1.5">
+                      <Brain className="h-4 w-4 text-[var(--color-primary)]" />
                       <span>{t.roadmap.whyThisMission || (isAr ? "علاش هذي المهمة؟" : "Pourquoi cette mission ?")}</span>
                     </div>
                     {rationale && (
-                      <Badge variant="outline" size="sm" className="bg-[#111827] border-blue-500/25 text-blue-300 font-semibold text-[10px]">
+                      <Badge variant="outline" size="sm" className="bg-card border-theme text-theme-text font-semibold text-[10px]">
                         {locale === "ar" ? rationale.reasonLabel_ar : rationale.reasonLabel_fr}
                       </Badge>
                     )}
                   </div>
-                  <p className="text-slate-300 leading-relaxed font-sans text-xs sm:text-sm">
+                  <p className="text-theme-secondary leading-relaxed font-sans text-xs sm:text-sm">
                     {rationale
                       ? (locale === "ar" ? rationale.shortExplanation_ar : rationale.shortExplanation_fr)
                       : (isAr
@@ -297,7 +297,7 @@ export default function RoadmapPage() {
                     size="lg"
                     fullWidth
                     onClick={() => handleStartMission(nextMission.id)}
-                    className="font-bold shadow-lg shadow-blue-600/25 min-h-[52px] text-base"
+                    className="font-bold shadow-clay min-h-[52px] text-base"
                   >
                     <span>{t.roadmap.startCurrentMissionCta || (isAr ? "ابدأ المهمة الآن" : "Démarrer la mission")}</span>
                     <Arrow className="h-5 w-5" />
@@ -305,7 +305,7 @@ export default function RoadmapPage() {
 
                   {nextMission.status === "repair_needed" && (
                     <Link href="/error-lab" className="w-full sm:w-auto">
-                      <Button variant="outline" size="lg" className="w-full sm:w-auto border-slate-700 text-slate-300 hover:bg-slate-800 min-h-[52px]">
+                      <Button variant="outline" size="lg" className="w-full sm:w-auto min-h-[52px]">
                         <span>{t.roadmap.errorLabLinkCta}</span>
                       </Button>
                     </Link>
@@ -314,8 +314,8 @@ export default function RoadmapPage() {
               </div>
             ) : (
               <div className="text-center py-6 space-y-3">
-                <CheckCircle2 className="h-10 w-10 text-emerald-400 mx-auto" />
-                <h3 className="font-bold text-slate-100 text-base">
+                <CheckCircle2 className="h-10 w-10 text-[var(--color-success)] mx-auto" />
+                <h3 className="font-bold text-theme-text text-base">
                   {t.roadmap.noMissionsLeft}
                 </h3>
               </div>
@@ -329,11 +329,11 @@ export default function RoadmapPage() {
         {roadmapState && roadmapState.queuedMissions.length > 0 && (
           <section className="space-y-3">
             <div className="px-1">
-              <h3 className="text-sm font-bold text-slate-100 flex items-center gap-1.5">
-                <ListOrdered className="h-4 w-4 text-blue-400" />
+              <h3 className="text-sm font-bold text-theme-text flex items-center gap-1.5">
+                <ListOrdered className="h-4 w-4 text-[var(--color-primary)]" />
                 <span>{isAr ? "بعدها" : "Ensuite"}</span>
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-theme-muted">
                 {isAr
                   ? "المهام التالية في مسارك، تتكيف تلقائياً حسب نتائجك وأخطائك."
                   : "Les prochaines étapes dans votre file d'attente, adaptées selon vos progrès."}
@@ -344,23 +344,23 @@ export default function RoadmapPage() {
               {roadmapState.queuedMissions.slice(0, 3).map((item: QueuedMissionItem, idx: number) => (
                 <div
                   key={item.mission.id}
-                  className="p-4 rounded-2xl border border-slate-800 bg-[#111827] hover:border-slate-700 transition-colors flex items-center justify-between gap-3"
+                  className="p-4 rounded-2xl border border-theme bg-card hover:border-[var(--color-primary)]/40 hover:bg-card-hover transition-colors flex items-center justify-between gap-3 shadow-sm"
                 >
                   <div className="space-y-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono text-slate-500 font-bold">
+                      <span className="text-[10px] font-mono text-theme-muted font-bold">
                         #{idx + 1}
                       </span>
-                      <span className="font-bold text-slate-200 text-xs sm:text-sm truncate">
+                      <span className="font-bold text-theme-text text-xs sm:text-sm truncate">
                         {locale === "ar" ? item.mission.title_ar : item.mission.title_fr}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-400 truncate max-w-md">
+                    <p className="text-[11px] text-theme-muted truncate max-w-md">
                       {locale === "ar" ? item.rationale.reasonLabel_ar : item.rationale.reasonLabel_fr}
                     </p>
                   </div>
 
-                  <Badge variant="outline" size="sm" className="shrink-0 text-[10px] border-slate-700 text-slate-400">
+                  <Badge variant="outline" size="sm" className="shrink-0 text-[10px]">
                     {isAr ? "في الانتظار" : "En attente"}
                   </Badge>
                 </div>
@@ -373,26 +373,26 @@ export default function RoadmapPage() {
         {/* SECTION 5: THE ROAD & YOUR PROGRESS                               */}
         {/* ----------------------------------------------------------------- */}
         <section id="progress" className="space-y-5">
-          <div className="p-4 sm:p-6 rounded-3xl border border-slate-800 bg-[#111827] space-y-4">
+          <div className="p-4 sm:p-6 rounded-3xl border border-theme bg-card shadow-card space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <h3 className="text-sm sm:text-base font-bold text-slate-100 flex items-center gap-2">
-                  <Map className="h-4 w-4 text-blue-400" />
+                <h3 className="text-sm sm:text-base font-bold text-theme-text flex items-center gap-2">
+                  <Map className="h-4 w-4 text-[var(--color-primary)]" />
                   <span>{t.roadmap.educationalMapLabel || (isAr ? "خريطتك التعليمية" : "Votre carte d'apprentissage")}</span>
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-theme-muted">
                   {isAr
                     ? `${roadmapState?.masteredSkills.length || 0} مهارات مثبتة من أصل 31 مهارة في خريطة التعلم`
                     : `${roadmapState?.masteredSkills.length || 0} compétences validées sur 31 dans la carte d'apprentissage`}
                 </p>
               </div>
-              <Badge variant="outline" size="sm" className="text-slate-400 border-slate-700 text-[10px]">
+              <Badge variant="outline" size="sm" className="text-[10px]">
                 {t.roadmap.adaptivePathLabel || (isAr ? "مسار متكيف" : "Parcours adaptatif")}
               </Badge>
             </div>
 
             {/* Visual Road Tracker */}
-            <div className="pt-2 border-t border-slate-800/80">
+            <div className="pt-2 border-t border-theme">
               <RoadVisualizer
                 targetScore={profile.targetScore || 16.0}
                 currentBaselineText={gapResult ? `${gapResult.estimatedBaselineScore.toFixed(1)}/20` : "12.0/20"}
@@ -412,39 +412,39 @@ export default function RoadmapPage() {
             </div>
 
             {/* Categorized Skills Status Chips */}
-            <div className="pt-2 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-              <Card className="p-3 border-emerald-500/30 bg-emerald-500/5 text-center space-y-0.5">
-                <span className="text-xl font-black text-emerald-400 font-mono">
+            <div className="pt-2 border-t border-theme grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+              <Card className="p-3 border-[var(--color-success)]/30 bg-[var(--color-success-soft)] text-center space-y-0.5 shadow-sm">
+                <span className="text-xl font-black text-[var(--color-success)] font-mono">
                   {roadmapState?.masteredSkills.length || 0}
                 </span>
-                <span className="text-[11px] font-bold text-emerald-300 block">
+                <span className="text-[11px] font-bold text-[var(--color-success)] block">
                   {t.roadmap.categories.demonstrated || (locale === "ar" ? "✓ تم إثبات التحكم" : "Maîtrise démontrée")}
                 </span>
               </Card>
 
-              <Card className="p-3 border-sky-500/30 bg-sky-500/5 text-center space-y-0.5">
-                <span className="text-xl font-black text-sky-400 font-mono">
+              <Card className="p-3 border-[var(--color-primary)]/30 bg-[var(--color-primary-soft)] text-center space-y-0.5 shadow-sm">
+                <span className="text-xl font-black text-[var(--color-primary)] font-mono">
                   {roadmapState?.emergingSkills.length || 0}
                 </span>
-                <span className="text-[11px] font-bold text-sky-300 block">
+                <span className="text-[11px] font-bold text-[var(--color-primary)] block">
                   {isAr ? "مهارات ناشئة" : "Émergentes"}
                 </span>
               </Card>
 
-              <Card className="p-3 border-amber-500/30 bg-amber-500/5 text-center space-y-0.5">
-                <span className="text-xl font-black text-amber-400 font-mono">
+              <Card className="p-3 border-[var(--color-accent)]/30 bg-[var(--color-accent-soft)] text-center space-y-0.5 shadow-sm">
+                <span className="text-xl font-black text-[var(--color-accent)] font-mono">
                   {roadmapState?.needsMoreWorkSkills.length || 0}
                 </span>
-                <span className="text-[11px] font-bold text-amber-300 block">
+                <span className="text-[11px] font-bold text-[var(--color-accent)] block">
                   {t.roadmap.categories.needs_work || (locale === "ar" ? "تحتاج إلى عمل إضافي" : "needs_more_work")}
                 </span>
               </Card>
 
-              <Card className="p-3 border-rose-500/30 bg-rose-500/5 text-center space-y-0.5">
-                <span className="text-xl font-black text-rose-400 font-mono">
+              <Card className="p-3 border-[var(--color-error)]/30 bg-[var(--color-error)]/10 text-center space-y-0.5 shadow-sm">
+                <span className="text-xl font-black text-[var(--color-error)] font-mono">
                   {roadmapState?.unresolvedErrors.length || 0}
                 </span>
-                <span className="text-[11px] font-bold text-rose-300 block">
+                <span className="text-[11px] font-bold text-[var(--color-error)] block">
                   {locale === "ar" ? "عندك خطأ يحتاج إصلاح" : "repair_needed"}
                 </span>
               </Card>
@@ -458,8 +458,8 @@ export default function RoadmapPage() {
         <section className="space-y-4">
           {/* Stream Subjects Breakdown */}
           {roadmapState && (
-            <Card className="p-4 sm:p-5 border-slate-800 bg-[#111827] space-y-4">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">
+            <Card className="p-4 sm:p-5 border-theme bg-card shadow-card space-y-4">
+              <span className="text-xs font-bold text-theme-muted uppercase tracking-wider block">
                 {t.roadmap.pilotCoverageNotice}
               </span>
 
@@ -469,25 +469,25 @@ export default function RoadmapPage() {
                   .map((sp) => (
                     <div
                       key={sp.subjectId}
-                      className="p-3.5 rounded-xl border border-slate-800 bg-[#0B1020]/60 space-y-2"
+                      className="p-3.5 rounded-xl border border-theme bg-surface-soft space-y-2 shadow-sm"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-slate-200 text-xs">
+                        <span className="font-bold text-theme-text text-xs">
                           {locale === "ar" ? sp.name_ar : sp.name_fr}
                         </span>
-                        <Badge variant="outline" size="sm" className="font-mono text-[10px] text-slate-400 border-slate-700">
+                        <Badge variant="outline" size="sm" className="font-mono text-[10px]">
                           Coef {sp.coefficient}
                         </Badge>
                       </div>
 
-                      <div className="text-[11px] text-slate-400 space-y-1">
+                      <div className="text-[11px] text-theme-muted space-y-1">
                         <div className="flex justify-between">
                           <span>{t.roadmap.categories.demonstrated}:</span>
-                          <span className="font-bold text-emerald-400">{sp.demonstratedCount}/{sp.totalPilotSkills}</span>
+                          <span className="font-bold text-[var(--color-success)]">{sp.demonstratedCount}/{sp.totalPilotSkills}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>{locale === "ar" ? "أخطاء قيد الترميم:" : "Erreurs :"}</span>
-                          <span className={`font-bold ${sp.openErrorsCount > 0 ? "text-rose-400" : "text-slate-400"}`}>
+                          <span className={`font-bold ${sp.openErrorsCount > 0 ? "text-[var(--color-error)]" : "text-theme-muted"}`}>
                             {sp.openErrorsCount}
                           </span>
                         </div>
@@ -497,15 +497,15 @@ export default function RoadmapPage() {
               </div>
 
               {/* Untested subjects disclosure */}
-              <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+              <div className="pt-2 border-t border-theme flex items-center justify-between text-xs text-theme-muted">
                 <span>{locale === "ar" ? "بقية مواد الشعبة (الأدبية والمشتركة):" : "Autres matières de la filière :"}</span>
-                <Badge variant="outline" size="sm" className="text-slate-500 border-slate-800 bg-[#0B1020]">
+                <Badge variant="outline" size="sm">
                   {t.roadmap.categories.not_assessed}
                 </Badge>
               </div>
 
               {/* Collapsible Expanded Curriculum Learning Map */}
-              <div className="pt-2 border-t border-slate-800">
+              <div className="pt-2 border-t border-theme">
                 {(() => {
                   const streamId = profile?.streamId || "sciences_exp";
                   const activeStreamSubjects = roadmapState?.subjectProgress
@@ -522,23 +522,23 @@ export default function RoadmapPage() {
                       <button
                         type="button"
                         onClick={() => setShowCurriculumMap(!showCurriculumMap)}
-                        className="w-full py-2.5 px-4 rounded-xl border border-slate-800 bg-[#0B1020]/80 hover:bg-slate-800/60 transition-colors flex items-center justify-between text-xs font-semibold text-slate-300 cursor-pointer min-h-[44px]"
+                        className="w-full py-2.5 px-4 rounded-xl border border-theme bg-surface-soft hover:bg-card-hover transition-colors flex items-center justify-between text-xs font-semibold text-theme-text cursor-pointer min-h-[44px]"
                       >
                         <div className="flex items-center gap-2">
-                          <BookOpen className="h-4 w-4 text-blue-400" />
+                          <BookOpen className="h-4 w-4 text-[var(--color-primary)]" />
                           <span>{t.roadmap.curriculumMapTitle || (locale === "ar" ? `خريطة المنهاج الموسعة (${streamLabel})` : `Carte d'apprentissage (${streamLabel})`)}</span>
-                          <Badge variant="outline" size="sm" className="bg-blue-500/10 text-blue-300 border-blue-500/25 font-mono text-[10px]">
+                          <Badge variant="outline" size="sm" className="bg-[var(--color-primary-soft)] text-[var(--color-primary)] border-[var(--color-primary)]/25 font-mono text-[10px]">
                             {activeStreamSubjects.length} {locale === "ar" ? "مواد" : "matières"} · {streamActiveSkillsCount} {locale === "ar" ? "مهارة" : "compétences"}
                           </Badge>
                         </div>
-                        <span className="text-slate-500 text-xs">
+                        <span className="text-theme-muted text-xs">
                           {showCurriculumMap ? "▲" : "▼"}
                         </span>
                       </button>
 
                       {showCurriculumMap && (
-                        <div className="mt-3 space-y-4 p-4 rounded-2xl border border-slate-800 bg-[#0B1020]/50 animate-in fade-in-50">
-                          <p className="text-xs text-slate-400 leading-relaxed">
+                        <div className="mt-3 space-y-4 p-4 rounded-2xl border border-theme bg-surface-soft animate-in fade-in-50">
+                          <p className="text-xs text-theme-muted leading-relaxed">
                             {t.roadmap.curriculumMapSubtitle || (locale === "ar" ? `استكشف مهارات شعبة ${streamLabel}، مع تتبع حالة كل كفاءة.` : `Explorez les compétences de la filière ${streamLabel}.`)}
                           </p>
 
@@ -549,12 +549,12 @@ export default function RoadmapPage() {
 
                             return (
                               <div key={subj.subjectId} className="space-y-2.5">
-                                <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
-                                  <span className="font-bold text-xs text-slate-200 flex items-center gap-1.5">
-                                    <span className="h-2 w-2 rounded-full bg-blue-500 inline-block" />
+                                <div className="flex items-center justify-between border-b border-theme pb-1.5">
+                                  <span className="font-bold text-xs text-theme-text flex items-center gap-1.5">
+                                    <span className="h-2 w-2 rounded-full bg-[var(--color-primary)] inline-block" />
                                     {subjName}
                                   </span>
-                                  <span className="text-[11px] text-slate-500 font-mono">
+                                  <span className="text-[11px] text-theme-muted font-mono">
                                     {skills.length} {locale === "ar" ? "مهارات" : "compétences"}
                                   </span>
                                 </div>
@@ -567,32 +567,32 @@ export default function RoadmapPage() {
                                     const isUnresolved = roadmapState?.unresolvedErrors.some((e) => e.skillId === skill.id);
 
                                     let statusBadge = (
-                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-400 border border-slate-700">
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-surface-soft text-theme-muted border border-theme">
                                         {locale === "ar" ? "غير مقيّمة بعد" : "Non évaluée"}
                                       </span>
                                     );
 
                                     if (isMastered) {
                                       statusBadge = (
-                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[var(--color-success-soft)] text-[var(--color-success)] border border-[var(--color-success)]/25">
                                           ✓ {locale === "ar" ? "تم إثباتها" : "Démontrée"}
                                         </span>
                                       );
                                     } else if (isUnresolved) {
                                       statusBadge = (
-                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/25">
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[var(--color-error)]/10 text-[var(--color-error)] border border-[var(--color-error)]/25">
                                           ⚠ {locale === "ar" ? "قيد الترميم" : "En réparation"}
                                         </span>
                                       );
                                     } else if (isNeedsWork) {
                                       statusBadge = (
-                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/25">
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[var(--color-accent-soft)] text-[var(--color-accent)] border border-[var(--color-accent)]/25">
                                           ↺ {locale === "ar" ? "عمل إضافي" : "À réviser"}
                                         </span>
                                       );
                                     } else if (isEmerging) {
                                       statusBadge = (
-                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-500/10 text-sky-400 border border-sky-500/25">
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-[var(--color-primary-soft)] text-[var(--color-primary)] border border-[var(--color-primary)]/25">
                                           ↑ {locale === "ar" ? "ناشئة" : "Émergente"}
                                         </span>
                                       );
@@ -601,13 +601,13 @@ export default function RoadmapPage() {
                                     return (
                                       <div
                                         key={skill.id}
-                                        className="p-2 rounded-lg border border-slate-800 bg-[#0B1020]/60 flex items-center justify-between gap-2 text-xs"
+                                        className="p-2 rounded-lg border border-theme bg-card flex items-center justify-between gap-2 text-xs shadow-sm"
                                       >
                                         <div className="min-w-0 flex-1">
-                                          <p className="font-medium text-slate-200 truncate text-[11px]">
+                                          <p className="font-medium text-theme-text truncate text-[11px]">
                                             {locale === "ar" ? skill.title_ar : skill.title_fr}
                                           </p>
-                                          <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                                          <div className="flex items-center gap-1 text-[10px] text-theme-muted">
                                             {skill.dimensions && (
                                               <span>{skill.dimensions.join(" · ")}</span>
                                             )}
@@ -631,12 +631,12 @@ export default function RoadmapPage() {
           )}
 
           {/* Limitations & Transparency Notice */}
-          <div className="p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20 text-xs text-amber-200 space-y-1.5">
-            <div className="font-bold flex items-center gap-1.5 text-amber-300">
-              <Info className="h-4 w-4 text-amber-400 shrink-0" />
+          <div className="p-4 rounded-2xl bg-[var(--color-accent-soft)] border border-[var(--color-accent)]/25 text-xs text-theme-secondary space-y-1.5">
+            <div className="font-bold flex items-center gap-1.5 text-[var(--color-accent)]">
+              <Info className="h-4 w-4 text-[var(--color-accent)] shrink-0" />
               <span>{t.roadmap.limitationsTitle}</span>
             </div>
-            <p className="leading-relaxed text-amber-200/90 font-sans">
+            <p className="leading-relaxed text-theme-secondary font-sans">
               {roadmapState ? (locale === "ar" ? roadmapState.limitations.ar : roadmapState.limitations.fr) : t.roadmap.limitationsText}
             </p>
           </div>
@@ -645,22 +645,22 @@ export default function RoadmapPage() {
           <div className="pt-2 flex flex-wrap items-center justify-between gap-3 text-xs">
             {isEmpirical ? (
               <>
-                <Link href="/diagnostic/results" className="text-blue-400 hover:underline flex items-center gap-1 font-semibold">
+                <Link href="/diagnostic/results" className="text-[var(--color-primary)] hover:underline flex items-center gap-1 font-semibold">
                   <BarChart3 className="h-3.5 w-3.5" />
                   <span>{t.roadmap.viewDiagnosticResultsCta}</span>
                 </Link>
-                <Link href="/diagnostic" className="text-slate-400 hover:text-slate-200 hover:underline flex items-center gap-1">
+                <Link href="/diagnostic" className="text-theme-muted hover:text-theme-text hover:underline flex items-center gap-1">
                   <RotateCcw className="h-3.5 w-3.5" />
                   <span>{locale === "ar" ? "إعادة التشخيص الأكاديمي" : "Repasser le diagnostic"}</span>
                 </Link>
               </>
             ) : (
-              <Link href="/diagnostic" className="text-blue-400 hover:underline flex items-center gap-1 font-semibold">
+              <Link href="/diagnostic" className="text-[var(--color-primary)] hover:underline flex items-center gap-1 font-semibold">
                 <Play className="h-3.5 w-3.5" />
                 <span>{t.roadmap.startDiagnosticCta}</span>
               </Link>
             )}
-            <Link href="/error-lab" className="text-slate-400 hover:text-slate-200 hover:underline flex items-center gap-1">
+            <Link href="/error-lab" className="text-theme-muted hover:text-theme-text hover:underline flex items-center gap-1">
               <span>{t.roadmap.errorLabLinkCta}</span>
             </Link>
           </div>

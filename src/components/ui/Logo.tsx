@@ -74,7 +74,7 @@ export function Logo({
 
   if (href) {
     return (
-      <Link href={href} className="inline-block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg">
+      <Link href={href} className="inline-block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] rounded-lg">
         {content}
       </Link>
     );
