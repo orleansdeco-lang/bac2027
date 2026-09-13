@@ -19,7 +19,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const students = await getStudentsOperationalList();
+    const students = await getStudentsOperationalList(operator.userId);
     return NextResponse.json({ success: true, students });
   } catch (err: any) {
     return NextResponse.json(

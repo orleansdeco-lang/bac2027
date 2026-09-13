@@ -174,7 +174,7 @@ export async function getPaymentOrders(filters?: {
       }
 
       const { data, error } = await query;
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         return data.map((d: any) => ({
           id: d.id,
           userId: d.user_id,
@@ -198,7 +198,7 @@ export async function getPaymentOrders(filters?: {
         }));
       }
     } catch {
-      // Fallback to memory
+      // Fallback to memory only if Supabase call failed
     }
   }
 

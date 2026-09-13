@@ -31,11 +31,6 @@ export function clearMemoryUserRoles(): void {
 export async function getServerUserRole(userId: string): Promise<UserRole | null> {
   if (!userId) return null;
 
-  // Check memory store first (for mock/bootstrap environments)
-  if (memoryRoles.has(userId)) {
-    return memoryRoles.get(userId) || null;
-  }
-
   if (isSupabaseConfigured && supabase) {
     try {
       const { data, error } = await supabase
@@ -44,15 +39,21 @@ export async function getServerUserRole(userId: string): Promise<UserRole | null
         .eq("user_id", userId)
         .maybeSingle();
 
-      if (error) {
-        return null;
-      }
-      if (data?.role) {
+      if (!error && data?.role) {
         return data.role as UserRole;
       }
+      if (!error && !data) {
+        // Authoritative from remote Supabase: No administrative role assigned
+        return null;
+      }
     } catch {
-      return null;
+      // Fallback only if remote call threw network error
     }
+  }
+
+  // Check memory store only for local offline / bootstrap environments
+  if (memoryRoles.has(userId)) {
+    return memoryRoles.get(userId) || null;
   }
 
   return null;

@@ -67,13 +67,13 @@ export default function OpsLearningPage() {
     },
     {
       name: "2. Diagnostic Completed",
-      count: totalRegistered > 0 ? Math.min(totalRegistered, Math.max(1, Math.floor(totalRegistered * 0.85))) : 0,
-      description: "Students who completed baseline diagnostic assessment",
-      isTelemetried: true,
+      count: null,
+      description: "Students who completed baseline diagnostic assessment (telemetry pending)",
+      isTelemetried: false,
     },
     {
       name: "3. First Mission",
-      count: completedMissions > 0 ? Math.min(totalRegistered || 1, completedMissions) : 0,
+      count: completedMissions,
       description: "Students who initiated their first personalized learning mission",
       isTelemetried: true,
     },
@@ -85,7 +85,7 @@ export default function OpsLearningPage() {
     },
     {
       name: "5. Error Lab Triggered",
-      count: practiceAttempts > 0 ? Math.max(0, Math.floor(practiceAttempts * (1 - avgAccuracy / 100))) : 0,
+      count: kpis?.learningSignals?.triggeredErrorLab ?? null,
       description: "Errors identified and captured in student error book",
       isTelemetried: true,
     },

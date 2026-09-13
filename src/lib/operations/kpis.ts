@@ -13,7 +13,7 @@ import { getStoredTelemetryEvents } from "./telemetry";
 import { supabase, isSupabaseConfigured } from "../supabase/client";
 import { getCapturedClientErrors } from "../monitoring";
 
-export async function getOperationsOverviewKPIs(): Promise<OperationsOverviewKPIs> {
+export async function getOperationsOverviewKPIs(operatorId?: string): Promise<OperationsOverviewKPIs> {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
 
@@ -34,43 +34,69 @@ export async function getOperationsOverviewKPIs(): Promise<OperationsOverviewKPI
     (e) => e.eventName === "practice_completed" || e.eventName === "retest_completed"
   ).length;
 
-  // 3. Database Aggregation (or defaults if local)
+  // 3. Database Aggregation
   let activeTrials = 0;
   let trialsExpiringWithin24h = 0;
   let expiredTrials = 0;
   let paidSubscribers = approvedOrders.length;
   let totalStudents = 0;
+  let completedOnboarding = 0;
 
   let completedMissions = 0;
   let totalPracticeAttempts = 0;
+  let correctPracticeAttempts = 0;
+  let totalErrorsRecorded = 0;
   let totalRetestsPassed = 0;
   let totalDemonstratedSkills = 0;
 
   if (isSupabaseConfigured && supabase) {
     try {
-      // Profiles aggregation
-      const { data: profiles } = await supabase
-        .from("student_profiles")
-        .select("id, access_status, plan, trial_expires_at, created_at");
+      // 3a. Student aggregation: Use safe operator RPC if operatorId provided
+      let countsLoadedFromRpc = false;
+      if (operatorId) {
+        const { data: kpiCounts, error: kpiCountsError } = await supabase.rpc(
+          "ops_get_student_kpi_counts",
+          { p_operator_id: operatorId }
+        );
+        if (!kpiCountsError && kpiCounts) {
+          totalStudents = Number(kpiCounts.total_students) || 0;
+          activeTrials = Number(kpiCounts.active_trials) || 0;
+          trialsExpiringWithin24h = Number(kpiCounts.trials_expiring_24h) || 0;
+          expiredTrials = Number(kpiCounts.expired_trials) || 0;
+          paidSubscribers = Number(kpiCounts.paid_subscribers) || approvedOrders.length;
+          completedOnboarding = Number(kpiCounts.completed_onboarding) || 0;
+          countsLoadedFromRpc = true;
+        }
+      }
 
-      if (profiles && profiles.length > 0) {
-        totalStudents = profiles.length;
-        const nowMs = now.getTime();
-        const in24hMs = nowMs + 24 * 60 * 60 * 1000;
+      // Fallback: Direct table aggregation
+      if (!countsLoadedFromRpc) {
+        const { data: profiles } = await supabase
+          .from("student_profiles")
+          .select("id, access_status, plan, trial_expires_at, created_at, onboarding_completed, academic_profile_completed_at");
 
-        for (const p of profiles) {
-          if (p.access_status === "PAID" || p.plan === "PAID") {
-            paidSubscribers++;
-          } else if (p.access_status === "EXPIRED") {
-            expiredTrials++;
-          } else {
-            const expMs = p.trial_expires_at ? new Date(p.trial_expires_at).getTime() : nowMs;
-            if (expMs <= nowMs) {
+        if (profiles && profiles.length > 0) {
+          totalStudents = profiles.length;
+          const nowMs = now.getTime();
+          const in24hMs = nowMs + 24 * 60 * 60 * 1000;
+
+          for (const p of profiles) {
+            if (p.onboarding_completed || p.academic_profile_completed_at) {
+              completedOnboarding++;
+            }
+            if (p.access_status === "PAID" || p.plan === "PAID") {
+              paidSubscribers++;
+            } else if (p.access_status === "EXPIRED") {
               expiredTrials++;
             } else {
-              activeTrials++;
-              if (expMs <= in24hMs) {
-                trialsExpiringWithin24h++;
+              const expMs = p.trial_expires_at ? new Date(p.trial_expires_at).getTime() : nowMs;
+              if (expMs <= nowMs) {
+                expiredTrials++;
+              } else {
+                activeTrials++;
+                if (expMs <= in24hMs) {
+                  trialsExpiringWithin24h++;
+                }
               }
             }
           }
@@ -90,6 +116,19 @@ export async function getOperationsOverviewKPIs(): Promise<OperationsOverviewKPI
         .select("*", { count: "exact", head: true });
       totalPracticeAttempts = pCount || 0;
 
+      // Exact correct practice attempts aggregation
+      const { count: cpCount } = await supabase
+        .from("practice_attempts")
+        .select("*", { count: "exact", head: true })
+        .eq("is_correct", true);
+      correctPracticeAttempts = cpCount || 0;
+
+      // Errors recorded in error book aggregation
+      const { count: eCount } = await supabase
+        .from("errors")
+        .select("*", { count: "exact", head: true });
+      totalErrorsRecorded = eCount || 0;
+
       // Retests passed aggregation
       const { count: rCount } = await supabase
         .from("retests")
@@ -104,7 +143,7 @@ export async function getOperationsOverviewKPIs(): Promise<OperationsOverviewKPI
         .eq("status", "demonstrated");
       totalDemonstratedSkills = sCount || 0;
     } catch {
-      // Fallback
+      // Retain authentic defaults (0)
     }
   }
 
@@ -112,6 +151,10 @@ export async function getOperationsOverviewKPIs(): Promise<OperationsOverviewKPI
   const clientErrors = getCapturedClientErrors();
 
   const conversionRate = totalStudents > 0 ? (paidSubscribers / totalStudents) * 100 : 0;
+  const averagePracticeAccuracy =
+    totalPracticeAttempts > 0
+      ? Number(((correctPracticeAttempts / totalPracticeAttempts) * 100).toFixed(1))
+      : 0;
 
   const todayApprovedOrders = approvedOrders.filter((o) => o.reviewedAt && o.reviewedAt >= todayStart);
   const todayRejectedOrders = rejectedOrders.filter((o) => o.reviewedAt && o.reviewedAt >= todayStart);
@@ -170,7 +213,7 @@ export async function getOperationsOverviewKPIs(): Promise<OperationsOverviewKPI
 
   return {
     today: {
-      activeStudents: Math.max(todayUniqueUsers, 1),
+      activeStudents: todayUniqueUsers,
       newRegistrations: todayRegistrations,
       missionsStarted: todayMissionsStarted,
       completedLearningEvents: todayCompletedLearningEvents,
@@ -184,12 +227,12 @@ export async function getOperationsOverviewKPIs(): Promise<OperationsOverviewKPI
     learningActivity: {
       totalMissionsCompleted: completedMissions,
       totalPracticeAttempts: totalPracticeAttempts,
-      averagePracticeAccuracy: totalPracticeAttempts > 0 ? 76.5 : 0,
+      averagePracticeAccuracy: averagePracticeAccuracy,
       totalRetestsPassed: totalRetestsPassed,
       totalDemonstratedSkills: totalDemonstratedSkills,
     },
     trialAndAccess: {
-      activeTrials: activeTrials || 1,
+      activeTrials: activeTrials,
       trialsExpiringWithin24h,
       expiredTrials,
       paidSubscribers,
@@ -208,12 +251,12 @@ export async function getOperationsOverviewKPIs(): Promise<OperationsOverviewKPI
       serverTime: now.toISOString(),
     },
     productStatus: {
-      totalRegistered: Math.max(totalStudents, activeTrials + paidSubscribers + expiredTrials, 1),
-      studentsInTrial: activeTrials || 1,
+      totalRegistered: totalStudents,
+      studentsInTrial: activeTrials,
       activePaidStudents: paidSubscribers,
       expiredStudents: expiredTrials,
-      completedOnboarding: Math.max(totalStudents, 1),
-      reachedFirstLearningActivity: Math.max(completedMissions, 1),
+      completedOnboarding: completedOnboarding,
+      reachedFirstLearningActivity: completedMissions,
     },
     todayDetailed: {
       newRegistrationsToday: todayRegistrations,
@@ -228,7 +271,7 @@ export async function getOperationsOverviewKPIs(): Promise<OperationsOverviewKPI
     learningSignals: {
       completedAtLeastOneMission: completedMissions,
       completedPractice: totalPracticeAttempts,
-      triggeredErrorLab: Math.max(0, Math.floor(totalPracticeAttempts * 0.25)),
+      triggeredErrorLab: totalErrorsRecorded,
       completedRepair: 0, // Invariant: Not separately telemetried
       completedRetest: totalRetestsPassed,
       demonstratingMasteryEvidence: totalDemonstratedSkills,
@@ -245,18 +288,36 @@ export async function getOperationsOverviewKPIs(): Promise<OperationsOverviewKPI
   };
 }
 
-export async function getStudentsOperationalList(): Promise<StudentOperationalSummary[]> {
+export async function getStudentsOperationalList(operatorId?: string): Promise<StudentOperationalSummary[]> {
   const summaries: StudentOperationalSummary[] = [];
   const pendingOrders = await getPaymentOrders({ status: "PENDING" });
   const pendingUserIds = new Set(pendingOrders.map((o) => o.userId));
 
   if (isSupabaseConfigured && supabase) {
     try {
-      const { data: profiles } = await supabase
-        .from("student_profiles")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(100);
+      let profiles: any[] | null = null;
+
+      // 1. Try safe operator directory RPC if operatorId is provided
+      if (operatorId) {
+        const { data: rpcProfiles, error: rpcError } = await supabase.rpc(
+          "ops_get_student_directory",
+          { p_operator_id: operatorId, p_limit: 100 }
+        );
+
+        if (!rpcError && Array.isArray(rpcProfiles)) {
+          profiles = rpcProfiles;
+        }
+      }
+
+      // 2. Direct query fallback
+      if (!profiles) {
+        const { data: directProfiles } = await supabase
+          .from("student_profiles")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(100);
+        profiles = directProfiles;
+      }
 
       if (profiles && profiles.length > 0) {
         const now = new Date();
@@ -288,68 +349,15 @@ export async function getStudentsOperationalList(): Promise<StudentOperationalSu
             subscriptionStartedAt: p.subscription_started_at,
             subscriptionExpiresAt: p.subscription_expires_at,
             createdAt: p.created_at,
-            onboardingCompleted: Boolean(p.onboarding_completed),
+            onboardingCompleted: Boolean(p.onboarding_completed || p.academic_profile_completed_at),
           });
         }
       }
     } catch {
-      // Fallback
+      // Empty on error
     }
   }
 
-  // If no profiles loaded from Supabase, provide baseline mock/test students for local test resilience
-  if (summaries.length === 0) {
-    summaries.push(
-      {
-        id: "usr_test_student_1",
-        fullName: "أمين بلقاسم",
-        email: "amine@bacmastery.dz",
-        studentPhone: "0550123456",
-        streamId: "sciences_exp",
-        wilayaName: "الجزائر",
-        communeName: "الجزائر الوسطى",
-        accessStatus: "TRIAL",
-        plan: "PILOT_TRIAL",
-        trialStartedAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-        trialExpiresAt: new Date(Date.now() + 48 * 3600 * 1000).toISOString(),
-        remainingHours: 48,
-        targetScore: 17.5,
-        completedMissionsCount: 3,
-        demonstratedSkillsCount: 2,
-        activeErrorsCount: 1,
-        resolvedRetestsCount: 1,
-        lastActiveAt: new Date().toISOString(),
-        hasPendingPayment: false,
-        createdAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-        onboardingCompleted: true,
-      },
-      {
-        id: "usr_test_student_2",
-        fullName: "سارة خليل",
-        email: "sara@bacmastery.dz",
-        studentPhone: "0661987654",
-        streamId: "math",
-        wilayaName: "وهران",
-        communeName: "وهران",
-        accessStatus: "PAID",
-        plan: "season",
-        trialStartedAt: new Date(Date.now() - 100 * 3600 * 1000).toISOString(),
-        trialExpiresAt: new Date(Date.now() - 28 * 3600 * 1000).toISOString(),
-        remainingHours: 0,
-        targetScore: 19.0,
-        completedMissionsCount: 12,
-        demonstratedSkillsCount: 9,
-        activeErrorsCount: 2,
-        resolvedRetestsCount: 4,
-        lastActiveAt: new Date().toISOString(),
-        hasPendingPayment: false,
-        subscriptionStartedAt: new Date(Date.now() - 10 * 86400 * 1000).toISOString(),
-        subscriptionExpiresAt: new Date(Date.now() + 290 * 86400 * 1000).toISOString(),
-        createdAt: new Date(Date.now() - 100 * 3600 * 1000).toISOString(),
-        onboardingCompleted: true,
-      }
-    );
-  }
-
+  // Strictly return authentic profiles. Zero mock/test fallback students.
   return summaries;
 }

@@ -19,7 +19,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const kpis = await getOperationsOverviewKPIs();
+    const kpis = await getOperationsOverviewKPIs(operator.userId);
     return NextResponse.json({ success: true, kpis });
   } catch (err: any) {
     return NextResponse.json(

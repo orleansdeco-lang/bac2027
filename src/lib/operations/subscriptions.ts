@@ -81,7 +81,7 @@ export async function getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
         .select("*")
         .order("duration_months", { ascending: false });
 
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         return data.map((d: any) => ({
           id: d.id,
           name: d.name,
@@ -93,7 +93,7 @@ export async function getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
         }));
       }
     } catch {
-      // Memory fallback
+      // Memory fallback only if Supabase call failed
     }
   }
 
@@ -127,8 +127,12 @@ export async function getSubscriptionPlanById(planId: string): Promise<Subscript
           updated_at: data.updated_at,
         };
       }
+      if (!error && !data) {
+        // Authoritatively not found in remote Supabase
+        return null;
+      }
     } catch {
-      // Memory fallback
+      // Memory fallback only on call error
     }
   }
 
