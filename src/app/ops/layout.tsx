@@ -15,12 +15,6 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isLoading) return;
 
-    // In local development mode, allow access for testing if configured
-    if (process.env.NODE_ENV !== "production") {
-      setAuthorized(true);
-      return;
-    }
-
     if (!user) {
       setAuthorized(false);
       return;

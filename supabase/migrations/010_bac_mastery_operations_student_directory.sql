@@ -8,8 +8,10 @@
 -- 2. Student RLS on public.student_profiles is 100% PRESERVED (USING auth.uid() = user_id).
 -- 3. No service role key exposed to client.
 -- 4. Server-enforced RBAC: Functions are SECURITY DEFINER but strictly verify
---    that the caller possesses OWNER or OPERATOR role via public.is_operator().
--- 5. Denies execution to normal students and unauthorized callers.
+--    that the caller possesses OWNER or OPERATOR role via auth.uid() ONLY.
+--    The parameter p_operator_id is NEVER trusted for authorization.
+-- 5. Strict search_path = public, pg_temp with schema-qualified object references.
+-- 6. Execution privileges: anon revoked, authenticated granted, operator verified.
 -- ==============================================================================
 
 -- ------------------------------------------------------------------------------
@@ -23,10 +25,11 @@ CREATE OR REPLACE FUNCTION public.ops_get_student_directory(
 )
 RETURNS JSONB AS $$
 DECLARE
-  v_caller UUID := COALESCE(auth.uid(), p_operator_id);
+  v_caller UUID := auth.uid();
   v_result JSONB;
 BEGIN
-  -- Strict verification: Caller must be an authorized operator or owner
+  -- Strict verification: Authorization is based ONLY on auth.uid()
+  -- The parameter p_operator_id is NEVER trusted for authorization
   IF v_caller IS NULL OR NOT public.is_operator(v_caller) THEN
     RAISE EXCEPTION 'Access denied: operator role required';
   END IF;
@@ -63,7 +66,7 @@ BEGIN
 
   RETURN v_result;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, auth;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- ------------------------------------------------------------------------------
 -- 2. OPS GET STUDENT DOSSIER RPC
@@ -75,10 +78,11 @@ CREATE OR REPLACE FUNCTION public.ops_get_student_dossier(
 )
 RETURNS JSONB AS $$
 DECLARE
-  v_caller UUID := COALESCE(auth.uid(), p_operator_id);
+  v_caller UUID := auth.uid();
   v_result JSONB;
 BEGIN
-  -- Strict verification: Caller must be an authorized operator or owner
+  -- Strict verification: Authorization is based ONLY on auth.uid()
+  -- The parameter p_operator_id is NEVER trusted for authorization
   IF v_caller IS NULL OR NOT public.is_operator(v_caller) THEN
     RAISE EXCEPTION 'Access denied: operator role required';
   END IF;
@@ -95,7 +99,7 @@ BEGIN
 
   RETURN v_result;
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, auth;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- ------------------------------------------------------------------------------
 -- 3. OPS GET STUDENT KPI COUNTS RPC
@@ -106,7 +110,7 @@ CREATE OR REPLACE FUNCTION public.ops_get_student_kpi_counts(
 )
 RETURNS JSONB AS $$
 DECLARE
-  v_caller UUID := COALESCE(auth.uid(), p_operator_id);
+  v_caller UUID := auth.uid();
   v_total_students INT := 0;
   v_active_trials INT := 0;
   v_trials_expiring_24h INT := 0;
@@ -116,7 +120,8 @@ DECLARE
   v_now TIMESTAMPTZ := now();
   v_in_24h TIMESTAMPTZ := now() + interval '24 hours';
 BEGIN
-  -- Strict verification: Caller must be an authorized operator or owner
+  -- Strict verification: Authorization is based ONLY on auth.uid()
+  -- The parameter p_operator_id is NEVER trusted for authorization
   IF v_caller IS NULL OR NOT public.is_operator(v_caller) THEN
     RAISE EXCEPTION 'Access denied: operator role required';
   END IF;
@@ -161,12 +166,24 @@ BEGIN
     'completed_onboarding', v_completed_onboarding
   );
 END;
-$$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, auth;
+$$ LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- ------------------------------------------------------------------------------
 -- 4. PERMISSIONS & GRANTS
+-- Desired model:
+-- - anon: NO EXECUTE
+-- - authenticated: EXECUTE allowed
+-- - function itself: operator authorization required (enforced via auth.uid())
 -- ------------------------------------------------------------------------------
 
-GRANT EXECUTE ON FUNCTION public.ops_get_student_directory(UUID, INT, INT) TO authenticated, service_role, anon;
-GRANT EXECUTE ON FUNCTION public.ops_get_student_dossier(UUID, UUID) TO authenticated, service_role, anon;
-GRANT EXECUTE ON FUNCTION public.ops_get_student_kpi_counts(UUID) TO authenticated, service_role, anon;
+REVOKE ALL ON FUNCTION public.ops_get_student_directory(UUID, INT, INT) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.ops_get_student_directory(UUID, INT, INT) FROM anon;
+GRANT EXECUTE ON FUNCTION public.ops_get_student_directory(UUID, INT, INT) TO authenticated, service_role;
+
+REVOKE ALL ON FUNCTION public.ops_get_student_dossier(UUID, UUID) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.ops_get_student_dossier(UUID, UUID) FROM anon;
+GRANT EXECUTE ON FUNCTION public.ops_get_student_dossier(UUID, UUID) TO authenticated, service_role;
+
+REVOKE ALL ON FUNCTION public.ops_get_student_kpi_counts(UUID) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.ops_get_student_kpi_counts(UUID) FROM anon;
+GRANT EXECUTE ON FUNCTION public.ops_get_student_kpi_counts(UUID) TO authenticated, service_role;

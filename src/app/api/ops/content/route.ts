@@ -5,12 +5,12 @@ import { ContentVerificationStatus, ContentProvenanceSource } from "@/lib/operat
 
 export async function GET(request: NextRequest) {
   const userId = request.headers.get("x-user-id");
-  const isAuthorized =
-    process.env.NODE_ENV !== "production" ||
-    (userId &&
+  const isAuthorized = Boolean(
+    userId &&
       ((await isServerOperator(userId)) ||
         (await isServerContentReviewer(userId)) ||
-        (await isServerOwner(userId))));
+        (await isServerOwner(userId)))
+  );
 
   if (!isAuthorized) {
     return NextResponse.json(

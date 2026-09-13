@@ -101,8 +101,12 @@ export async function getAuditLogs(filters?: {
         }));
       }
     } catch {
-      // Fallback to memory
+      // Fallback only if unconfigured
     }
+  }
+
+  if (isSupabaseConfigured) {
+    return [];
   }
 
   // Filter in-memory logs

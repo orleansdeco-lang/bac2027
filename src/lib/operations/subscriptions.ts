@@ -93,8 +93,12 @@ export async function getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
         }));
       }
     } catch {
-      // Memory fallback only if Supabase call failed
+      // Memory fallback only if unconfigured
     }
+  }
+
+  if (isSupabaseConfigured) {
+    return [];
   }
 
   return Array.from(memorySubscriptionPlans.values());
@@ -132,8 +136,12 @@ export async function getSubscriptionPlanById(planId: string): Promise<Subscript
         return null;
       }
     } catch {
-      // Memory fallback only on call error
+      // Memory fallback only if unconfigured
     }
+  }
+
+  if (isSupabaseConfigured) {
+    return null;
   }
 
   return memorySubscriptionPlans.get(targetId) || null;

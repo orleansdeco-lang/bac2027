@@ -198,8 +198,12 @@ export async function getPaymentOrders(filters?: {
         }));
       }
     } catch {
-      // Fallback to memory only if Supabase call failed
+      // Fallback only if unconfigured
     }
+  }
+
+  if (isSupabaseConfigured) {
+    return [];
   }
 
   let result = [...memoryPaymentOrders];

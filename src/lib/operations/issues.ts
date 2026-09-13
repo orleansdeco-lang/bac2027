@@ -82,8 +82,12 @@ export async function getOperationsIssues(filters?: {
         }));
       }
     } catch {
-      // Memory fallback
+      // Memory fallback only if unconfigured
     }
+  }
+
+  if (isSupabaseConfigured) {
+    return [];
   }
 
   // Filter in-memory issues

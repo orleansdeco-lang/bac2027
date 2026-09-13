@@ -51,8 +51,8 @@ export async function getServerUserRole(userId: string): Promise<UserRole | null
     }
   }
 
-  // Check memory store only for local offline / bootstrap environments
-  if (memoryRoles.has(userId)) {
+  // Check memory store only for local offline / unconfigured environments
+  if (!isSupabaseConfigured && memoryRoles.has(userId)) {
     return memoryRoles.get(userId) || null;
   }
 

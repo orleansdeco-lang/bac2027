@@ -9,7 +9,7 @@ import { IssueCategory, IssueSeverity, IssueStatus } from "@/lib/operations/type
 
 export async function GET(request: NextRequest) {
   const userId = request.headers.get("x-user-id");
-  const isOperator = process.env.NODE_ENV !== "production" || (userId && (await isServerOperator(userId)));
+  const isOperator = Boolean(userId && (await isServerOperator(userId)));
 
   if (!isOperator) {
     return NextResponse.json(
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const userId = request.headers.get("x-user-id");
-  const isOperator = process.env.NODE_ENV !== "production" || (userId && (await isServerOperator(userId)));
+  const isOperator = Boolean(userId && (await isServerOperator(userId)));
 
   if (!isOperator) {
     return NextResponse.json(
