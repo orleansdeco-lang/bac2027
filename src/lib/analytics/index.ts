@@ -126,6 +126,69 @@ function sanitizeProperties(props: PilotAnalyticsProperties): PilotAnalyticsProp
 }
 
 /**
+ * Telemetry Batch Ingestion Queue (Phase 2 Operations Foundation P0)
+ */
+const BATCH_QUEUE_SIZE_THRESHOLD = 5;
+const BATCH_FLUSH_INTERVAL_MS = 20000; // 20s debounced flush
+let pendingTelemetryQueue: StoredPilotEvent[] = [];
+let flushTimeout: any = null;
+let isFlushing = false;
+
+/**
+ * Flushes pending telemetry events to server endpoint /api/telemetry/events
+ */
+export async function flushTelemetryBatch(): Promise<void> {
+  if (typeof window === "undefined" || isFlushing || pendingTelemetryQueue.length === 0) {
+    return;
+  }
+
+  isFlushing = true;
+  const batchToSend = [...pendingTelemetryQueue];
+  pendingTelemetryQueue = [];
+
+  try {
+    const payload = JSON.stringify({ events: batchToSend });
+
+    // Use sendBeacon if page is unloading
+    if (document.visibilityState === "hidden" && navigator.sendBeacon) {
+      const blob = new Blob([payload], { type: "application/json" });
+      navigator.sendBeacon("/api/telemetry/events", blob);
+      isFlushing = false;
+      return;
+    }
+
+    const res = await fetch("/api/telemetry/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: payload,
+      keepalive: true,
+    });
+
+    if (!res.ok) {
+      // Re-queue events on non-blocking failure (capped at 50)
+      pendingTelemetryQueue = [...batchToSend.slice(-25), ...pendingTelemetryQueue].slice(-50);
+    }
+  } catch {
+    // Network offline: retain in queue up to limit
+    pendingTelemetryQueue = [...batchToSend.slice(-25), ...pendingTelemetryQueue].slice(-50);
+  } finally {
+    isFlushing = false;
+  }
+}
+
+// Setup page lifecycle flush listeners once in browser
+if (typeof window !== "undefined") {
+  window.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      flushTelemetryBatch().catch(() => {});
+    }
+  });
+  window.addEventListener("beforeunload", () => {
+    flushTelemetryBatch().catch(() => {});
+  });
+}
+
+/**
  * Core event tracking function
  */
 export function trackEvent(
@@ -154,6 +217,21 @@ export function trackEvent(
     } catch {
       // Gracefully ignore local storage quota / access issues
     }
+
+    // Add to remote batch queue
+    pendingTelemetryQueue.push(event);
+
+    if (pendingTelemetryQueue.length >= BATCH_QUEUE_SIZE_THRESHOLD) {
+      if (flushTimeout) clearTimeout(flushTimeout);
+      flushTelemetryBatch().catch(() => {});
+    } else {
+      if (!flushTimeout) {
+        flushTimeout = setTimeout(() => {
+          flushTimeout = null;
+          flushTelemetryBatch().catch(() => {});
+        }, BATCH_FLUSH_INTERVAL_MS);
+      }
+    }
   }
 
   return event;
@@ -176,6 +254,7 @@ export function getStoredPilotEvents(): StoredPilotEvent[] {
  * Purge buffered events (e.g. for testing cleanup)
  */
 export function clearStoredPilotEvents(): void {
+  pendingTelemetryQueue = [];
   if (typeof window === "undefined") return;
   try {
     localStorage.removeItem(PILOT_EVENTS_STORAGE_KEY);

@@ -1,0 +1,153 @@
+/**
+ * BAC Mastery — Operations Core Types
+ * Phase 2: Operations Foundation P0
+ */
+
+export type UserRole = "OWNER" | "OPERATOR" | "CONTENT_REVIEWER" | "TEACHER_ADMIN";
+
+export interface UserRoleRecord {
+  id: string;
+  userId: string;
+  role: UserRole;
+  createdAt: string;
+}
+
+export type PaymentOrderStatus = "DRAFT" | "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+
+export type PaymentMethod = "baridimob" | "ccp" | "manual_transfer" | "cash" | "other";
+
+export interface PaymentOrder {
+  id: string;
+  userId: string;
+  plan: string;
+  amount: number;
+  currency: "DZD";
+  paymentMethod: PaymentMethod;
+  status: PaymentOrderStatus;
+  receiptPath?: string | null;
+  notes?: string | null;
+  submittedAt: string;
+  reviewedAt?: string | null;
+  reviewedBy?: string | null;
+  rejectionReason?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  // Extended student metadata for operational views
+  studentEmail?: string;
+  studentName?: string;
+  studentPhone?: string;
+  streamId?: string;
+  wilayaName?: string;
+}
+
+export type AuditAction =
+  | "PAYMENT_APPROVED"
+  | "PAYMENT_REJECTED"
+  | "TRIAL_EXTENDED"
+  | "SUBSCRIPTION_ACTIVATED"
+  | "ROLE_GRANTED"
+  | "ROLE_REVOKED"
+  | "STUDENT_FLAGGED"
+  | "CONFIG_CHANGED";
+
+export type AuditTargetType =
+  | "payment_order"
+  | "student_profile"
+  | "user_role"
+  | "telemetry"
+  | "system";
+
+export interface OperationsAuditLog {
+  id: string;
+  actorUserId?: string | null;
+  actorRole: string;
+  action: AuditAction;
+  targetType: AuditTargetType;
+  targetId: string;
+  reason?: string | null;
+  beforeState?: Record<string, unknown> | null;
+  afterState?: Record<string, unknown> | null;
+  ipAddress?: string | null;
+  createdAt: string;
+}
+
+export interface IngestedTelemetryEvent {
+  id?: string;
+  eventId: string;
+  anonymousId: string;
+  sessionId: string;
+  userId?: string | null;
+  eventName: string;
+  occurredAt: string;
+  route?: string;
+  stream?: string;
+  subject?: string;
+  skillId?: string;
+  missionId?: string;
+  contentId?: string;
+  metadata?: Record<string, unknown>;
+  createdAt?: string;
+}
+
+export interface OperationsOverviewKPIs {
+  today: {
+    activeStudents: number;
+    newRegistrations: number;
+    missionsStarted: number;
+    completedLearningEvents: number;
+    pendingReceiptsCount: number;
+  };
+  needsAction: {
+    pendingPayments: PaymentOrder[];
+    atRiskTrialsCount: number;
+    unresolvedHighRecurrenceErrorsCount: number;
+  };
+  learningActivity: {
+    totalMissionsCompleted: number;
+    totalPracticeAttempts: number;
+    averagePracticeAccuracy: number;
+    totalRetestsPassed: number;
+    totalDemonstratedSkills: number;
+  };
+  trialAndAccess: {
+    activeTrials: number;
+    trialsExpiringWithin24h: number;
+    expiredTrials: number;
+    paidSubscribers: number;
+    conversionRatePercent: number;
+  };
+  revenue: {
+    totalRevenueDZD: number;
+    approvedOrdersCount: number;
+    pendingOrdersCount: number;
+    rejectedOrdersCount: number;
+  };
+  systemHealth: {
+    telemetryEventsLogged: number;
+    clientErrorsCount: number;
+    databaseStatus: "HEALTHY" | "DEGRADED";
+    serverTime: string;
+  };
+}
+
+export interface StudentOperationalSummary {
+  id: string;
+  fullName: string;
+  email?: string;
+  studentPhone?: string;
+  streamId?: string;
+  wilayaName?: string;
+  communeName?: string;
+  accessStatus: "TRIAL" | "PAID" | "EXPIRED";
+  plan: string;
+  trialStartedAt?: string;
+  trialExpiresAt?: string;
+  remainingHours: number;
+  targetScore: number;
+  completedMissionsCount: number;
+  demonstratedSkillsCount: number;
+  activeErrorsCount: number;
+  resolvedRetestsCount: number;
+  lastActiveAt?: string;
+  hasPendingPayment: boolean;
+}

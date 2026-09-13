@@ -81,6 +81,21 @@ export function markPaymentPendingVerification(requestId: string): PilotPaymentR
       updatedAt: new Date().toISOString(),
     };
     savePaymentRecord(updatedRecord);
+
+    // Sync to authoritative server endpoint
+    fetch("/api/ops/payments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: target.userId,
+        plan: target.planId,
+        amount: target.amountDZD,
+        paymentMethod: "baridimob",
+        notes: `Verification requested for ref: ${requestId}`,
+        studentEmail: target.studentEmail,
+      }),
+    }).catch(() => {});
+
     return updatedRecord;
   } catch {
     return null;
@@ -111,6 +126,22 @@ export class ManualPilotPaymentProvider implements PaymentProvider {
       studentEmail: req.studentEmail,
     };
     savePaymentRecord(record);
+
+    // Also persist server-side payment order
+    if (typeof window !== "undefined") {
+      fetch("/api/ops/payments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: req.userId,
+          plan: req.planId || PILOT_BAC_PLAN.id,
+          amount: PILOT_BAC_PLAN.priceDZD,
+          paymentMethod: "baridimob",
+          notes: `Reference ID: ${referenceId}`,
+          studentEmail: req.studentEmail,
+        }),
+      }).catch(() => {});
+    }
 
     return {
       status: "READY",
