@@ -239,7 +239,7 @@ export default function MissionPage() {
             </div>
             <div className="space-y-2">
               <h1 className="text-xl sm:text-2xl font-bold text-theme-text">
-                {isAr ? "انتهت فترة التجربة المجانية (48 ساعة)" : "Votre essai gratuit de 48h a expiré"}
+                {isAr ? "انتهت فترة التجربة المجانية (72 ساعة)" : "Votre essai gratuit de 72h a expiré"}
               </h1>
               <p className="text-xs sm:text-sm text-theme-secondary leading-relaxed max-w-md mx-auto">
                 {isAr

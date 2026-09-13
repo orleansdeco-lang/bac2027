@@ -136,7 +136,7 @@ export async function extractAuthenticatedUserId(req: Request): Promise<string |
 
   // Testing/development header support
   if (process.env.NODE_ENV !== "production") {
-    const headerUid = req.headers.get("x-test-user-id");
+    const headerUid = req.headers.get("x-test-user-id") || req.headers.get("x-user-id");
     if (headerUid) return headerUid;
   }
 

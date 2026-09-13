@@ -5,7 +5,7 @@
 -- ==============================================================================
 -- INVARIANTS:
 -- 1. Strictly ADDITIVE. Zero modifications to the 10 canonical Learning Core tables.
--- 2. Authoritative Price Catalog: 3,900 DZD for 'bac_season_pass_pilot'.
+-- 2. Authoritative Price Catalog: Neutral unconfigured pricing, server-authoritative via database.
 -- 3. Payment Order Anti-Tamper: Student inserts cannot self-approve or manipulate amount/currency.
 -- 4. Private Receipt Storage: 'payment_receipts' bucket with strict RLS isolation.
 -- 5. Granular RBAC: CONTENT_REVIEWER denied finance/receipts; OPERATOR denied role management.
@@ -15,31 +15,27 @@
 -- 1. PAYMENT ORDER ANTI-TAMPER CONSTRAINTS & TRIGGERS
 -- ------------------------------------------------------------------------------
 
--- Ensure payment orders strictly adhere to catalog specifications
+-- Ensure payment orders strictly adhere to non-negative amounts
 ALTER TABLE public.payment_orders 
   DROP CONSTRAINT IF EXISTS chk_payment_orders_pilot_catalog;
 
 ALTER TABLE public.payment_orders 
-  ADD CONSTRAINT chk_payment_orders_pilot_catalog CHECK (
-    (plan = 'bac_season_pass_pilot' AND amount = 3900.00 AND currency = 'DZD')
-    OR (plan <> 'bac_season_pass_pilot') -- Extensibility for future tier definitions
-  );
+  DROP CONSTRAINT IF EXISTS chk_payment_orders_amount_positive;
+
+ALTER TABLE public.payment_orders 
+  ADD CONSTRAINT chk_payment_orders_amount_positive CHECK (amount >= 0.00);
 
 -- Trigger to guarantee student inserts start as PENDING, zero self-approval
 CREATE OR REPLACE FUNCTION public.enforce_payment_order_student_invariants()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- If not an operator/owner, enforce default catalog and PENDING state
+  -- If not an operator/owner, enforce PENDING state and zero self-approval
   IF NOT public.is_operator(auth.uid()) THEN
     NEW.status := 'PENDING';
     NEW.reviewed_by := NULL;
     NEW.reviewed_at := NULL;
     NEW.rejection_reason := NULL;
-    IF NEW.plan = 'bac_season_pass_pilot' OR NEW.plan IS NULL THEN
-      NEW.plan := 'bac_season_pass_pilot';
-      NEW.amount := 3900.00;
-      NEW.currency := 'DZD';
-    END IF;
+    NEW.currency := 'DZD';
   END IF;
   RETURN NEW;
 END;
@@ -87,8 +83,9 @@ ON CONFLICT (id) DO UPDATE SET
   file_size_limit = 5242880,
   allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'application/pdf'];
 
--- Enable RLS on storage.objects (if not already enabled)
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+-- Note: RLS on storage.objects is managed by Supabase internally (already enabled by default).
+-- Storage policies below apply correctly without an explicit ENABLE ROW LEVEL SECURITY.
+
 
 -- Storage Policy 1: Students can upload only to their own folder: payment_receipts/{user_id}/*
 DO $$
@@ -219,14 +216,14 @@ BEGIN
   -- 5. Elevate student access state authoritatively
   UPDATE public.student_profiles
   SET access_status = 'PAID',
-      plan = 'PAID',
+      plan = coalesce(v_order.plan, 'season'),
       updated_at = now()
   WHERE id = v_order.user_id;
 
   v_after_state := jsonb_build_object(
     'order_status', 'APPROVED',
     'student_access_status', 'PAID',
-    'student_plan', 'PAID',
+    'student_plan', coalesce(v_order.plan, 'season'),
     'reviewed_by', v_caller_id,
     'reviewed_at', now()
   );
@@ -257,6 +254,113 @@ BEGIN
     'order_id', p_order_id,
     'user_id', v_order.user_id,
     'status', 'APPROVED'
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+
+-- Reject Payment Order with Finance Authorization and State Machine Integrity
+CREATE OR REPLACE FUNCTION public.reject_payment_order(
+  p_order_id UUID,
+  p_rejection_reason TEXT
+)
+RETURNS JSONB AS $$
+DECLARE
+  v_caller_id UUID := auth.uid();
+  v_order RECORD;
+  v_before_state JSONB;
+  v_after_state JSONB;
+BEGIN
+  -- 1. Authorization check: requires finance access (OWNER or OPERATOR)
+  IF NOT public.has_finance_access(v_caller_id) THEN
+    RAISE EXCEPTION 'Access denied: caller does not possess finance authorization.';
+  END IF;
+
+  IF p_rejection_reason IS NULL OR length(trim(p_rejection_reason)) = 0 THEN
+    RAISE EXCEPTION 'Rejection reason is required.';
+  END IF;
+
+  -- 2. Lock and retrieve payment order
+  SELECT * INTO v_order
+  FROM public.payment_orders
+  WHERE id = p_order_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Payment order % not found.', p_order_id;
+  END IF;
+
+  -- Cannot reject an approved order
+  IF v_order.status = 'APPROVED' THEN
+    RAISE EXCEPTION 'Cannot reject an already APPROVED payment order.';
+  END IF;
+
+  -- Cannot reject a cancelled order
+  IF v_order.status = 'CANCELLED' THEN
+    RAISE EXCEPTION 'Cannot reject a CANCELLED payment order.';
+  END IF;
+
+  -- Idempotent check
+  IF v_order.status = 'REJECTED' THEN
+    RETURN jsonb_build_object(
+      'success', true,
+      'order_id', p_order_id,
+      'status', 'REJECTED',
+      'message', 'Order is already rejected (idempotent).'
+    );
+  END IF;
+
+  IF v_order.status NOT IN ('PENDING', 'DRAFT') THEN
+    RAISE EXCEPTION 'Cannot reject order in status %.', v_order.status;
+  END IF;
+
+  v_before_state := jsonb_build_object(
+    'order_status', v_order.status,
+    'rejection_reason', v_order.rejection_reason
+  );
+
+  -- 3. Transition payment order to REJECTED
+  UPDATE public.payment_orders
+  SET status = 'REJECTED',
+      reviewed_at = now(),
+      reviewed_by = v_caller_id,
+      rejection_reason = p_rejection_reason,
+      updated_at = now()
+  WHERE id = p_order_id;
+
+  v_after_state := jsonb_build_object(
+    'order_status', 'REJECTED',
+    'rejection_reason', p_rejection_reason,
+    'reviewed_by', v_caller_id,
+    'reviewed_at', now()
+  );
+
+  -- 4. Write to immutable operations audit log
+  INSERT INTO public.operations_audit_logs (
+    actor_user_id,
+    actor_role,
+    action,
+    target_type,
+    target_id,
+    reason,
+    before_state,
+    after_state
+  ) VALUES (
+    v_caller_id,
+    CASE WHEN public.is_owner(v_caller_id) THEN 'OWNER' ELSE 'OPERATOR' END,
+    'PAYMENT_REJECTED',
+    'payment_order',
+    p_order_id::text,
+    p_rejection_reason,
+    v_before_state,
+    v_after_state
+  );
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'order_id', p_order_id,
+    'user_id', v_order.user_id,
+    'status', 'REJECTED'
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;

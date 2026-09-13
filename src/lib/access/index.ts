@@ -16,14 +16,11 @@ export const TRIAL_DURATION_MS = TRIAL_DURATION_HOURS * 60 * 60 * 1000;
 
 /**
  * Calculates trial expiration date:
- * Starts a 72-hour trial that extends until the end of the 3rd day (23:59:59.999).
- * E.g., if registered at 14:00 on Monday, expires at 23:59 on Thursday.
+ * Strictly 72 hours from account creation date.
+ * E.g., if registered at 14:00 on Monday, expires at exactly 14:00 on Thursday.
  */
 export function calculateTrialExpiration(startDate: Date = new Date()): Date {
-  const d = new Date(startDate);
-  d.setDate(d.getDate() + 3);
-  d.setHours(23, 59, 59, 999);
-  return d;
+  return new Date(startDate.getTime() + TRIAL_DURATION_MS);
 }
 
 /**
@@ -184,23 +181,24 @@ export function getStudentAccess(
 
   // 3. Resolve Trial Timestamps
   const profileCreated =
-    (profile as any).created_at || (profile as any).createdAt || now.toISOString();
+    (profile as any).created_at || (profile as any).createdAt || (profile as any).trial_started_at || now.toISOString();
 
   const trialStartedAt = (profile as any).trial_started_at || profileCreated;
-  const trialStartMs = new Date(trialStartedAt).getTime();
+  const accountCreatedMs = new Date(profileCreated).getTime();
 
-  let trialExpiresAt = (profile as any).trial_expires_at;
-  if (!trialExpiresAt) {
-    trialExpiresAt = new Date(trialStartMs + TRIAL_DURATION_MS).toISOString();
-  }
-  const trialExpiryMs = new Date(trialExpiresAt).getTime();
+  // Authoritative trial expiration: STRICTLY account_created_at + 72 hours
+  const authoritative72hMs = accountCreatedMs + TRIAL_DURATION_MS;
+  const authoritativeExpiresAtIso = new Date(authoritative72hMs).toISOString();
 
-  const remainingMs = trialExpiryMs - nowMs;
+  // Guard against client clock, localStorage manipulation, or legacy 48h values
+  // Always enforce authoritative account_created_at + 72 hours
+  const trialExpiresAt = authoritativeExpiresAtIso;
+  const remainingMs = authoritative72hMs - nowMs;
   const remainingHours = Math.max(0, Math.floor(remainingMs / (1000 * 60 * 60)));
   const remainingMinutes = Math.max(0, Math.floor(remainingMs / (1000 * 60)));
 
   // 4. Check for Expiration
-  if (remainingMs <= 0 || rawStatus === "EXPIRED") {
+  if (remainingMs <= 0) {
     return {
       status: "TRIAL_EXPIRED",
       trialStatus: "EXPIRED",

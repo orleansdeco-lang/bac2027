@@ -72,6 +72,7 @@ const opsAuth = loadTs("src/lib/operations/auth.ts");
 const opsTelemetry = loadTs("src/lib/operations/telemetry.ts");
 const opsPayments = loadTs("src/lib/operations/payments.ts");
 const opsAudit = loadTs("src/lib/operations/audit.ts");
+const opsSubscriptions = loadTs("src/lib/operations/subscriptions.ts");
 const opsKpis = loadTs("src/lib/operations/kpis.ts");
 const accessModule = loadTs("src/lib/access/index.ts");
 
@@ -201,6 +202,13 @@ async function runAll() {
   // ----------------------------------------------------------------------------
   // 4. PAYMENT ORDER CREATION & STATE MACHINE
   // ----------------------------------------------------------------------------
+  const bootstrapOpId = "usr_op_foundation_test";
+  opsAuth.setMemoryUserRole(bootstrapOpId, "OPERATOR");
+  await opsSubscriptions.updateSubscriptionPlan(bootstrapOpId, "season", {
+    price_dzd: 3900,
+    active: true,
+  });
+
   await runAsyncTest("4. Payment Orders: Order creation and initial PENDING state", async () => {
     const studentUserId = `student_${Date.now()}`;
     const order = await opsPayments.createPaymentOrder({

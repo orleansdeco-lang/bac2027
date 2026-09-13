@@ -166,8 +166,8 @@ END $$;
 CREATE TABLE IF NOT EXISTS public.payment_orders (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  plan TEXT NOT NULL DEFAULT 'bac_season_pass_pilot',
-  amount NUMERIC(10, 2) NOT NULL DEFAULT 3900.00,
+  plan TEXT NOT NULL DEFAULT 'season',
+  amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
   currency TEXT NOT NULL DEFAULT 'DZD',
   payment_method TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'PENDING',
@@ -184,6 +184,9 @@ CREATE TABLE IF NOT EXISTS public.payment_orders (
   ),
   CONSTRAINT chk_payment_orders_status CHECK (
     status IN ('DRAFT', 'PENDING', 'APPROVED', 'REJECTED', 'CANCELLED')
+  ),
+  CONSTRAINT chk_payment_orders_plan CHECK (
+    plan IN ('season', 'monthly', 'bac_season_pass_pilot', 'PAID')
   )
 );
 
@@ -234,7 +237,7 @@ CREATE TABLE IF NOT EXISTS public.operations_audit_logs (
   ip_address TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   CONSTRAINT chk_audit_logs_target_type CHECK (
-    target_type IN ('payment_order', 'student_profile', 'user_role', 'telemetry', 'system')
+    target_type IN ('payment_order', 'student_profile', 'user_role', 'telemetry', 'system', 'subscription_plan')
   )
 );
 
@@ -323,17 +326,16 @@ BEGIN
   WHERE id = p_order_id;
 
   -- 5. Elevate student access state authoritatively
-  -- (Trigger protect_student_trial_fields() will NOT block this since running inside SECURITY DEFINER)
   UPDATE public.student_profiles
   SET access_status = 'PAID',
-      plan = 'PAID',
+      plan = v_order.plan,
       updated_at = now()
   WHERE id = v_order.user_id;
 
   v_after_state := jsonb_build_object(
     'order_status', 'APPROVED',
     'student_access_status', 'PAID',
-    'student_plan', 'PAID',
+    'student_plan', v_order.plan,
     'reviewed_by', v_caller_id,
     'reviewed_at', now()
   );
@@ -400,8 +402,20 @@ BEGIN
     RAISE EXCEPTION 'Payment order % not found.', p_order_id;
   END IF;
 
+  IF v_order.status = 'APPROVED' THEN
+    RAISE EXCEPTION 'Cannot reject an already APPROVED payment order.';
+  END IF;
+
+  IF v_order.status = 'CANCELLED' THEN
+    RAISE EXCEPTION 'Cannot reject a CANCELLED payment order.';
+  END IF;
+
   IF v_order.status = 'REJECTED' THEN
     RETURN jsonb_build_object('success', true, 'message', 'Order already rejected.');
+  END IF;
+
+  IF v_order.status NOT IN ('PENDING', 'DRAFT') THEN
+    RAISE EXCEPTION 'Cannot reject order in status %.', v_order.status;
   END IF;
 
   v_before_state := jsonb_build_object(

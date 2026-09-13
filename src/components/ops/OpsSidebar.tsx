@@ -8,23 +8,51 @@ import {
   Users,
   CreditCard,
   GraduationCap,
+  BookOpen,
+  Sliders,
+  AlertCircle,
   FileClock,
   Server,
   ShieldCheck,
   ChevronRight,
   LogOut,
-  Sliders,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 
-const navItems = [
-  { href: "/ops/overview", label: "Overview", icon: LayoutDashboard },
-  { href: "/ops/students", label: "Students", icon: Users },
-  { href: "/ops/finance", label: "Finance & Orders", icon: CreditCard },
-  { href: "/ops/subscriptions", label: "Subscriptions", icon: Sliders },
-  { href: "/ops/pedagogy", label: "Pedagogy & Signals", icon: GraduationCap },
-  { href: "/ops/audit", label: "Audit Log", icon: FileClock },
-  { href: "/ops/system", label: "System Health", icon: Server },
+interface NavGroup {
+  title: string;
+  items: {
+    href: string;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    title: "MONITOR",
+    items: [
+      { href: "/ops/overview", label: "Overview", icon: LayoutDashboard },
+      { href: "/ops/students", label: "Students", icon: Users },
+      { href: "/ops/learning", label: "Learning", icon: GraduationCap },
+      { href: "/ops/content", label: "Content", icon: BookOpen },
+    ],
+  },
+  {
+    title: "CONTROL",
+    items: [
+      { href: "/ops/subscriptions", label: "Subscriptions", icon: Sliders },
+      { href: "/ops/finance", label: "Finance & Orders", icon: CreditCard },
+      { href: "/ops/issues", label: "Issues Queue", icon: AlertCircle },
+    ],
+  },
+  {
+    title: "GOVERNANCE",
+    items: [
+      { href: "/ops/audit", label: "Audit Log", icon: FileClock },
+      { href: "/ops/system", label: "System Health", icon: Server },
+    ],
+  },
 ];
 
 export function OpsSidebar() {
@@ -46,33 +74,40 @@ export function OpsSidebar() {
             </div>
           </div>
           <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-mono">
-            P0
+            V1
           </span>
         </div>
 
-        {/* Navigation */}
-        <nav className="p-3 space-y-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center justify-between px-3 py-2 rounded-md text-xs font-medium transition-colors ${
-                  isActive
-                    ? "bg-slate-800 text-white font-semibold shadow-sm border-l-2 border-indigo-500"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <Icon className={`w-4 h-4 ${isActive ? "text-indigo-400" : "text-slate-400"}`} />
-                  <span>{item.label}</span>
-                </div>
-                {isActive && <ChevronRight className="w-3.5 h-3.5 text-slate-500" />}
-              </Link>
-            );
-          })}
+        {/* Categorized Navigation */}
+        <nav className="p-3 space-y-4">
+          {navGroups.map((group) => (
+            <div key={group.title} className="space-y-1">
+              <div className="px-3 text-[10px] font-bold tracking-wider text-slate-500 uppercase">
+                {group.title}
+              </div>
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center justify-between px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                      isActive
+                        ? "bg-slate-800 text-white font-semibold shadow-sm border-l-2 border-indigo-500"
+                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Icon className={`w-3.5 h-3.5 ${isActive ? "text-indigo-400" : "text-slate-400"}`} />
+                      <span>{item.label}</span>
+                    </div>
+                    {isActive && <ChevronRight className="w-3.5 h-3.5 text-slate-500" />}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
       </div>
 

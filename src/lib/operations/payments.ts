@@ -20,7 +20,7 @@ export const AUTHORITATIVE_PLANS: Record<string, AuthoritativePlan> = {
     id: "season",
     name_ar: "اشتراك الموسم الدراسي",
     name_fr: "Pass Saison BAC",
-    priceDZD: 3900,
+    priceDZD: 0,
     currency: "DZD",
     durationMonths: 10,
     description_ar: "وصول غير محدود لجميع الدروس، التدريبات، والتصحيحات حتى يوم امتحان البكالوريا.",
@@ -30,7 +30,7 @@ export const AUTHORITATIVE_PLANS: Record<string, AuthoritativePlan> = {
     id: "monthly",
     name_ar: "الاشتراك الشهري",
     name_fr: "Abonnement Mensuel",
-    priceDZD: 1500,
+    priceDZD: 0,
     currency: "DZD",
     durationMonths: 1,
     description_ar: "وصول كامل لمدة 30 يوماً قابلة للتجديد.",
@@ -40,7 +40,7 @@ export const AUTHORITATIVE_PLANS: Record<string, AuthoritativePlan> = {
     id: "bac_season_pass_pilot",
     name_ar: "موسم البكالوريا الكامل",
     name_fr: "Pass Saison BAC",
-    priceDZD: 3900,
+    priceDZD: 0,
     currency: "DZD",
     durationMonths: 10,
     description_ar: "وصول غير محدود لجميع الدروس، التدريبات، والتصحيحات حتى يوم امتحان البكالوريا.",
@@ -83,7 +83,7 @@ export async function createPaymentOrder(input: CreatePaymentOrderInput): Promis
   }
 
   const finalPlanId = rawPlanKey;
-  const finalPrice = subscriptionPlan ? subscriptionPlan.price_dzd : (authoritativePlan?.priceDZD ?? 3900);
+  const finalPrice = subscriptionPlan ? subscriptionPlan.price_dzd : (authoritativePlan?.priceDZD ?? 0);
   const finalCurrency = "DZD";
 
   // Server-authoritative derivation: ignore any manipulated amount or currency from client
@@ -295,15 +295,23 @@ export async function approvePaymentOrder(
 
   // Elevate student profile authoritatively with subscription duration
   try {
-    if (studentProfileBefore) {
-      await StudentRepository.saveProfile({
-        ...studentProfileBefore,
-        access_status: "PAID",
-        plan: "PAID",
-        subscription_started_at: subscriptionStartedAt,
-        subscription_expires_at: subscriptionExpiresAt,
-      } as any);
-    }
+    const profileToUpdate = studentProfileBefore || {
+      id: order.userId,
+      educationLevel: "secondary",
+      examType: "BAC",
+      streamId: "sciences_exp",
+      targetScore: 16.0,
+      createdAt: now,
+      trial_started_at: now,
+    };
+    await StudentRepository.saveProfile({
+      ...profileToUpdate,
+      access_status: "PAID",
+      plan: order.plan || "season",
+      subscription_started_at: subscriptionStartedAt,
+      subscription_expires_at: subscriptionExpiresAt,
+      isServerAuthoritativePaid: true,
+    } as any, order.userId);
   } catch {
     // Non-blocking
   }

@@ -142,7 +142,7 @@ async function runTests() {
   // --------------------------------------------------------------------------
   // CHECK 01: Dynamic Plan Catalog Integrity
   // --------------------------------------------------------------------------
-  await check(1, "Plan Catalog: exactly two canonical plans (season & monthly) with non-hardcoded structure", async () => {
+  await check(1, "Plan Catalog: exactly two canonical plans (season & monthly) with non-hardcoded neutral structure", async () => {
     opsSubscriptions.resetMemorySubscriptionPlans();
     const plans = await opsSubscriptions.getSubscriptionPlans();
     assert.strictEqual(plans.length, 2, "Must contain exactly 2 plans");
@@ -152,29 +152,32 @@ async function runTests() {
     
     assert.ok(season, "season plan must exist");
     assert.strictEqual(season.name, "اشتراك الموسم الدراسي");
-    assert.strictEqual(season.price_dzd, 3900);
+    assert.strictEqual(season.price_dzd, 0, "No hardcoded 3900 price in initial plans");
     assert.strictEqual(season.duration_months, 10);
-    assert.strictEqual(season.active, true);
+    assert.strictEqual(season.active, false, "Initial unpriced plan is not open for purchase");
 
     assert.ok(monthly, "monthly plan must exist");
     assert.strictEqual(monthly.name, "الاشتراك الشهري");
-    assert.strictEqual(monthly.price_dzd, 1500);
+    assert.strictEqual(monthly.price_dzd, 0, "No hardcoded 1500 price in initial plans");
     assert.strictEqual(monthly.duration_months, 1);
-    assert.strictEqual(monthly.active, true);
+    assert.strictEqual(monthly.active, false, "Initial unpriced plan is not open for purchase");
   });
 
   // --------------------------------------------------------------------------
   // CHECK 02: Operator Price Update
   // --------------------------------------------------------------------------
-  await check(2, "Operator Price Update: updates season plan price to 4,500 DZD and records audit log", async () => {
+  await check(2, "Operator Price Update: updates season plan price to 4,500 DZD, activates plan, and records audit log", async () => {
     const res = await opsSubscriptions.updateSubscriptionPlan(operatorUser, "season", {
       price_dzd: 4500,
+      active: true,
     });
     assert.strictEqual(res.success, true);
     assert.strictEqual(res.plan.price_dzd, 4500);
+    assert.strictEqual(res.plan.active, true);
 
     const retrieved = await opsSubscriptions.getSubscriptionPlanById("season");
     assert.strictEqual(retrieved.price_dzd, 4500);
+    assert.strictEqual(retrieved.active, true);
   });
 
   // --------------------------------------------------------------------------
@@ -194,15 +197,19 @@ async function runTests() {
   // --------------------------------------------------------------------------
   // CHECK 04: Operator Duration Update
   // --------------------------------------------------------------------------
-  await check(4, "Operator Duration Update: updates monthly plan duration to 2 months", async () => {
+  await check(4, "Operator Duration Update: updates monthly plan duration to 2 months and configures price", async () => {
     const res = await opsSubscriptions.updateSubscriptionPlan(operatorUser, "monthly", {
       duration_months: 2,
+      price_dzd: 2000,
+      active: true,
     });
     assert.strictEqual(res.success, true);
     assert.strictEqual(res.plan.duration_months, 2);
+    assert.strictEqual(res.plan.active, true);
 
     const retrieved = await opsSubscriptions.getSubscriptionPlanById("monthly");
     assert.strictEqual(retrieved.duration_months, 2);
+    assert.strictEqual(retrieved.active, true);
   });
 
   // --------------------------------------------------------------------------

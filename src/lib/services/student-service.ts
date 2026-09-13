@@ -56,16 +56,17 @@ export const StudentService = {
           }
         }
 
-        // Case 2: No server profile exists, but local profile exists -> migrate up with 72h trial
+        // Case 2: No server profile exists, but local profile exists -> migrate up with 72h trial anchored to created_at
         if (localProfile) {
-          const now = new Date();
-          const trialExpires = calculateTrialExpiration(now);
+          const createdAt = (localProfile as any).created_at || (localProfile as any).createdAt || new Date().toISOString();
+          const trialStarted = (localProfile as any).trial_started_at || createdAt;
+          const trialExpires = calculateTrialExpiration(new Date(createdAt)).toISOString();
           const trialProfile = {
             ...localProfile,
-            trial_started_at: (localProfile as any).trial_started_at || now.toISOString(),
-            trial_expires_at: (localProfile as any).trial_expires_at || trialExpires.toISOString(),
-            access_status: (localProfile as any).access_status || "TRIAL",
-            plan: (localProfile as any).plan || "PILOT_TRIAL",
+            trial_started_at: trialStarted,
+            trial_expires_at: trialExpires,
+            access_status: (localProfile as any).access_status === "PAID" ? "TRIAL" : ((localProfile as any).access_status || "TRIAL"),
+            plan: (localProfile as any).plan === "PAID" ? "PILOT_TRIAL" : ((localProfile as any).plan || "PILOT_TRIAL"),
           };
           await StudentRepository.saveProfile(trialProfile, userId);
           clearOnboardingDraft();

@@ -185,8 +185,8 @@ export default function SubscribePage() {
 
           <p className="text-sm sm:text-base text-theme-secondary max-w-lg mx-auto leading-relaxed">
             {isAr
-              ? "48 ساعة كانت باش تشوف واش يقدر BAC Mastery يدير معاك. الخريطة تاعك والتقدم تاعك ما راحوش."
-              : "48 heures pour découvrir l'efficacité de la méthode. Votre roadmap et votre progression restent intégralement sauvegardées."}
+              ? "72 ساعة كانت باش تشوف واش يقدر BAC Mastery يدير معاك. الخريطة تاعك والتقدم تاعك ما راحوش."
+              : "72 heures pour découvrir l'efficacité de la méthode. Votre roadmap et votre progression restent intégralement sauvegardées."}
           </p>
         </div>
 
@@ -308,12 +308,16 @@ export default function SubscribePage() {
 
               <div className="text-start sm:text-end shrink-0">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-extrabold text-theme-text font-mono">{plan.priceDZD}</span>
-                  <span className="text-xs font-semibold text-theme-muted">
-                    {isAr
-                      ? `دج / ${plan.durationMonths === 1 ? "شهرياً" : "للموسم"}`
-                      : `DA / ${plan.durationMonths === 1 ? "mois" : "saison"}`}
+                  <span className="text-3xl font-extrabold text-theme-text font-mono">
+                    {plan.priceDZD > 0 ? plan.priceDZD : (isAr ? "قيد التحديد" : "À définir")}
                   </span>
+                  {plan.priceDZD > 0 && (
+                    <span className="text-xs font-semibold text-theme-muted">
+                      {isAr
+                        ? `دج / ${plan.durationMonths === 1 ? "شهرياً" : "للموسم"}`
+                        : `DA / ${plan.durationMonths === 1 ? "mois" : "saison"}`}
+                    </span>
+                  )}
                 </div>
                 <span className="text-[11px] text-[var(--color-success)] font-medium block mt-0.5">
                   {plan.durationMonths === 1

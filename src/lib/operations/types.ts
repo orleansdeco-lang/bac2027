@@ -54,7 +54,11 @@ export type AuditAction =
   | "ROLE_GRANTED"
   | "ROLE_REVOKED"
   | "STUDENT_FLAGGED"
-  | "CONFIG_CHANGED";
+  | "CONFIG_CHANGED"
+  | "ISSUE_CREATED"
+  | "ISSUE_STATUS_CHANGED"
+  | "ISSUE_RESOLVED"
+  | "ISSUE_DISMISSED";
 
 export type AuditTargetType =
   | "payment_order"
@@ -62,7 +66,8 @@ export type AuditTargetType =
   | "user_role"
   | "subscription_plan"
   | "telemetry"
-  | "system";
+  | "system"
+  | "issue";
 
 export interface OperationsAuditLog {
   id: string;
@@ -135,6 +140,49 @@ export interface OperationsOverviewKPIs {
     databaseStatus: "HEALTHY" | "DEGRADED";
     serverTime: string;
   };
+  productStatus: {
+    totalRegistered: number;
+    studentsInTrial: number;
+    activePaidStudents: number;
+    expiredStudents: number;
+    completedOnboarding: number;
+    reachedFirstLearningActivity: number;
+  };
+  todayDetailed: {
+    newRegistrationsToday: number;
+    newTrialStartsToday: number;
+    newPaymentOrdersToday: number;
+    approvedPaymentsToday: number;
+    rejectedPaymentsToday: number;
+    activeLearningSessionsToday: number;
+    errorsRecordedToday: number;
+    retestsToday: number;
+  };
+  learningSignals: {
+    completedAtLeastOneMission: number;
+    completedPractice: number;
+    triggeredErrorLab: number;
+    completedRepair: number;
+    completedRetest: number;
+    demonstratingMasteryEvidence: number;
+  };
+  commercialOverview: {
+    pendingPaymentOrders: number;
+    approvedToday: number;
+    rejectedToday: number;
+    activeSubscriptions: number;
+    subscriptionsExpiringSoon: number;
+    expiredSubscriptions: number;
+  };
+  attentionItems: {
+    id: string;
+    type: string;
+    severity: "P0" | "P1" | "P2" | "P3";
+    title: string;
+    description: string;
+    targetHref: string;
+    actionLabel: string;
+  }[];
 }
 
 export interface StudentOperationalSummary {
@@ -159,6 +207,8 @@ export interface StudentOperationalSummary {
   hasPendingPayment: boolean;
   subscriptionStartedAt?: string;
   subscriptionExpiresAt?: string;
+  createdAt?: string;
+  onboardingCompleted?: boolean;
 }
 
 export interface SubscriptionPlan {
@@ -215,5 +265,71 @@ export interface ReceiptViewResult {
   url?: string;
   error?: string;
   status?: number;
+}
+
+export type PlanOperationalState = "ACTIVE" | "CLOSED" | "NOT_CONFIGURED";
+
+export type IssueCategory =
+  | "payment"
+  | "access"
+  | "subscription"
+  | "trial"
+  | "telemetry"
+  | "learning"
+  | "content"
+  | "system"
+  | "security";
+
+export type IssueSeverity = "P0" | "P1" | "P2" | "P3";
+
+export type IssueStatus = "OPEN" | "INVESTIGATING" | "RESOLVED" | "DISMISSED";
+
+export interface OperationsIssue {
+  id: string;
+  category: IssueCategory;
+  severity: IssueSeverity;
+  status: IssueStatus;
+  description: string;
+  relatedStudentId?: string | null;
+  relatedOrderId?: string | null;
+  relatedEventId?: string | null;
+  resolution?: string | null;
+  resolvedBy?: string | null;
+  resolvedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ContentVerificationStatus =
+  | "DRAFT"
+  | "MAPPED"
+  | "QUALITY_CHECKED"
+  | "INTERNALLY_VERIFIED"
+  | "PUBLISHED"
+  | "NEEDS_REVIEW";
+
+export type ContentProvenanceSource =
+  | "OFFICIAL_CURRENT"
+  | "OFFICIAL_HISTORICAL"
+  | "AUTHENTIC_BAC"
+  | "TEXTBOOK"
+  | "BAC_MASTERY_ORIGINAL"
+  | "EXTERNAL_REFERENCE"
+  | "UNVERIFIED";
+
+export interface ContentSkillSummary {
+  id: string;
+  name: string;
+  streamId: string;
+  subjectId: string;
+  domainId: string;
+  verificationStatus: ContentVerificationStatus;
+  curriculumStatus: string;
+  sourceType: ContentProvenanceSource;
+  language: string;
+  lastVerificationDate?: string;
+  hasPracticeVariant: boolean;
+  hasRetestVariant: boolean;
+  missingResources?: string[];
 }
 

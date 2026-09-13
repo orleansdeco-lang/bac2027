@@ -157,7 +157,7 @@ export default function OpsFinancePage() {
 
       {/* Filter Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-        {["all", "PENDING", "APPROVED", "REJECTED"].map((tab) => (
+        {["all", "PENDING", "APPROVED", "REJECTED", "CANCELLED"].map((tab) => (
           <button
             key={tab}
             onClick={() => setStatusFilter(tab)}
@@ -179,11 +179,13 @@ export default function OpsFinancePage() {
             <thead className="bg-slate-950 border-b border-slate-800 text-slate-400 uppercase tracking-wider text-[10px]">
               <tr>
                 <th className="py-3 px-4">Order / User</th>
+                <th className="py-3 px-4">Plan</th>
                 <th className="py-3 px-4">Method</th>
                 <th className="py-3 px-4">Amount</th>
                 <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">Reference / Notes</th>
-                <th className="py-3 px-4">Submitted At</th>
+                <th className="py-3 px-4">Receipt / Notes</th>
+                <th className="py-3 px-4">Submitted</th>
+                <th className="py-3 px-4">Reviewer</th>
                 <th className="py-3 px-4 text-right">Operator Action</th>
               </tr>
             </thead>
@@ -199,6 +201,12 @@ export default function OpsFinancePage() {
                       <div className="text-[10px] text-slate-500 font-mono">
                         {o.userId.slice(0, 8)} · {o.studentPhone || "No phone"}
                       </div>
+                    </td>
+
+                    <td className="py-3 px-4">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-indigo-300 border border-slate-700 font-semibold uppercase">
+                        {o.plan}
+                      </span>
                     </td>
 
                     <td className="py-3 px-4">
@@ -218,6 +226,8 @@ export default function OpsFinancePage() {
                             ? "bg-emerald-950 text-emerald-400 border border-emerald-800"
                             : o.status === "REJECTED"
                             ? "bg-red-950 text-red-400 border border-red-800"
+                            : o.status === "CANCELLED"
+                            ? "bg-slate-800 text-slate-400 border border-slate-700"
                             : "bg-amber-950 text-amber-400 border border-amber-800 font-semibold"
                         }`}
                       >
@@ -247,7 +257,20 @@ export default function OpsFinancePage() {
                     </td>
 
                     <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">
-                      {new Date(o.submittedAt).toLocaleString()}
+                      {new Date(o.submittedAt).toLocaleDateString()}
+                    </td>
+
+                    <td className="py-3 px-4 text-slate-400 font-mono text-[10px]">
+                      {o.reviewedBy ? (
+                        <div>
+                          <div className="text-slate-300">{o.reviewedBy.slice(0, 8)}...</div>
+                          <div className="text-slate-500">
+                            {o.reviewedAt ? new Date(o.reviewedAt).toLocaleDateString() : ""}
+                          </div>
+                        </div>
+                      ) : (
+                        "—"
+                      )}
                     </td>
 
                     <td className="py-3 px-4 text-right">

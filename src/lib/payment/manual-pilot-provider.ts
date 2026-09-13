@@ -23,7 +23,7 @@ export const CANONICAL_PLANS: Record<string, PaymentPlan> = {
     id: "season",
     name_ar: "اشتراك الموسم الدراسي",
     name_fr: "Pass Saison BAC",
-    priceDZD: 3900,
+    priceDZD: 0,
     durationMonths: 10,
     description_ar: "وصول غير محدود لجميع الدروس، التدريبات، والتصحيحات حتى يوم امتحان البكالوريا.",
     description_fr: "Accès illimité à toutes les missions, entraînements et retests jusqu'aux épreuves du BAC.",
@@ -41,13 +41,13 @@ export const CANONICAL_PLANS: Record<string, PaymentPlan> = {
       "Retests jumeaux indépendants pour valider la maîtrise",
       "Couverture complète des matières majeures (Maths, Physique, SVT)",
     ],
-    active: true,
+    active: false,
   },
   monthly: {
     id: "monthly",
     name_ar: "الاشتراك الشهري",
     name_fr: "Pass Mensuel",
-    priceDZD: 1500,
+    priceDZD: 0,
     durationMonths: 1,
     description_ar: "وصول كامل وشامل لمدة شهر كامل (30 يوماً) قابل للتجديد.",
     description_fr: "Accès complet pendant 1 mois (30 jours) renouvelable.",
@@ -63,13 +63,13 @@ export const CANONICAL_PLANS: Record<string, PaymentPlan> = {
       "Suivi précis de la progression et des points faibles",
       "Renouvelable chaque mois selon vos besoins",
     ],
-    active: true,
+    active: false,
   },
   bac_season_pass_pilot: {
     id: "bac_season_pass_pilot",
     name_ar: "موسم البكالوريا الكامل",
     name_fr: "Pass Saison BAC",
-    priceDZD: 3900,
+    priceDZD: 0,
     durationMonths: 10,
     description_ar: "وصول غير محدود لجميع الدروس، التدريبات، والتصحيحات حتى يوم امتحان البكالوريا.",
     description_fr: "Accès illimité à toutes les missions, entraînements et retests jusqu'aux épreuves du BAC.",
@@ -87,11 +87,11 @@ export const CANONICAL_PLANS: Record<string, PaymentPlan> = {
       "Retests jumeaux indépendants pour valider la maîtrise",
       "Couverture complète des matières majeures (Maths, Physique, SVT)",
     ],
-    active: true,
+    active: false,
   },
 };
 
-export const PILOT_BAC_PLAN: PaymentPlan = CANONICAL_PLANS.bac_season_pass_pilot;
+export const PILOT_BAC_PLAN: PaymentPlan = CANONICAL_PLANS.season;
 
 export const PILOT_PAYMENT_RECORDS_KEY = "bac_mastery_pilot_payment_records";
 

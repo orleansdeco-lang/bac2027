@@ -383,7 +383,7 @@ export const PROMPT11_LEARNING_OBJECTIVES: LearningObjective[] = [
     code: "LO-MATH-SEQ-01",
     description_ar: "دراسة اتجاه تغير المتتاليات العددية وإثبات التقارب بمبرهنة المتتالية الرتيبة والمحدودة",
     description_fr: "Étudier le sens de variation des suites et prouver la convergence par le théorème de la limite monotone",
-    bloomLevel: "understand",
+    bloomLevel: "analyze",
     order: 8,
     sourceId: "src-ministry-curriculum-3as",
     sourceType: "official_curriculum",

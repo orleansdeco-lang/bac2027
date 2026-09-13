@@ -13,14 +13,31 @@ import { IngestedTelemetryEvent } from "./types";
 import { supabase, isSupabaseConfigured } from "../supabase/client";
 
 export const ALLOWED_TELEMETRY_EVENTS = new Set([
+  // ACQUISITION
+  "visitor",
+  "landing",
   "landing_view",
+  "cta",
+  "cta_clicked",
+  "conversion_viewed",
+  "conversion_cta_clicked",
+
+  // REGISTRATION
+  "registration_started",
+  "registration_completed",
+  "login_completed",
+
+  // ONBOARDING
   "onboarding_started",
   "onboarding_completed",
+
+  // LEARNING
   "diagnostic_started",
   "diagnostic_completed",
   "dashboard_viewed",
   "first_mission_started",
   "mission_started",
+  "mission_completed",
   "lesson_viewed",
   "active_recall_started",
   "active_recall_answer_revealed",
@@ -32,6 +49,7 @@ export const ALLOWED_TELEMETRY_EVENTS = new Set([
   "retest_started",
   "retest_completed",
   "mastery_demonstrated",
+  "mastery_evidence",
   "roadmap_viewed",
   "roadmap_mission_selected",
   "progress_viewed",
@@ -43,16 +61,27 @@ export const ALLOWED_TELEMETRY_EVENTS = new Set([
   "pilot_session_started",
   "pilot_session_ended",
   "pilot_resume_success",
+
+  // COMMERCIAL
   "trial_started",
-  "registration_completed",
-  "login_completed",
   "trial_expiring",
   "trial_expired",
-  "conversion_viewed",
-  "conversion_cta_clicked",
+  "checkout_started",
   "payment_started",
+  "payment_order_created",
+  "payment_submitted",
   "payment_pending_verification",
+  "payment_approved",
+  "payment_rejected",
   "payment_confirmed",
+  "subscription_started",
+  "subscription_extended",
+  "subscription_expired",
+
+  // SYSTEM
+  "api_error",
+  "telemetry_error",
+  "access_denied",
 ]);
 
 const FORBIDDEN_KEYS = new Set([

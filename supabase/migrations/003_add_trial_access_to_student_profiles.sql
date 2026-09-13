@@ -1,15 +1,15 @@
 -- ==============================================================================
 -- 003_add_trial_access_to_student_profiles.sql
--- BAC Mastery Prompt 18: 48-Hour Free Trial & Access Control Schema
+-- BAC Mastery Prompt 18: 72-Hour Free Trial & Access Control Schema
 -- Dedicated Project: erbvmpnxufgeinqnshzu
 -- ==============================================================================
 
 -- 1. Add trial and access status columns to student_profiles
 ALTER TABLE public.student_profiles
   ADD COLUMN IF NOT EXISTS trial_started_at TIMESTAMPTZ DEFAULT now(),
-  ADD COLUMN IF NOT EXISTS trial_expires_at TIMESTAMPTZ DEFAULT (now() + interval '48 hours'),
+  ADD COLUMN IF NOT EXISTS trial_expires_at TIMESTAMPTZ DEFAULT (now() + interval '72 hours'),
   ADD COLUMN IF NOT EXISTS access_status TEXT NOT NULL DEFAULT 'TRIAL' CHECK (access_status IN ('TRIAL', 'PAID', 'EXPIRED')),
-  ADD COLUMN IF NOT EXISTS plan TEXT NOT NULL DEFAULT 'PILOT_TRIAL' CHECK (plan IN ('PILOT_TRIAL', 'PAID'));
+  ADD COLUMN IF NOT EXISTS plan TEXT NOT NULL DEFAULT 'PILOT_TRIAL' CHECK (plan IN ('PILOT_TRIAL', 'season', 'monthly', 'PAID'));
 
 -- 2. Index for access status queries
 CREATE INDEX IF NOT EXISTS idx_student_profiles_access_status ON public.student_profiles(access_status);
@@ -37,15 +37,15 @@ BEGIN
       NEW.access_status := OLD.access_status;
     END IF;
 
-    -- Student cannot self-elevate plan to PAID
-    IF (OLD.plan IS DISTINCT FROM NEW.plan AND NEW.plan = 'PAID') THEN
+    -- Student cannot self-elevate plan to commercial plans or PAID
+    IF (OLD.plan IS DISTINCT FROM NEW.plan AND NEW.plan IN ('PAID', 'season', 'monthly')) THEN
       NEW.plan := OLD.plan;
     END IF;
   END IF;
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 DROP TRIGGER IF EXISTS trg_protect_student_trial ON public.student_profiles;
 CREATE TRIGGER trg_protect_student_trial

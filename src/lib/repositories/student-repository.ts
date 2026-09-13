@@ -61,10 +61,12 @@ export const StudentRepository = {
 
         if (data) {
           const localFallback = getStrategicProfile() || ({} as any);
-          const trialStarted = data.trial_started_at || data.raw_draft?.trial_started_at || localFallback.trial_started_at || data.created_at || new Date().toISOString();
-          const trialExpires = data.trial_expires_at || data.raw_draft?.trial_expires_at || localFallback.trial_expires_at || calculateTrialExpiration(new Date(trialStarted)).toISOString();
-          const accessStatus = data.access_status || data.raw_draft?.access_status || localFallback.access_status || "TRIAL";
-          const plan = data.plan || data.raw_draft?.plan || localFallback.plan || "PILOT_TRIAL";
+          const createdAt = data.created_at || localFallback.created_at || localFallback.createdAt || new Date().toISOString();
+          const trialStarted = data.trial_started_at || data.raw_draft?.trial_started_at || createdAt;
+          const trialExpires = data.trial_expires_at || calculateTrialExpiration(new Date(createdAt)).toISOString();
+          // Server authoritative access status: localFallback MUST NOT be able to grant PAID
+          const accessStatus = data.access_status || (localFallback.access_status === "PAID" ? "TRIAL" : localFallback.access_status) || "TRIAL";
+          const plan = data.plan || (localFallback.plan === "PAID" ? "PILOT_TRIAL" : localFallback.plan) || "PILOT_TRIAL";
 
           const merged: any = {
             ...localFallback,
@@ -137,26 +139,45 @@ export const StudentRepository = {
    * Always satisfies the database constraint: id = user_id
    */
   async saveProfile(profile: StrategicProfile, userId?: string): Promise<void> {
-    saveStrategicProfile(profile);
+    const targetId = (typeof userId === "string" && userId.trim()) ? userId.trim() : profile.id;
+    const existing = targetId ? memoryStudentProfiles.get(targetId) : null;
+    const canBePaid = Boolean(
+      (profile as any).subscription_expires_at ||
+      existing?.access_status === "PAID" ||
+      (profile as any).isServerAuthoritativePaid
+    );
 
-    const targetId = userId || profile.id;
+    const accessStatus = canBePaid && (profile as any).access_status === "PAID"
+      ? "PAID"
+      : ((profile as any).access_status === "PAID" ? "TRIAL" : ((profile as any).access_status || "TRIAL"));
+
+    const plan = canBePaid && (profile as any).access_status === "PAID"
+      ? ((profile as any).plan || "PAID")
+      : ((profile as any).plan === "PAID" ? "PILOT_TRIAL" : ((profile as any).plan || "PILOT_TRIAL"));
+
+    const sanitizedProfile = {
+      ...profile,
+      id: targetId || profile.id,
+      access_status: accessStatus,
+      plan: plan,
+    };
+
+    saveStrategicProfile(sanitizedProfile);
+
     if (targetId) {
-      memoryStudentProfiles.set(targetId, { ...profile, id: targetId });
+      memoryStudentProfiles.set(targetId, { ...sanitizedProfile, id: targetId });
     }
 
     if (isSupabaseConfigured && supabase && userId) {
       try {
-        const trialStarted = (profile as any).trial_started_at || new Date().toISOString();
-        const trialExpires = (profile as any).trial_expires_at || calculateTrialExpiration(new Date(trialStarted)).toISOString();
-        const accessStatus = (profile as any).access_status || "TRIAL";
-        const plan = (profile as any).plan || "PILOT_TRIAL";
+        const createdAt = (profile as any).created_at || (profile as any).createdAt || new Date().toISOString();
+        const trialStarted = (profile as any).trial_started_at || createdAt;
+        const trialExpires = calculateTrialExpiration(new Date(createdAt)).toISOString();
 
         const enrichedProfile = {
-          ...profile,
+          ...sanitizedProfile,
           trial_started_at: trialStarted,
           trial_expires_at: trialExpires,
-          access_status: accessStatus,
-          plan: plan,
         };
 
         const basePayload: Record<string, any> = {

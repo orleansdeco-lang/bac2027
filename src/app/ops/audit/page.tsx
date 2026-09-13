@@ -50,7 +50,7 @@ export default function OpsAuditPage() {
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Immutable governance trail of all privileged actions: payment approvals, rejections, trial modifications, and security events.
+            Application-level append-only governance trail of all privileged actions: payment approvals, rejections, plan updates, issues, and security events.
           </p>
         </div>
 
@@ -65,12 +65,21 @@ export default function OpsAuditPage() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-        {["all", "PAYMENT_APPROVED", "PAYMENT_REJECTED", "TRIAL_EXTENDED"].map((tab) => (
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-800 pb-3">
+        {[
+          "all",
+          "PAYMENT_APPROVED",
+          "PAYMENT_REJECTED",
+          "SUBSCRIPTION_APPROVED",
+          "SUBSCRIPTION_PLAN_UPDATED",
+          "SUBSCRIPTION_EXTENDED",
+          "ISSUE_CREATED",
+          "ISSUE_RESOLVED",
+        ].map((tab) => (
           <button
             key={tab}
             onClick={() => setActionFilter(tab)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
               actionFilter === tab
                 ? "bg-slate-800 text-white font-semibold shadow-sm"
                 : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"

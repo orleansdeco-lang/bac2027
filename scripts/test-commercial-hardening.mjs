@@ -78,6 +78,7 @@ const opsAuth = loadTs("src/lib/operations/auth.ts");
 const opsPayments = loadTs("src/lib/operations/payments.ts");
 const opsReceipts = loadTs("src/lib/operations/receipts.ts");
 const opsAudit = loadTs("src/lib/operations/audit.ts");
+const opsSubscriptions = loadTs("src/lib/operations/subscriptions.ts");
 const accessModule = loadTs("src/lib/access/index.ts");
 
 // API Route Handlers
@@ -146,19 +147,20 @@ async function runCommercialSecuritySuite() {
   opsAuth.setMemoryUserRole(ownerUser, "OWNER");
 
   // --------------------------------------------------------------------------
-  // CHECK 01: Server-Authoritative Price Catalog (3900 DZD)
+  // CHECK 01: Dynamic Server-Authoritative Price Enforcement
   // --------------------------------------------------------------------------
-  await check(1, "Price Catalog: 'bac_season_pass_pilot' authoritative price is 3,900 DZD", async () => {
-    const catalog = opsPayments.AUTHORITATIVE_PLANS;
-    assert.ok(catalog.bac_season_pass_pilot, "Catalog must define bac_season_pass_pilot");
-    assert.strictEqual(catalog.bac_season_pass_pilot.priceDZD, 3900);
-    assert.strictEqual(catalog.bac_season_pass_pilot.currency, "DZD");
+  await opsSubscriptions.updateSubscriptionPlan(ownerUser, "season", {
+    price_dzd: 4000,
+    active: true,
+  });
 
+  await check(1, "Price Authority: dynamically configured plan price is enforced by server (no hardcoded prices)", async () => {
     const order = await opsPayments.createPaymentOrder({
       userId: studentA,
+      plan: "season",
       paymentMethod: "baridimob",
     });
-    assert.strictEqual(order.amount, 3900);
+    assert.strictEqual(order.amount, 4000);
     assert.strictEqual(order.currency, "DZD");
     assert.strictEqual(order.status, "PENDING");
   });
@@ -184,8 +186,8 @@ async function runCommercialSecuritySuite() {
   await check(3, "Anti-Tamper: Client currency manipulation payload rejected (400)", async () => {
     const req = makeRequest("https://app/api/ops/payments", "POST", { "x-test-user-id": studentA }, {
       userId: studentA,
-      plan: "bac_season_pass_pilot",
-      amount: 3900,
+      plan: "season",
+      amount: 4000,
       currency: "USD", // Forged currency
     });
     const res = await paymentsRoute.POST(req);
@@ -465,7 +467,7 @@ async function runCommercialSecuritySuite() {
     assert.strictEqual(orderLogs1.length, 1);
     const firstLog = orderLogs1[0];
     assert.strictEqual(firstLog.beforeState?.order_status, "PENDING");
-    assert.strictEqual(firstLog.beforeState?.amount, 3900);
+    assert.strictEqual(firstLog.beforeState?.amount, 4000);
     assert.strictEqual(firstLog.afterState?.order_status, "APPROVED");
     assert.strictEqual(firstLog.afterState?.student_access_status, "PAID");
 
@@ -551,7 +553,7 @@ async function runCommercialSecuritySuite() {
     "Step 05: Student visits /subscribe conversion page",
     "Step 06: Student reviews commercial transparency FAQ (5 core questions)",
     "Step 07: Student initiates checkout for 'bac_season_pass_pilot'",
-    "Step 08: Server enforces canonical price of 3,900 DZD",
+    "Step 08: Server enforces configured dynamic price",
     "Step 09: Payment order created in PENDING state",
     "Step 10: Adversary attempts price forgery (100 DZD) -> Blocked (400)",
     "Step 11: Adversary attempts currency forgery (USD) -> Blocked (400)",

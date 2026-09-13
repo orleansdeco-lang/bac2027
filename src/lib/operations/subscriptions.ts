@@ -18,16 +18,16 @@ import { hasFinanceAccess, getServerUserRole } from "./auth";
 import { StudentRepository } from "../repositories/student-repository";
 import { getPaymentOrders } from "./payments";
 
-// In-memory fallback plans registry for testing / offline environments
+// In-memory fallback plans registry for testing / offline environments (neutral unconfigured pricing)
 const memorySubscriptionPlans: Map<string, SubscriptionPlan> = new Map([
   [
     "season",
     {
       id: "season",
       name: "اشتراك الموسم الدراسي",
-      price_dzd: 3900.0,
+      price_dzd: 0.0,
       duration_months: 10,
-      active: true,
+      active: false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },
@@ -37,9 +37,9 @@ const memorySubscriptionPlans: Map<string, SubscriptionPlan> = new Map([
     {
       id: "monthly",
       name: "الاشتراك الشهري",
-      price_dzd: 1500.0,
+      price_dzd: 0.0,
       duration_months: 1,
-      active: true,
+      active: false,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },
@@ -53,18 +53,18 @@ export function resetMemorySubscriptionPlans(): void {
   memorySubscriptionPlans.set("season", {
     id: "season",
     name: "اشتراك الموسم الدراسي",
-    price_dzd: 3900.0,
+    price_dzd: 0.0,
     duration_months: 10,
-    active: true,
+    active: false,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   });
   memorySubscriptionPlans.set("monthly", {
     id: "monthly",
     name: "الاشتراك الشهري",
-    price_dzd: 1500.0,
+    price_dzd: 0.0,
     duration_months: 1,
-    active: true,
+    active: false,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   });
