@@ -14,6 +14,55 @@ export * from "./server-time";
 export const TRIAL_DURATION_HOURS = 72;
 export const TRIAL_DURATION_MS = TRIAL_DURATION_HOURS * 60 * 60 * 1000;
 
+/**
+ * Calculates trial expiration date:
+ * Starts a 72-hour trial that extends until the end of the 3rd day (23:59:59.999).
+ * E.g., if registered at 14:00 on Monday, expires at 23:59 on Thursday.
+ */
+export function calculateTrialExpiration(startDate: Date = new Date()): Date {
+  const d = new Date(startDate);
+  d.setDate(d.getDate() + 3);
+  d.setHours(23, 59, 59, 999);
+  return d;
+}
+
+/**
+ * Formats countdown showing strictly days and hours, with zero minutes and zero seconds.
+ * E.g., "2 يوم و 14 سا" / "2j 14h", or "14 سا" / "14h"
+ */
+export function formatTrialCountdown(remainingHours: number, isAr: boolean = true): string {
+  const safeHours = Math.max(0, remainingHours);
+  const days = Math.floor(safeHours / 24);
+  const hours = safeHours % 24;
+
+  if (isAr) {
+    if (days > 0 && hours > 0) return `${days} يوم و ${hours} سا`;
+    if (days > 0) return `${days} يوم`;
+    return `${hours} سا`;
+  } else {
+    if (days > 0 && hours > 0) return `${days}j ${hours}h`;
+    if (days > 0) return `${days}j`;
+    return `${hours}h`;
+  }
+}
+
+/**
+ * Formats trial expiration date ONLY without showing hours/minutes.
+ * E.g., "16 سبتمبر 2026" / "16 septembre 2026"
+ */
+export function formatTrialExpiryDate(expiryDateOrIso: string | Date, isAr: boolean = true): string {
+  try {
+    const d = new Date(expiryDateOrIso);
+    return d.toLocaleDateString(isAr ? "ar-DZ" : "fr-FR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  } catch {
+    return String(expiryDateOrIso);
+  }
+}
+
 export interface AccessProfileInput {
   id?: string;
   createdAt?: string;
@@ -103,6 +152,8 @@ export function getStudentAccess(
       remainingMilliseconds: 0,
       remainingHours: 0,
       remainingMinutes: 0,
+      remainingDays: 0,
+      remainingHoursOnly: 0,
       canUseProduct: false,
       isExpiringSoon: false,
       reason: "trial_72h_expired",
@@ -110,6 +161,9 @@ export function getStudentAccess(
   }
 
   // 5. Active Trial
+  const remainingDays = Math.floor(remainingHours / 24);
+  const remainingHoursOnly = remainingHours % 24;
+
   return {
     status: "TRIAL_ACTIVE",
     trialStatus: "ACTIVE",
@@ -120,6 +174,8 @@ export function getStudentAccess(
     remainingMilliseconds: remainingMs,
     remainingHours,
     remainingMinutes,
+    remainingDays,
+    remainingHoursOnly,
     canUseProduct: true,
     isExpiringSoon: remainingHours < 6,
     reason: "trial_72h_active",

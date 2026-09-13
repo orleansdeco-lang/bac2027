@@ -9,7 +9,7 @@ import { getStrategicProfile, saveStrategicProfile, clearOnboardingDraft } from 
 import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
 import { StudentLearningContext, getStudentSubjects } from "@/domain/student";
 import { StreamSubjectRule } from "@/domain/curriculum/streams";
-import { getStudentAccess } from "@/lib/access";
+import { getStudentAccess, calculateTrialExpiration } from "@/lib/access";
 
 export const StudentService = {
   /**
@@ -59,7 +59,7 @@ export const StudentService = {
         // Case 2: No server profile exists, but local profile exists -> migrate up with 72h trial
         if (localProfile) {
           const now = new Date();
-          const trialExpires = new Date(now.getTime() + 72 * 3600 * 1000);
+          const trialExpires = calculateTrialExpiration(now);
           const trialProfile = {
             ...localProfile,
             trial_started_at: (localProfile as any).trial_started_at || now.toISOString(),
@@ -74,7 +74,7 @@ export const StudentService = {
 
         // Case 3: Fresh registration without local profile -> create initial trial profile
         const freshNow = new Date();
-        const freshExpires = new Date(freshNow.getTime() + 72 * 3600 * 1000);
+        const freshExpires = calculateTrialExpiration(freshNow);
         const defaultProfile: any = {
           id: userId,
           educationLevel: "secondary",

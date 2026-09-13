@@ -1,6 +1,9 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth/context";
 
 interface LogoProps {
   size?: "sm" | "md" | "lg";
@@ -13,8 +16,10 @@ export function Logo({
   size = "md",
   showTagline = false,
   className,
-  href = "/",
+  href,
 }: LogoProps) {
+  const { user } = useAuth();
+  const targetHref = href !== undefined ? href : (user ? "/dashboard" : "/");
   const sizeStyles = {
     sm: {
       text: "text-base tracking-tight",
@@ -72,9 +77,9 @@ export function Logo({
     </div>
   );
 
-  if (href) {
+  if (targetHref) {
     return (
-      <Link href={href} className="inline-block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] rounded-lg">
+      <Link href={targetHref} className="inline-block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-ring)] rounded-lg">
         {content}
       </Link>
     );

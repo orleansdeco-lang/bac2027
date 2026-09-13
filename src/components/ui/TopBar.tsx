@@ -14,6 +14,7 @@ import { StudentRegistrationData } from "@/types/registration";
 import { useAuth } from "@/lib/auth/context";
 import { StudentService } from "@/lib/services";
 import { StudentProfile } from "@/types/student";
+import { formatTrialCountdown, formatTrialExpiryDate } from "@/lib/access";
 import {
   Menu,
   X,
@@ -103,6 +104,9 @@ export function TopBar() {
     studentProfile?.trialStatus === "expired" ||
     (trialRemainingHours !== null && trialRemainingHours <= 0);
 
+  const countdownText = trialRemainingHours !== null ? formatTrialCountdown(trialRemainingHours, isAr) : "";
+  const expiryDateText = trialExpiresAt ? formatTrialExpiryDate(trialExpiresAt, isAr) : "";
+
   return (
     <header className="sticky top-0 z-40 border-b border-theme bg-surface/95 backdrop-blur-md transition-colors duration-200">
       <Container size="lg" className="flex h-16 items-center justify-between px-3 sm:px-6">
@@ -119,19 +123,19 @@ export function TopBar() {
             </Badge>
           )}
 
-          {/* 72h Trial Countdown Indicator */}
+          {/* 72h Trial Countdown Indicator (Days & Hours only, Expiry date only) */}
           {isTrialActive && (
             <div
               title={
                 isAr
-                  ? `فترة تجريبية 72 ساعة (متبقي ${trialRemainingHours} ساعة)`
-                  : `Essai 72h actif (${trialRemainingHours}h restantes)`
+                  ? `تنتهي التجربة بتاريخ ${expiryDateText} (متبقي: ${countdownText})`
+                  : `L'essai se termine le ${expiryDateText} (restant : ${countdownText})`
               }
               className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[var(--color-success-soft)] border border-[var(--color-success)]/30 text-[var(--color-success)] text-[10px] sm:text-xs font-mono font-bold whitespace-nowrap"
             >
               <Clock className="w-3 h-3 shrink-0 animate-pulse" />
-              <span className="hidden md:inline">{isAr ? "تجربة 72 سا:" : "Essai 72h:"}</span>
-              <span>{trialRemainingHours} {isAr ? "سا" : "h"}</span>
+              <span className="hidden md:inline">{isAr ? "تجربة مجانية:" : "Essai:"}</span>
+              <span>{countdownText}</span>
             </div>
           )}
 

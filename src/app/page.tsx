@@ -2,7 +2,9 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTranslation } from "@/lib/i18n/context";
+import { useAuth } from "@/lib/auth/context";
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -36,56 +38,21 @@ export default function HomePage() {
   const { t, locale, direction } = useTranslation();
   const isAr = locale === "ar";
   const Arrow = direction === "rtl" ? ArrowLeft : ArrowRight;
+  const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const [profile, setProfile] = useState<StrategicProfile | null>(null);
-  const [smartCta, setSmartCta] = useState<{ textAr: string; textFr: string; href: string }>({
-    textAr: "ابني خريطتي",
-    textFr: "Construire ma feuille de route",
-    href: "/onboarding",
-  });
+
+  useEffect(() => {
+    // If student is logged in, their Home is the Dashboard
+    if (!authLoading && user) {
+      router.replace("/dashboard");
+    }
+  }, [user, authLoading, router]);
 
   useEffect(() => {
     const p = getStrategicProfile();
     trackEvent("landing_view", { hasProfile: Boolean(p) });
-    if (p) {
-      setProfile(p);
-      const access = getStudentAccess(p);
-      const activeMissionId = getActiveMissionId();
-      const masteryMap = loadMasteryRecords();
-      const sessionsMap = loadPracticeSessions();
-      const diagResults = loadDiagnosticResults();
-
-      if (access.status === "TRIAL_EXPIRED") {
-        setSmartCta({
-          textAr: "شوف الحل",
-          textFr: "Voir la solution",
-          href: "/subscribe",
-        });
-      } else if (access.status === "PAID_ACTIVE") {
-        setSmartCta({
-          textAr: "كمّل مهمتك",
-          textFr: "Continuer ma mission",
-          href: "/dashboard",
-        });
-      } else if (activeMissionId) {
-        setSmartCta({
-          textAr: "كمّل مهمتك",
-          textFr: "Continuer ma mission",
-          href: `/mission/${activeMissionId}`,
-        });
-      } else {
-        setSmartCta({
-          textAr: "شوف خريطتي",
-          textFr: "Voir ma feuille de route",
-          href: "/roadmap",
-        });
-      }
-    } else {
-      setSmartCta({
-        textAr: "ابدأ الآن وسجّل مجاناً",
-        textFr: "Commencer gratuitement",
-        href: "/auth/register",
-      });
-    }
+    if (p) setProfile(p);
   }, []);
 
   return (
@@ -110,19 +77,19 @@ export default function HomePage() {
               </div>
 
               {/* Dominant Hero Heading */}
-              <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-theme-text leading-[1.15] font-sans">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight text-theme-text leading-[1.2] font-sans">
                 {isAr ? (
                   <>
-                    ماشي واش تقرا. <br />
+                    طريقك نحو امتياز البكالوريا يبدأ من هنا.. <br />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary)] via-[var(--color-accent)] to-[var(--color-secondary)]">
-                      كيفاش توصل.
+                      خطوة بخطوة حتى تحقق حلمك وتفرح والديك.
                     </span>
                   </>
                 ) : (
                   <>
-                    Pas seulement quoi étudier. <br />
+                    Votre chemin vers l'excellence au BAC.. <br />
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--color-primary)] via-[var(--color-accent)] to-[var(--color-secondary)]">
-                      Comment y arriver.
+                      Étape par étape jusqu'à votre rêve.
                     </span>
                   </>
                 )}
@@ -131,25 +98,35 @@ export default function HomePage() {
               {/* Supporting Subtitle */}
               <p className="text-base sm:text-lg text-theme-secondary max-w-xl mx-auto lg:mx-0 leading-relaxed">
                 {isAr
-                  ? "BAC Mastery يبني لك خريطة طريق واضحة من مستواك الحالي إلى الهدف اللي حاب توصله، مع حماية طاقتك وراحتك وبناء مستقبلك."
-                  : "BAC Mastery trace votre feuille de route personnalisée depuis votre niveau réel jusqu'à votre objectif, sans dispersion ni épuisement."}
+                  ? "ماشي واش تقرا، كيفاش توصل. منصة ذكية تكتشف ثغراتك الخفية، تصحح أخطاءك فوراً، وتبني ثقتك بنفسك حتى ترفع معدلك في البكالوريا بدون ضغط ولا تشتت."
+                  : "Une méthode intelligente qui cible vos lacunes cachées, répare vos erreurs et sécurise votre mention sans dispersion."}
               </p>
 
               {/* Action CTAs */}
               <div className="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4">
-                <Link id="hero-smart-cta-link" href={smartCta.href} className="w-full sm:w-auto">
-                  <Button variant="primary" size="lg" className="w-full sm:w-auto font-bold shadow-lg min-h-[48px] rounded-full">
-                    <span>{isAr ? smartCta.textAr : smartCta.textFr}</span>
+                <Link id="hero-smart-cta-link" href="/auth?mode=signup" className="w-full sm:w-auto">
+                  <Button variant="primary" size="lg" className="w-full sm:w-auto font-bold shadow-clay px-7 py-6 rounded-2xl flex items-center justify-center gap-2">
+                    <Sparkles className="h-5 w-5 text-amber-300" />
+                    <span>{isAr ? "افتح حسابك واستفد من 3 أيام مجاناً" : "Créer un compte & Essai 3j gratuit"}</span>
                     <Arrow className="h-4 w-4" />
                   </Button>
                 </Link>
 
-                <a href="#how-it-works" className="w-full sm:w-auto">
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto min-h-[48px] rounded-full">
-                    <span>{isAr ? "كيفاش تخدم؟" : "Comment ça marche ?"}</span>
-                    <ChevronDown className="h-4 w-4" />
+                <Link href="/auth?mode=login" className="w-full sm:w-auto">
+                  <Button variant="outline" size="lg" className="w-full sm:w-auto px-6 py-6 rounded-2xl font-semibold">
+                    <span>{isAr ? "تسجيل الدخول" : "Se connecter"}</span>
                   </Button>
-                </a>
+                </Link>
+              </div>
+
+              {/* 3-Day Free Trial Emotional Promise */}
+              <div className="p-3.5 rounded-2xl bg-[var(--color-primary-soft)]/60 border border-[var(--color-primary)]/20 text-xs text-theme-secondary flex items-center gap-2.5 max-w-xl">
+                <ShieldCheck className="h-5 w-5 text-[var(--color-primary)] shrink-0" />
+                <span className="leading-normal">
+                  {isAr
+                    ? "✨ 3 أيام تجريبية كاملة ومجانية لاكتشاف مهارات شعبتك وخريطتك الدراسية — ابدأ الآن واقترب من حلمك."
+                    : "✨ 3 jours d'essai gratuit complet pour découvrir vos compétences — Commencez dès aujourd'hui."}
+                </span>
               </div>
 
               {/* Trust & Scope Micro-Badges */}
@@ -385,9 +362,10 @@ export default function HomePage() {
           </p>
 
           <div className="pt-2">
-            <Link href={smartCta.href}>
-              <Button variant="primary" size="lg" className="rounded-full font-bold shadow-xl px-8 min-h-[48px]">
-                <span>{isAr ? smartCta.textAr : smartCta.textFr}</span>
+            <Link href="/auth?mode=signup">
+              <Button variant="primary" size="lg" className="rounded-2xl font-bold shadow-clay px-8 py-6 min-h-[48px] flex items-center justify-center gap-2 mx-auto">
+                <Sparkles className="h-5 w-5 text-amber-300" />
+                <span>{isAr ? "افتح حسابك واستفد من 3 أيام مجاناً" : "Créer un compte & Essai 3 jours gratuit"}</span>
                 <Arrow className="h-4 w-4" />
               </Button>
             </Link>

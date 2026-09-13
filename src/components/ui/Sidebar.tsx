@@ -79,8 +79,14 @@ export function Sidebar({ className }: SidebarProps) {
   const isTrial = access.status === "TRIAL_ACTIVE";
   const isPaid = access.status === "PAID_ACTIVE";
 
-  // Signature 3D Editorial Avatar for the unified BAC Mastery identity
-  const avatarSrc = "/illustrations/bac-hero.jpg";
+  // Study Character Avatar chosen at registration
+  const characterMap: Record<string, string> = {
+    boy: "/illustrations/characters/boy.jpg",
+    girl: "/illustrations/characters/girl.jpg",
+    scholar: "/illustrations/characters/scholar.jpg",
+  };
+  const characterId = (studentProfile as any)?.characterId || (profileDraft as any)?.characterId || "scholar";
+  const avatarSrc = characterMap[characterId] || "/illustrations/bac-hero.jpg";
 
   const navLinks = [
     {
@@ -115,7 +121,7 @@ export function Sidebar({ className }: SidebarProps) {
     },
     {
       href: "/account",
-      label: isAr ? "حسابي والمظهر" : "Mon espace",
+      label: isAr ? "حسابي" : "Mon compte",
       icon: User,
       matches: (p: string) => p.startsWith("/account"),
     },
@@ -132,9 +138,7 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Top Section: Logo & Personal Student Avatar Card */}
       <div className="space-y-6">
         <div className="flex items-center justify-between px-1">
-          <Link href="/" className="hover:opacity-90 transition-opacity">
-            <Logo size="sm" />
-          </Link>
+          <Logo size="sm" href="/dashboard" />
           <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-surface/60 border border-theme text-theme-secondary font-bold">
             BAC 2027
           </span>

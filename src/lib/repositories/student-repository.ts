@@ -21,6 +21,7 @@ import {
   saveAcademicProfileDraft,
 } from "../onboarding/profile";
 import { normalizeAlgerianPhone } from "@/domain/administrative/phone-validation";
+import { calculateTrialExpiration } from "@/lib/access";
 
 export const StudentRepository = {
   /**
@@ -55,7 +56,7 @@ export const StudentRepository = {
         if (data) {
           const localFallback = getStrategicProfile() || ({} as any);
           const trialStarted = data.trial_started_at || data.raw_draft?.trial_started_at || localFallback.trial_started_at || data.created_at || new Date().toISOString();
-          const trialExpires = data.trial_expires_at || data.raw_draft?.trial_expires_at || localFallback.trial_expires_at || new Date(new Date(trialStarted).getTime() + 72 * 3600 * 1000).toISOString();
+          const trialExpires = data.trial_expires_at || data.raw_draft?.trial_expires_at || localFallback.trial_expires_at || calculateTrialExpiration(new Date(trialStarted)).toISOString();
           const accessStatus = data.access_status || data.raw_draft?.access_status || localFallback.access_status || "TRIAL";
           const plan = data.plan || data.raw_draft?.plan || localFallback.plan || "PILOT_TRIAL";
 
@@ -135,7 +136,7 @@ export const StudentRepository = {
     if (isSupabaseConfigured && supabase && userId) {
       try {
         const trialStarted = (profile as any).trial_started_at || new Date().toISOString();
-        const trialExpires = (profile as any).trial_expires_at || new Date(new Date(trialStarted).getTime() + 72 * 3600 * 1000).toISOString();
+        const trialExpires = (profile as any).trial_expires_at || calculateTrialExpiration(new Date(trialStarted)).toISOString();
         const accessStatus = (profile as any).access_status || "TRIAL";
         const plan = (profile as any).plan || "PILOT_TRIAL";
 

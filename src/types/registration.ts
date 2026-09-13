@@ -29,6 +29,7 @@ export interface StudentRegistrationData {
   communeCode: string;
   communeName: string;
   schoolName?: string | null;
+  characterId?: "boy" | "girl" | "scholar";
   registrationCompletedAt?: string;
 }
 

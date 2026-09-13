@@ -26,6 +26,8 @@ export interface StudentAccessDecision {
   remainingMilliseconds: number;
   remainingHours: number;
   remainingMinutes: number;
+  remainingDays?: number;
+  remainingHoursOnly?: number;
   canUseProduct: boolean;
   isExpiringSoon: boolean; // < 6 hours
   reason: string;

@@ -107,6 +107,7 @@ export default function StudentRegistrationPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Form Fields
+  const [characterId, setCharacterId] = useState<"boy" | "girl" | "scholar">("scholar");
   const [firstName, setFirstName] = useState<string>("");
   const [lastName, setLastName] = useState<string>("");
   const [studentPhone, setStudentPhone] = useState<string>("");
@@ -131,6 +132,7 @@ export default function StudentRegistrationPage() {
   useEffect(() => {
     const draft = getRegistrationDraft();
     if (draft) {
+      if (draft.characterId) setCharacterId(draft.characterId);
       if (draft.firstName) setFirstName(draft.firstName);
       if (draft.lastName) setLastName(draft.lastName);
       if (draft.studentPhone) setStudentPhone(draft.studentPhone);
@@ -181,6 +183,7 @@ export default function StudentRegistrationPage() {
   // Save current draft to localStorage between steps
   const persistCurrentDraft = (overrides: Partial<StudentRegistrationData> = {}) => {
     const draftPayload: StudentRegistrationData = {
+      characterId: overrides.characterId !== undefined ? overrides.characterId : characterId,
       firstName: overrides.firstName !== undefined ? overrides.firstName : firstName,
       lastName: overrides.lastName !== undefined ? overrides.lastName : lastName,
       studentPhone: overrides.studentPhone !== undefined ? overrides.studentPhone : studentPhone,
@@ -445,6 +448,41 @@ export default function StudentRegistrationPage() {
                     ? "معلوماتك الأساسية باش نعرفو مع مين رانا نقراو."
                     : "Vos informations de base pour faire connaissance."}
                 </p>
+              </div>
+
+              {/* Study Character Avatar Selection */}
+              <div className="mb-6 p-4 rounded-2xl bg-canvas/60 border border-theme-border">
+                <label className="block text-xs font-bold text-theme-base mb-3 text-center">
+                  {isAr ? "اختر شخصيتك المرافقة في رحلة البكالوريا" : "Choisissez votre avatar d'étude"}
+                </label>
+                <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
+                  {[
+                    { id: "boy", nameAr: "الفتى الطموح", nameFr: "L'Ambitieux", img: "/illustrations/characters/boy.jpg" },
+                    { id: "girl", nameAr: "الفتاة المتفوقة", nameFr: "L'Étoile", img: "/illustrations/characters/girl.jpg" },
+                    { id: "scholar", nameAr: "الباحث المركز", nameFr: "Le Méthodique", img: "/illustrations/characters/scholar.jpg" },
+                  ].map((c) => {
+                    const isSelected = characterId === c.id;
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => setCharacterId(c.id as any)}
+                        className={`p-2.5 sm:p-3 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 cursor-pointer ${
+                          isSelected
+                            ? "bg-[var(--color-primary-soft)] border-[var(--color-primary)] ring-2 ring-[var(--color-primary)]/40 shadow-sm"
+                            : "bg-surface border-theme hover:border-[var(--color-border-hover)]"
+                        }`}
+                      >
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-white shadow-sm">
+                          <img src={c.img} alt={c.nameAr} className="w-full h-full object-cover object-top" />
+                        </div>
+                        <span className={`text-[11px] sm:text-xs font-bold ${isSelected ? "text-[var(--color-primary)]" : "text-theme-muted"}`}>
+                          {isAr ? c.nameAr : c.nameFr}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="space-y-4">
