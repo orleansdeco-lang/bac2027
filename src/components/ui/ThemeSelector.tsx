@@ -3,8 +3,11 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useTheme, Theme, THEMES } from "@/lib/theme/context";
 import { useTranslation } from "@/lib/i18n/context";
-import { Palette, Check, Sparkles } from "lucide-react";
+import { Palette, Check, Sparkles, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getStudentAccess } from "@/lib/access";
+import { getStrategicProfile } from "@/lib/onboarding/profile";
+import { useRouter } from "next/navigation";
 
 interface ThemeSelectorProps {
   variant?: "compact" | "segmented" | "cards";
@@ -15,11 +18,24 @@ export function ThemeSelector({
   variant = "compact",
   className,
 }: ThemeSelectorProps) {
+  const router = useRouter();
   const { theme, setTheme, themes } = useTheme();
   const { locale } = useTranslation();
   const isAr = locale === "ar";
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const profile = typeof window !== "undefined" ? getStrategicProfile() : null;
+  const access = getStudentAccess(profile);
+  const isPremiumUnlocked = access.status === "PAID_ACTIVE" || access.status === "TRIAL_ACTIVE";
+
+  const handleSelectTheme = (t: any) => {
+    if (t.isPremium && !isPremiumUnlocked) {
+      router.push("/subscribe");
+      return;
+    }
+    setTheme(t.id);
+  };
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -43,13 +59,14 @@ export function ThemeSelector({
       <div className={cn("grid grid-cols-1 sm:grid-cols-3 gap-3.5", className)}>
         {themes.map((t) => {
           const isSelected = theme === t.id;
+          const isLocked = t.isPremium && !isPremiumUnlocked;
           return (
             <button
               key={t.id}
               type="button"
-              onClick={() => setTheme(t.id)}
+              onClick={() => handleSelectTheme(t)}
               className={cn(
-                "relative text-start p-4 rounded-2xl border transition-all duration-200 cursor-pointer select-none",
+                "relative text-start p-4 rounded-3xl border transition-all duration-200 cursor-pointer select-none",
                 isSelected
                   ? "border-[var(--color-primary)] bg-[var(--color-primary-muted)] shadow-md shadow-[var(--color-primary)]/10 scale-[1.01]"
                   : "border-theme bg-card hover:border-[var(--color-border-hover)] hover:bg-card-hover"
@@ -60,13 +77,23 @@ export function ThemeSelector({
                   <Check className="h-3 w-3 stroke-[3]" />
                 </span>
               )}
+              {isLocked && !isSelected && (
+                <span className="absolute top-3.5 end-3.5 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/15 text-amber-400 text-[10px]" title={isAr ? "مظهر احترافي (Pro)" : "Thème Premium"}>
+                  <Lock className="h-3 w-3" />
+                </span>
+              )}
 
               <div className="flex items-center gap-2.5 mb-2">
                 <span className="text-xl leading-none">{t.icon}</span>
                 <div>
-                  <h4 className="font-bold text-sm text-theme-text font-sans tracking-tight">
-                    {isAr ? t.label_ar : t.label_fr}
-                  </h4>
+                  <div className="flex items-center gap-1.5">
+                    <h4 className="font-bold text-sm text-theme-text font-sans tracking-tight">
+                      {isAr ? t.label_ar : t.label_fr}
+                    </h4>
+                    {t.isPremium && (
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/20 text-amber-500 font-mono">PRO</span>
+                    )}
+                  </div>
                   <span className="text-[10px] uppercase font-mono tracking-wider text-theme-muted">
                     {t.id.toUpperCase()}
                   </span>
@@ -78,14 +105,22 @@ export function ThemeSelector({
               </p>
 
               {/* Color Accent Preview Bar */}
-              <div className="mt-3.5 pt-2.5 border-t border-theme flex items-center gap-1.5">
-                <span
-                  className="h-2.5 w-6 rounded-full"
-                  style={{ backgroundColor: t.accentColor }}
-                />
-                <span className="text-[10px] text-theme-muted capitalize">
-                  {t.colorScheme === "dark" ? (isAr ? "داكن" : "Sombre") : (isAr ? "فاتح" : "Clair")}
-                </span>
+              <div className="mt-3.5 pt-2.5 border-t border-theme flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <span
+                    className="h-2.5 w-6 rounded-full"
+                    style={{ backgroundColor: t.accentColor }}
+                  />
+                  <span className="text-[10px] text-theme-muted capitalize">
+                    {t.colorScheme === "dark" ? (isAr ? "داكن" : "Sombre") : (isAr ? "فاتح" : "Clair")}
+                  </span>
+                </div>
+                {isLocked && (
+                  <span className="text-[10px] text-amber-500 font-semibold flex items-center gap-0.5">
+                    <Lock className="h-2.5 w-2.5" />
+                    <span>{isAr ? "ترقية" : "Pro"}</span>
+                  </span>
+                )}
               </div>
             </button>
           );
@@ -99,19 +134,20 @@ export function ThemeSelector({
     return (
       <div
         className={cn(
-          "inline-flex items-center p-1 rounded-xl bg-card-muted border border-theme select-none",
+          "inline-flex items-center p-1 rounded-2xl bg-card-muted border border-theme select-none",
           className
         )}
       >
         {themes.map((t) => {
           const isSelected = theme === t.id;
+          const isLocked = t.isPremium && !isPremiumUnlocked;
           return (
             <button
               key={t.id}
               type="button"
-              onClick={() => setTheme(t.id)}
+              onClick={() => handleSelectTheme(t)}
               className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer",
+                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer",
                 isSelected
                   ? "bg-[var(--color-primary)] text-white shadow-sm"
                   : "text-theme-secondary hover:text-theme-text hover:bg-card-hover"
@@ -119,6 +155,7 @@ export function ThemeSelector({
             >
               <span>{t.icon}</span>
               <span>{isAr ? t.label_ar : t.label_fr}</span>
+              {isLocked && <Lock className="h-2.5 w-2.5 text-amber-400" />}
             </button>
           );
         })}
@@ -134,7 +171,7 @@ export function ThemeSelector({
         onClick={() => setIsOpen(!isOpen)}
         aria-label={isAr ? "تغيير المظهر" : "Changer de thème"}
         className={cn(
-          "flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-theme bg-card hover:bg-card-hover transition-all text-xs font-medium text-theme-text cursor-pointer select-none",
+          "flex items-center gap-1.5 px-2.5 py-1.5 rounded-2xl border border-theme bg-card hover:bg-card-hover transition-all text-xs font-medium text-theme-text cursor-pointer select-none shadow-sm",
           isOpen && "ring-2 ring-[var(--color-ring)]/30 border-[var(--color-primary)]"
         )}
       >
@@ -147,23 +184,25 @@ export function ThemeSelector({
       {isOpen && (
         <div
           className={cn(
-            "absolute z-50 mt-1.5 w-44 rounded-2xl border border-theme bg-card p-1.5 shadow-theme-card backdrop-blur-xl animate-in fade-in-50 zoom-in-95",
+            "absolute z-50 mt-1.5 w-52 rounded-2xl border border-theme bg-card p-1.5 shadow-theme-card backdrop-blur-xl animate-in fade-in-50 zoom-in-95",
             isAr ? "start-0" : "end-0"
           )}
         >
-          <div className="px-2.5 py-1.5 text-[10px] font-semibold text-theme-muted uppercase tracking-wider font-mono border-b border-theme mb-1">
-            {isAr ? "شخصية المظهر" : "Ambiance visuelle"}
+          <div className="px-2.5 py-1.5 text-[10px] font-semibold text-theme-muted uppercase tracking-wider font-mono border-b border-theme mb-1 flex items-center justify-between">
+            <span>{isAr ? "شخصية المظهر" : "Ambiance visuelle"}</span>
+            <Sparkles className="h-3 w-3 text-[var(--color-primary)]" />
           </div>
 
           <div className="space-y-0.5">
             {themes.map((t) => {
               const isSelected = theme === t.id;
+              const isLocked = t.isPremium && !isPremiumUnlocked;
               return (
                 <button
                   key={t.id}
                   type="button"
                   onClick={() => {
-                    setTheme(t.id);
+                    handleSelectTheme(t);
                     setIsOpen(false);
                   }}
                   className={cn(
@@ -176,8 +215,15 @@ export function ThemeSelector({
                   <span className="flex items-center gap-2">
                     <span className="text-sm leading-none">{t.icon}</span>
                     <span>{isAr ? t.label_ar : t.label_fr}</span>
+                    {t.isPremium && (
+                      <span className="text-[8px] font-bold px-1 py-0.2 rounded bg-amber-500/20 text-amber-500">PRO</span>
+                    )}
                   </span>
-                  {isSelected && <Check className="h-3.5 w-3.5 stroke-[2.5]" />}
+                  {isSelected ? (
+                    <Check className="h-3.5 w-3.5 stroke-[2.5]" />
+                  ) : isLocked ? (
+                    <Lock className="h-3 w-3 text-amber-500/70" />
+                  ) : null}
                 </button>
               );
             })}

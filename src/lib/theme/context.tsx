@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-export type Theme = "focus" | "balance" | "pure";
+export type Theme = "focus" | "bloom" | "edge" | "pure";
 
 export interface ThemeInfo {
   id: Theme;
@@ -13,42 +13,63 @@ export interface ThemeInfo {
   tagline_fr: string;
   colorScheme: "dark" | "light";
   accentColor: string;
+  isPremium?: boolean;
 }
 
 export const THEMES: Record<Theme, ThemeInfo> = {
   focus: {
     id: "focus",
-    label_ar: "تركيز",
+    label_ar: "فوكس (Focus)",
     label_fr: "Focus",
+    icon: "☀️",
+    tagline_ar: "دافئ، أنيق، ولمسة هادئة ومريحة",
+    tagline_fr: "Chaleureux, pastel et confiant",
+    colorScheme: "light",
+    accentColor: "#EE7B62",
+    isPremium: false,
+  },
+  bloom: {
+    id: "bloom",
+    label_ar: "بلوم (Bloom)",
+    label_fr: "Bloom",
+    icon: "✨",
+    tagline_ar: "أناقة فاخرة، درجات البنفسجي والمرجان",
+    tagline_fr: "Élégant, prune & lavande éditoriale",
+    colorScheme: "dark",
+    accentColor: "#C084FC",
+    isPremium: true,
+  },
+  edge: {
+    id: "edge",
+    label_ar: "إيدج (Edge)",
+    label_fr: "Edge",
     icon: "⚡",
-    tagline_ar: "طاقة، تركيز، وإنجاز مباشر",
-    tagline_fr: "Énergie, focus et rigueur",
+    tagline_ar: "طموح، حديث، أزرق داكن وسيان علمي",
+    tagline_fr: "Ambitieux, moderne & bleu nuit",
     colorScheme: "dark",
     accentColor: "#3B82F6",
-  },
-  balance: {
-    id: "balance",
-    label_ar: "توازن",
-    label_fr: "Balance",
-    icon: "✨",
-    tagline_ar: "ثقة هادئة، أناقة، وراحة بال",
-    tagline_fr: "Confiance sereine, élégance et motivation",
-    colorScheme: "dark",
-    accentColor: "#A855F7",
+    isPremium: true,
   },
   pure: {
     id: "pure",
-    label_ar: "نقاء",
-    label_fr: "Pur",
+    label_ar: "نقاء (Pure)",
+    label_fr: "Pure",
     icon: "🌿",
-    tagline_ar: "صفاء ذهني، بساطة، ومسار نقي",
-    tagline_fr: "Clarté d'esprit, minimalisme et fraîcheur",
+    tagline_ar: "بساطة نقية، صفاء ذهني، وخفة",
+    tagline_fr: "Minimaliste, sobre et universel",
     colorScheme: "light",
-    accentColor: "#0D9488",
+    accentColor: "#2563EB",
+    isPremium: false,
   },
 };
 
 export const DEFAULT_THEME: Theme = "focus";
+
+function normalizeTheme(val: any): Theme {
+  if (val === "balance") return "bloom";
+  if (val && THEMES[val as Theme]) return val as Theme;
+  return DEFAULT_THEME;
+}
 
 interface ThemeContextType {
   theme: Theme;
@@ -76,39 +97,33 @@ export function ThemeProvider({
     const meta = THEMES[t] || THEMES[DEFAULT_THEME];
     root.style.colorScheme = meta.colorScheme;
 
-    // Update meta theme-color tag dynamically if present
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
       metaThemeColor.setAttribute(
         "content",
-        t === "focus" ? "#070B16" : t === "balance" ? "#120A1C" : "#F8FAFC"
+        t === "focus" ? "#F7F3EE" : t === "bloom" ? "#181126" : t === "edge" ? "#0A0F1D" : "#FBFBFA"
       );
     }
   };
 
   const setTheme = (newTheme: Theme) => {
-    if (!THEMES[newTheme]) return;
-    setThemeState(newTheme);
-    applyThemeToDOM(newTheme);
+    const validTheme = normalizeTheme(newTheme);
+    setThemeState(validTheme);
+    applyThemeToDOM(validTheme);
     try {
-      localStorage.setItem("bac_mastery_theme", newTheme);
-    } catch {
-      // Ignore local storage errors in restricted contexts
-    }
+      localStorage.setItem("bac_mastery_theme", validTheme);
+    } catch {}
   };
 
   useEffect(() => {
     setMounted(true);
     try {
-      const saved = localStorage.getItem("bac_mastery_theme") as Theme;
-      if (saved && THEMES[saved]) {
-        setThemeState(saved);
-        applyThemeToDOM(saved);
-        return;
-      }
-    } catch {
-      // Fallback to initial
-    }
+      const saved = localStorage.getItem("bac_mastery_theme");
+      const normalized = normalizeTheme(saved);
+      setThemeState(normalized);
+      applyThemeToDOM(normalized);
+      return;
+    } catch {}
     applyThemeToDOM(initialTheme);
   }, [initialTheme]);
 

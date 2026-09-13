@@ -29,6 +29,8 @@ import {
   Sparkles,
   LogIn,
   Clock,
+  Search,
+  Bell,
 } from "lucide-react";
 
 export function TopBar() {
@@ -145,25 +147,23 @@ export function TopBar() {
           )}
         </div>
 
-        {/* Center Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-1.5">
-          {navLinks.map((link) => {
-            const isActive = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                  isActive
-                    ? "bg-[var(--color-primary-muted)] text-[var(--color-primary)] border border-[var(--color-primary)]/25 shadow-sm"
-                    : "text-theme-secondary hover:text-theme-text hover:bg-card-hover"
-                }`}
-              >
-                {link.label}
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Center Desktop: Reference Search Pill */}
+        <div className="hidden md:flex items-center flex-1 max-w-md mx-6">
+          <div className="relative w-full">
+            <Search className={`w-4 h-4 text-theme-muted absolute top-2.5 ${isAr ? "right-3.5" : "left-3.5"}`} />
+            <input
+              type="text"
+              readOnly
+              placeholder={isAr ? "ابحث في مهارات المنهاج، الدروس، الملخصات..." : "Rechercher une compétence, formule, mission..."}
+              onClick={() => {
+                window.location.href = "/roadmap";
+              }}
+              className={`w-full py-1.5 rounded-full bg-card/80 border border-theme text-xs text-theme-text placeholder:text-theme-muted shadow-sm hover:border-[var(--color-border-hover)] cursor-pointer transition-all ${
+                isAr ? "pr-9 pl-4" : "pl-9 pr-4"
+              }`}
+            />
+          </div>
+        </div>
 
         {/* Right Action: Desktop & Mobile Controls */}
         <div className="flex items-center gap-2">
@@ -202,6 +202,18 @@ export function TopBar() {
               <User className="w-4 h-4" />
             </Link>
           </div>
+
+          {/* Notification Indicator (Reference pill) */}
+          <Link
+            href="/progress"
+            aria-label={isAr ? "التنبيهات والتقدم" : "Notifications et progrès"}
+            className="hidden sm:inline-flex relative p-2 rounded-full border border-theme bg-card hover:bg-card-hover text-theme-secondary hover:text-theme-text transition-all shadow-sm"
+          >
+            <Bell className="w-3.5 h-3.5" />
+            <span className="absolute -top-0.5 -end-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-rose-500 text-white text-[8px] font-bold">
+              3
+            </span>
+          </Link>
 
           <ThemeSelector variant="compact" />
           <div className="hidden sm:block">
