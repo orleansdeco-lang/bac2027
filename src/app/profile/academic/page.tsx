@@ -39,8 +39,22 @@ export default function AcademicProfilePage() {
   const router = useRouter();
   const { direction, locale } = useTranslation();
   const isAr = locale === "ar";
-  const isRTL = direction === "rtl";
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
+
+  // Enforce auth & registration prerequisite
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace("/auth?mode=signup");
+      return;
+    }
+    if (!isLoading && user) {
+      StudentService.getProfile(user.id).then((p) => {
+        if (!p || (!p.registrationCompletedAt && !(p.firstName && p.streamId))) {
+          router.replace("/auth/register");
+        }
+      });
+    }
+  }, [user, isLoading, router]);
 
   // Form State
   const [targetScore, setTargetScore] = useState<number>(16.0);
@@ -204,6 +218,14 @@ export default function AcademicProfilePage() {
     };
     return selectedMethods.map((m) => labels[m]).join(" + ");
   };
+
+  if (isLoading || !user) {
+    return (
+      <div className="min-h-screen bg-canvas flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-[var(--color-primary)] border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-canvas text-theme-base flex flex-col justify-between" dir={direction}>

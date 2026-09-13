@@ -12,6 +12,9 @@ import { Badge } from "./Badge";
 import { getStrategicProfile, getRegistrationDraft } from "@/lib/onboarding/profile";
 import { StrategicProfile } from "@/types/onboarding";
 import { StudentRegistrationData } from "@/types/registration";
+import { useAuth } from "@/lib/auth/context";
+import { StudentService } from "@/lib/services";
+import { StudentProfile } from "@/types/student";
 import {
   Menu,
   X,
@@ -25,14 +28,17 @@ import {
   Stethoscope,
   Sparkles,
   LogIn,
+  Clock,
 } from "lucide-react";
 
 export function TopBar() {
   const pathname = usePathname();
   const { t, locale } = useTranslation();
   const isAr = locale === "ar";
+  const { user } = useAuth();
   const [profile, setProfile] = useState<StrategicProfile | null>(null);
   const [regData, setRegData] = useState<StudentRegistrationData | null>(null);
+  const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -41,7 +47,13 @@ export function TopBar() {
     const reg = getRegistrationDraft();
     if (reg) setRegData(reg);
     setIsMobileMenuOpen(false);
-  }, [pathname]);
+
+    if (user) {
+      StudentService.getProfile(user.id).then((sp) => {
+        if (sp) setStudentProfile(sp);
+      });
+    }
+  }, [pathname, user]);
 
   const navLinks = [
     { href: "/dashboard", label: isAr ? "لوحة التحكم" : "Tableau de bord", icon: Compass },
@@ -51,26 +63,84 @@ export function TopBar() {
     { href: "/account", label: isAr ? "حسابي" : "Mon compte", icon: User },
   ];
 
-  const hasAccount = Boolean(profile || regData);
-  const studentDisplayName = regData?.firstName || (profile ? (isAr ? "طالب بكالوريا" : "Élève") : null);
+  const hasAccount = Boolean(user || studentProfile || profile || regData);
+  const studentDisplayName =
+    studentProfile?.firstName ||
+    regData?.firstName ||
+    (profile ? (isAr ? "طالب بكالوريا" : "Élève") : null);
+
+  const activeStream =
+    studentProfile?.streamId ||
+    regData?.streamId ||
+    profile?.streamId ||
+    "sciences_exp";
+
+  const streamLabels: Record<string, { ar: string; fr: string }> = {
+    sciences_exp: { ar: "علوم تجريبية", fr: "Sciences Exp." },
+    gestion_eco: { ar: "تسيير واقتصاد", fr: "Gestion & Éco" },
+    math: { ar: "رياضيات", fr: "Mathématiques" },
+    technique_math: { ar: "تقني رياضي", fr: "Technique Math" },
+    lettres_philo: { ar: "آداب وفلسفة", fr: "Lettres & Philo" },
+    langues_etrangeres: { ar: "لغات أجنبية", fr: "Langues Étr." },
+  };
+
+  const streamLabel = activeStream && streamLabels[activeStream]
+    ? (isAr ? streamLabels[activeStream].ar : streamLabels[activeStream].fr)
+    : null;
+
+  // 72-Hour Server-Anchored Trial Calculation
+  const trialExpiresAt = studentProfile?.trialExpiresAt;
+  const trialRemainingHours = trialExpiresAt
+    ? Math.max(0, Math.ceil((new Date(trialExpiresAt).getTime() - Date.now()) / (3600 * 1000)))
+    : null;
+  const isTrialActive =
+    studentProfile?.trialStatus === "active" &&
+    trialRemainingHours !== null &&
+    trialRemainingHours > 0;
+  const isTrialExpired =
+    studentProfile?.trialStatus === "expired" ||
+    (trialRemainingHours !== null && trialRemainingHours <= 0);
 
   return (
     <header className="sticky top-0 z-40 border-b border-theme bg-surface/95 backdrop-blur-md transition-colors duration-200">
       <Container size="lg" className="flex h-16 items-center justify-between px-3 sm:px-6">
-        {/* Left: Logo + Optional Profile Badge */}
-        <div className="flex items-center gap-3">
+        {/* Left: Logo + Stream Badge + Trial Indicator */}
+        <div className="flex items-center gap-2 sm:gap-3">
           <Logo size="md" showTagline={false} />
-          {profile && (
+          {streamLabel && (
             <Badge
               variant="outline"
               size="sm"
-              className="hidden sm:inline-flex text-[10px] border-theme bg-card text-theme-secondary"
+              className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold border-cyan-500/40 bg-cyan-500/10 text-cyan-400"
             >
-              {profile.streamId === "sciences_exp"
-                ? (isAr ? "علوم تجريبية" : "Sciences Exp.")
-                : profile.streamId}
-              {profile.targetScore ? ` · ${profile.targetScore.toFixed(1)}/20` : ""}
+              <span>{streamLabel}</span>
             </Badge>
+          )}
+
+          {/* 72h Trial Countdown Indicator */}
+          {isTrialActive && (
+            <div
+              title={
+                isAr
+                  ? `فترة تجريبية 72 ساعة (متبقي ${trialRemainingHours} ساعة)`
+                  : `Essai 72h actif (${trialRemainingHours}h restantes)`
+              }
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] sm:text-xs font-mono font-bold whitespace-nowrap"
+            >
+              <Clock className="w-3 h-3 shrink-0 animate-pulse" />
+              <span className="hidden md:inline">{isAr ? "تجربة 72 سا:" : "Essai 72h:"}</span>
+              <span>{trialRemainingHours} {isAr ? "سا" : "h"}</span>
+            </div>
+          )}
+
+          {isTrialExpired && (
+            <div
+              title={isAr ? "انتهت الفترة التجريبية (72 ساعة)" : "Période d'essai 72h expirée"}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[10px] sm:text-xs font-mono font-bold whitespace-nowrap"
+            >
+              <AlertTriangle className="w-3 h-3 shrink-0" />
+              <span>{isAr ? "انتهت التجربة" : "Essai expiré"}</span>
+            </div>
           )}
         </div>
 
@@ -164,9 +234,23 @@ export function TopBar() {
                     <span className="text-xs font-bold text-theme-text block">
                       {studentDisplayName || (isAr ? "طالب بكالوريا" : "Élève")}
                     </span>
-                    <span className="text-[10px] text-theme-muted">
-                      {regData?.wilayaName ? `${isAr ? "ولاية" : "Wilaya"} ${regData.wilayaName}` : (isAr ? "جلسة دراسية نشطة" : "Session active")}
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                      {streamLabel && (
+                        <span className="text-[10px] text-cyan-400 font-semibold">
+                          {streamLabel}
+                        </span>
+                      )}
+                      {isTrialActive && (
+                        <span className="text-[10px] text-emerald-400 font-mono font-semibold">
+                          · {isAr ? `تجربة 72 سا: متبقي ${trialRemainingHours} سا` : `Essai 72h: ${trialRemainingHours}h`}
+                        </span>
+                      )}
+                      {isTrialExpired && (
+                        <span className="text-[10px] text-amber-400 font-semibold">
+                          · {isAr ? "انتهت التجربة" : "Essai expiré"}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <Link

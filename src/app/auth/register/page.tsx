@@ -66,8 +66,23 @@ export default function StudentRegistrationPage() {
   const router = useRouter();
   const { direction, locale } = useTranslation();
   const isAr = locale === "ar";
-  const isRTL = direction === "rtl";
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
+
+  // Enforce auth requirement: cannot access registration without an account
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace("/auth?mode=signup");
+      return;
+    }
+    if (!isLoading && user) {
+      StudentService.getProfile(user.id).then((p) => {
+        // If registration is already done, forward to academic profile
+        if (p?.registrationCompletedAt) {
+          router.replace("/profile/academic");
+        }
+      });
+    }
+  }, [user, isLoading, router]);
 
   // Progress state: step index 1 to 6 (or 1 to 5 for free candidates)
   const [currentStep, setCurrentStep] = useState<number>(1);
@@ -325,8 +340,16 @@ export default function StudentRegistrationPage() {
   const totalSteps = studentStatus === "free" ? 5 : 6;
   const displayStepNumber = studentStatus === "free" && currentStep === 6 ? 5 : currentStep;
 
-  const BackIcon = isRTL ? ArrowRight : ArrowLeft;
+  const isRTL = direction === "rtl" || isAr;
   const NextIcon = isRTL ? ArrowLeft : ArrowRight;
+  const BackIcon = isRTL ? ArrowRight : ArrowLeft;
+  if (isLoading || !user) {
+    return (
+      <div className="min-h-screen bg-canvas flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-2 border-[var(--color-primary)] border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-canvas text-theme-base flex flex-col justify-between" dir={direction}>

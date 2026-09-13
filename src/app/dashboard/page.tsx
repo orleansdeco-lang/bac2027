@@ -33,11 +33,14 @@ import {
   BarChart3,
 } from "lucide-react";
 
+import { ALL_SUBJECTS } from "@/lib/constants/streams";
+import { SubjectId } from "@/types/education";
+import { useLearningAccessGate } from "@/lib/hooks";
+
 export default function DashboardPage() {
   const { t, locale } = useTranslation();
   const isAr = locale === "ar";
-  const { user } = useAuth();
-  const [profile, setProfile] = useState<StrategicProfile | null>(null);
+  const gate = useLearningAccessGate();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -45,22 +48,25 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function loadDashboard() {
+      if (!gate.isAuthorized || !gate.profile) return;
       try {
-        const p = getStrategicProfile();
-        if (p) setProfile(p);
         const dashData = await DashboardService.getDashboardData();
         setData(dashData);
-        trackEvent("dashboard_viewed", { hasProfile: Boolean(p) });
+        trackEvent("dashboard_viewed", { streamId: gate.profile.streamId });
       } catch (err) {
         console.error("Failed to load dashboard data:", err);
       } finally {
         setLoading(false);
       }
     }
-    loadDashboard();
-  }, []);
+    if (gate.isAuthorized) {
+      loadDashboard();
+    } else if (!gate.isLoading) {
+      setLoading(false);
+    }
+  }, [gate.isAuthorized, gate.isLoading, gate.profile]);
 
-  if (loading) {
+  if (gate.isLoading || loading) {
     return (
       <AppShell>
         <div className="min-h-[60vh] flex items-center justify-center">
@@ -74,6 +80,12 @@ export default function DashboardPage() {
       </AppShell>
     );
   }
+
+  if (!gate.isAuthorized) {
+    return null;
+  }
+
+  const profile = gate.profile;
 
   const todaysMission = data?.todaysMission;
   const metrics = data?.verifiedMetrics || {
@@ -101,13 +113,82 @@ export default function DashboardPage() {
     }
   };
 
+  const streamId = profile?.streamId || "sciences_exp";
+
+  const streamMeta: Record<
+    string,
+    { name_ar: string; name_fr: string; totalSkills: number; subjects: { name_ar: string; name_fr: string }[] }
+  > = {
+    sciences_exp: {
+      name_ar: "شعبة العلوم التجريبية",
+      name_fr: "Sciences Expérimentales",
+      totalSkills: 31,
+      subjects: [
+        { name_ar: "10 رياضيات", name_fr: "10 Math" },
+        { name_ar: "11 فيزياء", name_fr: "11 Physique" },
+        { name_ar: "10 علوم طبيعية", name_fr: "10 SNV" },
+      ],
+    },
+    gestion_eco: {
+      name_ar: "شعبة التسيير والاقتصاد",
+      name_fr: "Gestion & Économie",
+      totalSkills: 33,
+      subjects: [
+        { name_ar: "9 محاسبة ومالية", name_fr: "9 Gestion Fin." },
+        { name_ar: "8 اقتصاد ومناجمنت", name_fr: "8 Économie" },
+        { name_ar: "8 قانون", name_fr: "8 Droit" },
+        { name_ar: "8 رياضيات", name_fr: "8 Math" },
+      ],
+    },
+    math: {
+      name_ar: "شعبة الرياضيات",
+      name_fr: "Mathématiques",
+      totalSkills: 30,
+      subjects: [
+        { name_ar: "15 رياضيات", name_fr: "15 Math" },
+        { name_ar: "15 فيزياء", name_fr: "15 Physique" },
+      ],
+    },
+    technique_math: {
+      name_ar: "شعبة تقني رياضي",
+      name_fr: "Technique Mathématiques",
+      totalSkills: 30,
+      subjects: [
+        { name_ar: "15 رياضيات", name_fr: "15 Math" },
+        { name_ar: "15 فيزياء", name_fr: "15 Physique" },
+      ],
+    },
+    lettres_philo: {
+      name_ar: "شعبة آداب وفلسفة",
+      name_fr: "Lettres et Philosophie",
+      totalSkills: 20,
+      subjects: [
+        { name_ar: "فلسفة", name_fr: "Philosophie" },
+        { name_ar: "لغة عربية", name_fr: "Langue Arabe" },
+      ],
+    },
+    langues_etrangeres: {
+      name_ar: "شعبة لغات أجنبية",
+      name_fr: "Langues Étrangères",
+      totalSkills: 20,
+      subjects: [
+        { name_ar: "لغة أجنبية 3", name_fr: "Langue 3" },
+        { name_ar: "لغة فرنسية", name_fr: "Français" },
+      ],
+    },
+  };
+
+  const activeStreamMeta = streamMeta[streamId] || streamMeta.sciences_exp;
+
   const getSubjectName = (subjectId?: string) => {
-    switch (subjectId) {
-      case "mathematics": return isAr ? "الرياضيات" : "Mathématiques";
-      case "physics": return isAr ? "العلوم الفيزيائية" : "Physique-Chimie";
-      case "science": return isAr ? "علوم الطبيعة والحياة" : "Sciences SNV";
-      default: return isAr ? "مادة دراسية" : "Discipline";
-    }
+    if (!subjectId) return isAr ? "مادة دراسية" : "Discipline";
+    const mappedId =
+      subjectId === "science" ? "natural_sciences" :
+      subjectId === "mathematics" ? "math" :
+      subjectId;
+    const subj = ALL_SUBJECTS[mappedId as SubjectId];
+    if (subj) return isAr ? subj.name_ar : subj.name_fr;
+    return subjectId;
   };
 
   const access = getStudentAccess(profile);
@@ -115,23 +196,23 @@ export default function DashboardPage() {
   return (
     <AppShell activeNav="home">
       <Container size="lg" className="py-6 sm:py-10 space-y-8">
-        {/* Subtle 48h Trial Status Banner */}
+        {/* Authoritative 72h Trial Status Banner */}
         {access.status === "TRIAL_EXPIRED" ? (
           <div data-testid="dashboard-trial-banner" className="p-4 rounded-2xl bg-amber-950/40 border border-amber-500/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-md animate-fade-in">
             <div className="flex items-center gap-3">
               <Clock className="w-5 h-5 text-amber-400 shrink-0" />
               <div className="text-xs sm:text-sm">
                 <span className="font-bold text-white block">
-                  {isAr ? "التجربة انتهت • تقدمك وخريطتك محفوظان" : "Essai terminé • Progression sauvegardée"}
+                  {isAr ? "انتهت فترة التجربة (72 ساعة) • تقدمك وخريطتك محفوظان" : "Essai de 72h terminé • Progression sauvegardée"}
                 </span>
                 <span className="text-amber-200/90 text-xs">
-                  {isAr ? "قم بتفعيل اشتراكك لمتابعة المهام والتصحيح الذكي." : "Activez votre pass pour continuer vos missions ciblées."}
+                  {isAr ? "قم بتفعيل اشتراكك لمتابعة المهام والتصحيح الذكي لشعبتك." : "Activez votre pass pour continuer vos missions ciblées."}
                 </span>
               </div>
             </div>
             <Link href="/subscribe">
               <Button size="sm" variant="primary" className="text-xs font-bold shrink-0">
-                <span>{isAr ? "كمّل BAC Mastery" : "Continuer"}</span>
+                <span>{isAr ? "تفعيل الاشتراك" : "Activer"}</span>
               </Button>
             </Link>
           </div>
@@ -141,8 +222,8 @@ export default function DashboardPage() {
               <Clock className="w-4 h-4 text-blue-400 shrink-0" />
               <span>
                 {access.isExpiringSoon
-                  ? isAr ? "باقي أقل من 6 ساعات في تجربتك المجانية" : "Moins de 6 heures restantes sur votre essai"
-                  : isAr ? `تجربتك المجانية مازالت فعالة • باقي ${access.remainingHours} ساعة` : `Essai gratuit actif • reste ${access.remainingHours}h`}
+                  ? isAr ? "باقي أقل من 6 ساعات في تجربتك المجانية (72 ساعة)" : "Moins de 6 heures restantes sur votre essai de 72h"
+                  : isAr ? `تجربتك المجانية (72 ساعة) مازالت فعالة • باقي ${access.remainingHours} ساعة` : `Essai gratuit de 72h actif • reste ${access.remainingHours}h`}
               </span>
             </div>
             <Link href="/subscribe" className="text-blue-400 hover:text-blue-300 font-semibold underline underline-offset-4 text-[11px]">
@@ -159,7 +240,7 @@ export default function DashboardPage() {
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <Badge variant="primary" size="sm" className="font-semibold">
-                  {isAr ? "مسار العلوم التجريبية" : "Sciences Expérimentales"}
+                  {isAr ? activeStreamMeta.name_ar : activeStreamMeta.name_fr}
                 </Badge>
                 {profile?.targetScore && (
                   <Badge variant="outline" size="sm" className="border-amber-500/30 text-amber-400">
@@ -370,7 +451,7 @@ export default function DashboardPage() {
                       : null
                   }
                   masteredCount={metrics.demonstratedSkillsCount}
-                  totalSkills={31}
+                  totalSkills={activeStreamMeta.totalSkills}
                   locale={locale}
                 />
               </Card>
@@ -402,7 +483,7 @@ export default function DashboardPage() {
                     <span className="text-xl font-bold text-emerald-400 font-mono">
                       {metrics.demonstratedSkillsCount}
                     </span>
-                    <span className="text-xs text-theme-muted font-mono">/31</span>
+                    <span className="text-xs text-theme-muted font-mono">/{activeStreamMeta.totalSkills}</span>
                   </div>
                 </div>
 
@@ -477,23 +558,22 @@ export default function DashboardPage() {
             <Card className="p-5 space-y-3">
               <div className="flex items-center gap-2 text-sm font-bold text-theme-text">
                 <BookOpen className="h-4 w-4 text-[var(--color-accent)]" />
-                <span>{isAr ? "تغطية شعبة العلوم التجريبية" : "Sciences Expérimentales"}</span>
+                <span>{isAr ? activeStreamMeta.name_ar : activeStreamMeta.name_fr}</span>
               </div>
               <p className="text-xs text-theme-secondary leading-relaxed">
                 {isAr
-                  ? "31 مهارة معيارية مغطاة بالكامل مع دروس، أمثلة محلولة، تمارين وتطبيقات البكالوريا."
-                  : "31 compétences canoniques avec leçons, exemples résolus et annales officielles."}
+                  ? `${activeStreamMeta.totalSkills} مهارة معيارية مغطاة بالكامل مع دروس، أمثلة محلولة، تمارين وتطبيقات البكالوريا.`
+                  : `${activeStreamMeta.totalSkills} compétences canoniques avec leçons, exemples résolus et annales officielles.`}
               </p>
               <div className="flex flex-wrap gap-1.5 pt-1 text-[11px]">
-                <span className="px-2 py-0.5 rounded-lg bg-[var(--color-primary-muted)] border border-[var(--color-primary)]/30 text-[var(--color-primary)] font-medium">
-                  {isAr ? "10 رياضيات" : "10 Math"}
-                </span>
-                <span className="px-2 py-0.5 rounded-lg bg-[var(--color-accent-muted)] border border-[var(--color-accent)]/30 text-[var(--color-accent)] font-medium">
-                  {isAr ? "11 فيزياء" : "11 Physique"}
-                </span>
-                <span className="px-2 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-medium">
-                  {isAr ? "10 علوم طبيعية" : "10 SNV"}
-                </span>
+                {activeStreamMeta.subjects.map((s, idx) => (
+                  <span
+                    key={idx}
+                    className="px-2 py-0.5 rounded-lg bg-[var(--color-primary-muted)] border border-[var(--color-primary)]/30 text-[var(--color-primary)] font-medium"
+                  >
+                    {isAr ? s.name_ar : s.name_fr}
+                  </span>
+                ))}
               </div>
             </Card>
           </div>

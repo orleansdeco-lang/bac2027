@@ -23,24 +23,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) {
+      if (typeof window !== "undefined") {
+        try {
+          const localAuth = localStorage.getItem("bac_auth_user");
+          if (localAuth) setUser(JSON.parse(localAuth));
+        } catch {}
+      }
       setIsLoading(false);
       return;
     }
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+      if (session?.user) {
+        setSession(session);
+        setUser(session.user);
+      } else if (typeof window !== "undefined") {
+        try {
+          const localAuth = localStorage.getItem("bac_auth_user");
+          if (localAuth) setUser(JSON.parse(localAuth));
+          else setUser(null);
+        } catch {
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
       setIsLoading(false);
     }).catch(() => {
+      if (typeof window !== "undefined") {
+        try {
+          const localAuth = localStorage.getItem("bac_auth_user");
+          if (localAuth) setUser(JSON.parse(localAuth));
+          else setUser(null);
+        } catch {
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
       setIsLoading(false);
     });
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+        if (session?.user) {
+          setSession(session);
+          setUser(session.user);
+        } else if (typeof window !== "undefined") {
+          try {
+            const localAuth = localStorage.getItem("bac_auth_user");
+            if (localAuth) setUser(JSON.parse(localAuth));
+            else setUser(null);
+          } catch {
+            setUser(null);
+          }
+        } else {
+          setUser(null);
+        }
         setIsLoading(false);
       }
     );

@@ -238,6 +238,7 @@ export interface Skill {
   description_fr: string;
   prerequisites: string[]; // Directional prerequisite skill IDs (DAG)
   cognitiveDimensions: DiagnosticDimension[];
+  dimensions?: DiagnosticDimension[];
   difficulty: 1 | 2 | 3;
   order: number;
   learningObjectiveIds?: string[];

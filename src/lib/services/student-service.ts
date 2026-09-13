@@ -7,6 +7,9 @@ import { StrategicProfile } from "@/types/onboarding";
 import { StudentRepository } from "@/lib/repositories/student-repository";
 import { getStrategicProfile, saveStrategicProfile, clearOnboardingDraft } from "@/lib/onboarding/profile";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
+import { StudentLearningContext, getStudentSubjects } from "@/domain/student";
+import { StreamSubjectRule } from "@/domain/curriculum/streams";
+import { getStudentAccess } from "@/lib/access";
 
 export const StudentService = {
   /**
@@ -53,10 +56,10 @@ export const StudentService = {
           }
         }
 
-        // Case 2: No server profile exists, but local profile exists -> migrate up with 48h trial
+        // Case 2: No server profile exists, but local profile exists -> migrate up with 72h trial
         if (localProfile) {
           const now = new Date();
-          const trialExpires = new Date(now.getTime() + 48 * 3600 * 1000);
+          const trialExpires = new Date(now.getTime() + 72 * 3600 * 1000);
           const trialProfile = {
             ...localProfile,
             trial_started_at: (localProfile as any).trial_started_at || now.toISOString(),
@@ -71,7 +74,7 @@ export const StudentService = {
 
         // Case 3: Fresh registration without local profile -> create initial trial profile
         const freshNow = new Date();
-        const freshExpires = new Date(freshNow.getTime() + 48 * 3600 * 1000);
+        const freshExpires = new Date(freshNow.getTime() + 72 * 3600 * 1000);
         const defaultProfile: any = {
           id: userId,
           educationLevel: "secondary",
@@ -98,9 +101,56 @@ export const StudentService = {
   },
 
   /**
+   * Resolves authoritative StudentLearningContext for a student
+   */
+  async getLearningContext(userId?: string): Promise<StudentLearningContext | null> {
+    const profile = await StudentRepository.getProfile(userId);
+    if (!profile) return null;
+
+    const access = getStudentAccess(profile);
+    const stream = (profile.streamId as any) || "sciences_exp";
+    const studentStatus = (profile as any).student_status || "schooled";
+
+    return {
+      userId: profile.id || userId || "anonymous",
+      stream,
+      studentStatus,
+      wilayaCode: (profile as any).wilaya_code || "",
+      wilayaName: (profile as any).wilaya_name,
+      communeCode: (profile as any).commune_code || "",
+      communeName: (profile as any).commune_name,
+      schoolName: (profile as any).school_name || null,
+      targetScore: profile.targetScore || 16.0,
+      targetSpecialty: (profile as any).target_specialty,
+      techniqueMathSpecialty: profile.techniqueMathSpecialty,
+      trialStartedAt: access.trialStartedAt || new Date().toISOString(),
+      trialExpiresAt: access.trialExpiresAt || new Date(Date.now() + 72 * 3600 * 1000).toISOString(),
+      isTrialActive: access.status === "TRIAL_ACTIVE" || access.status === "PAID_ACTIVE",
+      canUseProduct: access.canUseProduct,
+      registrationCompletedAt: (profile as any).registration_completed_at,
+      academicProfileCompletedAt: (profile as any).academic_profile_completed_at,
+    };
+  },
+
+  /**
+   * Deterministic authorized subjects for the student's stream
+   */
+  async getStudentSubjects(userId?: string): Promise<StreamSubjectRule[]> {
+    const context = await this.getLearningContext(userId);
+    if (!context) {
+      // Fallback default stream
+      return getStudentSubjects("sciences_exp");
+    }
+    return getStudentSubjects(context);
+  },
+
+  /**
    * Save registration data (Step 1-6)
    */
   async saveRegistration(data: any, userId?: string): Promise<void> {
+    if (!userId || userId.trim() === "") {
+      throw new Error("Cannot save registration without an authenticated userId: profile must not exist outside an account");
+    }
     await StudentRepository.saveRegistrationData(data, userId);
   },
 
@@ -115,6 +165,9 @@ export const StudentService = {
    * Save academic profile data
    */
   async saveAcademicProfile(data: any, userId?: string): Promise<void> {
+    if (!userId || userId.trim() === "") {
+      throw new Error("Cannot save academic profile without an authenticated userId: profile must not exist outside an account");
+    }
     await StudentRepository.saveAcademicProfileData(data, userId);
   },
 

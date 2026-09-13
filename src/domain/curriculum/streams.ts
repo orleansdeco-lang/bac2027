@@ -16,6 +16,7 @@
 
 import { StreamId, TechniqueMathSpecialty } from "@/types/education";
 import { StreamDefinition, SpecialtyDefinition, StreamSubjectRule } from "./types";
+export type { StreamDefinition, SpecialtyDefinition, StreamSubjectRule };
 
 // ============================================================================
 // 1. TECHNIQUE MATH SPECIALTY REGISTRY (4 INDEPENDENT ENGINEERING BRANCHES)
@@ -124,7 +125,6 @@ export const STREAM_REGISTRY: Record<StreamId, StreamDefinition> = {
       { subjectId: "math", coefficient: 7, coefficientStatus: "OFFICIAL_HISTORICAL", isCoreSubject: true },
       { subjectId: "physics", coefficient: 6, coefficientStatus: "OFFICIAL_HISTORICAL", isCoreSubject: true },
       { subjectId: "arabic", coefficient: 3, coefficientStatus: "OFFICIAL_HISTORICAL", isCoreSubject: false },
-      { subjectId: "natural_sciences", coefficient: 2, coefficientStatus: "OFFICIAL_HISTORICAL", isCoreSubject: false },
       { subjectId: "philosophy", coefficient: 2, coefficientStatus: "OFFICIAL_HISTORICAL", isCoreSubject: false },
       { subjectId: "french", coefficient: 2, coefficientStatus: "OFFICIAL_HISTORICAL", isCoreSubject: false },
       { subjectId: "english", coefficient: 2, coefficientStatus: "OFFICIAL_HISTORICAL", isCoreSubject: false },

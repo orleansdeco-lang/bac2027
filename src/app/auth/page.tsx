@@ -41,12 +41,14 @@ function AuthContent() {
     }
   }, [searchParams]);
 
-  // If already logged in, redirect to dashboard or onboarding
+  // If already logged in, redirect to the appropriate step
   React.useEffect(() => {
     if (!isLoading && user) {
       StudentService.getProfile(user.id).then((p) => {
-        if (!p || !p.streamId) {
-          router.push("/onboarding");
+        if (!p || (!p.registrationCompletedAt && !(p.firstName && p.streamId))) {
+          router.push("/auth/register");
+        } else if (!p.academicProfileCompletedAt && !(p.targetScore && p.studyMethods?.length)) {
+          router.push("/profile/academic");
         } else {
           router.push("/dashboard");
         }
@@ -99,8 +101,10 @@ function AuthContent() {
           const profile = await StudentService.getProfile(loggedInUser.id);
           const { trackEvent } = await import("@/lib/analytics");
           trackEvent("login_completed", { userId: loggedInUser.id });
-          if (!profile || !profile.streamId) {
-            router.push("/onboarding");
+          if (!profile || (!profile.registrationCompletedAt && !(profile.firstName && profile.streamId))) {
+            router.push("/auth/register");
+          } else if (!profile.academicProfileCompletedAt && !(profile.targetScore && profile.studyMethods?.length)) {
+            router.push("/profile/academic");
           } else {
             router.push("/dashboard");
           }
@@ -114,20 +118,15 @@ function AuthContent() {
           await syncAllLocalStorageToCloud(newUser.id);
           const { trackEvent } = await import("@/lib/analytics");
           trackEvent("registration_completed", { userId: newUser.id });
-          trackEvent("trial_started", { userId: newUser.id, durationHours: 48 });
+          trackEvent("trial_started", { userId: newUser.id, durationHours: 72 });
           setSuccessMsg(
             locale === "fr"
-              ? "Compte créé avec succès ! Votre essai gratuit de 48h a débuté."
-              : "تم إنشاء حسابك بنجاح! بدأت تجربتك المجانية لمدة 48 ساعة."
+              ? "Compte créé avec succès ! Votre essai gratuit de 72h a débuté."
+              : "تم إنشاء حسابك بنجاح! بدأت تجربتك المجانية لمدة 72 ساعة."
           );
-          setTimeout(async () => {
-            const profile = await StudentService.getProfile(newUser.id);
-            if (!profile || !profile.streamId) {
-              router.push("/onboarding");
-            } else {
-              router.push("/dashboard");
-            }
-          }, 800);
+          setTimeout(() => {
+            router.push("/auth/register");
+          }, 600);
         }
       }
     } catch {
@@ -213,27 +212,20 @@ function AuthContent() {
             </div>
 
             {mode === "signup" && (
-              <div className="mb-4 p-3.5 bg-blue-500/10 border border-blue-500/30 rounded-xl text-xs space-y-2">
+              <div className="mb-4 p-3.5 bg-blue-500/10 border border-blue-500/30 rounded-xl text-xs space-y-1.5">
                 <div className="flex items-center gap-2 font-bold text-blue-400">
                   <Sparkles className="w-4 h-4 shrink-0" />
                   <span>
                     {locale === "fr"
-                      ? "Nouveau : Inscription BAC simplifiée"
-                      : "التسجيل المدرسي المباشر للبكالوريا"}
+                      ? "Essai gratuit de 72 heures inclus"
+                      : "فترة تجريبية مجانية لمدة 72 ساعة"}
                   </span>
                 </div>
                 <p className="text-theme-secondary text-[11px] leading-relaxed">
                   {locale === "fr"
-                    ? "Inscrivez-vous en quelques clics avec votre filière et wilaya (sans e-mail obligatoire)."
-                    : "سجّل مباشرة بشعبتك وولايتك بدون الحاجة لحساب بريد إلكتروني."}
+                    ? "Créez votre compte pour démarrer immédiatement votre essai de 72h avec accès complet aux matières de votre filière."
+                    : "أنشئ حسابك لتبدأ فوراً تجربتك المجانية لمدة 72 ساعة مع وصول كامل لمواد شعبتك."}
                 </p>
-                <Link
-                  href="/auth/register"
-                  className="flex items-center justify-center gap-1.5 w-full py-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white rounded-lg font-bold text-xs transition-colors"
-                >
-                  <UserPlus className="w-3.5 h-3.5" />
-                  <span>{locale === "fr" ? "Accéder à l'inscription rapide" : "الانتقال للتسجيل المدرسي السريع"}</span>
-                </Link>
               </div>
             )}
 

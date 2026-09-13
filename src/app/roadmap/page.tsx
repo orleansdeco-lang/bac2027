@@ -29,6 +29,8 @@ import { buildAdaptiveRoadmap, getComputedAdaptiveRoadmap } from "@/lib/roadmap"
 import { setActiveMissionId } from "@/lib/mission";
 import { trackEvent } from "@/lib/analytics";
 import { getAllTopics, getSkillsForTopic } from "@/data/curriculum";
+import { getSkillsForSubject } from "@/data/skills";
+import { useLearningAccessGate } from "@/lib/hooks";
 import {
   Compass,
   ArrowRight,
@@ -49,13 +51,12 @@ import {
 
 export default function RoadmapPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const gate = useLearningAccessGate();
   const { t, locale, direction } = useTranslation();
   const isAr = locale === "ar";
   const isRtl = direction === "rtl";
   const Arrow = isRtl ? ArrowLeft : ArrowRight;
 
-  const [profile, setProfile] = useState<StrategicProfile | null>(null);
   const [gapResult, setGapResult] = useState<InitialGapResult | null>(null);
   const [bottlenecks, setBottlenecks] = useState<StrategicBottleneckAnalysis | null>(null);
   const [diagnosticResults, setDiagnosticResults] = useState<DiagnosticAnalysisResult | null>(null);
@@ -65,41 +66,39 @@ export default function RoadmapPage() {
 
   useEffect(() => {
     async function loadRoadmap() {
+      if (!gate.isAuthorized || !gate.profile) return;
       try {
-        const stored = await StudentRepository.getProfile(user?.id);
-        if (stored) {
-          setProfile(stored);
-          const gap = calculateInitialStrategicGap(stored);
-          setGapResult(gap);
-          const b = detectStrategicBottleneck(stored, gap);
-          setBottlenecks(b);
+        const stored = gate.profile;
+        const gap = calculateInitialStrategicGap(stored as any);
+        setGapResult(gap);
+        const b = detectStrategicBottleneck(stored as any, gap);
+        setBottlenecks(b);
 
-          const diag = await DiagnosticRepository.getResults(user?.id);
-          if (diag) {
-            setDiagnosticResults(diag);
-          }
-
-          const [missions, errors, mastery] = await Promise.all([
-            MissionRepository.getMissions(user?.id),
-            ErrorRepository.getErrors(user?.id),
-            MasteryRepository.getMasteryRecords(user?.id),
-          ]);
-
-          const computed = buildAdaptiveRoadmap({
-            onboardingProfile: stored,
-            diagnosticResult: diag,
-            missions: missions,
-            masteryEvidence: mastery,
-            errors: Object.values(errors),
-            energyState: stored.studyEnergy,
-          });
-          setRoadmapState(computed);
-          trackEvent("roadmap_viewed", {
-            hasProfile: Boolean(stored),
-            hasDiagnostic: Boolean(diag),
-            totalMissions: computed.queuedMissions.length,
-          });
+        const diag = await DiagnosticRepository.getResults(stored.id);
+        if (diag) {
+          setDiagnosticResults(diag);
         }
+
+        const [missions, errors, mastery] = await Promise.all([
+          MissionRepository.getMissions(stored.id),
+          ErrorRepository.getErrors(stored.id),
+          MasteryRepository.getMasteryRecords(stored.id),
+        ]);
+
+        const computed = buildAdaptiveRoadmap({
+          onboardingProfile: stored as any,
+          diagnosticResult: diag,
+          missions: missions,
+          masteryEvidence: mastery,
+          errors: Object.values(errors),
+          energyState: stored.studyEnergy,
+        });
+        setRoadmapState(computed);
+        trackEvent("roadmap_viewed", {
+          streamId: stored.streamId,
+          hasDiagnostic: Boolean(diag),
+          totalMissions: computed.queuedMissions.length,
+        });
       } catch (err) {
         console.error("Error loading roadmap state:", err);
       } finally {
@@ -107,10 +106,12 @@ export default function RoadmapPage() {
       }
     }
 
-    if (!authLoading) {
+    if (gate.isAuthorized) {
       loadRoadmap();
+    } else if (!gate.isLoading) {
+      setIsLoaded(true);
     }
-  }, [user, authLoading]);
+  }, [gate.isAuthorized, gate.isLoading, gate.profile]);
 
   const handleStartMission = (missionId: string) => {
     trackEvent("roadmap_mission_selected", { missionId });
@@ -118,7 +119,7 @@ export default function RoadmapPage() {
     router.push(`/mission/${missionId}`);
   };
 
-  if (!isLoaded) {
+  if (gate.isLoading || !isLoaded) {
     return (
       <AppShell>
         <div className="min-h-[60vh] flex items-center justify-center">
@@ -130,32 +131,11 @@ export default function RoadmapPage() {
     );
   }
 
-  // Fallback: No profile found
-  if (!profile) {
-    return (
-      <AppShell>
-        <Container size="sm" className="py-16 text-center space-y-6">
-          <div className="h-16 w-16 mx-auto rounded-3xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shadow-lg">
-            <Compass className="h-8 w-8" />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-100 font-sans">
-              {t.roadmap.noProfileTitle}
-            </h1>
-            <p className="text-sm text-slate-400 max-w-sm mx-auto leading-relaxed">
-              {t.roadmap.noProfileDesc}
-            </p>
-          </div>
-          <Link href="/onboarding" className="inline-block">
-            <Button variant="primary" size="lg" className="font-bold min-h-[48px]">
-              <span>{t.roadmap.startOnboardingCta}</span>
-              <Arrow className="h-4 w-4" />
-            </Button>
-          </Link>
-        </Container>
-      </AppShell>
-    );
+  if (!gate.isAuthorized || !gate.profile) {
+    return null;
   }
+
+  const profile = gate.profile;
 
   const isEmpirical = diagnosticResults !== null;
   const nextMission = roadmapState?.nextMission;
@@ -526,130 +506,126 @@ export default function RoadmapPage() {
 
               {/* Collapsible Expanded Curriculum Learning Map */}
               <div className="pt-2 border-t border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setShowCurriculumMap(!showCurriculumMap)}
-                  className="w-full py-2.5 px-4 rounded-xl border border-slate-800 bg-[#0B1020]/80 hover:bg-slate-800/60 transition-colors flex items-center justify-between text-xs font-semibold text-slate-300 cursor-pointer min-h-[44px]"
-                >
-                  <div className="flex items-center gap-2">
-                    <BookOpen className="h-4 w-4 text-blue-400" />
-                    <span>{t.roadmap.curriculumMapTitle || (locale === "ar" ? "خريطة المنهاج الموسعة (Sciences Expérimentales)" : "Carte d'apprentissage du programme")}</span>
-                    <Badge variant="outline" size="sm" className="bg-blue-500/10 text-blue-300 border-blue-500/25 font-mono text-[10px]">
-                      14 {locale === "ar" ? "محور" : "chapitres"} · 31 {locale === "ar" ? "مهارة" : "compétences"}
-                    </Badge>
-                  </div>
-                  <span className="text-slate-500 text-xs">
-                    {showCurriculumMap ? "▲" : "▼"}
-                  </span>
-                </button>
+                {(() => {
+                  const streamId = profile?.streamId || "sciences_exp";
+                  const activeStreamSubjects = roadmapState?.subjectProgress
+                    ? Object.values(roadmapState.subjectProgress).filter((sp) => sp.status !== "not_assessed")
+                    : [];
+                  const streamActiveSkillsCount = activeStreamSubjects.reduce((acc, sp) => acc + sp.totalPilotSkills, 0);
+                  const streamLabel =
+                    streamId === "gestion_eco" ? (locale === "ar" ? "التسيير والاقتصاد" : "Gestion & Économie") :
+                    streamId === "math" ? (locale === "ar" ? "الرياضيات" : "Mathématiques") :
+                    (locale === "ar" ? "العلوم التجريبية" : "Sciences Expérimentales");
 
-                {showCurriculumMap && (
-                  <div className="mt-3 space-y-4 p-4 rounded-2xl border border-slate-800 bg-[#0B1020]/50 animate-in fade-in-50">
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      {t.roadmap.curriculumMapSubtitle || (locale === "ar" ? "استكشف 31 مهارة و14 محوراً دراسياً في المواد الأساسية الثلاث، مع تتبع حالة كل كفاءة." : "Explorez les 31 compétences et 14 chapitres.")}
-                    </p>
+                  return (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setShowCurriculumMap(!showCurriculumMap)}
+                        className="w-full py-2.5 px-4 rounded-xl border border-slate-800 bg-[#0B1020]/80 hover:bg-slate-800/60 transition-colors flex items-center justify-between text-xs font-semibold text-slate-300 cursor-pointer min-h-[44px]"
+                      >
+                        <div className="flex items-center gap-2">
+                          <BookOpen className="h-4 w-4 text-blue-400" />
+                          <span>{t.roadmap.curriculumMapTitle || (locale === "ar" ? `خريطة المنهاج الموسعة (${streamLabel})` : `Carte d'apprentissage (${streamLabel})`)}</span>
+                          <Badge variant="outline" size="sm" className="bg-blue-500/10 text-blue-300 border-blue-500/25 font-mono text-[10px]">
+                            {activeStreamSubjects.length} {locale === "ar" ? "مواد" : "matières"} · {streamActiveSkillsCount} {locale === "ar" ? "مهارة" : "compétences"}
+                          </Badge>
+                        </div>
+                        <span className="text-slate-500 text-xs">
+                          {showCurriculumMap ? "▲" : "▼"}
+                        </span>
+                      </button>
 
-                    {(["math", "physics", "natural_sciences"] as const).map((subjId) => {
-                      const subjTopics = getAllTopics().filter((t) => t.subjectId === subjId);
-                      const subjName = subjId === "math" ? (locale === "ar" ? "الرياضيات" : "Mathématiques")
-                        : subjId === "physics" ? (locale === "ar" ? "العلوم الفيزيائية" : "Physique-Chimie")
-                        : (locale === "ar" ? "علوم الطبيعة والحياة" : "Sciences de la Nature et de la Vie");
+                      {showCurriculumMap && (
+                        <div className="mt-3 space-y-4 p-4 rounded-2xl border border-slate-800 bg-[#0B1020]/50 animate-in fade-in-50">
+                          <p className="text-xs text-slate-400 leading-relaxed">
+                            {t.roadmap.curriculumMapSubtitle || (locale === "ar" ? `استكشف مهارات شعبة ${streamLabel}، مع تتبع حالة كل كفاءة.` : `Explorez les compétences de la filière ${streamLabel}.`)}
+                          </p>
 
-                      return (
-                        <div key={subjId} className="space-y-2.5">
-                          <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
-                            <span className="font-bold text-xs text-slate-200 flex items-center gap-1.5">
-                              <span className="h-2 w-2 rounded-full bg-blue-500 inline-block" />
-                              {subjName}
-                            </span>
-                            <span className="text-[11px] text-slate-500 font-mono">
-                              {subjTopics.length} {locale === "ar" ? "محاور" : "chapitres"}
-                            </span>
-                          </div>
+                          {activeStreamSubjects.map((subj) => {
+                            const skills = getSkillsForSubject(subj.subjectId, streamId);
+                            if (skills.length === 0) return null;
+                            const subjName = locale === "ar" ? subj.name_ar : subj.name_fr;
 
-                          <div className="grid grid-cols-1 gap-2.5">
-                            {subjTopics.map((topic) => {
-                              const skills = getSkillsForTopic(topic.id);
-                              return (
-                                <div key={topic.id} className="p-3 rounded-xl border border-slate-800/80 bg-[#111827] space-y-2">
-                                  <div className="flex items-center justify-between">
-                                    <span className="text-xs font-semibold text-slate-200">
-                                      {locale === "ar" ? topic.title_ar : topic.title_fr}
-                                    </span>
-                                    <span className="text-[10px] text-slate-500 font-mono">
-                                      {skills.length} {locale === "ar" ? "مهارات" : "compétences"}
-                                    </span>
-                                  </div>
+                            return (
+                              <div key={subj.subjectId} className="space-y-2.5">
+                                <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                                  <span className="font-bold text-xs text-slate-200 flex items-center gap-1.5">
+                                    <span className="h-2 w-2 rounded-full bg-blue-500 inline-block" />
+                                    {subjName}
+                                  </span>
+                                  <span className="text-[11px] text-slate-500 font-mono">
+                                    {skills.length} {locale === "ar" ? "مهارات" : "compétences"}
+                                  </span>
+                                </div>
 
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                                    {skills.map((skill) => {
-                                      const isMastered = roadmapState?.masteredSkills.some((s) => s.skillId === skill.id);
-                                      const isEmerging = roadmapState?.emergingSkills.some((s) => s.skillId === skill.id);
-                                      const isNeedsWork = roadmapState?.needsMoreWorkSkills.some((s) => s.skillId === skill.id);
-                                      const isUnresolved = roadmapState?.unresolvedErrors.some((e) => e.skillId === skill.id);
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                  {skills.map((skill) => {
+                                    const isMastered = roadmapState?.masteredSkills.some((s) => s.skillId === skill.id);
+                                    const isEmerging = roadmapState?.emergingSkills.some((s) => s.skillId === skill.id);
+                                    const isNeedsWork = roadmapState?.needsMoreWorkSkills.some((s) => s.skillId === skill.id);
+                                    const isUnresolved = roadmapState?.unresolvedErrors.some((e) => e.skillId === skill.id);
 
-                                      let statusBadge = (
-                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-400 border border-slate-700">
-                                          {locale === "ar" ? "غير مقيّمة بعد" : "Non évaluée"}
+                                    let statusBadge = (
+                                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-400 border border-slate-700">
+                                        {locale === "ar" ? "غير مقيّمة بعد" : "Non évaluée"}
+                                      </span>
+                                    );
+
+                                    if (isMastered) {
+                                      statusBadge = (
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                                          ✓ {locale === "ar" ? "تم إثباتها" : "Démontrée"}
                                         </span>
                                       );
-
-                                      if (isMastered) {
-                                        statusBadge = (
-                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
-                                            ✓ {locale === "ar" ? "تم إثباتها" : "Démontrée"}
-                                          </span>
-                                        );
-                                      } else if (isUnresolved) {
-                                        statusBadge = (
-                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/25">
-                                            ⚠ {locale === "ar" ? "قيد الترميم" : "En réparation"}
-                                          </span>
-                                        );
-                                      } else if (isNeedsWork) {
-                                        statusBadge = (
-                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/25">
-                                            ↺ {locale === "ar" ? "عمل إضافي" : "À réviser"}
-                                          </span>
-                                        );
-                                      } else if (isEmerging) {
-                                        statusBadge = (
-                                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-500/10 text-sky-400 border border-sky-500/25">
-                                            ↑ {locale === "ar" ? "ناشئة" : "Émergente"}
-                                          </span>
-                                        );
-                                      }
-
-                                      return (
-                                        <div
-                                          key={skill.id}
-                                          className="p-2 rounded-lg border border-slate-800 bg-[#0B1020]/60 flex items-center justify-between gap-2 text-xs"
-                                        >
-                                          <div className="min-w-0 flex-1">
-                                            <p className="font-medium text-slate-200 truncate text-[11px]">
-                                              {locale === "ar" ? skill.title_ar : skill.title_fr}
-                                            </p>
-                                            <div className="flex items-center gap-1 text-[10px] text-slate-500">
-                                              <span>{"★".repeat(skill.difficulty)}{"☆".repeat(3 - skill.difficulty)}</span>
-                                              {skill.prerequisites && skill.prerequisites.length > 0 && (
-                                                <span>· {skill.prerequisites.length} {locale === "ar" ? "متطلب" : "prérequis"}</span>
-                                              )}
-                                            </div>
-                                          </div>
-                                          <div className="shrink-0">{statusBadge}</div>
-                                        </div>
+                                    } else if (isUnresolved) {
+                                      statusBadge = (
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/25">
+                                          ⚠ {locale === "ar" ? "قيد الترميم" : "En réparation"}
+                                        </span>
                                       );
-                                    })}
-                                  </div>
+                                    } else if (isNeedsWork) {
+                                      statusBadge = (
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/25">
+                                          ↺ {locale === "ar" ? "عمل إضافي" : "À réviser"}
+                                        </span>
+                                      );
+                                    } else if (isEmerging) {
+                                      statusBadge = (
+                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-sky-500/10 text-sky-400 border border-sky-500/25">
+                                          ↑ {locale === "ar" ? "ناشئة" : "Émergente"}
+                                        </span>
+                                      );
+                                    }
+
+                                    return (
+                                      <div
+                                        key={skill.id}
+                                        className="p-2 rounded-lg border border-slate-800 bg-[#0B1020]/60 flex items-center justify-between gap-2 text-xs"
+                                      >
+                                        <div className="min-w-0 flex-1">
+                                          <p className="font-medium text-slate-200 truncate text-[11px]">
+                                            {locale === "ar" ? skill.title_ar : skill.title_fr}
+                                          </p>
+                                          <div className="flex items-center gap-1 text-[10px] text-slate-500">
+                                            {skill.dimensions && (
+                                              <span>{skill.dimensions.join(" · ")}</span>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <div className="shrink-0">{statusBadge}</div>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
-                              );
-                            })}
-                          </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </Card>
           )}

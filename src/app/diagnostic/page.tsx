@@ -69,9 +69,13 @@ export default function DiagnosticPage() {
     let estimate = 12.0;
 
     try {
-      const savedProfile = localStorage.getItem("bac_mastery_student_profile");
-      const savedDraft = localStorage.getItem("bac_mastery_onboarding_draft");
-      const profileData = savedProfile ? JSON.parse(savedProfile) : savedDraft ? JSON.parse(savedDraft) : null;
+      const savedProfile =
+        localStorage.getItem("bac_student_profile") ||
+        localStorage.getItem("bac_strategic_profile") ||
+        localStorage.getItem("bac_academic_profile_draft") ||
+        localStorage.getItem("bac_mastery_student_profile") ||
+        localStorage.getItem("bac_mastery_onboarding_draft");
+      const profileData = savedProfile ? JSON.parse(savedProfile) : null;
 
       if (profileData) {
         if (profileData.streamId) activeStream = profileData.streamId;
@@ -279,20 +283,52 @@ export default function DiagnosticPage() {
                   </Badge>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                  <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
-                    <div className="font-bold text-white">5 {locale === "ar" ? "رياضيات" : "Maths"}</div>
-                    <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "دوال، متتاليات، قيم متوسطة" : "Fonctions, TVI, suites"}</div>
+                {streamId === "math" ? (
+                  <div className="grid grid-cols-2 gap-2 text-center text-xs">
+                    <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
+                      <div className="font-bold text-white">5 {locale === "ar" ? "رياضيات" : "Maths"}</div>
+                      <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "دوال، متتاليات، نهايات" : "Fonctions, suites, limites"}</div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
+                      <div className="font-bold text-white">5 {locale === "ar" ? "فيزياء" : "Physique"}</div>
+                      <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "كهرباء، نووي، ميكانيك" : "RC, nucléaire, Newton"}</div>
+                    </div>
                   </div>
-                  <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
-                    <div className="font-bold text-white">5 {locale === "ar" ? "فيزياء" : "Physique"}</div>
-                    <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "كهرباء، نووي، ميكانيك" : "RC, nucléaire, Newton"}</div>
+                ) : streamId === "gestion_eco" ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+                    <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
+                      <div className="font-bold text-white">4 {locale === "ar" ? "محاسبة ومالية" : "Comptabilité"}</div>
+                      <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "اهتلاكات، تسويات" : "Amortissements"}</div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
+                      <div className="font-bold text-white">4 {locale === "ar" ? "اقتصاد ومناجمنت" : "Économie"}</div>
+                      <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "تضخم، نقود، بنوك" : "Inflation, monnaie"}</div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
+                      <div className="font-bold text-white">3 {locale === "ar" ? "قانون" : "Droit"}</div>
+                      <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "عقد العمل، شركات" : "Contrat de travail"}</div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
+                      <div className="font-bold text-white">4 {locale === "ar" ? "رياضيات" : "Maths"}</div>
+                      <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "دوال، متتاليات عددية" : "Fonctions, suites"}</div>
+                    </div>
                   </div>
-                  <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
-                    <div className="font-bold text-white">5 {locale === "ar" ? "علوم طبيعية" : "SVT"}</div>
-                    <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "بروتين، مناعة، اتصال عصبي" : "Protéines, immunologie"}</div>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                    <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
+                      <div className="font-bold text-white">5 {locale === "ar" ? "رياضيات" : "Maths"}</div>
+                      <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "دوال، متتاليات، قيم متوسطة" : "Fonctions, TVI, suites"}</div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
+                      <div className="font-bold text-white">5 {locale === "ar" ? "فيزياء" : "Physique"}</div>
+                      <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "كهرباء، نووي، ميكانيك" : "RC, nucléaire, Newton"}</div>
+                    </div>
+                    <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
+                      <div className="font-bold text-white">5 {locale === "ar" ? "علوم طبيعية" : "SVT"}</div>
+                      <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "بروتين، مناعة، اتصال عصبي" : "Protéines, immunologie"}</div>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="pt-2 text-xs text-slate-400 space-y-2 border-t border-slate-800">
                   <div className="font-semibold text-slate-300">{t.diagnostic.dimensionsHeading}</div>

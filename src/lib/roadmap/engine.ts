@@ -34,6 +34,8 @@ import {
   getRetestQuestionForSkill,
 } from "@/data/practice/sciences-exp";
 import { getStreamSubjects, ALL_SUBJECTS } from "@/lib/constants/streams";
+import { ContentService } from "@/lib/services/content-service";
+import { isSubjectAllowedForStream } from "@/domain/student";
 
 /**
  * Pure in-memory mission resolver
@@ -42,7 +44,8 @@ function resolveMission(
   skillId: string,
   missionsMap: Record<string, Mission>,
   source: MissionSource = "manual",
-  priority: MissionPriority = "medium"
+  priority: MissionPriority = "medium",
+  streamId: StreamId = "sciences_exp"
 ): Mission {
   const missionId = `mission-${skillId}`;
   const existing =
@@ -59,7 +62,7 @@ function resolveMission(
     id: missionId,
     educationLevel: "secondary",
     examType: "bac",
-    streamId: "sciences_exp",
+    streamId: streamId || "sciences_exp",
     subjectId: skill.subjectId,
     skillId: skill.id,
     title: skill.title_ar,
@@ -99,6 +102,7 @@ export function getNextBestMission(input: AdaptiveRoadmapInput): {
   mission: Mission | null;
   rationale: MissionRationale | null;
 } {
+  const streamId: StreamId = input.onboardingProfile?.streamId || "sciences_exp";
   const missionsMap: Record<string, Mission> = Array.isArray(input.missions)
     ? Object.fromEntries(input.missions.map((m) => [m.id, m]))
     : (input.missions || {});
@@ -107,7 +111,19 @@ export function getNextBestMission(input: AdaptiveRoadmapInput): {
   const errorList = input.errors || [];
   const diag = input.diagnosticResult;
 
-  const allMissions = Object.values(missionsMap);
+  // Stream canonical skills to prevent cross-stream pollution
+  const streamSkills = ContentService.getSkillsForStream(streamId);
+  const streamSkillIds = new Set(streamSkills.map((s) => s.id));
+
+  // Authoritative missions strictly in stream context
+  const allMissions = Object.values(missionsMap).filter((m) => {
+    if (m.streamId && m.streamId !== streamId) return false;
+    if (m.skillId && streamSkillIds.size > 0 && !streamSkillIds.has(m.skillId)) {
+      const skill = getSkillById(m.skillId);
+      if (skill && !isSubjectAllowedForStream(skill.subjectId, streamId)) return false;
+    }
+    return true;
+  });
 
   const isMissionInNeedsMoreWork = (skillId: string) =>
     allMissions.some((m) => m.skillId === skillId && m.status === "needs_more_work");
@@ -161,13 +177,18 @@ export function getNextBestMission(input: AdaptiveRoadmapInput): {
   // PRIORITY 3: Recurring Errors (Fix the root cause, not more random practice)
   // Evaluated BEFORE general unstarted missions.
   // ---------------------------------------------------------------------------
-  const recurringErrors = errorList.filter((e) => e.isRecurring);
+  const recurringErrors = errorList.filter((e) => {
+    if (!e.isRecurring) return false;
+    const skill = getSkillById(e.skillId);
+    if (!skill) return false;
+    return isSubjectAllowedForStream(skill.subjectId, streamId);
+  });
   const unmasteredRecurringError = recurringErrors.find(
     (e) => !isSkillDemonstrated(e.skillId, evidenceMap)
   );
 
   if (unmasteredRecurringError) {
-    const mission = resolveMission(unmasteredRecurringError.skillId, missionsMap, "manual", "high");
+    const mission = resolveMission(unmasteredRecurringError.skillId, missionsMap, "manual", "high", streamId);
     const skill = getSkillById(unmasteredRecurringError.skillId);
     const skillTitle = skill?.title_ar || unmasteredRecurringError.skillId;
 
@@ -193,17 +214,19 @@ export function getNextBestMission(input: AdaptiveRoadmapInput): {
       diag.preliminaryBottleneck?.dimension || diag.primaryBottleneck?.dimension;
 
     if (weakestDim) {
-      const dimensionSkills = Object.values(SCIENCES_EXP_SKILLS).filter(
-        (s) => s.dimensions.includes(weakestDim) && !isSkillDemonstrated(s.id, evidenceMap)
+      const dimensionSkills = streamSkills.filter(
+        (s: any) =>
+          (s.dimensions?.includes(weakestDim) || s.cognitiveDimensions?.includes(weakestDim)) &&
+          !isSkillDemonstrated(s.id, evidenceMap)
       );
 
       // Exclude skills currently in needs_more_work (they are delayed) unless all are delayed
       const eligibleDimSkill =
-        dimensionSkills.find((s) => !isMissionInNeedsMoreWork(s.id)) ||
+        dimensionSkills.find((s: any) => !isMissionInNeedsMoreWork(s.id)) ||
         dimensionSkills[0];
 
       if (eligibleDimSkill) {
-        const mission = resolveMission(eligibleDimSkill.id, missionsMap, "diagnostic_dimension", "medium");
+        const mission = resolveMission(eligibleDimSkill.id, missionsMap, "diagnostic_dimension", "medium", streamId);
         const dimLabelAr =
           weakestDim === "methodology"
             ? "المنهجية وصياغة الإجابة"
@@ -233,7 +256,11 @@ export function getNextBestMission(input: AdaptiveRoadmapInput): {
   // PRIORITY 5: Emerging Skills (Positive evidence needing transfer verification)
   // ---------------------------------------------------------------------------
   const emergingSkills = Object.entries(evidenceMap).filter(
-    ([id, ev]) => ev.masteryStatus === "emerging" && !isSkillDemonstrated(id, evidenceMap)
+    ([id, ev]) => {
+      if (ev.masteryStatus !== "emerging" || isSkillDemonstrated(id, evidenceMap)) return false;
+      const skill = getSkillById(id);
+      return skill ? isSubjectAllowedForStream(skill.subjectId, streamId) : false;
+    }
   );
 
   const eligibleEmerging = emergingSkills.find(
@@ -242,7 +269,7 @@ export function getNextBestMission(input: AdaptiveRoadmapInput): {
 
   if (eligibleEmerging) {
     const [skillId] = eligibleEmerging;
-    const mission = resolveMission(skillId, missionsMap, "manual", "medium");
+    const mission = resolveMission(skillId, missionsMap, "manual", "medium", streamId);
     const skill = getSkillById(skillId);
 
     const rationale: MissionRationale = {
@@ -262,21 +289,39 @@ export function getNextBestMission(input: AdaptiveRoadmapInput): {
   // ---------------------------------------------------------------------------
   // PRIORITY 6: Next Unmastered Skill in Current Subject
   // ---------------------------------------------------------------------------
-  const streamId = input.onboardingProfile?.streamId || "sciences_exp";
-  let currentSubjectId: SubjectId = "math";
-  if (diag?.preliminaryBottleneck?.subjectId) {
-    currentSubjectId = diag.preliminaryBottleneck.subjectId;
+  let currentSubjectId: SubjectId;
+  const preferredSubj =
+    (typeof diag?.primaryBottleneck === "string" ? diag.primaryBottleneck : (diag?.primaryBottleneck as any)?.subjectId) ||
+    (typeof diag?.preliminaryBottleneck === "string" ? diag.preliminaryBottleneck : (diag?.preliminaryBottleneck as any)?.subjectId);
+
+  if (preferredSubj && isSubjectAllowedForStream(preferredSubj as SubjectId, streamId)) {
+    currentSubjectId = preferredSubj as SubjectId;
+  } else {
+    const specialty = input.onboardingProfile?.techniqueMathSpecialty || undefined;
+    const streamRules = getStreamSubjects(streamId, specialty);
+    const sorted = [...streamRules].sort((a, b) => b.coefficient - a.coefficient);
+    currentSubjectId = sorted[0]?.subjectId || (streamId === "gestion_eco" ? "accounting" : "math");
   }
 
   const subjectSkills = getSkillsForSubject(currentSubjectId, streamId);
-  const unmasteredSubjectSkill = subjectSkills.find(
-    (s) =>
-      !isSkillDemonstrated(s.id, evidenceMap) &&
-      !isMissionInNeedsMoreWork(s.id)
-  );
+  const diagWeakest = Array.isArray(diag?.weakestSkills) ? diag.weakestSkills : undefined;
+  const unmasteredSubjectSkill =
+    (diagWeakest
+      ? subjectSkills.find(
+          (s) =>
+            diagWeakest.includes(s.id) &&
+            !isSkillDemonstrated(s.id, evidenceMap) &&
+            !isMissionInNeedsMoreWork(s.id)
+        )
+      : undefined) ||
+    subjectSkills.find(
+      (s) =>
+        !isSkillDemonstrated(s.id, evidenceMap) &&
+        !isMissionInNeedsMoreWork(s.id)
+    );
 
   if (unmasteredSubjectSkill) {
-    const mission = resolveMission(unmasteredSubjectSkill.id, missionsMap, "manual", "medium");
+    const mission = resolveMission(unmasteredSubjectSkill.id, missionsMap, "manual", "medium", streamId);
 
     const rationale: MissionRationale = {
       reasonCode: "next_subject_skill",
@@ -295,7 +340,7 @@ export function getNextBestMission(input: AdaptiveRoadmapInput): {
   // ---------------------------------------------------------------------------
   // PRIORITY 7: Next Supported Subject (Ordered by coefficient rules)
   // ---------------------------------------------------------------------------
-  const specialty = input.onboardingProfile?.techniqueMathSpecialty;
+  const specialty = input.onboardingProfile?.techniqueMathSpecialty || undefined;
   const streamRules = getStreamSubjects(streamId, specialty);
 
   // Core subjects sorted descending by coefficient
@@ -310,7 +355,7 @@ export function getNextBestMission(input: AdaptiveRoadmapInput): {
     );
 
     if (unmastered) {
-      const mission = resolveMission(unmastered.id, missionsMap, "manual", "medium");
+      const mission = resolveMission(unmastered.id, missionsMap, "manual", "medium", streamId);
       const subjMeta = ALL_SUBJECTS[rule.subjectId];
 
       const rationale: MissionRationale = {
@@ -334,7 +379,11 @@ export function getNextBestMission(input: AdaptiveRoadmapInput): {
   // can now be safely scheduled for deeper spaced revision without looping!
   // ---------------------------------------------------------------------------
   const delayedNeedsWork = allMissions.find(
-    (m) => m.status === "needs_more_work" && !isSkillDemonstrated(m.skillId, evidenceMap)
+    (m) =>
+      m.status === "needs_more_work" &&
+      !isSkillDemonstrated(m.skillId, evidenceMap) &&
+      (!m.streamId || m.streamId === streamId) &&
+      isSubjectAllowedForStream(m.subjectId, streamId)
   );
 
   if (delayedNeedsWork) {
@@ -346,7 +395,7 @@ export function getNextBestMission(input: AdaptiveRoadmapInput): {
       evidence_ar: "تم تأجيل هذه المهارة سابقاً بعد استنفاذ محاولات الاختبار المباشرة لحماية طاقتك، وحان وقت العودة إليها بهدوء.",
       evidence_fr: "Cette notion a été différée pour éviter la surcharge cognitive ; il est temps d'y revenir posément.",
       shortExplanation_ar: "نعود الآن لهذه المهارة بعد استراحة كافية لترميمها بتركيز متجدد دون ضغط.",
-      shortExplanation_fr: "Nous revenons à cette notion avec un regard neuf après avoir avancé sur le reste.",
+      shortExplanation_fr: "Nous revenons à cette notion avec un regard neuf بعد أن أحرزت تقدماً في بقية المسار.",
     };
 
     return { mission: delayedNeedsWork, rationale };
@@ -365,7 +414,7 @@ export function buildAdaptiveRoadmap(input: AdaptiveRoadmapInput): AdaptiveRoadm
   const educationLevel = profile?.educationLevel ?? "secondary";
   const examType = profile?.examType ?? "BAC";
   const streamId = profile?.streamId ?? "sciences_exp";
-  const specialtyId = profile?.techniqueMathSpecialty;
+  const specialtyId = profile?.techniqueMathSpecialty || undefined;
 
   const missionsMap: Record<string, Mission> = Array.isArray(input.missions)
     ? Object.fromEntries(input.missions.map((m) => [m.id, m]))
@@ -454,6 +503,10 @@ export function buildAdaptiveRoadmap(input: AdaptiveRoadmapInput): AdaptiveRoadm
   const needsMoreWorkSkills: NeedsMoreWorkSkillItem[] = [];
 
   for (const [skillId, ev] of Object.entries(evidenceMap)) {
+    const skill = getSkillById(skillId);
+    if (skill && !isSubjectAllowedForStream(skill.subjectId, streamId)) {
+      continue;
+    }
     if (ev.masteryStatus === "demonstrated" || ev.status === "mastered") {
       masteredSkills.push({
         skillId,
@@ -470,18 +523,27 @@ export function buildAdaptiveRoadmap(input: AdaptiveRoadmapInput): AdaptiveRoadm
   }
 
   for (const mission of Object.values(missionsMap)) {
+    if (mission.streamId && mission.streamId !== streamId) continue;
     if (mission.status === "needs_more_work" && !isSkillDemonstrated(mission.skillId, evidenceMap)) {
-      needsMoreWorkSkills.push({
-        skillId: mission.skillId,
-        subjectId: mission.subjectId,
-        failureCount: 2,
-      });
+      if (isSubjectAllowedForStream(mission.subjectId, streamId)) {
+        needsMoreWorkSkills.push({
+          skillId: mission.skillId,
+          subjectId: mission.subjectId,
+          failureCount: 2,
+        });
+      }
     }
   }
 
   // 4. Classify Errors
-  const unresolvedErrors = errorList.filter((e) => e.repairStatus !== "retest_passed");
-  const recurringErrors = errorList.filter((e) => e.isRecurring);
+  const unresolvedErrors = errorList.filter((e) => {
+    if (e.repairStatus === "retest_passed") return false;
+    return isSubjectAllowedForStream(e.subjectId, streamId);
+  });
+  const recurringErrors = errorList.filter((e) => {
+    if (!e.isRecurring) return false;
+    return isSubjectAllowedForStream(e.subjectId, streamId);
+  });
 
   // 5. Weakest Dimensions from Diagnostic
   const weakestDimensions: WeakestDimensionItem[] = [];
@@ -510,10 +572,9 @@ export function buildAdaptiveRoadmap(input: AdaptiveRoadmapInput): AdaptiveRoadm
     const name_ar = subjMeta?.name_ar || rule.subjectId;
     const name_fr = subjMeta?.name_fr || rule.subjectId;
 
-    const isPilotSubject =
-      rule.subjectId === "math" ||
-      rule.subjectId === "physics" ||
-      rule.subjectId === "natural_sciences";
+    const subjSkills = getSkillsForSubject(rule.subjectId, streamId);
+    const hasDiag = Boolean(diag?.subjectScores?.[rule.subjectId as keyof typeof diag.subjectScores]);
+    const isPilotSubject = subjSkills.length > 0 || hasDiag;
 
     if (!isPilotSubject) {
       subjectProgress[rule.subjectId] = {
@@ -530,7 +591,6 @@ export function buildAdaptiveRoadmap(input: AdaptiveRoadmapInput): AdaptiveRoadm
         coefficient: rule.coefficient,
       };
     } else {
-      const subjSkills = getSkillsForSubject(rule.subjectId, streamId);
       const demonstratedInSubj = subjSkills.filter((s) => isSkillDemonstrated(s.id, evidenceMap)).length;
       const emergingInSubj = subjSkills.filter((s) => evidenceMap[s.id]?.masteryStatus === "emerging" && !isSkillDemonstrated(s.id, evidenceMap)).length;
       const needsWorkInSubj = subjSkills.filter((s) =>
@@ -538,8 +598,6 @@ export function buildAdaptiveRoadmap(input: AdaptiveRoadmapInput): AdaptiveRoadm
         !isSkillDemonstrated(s.id, evidenceMap)
       ).length;
       const openErrorsInSubj = unresolvedErrors.filter((e) => e.subjectId === rule.subjectId).length;
-
-      const hasDiag = Boolean(diag?.subjectScores?.[rule.subjectId as "math" | "physics" | "natural_sciences"]);
 
       subjectProgress[rule.subjectId] = {
         subjectId: rule.subjectId,
@@ -561,8 +619,10 @@ export function buildAdaptiveRoadmap(input: AdaptiveRoadmapInput): AdaptiveRoadm
   let stage: LearningStage = "move_forward";
   let focusTitleAr = "مواصلة التقدم في المسار";
   let focusTitleFr = "Progression continue dans le parcours";
-  let focusSubjectId: SubjectId = "math";
-  let focusSkillId = "math_derivatives_chain_rule";
+  const defaultSubj = streamSubjectRules[0]?.subjectId || (streamId === "gestion_eco" ? "accounting" : "math");
+  let focusSubjectId: SubjectId = defaultSubj;
+  const streamSkills = ContentService.getSkillsForStream(streamId);
+  let focusSkillId = streamSkills[0]?.id || "math_derivatives_chain_rule";
 
   if (nextMission) {
     focusSubjectId = nextMission.subjectId;
@@ -590,10 +650,20 @@ export function buildAdaptiveRoadmap(input: AdaptiveRoadmapInput): AdaptiveRoadm
   };
 
   // 8. Honest Limitations & Non-Overclaiming Rationale
-  const limitations = {
-    ar: "الخريطة الحالية مبنية على بيانات تشخيص تجريبية محددة في المواد الأساسية الثلاث (الرياضيات، العلوم الفيزيائية، علوم الطبيعة والحياة). بقية مواد البكالوريا غير مشمولة في هذه المرحلة.",
-    fr: "Cette feuille de route repose sur des données diagnostiques pilotes ciblées sur les 3 matières principales (Mathématiques, Physique, SVT). Les autres matières ne sont pas encore évaluées.",
-  };
+  const limitations = streamId === "gestion_eco"
+    ? {
+        ar: "الخريطة الحالية مبنية على بيانات تشخيص ومحتوى تجريبي لشعبة التسيير والاقتصاد (التسيير المحاسبي والمالي، الاقتصاد والمناجمنت، القانون، الرياضيات). بقية مواد البكالوريا غير مشمولة في هذه المرحلة.",
+        fr: "Cette feuille de route repose sur les données de la filière Gestion et Économie. Les autres matières ne sont pas encore évaluées.",
+      }
+    : streamId === "math"
+    ? {
+        ar: "الخريطة الحالية مبنية على بيانات تشخيص تجريبية محددة لشعبة الرياضيات (الرياضيات، العلوم الفيزيائية). بقية المواد غير مشمولة في هذه المرحلة.",
+        fr: "Cette feuille de route repose sur des données ciblées sur les matières de la filière Mathématiques (Mathématiques, Physique).",
+      }
+    : {
+        ar: "الخريطة الحالية مبنية على بيانات تشخيص تجريبية محددة في المواد الأساسية الثلاث (الرياضيات، العلوم الفيزيائية، علوم الطبيعة والحياة). بقية مواد البكالوريا غير مشمولة في هذه المرحلة.",
+        fr: "Cette feuille de route repose sur des données diagnostiques pilotes ciblées sur les 3 matières principales (Mathématiques, Physique, SVT). Les autres matières ne sont pas encore évaluées.",
+      };
 
   const rationale = nextMissionRationale
     ? nextMissionRationale.shortExplanation_ar

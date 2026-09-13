@@ -43,7 +43,7 @@ export const StudentRepository = {
 
         if (data) {
           const trialStarted = data.trial_started_at || data.raw_draft?.trial_started_at || data.created_at || new Date().toISOString();
-          const trialExpires = data.trial_expires_at || data.raw_draft?.trial_expires_at || new Date(new Date(trialStarted).getTime() + 48 * 3600 * 1000).toISOString();
+          const trialExpires = data.trial_expires_at || data.raw_draft?.trial_expires_at || new Date(new Date(trialStarted).getTime() + 72 * 3600 * 1000).toISOString();
           const accessStatus = data.access_status || data.raw_draft?.access_status || "TRIAL";
           const plan = data.plan || data.raw_draft?.plan || "PILOT_TRIAL";
 
@@ -54,6 +54,18 @@ export const StudentRepository = {
             draft.access_status = accessStatus;
             draft.plan = plan;
             draft.created_at = data.created_at;
+            draft.first_name = data.first_name || draft.first_name;
+            draft.last_name = data.last_name || draft.last_name;
+            draft.student_phone = data.student_phone || draft.student_phone;
+            draft.parent_phone = data.parent_phone || draft.parent_phone;
+            draft.student_status = data.student_status || draft.student_status;
+            draft.wilaya_code = data.wilaya_code || draft.wilaya_code;
+            draft.wilaya_name = data.wilaya_name || draft.wilaya_name;
+            draft.commune_code = data.commune_code || draft.commune_code;
+            draft.commune_name = data.commune_name || draft.commune_name;
+            draft.school_name = data.school_name !== undefined ? data.school_name : draft.school_name;
+            draft.registration_completed_at = data.registration_completed_at || draft.registration_completed_at;
+            draft.academic_profile_completed_at = data.academic_profile_completed_at || draft.academic_profile_completed_at;
             saveStrategicProfile(draft);
             return draft;
           }
@@ -76,6 +88,24 @@ export const StudentRepository = {
             trial_expires_at: trialExpires,
             access_status: accessStatus,
             plan: plan,
+            first_name: data.first_name,
+            last_name: data.last_name,
+            student_phone: data.student_phone,
+            parent_phone: data.parent_phone,
+            student_status: data.student_status,
+            wilaya_code: data.wilaya_code,
+            wilaya_name: data.wilaya_name,
+            commune_code: data.commune_code,
+            commune_name: data.commune_name,
+            school_name: data.school_name,
+            annual_average_year_1: data.annual_average_year_1,
+            annual_average_year_2: data.annual_average_year_2,
+            has_target_specialty: data.has_target_specialty,
+            target_specialty: data.target_specialty,
+            study_methods: data.study_methods,
+            current_self_assessment: data.current_self_assessment,
+            registration_completed_at: data.registration_completed_at,
+            academic_profile_completed_at: data.academic_profile_completed_at,
           };
           saveStrategicProfile(reconstructed);
           return reconstructed;
@@ -98,7 +128,7 @@ export const StudentRepository = {
     if (isSupabaseConfigured && supabase && userId) {
       try {
         const trialStarted = (profile as any).trial_started_at || new Date().toISOString();
-        const trialExpires = (profile as any).trial_expires_at || new Date(new Date(trialStarted).getTime() + 48 * 3600 * 1000).toISOString();
+        const trialExpires = (profile as any).trial_expires_at || new Date(new Date(trialStarted).getTime() + 72 * 3600 * 1000).toISOString();
         const accessStatus = (profile as any).access_status || "TRIAL";
         const plan = (profile as any).plan || "PILOT_TRIAL";
 
@@ -166,6 +196,10 @@ export const StudentRepository = {
    * Save registration data (Step 1 to 6)
    */
   async saveRegistrationData(data: StudentRegistrationData, userId?: string): Promise<void> {
+    if (!userId || userId.trim() === "") {
+      throw new Error("Cannot save registration without an authenticated userId: profile must not exist outside an account");
+    }
+
     // 1. Normalize phone numbers
     const normalizedStudentPhone = normalizeAlgerianPhone(data.studentPhone);
     const normalizedParentPhone = data.parentPhone ? normalizeAlgerianPhone(data.parentPhone) : undefined;
@@ -243,6 +277,10 @@ export const StudentRepository = {
    * Save Academic Profile Data
    */
   async saveAcademicProfileData(data: AcademicProfileData, userId?: string): Promise<void> {
+    if (!userId || userId.trim() === "") {
+      throw new Error("Cannot save academic profile without an authenticated userId: profile must not exist outside an account");
+    }
+
     const sanitizedData: AcademicProfileData = {
       ...data,
       targetScore: Math.min(20, Math.max(0, Number(data.targetScore) || 16.0)),

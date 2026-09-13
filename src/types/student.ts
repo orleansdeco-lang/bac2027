@@ -2,15 +2,42 @@
  * BAC Mastery - Student & Goal Engine Types
  */
 
-import { ExamType, StreamId, SubjectId } from "./education";
+import { ExamType, StreamId, SubjectId, TechniqueMathSpecialty } from "./education";
+import { StudentStatus, StudyMethodType, CurrentSelfAssessmentType } from "./registration";
+import { AvailableTimeRange, StudyEnergyState } from "./onboarding";
 
 export interface StudentProfile {
   id: string;
-  fullName: string;
-  examType: ExamType;
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+  studentPhone?: string;
+  parentPhone?: string;
+  studentStatus?: StudentStatus;
+  examType?: ExamType;
   streamId: StreamId;
-  targetExamYear: number;
-  createdAt: string;
+  techniqueMathSpecialty?: TechniqueMathSpecialty;
+  wilayaCode?: string;
+  wilayaName?: string;
+  communeCode?: string;
+  communeName?: string;
+  schoolName?: string | null;
+  targetScore?: number;
+  targetExamYear?: number;
+  targetSpecialty?: string | null;
+  studyMethods?: StudyMethodType[];
+  currentSelfAssessment?: CurrentSelfAssessmentType;
+  availableTime?: AvailableTimeRange;
+  studyEnergy?: StudyEnergyState;
+  trialStartedAt?: string;
+  trialExpiresAt?: string;
+  trialStatus?: string;
+  isTrialActive?: boolean;
+  canUseProduct?: boolean;
+  registrationCompletedAt?: string | null;
+  academicProfileCompletedAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface SubjectGoalTarget {

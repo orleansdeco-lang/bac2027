@@ -190,6 +190,8 @@ export interface DiagnosticAnalysisResult {
   preliminaryBottleneck?: DiagnosticBottleneck; // Preliminary bottleneck candidate
   secondaryBottlenecks: DiagnosticBottleneck[];
   firstRecommendedMission: FirstMissionRecommendation;
+  weakestSkills?: string[];
+  strengths?: string[];
   levelSource: LevelSource;
   limitations: string[];
 }

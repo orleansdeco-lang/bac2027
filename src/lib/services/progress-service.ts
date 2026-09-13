@@ -9,7 +9,13 @@ import { MissionRepository } from "@/lib/repositories/mission-repository";
 import { RetestRepository } from "@/lib/repositories/retest-repository";
 import { ContentService } from "./content-service";
 
+import { StudentRepository } from "@/lib/repositories/student-repository";
+import { getStrategicProfile } from "@/lib/onboarding/profile";
+import { StreamId } from "@/types/education";
+import { getStudentSubjects } from "@/domain/student";
+
 export interface ProgressReport {
+  streamId: StreamId;
   demonstratedSkills: Array<{ skillId: string; title_ar: string; title_fr: string; subjectId: string }>;
   emergingSkills: Array<{ skillId: string; title_ar: string; title_fr: string; subjectId: string }>;
   activeErrors: Array<{ errorId: string; skillId: string; questionId: string; status: string }>;
@@ -29,22 +35,32 @@ export interface ProgressReport {
 }
 
 export const ProgressService = {
-  async getProgressReport(userId?: string): Promise<ProgressReport> {
-    const [masteryMap, errorsMap, missionsMap, retestsList] = await Promise.all([
+  async getProgressReport(userId?: string, streamIdParam?: StreamId): Promise<ProgressReport> {
+    const [profile, masteryMap, errorsMap, missionsMap, retestsList] = await Promise.all([
+      StudentRepository.getProfile(userId),
       MasteryRepository.getMasteryRecords(userId),
       ErrorRepository.getErrors(userId),
       MissionRepository.getMissions(userId),
       RetestRepository.getAllRetests(userId),
     ]);
 
-    const allSkills = ContentService.getAllSkills();
-    const skillsMap = new Map(allSkills.map((s) => [s.id, s]));
+    const localProfile = getStrategicProfile();
+    const effectiveStream: StreamId =
+      streamIdParam ||
+      (profile?.streamId as StreamId) ||
+      (localProfile?.streamId as StreamId) ||
+      "sciences_exp";
+
+    // Strictly scope all skills to the student's authorized stream
+    const streamSkills = ContentService.getSkillsForStream(effectiveStream);
+    const skillsMap = new Map(streamSkills.map((s) => [s.id, s]));
 
     const demonstratedSkills: ProgressReport["demonstratedSkills"] = [];
     const emergingSkills: ProgressReport["emergingSkills"] = [];
 
     for (const [skillId, evidence] of Object.entries(masteryMap)) {
       const skill = skillsMap.get(skillId);
+      // Invariant: Do not count mastery for skills outside the student's stream!
       if (!skill) continue;
 
       if (evidence.masteryStatus === "demonstrated" || evidence.status === "mastered") {
@@ -67,6 +83,7 @@ export const ProgressService = {
     const errorsList = Object.values(errorsMap);
     const activeErrors = errorsList
       .filter((e) => e.repairStatus === "identified" || e.repairStatus === "repair_started")
+      .filter((e) => skillsMap.has(e.skillId)) // only errors for skills in student's stream
       .map((e) => ({
         errorId: e.id,
         skillId: e.skillId,
@@ -75,13 +92,13 @@ export const ProgressService = {
       }));
 
     const repairedErrorsCount = errorsList.filter(
-      (e) => e.repairStatus === "repair_completed" || e.repairStatus === "retest_passed"
+      (e) => (e.repairStatus === "repair_completed" || e.repairStatus === "retest_passed") && skillsMap.has(e.skillId)
     ).length;
 
     const retestSuccessCount = retestsList.filter((r) => r.isPassed).length;
 
     const completedMissionsCount = Object.values(missionsMap).filter(
-      (m) => m.status === "mastered"
+      (m) => m.status === "mastered" && skillsMap.has(m.skillId)
     ).length;
 
     // Subject breakdown with alias normalization (math / mathematics)
@@ -94,26 +111,37 @@ export const ProgressService = {
       const aliases = normalizeSubj(subj);
       const dem = demonstratedSkills.filter((s) => aliases.includes(s.subjectId)).length;
       const em = emergingSkills.filter((s) => aliases.includes(s.subjectId)).length;
-      const tot = allSkills.filter((s) => aliases.includes(s.subjectId)).length;
+      const tot = streamSkills.filter((s) => aliases.includes(s.subjectId)).length;
       return { demonstrated: dem, emerging: em, total: tot };
     };
 
+    // Populate authorized stream subjects
+    const authorizedSubjects = getStudentSubjects(effectiveStream, profile?.techniqueMathSpecialty);
+    const breakdown: ProgressReport["subjectBreakdown"] = {
+      mathematics: getCountForSubject("math"),
+      physics: getCountForSubject("physics"),
+      natural_sciences: getCountForSubject("natural_sciences"),
+      accounting_finance: getCountForSubject("accounting_finance"),
+      economics_management: getCountForSubject("economics_management"),
+      law: getCountForSubject("law"),
+      history_geography: getCountForSubject("history_geography"),
+    };
+
+    for (const rule of authorizedSubjects) {
+      breakdown[rule.subjectId] = getCountForSubject(rule.subjectId);
+    }
+    // Maintain backward compatibility for mathematics alias
+    breakdown.mathematics = getCountForSubject("math");
+
     return {
+      streamId: effectiveStream,
       demonstratedSkills,
       emergingSkills,
       activeErrors,
       repairedErrorsCount,
       retestSuccessCount,
       completedMissionsCount,
-      subjectBreakdown: {
-        mathematics: getCountForSubject("mathematics"),
-        physics: getCountForSubject("physics"),
-        natural_sciences: getCountForSubject("natural_sciences"),
-        accounting_finance: getCountForSubject("accounting_finance"),
-        economics_management: getCountForSubject("economics_management"),
-        law: getCountForSubject("law"),
-        history_geography: getCountForSubject("history_geography"),
-      },
+      subjectBreakdown: breakdown,
     };
   },
 };

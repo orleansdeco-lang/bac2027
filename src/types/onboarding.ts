@@ -72,20 +72,45 @@ export interface OnboardingDraft {
 
 export interface StrategicProfile {
   id: string;
-  educationLevel: EducationLevel;
-  examType: ExamType;
+  educationLevel?: EducationLevel;
+  examType?: ExamType;
   streamId: StreamId;
   techniqueMathSpecialty?: TechniqueMathSpecialty;
   targetScore: number;
   subjectEstimates: Record<SubjectId, SelfRatedLevel>;
-  availableTime: AvailableTimeRange;
-  futureObjective: {
+  availableTime?: AvailableTimeRange;
+  futureObjective?: {
     preset?: FutureObjectivePreset;
     customText?: string;
   };
-  obstacles: ObstacleId[];
-  studyEnergy: StudyEnergyState;
-  createdAt: string;
+  obstacles?: ObstacleId[];
+  studyEnergy?: StudyEnergyState;
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+  studentPhone?: string;
+  parentPhone?: string;
+  studentStatus?: "schooled" | "free";
+  wilayaCode?: string;
+  wilayaName?: string;
+  communeCode?: string;
+  communeName?: string;
+  schoolName?: string | null;
+  targetExamYear?: number;
+  targetSpecialty?: string | null;
+  studyMethods?: any[];
+  currentSelfAssessment?: any;
+  registrationCompletedAt?: string | null;
+  academicProfileCompletedAt?: string | null;
+  trial_started_at?: string;
+  trial_expires_at?: string;
+  trialStartedAt?: string;
+  trialExpiresAt?: string;
+  trialStatus?: string;
+  isTrialActive?: boolean;
+  canUseProduct?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface InitialSubjectGap {

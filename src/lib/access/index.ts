@@ -11,7 +11,7 @@ import { StrategicProfile } from "@/types/onboarding";
 export * from "./types";
 export * from "./server-time";
 
-export const TRIAL_DURATION_HOURS = 48;
+export const TRIAL_DURATION_HOURS = 72;
 export const TRIAL_DURATION_MS = TRIAL_DURATION_HOURS * 60 * 60 * 1000;
 
 export interface AccessProfileInput {
@@ -105,7 +105,7 @@ export function getStudentAccess(
       remainingMinutes: 0,
       canUseProduct: false,
       isExpiringSoon: false,
-      reason: "trial_48h_expired",
+      reason: "trial_72h_expired",
     };
   }
 
@@ -122,6 +122,6 @@ export function getStudentAccess(
     remainingMinutes,
     canUseProduct: true,
     isExpiringSoon: remainingHours < 6,
-    reason: "trial_48h_active",
+    reason: "trial_72h_active",
   };
 }

@@ -11,6 +11,10 @@ import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { ProgressService } from "@/lib/services";
 import { trackEvent } from "@/lib/analytics";
+import { StreamId, SubjectId } from "@/types/education";
+import { getStudentSubjects } from "@/domain/student";
+import { SUBJECT_REGISTRY } from "@/domain/curriculum/subjects";
+import { useLearningAccessGate } from "@/lib/hooks";
 import {
   CheckCircle2,
   Brain,
@@ -26,6 +30,7 @@ import {
 export default function ProgressPage() {
   const { t, locale } = useTranslation();
   const isAr = locale === "ar";
+  const gate = useLearningAccessGate();
   const [report, setReport] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -34,10 +39,12 @@ export default function ProgressPage() {
 
   useEffect(() => {
     async function loadProgress() {
+      if (!gate.isAuthorized || !gate.profile) return;
       try {
-        const data = await ProgressService.getProgressReport();
+        const data = await ProgressService.getProgressReport(gate.profile.id);
         setReport(data);
         trackEvent("progress_viewed", {
+          streamId: gate.profile.streamId,
           demonstratedCount: data?.demonstratedSkills?.length,
           emergingCount: data?.emergingSkills?.length,
           completedCount: data?.completedMissionsCount,
@@ -48,10 +55,14 @@ export default function ProgressPage() {
         setLoading(false);
       }
     }
-    loadProgress();
-  }, []);
+    if (gate.isAuthorized) {
+      loadProgress();
+    } else if (!gate.isLoading) {
+      setLoading(false);
+    }
+  }, [gate.isAuthorized, gate.isLoading, gate.profile]);
 
-  if (loading) {
+  if (gate.isLoading || loading) {
     return (
       <AppShell>
         <div className="min-h-[60vh] flex items-center justify-center">
@@ -66,14 +77,28 @@ export default function ProgressPage() {
     );
   }
 
+  if (!gate.isAuthorized || !gate.profile) {
+    return null;
+  }
+
+  const streamId = (gate.profile?.streamId || report?.streamId || "sciences_exp") as StreamId;
+  const authorizedSubjects = getStudentSubjects(streamId, gate.profile?.techniqueMathSpecialty);
+  const totalStreamSkills = report?.overallMetrics?.totalSkills || (streamId === "gestion_eco" ? 33 : streamId === "math" ? 30 : 31);
+
+  const streamLabels: Record<string, { ar: string; fr: string }> = {
+    sciences_exp: { ar: "شعبة العلوم التجريبية", fr: "Sciences Expérimentales" },
+    gestion_eco: { ar: "شعبة التسيير والاقتصاد", fr: "Gestion & Économie" },
+    math: { ar: "شعبة الرياضيات", fr: "Mathématiques" },
+    technique_math: { ar: "شعبة تقني رياضي", fr: "Technique Mathématiques" },
+    lettres_philo: { ar: "شعبة آداب وفلسفة", fr: "Lettres et Philosophie" },
+    langues_etrangeres: { ar: "شعبة لغات أجنبية", fr: "Langues Étrangères" },
+  };
+  const streamLabel = streamLabels[streamId] ? (isAr ? streamLabels[streamId].ar : streamLabels[streamId].fr) : (isAr ? "شعبة العلوم التجريبية" : "Sciences Expérimentales");
+
   const demonstratedCount = report?.overallMetrics?.demonstratedSkillsCount || 0;
   const emergingCount = report?.overallMetrics?.emergingSkillsCount || 0;
   const repairedCount = report?.overallMetrics?.repairedErrorsCount || 0;
   const completedMissions = report?.overallMetrics?.completedMissionsCount || 0;
-
-  const math = report?.subjectBreakdown?.mathematics || { demonstrated: 0, emerging: 0, total: 10 };
-  const physics = report?.subjectBreakdown?.physics || { demonstrated: 0, emerging: 0, total: 11 };
-  const svt = report?.subjectBreakdown?.natural_sciences || { demonstrated: 0, emerging: 0, total: 10 };
 
   return (
     <AppShell activeNav="progress">
@@ -86,7 +111,7 @@ export default function ProgressPage() {
                 {isAr ? "سجل الأدلة الحقيقية" : "Preuves Réelles"}
               </Badge>
               <span className="text-xs text-theme-muted font-mono">
-                {isAr ? "شعبة العلوم التجريبية (31 مهارة)" : "Sciences Expérimentales (31 compétences)"}
+                {streamLabel} ({totalStreamSkills} {isAr ? "مهارة" : "compétences"})
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-theme-text tracking-tight font-sans">
@@ -120,7 +145,7 @@ export default function ProgressPage() {
               <span className="text-3xl font-black text-emerald-400 font-mono">
                 {demonstratedCount}
               </span>
-              <span className="text-xs text-theme-muted font-mono">/31</span>
+              <span className="text-xs text-theme-muted font-mono">/{totalStreamSkills}</span>
             </div>
             <span className="text-[11px] text-theme-secondary block">
               {isAr ? "حل ناجح + اختبار توأم" : "Succès complet"}
@@ -138,7 +163,7 @@ export default function ProgressPage() {
               <span className="text-3xl font-black text-[var(--color-primary)] font-mono">
                 {emergingCount}
               </span>
-              <span className="text-xs text-theme-muted font-mono">/31</span>
+              <span className="text-xs text-theme-muted font-mono">/{totalStreamSkills}</span>
             </div>
             <span className="text-[11px] text-theme-secondary block">
               {isAr ? "بدأت فيها ممارسة ناجحة" : "Premier succès"}
@@ -184,75 +209,51 @@ export default function ProgressPage() {
         <div className="space-y-4">
           <h2 className="text-lg font-bold text-theme-text flex items-center gap-2 font-sans">
             <BookOpen className="h-5 w-5 text-[var(--color-accent)]" />
-            <span>{isAr ? "التغطية المعيارية حسب المواد الأساسية الثلاث" : "Couverture par Matière"}</span>
+            <span>{isAr ? "التغطية المعيارية حسب المواد الأساسية" : "Couverture par Matière"}</span>
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* Math */}
-            <Card className="p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-theme-text">
-                  {isAr ? "الرياضيات (10 مهارات)" : "Mathématiques (10)"}
-                </span>
-                <Badge variant="primary" size="sm">
-                  {math.demonstrated}/{math.total}
-                </Badge>
-              </div>
-              <ProgressBar
-                value={(math.demonstrated / math.total) * 100}
-                showPercentage={false}
-                variant="primary"
-                size="sm"
-              />
-              <div className="flex justify-between text-xs text-theme-secondary">
-                <span>{isAr ? `مثبتة: ${math.demonstrated}` : `Validées: ${math.demonstrated}`}</span>
-                <span>{isAr ? `قيد التثبيت: ${math.emerging}` : `En cours: ${math.emerging}`}</span>
-              </div>
-            </Card>
+            {authorizedSubjects.map((rule, idx) => {
+              const meta = SUBJECT_REGISTRY[rule.subjectId as SubjectId];
+              const sData =
+                report?.subjectBreakdown?.[rule.subjectId] ||
+                (rule.subjectId === "math" ? report?.subjectBreakdown?.mathematics : null) ||
+                { demonstrated: 0, emerging: 0, total: 0 };
+              const subjectName = isAr
+                ? meta?.name_ar || rule.subjectId
+                : meta?.name_fr || rule.subjectId;
+              const badgeVariants: ("primary" | "default" | "success")[] = ["primary", "default", "success"];
+              const progressVariants: ("primary" | "accent" | "success")[] = ["primary", "accent", "success"];
+              const badgeVariant = badgeVariants[idx % badgeVariants.length];
+              const progressVariant = progressVariants[idx % progressVariants.length];
 
-            {/* Physics */}
-            <Card className="p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-theme-text">
-                  {isAr ? "العلوم الفيزيائية (11 مهارة)" : "Physique-Chimie (11)"}
-                </span>
-                <Badge variant="primary" size="sm">
-                  {physics.demonstrated}/{physics.total}
-                </Badge>
-              </div>
-              <ProgressBar
-                value={(physics.demonstrated / physics.total) * 100}
-                showPercentage={false}
-                variant="accent"
-                size="sm"
-              />
-              <div className="flex justify-between text-xs text-theme-secondary">
-                <span>{isAr ? `مثبتة: ${physics.demonstrated}` : `Validées: ${physics.demonstrated}`}</span>
-                <span>{isAr ? `قيد التثبيت: ${physics.emerging}` : `En cours: ${physics.emerging}`}</span>
-              </div>
-            </Card>
-
-            {/* SVT */}
-            <Card className="p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-theme-text">
-                  {isAr ? "علوم الطبيعة والحياة (10 مهارات)" : "SNV (10)"}
-                </span>
-                <Badge variant="primary" size="sm">
-                  {svt.demonstrated}/{svt.total}
-                </Badge>
-              </div>
-              <ProgressBar
-                value={(svt.demonstrated / svt.total) * 100}
-                showPercentage={false}
-                variant="success"
-                size="sm"
-              />
-              <div className="flex justify-between text-xs text-theme-secondary">
-                <span>{isAr ? `مثبتة: ${svt.demonstrated}` : `Validées: ${svt.demonstrated}`}</span>
-                <span>{isAr ? `قيد التثبيت: ${svt.emerging}` : `En cours: ${svt.emerging}`}</span>
-              </div>
-            </Card>
+              return (
+                <Card key={rule.subjectId} className="p-5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-theme-text">
+                      {subjectName} {sData.total > 0 ? `(${sData.total} ${isAr ? "مهارات" : "compétences"})` : ""}
+                    </span>
+                    <Badge variant={badgeVariant} size="sm">
+                      {sData.demonstrated}/{sData.total}
+                    </Badge>
+                  </div>
+                  <ProgressBar
+                    value={sData.total > 0 ? (sData.demonstrated / sData.total) * 100 : 0}
+                    showPercentage={false}
+                    variant={progressVariant}
+                    size="sm"
+                  />
+                  <div className="flex justify-between text-xs text-theme-secondary">
+                    <span>
+                      {isAr ? `مثبتة: ${sData.demonstrated}` : `Validées: ${sData.demonstrated}`}
+                    </span>
+                    <span>
+                      {isAr ? `قيد التثبيت: ${sData.emerging}` : `En cours: ${sData.emerging}`}
+                    </span>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         </div>
 
