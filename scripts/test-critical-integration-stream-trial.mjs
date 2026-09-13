@@ -18,7 +18,10 @@
 import fs from "node:fs";
 import path from "node:path";
 import assert from "node:assert";
+import { createRequire } from "node:module";
 import ts from "typescript";
+
+const nativeRequire = createRequire(import.meta.url);
 
 console.log("==================================================================");
 console.log("  BAC MASTERY — CRITICAL INTEGRATION & STREAM LOCK SUITE (10 GATES)");
@@ -56,7 +59,11 @@ function loadTs(relPath) {
       if (fs.existsSync(target + ".ts")) return loadTs(target + ".ts");
       if (fs.existsSync(target + "/index.ts")) return loadTs(target + "/index.ts");
       if (fs.existsSync(target) && fs.statSync(target).isFile()) return loadTs(target);
-      return {};
+      try {
+        return nativeRequire(reqPath);
+      } catch {
+        return {};
+      }
     },
     m
   );
