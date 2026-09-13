@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth/context";
 import { useTranslation } from "@/lib/i18n/context";
+import { useTheme } from "@/lib/theme/context";
 import { Container } from "@/components/ui/Container";
 import { Button } from "@/components/ui/Button";
 import { Logo } from "@/components/ui/Logo";
@@ -31,7 +32,8 @@ function AuthContent() {
   const router = useRouter();
   const { direction, locale } = useTranslation();
   const isRTL = direction === "rtl";
-  const { signIn, signUp, user, isLoading, isConfigured } = useAuth();
+  const { signIn, signUp, user, isLoading } = useAuth();
+  const { theme } = useTheme();
 
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
@@ -151,15 +153,26 @@ function AuthContent() {
     }
   };
 
+  // 3D Illustration Selection:
+  // SIGN-UP: Always boy and girl together so both feel represented!
+  // LOGIN: Matches theme (girls -> girl, boys -> boy, freemium -> duo)
+  const peekingIllustration =
+    mode === "signup"
+      ? "/illustrations/signup-peeking-duo.jpg"
+      : theme === "boys"
+      ? "/illustrations/login-peeking-boy.jpg"
+      : theme === "girls"
+      ? "/illustrations/login-peeking.jpg"
+      : "/illustrations/signup-peeking-duo.jpg";
+
   return (
-    <div className="min-h-screen bg-canvas text-theme-text flex flex-col justify-between py-6 transition-colors duration-300 relative overflow-x-hidden">
+    <div className="min-h-screen bg-canvas text-theme-text flex flex-col justify-between py-5 sm:py-6 transition-colors duration-300 relative overflow-x-hidden">
       
-      {/* Background Soft Pastel Glows */}
-      <div className="absolute top-10 left-1/4 w-96 h-96 rounded-full bg-amber-400/10 dark:bg-amber-400/5 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 right-1/4 w-96 h-96 rounded-full bg-purple-400/10 dark:bg-purple-400/5 blur-3xl pointer-events-none" />
+      {/* Background Soft Glows */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-96 bg-gradient-to-b from-[var(--color-primary)]/10 via-[var(--color-secondary)]/5 to-transparent pointer-events-none blur-3xl" />
 
       {/* Header */}
-      <header className="border-b border-theme/50 pb-4 relative z-20">
+      <header className="border-b border-theme/40 pb-4 relative z-20">
         <Container className="flex items-center justify-between">
           <Logo />
           <div className="flex items-center gap-2.5">
@@ -169,38 +182,39 @@ function AuthContent() {
         </Container>
       </header>
 
-      {/* Main Content with Peeking Character Card */}
-      <main className="flex-1 flex items-center justify-center px-4 py-8 relative z-10">
-        <Container size="sm" className="w-full max-w-md">
+      {/* Main Content */}
+      <main className="flex-1 flex items-center justify-center px-4 py-6 sm:py-10 relative z-10">
+        <Container size="sm" className="w-full max-w-[460px]">
           
-          <div className="relative rounded-[36px] bg-card border border-stone-200/80 dark:border-white/10 shadow-clay overflow-hidden backdrop-blur-md transition-all">
+          {/* Outer Billboard Card Container */}
+          <div className="relative rounded-[36px] bg-white dark:bg-white text-slate-900 border border-slate-200/80 shadow-2xl overflow-hidden transition-all">
             
-            {/* Top Peeking 3D Student Illustration (Reference #2 Inspiration) */}
-            <div className="relative h-48 sm:h-56 w-full bg-gradient-to-b from-purple-100/60 via-indigo-50/40 to-transparent dark:from-purple-950/40 dark:via-indigo-950/20 flex items-end justify-center overflow-hidden border-b border-stone-200/40 dark:border-white/5">
-              <div className="relative w-56 h-48 sm:w-64 sm:h-56 transform translate-y-1">
+            {/* Top Peeking 3D Illustration Area */}
+            <div className="relative h-44 sm:h-52 w-full bg-gradient-to-b from-slate-100 via-white to-white overflow-hidden flex items-end justify-center border-b border-slate-100">
+              <div className="relative w-full h-full transform translate-y-1">
                 <Image
-                  src="/illustrations/login-peeking.jpg"
-                  alt="3D Student Illustration"
+                  src={peekingIllustration}
+                  alt="BAC Mastery Students"
                   fill
-                  className="object-contain object-bottom drop-shadow-xl"
+                  className="object-cover object-top drop-shadow-sm"
                   priority
                 />
               </div>
 
-              {/* Floating Welcome Tag */}
-              <div className="absolute top-4 left-4">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-white/90 dark:bg-stone-900/90 text-stone-800 dark:text-stone-200 shadow-sm border border-stone-200/60 dark:border-white/10 backdrop-blur-sm">
+              {/* Floating Badge */}
+              <div className="absolute top-3.5 left-3.5">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-white/95 text-slate-800 shadow-md border border-slate-200/60 backdrop-blur-md">
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                   <span>BAC 2027</span>
                 </span>
               </div>
             </div>
 
-            {/* Card Content */}
-            <div className="p-6 sm:p-8 space-y-6">
+            {/* Inner White Form Container (The Board Held by the Characters) */}
+            <div className="p-6 sm:p-8 space-y-5 bg-white">
               
               {/* Segmented Mode Switcher Tabs */}
-              <div className="grid grid-cols-2 gap-1.5 p-1.5 bg-stone-100 dark:bg-stone-800/80 border border-stone-200/70 dark:border-white/10 rounded-full shadow-inner">
+              <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 border border-slate-200/80 rounded-full shadow-inner">
                 <button
                   data-testid="auth-mode-login"
                   type="button"
@@ -212,7 +226,7 @@ function AuthContent() {
                   className={`py-2 text-xs font-bold rounded-full transition-all cursor-pointer ${
                     mode === "login"
                       ? "bg-[var(--color-primary)] text-white shadow-md"
-                      : "text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
+                      : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
                   {locale === "fr" ? "Connexion" : "تسجيل الدخول"}
@@ -228,16 +242,16 @@ function AuthContent() {
                   className={`py-2 text-xs font-bold rounded-full transition-all cursor-pointer ${
                     mode === "signup"
                       ? "bg-[var(--color-primary)] text-white shadow-md"
-                      : "text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-100"
+                      : "text-slate-600 hover:text-slate-900"
                   }`}
                 >
                   {locale === "fr" ? "Créer un compte" : "حساب جديد"}
                 </button>
               </div>
 
-              {/* Title & Mentor Subtitle */}
+              {/* Title & Subtitle */}
               <div className="text-center space-y-1">
-                <h1 className="text-2xl font-black text-stone-900 dark:text-white tracking-tight">
+                <h1 className="text-2xl font-black text-slate-900 tracking-tight font-sans">
                   {mode === "login"
                     ? locale === "fr"
                       ? "Bon retour parmi nous !"
@@ -246,7 +260,7 @@ function AuthContent() {
                     ? "Rejoignez BAC Mastery"
                     : "ابدأ مسارك نحو البكالوريا"}
                 </h1>
-                <p className="text-xs text-stone-500 dark:text-stone-400">
+                <p className="text-xs text-slate-500 font-medium">
                   {locale === "fr"
                     ? "Pas ce que vous lisez. Comment y arriver."
                     : "ماشي واش تقرا. كيفاش توصل."}
@@ -255,16 +269,16 @@ function AuthContent() {
 
               {/* Free Trial Banner in Signup Mode */}
               {mode === "signup" && (
-                <div className="p-3.5 bg-blue-500/10 border border-blue-500/25 rounded-2xl text-xs space-y-1">
-                  <div className="flex items-center gap-2 font-bold text-blue-600 dark:text-blue-400">
-                    <Sparkles className="w-4 h-4 shrink-0" />
+                <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-2xl text-xs space-y-1">
+                  <div className="flex items-center gap-2 font-bold text-blue-700">
+                    <Sparkles className="w-4 h-4 shrink-0 text-blue-600" />
                     <span>
                       {locale === "fr"
                         ? "Essai gratuit de 72 heures inclus"
                         : "فترة تجريبية مجانية لمدة 72 ساعة"}
                     </span>
                   </div>
-                  <p className="text-stone-600 dark:text-stone-400 text-[11px] leading-relaxed">
+                  <p className="text-slate-600 text-[11px] leading-relaxed">
                     {locale === "fr"
                       ? "Accès complet immédiat aux matières de votre filière et à votre diagnostic initial."
                       : "وصول كامل ومباشر لمواد شعبتك والتشخيص الأولي دون أي التزام مالي."}
@@ -274,16 +288,16 @@ function AuthContent() {
 
               {/* Error Alert */}
               {errorMsg && (
-                <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-2xl text-xs text-rose-600 dark:text-rose-400 flex items-center gap-2 animate-calm-shake">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
+                <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700 flex items-center gap-2 animate-calm-shake">
+                  <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
                   <span>{errorMsg}</span>
                 </div>
               )}
 
               {/* Success Alert */}
               {successMsg && (
-                <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-xs text-emerald-700 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
                   <span>{successMsg}</span>
                 </div>
               )}
@@ -293,14 +307,14 @@ function AuthContent() {
                 
                 {/* Email Pill Input */}
                 <div>
-                  <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1.5 px-1">
+                  <label className="block text-xs font-bold text-slate-800 mb-1.5 px-1">
                     {locale === "fr" ? "Adresse email" : "البريد الإلكتروني"}
                   </label>
                   <div className="relative flex items-center">
                     <div
                       className={`absolute ${
-                        isRTL ? "right-2" : "left-2"
-                      } w-9 h-9 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 flex items-center justify-center shadow-inner shrink-0 pointer-events-none`}
+                        isRTL ? "right-2.5" : "left-2.5"
+                      } w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center shrink-0 pointer-events-none`}
                     >
                       <Mail className="w-4 h-4" />
                     </div>
@@ -311,8 +325,8 @@ function AuthContent() {
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder={locale === "fr" ? "eleve@example.com" : "student@example.com"}
                       required
-                      className={`w-full h-13 rounded-full bg-stone-50/90 dark:bg-stone-800/80 border border-stone-200/80 dark:border-white/10 text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all ${
-                        isRTL ? "pr-13 pl-4" : "pl-13 pr-4"
+                      className={`w-full h-12 rounded-full bg-slate-50 border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all font-medium ${
+                        isRTL ? "pr-12 pl-4" : "pl-12 pr-4"
                       }`}
                     />
                   </div>
@@ -321,11 +335,11 @@ function AuthContent() {
                 {/* Password Pill Input */}
                 <div>
                   <div className="flex items-center justify-between mb-1.5 px-1">
-                    <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300">
+                    <label className="block text-xs font-bold text-slate-800">
                       {locale === "fr" ? "Mot de passe" : "كلمة المرور"}
                     </label>
                     {mode === "login" && (
-                      <span className="text-[11px] text-stone-400 cursor-not-allowed">
+                      <span className="text-[11px] text-slate-400 cursor-not-allowed">
                         {locale === "fr" ? "Oublié ?" : "نسيت كلمة المرور؟"}
                       </span>
                     )}
@@ -333,8 +347,8 @@ function AuthContent() {
                   <div className="relative flex items-center">
                     <div
                       className={`absolute ${
-                        isRTL ? "right-2" : "left-2"
-                      } w-9 h-9 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 flex items-center justify-center shadow-inner shrink-0 pointer-events-none`}
+                        isRTL ? "right-2.5" : "left-2.5"
+                      } w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center shrink-0 pointer-events-none`}
                     >
                       <Lock className="w-4 h-4" />
                     </div>
@@ -345,14 +359,14 @@ function AuthContent() {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
                       required
-                      className={`w-full h-13 rounded-full bg-stone-50/90 dark:bg-stone-800/80 border border-stone-200/80 dark:border-white/10 text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all ${
-                        isRTL ? "pr-13 pl-12" : "pl-13 pr-12"
+                      className={`w-full h-12 rounded-full bg-slate-50 border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all font-medium ${
+                        isRTL ? "pr-12 pl-11" : "pl-12 pr-11"
                       }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className={`absolute ${isRTL ? "left-3.5" : "right-3.5"} text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 cursor-pointer`}
+                      className={`absolute ${isRTL ? "left-3" : "right-3"} text-slate-400 hover:text-slate-700 cursor-pointer`}
                       aria-label="Toggle password visibility"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -363,14 +377,14 @@ function AuthContent() {
                 {/* Confirm Password (Signup only) */}
                 {mode === "signup" && (
                   <div className="animate-fade-in">
-                    <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1.5 px-1">
+                    <label className="block text-xs font-bold text-slate-800 mb-1.5 px-1">
                       {locale === "fr" ? "Confirmer le mot de passe" : "تأكيد كلمة المرور"}
                     </label>
                     <div className="relative flex items-center">
                       <div
                         className={`absolute ${
-                          isRTL ? "right-2" : "left-2"
-                        } w-9 h-9 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 flex items-center justify-center shadow-inner shrink-0 pointer-events-none`}
+                          isRTL ? "right-2.5" : "left-2.5"
+                        } w-8 h-8 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center shrink-0 pointer-events-none`}
                       >
                         <Lock className="w-4 h-4" />
                       </div>
@@ -381,32 +395,32 @@ function AuthContent() {
                         onChange={(e) => setPasswordConfirmation(e.target.value)}
                         placeholder="••••••••"
                         required
-                        className={`w-full h-13 rounded-full bg-stone-50/90 dark:bg-stone-800/80 border border-stone-200/80 dark:border-white/10 text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all ${
-                          isRTL ? "pr-13 pl-4" : "pl-13 pr-4"
+                        className={`w-full h-12 rounded-full bg-slate-50 border border-slate-300 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 transition-all font-medium ${
+                          isRTL ? "pr-12 pl-4" : "pl-12 pr-4"
                         }`}
                       />
                     </div>
                   </div>
                 )}
 
-                {/* Tactile Big Pill CTA Button */}
+                {/* Tactile Pill CTA Button */}
                 <Button
                   data-testid="auth-submit-button"
                   type="submit"
                   variant="primary"
                   fullWidth
                   disabled={submitting}
-                  className="rounded-full h-13 mt-3 font-bold text-white shadow-clay hover:scale-[1.01] active:scale-[0.99] transition-all bg-[var(--color-primary)]"
+                  className="rounded-full h-12 mt-2 font-bold text-white shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-all bg-[var(--color-primary)]"
                 >
                   {submitting ? (
-                    <span>{locale === "fr" ? "Connexion en cours..." : "جاري التحقق..."}</span>
+                    <span>{locale === "fr" ? "Vérification..." : "جاري التحقق..."}</span>
                   ) : (
                     <div className="flex items-center justify-center gap-2">
                       <span>
                         {mode === "login"
                           ? locale === "fr"
                             ? "Se connecter"
-                            : "دخول"
+                            : "تسجيل الدخول"
                           : locale === "fr"
                           ? "Démarrer mon essai de 72h"
                           : "بدء التجربة المجانية (72 ساعة)"}
@@ -418,8 +432,8 @@ function AuthContent() {
               </form>
 
               {/* Onboarding Register Link */}
-              <div className="pt-4 border-t border-stone-200/60 dark:border-white/10 text-center space-y-2">
-                <p className="text-xs text-stone-500 dark:text-stone-400">
+              <div className="pt-3 border-t border-slate-200 text-center space-y-1.5">
+                <p className="text-xs text-slate-500">
                   {locale === "fr" ? "Nouveau sur BAC Mastery ?" : "تلميذ جديد في BAC Mastery؟"}
                 </p>
                 <Link
@@ -436,10 +450,10 @@ function AuthContent() {
               </div>
 
               {/* Back to Home */}
-              <div className="pt-2 text-center">
+              <div className="pt-1 text-center">
                 <Link
                   href="/"
-                  className="text-xs text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors inline-flex items-center gap-1"
+                  className="text-xs text-slate-400 hover:text-slate-700 transition-colors inline-flex items-center gap-1"
                 >
                   {isRTL ? <ArrowRight className="w-3.5 h-3.5" /> : <ArrowLeft className="w-3.5 h-3.5" />}
                   <span>{locale === "fr" ? "Retour à l'accueil" : "العودة إلى الصفحة الرئيسية"}</span>
@@ -452,7 +466,7 @@ function AuthContent() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-theme/50 pt-4 text-center text-xs text-stone-400 dark:text-stone-500 relative z-20">
+      <footer className="border-t border-theme/40 pt-4 text-center text-xs text-theme-muted relative z-20">
         <div className="flex items-center justify-center gap-1.5 mb-1">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
           <span>BAC 2027 • Conforme au Ministère de l&apos;Éducation Nationale</span>

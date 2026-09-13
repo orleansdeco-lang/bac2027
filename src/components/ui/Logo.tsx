@@ -36,7 +36,7 @@ export function Logo({
   const content = (
     <div className={cn("inline-flex items-center gap-2 select-none group", className)}>
       {/* Brand Icon: Minimal geometric path mark with upward trajectory */}
-      <div className="relative flex items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 p-2 text-white shadow-sm border border-blue-500/30 group-hover:border-blue-400 transition-colors">
+      <div className="relative flex items-center justify-center rounded-xl bg-[var(--color-primary)] text-white shadow-sm border border-[var(--color-primary)]/40 group-hover:scale-105 transition-transform p-2">
         <svg
           viewBox="0 0 24 24"
           fill="none"
@@ -55,16 +55,16 @@ export function Logo({
 
       {/* Brand Text */}
       <div className="flex flex-col text-start">
-        <div className="flex items-center gap-1.5 font-black text-slate-100 font-sans">
+        <div className="flex items-center gap-1.5 font-black text-theme-text font-sans">
           <span className={cn("font-extrabold tracking-tight", sizeStyles[size].text)}>
             BAC
           </span>
-          <span className={cn("font-bold tracking-wider text-blue-400", sizeStyles[size].text)}>
+          <span className={cn("font-bold tracking-wider text-[var(--color-primary)]", sizeStyles[size].text)}>
             MASTERY
           </span>
         </div>
         {showTagline && (
-          <span className="text-[11px] font-medium text-slate-400 leading-tight">
+          <span className="text-[11px] font-medium text-theme-muted leading-tight">
             ماشي واش تقرا. كيفاش توصل.
           </span>
         )}

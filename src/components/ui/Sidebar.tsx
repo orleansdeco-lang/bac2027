@@ -81,9 +81,9 @@ export function Sidebar({ className }: SidebarProps) {
 
   // Avatar image matching the active theme personality
   const avatarSrc =
-    theme === "edge"
+    theme === "boys"
       ? "/illustrations/hero-edge.jpg"
-      : theme === "bloom"
+      : theme === "girls"
       ? "/illustrations/hero-bloom.jpg"
       : "/illustrations/hero-focus.jpg";
 

@@ -219,9 +219,9 @@ export default function DashboardPage() {
 
   // Dynamic 3D Editorial Illustration based on Active Theme
   const heroIllustration =
-    theme === "bloom"
+    theme === "girls"
       ? "/illustrations/hero-bloom.jpg"
-      : theme === "edge"
+      : theme === "boys"
       ? "/illustrations/hero-edge.jpg"
       : "/illustrations/hero-focus.jpg";
 

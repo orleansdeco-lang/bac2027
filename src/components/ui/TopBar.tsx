@@ -108,13 +108,13 @@ export function TopBar() {
     <header className="sticky top-0 z-40 border-b border-theme bg-surface/95 backdrop-blur-md transition-colors duration-200">
       <Container size="lg" className="flex h-16 items-center justify-between px-3 sm:px-6">
         {/* Left: Logo + Stream Badge + Trial Indicator */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <Logo size="md" showTagline={false} />
           {streamLabel && (
             <Badge
               variant="outline"
               size="sm"
-              className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold border-cyan-500/40 bg-cyan-500/10 text-cyan-400"
+              className="hidden sm:inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold border-cyan-500/40 bg-cyan-500/10 text-cyan-400"
             >
               <span>{streamLabel}</span>
             </Badge>
@@ -148,13 +148,13 @@ export function TopBar() {
         </div>
 
         {/* Center Desktop: Reference Search Pill */}
-        <div className="hidden md:flex items-center flex-1 max-w-md mx-6">
+        <div className="hidden lg:flex items-center flex-1 max-w-xs xl:max-w-md mx-3 xl:mx-6 min-w-0">
           <div className="relative w-full">
             <Search className={`w-4 h-4 text-theme-muted absolute top-2.5 ${isAr ? "right-3.5" : "left-3.5"}`} />
             <input
               type="text"
               readOnly
-              placeholder={isAr ? "ابحث في مهارات المنهاج، الدروس، الملخصات..." : "Rechercher une compétence, formule, mission..."}
+              placeholder={isAr ? "ابحث في مهارات المنهاج، الدروس..." : "Rechercher une compétence, formule..."}
               onClick={() => {
                 window.location.href = "/roadmap";
               }}
@@ -166,7 +166,7 @@ export function TopBar() {
         </div>
 
         {/* Right Action: Desktop & Mobile Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Desktop Register CTA Button */}
           {!hasAccount && (
             <Link

@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from "react";
 
-export type Theme = "focus" | "bloom" | "edge" | "pure";
+export type Theme = "freemium" | "girls" | "boys";
 
 export interface ThemeInfo {
   id: Theme;
@@ -17,56 +17,47 @@ export interface ThemeInfo {
 }
 
 export const THEMES: Record<Theme, ThemeInfo> = {
-  focus: {
-    id: "focus",
-    label_ar: "فوكس (Focus)",
-    label_fr: "Focus",
-    icon: "☀️",
-    tagline_ar: "دافئ، أنيق، ولمسة هادئة ومريحة",
-    tagline_fr: "Chaleureux, pastel et confiant",
-    colorScheme: "light",
-    accentColor: "#EE7B62",
-    isPremium: false,
-  },
-  bloom: {
-    id: "bloom",
-    label_ar: "بلوم (Bloom)",
-    label_fr: "Bloom",
-    icon: "✨",
-    tagline_ar: "أناقة فاخرة، درجات البنفسجي والمرجان",
-    tagline_fr: "Élégant, prune & lavande éditoriale",
-    colorScheme: "dark",
-    accentColor: "#C084FC",
-    isPremium: true,
-  },
-  edge: {
-    id: "edge",
-    label_ar: "إيدج (Edge)",
-    label_fr: "Edge",
-    icon: "⚡",
-    tagline_ar: "طموح، حديث، أزرق داكن وسيان علمي",
-    tagline_fr: "Ambitieux, moderne & bleu nuit",
-    colorScheme: "dark",
-    accentColor: "#3B82F6",
-    isPremium: true,
-  },
-  pure: {
-    id: "pure",
-    label_ar: "نقاء (Pure)",
-    label_fr: "Pure",
+  freemium: {
+    id: "freemium",
+    label_ar: "بسيط (Freemium)",
+    label_fr: "Simple (Freemium)",
     icon: "🌿",
-    tagline_ar: "بساطة نقية، صفاء ذهني، وخفة",
-    tagline_fr: "Minimaliste, sobre et universel",
+    tagline_ar: "تصميم بسيط وعالي الوضوح بدون أي تشتيت",
+    tagline_fr: "Minimaliste, sobre, rapide et gratuit",
     colorScheme: "light",
     accentColor: "#2563EB",
     isPremium: false,
   },
+  girls: {
+    id: "girls",
+    label_ar: "بنات (Girls 3D)",
+    label_fr: "Filles (Girls 3D)",
+    icon: "✨",
+    tagline_ar: "ألوان اللافندر والوردي الفاخرة مع شخصية الطالبة 3D",
+    tagline_fr: "Élégant, prune, rose poudré et illustration 3D",
+    colorScheme: "dark",
+    accentColor: "#C084FC",
+    isPremium: true,
+  },
+  boys: {
+    id: "boys",
+    label_ar: "ذكور (Boys 3D)",
+    label_fr: "Garçons (Boys 3D)",
+    icon: "⚡",
+    tagline_ar: "أزرق داكن وسيان علمي حديث مع شخصية الطالب 3D",
+    tagline_fr: "Dynamique, bleu nuit, cyan et illustration 3D",
+    colorScheme: "dark",
+    accentColor: "#3B82F6",
+    isPremium: true,
+  },
 };
 
-export const DEFAULT_THEME: Theme = "focus";
+export const DEFAULT_THEME: Theme = "freemium";
 
 function normalizeTheme(val: any): Theme {
-  if (val === "balance") return "bloom";
+  if (val === "girls" || val === "bloom" || val === "balance") return "girls";
+  if (val === "boys" || val === "edge") return "boys";
+  if (val === "freemium" || val === "pure" || val === "focus") return "freemium";
   if (val && THEMES[val as Theme]) return val as Theme;
   return DEFAULT_THEME;
 }
@@ -101,7 +92,7 @@ export function ThemeProvider({
     if (metaThemeColor) {
       metaThemeColor.setAttribute(
         "content",
-        t === "focus" ? "#F7F3EE" : t === "bloom" ? "#181126" : t === "edge" ? "#0A0F1D" : "#FBFBFA"
+        t === "freemium" ? "#F8FAFC" : t === "girls" ? "#1F1530" : "#0B132B"
       );
     }
   };
