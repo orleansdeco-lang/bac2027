@@ -13,8 +13,29 @@ import { PaymentOrder, PaymentOrderStatus, PaymentMethod, AuthoritativePlan } fr
 import { recordAuditLog } from "./audit";
 import { supabase, isSupabaseConfigured } from "../supabase/client";
 import { StudentRepository } from "../repositories/student-repository";
+import { getSubscriptionPlanById } from "./subscriptions";
 
 export const AUTHORITATIVE_PLANS: Record<string, AuthoritativePlan> = {
+  season: {
+    id: "season",
+    name_ar: "اشتراك الموسم الدراسي",
+    name_fr: "Pass Saison BAC",
+    priceDZD: 3900,
+    currency: "DZD",
+    durationMonths: 10,
+    description_ar: "وصول غير محدود لجميع الدروس، التدريبات، والتصحيحات حتى يوم امتحان البكالوريا.",
+    description_fr: "Accès illimité à toutes les missions, entraînements et retests jusqu'aux épreuves du BAC.",
+  },
+  monthly: {
+    id: "monthly",
+    name_ar: "الاشتراك الشهري",
+    name_fr: "Abonnement Mensuel",
+    priceDZD: 1500,
+    currency: "DZD",
+    durationMonths: 1,
+    description_ar: "وصول كامل لمدة 30 يوماً قابلة للتجديد.",
+    description_fr: "Accès complet pendant 30 jours renouvelable.",
+  },
   bac_season_pass_pilot: {
     id: "bac_season_pass_pilot",
     name_ar: "موسم البكالوريا الكامل",
@@ -45,11 +66,25 @@ export interface CreatePaymentOrderInput {
 }
 
 export async function createPaymentOrder(input: CreatePaymentOrderInput): Promise<PaymentOrder> {
-  const planKey = input.plan || "bac_season_pass_pilot";
-  const authoritativePlan = AUTHORITATIVE_PLANS[planKey];
-  if (!authoritativePlan) {
+  const rawPlanKey = input.plan || "season";
+  const normalizedKey = rawPlanKey === "bac_season_pass_pilot" ? "season" : rawPlanKey;
+
+  // Check subscription plans dynamically
+  const subscriptionPlan = await getSubscriptionPlanById(normalizedKey);
+  const authoritativePlan = AUTHORITATIVE_PLANS[rawPlanKey] || AUTHORITATIVE_PLANS[normalizedKey];
+
+  if (!subscriptionPlan && !authoritativePlan) {
     throw new Error(`Unknown or unsupported plan: ${input.plan}`);
   }
+
+  // Check if plan is closed
+  if (subscriptionPlan && subscriptionPlan.active === false) {
+    throw new Error(`Subscription plan '${subscriptionPlan.name}' is currently closed for new purchases.`);
+  }
+
+  const finalPlanId = rawPlanKey;
+  const finalPrice = subscriptionPlan ? subscriptionPlan.price_dzd : (authoritativePlan?.priceDZD ?? 3900);
+  const finalCurrency = "DZD";
 
   // Server-authoritative derivation: ignore any manipulated amount or currency from client
   const orderId = `ord_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -58,9 +93,9 @@ export async function createPaymentOrder(input: CreatePaymentOrderInput): Promis
   const newOrder: PaymentOrder = {
     id: orderId,
     userId: input.userId,
-    plan: authoritativePlan.id,
-    amount: authoritativePlan.priceDZD, // Strictly server-authoritative: 3900 DZD
-    currency: authoritativePlan.currency, // Strictly DZD
+    plan: finalPlanId,
+    amount: finalPrice, // Strictly server-authoritative
+    currency: finalCurrency, // Strictly DZD
     paymentMethod: input.paymentMethod || "baridimob",
     status: "PENDING", // Strictly PENDING
     receiptPath: input.receiptPath || null,
@@ -222,7 +257,19 @@ export async function approvePaymentOrder(
     return { success: false, error: `Cannot approve order in status ${order.status}` };
   }
 
-  const now = new Date().toISOString();
+  const nowDate = new Date();
+  const now = nowDate.toISOString();
+
+  // Look up plan to determine duration dynamically
+  const rawPlanKey = order.plan || "season";
+  const normalizedKey = rawPlanKey === "bac_season_pass_pilot" ? "season" : rawPlanKey;
+  const subscriptionPlan = await getSubscriptionPlanById(normalizedKey);
+  const durationMonths = subscriptionPlan ? subscriptionPlan.duration_months : (normalizedKey === "monthly" ? 1 : 10);
+  const durationDays = durationMonths * 30;
+
+  const subscriptionStartedAt = now;
+  const subscriptionExpiresAt = new Date(nowDate.getTime() + durationDays * 24 * 60 * 60 * 1000).toISOString();
+
   let studentProfileBefore: any = null;
   try {
     studentProfileBefore = await StudentRepository.getProfile(order.userId);
@@ -236,6 +283,7 @@ export async function approvePaymentOrder(
     student_plan: studentProfileBefore?.plan || "PILOT_TRIAL",
     amount: order.amount,
     currency: order.currency,
+    subscription_expires_at: studentProfileBefore?.subscription_expires_at || null,
   };
 
   // Update order
@@ -245,13 +293,15 @@ export async function approvePaymentOrder(
   order.notes = reason;
   order.updatedAt = now;
 
-  // Elevate student profile authoritatively
+  // Elevate student profile authoritatively with subscription duration
   try {
     if (studentProfileBefore) {
       await StudentRepository.saveProfile({
         ...studentProfileBefore,
         access_status: "PAID",
         plan: "PAID",
+        subscription_started_at: subscriptionStartedAt,
+        subscription_expires_at: subscriptionExpiresAt,
       } as any);
     }
   } catch {
@@ -262,6 +312,8 @@ export async function approvePaymentOrder(
     order_status: "APPROVED",
     student_access_status: "PAID",
     student_plan: "PAID",
+    subscription_started_at: subscriptionStartedAt,
+    subscription_expires_at: subscriptionExpiresAt,
     reviewed_by: operatorId,
     reviewed_at: now,
   };

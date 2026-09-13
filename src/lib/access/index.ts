@@ -69,6 +69,8 @@ export interface AccessProfileInput {
   created_at?: string;
   trial_started_at?: string | null;
   trial_expires_at?: string | null;
+  subscription_started_at?: string | null;
+  subscription_expires_at?: string | null;
   access_status?: AccessStatus | string | null;
   plan?: Plan | string | null;
   raw_draft?: any;
@@ -106,14 +108,71 @@ export function getStudentAccess(
   // 2. Explicit Paid Subscriber
   const rawStatus = (profile as any).access_status;
   const rawPlan = (profile as any).plan;
-  if (rawStatus === "PAID" || rawPlan === "PAID") {
+  const subExpiresAt = (profile as any).subscription_expires_at;
+  const subStartedAt = (profile as any).subscription_started_at;
+
+  if (rawStatus === "PAID" || rawPlan === "PAID" || (subExpiresAt && rawStatus !== "TRIAL")) {
+    // If subscription_expires_at is present, verify expiration dynamically against server time
+    if (subExpiresAt) {
+      const subExpiryMs = new Date(subExpiresAt).getTime();
+      if (!isNaN(subExpiryMs)) {
+        if (nowMs >= subExpiryMs) {
+          return {
+            status: "EXPIRED",
+            trialStatus: "EXPIRED",
+            accessStatus: "EXPIRED",
+            plan: rawPlan || "PAID",
+            trialStartedAt: (profile as any).trial_started_at || null,
+            trialExpiresAt: (profile as any).trial_expires_at || null,
+            subscriptionStartedAt: subStartedAt || null,
+            subscriptionExpiresAt: subExpiresAt,
+            remainingMilliseconds: 0,
+            remainingHours: 0,
+            remainingMinutes: 0,
+            remainingDays: 0,
+            remainingHoursOnly: 0,
+            canUseProduct: false,
+            isExpiringSoon: false,
+            reason: "subscription_expired",
+          };
+        }
+
+        const remainingMs = subExpiryMs - nowMs;
+        const remainingHours = Math.max(0, Math.floor(remainingMs / (1000 * 60 * 60)));
+        const remainingMinutes = Math.max(0, Math.floor(remainingMs / (1000 * 60)));
+        const remainingDays = Math.floor(remainingHours / 24);
+        const remainingHoursOnly = remainingHours % 24;
+
+        return {
+          status: "PAID_ACTIVE",
+          trialStatus: "EXPIRED",
+          accessStatus: "PAID",
+          plan: rawPlan || "PAID",
+          trialStartedAt: (profile as any).trial_started_at || null,
+          trialExpiresAt: (profile as any).trial_expires_at || null,
+          subscriptionStartedAt: subStartedAt || null,
+          subscriptionExpiresAt: subExpiresAt,
+          remainingMilliseconds: remainingMs,
+          remainingHours,
+          remainingMinutes,
+          remainingDays,
+          remainingHoursOnly,
+          canUseProduct: true,
+          isExpiringSoon: remainingHours < 48,
+          reason: "paid_active_access",
+        };
+      }
+    }
+
     return {
       status: "PAID_ACTIVE",
       trialStatus: "EXPIRED",
       accessStatus: "PAID",
-      plan: "PAID",
+      plan: rawPlan || "PAID",
       trialStartedAt: (profile as any).trial_started_at || null,
       trialExpiresAt: (profile as any).trial_expires_at || null,
+      subscriptionStartedAt: subStartedAt || null,
+      subscriptionExpiresAt: null,
       remainingMilliseconds: Infinity,
       remainingHours: Infinity,
       remainingMinutes: Infinity,

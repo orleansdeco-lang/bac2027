@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   ChevronRight,
   LogOut,
+  Sliders,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 
@@ -20,6 +21,7 @@ const navItems = [
   { href: "/ops/overview", label: "Overview", icon: LayoutDashboard },
   { href: "/ops/students", label: "Students", icon: Users },
   { href: "/ops/finance", label: "Finance & Orders", icon: CreditCard },
+  { href: "/ops/subscriptions", label: "Subscriptions", icon: Sliders },
   { href: "/ops/pedagogy", label: "Pedagogy & Signals", icon: GraduationCap },
   { href: "/ops/audit", label: "Audit Log", icon: FileClock },
   { href: "/ops/system", label: "System Health", icon: Server },

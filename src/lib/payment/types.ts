@@ -13,6 +13,7 @@ export interface PaymentPlan {
   description_fr: string;
   features_ar: string[];
   features_fr: string[];
+  active?: boolean;
 }
 
 export interface CheckoutRequest {

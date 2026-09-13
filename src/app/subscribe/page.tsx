@@ -48,6 +48,7 @@ export default function SubscribePage() {
   const [diagnosticResult, setDiagnosticResult] = useState<any>(null);
   const [masteryCount, setMasteryCount] = useState(0);
   const [completedMissionsCount, setCompletedMissionsCount] = useState(0);
+  const [availablePlans, setAvailablePlans] = useState<PaymentPlan[]>([]);
   const [plan, setPlan] = useState<PaymentPlan | null>(null);
   const [checkoutData, setCheckoutData] = useState<CheckoutResult | null>(null);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
@@ -81,6 +82,7 @@ export default function SubscribePage() {
           missions ? Object.values(missions).filter((m: any) => m.status === "completed" || m.status === "mastered").length : 0
         );
         if (plans && plans.length > 0) {
+          setAvailablePlans(plans);
           setPlan(plans[0]);
         }
       } catch (err) {
@@ -100,7 +102,7 @@ export default function SubscribePage() {
     const provider = getPaymentProvider();
     const res = await provider.createCheckout({
       userId: user?.id || "guest_pilot",
-      planId: plan?.id || "bac_season_pass_pilot",
+      planId: plan?.id || "season",
       studentEmail: user?.email || undefined,
     });
     setCheckoutData(res);
@@ -246,13 +248,55 @@ export default function SubscribePage() {
           )}
         </Card>
 
+        {/* Plan Switcher / Selection Tabs */}
+        {availablePlans.length > 1 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
+            {availablePlans.map((p) => {
+              const isSelected = plan?.id === p.id;
+              const isClosed = p.active === false;
+              return (
+                <button
+                  type="button"
+                  key={p.id}
+                  onClick={() => setPlan(p)}
+                  className={`p-3.5 rounded-2xl border text-start transition-all relative flex flex-col justify-between ${
+                    isSelected
+                      ? "border-2 border-[var(--color-primary)] bg-[var(--color-primary-soft)]/20 shadow-sm"
+                      : "border-theme bg-card hover:border-[var(--color-primary)]/40 opacity-80"
+                  }`}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-xs font-bold text-theme-text">
+                      {isAr ? p.name_ar : p.name_fr}
+                    </span>
+                    {isClosed ? (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-500 font-medium">
+                        {isAr ? "مغلق" : "Fermé"}
+                      </span>
+                    ) : (
+                      <span className="text-xs font-bold font-mono text-[var(--color-primary)]">
+                        {p.priceDZD} {isAr ? "دج" : "DA"}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-theme-secondary mt-1 block">
+                    {p.durationMonths === 1
+                      ? isAr ? "صلاحية 1 شهر كامل" : "1 mois complet"
+                      : isAr ? `صلاحية ${p.durationMonths} أشهر حتى البكالوريا` : `${p.durationMonths} mois jusqu'au BAC`}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Subscription Plan Card */}
         {plan && (
           <Card className="p-6 sm:p-8 bg-card border-2 border-[var(--color-primary)] space-y-6 shadow-clay relative overflow-hidden">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-theme pb-5">
               <div>
                 <span className="text-xs font-bold text-[var(--color-primary)] uppercase tracking-widest block mb-1">
-                  {isAr ? "العرض الكامل للتلميذ" : "Pass Pédagogique Intégral"}
+                  {isAr ? "تفاصيل الخطة المختارة" : "Pass Pédagogique Sélectionné"}
                 </span>
                 <h2 className="text-xl font-bold text-theme-text">
                   {isAr ? plan.name_ar : plan.name_fr}
@@ -265,10 +309,16 @@ export default function SubscribePage() {
               <div className="text-start sm:text-end shrink-0">
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-extrabold text-theme-text font-mono">{plan.priceDZD}</span>
-                  <span className="text-xs font-semibold text-theme-muted">{isAr ? "دج / للموسم" : "DA / saison"}</span>
+                  <span className="text-xs font-semibold text-theme-muted">
+                    {isAr
+                      ? `دج / ${plan.durationMonths === 1 ? "شهرياً" : "للموسم"}`
+                      : `DA / ${plan.durationMonths === 1 ? "mois" : "saison"}`}
+                  </span>
                 </div>
                 <span className="text-[11px] text-[var(--color-success)] font-medium block mt-0.5">
-                  {isAr ? "حتى يوم امتحان البكالوريا" : "Accès garanti jusqu'au BAC"}
+                  {plan.durationMonths === 1
+                    ? isAr ? "صلاحية 30 يوماً قابلة للتجديد" : "Accès 30 jours renouvelable"
+                    : isAr ? "حتى يوم امتحان البكالوريا" : "Accès garanti jusqu'au BAC"}
                 </span>
               </div>
             </div>
@@ -283,32 +333,40 @@ export default function SubscribePage() {
               ))}
             </div>
 
-            {/* Action Buttons */}
-            <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
-              <Button
-                data-testid="subscribe-primary-cta"
-                size="lg"
-                variant="primary"
-                fullWidth
-                onClick={handleStartCheckout}
-                className="min-h-[50px] font-bold text-sm flex items-center justify-center gap-2 shadow-clay rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white"
-              >
-                <span>{isAr ? "كمّل BAC Mastery" : "Continuer avec BAC Mastery"}</span>
-                <NextArrow className="w-4 h-4" />
-              </Button>
-
-              <Link href="/progress" className="w-full sm:w-auto">
+            {/* Plan Closed Notice or Action Buttons */}
+            {plan.active === false ? (
+              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs text-center font-medium">
+                {isAr
+                  ? "عذراً، باب التسجيل في هذه الخطة مغلق حالياً بقرار من إدارة المنصة."
+                  : "Désolé, les inscriptions pour ce pass sont temporairement fermées."}
+              </div>
+            ) : (
+              <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
                 <Button
-                  data-testid="subscribe-secondary-cta"
+                  data-testid="subscribe-primary-cta"
                   size="lg"
-                  variant="outline"
+                  variant="primary"
                   fullWidth
-                  className="min-h-[50px] text-xs font-medium text-theme-secondary rounded-full"
+                  onClick={handleStartCheckout}
+                  className="min-h-[50px] font-bold text-sm flex items-center justify-center gap-2 shadow-clay rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white"
                 >
-                  <span>{isAr ? "شوف واش بنيت حتى الآن" : "Consulter mes acquis"}</span>
+                  <span>{isAr ? "كمّل BAC Mastery" : "Continuer avec BAC Mastery"}</span>
+                  <NextArrow className="w-4 h-4" />
                 </Button>
-              </Link>
-            </div>
+
+                <Link href="/progress" className="w-full sm:w-auto">
+                  <Button
+                    data-testid="subscribe-secondary-cta"
+                    size="lg"
+                    variant="outline"
+                    fullWidth
+                    className="min-h-[50px] text-xs font-medium text-theme-secondary rounded-full"
+                  >
+                    <span>{isAr ? "شوف واش بنيت حتى الآن" : "Consulter mes acquis"}</span>
+                  </Button>
+                </Link>
+              </div>
+            )}
           </Card>
         )}
 

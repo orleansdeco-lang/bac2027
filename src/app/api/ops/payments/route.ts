@@ -9,6 +9,7 @@ import {
   createPaymentOrder,
   AUTHORITATIVE_PLANS,
 } from "@/lib/operations/payments";
+import { getSubscriptionPlanById } from "@/lib/operations/subscriptions";
 import { PaymentOrderStatus } from "@/lib/operations/types";
 
 export const dynamic = "force-dynamic";
@@ -86,9 +87,12 @@ export async function POST(req: Request) {
     }
 
     // 3. Plan validation
-    const requestedPlan = body.plan || "bac_season_pass_pilot";
-    const catalogPlan = AUTHORITATIVE_PLANS[requestedPlan];
-    if (!catalogPlan) {
+    const rawPlan = body.plan || "season";
+    const planKey = rawPlan === "bac_season_pass_pilot" ? "season" : rawPlan;
+    const dynamicPlan = await getSubscriptionPlanById(planKey);
+    const catalogPlan = AUTHORITATIVE_PLANS[rawPlan] || AUTHORITATIVE_PLANS[planKey];
+
+    if (!dynamicPlan && !catalogPlan) {
       return NextResponse.json(
         {
           success: false,
@@ -98,23 +102,38 @@ export async function POST(req: Request) {
       );
     }
 
-    // 4. Anti-Tamper: Price manipulation check
-    if (body.amount !== undefined && Number(body.amount) !== catalogPlan.priceDZD) {
+    // Check if plan is closed for new purchases
+    if (dynamicPlan && dynamicPlan.active === false) {
       return NextResponse.json(
         {
           success: false,
-          error: `Price manipulation detected. Plan '${requestedPlan}' price is ${catalogPlan.priceDZD} DZD, received ${body.amount}.`,
+          error: `Subscription plan '${dynamicPlan.name}' is currently closed for new purchases.`,
+        },
+        { status: 400 }
+      );
+    }
+
+    const effectivePrice = dynamicPlan ? dynamicPlan.price_dzd : catalogPlan.priceDZD;
+    const effectiveCurrency = catalogPlan?.currency || "DZD";
+    const effectivePlanId = rawPlan;
+
+    // 4. Anti-Tamper: Price manipulation check
+    if (body.amount !== undefined && Number(body.amount) !== effectivePrice) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Price manipulation detected. Plan '${rawPlan}' price is ${effectivePrice} DZD, received ${body.amount}.`,
         },
         { status: 400 }
       );
     }
 
     // 5. Anti-Tamper: Currency manipulation check
-    if (body.currency !== undefined && body.currency !== catalogPlan.currency) {
+    if (body.currency !== undefined && body.currency !== effectiveCurrency) {
       return NextResponse.json(
         {
           success: false,
-          error: `Currency manipulation detected. Currency must be '${catalogPlan.currency}', received '${body.currency}'.`,
+          error: `Currency manipulation detected. Currency must be '${effectiveCurrency}', received '${body.currency}'.`,
         },
         { status: 400 }
       );
@@ -134,9 +153,9 @@ export async function POST(req: Request) {
     // Create authoritative order
     const order = await createPaymentOrder({
       userId: effectiveUserId,
-      plan: catalogPlan.id,
-      amount: catalogPlan.priceDZD,
-      currency: catalogPlan.currency,
+      plan: effectivePlanId,
+      amount: effectivePrice,
+      currency: effectiveCurrency,
       paymentMethod: body.paymentMethod || "baridimob",
       receiptPath: body.receiptPath,
       notes: body.notes,

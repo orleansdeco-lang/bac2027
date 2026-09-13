@@ -45,6 +45,12 @@ export type AuditAction =
   | "PAYMENT_REJECTED"
   | "TRIAL_EXTENDED"
   | "SUBSCRIPTION_ACTIVATED"
+  | "SUBSCRIPTION_APPROVED"
+  | "SUBSCRIPTION_PLAN_UPDATED"
+  | "SUBSCRIPTION_OPENED"
+  | "SUBSCRIPTION_CLOSED"
+  | "SUBSCRIPTION_EXTENDED"
+  | "SUBSCRIPTION_EXPIRED"
   | "ROLE_GRANTED"
   | "ROLE_REVOKED"
   | "STUDENT_FLAGGED"
@@ -54,6 +60,7 @@ export type AuditTargetType =
   | "payment_order"
   | "student_profile"
   | "user_role"
+  | "subscription_plan"
   | "telemetry"
   | "system";
 
@@ -150,6 +157,34 @@ export interface StudentOperationalSummary {
   resolvedRetestsCount: number;
   lastActiveAt?: string;
   hasPendingPayment: boolean;
+  subscriptionStartedAt?: string;
+  subscriptionExpiresAt?: string;
+}
+
+export interface SubscriptionPlan {
+  id: "season" | "monthly" | string;
+  name: string;
+  price_dzd: number;
+  duration_months: number;
+  active: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface SubscriptionAlert {
+  id: string;
+  type:
+    | "PENDING_PAYMENT"
+    | "RECEIPT_UPLOADED"
+    | "EXPIRES_TODAY"
+    | "EXPIRED"
+    | "PLAN_CLOSED"
+    | "SUBSCRIPTION_APPROVED";
+  title: string;
+  description: string;
+  severity: "info" | "warning" | "danger" | "success";
+  timestamp: string;
+  targetId?: string;
 }
 
 export interface AuthoritativePlan {

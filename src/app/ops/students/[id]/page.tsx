@@ -24,34 +24,73 @@ export default function StudentDossierPage() {
   const [student, setStudent] = useState<any>(null);
   const [orders, setOrders] = useState<PaymentOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [extending, setExtending] = useState(false);
+  const [customDays, setCustomDays] = useState("");
+  const [extMessage, setExtMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  async function loadStudent() {
+    setLoading(true);
+    try {
+      const [studRes, ordRes] = await Promise.all([
+        fetch("/api/ops/students"),
+        fetch(`/api/ops/payments?userId=${studentId}`),
+      ]);
+
+      if (studRes.ok) {
+        const sData = await studRes.json();
+        const target = sData?.students?.find((s: any) => s.id === studentId);
+        setStudent(target || { id: studentId, fullName: "Student Record" });
+      }
+      if (ordRes.ok) {
+        const oData = await ordRes.json();
+        setOrders(oData?.orders || []);
+      }
+    } catch (err) {
+      console.error("Failed to load dossier:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function loadStudent() {
-      setLoading(true);
-      try {
-        const [studRes, ordRes] = await Promise.all([
-          fetch("/api/ops/students"),
-          fetch(`/api/ops/payments?userId=${studentId}`),
-        ]);
-
-        if (studRes.ok) {
-          const sData = await studRes.json();
-          const target = sData?.students?.find((s: any) => s.id === studentId);
-          setStudent(target || { id: studentId, fullName: "Student Record" });
-        }
-        if (ordRes.ok) {
-          const oData = await ordRes.json();
-          setOrders(oData?.orders || []);
-        }
-      } catch (err) {
-        console.error("Failed to load dossier:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     if (studentId) loadStudent();
   }, [studentId]);
+
+  async function handleExtendSubscription(type: "1_month" | "1_week" | "custom") {
+    setExtending(true);
+    setExtMessage(null);
+    try {
+      const body: any = { type };
+      if (type === "custom") {
+        body.days = Number(customDays);
+      }
+
+      const res = await fetch(`/api/ops/students/${studentId}/extend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setExtMessage({
+          type: "success",
+          text: `تم تمديد اشتراك الطالب بنجاح حتى: ${new Date(data.newExpiresAt).toLocaleDateString()}`,
+        });
+        setCustomDays("");
+        await loadStudent();
+      } else {
+        setExtMessage({
+          type: "error",
+          text: data.error || "فشل تمديد الاشتراك. يرجى التحقق من صلاحيات المشرف.",
+        });
+      }
+    } catch (err: any) {
+      setExtMessage({ type: "error", text: err.message || "حدث خطأ أثناء الاتصال بالخادم." });
+    } finally {
+      setExtending(false);
+    }
+  }
 
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-6">
@@ -65,6 +104,22 @@ export default function StudentDossierPage() {
           <span>Back to Student Directory</span>
         </Link>
       </div>
+
+      {/* Extension Message Banner */}
+      {extMessage && (
+        <div
+          className={`p-4 rounded-xl border text-xs font-semibold flex items-center justify-between ${
+            extMessage.type === "success"
+              ? "bg-emerald-950/40 border-emerald-800 text-emerald-300"
+              : "bg-rose-950/40 border-rose-800 text-rose-300"
+          }`}
+        >
+          <span>{extMessage.text}</span>
+          <button onClick={() => setExtMessage(null)} className="underline opacity-70 hover:opacity-100">
+            إغلاق
+          </button>
+        </div>
+      )}
 
       {/* Header Banner */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -135,44 +190,94 @@ export default function StudentDossierPage() {
           </div>
         </div>
 
-        {/* Entitlement Details */}
+        {/* Entitlement & Subscription Details */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 border-b border-slate-800 pb-2">
             <Clock className="w-4 h-4 text-blue-400" />
-            <span>Trial & Entitlements</span>
+            <span>Trial & Subscription Entitlements</span>
           </h2>
           <div className="text-xs space-y-2 text-slate-300">
             <div className="flex justify-between">
-              <span className="text-slate-500">Trial Start:</span>
-              <span className="font-mono">{student?.trialStartedAt ? new Date(student.trialStartedAt).toLocaleDateString() : "—"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500">Trial Expiration:</span>
-              <span className="font-mono">{student?.trialExpiresAt ? new Date(student.trialExpiresAt).toLocaleDateString() : "—"}</span>
-            </div>
-            <div className="flex justify-between">
               <span className="text-slate-500">Access Status:</span>
-              <span className="font-mono font-bold text-white">{student?.accessStatus || "TRIAL"}</span>
+              <span className={`font-mono font-bold ${
+                student?.accessStatus === "PAID" ? "text-emerald-400" : student?.accessStatus === "EXPIRED" ? "text-rose-400" : "text-blue-400"
+              }`}>
+                {student?.accessStatus || "TRIAL"}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Active Plan:</span>
-              <span className="font-mono">{student?.plan || "PILOT_TRIAL"}</span>
+              <span className="font-mono font-semibold text-white">{student?.plan || "PILOT_TRIAL"}</span>
             </div>
+            {student?.subscriptionStartedAt && (
+              <div className="flex justify-between">
+                <span className="text-slate-500">Subscription Start:</span>
+                <span className="font-mono">{new Date(student.subscriptionStartedAt).toLocaleDateString()}</span>
+              </div>
+            )}
+            {student?.subscriptionExpiresAt ? (
+              <div className="flex justify-between">
+                <span className="text-slate-500">Subscription Expiration:</span>
+                <span className="font-mono font-semibold text-indigo-300">
+                  {new Date(student.subscriptionExpiresAt).toLocaleDateString()}
+                </span>
+              </div>
+            ) : (
+              <div className="flex justify-between">
+                <span className="text-slate-500">Trial Expiration:</span>
+                <span className="font-mono">{student?.trialExpiresAt ? new Date(student.trialExpiresAt).toLocaleDateString() : "—"}</span>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Security & Access Guard */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
-          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 border-b border-slate-800 pb-2">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>Operations Governance</span>
-          </h2>
-          <div className="text-xs space-y-2 text-slate-400">
-            <p className="leading-relaxed">
-              Read-only operational intelligence. Impersonation is disabled by architectural policy to ensure student privacy.
+        {/* Manual Subscription Extension Controls */}
+        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3 flex flex-col justify-between">
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 border-b border-slate-800 pb-2">
+              <CreditCard className="w-4 h-4 text-emerald-400" />
+              <span>تمديد الاشتراك يدوياً (Manual Extension)</span>
+            </h2>
+            <p className="text-[11px] text-slate-400 mt-2 leading-relaxed">
+              تمديد صلاحية الطالب مباشرة على الخادم دون إنشاء طلب دفع مالي. يُسجل في سجل التدقيق فوراً.
             </p>
-            <div className="pt-2 text-[11px] font-mono text-emerald-400">
-              ✓ Server-Authoritative Integrity
+          </div>
+
+          <div className="space-y-2 pt-2">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => handleExtendSubscription("1_month")}
+                disabled={extending}
+                className="px-2.5 py-2 bg-indigo-600/80 hover:bg-indigo-600 text-white rounded-lg text-xs font-semibold transition text-center disabled:opacity-50"
+              >
+                + 1 شهر
+              </button>
+              <button
+                onClick={() => handleExtendSubscription("1_week")}
+                disabled={extending}
+                className="px-2.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-semibold transition text-center border border-slate-700 disabled:opacity-50"
+              >
+                + 1 أسبوع
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="number"
+                min="1"
+                max="365"
+                placeholder="أيام مخصصة"
+                value={customDays}
+                onChange={(e) => setCustomDays(e.target.value)}
+                className="w-24 bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono focus:outline-none focus:border-indigo-500"
+              />
+              <button
+                onClick={() => handleExtendSubscription("custom")}
+                disabled={extending || !customDays}
+                className="flex-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition text-center border border-slate-700 disabled:opacity-50"
+              >
+                + تمديد مخصص
+              </button>
             </div>
           </div>
         </div>

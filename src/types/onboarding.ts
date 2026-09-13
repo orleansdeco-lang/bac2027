@@ -109,6 +109,12 @@ export interface StrategicProfile {
   trialStatus?: string;
   isTrialActive?: boolean;
   canUseProduct?: boolean;
+  access_status?: string;
+  plan?: string;
+  subscription_started_at?: string | null;
+  subscription_expires_at?: string | null;
+  subscriptionStartedAt?: string | null;
+  subscriptionExpiresAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }

@@ -23,10 +23,12 @@ import {
 import { normalizeAlgerianPhone } from "@/domain/administrative/phone-validation";
 import { calculateTrialExpiration } from "@/lib/access";
 
+const memoryStudentProfiles = new Map<string, any>();
+
 export const StudentRepository = {
   /**
    * Fetch student profile for an authenticated user.
-   * If Supabase is unconfigured or returns null, gracefully falls back to LocalStorage.
+   * If Supabase is unconfigured or returns null, gracefully falls back to memory/LocalStorage.
    */
   async getProfile(userId?: string): Promise<StrategicProfile | null> {
     let effectiveUserId = userId;
@@ -38,6 +40,10 @@ export const StudentRepository = {
     }
     if (!effectiveUserId) {
       effectiveUserId = getStrategicProfile()?.id;
+    }
+
+    if (effectiveUserId && memoryStudentProfiles.has(effectiveUserId)) {
+      return memoryStudentProfiles.get(effectiveUserId);
     }
 
     if (isSupabaseConfigured && supabase && effectiveUserId) {
@@ -132,6 +138,11 @@ export const StudentRepository = {
    */
   async saveProfile(profile: StrategicProfile, userId?: string): Promise<void> {
     saveStrategicProfile(profile);
+
+    const targetId = userId || profile.id;
+    if (targetId) {
+      memoryStudentProfiles.set(targetId, { ...profile, id: targetId });
+    }
 
     if (isSupabaseConfigured && supabase && userId) {
       try {
