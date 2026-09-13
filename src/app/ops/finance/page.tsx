@@ -22,6 +22,25 @@ export default function OpsFinancePage() {
   const [rejectingOrder, setRejectingOrder] = useState<PaymentOrder | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [actionMessage, setActionMessage] = useState<string | null>(null);
+  const [previewReceiptUrl, setPreviewReceiptUrl] = useState<string | null>(null);
+  const [loadingReceiptId, setLoadingReceiptId] = useState<string | null>(null);
+
+  async function handleViewReceipt(orderId: string) {
+    setLoadingReceiptId(orderId);
+    try {
+      const res = await fetch(`/api/ops/payments/receipt/view?orderId=${orderId}`);
+      const data = await res.json();
+      if (data?.success && data?.url) {
+        setPreviewReceiptUrl(data.url);
+      } else {
+        alert(data?.error || "Failed to load receipt");
+      }
+    } catch {
+      alert("Error loading receipt view");
+    } finally {
+      setLoadingReceiptId(null);
+    }
+  }
 
   async function fetchOrders() {
     setLoading(true);
@@ -213,8 +232,18 @@ export default function OpsFinancePage() {
                       </span>
                     </td>
 
-                    <td className="py-3 px-4 text-slate-400 max-w-xs truncate">
-                      {o.notes || o.rejectionReason || "—"}
+                    <td className="py-3 px-4 text-slate-400 max-w-xs">
+                      <div className="truncate">{o.notes || o.rejectionReason || "—"}</div>
+                      {o.receiptPath && (
+                        <button
+                          onClick={() => handleViewReceipt(o.id)}
+                          disabled={loadingReceiptId === o.id}
+                          className="mt-1 inline-flex items-center gap-1 text-[10px] text-indigo-400 hover:text-indigo-300 font-medium underline"
+                        >
+                          <FileText className="w-3 h-3" />
+                          <span>{loadingReceiptId === o.id ? "Loading..." : "View Receipt"}</span>
+                        </button>
+                      )}
                     </td>
 
                     <td className="py-3 px-4 text-slate-400 font-mono text-[11px]">
@@ -298,6 +327,57 @@ export default function OpsFinancePage() {
                 className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 disabled:opacity-50 text-white text-xs font-semibold"
               >
                 Confirm Rejection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Receipt Modal */}
+      {previewReceiptUrl && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 max-w-2xl w-full space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2 text-indigo-400 font-bold text-sm">
+                <FileText className="w-4 h-4" />
+                <span>Verified Payment Receipt</span>
+              </div>
+              <button
+                onClick={() => setPreviewReceiptUrl(null)}
+                className="text-slate-400 hover:text-white text-xs font-mono"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            <div className="bg-slate-950 rounded-lg p-2 flex items-center justify-center max-h-[70vh] overflow-auto">
+              {previewReceiptUrl.startsWith("data:application/pdf") ? (
+                <div className="text-center py-10 space-y-3">
+                  <FileText className="w-12 h-12 text-red-400 mx-auto" />
+                  <span className="text-xs text-slate-300 block">PDF Document Attached</span>
+                  <a
+                    href={previewReceiptUrl}
+                    download="payment_receipt.pdf"
+                    className="inline-block px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium"
+                  >
+                    Download PDF Receipt
+                  </a>
+                </div>
+              ) : (
+                <img
+                  src={previewReceiptUrl}
+                  alt="Payment Receipt"
+                  className="max-h-[65vh] object-contain rounded"
+                />
+              )}
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                onClick={() => setPreviewReceiptUrl(null)}
+                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium"
+              >
+                Close
               </button>
             </div>
           </div>

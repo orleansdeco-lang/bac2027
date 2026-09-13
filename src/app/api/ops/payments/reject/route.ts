@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { extractAndVerifyOperator } from "@/lib/operations/auth";
+import { extractAndVerifyFinanceOperator } from "@/lib/operations/auth";
 import { rejectPaymentOrder } from "@/lib/operations/payments";
 
 export const dynamic = "force-dynamic";
@@ -7,14 +7,15 @@ export const dynamic = "force-dynamic";
 /**
  * POST /api/ops/payments/reject
  * Rejects a payment order with an explicit mandatory reason.
- * Strictly requires OPERATOR or OWNER role.
+ * Strictly requires OPERATOR or OWNER role with finance access.
+ * Content Reviewer is explicitly denied with 403.
  */
 export async function POST(req: Request) {
-  const operator = await extractAndVerifyOperator(req);
-  if (!operator) {
+  const authRes = await extractAndVerifyFinanceOperator(req);
+  if (!authRes.authorized || !authRes.userId) {
     return NextResponse.json(
-      { success: false, error: "Unauthorized: Operator access required" },
-      { status: 403 }
+      { success: false, error: authRes.error || "Unauthorized: Finance operator access required" },
+      { status: authRes.status }
     );
   }
 
@@ -31,12 +32,12 @@ export async function POST(req: Request) {
     }
     if (!reason || !reason.trim()) {
       return NextResponse.json(
-        { success: false, error: "Rejection reason is required." },
+        { success: false, error: "Rejection reason is mandatory." },
         { status: 400 }
       );
     }
 
-    const result = await rejectPaymentOrder(orderId, operator.userId, reason.trim());
+    const result = await rejectPaymentOrder(orderId, authRes.userId, reason.trim());
     if (!result.success) {
       return NextResponse.json(
         { success: false, error: result.error || "Rejection failed" },

@@ -9,10 +9,23 @@
  * 4. Dual-mode resilience: remote Supabase execution with memory fallback.
  */
 
-import { PaymentOrder, PaymentOrderStatus, PaymentMethod } from "./types";
+import { PaymentOrder, PaymentOrderStatus, PaymentMethod, AuthoritativePlan } from "./types";
 import { recordAuditLog } from "./audit";
 import { supabase, isSupabaseConfigured } from "../supabase/client";
 import { StudentRepository } from "../repositories/student-repository";
+
+export const AUTHORITATIVE_PLANS: Record<string, AuthoritativePlan> = {
+  bac_season_pass_pilot: {
+    id: "bac_season_pass_pilot",
+    name_ar: "موسم البكالوريا الكامل",
+    name_fr: "Pass Saison BAC",
+    priceDZD: 3900,
+    currency: "DZD",
+    durationMonths: 10,
+    description_ar: "وصول غير محدود لجميع الدروس، التدريبات، والتصحيحات حتى يوم امتحان البكالوريا.",
+    description_fr: "Accès illimité à toutes les missions, entraînements et retests jusqu'aux épreuves du BAC.",
+  },
+};
 
 const memoryPaymentOrders: PaymentOrder[] = [];
 
@@ -32,17 +45,24 @@ export interface CreatePaymentOrderInput {
 }
 
 export async function createPaymentOrder(input: CreatePaymentOrderInput): Promise<PaymentOrder> {
+  const planKey = input.plan || "bac_season_pass_pilot";
+  const authoritativePlan = AUTHORITATIVE_PLANS[planKey];
+  if (!authoritativePlan) {
+    throw new Error(`Unknown or unsupported plan: ${input.plan}`);
+  }
+
+  // Server-authoritative derivation: ignore any manipulated amount or currency from client
   const orderId = `ord_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const now = new Date().toISOString();
 
   const newOrder: PaymentOrder = {
     id: orderId,
     userId: input.userId,
-    plan: input.plan || "bac_season_pass_pilot",
-    amount: input.amount || 3900.0,
-    currency: "DZD",
-    paymentMethod: input.paymentMethod,
-    status: "PENDING",
+    plan: authoritativePlan.id,
+    amount: authoritativePlan.priceDZD, // Strictly server-authoritative: 3900 DZD
+    currency: authoritativePlan.currency, // Strictly DZD
+    paymentMethod: input.paymentMethod || "baridimob",
+    status: "PENDING", // Strictly PENDING
     receiptPath: input.receiptPath || null,
     notes: input.notes || null,
     submittedAt: now,
@@ -191,15 +211,32 @@ export async function approvePaymentOrder(
   }
 
   const order = memoryPaymentOrders[orderIndex];
+  // Idempotency: If already approved, return success without duplicating audit logs
   if (order.status === "APPROVED") {
     return { success: true, order };
+  }
+  if (order.status === "REJECTED") {
+    return { success: false, error: "Cannot approve an already REJECTED payment order." };
   }
   if (order.status !== "PENDING" && order.status !== "DRAFT") {
     return { success: false, error: `Cannot approve order in status ${order.status}` };
   }
 
-  const beforeState = { ...order };
   const now = new Date().toISOString();
+  let studentProfileBefore: any = null;
+  try {
+    studentProfileBefore = await StudentRepository.getProfile(order.userId);
+  } catch {
+    // Non-blocking
+  }
+
+  const beforeState = {
+    order_status: order.status,
+    student_access_status: studentProfileBefore?.access_status || "TRIAL",
+    student_plan: studentProfileBefore?.plan || "PILOT_TRIAL",
+    amount: order.amount,
+    currency: order.currency,
+  };
 
   // Update order
   order.status = "APPROVED";
@@ -208,12 +245,11 @@ export async function approvePaymentOrder(
   order.notes = reason;
   order.updatedAt = now;
 
-  // Elevate student profile
+  // Elevate student profile authoritatively
   try {
-    const profile = await StudentRepository.getProfile(order.userId);
-    if (profile) {
+    if (studentProfileBefore) {
       await StudentRepository.saveProfile({
-        ...profile,
+        ...studentProfileBefore,
         access_status: "PAID",
         plan: "PAID",
       } as any);
@@ -222,7 +258,15 @@ export async function approvePaymentOrder(
     // Non-blocking
   }
 
-  // Record audit log
+  const afterState = {
+    order_status: "APPROVED",
+    student_access_status: "PAID",
+    student_plan: "PAID",
+    reviewed_by: operatorId,
+    reviewed_at: now,
+  };
+
+  // Record audit log with complete before/after state
   await recordAuditLog({
     actorUserId: operatorId,
     actorRole: "OPERATOR",
@@ -230,8 +274,8 @@ export async function approvePaymentOrder(
     targetType: "payment_order",
     targetId: orderId,
     reason,
-    beforeState: { status: beforeState.status, amount: beforeState.amount },
-    afterState: { status: "APPROVED", studentId: order.userId },
+    beforeState,
+    afterState,
   });
 
   return { success: true, order };
@@ -250,7 +294,7 @@ export async function rejectPaymentOrder(
     try {
       const { data, error } = await supabase.rpc("reject_payment_order", {
         p_order_id: orderId,
-        p_rejection_reason: rejectionReason,
+        p_rejection_reason: rejectionReason.trim(),
       });
 
       if (!error && data?.success) {
@@ -271,15 +315,29 @@ export async function rejectPaymentOrder(
   if (order.status === "REJECTED") {
     return { success: true, order };
   }
+  if (order.status === "APPROVED") {
+    return { success: false, error: "Cannot reject an already APPROVED payment order." };
+  }
 
-  const beforeState = { ...order };
+  const beforeState = {
+    order_status: order.status,
+    amount: order.amount,
+    currency: order.currency,
+  };
   const now = new Date().toISOString();
 
   order.status = "REJECTED";
   order.reviewedAt = now;
   order.reviewedBy = operatorId;
-  order.rejectionReason = rejectionReason;
+  order.rejectionReason = rejectionReason.trim();
   order.updatedAt = now;
+
+  const afterState = {
+    order_status: "REJECTED",
+    rejection_reason: rejectionReason.trim(),
+    reviewed_by: operatorId,
+    reviewed_at: now,
+  };
 
   await recordAuditLog({
     actorUserId: operatorId,
@@ -287,10 +345,32 @@ export async function rejectPaymentOrder(
     action: "PAYMENT_REJECTED",
     targetType: "payment_order",
     targetId: orderId,
-    reason: rejectionReason,
-    beforeState: { status: beforeState.status },
-    afterState: { status: "REJECTED", reason: rejectionReason },
+    reason: rejectionReason.trim(),
+    beforeState,
+    afterState,
   });
 
   return { success: true, order };
 }
+
+export async function updateOrderReceiptPath(orderId: string, receiptPath: string): Promise<boolean> {
+  const order = memoryPaymentOrders.find((o) => o.id === orderId);
+  if (order) {
+    order.receiptPath = receiptPath;
+    order.updatedAt = new Date().toISOString();
+  }
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase
+        .from("payment_orders")
+        .update({ receipt_path: receiptPath, updated_at: new Date().toISOString() })
+        .eq("id", orderId);
+    } catch {
+      // Retained in memory fallback
+    }
+  }
+
+  return true;
+}
+

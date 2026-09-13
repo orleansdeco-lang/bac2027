@@ -151,3 +151,34 @@ export interface StudentOperationalSummary {
   lastActiveAt?: string;
   hasPendingPayment: boolean;
 }
+
+export interface AuthoritativePlan {
+  id: string;
+  name_ar: string;
+  name_fr: string;
+  priceDZD: number;
+  currency: "DZD";
+  durationMonths: number;
+  description_ar: string;
+  description_fr: string;
+}
+
+export interface ReceiptValidationResult {
+  valid: boolean;
+  error?: string;
+  sanitizedFileName?: string;
+}
+
+export interface ReceiptUploadResult {
+  success: boolean;
+  receiptPath?: string;
+  error?: string;
+}
+
+export interface ReceiptViewResult {
+  success: boolean;
+  url?: string;
+  error?: string;
+  status?: number;
+}
+

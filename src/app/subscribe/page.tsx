@@ -32,6 +32,9 @@ import {
   ShieldAlert,
   Phone,
   Mail,
+  UploadCloud,
+  FileCheck,
+  AlertCircle,
 } from "lucide-react";
 
 export default function SubscribePage() {
@@ -49,6 +52,9 @@ export default function SubscribePage() {
   const [checkoutData, setCheckoutData] = useState<CheckoutResult | null>(null);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [paymentState, setPaymentState] = useState<string>("PAYMENT_REQUESTED");
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptUploadStatus, setReceiptUploadStatus] = useState<"idle" | "uploading" | "uploaded" | "error">("idle");
+  const [receiptError, setReceiptError] = useState<string | null>(null);
 
   const supportWhatsApp = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP;
   const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
@@ -102,8 +108,49 @@ export default function SubscribePage() {
     setShowCheckoutModal(true);
   };
 
-  const handleNotifySupervisor = () => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setReceiptError(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      setReceiptError(isAr ? "حجم الملف يتجاوز الحد الأقصى (5 ميغابايت)" : "Le fichier dépasse 5 Mo");
+      return;
+    }
+
+    const allowed = ["image/jpeg", "image/png", "application/pdf"];
+    if (!allowed.includes(file.type)) {
+      setReceiptError(isAr ? "صيغة غير مدعومة. يرجى اختيار صورة PNG/JPG أو مستند PDF" : "Format non supporté (JPEG, PNG ou PDF requis)");
+      return;
+    }
+
+    setReceiptFile(file);
+  };
+
+  const handleNotifySupervisor = async () => {
     if (!checkoutData?.referenceId) return;
+
+    if (receiptFile) {
+      setReceiptUploadStatus("uploading");
+      try {
+        const formData = new FormData();
+        formData.append("orderId", checkoutData.referenceId);
+        formData.append("file", receiptFile);
+
+        const res = await fetch("/api/ops/payments/receipt/upload", {
+          method: "POST",
+          body: formData,
+        });
+        if (res.ok) {
+          setReceiptUploadStatus("uploaded");
+        } else {
+          setReceiptUploadStatus("error");
+        }
+      } catch {
+        setReceiptUploadStatus("error");
+      }
+    }
+
     markPaymentPendingVerification(checkoutData.referenceId);
     setPaymentState("PAYMENT_PENDING_VERIFICATION");
     trackEvent("payment_pending_verification", {
@@ -426,6 +473,35 @@ export default function SubscribePage() {
                         ? "SUPPORT_CONTACT_REQUIRED: يرجى التواصل مع المشرف المباشر للدفعة التجريبية لتأكيد التحويل."
                         : "SUPPORT_CONTACT_REQUIRED: Veuillez contacter le superviseur du projet pilote."}
                     </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Receipt upload attachment section */}
+              <div className="p-3.5 rounded-xl bg-surface border border-theme space-y-2">
+                <span className="text-[11px] font-semibold text-theme-text flex items-center gap-1.5">
+                  <UploadCloud className="w-3.5 h-3.5 text-[var(--color-primary)]" />
+                  <span>{isAr ? "إرفاق وصل الدفع (اختياري - أقصى حد 5 ميغابايت):" : "Joindre le reçu (max 5 Mo) :"}</span>
+                </span>
+
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,application/pdf"
+                  onChange={handleFileChange}
+                  className="w-full text-xs text-theme-secondary file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[var(--color-primary-soft)] file:text-[var(--color-primary)] hover:file:bg-[var(--color-primary)]/20 cursor-pointer"
+                />
+
+                {receiptFile && (
+                  <div className="flex items-center gap-2 text-xs text-[var(--color-success)] bg-[var(--color-success-soft)] p-2 rounded-lg">
+                    <FileCheck className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{receiptFile.name} ({(receiptFile.size / 1024).toFixed(1)} KB)</span>
+                  </div>
+                )}
+
+                {receiptError && (
+                  <div className="flex items-center gap-2 text-xs text-red-400 bg-red-950/40 p-2 rounded-lg border border-red-800/40">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{receiptError}</span>
                   </div>
                 )}
               </div>

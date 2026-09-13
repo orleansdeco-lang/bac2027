@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { extractAndVerifyOperator } from "@/lib/operations/auth";
+import { extractAndVerifyFinanceOperator } from "@/lib/operations/auth";
 import { getAuditLogs } from "@/lib/operations/audit";
 
 export const dynamic = "force-dynamic";
@@ -8,13 +8,14 @@ export const dynamic = "force-dynamic";
  * GET /api/ops/audit
  * Returns append-only audit trail entries with filters.
  * Strictly requires OPERATOR or OWNER role.
+ * Content Reviewer is explicitly denied with 403.
  */
 export async function GET(req: Request) {
-  const operator = await extractAndVerifyOperator(req);
-  if (!operator) {
+  const authRes = await extractAndVerifyFinanceOperator(req);
+  if (!authRes.authorized) {
     return NextResponse.json(
-      { success: false, error: "Unauthorized: Operator access required" },
-      { status: 403 }
+      { success: false, error: authRes.error || "Unauthorized: Operator access required" },
+      { status: authRes.status }
     );
   }
 
