@@ -50,7 +50,7 @@ export function useLearningAccessGate(options?: {
       }
 
       // 1. Must be authenticated
-      if (!effectiveUserId) {
+      if (!user && !effectiveUserId) {
         if (options?.redirectToAuth !== false) {
           router.replace("/auth?mode=login");
         }

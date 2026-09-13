@@ -34,6 +34,7 @@ export type PilotAnalyticsEventName =
   | "progress_viewed"
   | "error_lab_viewed"
   | "recovery_viewed"
+  | "exam_mode_viewed"
   | "returned_next_day"
   | "pilot_feedback_submitted"
   | "pilot_session_started"

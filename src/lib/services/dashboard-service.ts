@@ -13,7 +13,7 @@ import { DiagnosticRepository } from "@/lib/repositories/diagnostic-repository";
 import { MissionRepository } from "@/lib/repositories/mission-repository";
 import { ErrorRepository } from "@/lib/repositories/error-repository";
 import { MasteryRepository } from "@/lib/repositories/mastery-repository";
-import { getNextBestMission } from "@/lib/roadmap/engine";
+import { getNextBestMission, buildAdaptiveRoadmap } from "@/lib/roadmap/engine";
 import { AdaptiveRoadmapInput, MissionRationale } from "@/types/roadmap";
 import { Mission } from "@/types/mission";
 import { StrategicProfile } from "@/types/onboarding";
@@ -33,14 +33,31 @@ export interface StudentDashboardData {
     whyText_ar: string;
     whyText_fr: string;
   } | null;
+  upNext: {
+    mission: Mission | null;
+    skillTitle_ar: string;
+    skillTitle_fr: string;
+    subjectId: string;
+    estimatedMinutes: number;
+    reason_ar: string;
+    reason_fr: string;
+  } | null;
   roadPosition: {
     goal: number;
+    currentScore: number;
+    gap: number;
     hasDiagnostic: boolean;
     hasGaps: boolean;
     hasActiveMission: boolean;
     demonstratedCount: number;
   };
   progressMetrics: {
+    demonstratedSkillsCount: number;
+    emergingSkillsCount: number;
+    completedMissionsCount: number;
+    activeRepairsCount: number;
+  };
+  verifiedMetrics?: {
     demonstratedSkillsCount: number;
     emergingSkillsCount: number;
     completedMissionsCount: number;
@@ -125,6 +142,25 @@ export const DashboardService = {
       (e) => e.repairStatus === "identified" || e.repairStatus === "repair_started"
     ).length;
 
+    const roadmap = buildAdaptiveRoadmap(input);
+    const upNextItem = roadmap.queuedMissions && roadmap.queuedMissions.length > 0
+      ? roadmap.queuedMissions[0]
+      : null;
+
+    const goal = profile?.targetScore || 16.0;
+    let currentScore = 11.5;
+    if (diagResult?.observedDiagnosticScore) {
+      currentScore = Math.round((diagResult.observedDiagnosticScore / 5) * 10) / 10;
+    }
+    const gap = Math.max(0, Math.round((goal - currentScore) * 10) / 10);
+
+    const metrics = {
+      demonstratedSkillsCount: demonstratedCount,
+      emergingSkillsCount: emergingCount,
+      completedMissionsCount: completedMissions,
+      activeRepairsCount: activeRepairs,
+    };
+
     return {
       profile,
       diagnosticResult: diagResult,
@@ -141,19 +177,28 @@ export const DashboardService = {
             whyText_fr: whyFr,
           }
         : null,
+      upNext: upNextItem?.mission
+        ? {
+            mission: upNextItem.mission,
+            skillTitle_ar: upNextItem.mission.title_ar || upNextItem.mission.title,
+            skillTitle_fr: upNextItem.mission.title_fr || upNextItem.mission.title,
+            subjectId: upNextItem.mission.subjectId,
+            estimatedMinutes: upNextItem.mission.estimatedMinutes || 15,
+            reason_ar: upNextItem.rationale?.reasonLabel_ar || "المهمة الموالية في مسارك الأكاديمي",
+            reason_fr: upNextItem.rationale?.reasonLabel_fr || "Prochaine étape dans votre parcours",
+          }
+        : null,
       roadPosition: {
-        goal: profile?.targetScore || 16,
+        goal,
+        currentScore,
+        gap,
         hasDiagnostic: Boolean(diagResult),
         hasGaps: Boolean(diagResult?.primaryBottleneck),
         hasActiveMission: Boolean(nextBest.mission),
         demonstratedCount,
       },
-      progressMetrics: {
-        demonstratedSkillsCount: demonstratedCount,
-        emergingSkillsCount: emergingCount,
-        completedMissionsCount: completedMissions,
-        activeRepairsCount: activeRepairs,
-      },
+      progressMetrics: metrics,
+      verifiedMetrics: metrics,
     };
   },
 };

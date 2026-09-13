@@ -60,6 +60,7 @@ export function TopBar() {
     { href: "/roadmap", label: isAr ? "الخريطة" : "Feuille de route", icon: Map },
     { href: "/error-lab", label: isAr ? "مختبر الأخطاء" : "Lab d'erreurs", icon: AlertTriangle },
     { href: "/progress", label: isAr ? "تقدمي" : "Progrès", icon: BarChart3 },
+    { href: "/exam", label: isAr ? "وضع الامتحان" : "Mode Examen", icon: Target },
     { href: "/account", label: isAr ? "حسابي" : "Mon compte", icon: User },
   ];
 
@@ -348,6 +349,15 @@ export function TopBar() {
             >
               <Stethoscope className="w-4 h-4 text-rose-400" />
               <span>{isAr ? "اختبار المستوى" : "Diagnostic"}</span>
+            </Link>
+
+            <Link
+              href="/exam"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center gap-2.5 p-2.5 rounded-xl bg-card border border-theme text-xs font-semibold text-theme-text hover:border-[var(--color-primary)]/50 transition-colors"
+            >
+              <Target className="w-4 h-4 text-cyan-400" />
+              <span>{isAr ? "وضع الامتحان" : "Mode Examen"}</span>
             </Link>
           </div>
 

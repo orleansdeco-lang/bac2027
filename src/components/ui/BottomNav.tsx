@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "@/lib/i18n/context";
-import { Compass, Map, Target, BarChart3, User } from "lucide-react";
+import { Compass, Map, Wrench, BarChart3, Target } from "lucide-react";
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -24,26 +24,22 @@ export function BottomNav() {
       matches: (p: string) => p.startsWith("/roadmap"),
     },
     {
-      href: "/roadmap#now",
-      label: locale === "ar" ? "المهمات" : "Missions",
-      icon: Target,
-      matches: (p: string) => p.startsWith("/mission"),
+      href: "/error-lab",
+      label: locale === "ar" ? "الأخطاء" : "Erreurs",
+      icon: Wrench,
+      matches: (p: string) => p.startsWith("/error-lab") || p.startsWith("/errors"),
     },
     {
       href: "/progress",
       label: locale === "ar" ? "تقدمي" : "Progrès",
       icon: BarChart3,
-      matches: (p: string) => p.startsWith("/progress") || p.startsWith("/error-lab"),
+      matches: (p: string) => p.startsWith("/progress"),
     },
     {
-      href: "/account",
-      label: locale === "ar" ? "حسابي" : "Mon compte",
-      icon: User,
-      matches: (p: string) =>
-        p.startsWith("/account") ||
-        p.startsWith("/auth") ||
-        p.startsWith("/register") ||
-        p.startsWith("/profile"),
+      href: "/exam",
+      label: locale === "ar" ? "الامتحان" : "Examen",
+      icon: Target,
+      matches: (p: string) => p.startsWith("/exam"),
     },
   ];
 

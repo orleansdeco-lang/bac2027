@@ -57,6 +57,9 @@ import {
   SuspectedErrorType,
   ErrorRecord,
 } from "@/types/mission";
+import { ExternalResourceWithReturnTicket } from "@/components/ui/ExternalResourceWithReturnTicket";
+import { TeacherEscalationModal } from "@/components/ui/TeacherEscalationModal";
+import { getExternalResourcesForSkill } from "@/domain/learning-ecosystem/external-resources";
 
 type MissionStep =
   | "learn"
@@ -119,6 +122,7 @@ export default function MissionPage() {
   const [feedbackNote, setFeedbackNote] = useState("");
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
   const [profile, setProfile] = useState<any>(null);
+  const [isTeacherModalOpen, setIsTeacherModalOpen] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -1369,22 +1373,72 @@ export default function MissionPage() {
         {/* ================================================================= */}
         {currentStep === "summary" && (
           <div className="space-y-6 animate-fade-in">
-            <Card className="border-emerald-500/40 bg-gradient-to-br from-[#0e1c2e] to-[#0b1424] p-6 sm:p-8 space-y-6 shadow-xl">
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
-                  <Award className="h-7 w-7" />
+            {isRetestPassed === false ? (
+              <Card className="border-amber-500/40 bg-gradient-to-br from-[#1c150e] to-[#0f1118] p-6 sm:p-8 space-y-6 shadow-xl">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                    <AlertTriangle className="h-7 w-7" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                      {isAr ? "نتيجة الاختبار التوأم • نحتاج دعماً وتثبيتاً إضافياً" : "Retest non validé • Consolidation requise"}
+                    </h2>
+                    <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                      {isAr
+                        ? "لم يتم تثبيت المهارة هذه المرة بنجاح. لا تقلق، هذا جزء طبيعي من مسار التعلم وسنوجهك للمورد الأنسب لترميمها."
+                        : "Cette compétence nécessite encore de la pratique. Consultez la ressource ci-dessous."}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-                    {isAr ? "وش ثبت اليوم؟ • تم إثبات التمكن" : "Bilan de Maîtrise Validée"}
-                  </h2>
-                  <p className="text-xs sm:text-sm text-slate-300 mt-1">
-                    {isAr
-                      ? "تم تسجيل هذه المهارة كمهارة مثبتة (Demonstrated) في رصيدك الأكاديمي."
-                      : "Cette compétence est désormais validée dans votre profil."}
-                  </p>
+
+                {/* External Resource with Return Ticket */}
+                <div className="pt-2">
+                  <ExternalResourceWithReturnTicket
+                    skillId={bundle.skill.id}
+                    onReturnAction={() => setCurrentStep("practice")}
+                    locale={locale}
+                  />
                 </div>
-              </div>
+
+                {/* Teacher Help Callout */}
+                <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="space-y-0.5">
+                    <span className="text-xs font-bold text-white block">
+                      {isAr ? "تحتاج مساعدة إضافية من أستاذ متخصص؟" : "Besoin de l'aide d'un enseignant ?"}
+                    </span>
+                    <span className="text-[11px] text-slate-400">
+                      {isAr
+                        ? "يمكنك استخراج بطاقة التوجيه البيداغوجي (Zero-PII) لتقديمها لأستاذك في الثانوية."
+                        : "Générez la fiche diagnostic confidentielle pour votre professeur."}
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsTeacherModalOpen(true)}
+                    className="border-blue-500/30 text-blue-400 hover:bg-blue-500/10 text-xs shrink-0"
+                  >
+                    <span>{isAr ? "تجهيز بطاقة التوجيه" : "Préparer la fiche"}</span>
+                  </Button>
+                </div>
+              </Card>
+            ) : (
+              <Card className="border-emerald-500/40 bg-gradient-to-br from-[#0e1c2e] to-[#0b1424] p-6 sm:p-8 space-y-6 shadow-xl">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                    <Award className="h-7 w-7" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                      {isAr ? "وش ثبت اليوم؟ • تم إثبات التمكن" : "Bilan de Maîtrise Validée"}
+                    </h2>
+                    <p className="text-xs sm:text-sm text-slate-300 mt-1">
+                      {isAr
+                        ? "تم تسجيل هذه المهارة كمهارة مثبتة (Demonstrated) في رصيدك الأكاديمي."
+                        : "Cette compétence est désormais validée dans votre profil."}
+                    </p>
+                  </div>
+                </div>
 
               {/* What was proven */}
               <div className="space-y-3 border-t border-slate-800 pt-4">
@@ -1410,116 +1464,132 @@ export default function MissionPage() {
                 </div>
               </div>
 
-              {/* Past BAC connection */}
-              {bundle.examApplication && (
-                <div className="p-4 rounded-xl bg-blue-950/20 border border-blue-800/40 space-y-1.5">
-                  <div className="flex items-center gap-2 text-xs font-bold text-blue-300">
-                    <ShieldCheck className="h-4 w-4 text-blue-400" />
-                    <span>{isAr ? "ورود هذه المهارة في البكالوريات السابقة" : "Présence aux sessions antérieures du BAC"}</span>
+                {/* Past BAC connection */}
+                {bundle.examApplication && (
+                  <div className="p-4 rounded-xl bg-blue-950/20 border border-blue-800/40 space-y-1.5">
+                    <div className="flex items-center gap-2 text-xs font-bold text-blue-300">
+                      <ShieldCheck className="h-4 w-4 text-blue-400" />
+                      <span>{isAr ? "ورود هذه المهارة في البكالوريات السابقة" : "Présence aux sessions antérieures du BAC"}</span>
+                    </div>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      {bundle.examApplication.year} • {bundle.examApplication.session === "principal" ? (isAr ? "دورة عادية" : "Session normale") : (isAr ? "دورة استثنائية" : "Session rattrapage")} • {isAr ? `تمرين ${bundle.examApplication.exerciseNumber}` : `Exercice ${bundle.examApplication.exerciseNumber}`}
+                    </p>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
-                    {bundle.examApplication.year} • {bundle.examApplication.session === "principal" ? (isAr ? "دورة عادية" : "Session normale") : (isAr ? "دورة استثنائية" : "Session rattrapage")} • {isAr ? `تمرين ${bundle.examApplication.exerciseNumber}` : `Exercice ${bundle.examApplication.exerciseNumber}`}
+                )}
+              </Card>
+            )}
+
+            {/* PILOT FEEDBACK CARD */}
+            <div className="p-4 sm:p-5 rounded-2xl border border-blue-500/30 bg-slate-900/80 space-y-3.5">
+              <div className="flex items-center gap-2 text-xs font-bold text-blue-300">
+                <Sparkles className="h-4 w-4 text-blue-400" />
+                <span>{isAr ? "تقييم تجربة المهمة (ملاحظات التلميذ)" : "Retour d'expérience (Pilote)"}</span>
+              </div>
+
+              {!feedbackSubmitted ? (
+                <div className="space-y-3">
+                  <p className="text-xs sm:text-sm text-slate-200 font-semibold">
+                    {isAr ? "كيف كانت هذي المهمة؟" : "Comment s'est passée cette mission ?"}
                   </p>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {(
+                      [
+                        { id: "easy", label_ar: "سهلة", label_fr: "Facile" },
+                        { id: "normal", label_ar: "عادية", label_fr: "Normale" },
+                        { id: "hard", label_ar: "صعبة", label_fr: "Difficile" },
+                        { id: "unclear", label_ar: "ما فهمتش واش ندير", label_fr: "Consignes peu claires" },
+                      ] as const
+                    ).map((opt) => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setFeedbackRating(opt.id)}
+                        className={`p-2 rounded-xl text-xs font-semibold border transition-all ${
+                          feedbackRating === opt.id
+                            ? "border-blue-500 bg-blue-950/60 text-blue-300 ring-1 ring-blue-500/40"
+                            : "border-slate-800 bg-slate-900/40 text-slate-400 hover:text-slate-200"
+                        }`}
+                      >
+                        {isAr ? opt.label_ar : opt.label_fr}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[11px] text-slate-400 block">
+                      {isAr ? "واش اللي ما عجبكش؟ (اختياري)" : "Qu'est-ce qui pourrait être amélioré ? (optionnel)"}
+                    </label>
+                    <input
+                      type="text"
+                      value={feedbackNote}
+                      onChange={(e) => setFeedbackNote(e.target.value)}
+                      placeholder={isAr ? "ملاحظة قصيرة لمساعدتنا في تحسين التجربة..." : "Votre remarque..."}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div className="flex justify-end pt-1">
+                    <Button
+                      data-testid="pilot-feedback-submit-btn"
+                      size="sm"
+                      variant="primary"
+                      disabled={!feedbackRating}
+                      onClick={handleFeedbackSubmit}
+                      className="text-xs font-bold"
+                    >
+                      <span>{isAr ? "إرسال الملاحظة" : "Envoyer"}</span>
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-xs text-emerald-300 flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                  <span>{isAr ? "شكراً لك! وصلت ملاحظتك وستساعدنا في تحسين المنصة." : "Merci pour votre retour !"}</span>
                 </div>
               )}
+            </div>
 
-              {/* PILOT FEEDBACK CARD */}
-              <div className="p-4 sm:p-5 rounded-2xl border border-blue-500/30 bg-slate-900/80 space-y-3.5">
-                <div className="flex items-center gap-2 text-xs font-bold text-blue-300">
-                  <Sparkles className="h-4 w-4 text-blue-400" />
-                  <span>{isAr ? "تقييم تجربة المهمة (ملاحظات التلميذ)" : "Retour d'expérience (Pilote)"}</span>
-                </div>
-
-                {!feedbackSubmitted ? (
-                  <div className="space-y-3">
-                    <p className="text-xs sm:text-sm text-slate-200 font-semibold">
-                      {isAr ? "كيف كانت هذي المهمة؟" : "Comment s'est passée cette mission ?"}
-                    </p>
-
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {(
-                        [
-                          { id: "easy", label_ar: "سهلة", label_fr: "Facile" },
-                          { id: "normal", label_ar: "عادية", label_fr: "Normale" },
-                          { id: "hard", label_ar: "صعبة", label_fr: "Difficile" },
-                          { id: "unclear", label_ar: "ما فهمتش واش ندير", label_fr: "Consignes peu claires" },
-                        ] as const
-                      ).map((opt) => (
-                        <button
-                          key={opt.id}
-                          type="button"
-                          onClick={() => setFeedbackRating(opt.id)}
-                          className={`p-2 rounded-xl text-xs font-semibold border transition-all ${
-                            feedbackRating === opt.id
-                              ? "border-blue-500 bg-blue-950/60 text-blue-300 ring-1 ring-blue-500/40"
-                              : "border-slate-800 bg-slate-900/40 text-slate-400 hover:text-slate-200"
-                          }`}
-                        >
-                          {isAr ? opt.label_ar : opt.label_fr}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="text-[11px] text-slate-400 block">
-                        {isAr ? "واش اللي ما عجبكش؟ (اختياري)" : "Qu'est-ce qui pourrait être amélioré ? (optionnel)"}
-                      </label>
-                      <input
-                        type="text"
-                        value={feedbackNote}
-                        onChange={(e) => setFeedbackNote(e.target.value)}
-                        placeholder={isAr ? "ملاحظة قصيرة لمساعدتنا في تحسين التجربة..." : "Votre remarque..."}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
-                      />
-                    </div>
-
-                    <div className="flex justify-end pt-1">
-                      <Button
-                        data-testid="pilot-feedback-submit-btn"
-                        size="sm"
-                        variant="primary"
-                        disabled={!feedbackRating}
-                        onClick={handleFeedbackSubmit}
-                        className="text-xs font-bold"
-                      >
-                        <span>{isAr ? "إرسال الملاحظة" : "Envoyer"}</span>
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-xs text-emerald-300 flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
-                    <span>{isAr ? "شكراً لك! وصلت ملاحظتك وستساعدنا في تحسين المنصة." : "Merci pour votre retour !"}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Next Steps CTA */}
-              <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 border-t border-slate-800">
-                {nextMissionId ? (
-                  <Link href={`/mission/${nextMissionId}`} className="w-full sm:w-auto">
-                    <Button variant="primary" size="lg" className="w-full sm:w-auto font-bold shadow-lg shadow-blue-600/25">
-                      <span>{isAr ? "الانتقال إلى المهمة التالية" : "Mission suivante"}</span>
-                      <NextArrow className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                ) : (
-                  <Link href="/dashboard" className="w-full sm:w-auto">
-                    <Button variant="primary" size="lg" className="w-full sm:w-auto font-bold">
-                      <span>{isAr ? "العودة إلى لوحة التحكم" : "Retour au tableau de bord"}</span>
-                      <NextArrow className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                )}
-
-                <Link href="/roadmap" className="w-full sm:w-auto">
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto text-slate-300 border-slate-700">
-                    <span>{isAr ? "عرض الخريطة التكيفية" : "Voir la feuille de route"}</span>
+            {/* Next Steps CTA */}
+            <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 border-t border-slate-800">
+              {nextMissionId ? (
+                <Link href={`/mission/${nextMissionId}`} className="w-full sm:w-auto">
+                  <Button variant="primary" size="lg" className="w-full sm:w-auto font-bold shadow-lg shadow-blue-600/25">
+                    <span>{isAr ? "الانتقال إلى المهمة التالية" : "Mission suivante"}</span>
+                    <NextArrow className="h-4 w-4" />
                   </Button>
                 </Link>
-              </div>
-            </Card>
+              ) : (
+                <Link href="/dashboard" className="w-full sm:w-auto">
+                  <Button variant="primary" size="lg" className="w-full sm:w-auto font-bold">
+                    <span>{isAr ? "العودة إلى لوحة التحكم" : "Retour au tableau de bord"}</span>
+                    <NextArrow className="h-4 w-4" />
+                  </Button>
+                </Link>
+              )}
+
+              <Link href="/roadmap" className="w-full sm:w-auto">
+                <Button variant="outline" size="lg" className="w-full sm:w-auto text-slate-300 border-slate-700">
+                  <span>{isAr ? "عرض الخريطة التكيفية" : "Voir la feuille de route"}</span>
+                </Button>
+              </Link>
+            </div>
           </div>
+        )}
+
+        {/* Teacher Escalation Modal */}
+        {bundle && (
+          <TeacherEscalationModal
+            isOpen={isTeacherModalOpen}
+            onClose={() => setIsTeacherModalOpen(false)}
+            skillId={bundle.skill.id}
+            skillTitle={isAr ? bundle.skill.title_ar : bundle.skill.title_fr}
+            subjectId={bundle.skill.subjectId}
+            streamId={profile?.streamId || "sciences_exp"}
+            errorType={selectedAttribution}
+            retestFailedCount={isRetestPassed === false ? 2 : 1}
+            locale={locale}
+          />
         )}
       </Container>
     </AppShell>

@@ -36,6 +36,7 @@ import {
 import { ALL_SUBJECTS } from "@/lib/constants/streams";
 import { SubjectId } from "@/types/education";
 import { useLearningAccessGate } from "@/lib/hooks";
+import { TeacherEscalationModal } from "@/components/ui/TeacherEscalationModal";
 
 export default function DashboardPage() {
   const { t, locale } = useTranslation();
@@ -43,6 +44,7 @@ export default function DashboardPage() {
   const gate = useLearningAccessGate();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isTeacherModalOpen, setIsTeacherModalOpen] = useState(false);
 
   const NextArrow = isAr ? ArrowLeft : ArrowRight;
 
@@ -86,6 +88,16 @@ export default function DashboardPage() {
   }
 
   const profile = gate.profile;
+  const firstName =
+    profile?.firstName ||
+    (profile?.fullName ? profile.fullName.trim().split(" ")[0] : null) ||
+    (isAr ? "طالبنا العزيز" : "Élève");
+
+  const targetScore = profile?.targetScore || 16.0;
+  const currentScore = data?.roadPosition?.currentScore ?? 11.5;
+  const gap =
+    data?.roadPosition?.gap ??
+    Math.max(0, Math.round((targetScore - currentScore) * 10) / 10);
 
   const todaysMission = data?.todaysMission;
   const metrics = data?.verifiedMetrics || {
@@ -233,28 +245,34 @@ export default function DashboardPage() {
         ) : null}
 
         {/* ================================================================= */}
-        {/* 1. STUDENT HEADER & STRATEGIC CONTEXT                             */}
+        {/* 1. TODAY: STUDENT HEADER & STRATEGIC CONTEXT                      */}
         {/* ================================================================= */}
         <section className="rounded-2xl border border-theme bg-card backdrop-blur-md p-5 sm:p-7 shadow-theme-card transition-colors duration-200">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="primary" size="sm" className="font-semibold">
                   {isAr ? activeStreamMeta.name_ar : activeStreamMeta.name_fr}
                 </Badge>
-                {profile?.targetScore && (
-                  <Badge variant="outline" size="sm" className="border-amber-500/30 text-amber-400">
-                    {isAr ? `الهدف: ${profile.targetScore.toFixed(1)}/20` : `Objectif : ${profile.targetScore.toFixed(1)}/20`}
+                <Badge variant="outline" size="sm" className="border-amber-500/30 text-amber-400">
+                  {isAr ? `الهدف: ${targetScore.toFixed(1)}/20` : `Objectif : ${targetScore.toFixed(1)}/20`}
+                </Badge>
+                <Badge variant="outline" size="sm" className="border-blue-500/30 text-blue-400">
+                  {isAr ? `مستواك الحالي: ${currentScore.toFixed(1)}/20` : `Niveau actuel : ${currentScore.toFixed(1)}/20`}
+                </Badge>
+                {gap > 0 && (
+                  <Badge variant="outline" size="sm" className="border-cyan-500/30 text-cyan-300">
+                    {isAr ? `الفارق: ${gap.toFixed(1)} نقطة` : `Écart : ${gap.toFixed(1)} pts`}
                   </Badge>
                 )}
               </div>
               <h1 className="text-2xl sm:text-3xl font-black text-theme-text tracking-tight font-sans">
-                {isAr ? "مرحباً بك في خطتك اليومية" : "Bienvenue sur votre plan du jour"}
+                {isAr ? `سلام ${firstName} 👋` : `Bonjour ${firstName} 👋`}
               </h1>
               <p className="text-xs sm:text-sm text-theme-secondary max-w-xl leading-relaxed">
                 {isAr
-                  ? "كل مهمة تدرسها مبنية بدقة على نقاط قوتك وما تحتاجه للوصول إلى هدفك بدون تشتت."
-                  : "Chaque mission cible exactement vos besoins réels pour atteindre votre objectif sans dispersion."}
+                  ? "من مستواك الحالي إلى هدفك • ماشي واش تقرا. كيفاش توصل."
+                  : "De votre niveau actuel à votre objectif • Méthode ciblée BAC."}
               </p>
             </div>
 
@@ -288,6 +306,30 @@ export default function DashboardPage() {
             </div>
           </div>
         </section>
+
+        {/* Mind & Recovery Mode Banner */}
+        {(profile?.studyEnergy === "tired" || profile?.studyEnergy === "stressed") && (
+          <div className="p-4 rounded-2xl bg-amber-950/30 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs animate-fade-in">
+            <div className="flex items-center gap-3">
+              <Zap className="h-5 w-5 text-amber-400 shrink-0" />
+              <div>
+                <span className="font-bold text-white block">
+                  {isAr ? "نرجعو من هنا • وتيرة دراسية معدلة" : "Mode Récupération actif"}
+                </span>
+                <span className="text-amber-200/90 text-[11px]">
+                  {isAr
+                    ? "نظراً لشعورك بالإرهاق، قلصنا وتيرة العمل لتركز على تثبيت مهارة واحدة دون إرهاق الذاكرة."
+                    : "Votre charge quotidienne a été allégée pour préserver votre concentration sans surcharge."}
+                </span>
+              </div>
+            </div>
+            <Link href="/mind">
+              <Button size="sm" variant="outline" className="border-amber-500/40 text-amber-300 hover:bg-amber-500/20 text-xs shrink-0">
+                <span>{isAr ? "تعديل الحالة الذهنية" : "Gérer l'énergie"}</span>
+              </Button>
+            </Link>
+          </div>
+        )}
 
         {/* ================================================================= */}
         {/* 2. DIAGNOSTIC PROMPT IF NOT COMPLETED                             */}
@@ -456,6 +498,48 @@ export default function DashboardPage() {
                 />
               </Card>
             </div>
+
+            {/* UP NEXT (الخطوة القادمة) */}
+            {data?.upNext && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-theme-text flex items-center gap-2 font-sans">
+                    <ArrowRight className="h-4 w-4 text-[var(--color-primary)]" />
+                    <span>{isAr ? "الخطوة القادمة (Up Next)" : "Étape Suivante"}</span>
+                  </h3>
+                  <span className="text-[11px] text-theme-muted font-mono">
+                    {isAr ? "المسار الموالي" : "Suite du parcours"}
+                  </span>
+                </div>
+
+                <Card className="p-4 sm:p-5 border-theme bg-card/70 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" size="sm" className="text-[10px] border-slate-700 text-slate-300">
+                        {getSubjectName(data.upNext.subjectId)}
+                      </Badge>
+                      <span className="flex items-center gap-1 text-[11px] text-theme-muted font-mono">
+                        <Clock className="h-3 w-3 text-theme-muted" />
+                        {data.upNext.estimatedMinutes} {isAr ? "دقيقة" : "min"}
+                      </span>
+                    </div>
+                    <h4 className="text-sm sm:text-base font-bold text-theme-text font-sans">
+                      {isAr ? data.upNext.skillTitle_ar : data.upNext.skillTitle_fr}
+                    </h4>
+                    <p className="text-xs text-theme-secondary">
+                      {isAr ? data.upNext.reason_ar : data.upNext.reason_fr}
+                    </p>
+                  </div>
+
+                  <Link href="/roadmap" className="shrink-0">
+                    <Button variant="outline" size="sm" className="w-full sm:w-auto text-xs">
+                      <span>{isAr ? "عرض في الخريطة" : "Voir sur la route"}</span>
+                      <NextArrow className="h-3.5 w-3.5" />
+                    </Button>
+                  </Link>
+                </Card>
+              </div>
+            )}
           </div>
 
           {/* =============================================================== */}
@@ -554,6 +638,57 @@ export default function DashboardPage() {
               </Link>
             </Card>
 
+            {/* Exam Mode Simulation Card */}
+            <Card className="p-5 space-y-3 border-blue-500/25 bg-card">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-bold text-theme-text">
+                  <Target className="h-4 w-4 text-blue-400" />
+                  <span>{isAr ? "وضع الامتحان (Exam Mode)" : "Mode Examen"}</span>
+                </div>
+                <Badge variant="primary" size="sm">
+                  {isAr ? "محاكاة BAC" : "BAC"}
+                </Badge>
+              </div>
+              <p className="text-xs text-theme-secondary leading-relaxed">
+                {isAr
+                  ? "محاكاة ظروف البكالوريا الرسمية، استراتيجية اختيار الموضوع (30 دقيقة)، ومؤشر الجاهزية الحقيقي."
+                  : "Simulation officielle, stratégie de choix de sujet et indice de préparation."}
+              </p>
+              <Link href="/exam" className="block">
+                <Button variant="outline" size="sm" className="w-full justify-between text-xs border-blue-500/30 text-blue-400 hover:bg-blue-500/10">
+                  <span>{isAr ? "دخول وضع الامتحان" : "Ouvrir Mode Examen"}</span>
+                  <NextArrow className="h-3.5 w-3.5" />
+                </Button>
+              </Link>
+            </Card>
+
+            {/* Teacher Help Support Card */}
+            <Card className="p-5 space-y-3 border-slate-800 bg-card">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm font-bold text-theme-text">
+                  <Brain className="h-4 w-4 text-cyan-400" />
+                  <span>{isAr ? "توجيه للأستاذ (Teacher Help)" : "Aide Enseignant"}</span>
+                </div>
+                <Badge variant="outline" size="sm" className="text-[10px] text-cyan-400 border-cyan-500/30">
+                  Zero-PII
+                </Badge>
+              </div>
+              <p className="text-xs text-theme-secondary leading-relaxed">
+                {isAr
+                  ? "تعثر مستمر في مهارة معينة؟ جهّز بطاقة التوجيه البيداغوجي لتقديمها لأستاذك دون مشاركة أي بيانات شخصية."
+                  : "Générez une fiche diagnostic confidentielle pour votre professeur."}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsTeacherModalOpen(true)}
+                className="w-full justify-between text-xs border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/10"
+              >
+                <span>{isAr ? "عرض بطاقة التوجيه ودليل الأساتذة" : "Fiche diagnostic & Répertoire"}</span>
+                <NextArrow className="h-3.5 w-3.5" />
+              </Button>
+            </Card>
+
             {/* Quick Curriculum Explorer */}
             <Card className="p-5 space-y-3">
               <div className="flex items-center gap-2 text-sm font-bold text-theme-text">
@@ -578,6 +713,17 @@ export default function DashboardPage() {
             </Card>
           </div>
         </div>
+
+        {/* Teacher Escalation Modal */}
+        <TeacherEscalationModal
+          isOpen={isTeacherModalOpen}
+          onClose={() => setIsTeacherModalOpen(false)}
+          skillId={todaysMission?.mission?.skillId || "math_exp_limits_indeterminate"}
+          skillTitle={todaysMission?.skillTitle_ar || "حساب النهايات في الدوال الأسية"}
+          subjectId={(todaysMission?.subjectId as SubjectId) || "math"}
+          streamId={streamId as any}
+          locale={locale}
+        />
       </Container>
     </AppShell>
   );
