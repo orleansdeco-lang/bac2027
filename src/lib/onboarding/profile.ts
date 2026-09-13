@@ -78,8 +78,68 @@ export function getStrategicProfile(): StrategicProfile | null {
   if (typeof window === "undefined") return null;
   try {
     const raw = localStorage.getItem(STRATEGIC_PROFILE_KEY) || localStorage.getItem("bac_mastery_student_profile");
-    if (!raw) return null;
-    return JSON.parse(raw) as StrategicProfile;
+    let profile: any = raw ? JSON.parse(raw) : null;
+    const reg = getRegistrationDraft();
+    const acad = getAcademicProfileDraft();
+
+    if (!profile && !reg && !acad) return null;
+
+    if (!profile) {
+      profile = {
+        id: `profile_${Date.now()}`,
+        streamId: reg?.streamId || "sciences_exp",
+        targetScore: acad?.targetScore || 16.0,
+        subjectEstimates: {},
+        availableTime: "12_to_18",
+        studyEnergy: "normal",
+        createdAt: new Date().toISOString(),
+      };
+    }
+
+    if (reg) {
+      profile.firstName = reg.firstName || profile.firstName;
+      profile.first_name = reg.firstName || profile.first_name;
+      profile.lastName = reg.lastName || profile.lastName;
+      profile.last_name = reg.lastName || profile.last_name;
+      profile.studentPhone = reg.studentPhone || profile.studentPhone;
+      profile.student_phone = reg.studentPhone || profile.student_phone;
+      profile.parentPhone = reg.parentPhone || profile.parentPhone;
+      profile.parent_phone = reg.parentPhone || profile.parent_phone;
+      profile.studentStatus = reg.studentStatus || profile.studentStatus;
+      profile.student_status = reg.studentStatus || profile.student_status;
+      profile.streamId = reg.streamId || profile.streamId;
+      profile.stream_id = reg.streamId || profile.stream_id;
+      profile.techniqueMathSpecialty = reg.techniqueMathSpecialty || profile.techniqueMathSpecialty;
+      profile.wilayaCode = reg.wilayaCode || profile.wilayaCode;
+      profile.wilaya_code = reg.wilayaCode || profile.wilaya_code;
+      profile.wilayaName = reg.wilayaName || profile.wilayaName;
+      profile.wilaya_name = reg.wilayaName || profile.wilaya_name;
+      profile.communeCode = reg.communeCode || profile.communeCode;
+      profile.commune_code = reg.communeCode || profile.commune_code;
+      profile.communeName = reg.communeName || profile.communeName;
+      profile.commune_name = reg.communeName || profile.commune_name;
+      profile.schoolName = reg.schoolName !== undefined ? reg.schoolName : profile.schoolName;
+      profile.school_name = reg.schoolName !== undefined ? reg.schoolName : profile.school_name;
+      profile.registrationCompletedAt = reg.registrationCompletedAt || profile.registrationCompletedAt;
+      profile.registration_completed_at = reg.registrationCompletedAt || profile.registration_completed_at;
+    }
+
+    if (acad) {
+      profile.targetScore = acad.targetScore || profile.targetScore;
+      profile.target_score = acad.targetScore || profile.target_score;
+      profile.academicProfileCompletedAt = acad.academicProfileCompletedAt || profile.academicProfileCompletedAt;
+      profile.academic_profile_completed_at = acad.academicProfileCompletedAt || profile.academic_profile_completed_at;
+      if (acad.targetSpecialty) {
+        profile.targetSpecialty = acad.targetSpecialty;
+        profile.target_specialty = acad.targetSpecialty;
+      }
+      if (acad.studyMethods) {
+        profile.studyMethods = acad.studyMethods;
+        profile.study_methods = acad.studyMethods;
+      }
+    }
+
+    return profile as StrategicProfile;
   } catch {
     return null;
   }

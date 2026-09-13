@@ -19,6 +19,7 @@ import { StudentService } from "@/lib/services";
 import {
   getAcademicProfileDraft,
   saveAcademicProfileDraft,
+  getRegistrationDraft,
 } from "@/lib/onboarding/profile";
 import {
   Target,
@@ -44,15 +45,41 @@ export default function AcademicProfilePage() {
   // Enforce auth & registration prerequisite
   useEffect(() => {
     if (!isLoading && !user) {
-      router.replace("/auth?mode=signup");
-      return;
+      let hasLocalUser = false;
+      try {
+        if (typeof window !== "undefined" && localStorage.getItem("bac_auth_user")) {
+          hasLocalUser = true;
+        }
+      } catch {}
+      if (!hasLocalUser) {
+        router.replace("/auth?mode=signup");
+        return;
+      }
     }
-    if (!isLoading && user) {
-      StudentService.getProfile(user.id).then((p) => {
-        if (!p || (!p.registrationCompletedAt && !(p.firstName && p.streamId))) {
+    if (!isLoading) {
+      const effectiveId = user?.id || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id : undefined);
+      if (effectiveId) {
+        StudentService.getProfile(effectiveId).then((p) => {
+          const regDraft = getRegistrationDraft();
+          const isRegistered = Boolean(
+            p?.registrationCompletedAt ||
+            (p as any)?.registration_completed_at ||
+            ((p?.firstName || (p as any)?.first_name) && (p?.streamId || (p as any)?.stream_id)) ||
+            (regDraft?.registrationCompletedAt && (regDraft?.firstName || regDraft?.streamId))
+          );
+          if (!isRegistered) {
+            router.replace("/auth/register");
+          }
+        });
+      } else {
+        const regDraft = getRegistrationDraft();
+        const isRegistered = Boolean(
+          regDraft?.registrationCompletedAt && (regDraft?.firstName || regDraft?.streamId)
+        );
+        if (!isRegistered) {
           router.replace("/auth/register");
         }
-      });
+      }
     }
   }, [user, isLoading, router]);
 
@@ -183,7 +210,11 @@ export default function AcademicProfilePage() {
         academicProfileCompletedAt: new Date().toISOString(),
       };
 
-      await StudentService.saveAcademicProfile(academicData, user?.id);
+      // Save draft immediately to ensure offline / synchronous resilience
+      saveAcademicProfileDraft(academicData);
+
+      const effectiveUserId = user?.id || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id : undefined);
+      await StudentService.saveAcademicProfile(academicData, effectiveUserId);
 
       // Start existing diagnostic flow
       router.push("/diagnostic");

@@ -71,16 +71,33 @@ export default function StudentRegistrationPage() {
   // Enforce auth requirement: cannot access registration without an account
   useEffect(() => {
     if (!isLoading && !user) {
-      router.replace("/auth?mode=signup");
-      return;
-    }
-    if (!isLoading && user) {
-      StudentService.getProfile(user.id).then((p) => {
-        // If registration is already done, forward to academic profile
-        if (p?.registrationCompletedAt) {
-          router.replace("/profile/academic");
+      let hasLocalUser = false;
+      try {
+        if (typeof window !== "undefined" && localStorage.getItem("bac_auth_user")) {
+          hasLocalUser = true;
         }
-      });
+      } catch {}
+      if (!hasLocalUser) {
+        router.replace("/auth?mode=signup");
+        return;
+      }
+    }
+    if (!isLoading) {
+      const effectiveUserId = user?.id || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id : undefined);
+      if (effectiveUserId) {
+        StudentService.getProfile(effectiveUserId).then((p) => {
+          const regDraft = getRegistrationDraft();
+          // If registration is already done, forward to academic profile
+          const isRegistered = Boolean(
+            p?.registrationCompletedAt ||
+            (p as any)?.registration_completed_at ||
+            (regDraft?.registrationCompletedAt && (regDraft?.firstName || regDraft?.streamId))
+          );
+          if (isRegistered) {
+            router.replace("/profile/academic");
+          }
+        });
+      }
     }
   }, [user, isLoading, router]);
 
@@ -320,10 +337,22 @@ export default function StudentRegistrationPage() {
         registrationCompletedAt: new Date().toISOString(),
       };
 
-      // Persist to service (LocalStorage + Supabase if auth user exists)
-      await StudentService.saveRegistration(finalPayload, user?.id);
+      // 1. Immediately save to localStorage draft so it exists synchronously before navigation
+      saveRegistrationDraft(finalPayload);
 
-      // Transition immediately to the Academic Profile page
+      // 2. Resolve effective user ID
+      let effectiveUserId = user?.id;
+      if (!effectiveUserId && typeof window !== "undefined") {
+        try {
+          const stored = localStorage.getItem("bac_auth_user");
+          if (stored) effectiveUserId = JSON.parse(stored)?.id;
+        } catch {}
+      }
+
+      // 3. Persist to service (LocalStorage + Supabase if auth user exists)
+      await StudentService.saveRegistration(finalPayload, effectiveUserId);
+
+      // 4. Transition immediately to the Academic Profile page
       router.push("/profile/academic");
     } catch (err: any) {
       console.error("Registration error:", err);

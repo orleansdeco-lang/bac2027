@@ -28,12 +28,23 @@ export const StudentRepository = {
    * If Supabase is unconfigured or returns null, gracefully falls back to LocalStorage.
    */
   async getProfile(userId?: string): Promise<StrategicProfile | null> {
-    if (isSupabaseConfigured && supabase && userId) {
+    let effectiveUserId = userId;
+    if (!effectiveUserId && typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("bac_auth_user");
+        if (stored) effectiveUserId = JSON.parse(stored)?.id;
+      } catch {}
+    }
+    if (!effectiveUserId) {
+      effectiveUserId = getStrategicProfile()?.id;
+    }
+
+    if (isSupabaseConfigured && supabase && effectiveUserId) {
       try {
         const { data, error } = await supabase
           .from("student_profiles")
           .select("*")
-          .eq("id", userId)
+          .eq("id", effectiveUserId)
           .maybeSingle();
 
         if (error) {
@@ -42,73 +53,69 @@ export const StudentRepository = {
         }
 
         if (data) {
-          const trialStarted = data.trial_started_at || data.raw_draft?.trial_started_at || data.created_at || new Date().toISOString();
-          const trialExpires = data.trial_expires_at || data.raw_draft?.trial_expires_at || new Date(new Date(trialStarted).getTime() + 72 * 3600 * 1000).toISOString();
-          const accessStatus = data.access_status || data.raw_draft?.access_status || "TRIAL";
-          const plan = data.plan || data.raw_draft?.plan || "PILOT_TRIAL";
+          const localFallback = getStrategicProfile() || ({} as any);
+          const trialStarted = data.trial_started_at || data.raw_draft?.trial_started_at || localFallback.trial_started_at || data.created_at || new Date().toISOString();
+          const trialExpires = data.trial_expires_at || data.raw_draft?.trial_expires_at || localFallback.trial_expires_at || new Date(new Date(trialStarted).getTime() + 72 * 3600 * 1000).toISOString();
+          const accessStatus = data.access_status || data.raw_draft?.access_status || localFallback.access_status || "TRIAL";
+          const plan = data.plan || data.raw_draft?.plan || localFallback.plan || "PILOT_TRIAL";
 
-          if (data.raw_draft && Object.keys(data.raw_draft).length > 0) {
-            const draft = { ...(data.raw_draft as StrategicProfile) } as any;
-            draft.trial_started_at = trialStarted;
-            draft.trial_expires_at = trialExpires;
-            draft.access_status = accessStatus;
-            draft.plan = plan;
-            draft.created_at = data.created_at;
-            draft.first_name = data.first_name || draft.first_name;
-            draft.last_name = data.last_name || draft.last_name;
-            draft.student_phone = data.student_phone || draft.student_phone;
-            draft.parent_phone = data.parent_phone || draft.parent_phone;
-            draft.student_status = data.student_status || draft.student_status;
-            draft.wilaya_code = data.wilaya_code || draft.wilaya_code;
-            draft.wilaya_name = data.wilaya_name || draft.wilaya_name;
-            draft.commune_code = data.commune_code || draft.commune_code;
-            draft.commune_name = data.commune_name || draft.commune_name;
-            draft.school_name = data.school_name !== undefined ? data.school_name : draft.school_name;
-            draft.registration_completed_at = data.registration_completed_at || draft.registration_completed_at;
-            draft.academic_profile_completed_at = data.academic_profile_completed_at || draft.academic_profile_completed_at;
-            saveStrategicProfile(draft);
-            return draft;
-          }
-
-          const reconstructed: any = {
-            id: data.id || userId,
-            educationLevel: (data.education_level as any) || "secondary",
-            examType: ((data.exam_type || "bac").toUpperCase() as any),
-            streamId: data.stream_id,
-            techniqueMathSpecialty: data.specialty_id || undefined,
-            targetScore: Number(data.target_score) || 16.0,
-            subjectEstimates: {} as any,
-            availableTime: "12_to_18",
-            futureObjective: { preset: "higher_school_ens_esi", customText: data.future_objective || "" },
-            obstacles: data.biggest_obstacle ? [data.biggest_obstacle as any] : [],
-            studyEnergy: (data.energy_state as any) || "normal",
-            createdAt: data.created_at || new Date().toISOString(),
-            created_at: data.created_at,
+          const merged: any = {
+            ...localFallback,
+            ...(data.raw_draft && typeof data.raw_draft === "object" ? data.raw_draft : {}),
+            id: data.id || effectiveUserId || localFallback.id,
+            educationLevel: (data.education_level as any) || data.raw_draft?.educationLevel || localFallback.educationLevel || "secondary",
+            examType: ((data.exam_type || data.raw_draft?.examType || localFallback.examType || "bac").toUpperCase() as any),
+            streamId: data.stream_id || data.raw_draft?.streamId || localFallback.streamId,
+            techniqueMathSpecialty: data.specialty_id || data.raw_draft?.techniqueMathSpecialty || localFallback.techniqueMathSpecialty || undefined,
+            targetScore: Number(data.target_score) || data.raw_draft?.targetScore || localFallback.targetScore || 16.0,
+            subjectEstimates: data.raw_draft?.subjectEstimates || localFallback.subjectEstimates || ({} as any),
+            availableTime: data.raw_draft?.availableTime || localFallback.availableTime || "12_to_18",
+            futureObjective: data.raw_draft?.futureObjective || (data.future_objective ? { preset: "higher_school_ens_esi", customText: data.future_objective } : localFallback.futureObjective || { preset: "higher_school_ens_esi" }),
+            obstacles: data.biggest_obstacle ? [data.biggest_obstacle as any] : (data.raw_draft?.obstacles || localFallback.obstacles || []),
+            studyEnergy: (data.energy_state as any) || data.raw_draft?.studyEnergy || localFallback.studyEnergy || "normal",
+            createdAt: data.created_at || localFallback.createdAt || new Date().toISOString(),
+            created_at: data.created_at || localFallback.created_at,
             trial_started_at: trialStarted,
             trial_expires_at: trialExpires,
             access_status: accessStatus,
             plan: plan,
-            first_name: data.first_name,
-            last_name: data.last_name,
-            student_phone: data.student_phone,
-            parent_phone: data.parent_phone,
-            student_status: data.student_status,
-            wilaya_code: data.wilaya_code,
-            wilaya_name: data.wilaya_name,
-            commune_code: data.commune_code,
-            commune_name: data.commune_name,
-            school_name: data.school_name,
-            annual_average_year_1: data.annual_average_year_1,
-            annual_average_year_2: data.annual_average_year_2,
-            has_target_specialty: data.has_target_specialty,
-            target_specialty: data.target_specialty,
-            study_methods: data.study_methods,
-            current_self_assessment: data.current_self_assessment,
-            registration_completed_at: data.registration_completed_at,
-            academic_profile_completed_at: data.academic_profile_completed_at,
+            first_name: data.first_name || data.raw_draft?.first_name || data.raw_draft?.firstName || localFallback.firstName || localFallback.first_name,
+            firstName: data.first_name || data.raw_draft?.first_name || data.raw_draft?.firstName || localFallback.firstName || localFallback.first_name,
+            last_name: data.last_name || data.raw_draft?.last_name || data.raw_draft?.lastName || localFallback.lastName || localFallback.last_name,
+            lastName: data.last_name || data.raw_draft?.last_name || data.raw_draft?.lastName || localFallback.lastName || localFallback.last_name,
+            student_phone: data.student_phone || data.raw_draft?.student_phone || data.raw_draft?.studentPhone || localFallback.studentPhone || localFallback.student_phone,
+            studentPhone: data.student_phone || data.raw_draft?.student_phone || data.raw_draft?.studentPhone || localFallback.studentPhone || localFallback.student_phone,
+            parent_phone: data.parent_phone || data.raw_draft?.parent_phone || data.raw_draft?.parentPhone || localFallback.parentPhone || localFallback.parent_phone,
+            parentPhone: data.parent_phone || data.raw_draft?.parent_phone || data.raw_draft?.parentPhone || localFallback.parentPhone || localFallback.parent_phone,
+            student_status: data.student_status || data.raw_draft?.student_status || data.raw_draft?.studentStatus || localFallback.studentStatus || localFallback.student_status,
+            studentStatus: data.student_status || data.raw_draft?.student_status || data.raw_draft?.studentStatus || localFallback.studentStatus || localFallback.student_status,
+            wilaya_code: data.wilaya_code || data.raw_draft?.wilaya_code || data.raw_draft?.wilayaCode || localFallback.wilayaCode || localFallback.wilaya_code,
+            wilayaCode: data.wilaya_code || data.raw_draft?.wilaya_code || data.raw_draft?.wilayaCode || localFallback.wilayaCode || localFallback.wilaya_code,
+            wilaya_name: data.wilaya_name || data.raw_draft?.wilaya_name || data.raw_draft?.wilayaName || localFallback.wilayaName || localFallback.wilaya_name,
+            wilayaName: data.wilaya_name || data.raw_draft?.wilaya_name || data.raw_draft?.wilayaName || localFallback.wilayaName || localFallback.wilaya_name,
+            commune_code: data.commune_code || data.raw_draft?.commune_code || data.raw_draft?.communeCode || localFallback.communeCode || localFallback.commune_code,
+            communeCode: data.commune_code || data.raw_draft?.commune_code || data.raw_draft?.communeCode || localFallback.communeCode || localFallback.commune_code,
+            commune_name: data.commune_name || data.raw_draft?.commune_name || data.raw_draft?.communeName || localFallback.communeName || localFallback.commune_name,
+            communeName: data.commune_name || data.raw_draft?.commune_name || data.raw_draft?.communeName || localFallback.communeName || localFallback.commune_name,
+            school_name: data.school_name !== undefined ? data.school_name : (data.raw_draft?.schoolName !== undefined ? data.raw_draft.schoolName : localFallback.schoolName),
+            schoolName: data.school_name !== undefined ? data.school_name : (data.raw_draft?.schoolName !== undefined ? data.raw_draft.schoolName : localFallback.schoolName),
+            annual_average_year_1: data.annual_average_year_1 ?? data.raw_draft?.annualAverageYear1 ?? localFallback.annualAverageYear1,
+            annualAverageYear1: data.annual_average_year_1 ?? data.raw_draft?.annualAverageYear1 ?? localFallback.annualAverageYear1,
+            annual_average_year_2: data.annual_average_year_2 ?? data.raw_draft?.annualAverageYear2 ?? localFallback.annualAverageYear2,
+            annualAverageYear2: data.annual_average_year_2 ?? data.raw_draft?.annualAverageYear2 ?? localFallback.annualAverageYear2,
+            has_target_specialty: data.has_target_specialty ?? data.raw_draft?.hasTargetSpecialty ?? localFallback.hasTargetSpecialty,
+            target_specialty: data.target_specialty || data.raw_draft?.targetSpecialty || localFallback.targetSpecialty,
+            targetSpecialty: data.target_specialty || data.raw_draft?.targetSpecialty || localFallback.targetSpecialty,
+            study_methods: data.study_methods || data.raw_draft?.studyMethods || localFallback.studyMethods,
+            studyMethods: data.study_methods || data.raw_draft?.studyMethods || localFallback.studyMethods,
+            current_self_assessment: data.current_self_assessment || data.raw_draft?.currentSelfAssessment || localFallback.currentSelfAssessment,
+            registration_completed_at: data.registration_completed_at || data.raw_draft?.registrationCompletedAt || data.raw_draft?.registration_completed_at || localFallback.registrationCompletedAt || localFallback.registration_completed_at,
+            registrationCompletedAt: data.registration_completed_at || data.raw_draft?.registrationCompletedAt || data.raw_draft?.registration_completed_at || localFallback.registrationCompletedAt || localFallback.registration_completed_at,
+            academic_profile_completed_at: data.academic_profile_completed_at || data.raw_draft?.academicProfileCompletedAt || data.raw_draft?.academic_profile_completed_at || localFallback.academicProfileCompletedAt || localFallback.academic_profile_completed_at,
+            academicProfileCompletedAt: data.academic_profile_completed_at || data.raw_draft?.academicProfileCompletedAt || data.raw_draft?.academic_profile_completed_at || localFallback.academicProfileCompletedAt || localFallback.academic_profile_completed_at,
           };
-          saveStrategicProfile(reconstructed);
-          return reconstructed;
+          saveStrategicProfile(merged);
+          return merged;
         }
       } catch (err) {
         console.error("StudentRepository.getProfile exception:", err);
@@ -196,7 +203,18 @@ export const StudentRepository = {
    * Save registration data (Step 1 to 6)
    */
   async saveRegistrationData(data: StudentRegistrationData, userId?: string): Promise<void> {
-    if (!userId || userId.trim() === "") {
+    let effectiveUserId = userId;
+    if (!effectiveUserId && typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("bac_auth_user");
+        if (stored) effectiveUserId = JSON.parse(stored)?.id;
+      } catch {}
+    }
+    if (!effectiveUserId) {
+      effectiveUserId = getStrategicProfile()?.id;
+    }
+
+    if (!effectiveUserId || effectiveUserId.trim() === "") {
       throw new Error("Cannot save registration without an authenticated userId: profile must not exist outside an account");
     }
 
@@ -233,39 +251,93 @@ export const StudentRepository = {
       obstacles: existingProfile?.obstacles || [],
       studyEnergy: existingProfile?.studyEnergy || "normal",
       createdAt: existingProfile?.createdAt || new Date().toISOString(),
+      firstName: sanitizedData.firstName,
+      lastName: sanitizedData.lastName,
+      studentPhone: sanitizedData.studentPhone,
+      parentPhone: sanitizedData.parentPhone,
+      studentStatus: sanitizedData.studentStatus,
+      wilayaCode: sanitizedData.wilayaCode,
+      wilayaName: sanitizedData.wilayaName,
+      communeCode: sanitizedData.communeCode,
+      communeName: sanitizedData.communeName,
+      schoolName: sanitizedData.schoolName,
+      registrationCompletedAt: sanitizedData.registrationCompletedAt,
     };
+    (updatedProfile as any).first_name = sanitizedData.firstName;
+    (updatedProfile as any).last_name = sanitizedData.lastName;
+    (updatedProfile as any).student_phone = sanitizedData.studentPhone;
+    (updatedProfile as any).parent_phone = sanitizedData.parentPhone;
+    (updatedProfile as any).student_status = sanitizedData.studentStatus;
+    (updatedProfile as any).wilaya_code = sanitizedData.wilayaCode;
+    (updatedProfile as any).wilaya_name = sanitizedData.wilayaName;
+    (updatedProfile as any).commune_code = sanitizedData.communeCode;
+    (updatedProfile as any).commune_name = sanitizedData.communeName;
+    (updatedProfile as any).school_name = sanitizedData.schoolName;
+    (updatedProfile as any).registration_completed_at = sanitizedData.registrationCompletedAt;
     saveStrategicProfile(updatedProfile);
 
     // Persist to Supabase if authenticated
     if (isSupabaseConfigured && supabase && userId) {
       try {
-        const payload: Record<string, any> = {
+        const enrichedDraft = {
+          ...updatedProfile,
+          ...sanitizedData,
+          registration_completed_at: sanitizedData.registrationCompletedAt,
+          registrationCompletedAt: sanitizedData.registrationCompletedAt,
+          first_name: sanitizedData.firstName,
+          firstName: sanitizedData.firstName,
+          last_name: sanitizedData.lastName,
+          lastName: sanitizedData.lastName,
+        };
+
+        const fullPayload: Record<string, any> = {
           id: userId,
           user_id: userId,
+          education_level: "secondary",
+          exam_type: "bac",
+          target_score: existingProfile?.targetScore || 16.0,
+          stream_id: sanitizedData.streamId,
+          specialty_id: sanitizedData.techniqueMathSpecialty || null,
           first_name: sanitizedData.firstName.trim(),
           last_name: sanitizedData.lastName.trim(),
           student_phone: sanitizedData.studentPhone,
           parent_phone: sanitizedData.parentPhone || null,
           student_status: sanitizedData.studentStatus,
-          stream_id: sanitizedData.streamId,
-          specialty_id: sanitizedData.techniqueMathSpecialty || null,
           wilaya_code: sanitizedData.wilayaCode,
           wilaya_name: sanitizedData.wilayaName,
           commune_code: sanitizedData.communeCode,
           commune_name: sanitizedData.communeName,
           school_name: sanitizedData.schoolName,
           registration_completed_at: sanitizedData.registrationCompletedAt,
+          raw_draft: enrichedDraft,
           updated_at: new Date().toISOString(),
         };
 
-        const { error } = await supabase
+        const { error: fullErr } = await supabase
           .from("student_profiles")
-          .upsert(payload, { onConflict: "id" });
+          .upsert(fullPayload, { onConflict: "id" });
 
-        if (error) {
-          console.error("StudentRepository.saveRegistrationData error:", error);
-          // Fallback: save inside raw_draft
-          await this.saveProfile(updatedProfile, userId);
+        if (fullErr) {
+          console.warn("StudentRepository.saveRegistrationData using foundation schema + raw_draft fallback:", fullErr.message);
+          const basePayload: Record<string, any> = {
+            id: userId,
+            user_id: userId,
+            education_level: "secondary",
+            exam_type: "bac",
+            stream_id: sanitizedData.streamId,
+            specialty_id: sanitizedData.techniqueMathSpecialty || null,
+            target_score: existingProfile?.targetScore || 16.0,
+            raw_draft: enrichedDraft,
+            updated_at: new Date().toISOString(),
+          };
+
+          const { error: baseErr } = await supabase
+            .from("student_profiles")
+            .upsert(basePayload, { onConflict: "id" });
+
+          if (baseErr) {
+            console.error("StudentRepository.saveRegistrationData base upsert error:", baseErr.message);
+          }
         }
       } catch (err) {
         console.error("StudentRepository.saveRegistrationData exception:", err);
@@ -277,7 +349,18 @@ export const StudentRepository = {
    * Save Academic Profile Data
    */
   async saveAcademicProfileData(data: AcademicProfileData, userId?: string): Promise<void> {
-    if (!userId || userId.trim() === "") {
+    let effectiveUserId = userId;
+    if (!effectiveUserId && typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("bac_auth_user");
+        if (stored) effectiveUserId = JSON.parse(stored)?.id;
+      } catch {}
+    }
+    if (!effectiveUserId) {
+      effectiveUserId = getStrategicProfile()?.id;
+    }
+
+    if (!effectiveUserId || effectiveUserId.trim() === "") {
       throw new Error("Cannot save academic profile without an authenticated userId: profile must not exist outside an account");
     }
 
@@ -301,11 +384,19 @@ export const StudentRepository = {
     const existingProfile = getStrategicProfile();
     if (existingProfile) {
       existingProfile.targetScore = sanitizedData.targetScore;
+      existingProfile.academicProfileCompletedAt = sanitizedData.academicProfileCompletedAt;
+      (existingProfile as any).academic_profile_completed_at = sanitizedData.academicProfileCompletedAt;
       if (sanitizedData.targetSpecialty) {
         existingProfile.futureObjective = {
           preset: "specific_university_field",
           customText: sanitizedData.targetSpecialty,
         };
+        existingProfile.targetSpecialty = sanitizedData.targetSpecialty;
+        (existingProfile as any).target_specialty = sanitizedData.targetSpecialty;
+      }
+      if (sanitizedData.studyMethods) {
+        existingProfile.studyMethods = sanitizedData.studyMethods;
+        (existingProfile as any).study_methods = sanitizedData.studyMethods;
       }
       saveStrategicProfile(existingProfile);
     }
@@ -313,6 +404,15 @@ export const StudentRepository = {
     // Persist to Supabase if authenticated
     if (isSupabaseConfigured && supabase && userId) {
       try {
+        const enrichedDraft = {
+          ...existingProfile,
+          ...sanitizedData,
+          academicProfileCompletedAt: sanitizedData.academicProfileCompletedAt,
+          academic_profile_completed_at: sanitizedData.academicProfileCompletedAt,
+          targetScore: sanitizedData.targetScore,
+          target_score: sanitizedData.targetScore,
+        };
+
         const payload: Record<string, any> = {
           id: userId,
           user_id: userId,
@@ -324,15 +424,24 @@ export const StudentRepository = {
           study_methods: sanitizedData.studyMethods || [],
           current_self_assessment: sanitizedData.currentSelfAssessment,
           academic_profile_completed_at: sanitizedData.academicProfileCompletedAt,
+          raw_draft: enrichedDraft,
           updated_at: new Date().toISOString(),
         };
 
-        const { error } = await supabase
+        const { error: fullErr } = await supabase
           .from("student_profiles")
           .upsert(payload, { onConflict: "id" });
 
-        if (error) {
-          console.error("StudentRepository.saveAcademicProfileData error:", error);
+        if (fullErr) {
+          console.warn("StudentRepository.saveAcademicProfileData fallback to basePayload + raw_draft:", fullErr.message);
+          const basePayload: Record<string, any> = {
+            id: userId,
+            user_id: userId,
+            target_score: sanitizedData.targetScore,
+            raw_draft: enrichedDraft,
+            updated_at: new Date().toISOString(),
+          };
+          await supabase.from("student_profiles").upsert(basePayload, { onConflict: "id" });
         }
       } catch (err) {
         console.error("StudentRepository.saveAcademicProfileData exception:", err);

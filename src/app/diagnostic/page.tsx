@@ -72,6 +72,8 @@ export default function DiagnosticPage() {
       const savedProfile =
         localStorage.getItem("bac_student_profile") ||
         localStorage.getItem("bac_strategic_profile") ||
+        localStorage.getItem("bac_mastery_registration_draft") ||
+        localStorage.getItem("bac_mastery_academic_draft") ||
         localStorage.getItem("bac_academic_profile_draft") ||
         localStorage.getItem("bac_mastery_student_profile") ||
         localStorage.getItem("bac_mastery_onboarding_draft");
