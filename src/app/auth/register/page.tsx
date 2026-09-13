@@ -86,11 +86,12 @@ export default function StudentRegistrationPage() {
       const effectiveUserId = user?.id || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id : undefined);
       if (effectiveUserId) {
         StudentService.getProfile(effectiveUserId).then((p) => {
-          const regDraft = getRegistrationDraft();
-          // If registration is already done, forward to academic profile
+          const regDraft = getRegistrationDraft(effectiveUserId);
+          // If registration is already done for THIS user, forward to academic profile
           const isRegistered = Boolean(
             p?.registrationCompletedAt ||
             (p as any)?.registration_completed_at ||
+            (p?.firstName && p?.streamId) ||
             (regDraft?.registrationCompletedAt && (regDraft?.firstName || regDraft?.streamId))
           );
           if (isRegistered) {
@@ -128,9 +129,10 @@ export default function StudentRegistrationPage() {
   const wilayas: Wilaya[] = getAlgerianWilayas();
   const [availableCommunes, setAvailableCommunes] = useState<Commune[]>([]);
 
-  // Load saved draft on mount
+  // Load saved draft on mount (scoped strictly to active user)
   useEffect(() => {
-    const draft = getRegistrationDraft();
+    const effectiveUserId = user?.id || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id : undefined);
+    const draft = getRegistrationDraft(effectiveUserId);
     if (draft) {
       if (draft.characterId) setCharacterId(draft.characterId);
       if (draft.firstName) setFirstName(draft.firstName);
@@ -152,7 +154,7 @@ export default function StudentRegistrationPage() {
       }
       if (draft.schoolName) setSchoolName(draft.schoolName);
     }
-  }, []);
+  }, [user]);
 
   // Update dynamic communes when wilaya changes
   const handleWilayaChange = (code: string) => {
@@ -180,8 +182,15 @@ export default function StudentRegistrationPage() {
     }
   };
 
-  // Save current draft to localStorage between steps
+  // Save current draft to localStorage between steps (scoped to active user)
   const persistCurrentDraft = (overrides: Partial<StudentRegistrationData> = {}) => {
+    let effectiveUserId = user?.id;
+    if (!effectiveUserId && typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("bac_auth_user");
+        if (stored) effectiveUserId = JSON.parse(stored)?.id;
+      } catch {}
+    }
     const draftPayload: StudentRegistrationData = {
       characterId: overrides.characterId !== undefined ? overrides.characterId : characterId,
       firstName: overrides.firstName !== undefined ? overrides.firstName : firstName,
@@ -197,7 +206,7 @@ export default function StudentRegistrationPage() {
       communeName: overrides.communeName !== undefined ? overrides.communeName : communeName,
       schoolName: studentStatus === "free" ? null : (overrides.schoolName !== undefined ? overrides.schoolName : schoolName),
     };
-    saveRegistrationDraft(draftPayload);
+    saveRegistrationDraft(draftPayload, effectiveUserId);
   };
 
   // Step 1: Validation
@@ -340,10 +349,7 @@ export default function StudentRegistrationPage() {
         registrationCompletedAt: new Date().toISOString(),
       };
 
-      // 1. Immediately save to localStorage draft so it exists synchronously before navigation
-      saveRegistrationDraft(finalPayload);
-
-      // 2. Resolve effective user ID
+      // 1. Resolve effective user ID
       let effectiveUserId = user?.id;
       if (!effectiveUserId && typeof window !== "undefined") {
         try {
@@ -351,6 +357,9 @@ export default function StudentRegistrationPage() {
           if (stored) effectiveUserId = JSON.parse(stored)?.id;
         } catch {}
       }
+
+      // 2. Immediately save to scoped localStorage draft so it exists synchronously before navigation
+      saveRegistrationDraft(finalPayload, effectiveUserId);
 
       // 3. Persist to service (LocalStorage + Supabase if auth user exists)
       await StudentService.saveRegistration(finalPayload, effectiveUserId);

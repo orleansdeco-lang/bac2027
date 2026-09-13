@@ -41,14 +41,17 @@ export function Sidebar({ className }: SidebarProps) {
   const [profileDraft, setProfileDraft] = useState<any>(null);
 
   useEffect(() => {
-    const p = getStrategicProfile();
-    const reg = getRegistrationDraft();
-    setProfileDraft({ ...p, ...reg });
-
     if (user?.id) {
+      const p = getStrategicProfile(user.id);
+      const reg = getRegistrationDraft(user.id);
+      setProfileDraft({ ...p, ...reg });
+
       StudentService.getProfile(user.id).then((sp) => {
         if (sp) setStudentProfile(sp);
       });
+    } else {
+      setStudentProfile(null);
+      setProfileDraft(null);
     }
   }, [user]);
 

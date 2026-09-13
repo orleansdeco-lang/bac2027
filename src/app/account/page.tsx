@@ -74,24 +74,23 @@ export default function AccountPage() {
 
   useEffect(() => {
     async function fetchAccProfile() {
-      const p = user ? await StudentService.getProfile(user.id) : getStrategicProfile();
+      if (!user?.id) {
+        setProfile(null);
+        setRegDraft(null);
+        setPaymentRecord(null);
+        return;
+      }
+      const p = await StudentService.getProfile(user.id);
       if (p) {
         setProfile(p);
-        // Automatic cloud synchronization on load
-        if (user) {
-          StudentService.saveProfile(p).catch((err) => {
-            console.error("Auto sync profile failed:", err);
-          });
-        }
       }
-      const reg = getRegistrationDraft();
+      const reg = getRegistrationDraft(user.id);
       if (reg) setRegDraft(reg);
 
       const records = getStoredPaymentRecords();
-      const currentUid = user?.id || "guest_pilot";
       const userRecord = records.find(
-        (r) => r.userId === currentUid || (user?.email && r.studentEmail === user.email)
-      ) || (records.length > 0 ? records[records.length - 1] : null);
+        (r) => r.userId === user.id || (user.email && r.studentEmail === user.email)
+      ) || null;
       if (userRecord) {
         setPaymentRecord(userRecord);
       }

@@ -32,9 +32,13 @@ import {
   DiagnosticDimension,
 } from "@/types/diagnostic";
 import { loadDiagnosticResults } from "@/lib/diagnostic";
+import { useAuth } from "@/lib/auth/context";
+import { StudentService } from "@/lib/services";
+import { getStrategicProfile, saveStrategicProfile } from "@/lib/onboarding/profile";
 
 export default function DiagnosticResultsPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const { t, locale, direction } = useTranslation();
   const isRtl = direction === "rtl";
   const NextArrow = isRtl ? ArrowLeft : ArrowRight;
@@ -54,22 +58,24 @@ export default function DiagnosticResultsPage() {
     if (!results) return;
 
     try {
-      // Sync core diagnostic signal into student profile
-      const savedProfile = localStorage.getItem("bac_mastery_student_profile");
-      if (savedProfile) {
-        const profile = JSON.parse(savedProfile);
-        profile.levelSource = "diagnostic_observed";
-        const signalScore = results.coreDiagnosticSignal || results.observedDiagnosticScore;
-        profile.observedDiagnosticScore = signalScore;
-        // Convert core signal (0-100%) to 0-20 scale baseline for gap calculation
-        profile.estimatedBaselineScore = Math.round((signalScore / 5) * 10) / 10;
-        profile.approximateGap = Math.max(
-          0,
-          Math.round((profile.targetScore - profile.estimatedBaselineScore) * 10) / 10
-        );
-        // Preserve untested subject estimates and save tested subject scores
-        profile.testedSubjectScores = results.subjectScores;
-        localStorage.setItem("bac_mastery_student_profile", JSON.stringify(profile));
+      const effectiveUserId = user?.id || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id : undefined);
+      if (effectiveUserId) {
+        StudentService.getProfile(effectiveUserId).then((profile) => {
+          if (profile) {
+            const prof = profile as any;
+            prof.levelSource = "diagnostic_observed";
+            const signalScore = results.coreDiagnosticSignal || results.observedDiagnosticScore;
+            prof.observedDiagnosticScore = signalScore;
+            prof.estimatedBaselineScore = Math.round((signalScore / 5) * 10) / 10;
+            prof.approximateGap = Math.max(
+              0,
+              Math.round(((prof.targetScore || 16.0) - prof.estimatedBaselineScore) * 10) / 10
+            );
+            prof.testedSubjectScores = results.subjectScores;
+            saveStrategicProfile(prof, effectiveUserId);
+            StudentService.saveProfile(prof, effectiveUserId).catch(console.error);
+          }
+        });
       }
     } catch (e) {
       console.error("Error updating profile from diagnostic results", e);

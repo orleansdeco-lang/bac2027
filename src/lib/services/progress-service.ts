@@ -44,7 +44,7 @@ export const ProgressService = {
       RetestRepository.getAllRetests(userId),
     ]);
 
-    const localProfile = getStrategicProfile();
+    const localProfile = getStrategicProfile(userId);
     const effectiveStream: StreamId =
       streamIdParam ||
       (profile?.streamId as StreamId) ||

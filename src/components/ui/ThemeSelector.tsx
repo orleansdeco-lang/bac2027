@@ -7,6 +7,7 @@ import { Palette, Check, Sparkles, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getStudentAccess } from "@/lib/access";
 import { getStrategicProfile } from "@/lib/onboarding/profile";
+import { useAuth } from "@/lib/auth/context";
 import { useRouter } from "next/navigation";
 
 interface ThemeSelectorProps {
@@ -19,13 +20,14 @@ export function ThemeSelector({
   className,
 }: ThemeSelectorProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const { theme, setTheme, themes } = useTheme();
   const { locale } = useTranslation();
   const isAr = locale === "ar";
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const profile = typeof window !== "undefined" ? getStrategicProfile() : null;
+  const profile = typeof window !== "undefined" && user?.id ? getStrategicProfile(user.id) : null;
   const access = getStudentAccess(profile);
   const isPremiumUnlocked = access.status === "PAID_ACTIVE" || access.status === "TRIAL_ACTIVE";
 

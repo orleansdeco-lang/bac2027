@@ -2,17 +2,35 @@ import { OnboardingDraft, StrategicProfile } from "../../types/onboarding";
 
 export const ONBOARDING_DRAFT_KEY = "bac_mastery_onboarding_draft";
 export const STRATEGIC_PROFILE_KEY = "bac_mastery_strategic_profile";
+export const REGISTRATION_DRAFT_KEY = "bac_mastery_registration_draft";
+export const ACADEMIC_PROFILE_DRAFT_KEY = "bac_mastery_academic_draft";
+export const GUEST_DRAFT_KEY = "bac_mastery_guest_draft";
+
+/**
+ * Derives a strictly scoped LocalStorage key.
+ * If userId is provided, keys are isolated per user: `${baseKey}:${userId}`
+ * If unauthenticated, returns null for authenticated keys, or guest key for onboarding.
+ */
+export function getScopedKey(baseKey: string, userId?: string | null): string | null {
+  if (userId && typeof userId === "string" && userId.trim() !== "") {
+    return `${baseKey}:${userId.trim()}`;
+  }
+  if (baseKey === ONBOARDING_DRAFT_KEY) {
+    return GUEST_DRAFT_KEY;
+  }
+  return null;
+}
 
 /**
  * Builds a validated StrategicProfile from onboarding draft data.
  */
-export function buildStrategicProfile(draft: OnboardingDraft): StrategicProfile {
+export function buildStrategicProfile(draft: OnboardingDraft, userId?: string): StrategicProfile {
   if (!draft.streamId) {
     throw new Error("Cannot build StrategicProfile without a streamId");
   }
 
   return {
-    id: `profile_${Date.now()}`,
+    id: userId || `profile_${Date.now()}`,
     educationLevel: draft.educationLevel || "secondary",
     examType: draft.examType || "BAC",
     streamId: draft.streamId,
@@ -31,21 +49,27 @@ export function buildStrategicProfile(draft: OnboardingDraft): StrategicProfile 
 }
 
 /**
- * LocalStorage Helpers for Draft state
+ * LocalStorage Helpers for Draft state (scoped by userId)
+ * Unauthenticated onboarding strictly uses GUEST_DRAFT_KEY.
+ * Authenticated onboarding uses ONBOARDING_DRAFT_KEY:${userId}.
  */
-export function saveOnboardingDraft(draft: OnboardingDraft): void {
+export function saveOnboardingDraft(draft: OnboardingDraft, userId?: string | null): void {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(ONBOARDING_DRAFT_KEY, JSON.stringify(draft));
+    const key = getScopedKey(ONBOARDING_DRAFT_KEY, userId);
+    if (!key) return;
+    localStorage.setItem(key, JSON.stringify(draft));
   } catch (err) {
     console.warn("Failed to persist onboarding draft to localStorage", err);
   }
 }
 
-export function getOnboardingDraft(): OnboardingDraft | null {
+export function getOnboardingDraft(userId?: string | null): OnboardingDraft | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = localStorage.getItem(ONBOARDING_DRAFT_KEY);
+    const key = getScopedKey(ONBOARDING_DRAFT_KEY, userId);
+    if (!key) return null;
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
     return JSON.parse(raw) as OnboardingDraft;
   } catch {
@@ -53,126 +77,92 @@ export function getOnboardingDraft(): OnboardingDraft | null {
   }
 }
 
-export function clearOnboardingDraft(): void {
+export function clearOnboardingDraft(userId?: string | null): void {
   if (typeof window === "undefined") return;
   try {
+    const key = getScopedKey(ONBOARDING_DRAFT_KEY, userId);
+    if (key) {
+      localStorage.removeItem(key);
+    }
     localStorage.removeItem(ONBOARDING_DRAFT_KEY);
+    localStorage.removeItem(GUEST_DRAFT_KEY);
   } catch {
     // Ignore
   }
 }
 
 /**
- * LocalStorage Helpers for Completed Strategic Profile
+ * LocalStorage Helpers for Completed Strategic Profile (strictly scoped by userId)
+ * Missing or empty userId will NOT write or read any profile from localStorage.
  */
-export function saveStrategicProfile(profile: StrategicProfile): void {
+export function saveStrategicProfile(profile: StrategicProfile, userId?: string | null): void {
   if (typeof window === "undefined") return;
+  const effectiveId = (userId && typeof userId === "string" && userId.trim() !== "")
+    ? userId.trim()
+    : (profile.id && !profile.id.startsWith("profile_") ? profile.id.trim() : null);
+
+  if (!effectiveId) return;
+
   try {
-    localStorage.setItem(STRATEGIC_PROFILE_KEY, JSON.stringify(profile));
+    const key = `${STRATEGIC_PROFILE_KEY}:${effectiveId}`;
+    localStorage.setItem(key, JSON.stringify(profile));
   } catch (err) {
     console.warn("Failed to persist strategic profile to localStorage", err);
   }
 }
 
-export function getStrategicProfile(): StrategicProfile | null {
+export function getStrategicProfile(userId?: string | null): StrategicProfile | null {
   if (typeof window === "undefined") return null;
+  if (!userId || typeof userId !== "string" || userId.trim() === "") return null;
+
   try {
-    const raw = localStorage.getItem(STRATEGIC_PROFILE_KEY) || localStorage.getItem("bac_mastery_student_profile");
-    let profile: any = raw ? JSON.parse(raw) : null;
-    const reg = getRegistrationDraft();
-    const acad = getAcademicProfileDraft();
-
-    if (!profile && !reg && !acad) return null;
-
-    if (!profile) {
-      profile = {
-        id: `profile_${Date.now()}`,
-        streamId: reg?.streamId || "sciences_exp",
-        targetScore: acad?.targetScore || 16.0,
-        subjectEstimates: {},
-        availableTime: "12_to_18",
-        studyEnergy: "normal",
-        createdAt: new Date().toISOString(),
-      };
-    }
-
-    if (reg) {
-      profile.firstName = reg.firstName || profile.firstName;
-      profile.first_name = reg.firstName || profile.first_name;
-      profile.lastName = reg.lastName || profile.lastName;
-      profile.last_name = reg.lastName || profile.last_name;
-      profile.studentPhone = reg.studentPhone || profile.studentPhone;
-      profile.student_phone = reg.studentPhone || profile.student_phone;
-      profile.parentPhone = reg.parentPhone || profile.parentPhone;
-      profile.parent_phone = reg.parentPhone || profile.parent_phone;
-      profile.studentStatus = reg.studentStatus || profile.studentStatus;
-      profile.student_status = reg.studentStatus || profile.student_status;
-      profile.streamId = reg.streamId || profile.streamId;
-      profile.stream_id = reg.streamId || profile.stream_id;
-      profile.techniqueMathSpecialty = reg.techniqueMathSpecialty || profile.techniqueMathSpecialty;
-      profile.wilayaCode = reg.wilayaCode || profile.wilayaCode;
-      profile.wilaya_code = reg.wilayaCode || profile.wilaya_code;
-      profile.wilayaName = reg.wilayaName || profile.wilayaName;
-      profile.wilaya_name = reg.wilayaName || profile.wilaya_name;
-      profile.communeCode = reg.communeCode || profile.communeCode;
-      profile.commune_code = reg.communeCode || profile.commune_code;
-      profile.communeName = reg.communeName || profile.communeName;
-      profile.commune_name = reg.communeName || profile.commune_name;
-      profile.schoolName = reg.schoolName !== undefined ? reg.schoolName : profile.schoolName;
-      profile.school_name = reg.schoolName !== undefined ? reg.schoolName : profile.school_name;
-      profile.registrationCompletedAt = reg.registrationCompletedAt || profile.registrationCompletedAt;
-      profile.registration_completed_at = reg.registrationCompletedAt || profile.registration_completed_at;
-    }
-
-    if (acad) {
-      profile.targetScore = acad.targetScore || profile.targetScore;
-      profile.target_score = acad.targetScore || profile.target_score;
-      profile.academicProfileCompletedAt = acad.academicProfileCompletedAt || profile.academicProfileCompletedAt;
-      profile.academic_profile_completed_at = acad.academicProfileCompletedAt || profile.academic_profile_completed_at;
-      if (acad.targetSpecialty) {
-        profile.targetSpecialty = acad.targetSpecialty;
-        profile.target_specialty = acad.targetSpecialty;
-      }
-      if (acad.studyMethods) {
-        profile.studyMethods = acad.studyMethods;
-        profile.study_methods = acad.studyMethods;
-      }
-    }
-
-    return profile as StrategicProfile;
+    const key = `${STRATEGIC_PROFILE_KEY}:${userId.trim()}`;
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    return JSON.parse(raw) as StrategicProfile;
   } catch {
     return null;
   }
 }
 
-export function clearStrategicProfile(): void {
+export function clearStrategicProfile(userId?: string | null): void {
   if (typeof window === "undefined") return;
   try {
+    if (userId && typeof userId === "string" && userId.trim() !== "") {
+      localStorage.removeItem(`${STRATEGIC_PROFILE_KEY}:${userId.trim()}`);
+    }
     localStorage.removeItem(STRATEGIC_PROFILE_KEY);
+    localStorage.removeItem("bac_mastery_student_profile");
+    localStorage.removeItem("bac_student_profile");
+    localStorage.removeItem("bac_strategic_profile");
   } catch {
     // Ignore
   }
 }
 
 /**
- * LocalStorage Helpers for Registration Draft (V1 Progressive Flow)
+ * LocalStorage Helpers for Registration Draft (strictly scoped by userId)
+ * NEVER accepts unauthenticated or arbitrary unscoped storage.
  */
-export const REGISTRATION_DRAFT_KEY = "bac_mastery_registration_draft";
-export const ACADEMIC_PROFILE_DRAFT_KEY = "bac_mastery_academic_draft";
-
-export function saveRegistrationDraft(draft: any): void {
+export function saveRegistrationDraft(draft: any, userId?: string | null): void {
   if (typeof window === "undefined") return;
+  if (!userId || typeof userId !== "string" || userId.trim() === "") return;
+
   try {
-    localStorage.setItem(REGISTRATION_DRAFT_KEY, JSON.stringify(draft));
+    const key = `${REGISTRATION_DRAFT_KEY}:${userId.trim()}`;
+    localStorage.setItem(key, JSON.stringify(draft));
   } catch (err) {
     console.warn("Failed to persist registration draft to localStorage", err);
   }
 }
 
-export function getRegistrationDraft(): any | null {
+export function getRegistrationDraft(userId?: string | null): any | null {
   if (typeof window === "undefined") return null;
+  if (!userId || typeof userId !== "string" || userId.trim() === "") return null;
+
   try {
-    const raw = localStorage.getItem(REGISTRATION_DRAFT_KEY);
+    const key = `${REGISTRATION_DRAFT_KEY}:${userId.trim()}`;
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
     return JSON.parse(raw);
   } catch {
@@ -180,28 +170,41 @@ export function getRegistrationDraft(): any | null {
   }
 }
 
-export function clearRegistrationDraft(): void {
+export function clearRegistrationDraft(userId?: string | null): void {
   if (typeof window === "undefined") return;
   try {
+    if (userId && typeof userId === "string" && userId.trim() !== "") {
+      localStorage.removeItem(`${REGISTRATION_DRAFT_KEY}:${userId.trim()}`);
+    }
     localStorage.removeItem(REGISTRATION_DRAFT_KEY);
   } catch {
     // Ignore
   }
 }
 
-export function saveAcademicProfileDraft(draft: any): void {
+/**
+ * LocalStorage Helpers for Academic Profile Draft (strictly scoped by userId)
+ * NEVER accepts unauthenticated or arbitrary unscoped storage.
+ */
+export function saveAcademicProfileDraft(draft: any, userId?: string | null): void {
   if (typeof window === "undefined") return;
+  if (!userId || typeof userId !== "string" || userId.trim() === "") return;
+
   try {
-    localStorage.setItem(ACADEMIC_PROFILE_DRAFT_KEY, JSON.stringify(draft));
+    const key = `${ACADEMIC_PROFILE_DRAFT_KEY}:${userId.trim()}`;
+    localStorage.setItem(key, JSON.stringify(draft));
   } catch (err) {
     console.warn("Failed to persist academic profile draft to localStorage", err);
   }
 }
 
-export function getAcademicProfileDraft(): any | null {
+export function getAcademicProfileDraft(userId?: string | null): any | null {
   if (typeof window === "undefined") return null;
+  if (!userId || typeof userId !== "string" || userId.trim() === "") return null;
+
   try {
-    const raw = localStorage.getItem(ACADEMIC_PROFILE_DRAFT_KEY);
+    const key = `${ACADEMIC_PROFILE_DRAFT_KEY}:${userId.trim()}`;
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
     return JSON.parse(raw);
   } catch {
@@ -209,11 +212,84 @@ export function getAcademicProfileDraft(): any | null {
   }
 }
 
-export function clearAcademicProfileDraft(): void {
+export function clearAcademicProfileDraft(userId?: string | null): void {
   if (typeof window === "undefined") return;
   try {
+    if (userId && typeof userId === "string" && userId.trim() !== "") {
+      localStorage.removeItem(`${ACADEMIC_PROFILE_DRAFT_KEY}:${userId.trim()}`);
+    }
     localStorage.removeItem(ACADEMIC_PROFILE_DRAFT_KEY);
+    localStorage.removeItem("bac_academic_profile_draft");
   } catch {
     // Ignore
   }
+}
+
+/**
+ * Purge all legacy global unscoped keys across the application
+ */
+export function purgeLegacyGlobalStorage(): void {
+  if (typeof window === "undefined") return;
+  const legacyKeys = [
+    ONBOARDING_DRAFT_KEY,
+    STRATEGIC_PROFILE_KEY,
+    REGISTRATION_DRAFT_KEY,
+    ACADEMIC_PROFILE_DRAFT_KEY,
+    GUEST_DRAFT_KEY,
+    "bac_mastery_student_profile",
+    "bac_student_profile",
+    "bac_strategic_profile",
+    "bac_academic_profile_draft",
+    "bac_mastery_guest_draft:guest",
+    `${ONBOARDING_DRAFT_KEY}:guest`,
+    `${STRATEGIC_PROFILE_KEY}:guest`,
+    `${REGISTRATION_DRAFT_KEY}:guest`,
+    `${ACADEMIC_PROFILE_DRAFT_KEY}:guest`,
+    "bac_mastery_diagnostic_session",
+    "bac_mastery_diagnostic_results",
+  ];
+
+  legacyKeys.forEach((key) => {
+    try {
+      localStorage.removeItem(key);
+    } catch {}
+  });
+}
+
+/**
+ * Purge storage scoped strictly to a given user
+ */
+export function purgeUserScopedStorage(userId: string): void {
+  if (typeof window === "undefined" || !userId) return;
+  const trimmedId = userId.trim();
+  clearRegistrationDraft(trimmedId);
+  clearAcademicProfileDraft(trimmedId);
+  clearStrategicProfile(trimmedId);
+  clearOnboardingDraft(trimmedId);
+
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && (k.endsWith(`:${trimmedId}`) || k.includes(`:${trimmedId}:`))) {
+        keysToRemove.push(k);
+      }
+    }
+    keysToRemove.forEach((k) => {
+      try {
+        localStorage.removeItem(k);
+      } catch {}
+    });
+  } catch {}
+}
+
+/**
+ * Combined purge for explicit cleanup routines
+ */
+export function purgeUserAndLegacyStorage(userId?: string): void {
+  if (typeof window === "undefined") return;
+  if (userId) {
+    purgeUserScopedStorage(userId);
+  }
+  purgeLegacyGlobalStorage();
 }

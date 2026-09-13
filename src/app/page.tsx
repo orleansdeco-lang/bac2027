@@ -50,10 +50,10 @@ export default function HomePage() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    const p = getStrategicProfile();
+    const p = user?.id ? getStrategicProfile(user.id) : null;
     trackEvent("landing_view", { hasProfile: Boolean(p) });
-    if (p) setProfile(p);
-  }, []);
+    setProfile(p);
+  }, [user]);
 
   return (
     <AppShell showSidebar={false}>

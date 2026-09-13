@@ -39,10 +39,10 @@ export const StudentRepository = {
       } catch {}
     }
     if (!effectiveUserId) {
-      effectiveUserId = getStrategicProfile()?.id;
+      return null;
     }
 
-    if (effectiveUserId && memoryStudentProfiles.has(effectiveUserId)) {
+    if (memoryStudentProfiles.has(effectiveUserId)) {
       return memoryStudentProfiles.get(effectiveUserId);
     }
 
@@ -56,11 +56,11 @@ export const StudentRepository = {
 
         if (error) {
           console.error("StudentRepository.getProfile error:", error);
-          return getStrategicProfile();
+          return null;
         }
 
         if (data) {
-          const localFallback = getStrategicProfile() || ({} as any);
+          const localFallback = getStrategicProfile(effectiveUserId) || ({} as any);
           const createdAt = data.created_at || localFallback.created_at || localFallback.createdAt || new Date().toISOString();
           const trialStarted = data.trial_started_at || data.raw_draft?.trial_started_at || createdAt;
           const trialExpires = data.trial_expires_at || calculateTrialExpiration(new Date(createdAt)).toISOString();
@@ -71,7 +71,7 @@ export const StudentRepository = {
           const merged: any = {
             ...localFallback,
             ...(data.raw_draft && typeof data.raw_draft === "object" ? data.raw_draft : {}),
-            id: data.id || effectiveUserId || localFallback.id,
+            id: data.id || effectiveUserId,
             educationLevel: (data.education_level as any) || data.raw_draft?.educationLevel || localFallback.educationLevel || "secondary",
             examType: ((data.exam_type || data.raw_draft?.examType || localFallback.examType || "bac").toUpperCase() as any),
             streamId: data.stream_id || data.raw_draft?.streamId || localFallback.streamId,
@@ -123,15 +123,19 @@ export const StudentRepository = {
             academic_profile_completed_at: data.academic_profile_completed_at || data.raw_draft?.academicProfileCompletedAt || data.raw_draft?.academic_profile_completed_at || localFallback.academicProfileCompletedAt || localFallback.academic_profile_completed_at,
             academicProfileCompletedAt: data.academic_profile_completed_at || data.raw_draft?.academicProfileCompletedAt || data.raw_draft?.academic_profile_completed_at || localFallback.academicProfileCompletedAt || localFallback.academic_profile_completed_at,
           };
-          saveStrategicProfile(merged);
+          saveStrategicProfile(merged, effectiveUserId);
+          memoryStudentProfiles.set(effectiveUserId, merged);
           return merged;
         }
+
+        // Supabase returned no row for this user: they have no profile yet
+        return null;
       } catch (err) {
         console.error("StudentRepository.getProfile exception:", err);
       }
     }
 
-    return getStrategicProfile();
+    return getStrategicProfile(effectiveUserId);
   },
 
   /**
@@ -162,7 +166,7 @@ export const StudentRepository = {
       plan: plan,
     };
 
-    saveStrategicProfile(sanitizedProfile);
+    saveStrategicProfile(sanitizedProfile, targetId);
 
     if (targetId) {
       memoryStudentProfiles.set(targetId, { ...sanitizedProfile, id: targetId });
@@ -243,10 +247,6 @@ export const StudentRepository = {
         if (stored) effectiveUserId = JSON.parse(stored)?.id;
       } catch {}
     }
-    if (!effectiveUserId) {
-      effectiveUserId = getStrategicProfile()?.id;
-    }
-
     if (!effectiveUserId || effectiveUserId.trim() === "") {
       throw new Error("Cannot save registration without an authenticated userId: profile must not exist outside an account");
     }
@@ -266,11 +266,11 @@ export const StudentRepository = {
       registrationCompletedAt: data.registrationCompletedAt || new Date().toISOString(),
     };
 
-    // Save to LocalStorage draft
-    saveRegistrationDraft(sanitizedData);
+    // Save to LocalStorage draft (scoped to userId)
+    saveRegistrationDraft(sanitizedData, userId);
 
-    // Sync baseline StrategicProfile for backward compatibility
-    const existingProfile = getStrategicProfile();
+    // Sync baseline StrategicProfile for this user
+    const existingProfile = getStrategicProfile(userId);
     const updatedProfile: StrategicProfile = {
       id: userId || existingProfile?.id || `profile_${Date.now()}`,
       educationLevel: "secondary",
@@ -307,7 +307,10 @@ export const StudentRepository = {
     (updatedProfile as any).commune_name = sanitizedData.communeName;
     (updatedProfile as any).school_name = sanitizedData.schoolName;
     (updatedProfile as any).registration_completed_at = sanitizedData.registrationCompletedAt;
-    saveStrategicProfile(updatedProfile);
+    saveStrategicProfile(updatedProfile, userId);
+    if (userId) {
+      memoryStudentProfiles.set(userId, updatedProfile);
+    }
 
     // Persist to Supabase if authenticated
     if (isSupabaseConfigured && supabase && userId) {
@@ -389,9 +392,6 @@ export const StudentRepository = {
         if (stored) effectiveUserId = JSON.parse(stored)?.id;
       } catch {}
     }
-    if (!effectiveUserId) {
-      effectiveUserId = getStrategicProfile()?.id;
-    }
 
     if (!effectiveUserId || effectiveUserId.trim() === "") {
       throw new Error("Cannot save academic profile without an authenticated userId: profile must not exist outside an account");
@@ -410,11 +410,11 @@ export const StudentRepository = {
       academicProfileCompletedAt: data.academicProfileCompletedAt || new Date().toISOString(),
     };
 
-    // Save to LocalStorage
-    saveAcademicProfileDraft(sanitizedData);
+    // Save to LocalStorage draft (scoped)
+    saveAcademicProfileDraft(sanitizedData, effectiveUserId);
 
     // Update targetScore on strategic profile mirror
-    const existingProfile = getStrategicProfile();
+    const existingProfile = getStrategicProfile(effectiveUserId);
     if (existingProfile) {
       existingProfile.targetScore = sanitizedData.targetScore;
       existingProfile.academicProfileCompletedAt = sanitizedData.academicProfileCompletedAt;
@@ -431,7 +431,8 @@ export const StudentRepository = {
         existingProfile.studyMethods = sanitizedData.studyMethods;
         (existingProfile as any).study_methods = sanitizedData.studyMethods;
       }
-      saveStrategicProfile(existingProfile);
+      saveStrategicProfile(existingProfile, effectiveUserId);
+      memoryStudentProfiles.set(effectiveUserId, existingProfile);
     }
 
     // Persist to Supabase if authenticated
@@ -516,7 +517,10 @@ export const StudentRepository = {
       }
     }
 
-    return getRegistrationDraft();
+    if (userId) {
+      return getRegistrationDraft(userId);
+    }
+    return null;
   },
 
   /**
@@ -550,39 +554,29 @@ export const StudentRepository = {
       }
     }
 
-    return getAcademicProfileDraft();
+    if (userId) {
+      return getAcademicProfileDraft(userId);
+    }
+    return null;
   },
 
   /**
-   * Safely migrate existing LocalStorage profile to Supabase on first sign in
+   * Disarmed syncLocalToCloud to prevent cross-account contamination.
+   * Under canonical identity rules, local prototype or guest drafts
+   * must NEVER automatically migrate into newly registered cloud accounts.
    */
-  async syncLocalToCloud(userId: string): Promise<void> {
-    const localProfile = getStrategicProfile();
-    const localReg = getRegistrationDraft();
-    const localAcad = getAcademicProfileDraft();
+  async syncLocalToCloud(_userId: string): Promise<void> {
+    return;
+  },
 
-    if (isSupabaseConfigured && supabase && userId) {
-      try {
-        const { data } = await supabase
-          .from("student_profiles")
-          .select("id, registration_completed_at")
-          .eq("id", userId)
-          .maybeSingle();
-
-        if (!data && localProfile) {
-          await this.saveProfile(localProfile, userId);
-        }
-
-        if (localReg && (!data || !data.registration_completed_at)) {
-          await this.saveRegistrationData(localReg, userId);
-        }
-
-        if (localAcad) {
-          await this.saveAcademicProfileData(localAcad, userId);
-        }
-      } catch (err) {
-        console.error("StudentRepository.syncLocalToCloud error:", err);
-      }
+  /**
+   * Invalidate memory cache for a specific user or completely upon sign out
+   */
+  clearMemoryCache(userId?: string): void {
+    if (userId) {
+      memoryStudentProfiles.delete(userId);
+    } else {
+      memoryStudentProfiles.clear();
     }
   },
 };

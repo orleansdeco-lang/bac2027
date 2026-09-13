@@ -41,10 +41,13 @@ import {
   clearDiagnosticSession,
 } from "@/lib/diagnostic";
 import { trackEvent } from "@/lib/analytics";
+import { useAuth } from "@/lib/auth/context";
+import { StudentService } from "@/lib/services";
 
 export default function DiagnosticPage() {
   const router = useRouter();
   const { t, locale, direction } = useTranslation();
+  const { user } = useAuth();
   const isRtl = direction === "rtl";
   const NextArrow = isRtl ? ArrowLeft : ArrowRight;
   const PrevArrow = isRtl ? ArrowRight : ArrowLeft;
@@ -68,49 +71,46 @@ export default function DiagnosticPage() {
     let activeSpecialty: TechniqueMathSpecialty | undefined = undefined;
     let estimate = 12.0;
 
-    try {
-      const savedProfile =
-        localStorage.getItem("bac_student_profile") ||
-        localStorage.getItem("bac_strategic_profile") ||
-        localStorage.getItem("bac_mastery_registration_draft") ||
-        localStorage.getItem("bac_mastery_academic_draft") ||
-        localStorage.getItem("bac_academic_profile_draft") ||
-        localStorage.getItem("bac_mastery_student_profile") ||
-        localStorage.getItem("bac_mastery_onboarding_draft");
-      const profileData = savedProfile ? JSON.parse(savedProfile) : null;
-
-      if (profileData) {
-        if (profileData.streamId) activeStream = profileData.streamId;
-        if (profileData.techniqueMathSpecialty) activeSpecialty = profileData.techniqueMathSpecialty;
-        if (profileData.estimatedBaselineScore) estimate = profileData.estimatedBaselineScore;
-        else if (profileData.targetScore) estimate = Math.max(8, profileData.targetScore - 4);
+    async function initDiagnostic() {
+      const effectiveUserId = user?.id || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id : undefined);
+      if (effectiveUserId) {
+        try {
+          const profile = await StudentService.getProfile(effectiveUserId);
+          if (profile) {
+            if (profile.streamId) activeStream = profile.streamId;
+            if (profile.techniqueMathSpecialty) activeSpecialty = profile.techniqueMathSpecialty;
+            if (profile.targetScore) estimate = Math.max(8, profile.targetScore - 4);
+          }
+        } catch (e) {
+          console.error("Error reading profile for diagnostic", e);
+        }
       }
-    } catch (e) {
-      console.error("Error reading profile for diagnostic", e);
+
+      setStreamId(activeStream);
+      setSpecialty(activeSpecialty);
+      setSelfEstimateScore(estimate);
+
+      const pack = getDiagnosticQuestionsForStream(activeStream);
+      setQuestions(pack);
+
+      const existingSession = loadDiagnosticSession();
+      if (existingSession && existingSession.status === "in_progress") {
+        setSession(existingSession);
+        const resumeIndex = Math.min(existingSession.currentQuestionIndex, pack.length - 1);
+        setCurrentIndex(resumeIndex);
+        const currentQ = pack[resumeIndex];
+        const existingResp = existingSession.responses[currentQ.id];
+        if (existingResp) {
+          setSelectedOptionId(existingResp.selectedOptionId);
+          setConfidenceRating(existingResp.confidenceRating);
+        }
+      }
+
+      setHasLoaded(true);
     }
 
-    setStreamId(activeStream);
-    setSpecialty(activeSpecialty);
-    setSelfEstimateScore(estimate);
-
-    const pack = getDiagnosticQuestionsForStream(activeStream);
-    setQuestions(pack);
-
-    const existingSession = loadDiagnosticSession();
-    if (existingSession && existingSession.status === "in_progress") {
-      setSession(existingSession);
-      const resumeIndex = Math.min(existingSession.currentQuestionIndex, pack.length - 1);
-      setCurrentIndex(resumeIndex);
-      const currentQ = pack[resumeIndex];
-      const existingResp = existingSession.responses[currentQ.id];
-      if (existingResp) {
-        setSelectedOptionId(existingResp.selectedOptionId);
-        setConfidenceRating(existingResp.confidenceRating);
-      }
-    }
-
-    setHasLoaded(true);
-  }, []);
+    initDiagnostic();
+  }, [user]);
 
   // Timer for active question
   useEffect(() => {

@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/Badge";
 import { AppShell } from "@/components/ui/AppShell";
 import { RoadVisualizer } from "@/components/ui/RoadVisualizer";
 import { StrategicProfile, InitialGapResult, StrategicBottleneckAnalysis } from "@/types/onboarding";
-import { getStrategicProfile } from "@/lib/onboarding/profile";
 import { calculateInitialStrategicGap } from "@/lib/onboarding/gap";
 import { detectStrategicBottleneck } from "@/lib/onboarding/bottleneck";
 import { DiagnosticAnalysisResult } from "@/types/diagnostic";
@@ -25,7 +24,7 @@ import {
   MasteryRepository,
 } from "@/lib/repositories";
 import { AdaptiveRoadmapState, QueuedMissionItem } from "@/types/roadmap";
-import { buildAdaptiveRoadmap, getComputedAdaptiveRoadmap } from "@/lib/roadmap";
+import { buildAdaptiveRoadmap } from "@/lib/roadmap";
 import { setActiveMissionId } from "@/lib/mission";
 import { trackEvent } from "@/lib/analytics";
 import { getAllTopics, getSkillsForTopic } from "@/data/curriculum";
@@ -464,9 +463,9 @@ export default function RoadmapPage() {
               </span>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {Object.values(roadmapState.subjectProgress)
-                  .filter((sp) => sp.evidenceLevel === "pilot_evidence")
-                  .map((sp) => (
+                {(Object.values(roadmapState.subjectProgress) as any[])
+                  .filter((sp: any) => sp.evidenceLevel === "pilot_evidence")
+                  .map((sp: any) => (
                     <div
                       key={sp.subjectId}
                       className="p-3.5 rounded-xl border border-theme bg-surface-soft space-y-2 shadow-sm"
@@ -508,8 +507,8 @@ export default function RoadmapPage() {
               <div className="pt-2 border-t border-theme">
                 {(() => {
                   const streamId = profile?.streamId || "sciences_exp";
-                  const activeStreamSubjects = roadmapState?.subjectProgress
-                    ? Object.values(roadmapState.subjectProgress).filter((sp) => sp.status !== "not_assessed")
+                  const activeStreamSubjects: any[] = roadmapState?.subjectProgress
+                    ? (Object.values(roadmapState.subjectProgress) as any[]).filter((sp: any) => sp.status !== "not_assessed")
                     : [];
                   const streamActiveSkillsCount = activeStreamSubjects.reduce((acc, sp) => acc + sp.totalPilotSkills, 0);
                   const streamLabel =
@@ -542,7 +541,7 @@ export default function RoadmapPage() {
                             {t.roadmap.curriculumMapSubtitle || (locale === "ar" ? `استكشف مهارات شعبة ${streamLabel}، مع تتبع حالة كل كفاءة.` : `Explorez les compétences de la filière ${streamLabel}.`)}
                           </p>
 
-                          {activeStreamSubjects.map((subj) => {
+                          {activeStreamSubjects.map((subj: any) => {
                             const skills = getSkillsForSubject(subj.subjectId, streamId);
                             if (skills.length === 0) return null;
                             const subjName = locale === "ar" ? subj.name_ar : subj.name_fr;
@@ -561,10 +560,10 @@ export default function RoadmapPage() {
 
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                                   {skills.map((skill) => {
-                                    const isMastered = roadmapState?.masteredSkills.some((s) => s.skillId === skill.id);
-                                    const isEmerging = roadmapState?.emergingSkills.some((s) => s.skillId === skill.id);
-                                    const isNeedsWork = roadmapState?.needsMoreWorkSkills.some((s) => s.skillId === skill.id);
-                                    const isUnresolved = roadmapState?.unresolvedErrors.some((e) => e.skillId === skill.id);
+                                    const isMastered = roadmapState?.masteredSkills.some((s: any) => s.skillId === skill.id);
+                                    const isEmerging = roadmapState?.emergingSkills.some((s: any) => s.skillId === skill.id);
+                                    const isNeedsWork = roadmapState?.needsMoreWorkSkills.some((s: any) => s.skillId === skill.id);
+                                    const isUnresolved = roadmapState?.unresolvedErrors.some((e: any) => e.skillId === skill.id);
 
                                     let statusBadge = (
                                       <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-surface-soft text-theme-muted border border-theme">

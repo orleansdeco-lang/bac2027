@@ -17,9 +17,10 @@ import {
  * Loads current browser evidence from localStorage and runs the pure engine
  */
 export function getComputedAdaptiveRoadmap(
-  overrides?: Partial<AdaptiveRoadmapInput>
+  overrides?: Partial<AdaptiveRoadmapInput>,
+  userId?: string
 ): AdaptiveRoadmapState {
-  const profile = getStrategicProfile();
+  const profile = getStrategicProfile(userId);
   const diagnosticResult = loadDiagnosticResults();
   const missions = loadMissions();
   const masteryEvidence = loadMasteryRecords();

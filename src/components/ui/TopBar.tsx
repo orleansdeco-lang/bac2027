@@ -44,16 +44,24 @@ export function TopBar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
-    const p = getStrategicProfile();
-    if (p) setProfile(p);
-    const reg = getRegistrationDraft();
-    if (reg) setRegData(reg);
     setIsMobileMenuOpen(false);
 
-    if (user) {
+    if (user?.id) {
+      const p = getStrategicProfile(user.id);
+      if (p) setProfile(p);
+      const reg = getRegistrationDraft(user.id);
+      if (reg) setRegData(reg);
+
       StudentService.getProfile(user.id).then((sp) => {
-        if (sp) setStudentProfile(sp);
+        if (sp) {
+          setStudentProfile(sp);
+          setProfile(sp as any);
+        }
       });
+    } else {
+      setProfile(null);
+      setRegData(null);
+      setStudentProfile(null);
     }
   }, [pathname, user]);
 

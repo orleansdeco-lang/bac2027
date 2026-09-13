@@ -60,7 +60,7 @@ export default function AcademicProfilePage() {
       const effectiveId = user?.id || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id : undefined);
       if (effectiveId) {
         StudentService.getProfile(effectiveId).then((p) => {
-          const regDraft = getRegistrationDraft();
+          const regDraft = getRegistrationDraft(effectiveId);
           const isRegistered = Boolean(
             p?.registrationCompletedAt ||
             (p as any)?.registration_completed_at ||
@@ -72,13 +72,7 @@ export default function AcademicProfilePage() {
           }
         });
       } else {
-        const regDraft = getRegistrationDraft();
-        const isRegistered = Boolean(
-          regDraft?.registrationCompletedAt && (regDraft?.firstName || regDraft?.streamId)
-        );
-        if (!isRegistered) {
-          router.replace("/auth/register");
-        }
+        router.replace("/auth/register");
       }
     }
   }, [user, isLoading, router]);
@@ -102,9 +96,10 @@ export default function AcademicProfilePage() {
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Restore draft on mount
+  // Restore draft on mount (scoped strictly to active user)
   useEffect(() => {
-    const draft = getAcademicProfileDraft();
+    const effectiveId = user?.id || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id : undefined);
+    const draft = getAcademicProfileDraft(effectiveId);
     if (draft) {
       if (draft.targetScore) setTargetScore(draft.targetScore);
       if (draft.annualAverageYear1 !== undefined && draft.annualAverageYear1 !== null) {
@@ -134,7 +129,7 @@ export default function AcademicProfilePage() {
         setCurrentSituation(draft.currentSelfAssessment);
       }
     }
-  }, []);
+  }, [user]);
 
   // Toggle study method
   const toggleMethod = (method: StudyMethodType) => {
@@ -173,7 +168,8 @@ export default function AcademicProfilePage() {
       return;
     }
 
-    // Auto-save draft
+    // Auto-save draft (scoped)
+    const effectiveUserId = user?.id || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id : undefined);
     const academicDraft: AcademicProfileData = {
       targetScore,
       annualAverageYear1: dontRemember1 || !avg1 ? null : parseFloat(avg1),
@@ -186,7 +182,7 @@ export default function AcademicProfilePage() {
       currentSelfAssessment: currentSituation,
       academicProfileCompletedAt: new Date().toISOString(),
     };
-    saveAcademicProfileDraft(academicDraft);
+    saveAcademicProfileDraft(academicDraft, effectiveUserId);
 
     setShowSummary(true);
   };
@@ -197,6 +193,7 @@ export default function AcademicProfilePage() {
     setErrorMsg(null);
 
     try {
+      const effectiveUserId = user?.id || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id : undefined);
       const academicData: AcademicProfileData = {
         targetScore,
         annualAverageYear1: dontRemember1 || !avg1 ? null : parseFloat(avg1),
@@ -210,10 +207,9 @@ export default function AcademicProfilePage() {
         academicProfileCompletedAt: new Date().toISOString(),
       };
 
-      // Save draft immediately to ensure offline / synchronous resilience
-      saveAcademicProfileDraft(academicData);
+      // Save draft immediately to ensure offline / synchronous resilience (scoped)
+      saveAcademicProfileDraft(academicData, effectiveUserId);
 
-      const effectiveUserId = user?.id || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id : undefined);
       await StudentService.saveAcademicProfile(academicData, effectiveUserId);
 
       // Start existing diagnostic flow

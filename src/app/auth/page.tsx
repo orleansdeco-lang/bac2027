@@ -25,7 +25,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { StudentService } from "@/lib/services";
-import { syncAllLocalStorageToCloud } from "@/lib/repositories";
+import { purgeUserAndLegacyStorage } from "@/lib/onboarding/profile";
 
 function AuthContent() {
   const router = useRouter();
@@ -109,7 +109,6 @@ function AuthContent() {
           setErrorMsg(error.message);
         } else if (loggedInUser) {
           await StudentService.handleAuthSessionMigration(loggedInUser.id);
-          await syncAllLocalStorageToCloud(loggedInUser.id);
           const profile = await StudentService.getProfile(loggedInUser.id);
           const { trackEvent } = await import("@/lib/analytics");
           trackEvent("login_completed", { userId: loggedInUser.id });
@@ -126,15 +125,14 @@ function AuthContent() {
         if (error) {
           setErrorMsg(error.message);
         } else if (newUser) {
-          await StudentService.handleAuthSessionMigration(newUser.id);
-          await syncAllLocalStorageToCloud(newUser.id);
+          // Clean slate for new account: eradicate any previous session state
+          purgeUserAndLegacyStorage(newUser.id);
           const { trackEvent } = await import("@/lib/analytics");
-          trackEvent("registration_completed", { userId: newUser.id });
           trackEvent("trial_started", { userId: newUser.id, durationHours: 72 });
           setSuccessMsg(
             locale === "fr"
-              ? "Compte créé avec succès ! Votre essai gratuit de 72h a débuté."
-              : "تم إنشاء حسابك بنجاح! بدأت تجربتك المجانية لمدة 72 ساعة."
+              ? "Compte créé avec succès ! Votre essai gratuit de 72h débutera dès votre inscription."
+              : "تم إنشاء حسابك بنجاح! ستبدأ تجربتك المجانية لمدة 72 ساعة فور التسجيل."
           );
           setTimeout(() => {
             router.push("/auth/register");

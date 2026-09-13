@@ -94,18 +94,18 @@ export default function OnboardingPage() {
   // Restore saved draft on mount
   useEffect(() => {
     trackEvent("onboarding_started");
-    const saved = getOnboardingDraft();
+    const saved = getOnboardingDraft(user?.id);
     if (saved) {
       setDraft(saved);
     }
     setIsClientLoaded(true);
-  }, []);
+  }, [user]);
 
   // Autosave draft on change
   const updateDraft = (updates: Partial<OnboardingDraft>) => {
     setDraft((prev) => {
       const next = { ...prev, ...updates };
-      saveOnboardingDraft(next);
+      saveOnboardingDraft(next, user?.id);
       return next;
     });
     setErrorMessage(null);
@@ -146,8 +146,8 @@ export default function OnboardingPage() {
 
   const handleFinish = async () => {
     try {
-      const profile = buildStrategicProfile(draft);
-      saveStrategicProfile(profile);
+      const profile = buildStrategicProfile(draft, user?.id);
+      saveStrategicProfile(profile, user?.id);
       trackEvent("onboarding_completed", {
         streamId: profile.streamId,
         targetScore: profile.targetScore,

@@ -31,9 +31,9 @@ export const StudentService = {
    * Rule: Server profile is authoritative. If server profile already exists, do not overwrite it.
    */
   async handleAuthSessionMigration(userId: string): Promise<StrategicProfile | null> {
-    const localProfile = getStrategicProfile();
+    if (!userId || userId.trim() === "") return null;
 
-    if (isSupabaseConfigured && supabase && userId) {
+    if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase
           .from("student_profiles")
@@ -43,62 +43,25 @@ export const StudentService = {
 
         if (error) {
           console.error("StudentService migration check error:", error);
-          return localProfile;
+          return null;
         }
 
         // Case 1: Server profile already exists and is authoritative
         if (data) {
           const serverProfile = await StudentRepository.getProfile(userId);
           if (serverProfile) {
-            saveStrategicProfile(serverProfile); // update local mirror
-            clearOnboardingDraft();
+            saveStrategicProfile(serverProfile, userId); // update scoped local mirror
+            clearOnboardingDraft(userId);
             return serverProfile;
           }
         }
-
-        // Case 2: No server profile exists, but local profile exists -> migrate up with 72h trial anchored to created_at
-        if (localProfile) {
-          const createdAt = (localProfile as any).created_at || (localProfile as any).createdAt || new Date().toISOString();
-          const trialStarted = (localProfile as any).trial_started_at || createdAt;
-          const trialExpires = calculateTrialExpiration(new Date(createdAt)).toISOString();
-          const trialProfile = {
-            ...localProfile,
-            trial_started_at: trialStarted,
-            trial_expires_at: trialExpires,
-            access_status: (localProfile as any).access_status === "PAID" ? "TRIAL" : ((localProfile as any).access_status || "TRIAL"),
-            plan: (localProfile as any).plan === "PAID" ? "PILOT_TRIAL" : ((localProfile as any).plan || "PILOT_TRIAL"),
-          };
-          await StudentRepository.saveProfile(trialProfile, userId);
-          clearOnboardingDraft();
-          return trialProfile;
-        }
-
-        // Case 3: Fresh registration without local profile -> create initial trial profile
-        const freshNow = new Date();
-        const freshExpires = calculateTrialExpiration(freshNow);
-        const defaultProfile: any = {
-          id: userId,
-          educationLevel: "secondary",
-          examType: "BAC",
-          streamId: "sciences_exp",
-          targetScore: 16.0,
-          subjectEstimates: {},
-          availableTime: "12_to_18",
-          studyEnergy: "normal",
-          createdAt: freshNow.toISOString(),
-          trial_started_at: freshNow.toISOString(),
-          trial_expires_at: freshExpires.toISOString(),
-          access_status: "TRIAL",
-          plan: "PILOT_TRIAL",
-        };
-        await StudentRepository.saveProfile(defaultProfile, userId);
-        return defaultProfile;
       } catch (err) {
         console.error("StudentService.handleAuthSessionMigration exception:", err);
       }
     }
 
-    return localProfile;
+    // New accounts start with a clean slate: no silent migration of unscoped drafts
+    return null;
   },
 
   /**

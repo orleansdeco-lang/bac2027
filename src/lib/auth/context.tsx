@@ -3,6 +3,9 @@
 import React, { createContext, useContext, useEffect, useState, useMemo } from "react";
 import { User, Session, AuthError } from "@supabase/supabase-js";
 import { supabase, isSupabaseConfigured } from "../supabase/client";
+import { purgeUserAndLegacyStorage, purgeUserScopedStorage, purgeLegacyGlobalStorage } from "../onboarding/profile";
+import { StudentRepository } from "../repositories/student-repository";
+import { clearAllMissionData } from "../mission/storage";
 
 export interface AuthContextType {
   user: User | null;
@@ -176,6 +179,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    const currentUid = user?.id;
+    if (currentUid) {
+      purgeUserScopedStorage(currentUid);
+      purgeUserAndLegacyStorage(currentUid);
+      StudentRepository.clearMemoryCache(currentUid);
+    }
+    purgeLegacyGlobalStorage();
+    clearAllMissionData();
+
     if (isSupabaseConfigured && supabase) {
       try {
         await supabase.auth.signOut();
