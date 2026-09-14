@@ -244,18 +244,22 @@ export async function updateSubscriptionPlan(
 
 /**
  * Manually extends an active or expired student's access.
+ * Supports both School Year (season) and Monthly (monthly) activations.
+ * Auto-provisions profile if user hasn't completed onboarding yet (including Absolute Owner).
  * Does NOT create a payment order.
  * Emits audit log: SUBSCRIPTION_EXTENDED.
  */
 export async function extendStudentSubscription(
   callerUserId: string,
-  studentId: string,
+  rawStudentId: string,
   extension: {
-    type: "1_month" | "1_week" | "custom";
+    type: "1_month" | "1_week" | "custom" | "season";
     days?: number;
     reason?: string;
-  }
-): Promise<{ success: boolean; error?: string; newExpiresAt?: string }> {
+    plan?: "season" | "monthly";
+  },
+  token?: string | null
+): Promise<{ success: boolean; error?: string; newExpiresAt?: string; plan?: string }> {
   // 1. Authorization check
   const authorized = await hasFinanceAccess(callerUserId);
   if (!authorized) {
@@ -265,19 +269,85 @@ export async function extendStudentSubscription(
     };
   }
 
-  const studentProfile: any = await StudentRepository.getProfile(studentId);
-  if (!studentProfile) {
-    return { success: false, error: `Student '${studentId}' not found.` };
+  const cleanStudentId = (rawStudentId || "").trim();
+  if (!cleanStudentId) {
+    return { success: false, error: "معرف الطالب أو بريده الإلكتروني مطلوب." };
+  }
+
+  // 2. Resolve owner email or UUID
+  let effectiveStudentId = cleanStudentId;
+  const isOwner = isAbsoluteOwner(cleanStudentId);
+  if (isOwner) {
+    effectiveStudentId = OWNER_UUID;
+  }
+
+  // 3. Retrieve student profile from Repository or remote Supabase
+  const client = token ? createAuthenticatedSupabaseClient(token) : supabase;
+  let studentProfile: any = await StudentRepository.getProfile(effectiveStudentId);
+
+  // If not in local repository, query remote Supabase
+  if (!studentProfile && isSupabaseConfigured && client) {
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(effectiveStudentId);
+      if (isUuid) {
+        const { data } = await client
+          .from("student_profiles")
+          .select("*")
+          .eq("id", effectiveStudentId)
+          .maybeSingle();
+        if (data) studentProfile = data;
+      } else if (cleanStudentId.includes("@")) {
+        const { data } = await client
+          .from("student_profiles")
+          .select("*")
+          .ilike("raw_draft->>student_email", cleanStudentId)
+          .maybeSingle();
+        if (data) {
+          studentProfile = data;
+          effectiveStudentId = data.id;
+        }
+      }
+    } catch {}
   }
 
   const now = new Date();
+
+  // 4. Auto-provision student profile if not found
+  // Guarantees that neither Owner nor fresh registered students fail activation
+  if (!studentProfile) {
+    studentProfile = {
+      id: effectiveStudentId,
+      user_id: effectiveStudentId,
+      streamId: "sciences_exp",
+      targetScore: 16.0,
+      educationLevel: "secondary",
+      examType: "bac",
+      access_status: "PAID",
+      plan: extension.plan || (extension.type === "1_month" ? "monthly" : "season"),
+      first_name: isOwner ? "المالك (Admin)" : "طالب",
+      last_name: "BAC Mastery",
+      createdAt: now.toISOString(),
+      created_at: now.toISOString(),
+    };
+  }
+
+  // 5. Calculate extension duration and plan type
   let extensionMs = 30 * 24 * 60 * 60 * 1000; // default 1 month
+  let chosenPlan: "season" | "monthly" = extension.plan || (extension.type === "1_month" ? "monthly" : "season");
 
   if (extension.type === "1_week") {
     extensionMs = 7 * 24 * 60 * 60 * 1000;
+  } else if (extension.type === "1_month" || extension.plan === "monthly") {
+    extensionMs = 30 * 24 * 60 * 60 * 1000;
+    chosenPlan = "monthly";
+  } else if (extension.type === "season" || extension.plan === "season") {
+    const days = extension.days ? Number(extension.days) : 365;
+    extensionMs = days * 24 * 60 * 60 * 1000;
+    chosenPlan = "season";
   } else if (extension.type === "custom") {
     const safeDays = Math.max(1, Number(extension.days) || 30);
     extensionMs = safeDays * 24 * 60 * 60 * 1000;
+    chosenPlan = safeDays > 60 ? "season" : "monthly";
   }
 
   // Base anchor: if student is currently active (subscription_expires_at > now), add to existing end date;
@@ -301,36 +371,62 @@ export async function extendStudentSubscription(
   // Update student profile authoritatively
   const updatedProfile = {
     ...studentProfile,
+    id: effectiveStudentId,
     access_status: "PAID",
-    plan: studentProfile.plan === "PILOT_TRIAL" ? "season" : studentProfile.plan || "season",
+    plan: chosenPlan,
     subscription_started_at: studentProfile.subscription_started_at || now.toISOString(),
     subscription_expires_at: newExpiration,
     updated_at: now.toISOString(),
   };
 
-  await StudentRepository.saveProfile(updatedProfile as any);
+  await StudentRepository.saveProfile(updatedProfile as any, effectiveStudentId);
+
+  // Directly upsert into Supabase student_profiles table if database is configured
+  if (isSupabaseConfigured && client) {
+    try {
+      await client.from("student_profiles").upsert(
+        {
+          id: effectiveStudentId,
+          user_id: effectiveStudentId,
+          stream_id: updatedProfile.streamId || "sciences_exp",
+          education_level: updatedProfile.educationLevel || "secondary",
+          exam_type: (updatedProfile.examType || "bac").toLowerCase(),
+          target_score: updatedProfile.targetScore || 16.0,
+          access_status: "PAID",
+          plan: chosenPlan,
+          subscription_started_at: updatedProfile.subscription_started_at,
+          subscription_expires_at: newExpiration,
+          updated_at: now.toISOString(),
+        },
+        { onConflict: "id" }
+      );
+    } catch (dbErr) {
+      console.warn("Direct Supabase upsert in extendStudentSubscription:", dbErr);
+    }
+  }
 
   // Emit audit log
   const role = (await getServerUserRole(callerUserId)) || "OPERATOR";
-  const reasonText = extension.reason || `Manual subscription extension (${extension.type}) by operator`;
+  const reasonText = extension.reason || `Manual subscription activation (${chosenPlan}) by operator`;
 
   await recordAuditLog({
     actorUserId: callerUserId,
     actorRole: role,
     action: "SUBSCRIPTION_EXTENDED",
     targetType: "student_profile",
-    targetId: studentId,
+    targetId: effectiveStudentId,
     reason: reasonText,
     beforeState,
     afterState: {
       access_status: "PAID",
       subscription_expires_at: newExpiration,
       extension_type: extension.type,
+      extension_plan: chosenPlan,
       extension_days: Math.round(extensionMs / (24 * 3600 * 1000)),
     },
   });
 
-  return { success: true, newExpiresAt: newExpiration };
+  return { success: true, newExpiresAt: newExpiration, plan: chosenPlan };
 }
 
 /**

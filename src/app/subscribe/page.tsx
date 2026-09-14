@@ -70,7 +70,11 @@ export default function SubscribePage() {
   const CCP_ACCOUNT = "22334455";
   const CCP_KEY = "66";
 
-  const activationMessage = `مرحباً، قمت بالدفع لتفعيل حساب BAC Mastery.\nالبريد الإلكتروني: ${user?.email || "غير مسجل"}\nمعرف الحساب: ${user?.id || "غير متوفر"}\nمرفق صورة الوصل.`;
+  const selectedPlanName = plan?.id === "monthly"
+    ? (isAr ? "الاشتراك الشهري (30 يوماً)" : "Pass Mensuel (30 jours)")
+    : (isAr ? "اشتراك السنة الدراسية (موسم كامل)" : "Pass Année Scolaire (Saison Complète)");
+
+  const activationMessage = `مرحباً، قمت بالدفع لتفعيل حساب BAC Mastery.\nنوع الاشتراك: ${selectedPlanName}\nالبريد الإلكتروني: ${user?.email || "غير مسجل"}\nمعرف الحساب: ${user?.id || "غير متوفر"}\nمرفق صورة الوصل.`;
   const activationWhatsAppUrl = `https://wa.me/${ACTIVATION_WHATSAPP_NUMBER}?text=${encodeURIComponent(activationMessage)}`;
 
   const supportMessage = "مرحباً، أحتاج إلى مساعدة ودعم فني في منصة BAC Mastery.";
@@ -276,37 +280,46 @@ export default function SubscribePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-2">
             {availablePlans.map((p) => {
               const isSelected = plan?.id === p.id;
-              const isClosed = p.active === false;
+              const isMonthly = p.id === "monthly";
               return (
                 <button
                   type="button"
                   key={p.id}
                   onClick={() => setPlan(p)}
-                  className={`p-3.5 rounded-2xl border text-start transition-all relative flex flex-col justify-between ${
+                  className={`p-4 rounded-2xl border text-start transition-all relative flex flex-col justify-between gap-2.5 cursor-pointer ${
                     isSelected
-                      ? "border-2 border-[var(--color-primary)] bg-[var(--color-primary-soft)]/20 shadow-sm"
-                      : "border-theme bg-card hover:border-[var(--color-primary)]/40 opacity-80"
+                      ? "border-2 border-[var(--color-primary)] bg-[var(--color-primary-soft)]/25 shadow-md shadow-[var(--color-primary)]/10 ring-2 ring-[var(--color-primary)]/20"
+                      : "border-theme bg-card hover:border-[var(--color-primary)]/50 opacity-90 hover:opacity-100"
                   }`}
                 >
                   <div className="flex items-center justify-between w-full">
-                    <span className="text-xs font-bold text-theme-text">
-                      {isAr ? p.name_ar : p.name_fr}
-                    </span>
-                    {isClosed ? (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-500 font-medium">
-                        {isAr ? "مغلق" : "Fermé"}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-theme-text">
+                        {isMonthly
+                          ? (isAr ? "📅 الاشتراك الشهري" : "📅 Pass Mensuel")
+                          : (isAr ? "🎓 اشتراك السنة الدراسية" : "🎓 Pass Année Scolaire")}
+                      </span>
+                    </div>
+                    {!isMonthly ? (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30">
+                        {isAr ? "الأوفر والأكثر طلباً ⭐" : "Plus économique ⭐"}
                       </span>
                     ) : (
-                      <span className="text-xs font-bold font-mono text-[var(--color-primary)]">
-                        {p.priceDZD} {isAr ? "دج" : "DA"}
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/30">
+                        {isAr ? "مرونة شهرية 🔄" : "Flexible 🔄"}
                       </span>
                     )}
                   </div>
-                  <span className="text-[11px] text-theme-secondary mt-1 block">
-                    {p.durationMonths === 1
-                      ? isAr ? "صلاحية 1 شهر كامل" : "1 mois complet"
-                      : isAr ? `صلاحية ${p.durationMonths} أشهر حتى البكالوريا` : `${p.durationMonths} mois jusqu'au BAC`}
-                  </span>
+                  <div className="flex items-baseline justify-between w-full pt-1 border-t border-theme/40">
+                    <span className="text-xs text-theme-secondary">
+                      {isMonthly
+                        ? (isAr ? "صلاحية 30 يوماً كاملة قابلة للتجديد" : "Accès 30 jours renouvelable")
+                        : (isAr ? "وصول شامل حتى يوم امتحان البكالوريا" : "Accès garanti jusqu'au BAC")}
+                    </span>
+                    <span className="text-xs font-bold text-[var(--color-primary)]">
+                      {isMonthly ? (isAr ? "بالشهر" : "/ mois") : (isAr ? "سنة كاملة" : "Saison")}
+                    </span>
+                  </div>
                 </button>
               );
             })}
@@ -608,6 +621,21 @@ export default function SubscribePage() {
                 <span className="font-mono font-bold text-theme-text text-sm block select-all">
                   {checkoutData.referenceId}
                 </span>
+              </div>
+
+              {/* Selected Plan Details */}
+              <div className="p-3 rounded-xl bg-surface border border-theme flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-theme-muted uppercase tracking-wider block">
+                    {isAr ? "نوع الاشتراك المختار:" : "Pass sélectionné :"}
+                  </span>
+                  <span className="text-xs font-bold text-theme-text mt-0.5 block">
+                    {selectedPlanName}
+                  </span>
+                </div>
+                <Badge variant="primary" size="sm">
+                  {plan?.id === "monthly" ? (isAr ? "30 يوماً" : "30 jours") : (isAr ? "سنة دراسية كاملة" : "Saison complète")}
+                </Badge>
               </div>
 
               <p className="text-xs text-theme-secondary leading-relaxed">

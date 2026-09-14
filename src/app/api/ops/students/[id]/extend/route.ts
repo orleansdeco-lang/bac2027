@@ -32,16 +32,33 @@ export async function POST(
       );
     }
 
-    const body = await req.json().catch(() => ({}));
-    const extensionType = body.type || "1_month";
-    const days = body.days ? Number(body.days) : undefined;
-    const reason = body.reason || undefined;
+    const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
+    let token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.replace(/^Bearer\s+/i, "").trim() : null;
+    if (!token) {
+      const cookieHeader = req.headers.get("cookie") || req.headers.get("Cookie");
+      if (cookieHeader) {
+        const match = cookieHeader.match(/(?:ops_auth_token|sb-access-token)=([^;]+)/);
+        if (match) token = decodeURIComponent(match[1]);
+      }
+    }
 
-    const result = await extendStudentSubscription(authRes.userId!, studentId, {
-      type: extensionType,
-      days,
-      reason,
-    });
+    const body = await req.json().catch(() => ({}));
+    const extensionType = body.type || (body.plan === "monthly" ? "1_month" : "custom");
+    const days = body.days ? Number(body.days) : (body.plan === "monthly" || extensionType === "1_month" ? 30 : 365);
+    const reason = body.reason || undefined;
+    const plan = body.plan || (days > 60 ? "season" : "monthly");
+
+    const result = await extendStudentSubscription(
+      authRes.userId!,
+      decodeURIComponent(studentId).trim(),
+      {
+        type: extensionType,
+        days,
+        reason,
+        plan,
+      },
+      token
+    );
 
     if (!result.success) {
       return NextResponse.json(
@@ -53,6 +70,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       newExpiresAt: result.newExpiresAt,
+      plan: result.plan,
       message: "Subscription successfully extended.",
     });
   } catch (err: any) {

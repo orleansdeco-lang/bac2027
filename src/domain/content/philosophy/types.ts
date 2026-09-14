@@ -46,6 +46,7 @@ export type PhilosophicalSchool =
   | "pragmatism"           // المذهب البراغماتي (النفعي)
   | "critical_idealism"    // الفلسفة النقدية الكانطية
   | "materialism"          // المذهب المادي / التجريبي الحديث
+  | "sociological"         // النزعة الاجتماعية السوسيولوجية (دوركايم وهالبواكس)
   | "islamic_philosophy"   // الفلسفة الإسلامية
   | "classic_philosophy";  // الفلسفة اليونانية الكلاسيكية
 
