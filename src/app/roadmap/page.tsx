@@ -509,26 +509,95 @@ export default function RoadmapPage() {
                 </Badge>
               </div>
 
-              {/* Direct Access to Full 55 Daily Lessons */}
+              {/* Direct Access to Full Stream Curriculum */}
               <div className="pt-2 border-t border-theme">
-                <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="space-y-1">
-                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-                      <BookOpen className="h-4 w-4" />
-                      {isAr ? "منهاج علوم الطبيعة والحياة (55 يوماً تفصيلياً)" : "Programme SVT (55 Jours détaillés)"}
-                    </span>
-                    <p className="text-xs text-theme-secondary">
-                      {isAr ? "دروس يومية مفصلة مع فيديوهات موجهة ورسومات تخطيطية ومحطات تفتيش أسبوعية." : "55 leçons quotidiennes guidées avec vidéos, schémas et retests jumeaux."}
-                    </p>
-                  </div>
-                  <Link href="/curriculum" className="shrink-0 w-full sm:w-auto">
-                    <Button variant="primary" size="sm" className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-sm">
-                      <span>{isAr ? "فتح فهرس الدروس (55)" : "Explorer les 55 jours"}</span>
-                      <Arrow className="h-3.5 w-3.5" />
-                    </Button>
-                  </Link>
-                </div>
+                {(() => {
+                  const cardData = (() => {
+                    switch (streamId) {
+                      case "lettres_philo":
+                        return {
+                          title: isAr ? "منهاج الفلسفة واللغة العربية (إشكاليات الفصل الأول)" : "Programme Philosophie & Arabe (Trimestre 1)",
+                          desc: isAr ? "إشكاليات العالم الخارجي، بنك المقالات، أقوال الفلاسفة، وأحكام إعراب إذا وقضايا شعر المنفى." : "Notions fondamentales, dissertations types, citations et stylistique.",
+                          btn: isAr ? "فتح فهرس المنهاج" : "Explorer le programme",
+                          color: "rose",
+                        };
+                      case "gestion_eco":
+                        return {
+                          title: isAr ? "منهاج التسيير المحاسبي والمالي والاقتصاد" : "Programme Gestion & Économie (Trimestre 1)",
+                          desc: isAr ? "أعمال نهاية السنة، الاهتلاكات، تسوية المخزونات، قيود اليومية ونظريات الاقتصاد." : "Travaux de fin d'exercice, amortissements, régularisations et économie.",
+                          btn: isAr ? "فتح فهرس المنهاج" : "Explorer le programme",
+                          color: "amber",
+                        };
+                      case "math":
+                      case "technique_math":
+                        return {
+                          title: isAr ? "منهاج الرياضيات والفيزياء المتقدمة" : "Programme Mathématiques & Physique",
+                          desc: isAr ? "الدوال العددية، النهايات، الاشتقاقية، الحساب والميكانيك الكلاسيكي بتمارين البرهان." : "Analyse, dérivation, arithmétique et mécanique avec démonstrations rigoureuses.",
+                          btn: isAr ? "فتح فهرس المنهاج" : "Explorer le programme",
+                          color: "indigo",
+                        };
+                      case "langues_etrangeres":
+                        return {
+                          title: isAr ? "منهاج اللغات الحية وآدابها" : "Programme Langues Étrangères",
+                          desc: isAr ? "تقنيات التلخيص والنصوص الفكرية والـ Compte-Rendu باللغات الحية." : "Compte-rendu objectif et critique, textes d'idées et langues vivantes.",
+                          btn: isAr ? "فتح فهرس المنهاج" : "Explorer le programme",
+                          color: "purple",
+                        };
+                      case "sciences_exp":
+                      default:
+                        return {
+                          title: isAr ? "منهاج علوم الطبيعة والحياة (55 يوماً تفصيلياً)" : "Programme SVT (55 Jours détaillés)",
+                          desc: isAr ? "دروس يومية مفصلة مع فيديوهات موجهة ورسومات تخطيطية ومحطات تفتيش أسبوعية." : "55 leçons quotidiennes guidées avec vidéos, schémas et retests jumeaux.",
+                          btn: isAr ? "فتح فهرس الدروس (55)" : "Explorer les 55 jours",
+                          color: "emerald",
+                        };
+                    }
+                  })();
+
+                  const colorClass =
+                    cardData.color === "rose"
+                      ? "bg-rose-500/10 border-rose-500/20 text-rose-400"
+                      : cardData.color === "amber"
+                      ? "bg-amber-500/10 border-amber-500/20 text-amber-400"
+                      : cardData.color === "indigo"
+                      ? "bg-indigo-500/10 border-indigo-500/20 text-indigo-400"
+                      : cardData.color === "purple"
+                      ? "bg-purple-500/10 border-purple-500/20 text-purple-400"
+                      : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400";
+
+                  const btnClass =
+                    cardData.color === "rose"
+                      ? "bg-rose-700 hover:bg-rose-600"
+                      : cardData.color === "amber"
+                      ? "bg-amber-600 hover:bg-amber-500"
+                      : cardData.color === "indigo"
+                      ? "bg-indigo-600 hover:bg-indigo-500"
+                      : cardData.color === "purple"
+                      ? "bg-purple-600 hover:bg-purple-500"
+                      : "bg-emerald-600 hover:bg-emerald-500";
+
+                  return (
+                    <div className={`p-4 rounded-2xl border ${colorClass} flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3`}>
+                      <div className="space-y-1">
+                        <span className="text-xs font-bold flex items-center gap-1.5">
+                          <BookOpen className="h-4 w-4" />
+                          {cardData.title}
+                        </span>
+                        <p className="text-xs text-theme-secondary">
+                          {cardData.desc}
+                        </p>
+                      </div>
+                      <Link href="/curriculum" className="shrink-0 w-full sm:w-auto">
+                        <Button variant="primary" size="sm" className={`w-full sm:w-auto ${btnClass} text-white font-bold text-xs rounded-xl shadow-sm`}>
+                          <span>{cardData.btn}</span>
+                          <Arrow className="h-3.5 w-3.5" />
+                        </Button>
+                      </Link>
+                    </div>
+                  );
+                })()}
               </div>
+
 
               {/* Collapsible Expanded Curriculum Learning Map */}
               <div className="pt-2 border-t border-theme">

@@ -91,15 +91,31 @@ export function validateContentStreamCompatibility(
 
   // 3. Prevent cross-stream skill prefix leakage
   if (item.skillId) {
-    // Gestion & Économie specific skills
+    // Gestion & Économie specific skills (accounting, eco, law, management, and gestion-specific philosophy/french)
     const isGestionSkill =
       item.skillId.startsWith("acc_") ||
       item.skillId.startsWith("eco_") ||
       item.skillId.startsWith("law_") ||
       item.skillId.startsWith("gestion_") ||
-      item.skillId.startsWith("mgmt_");
+      item.skillId.startsWith("mgmt_") ||
+      item.skillId.startsWith("phi_ge_") ||
+      item.skillId.startsWith("fr_ge_");
 
     if (isGestionSkill && streamId !== "gestion_eco") {
+      return false;
+    }
+
+    // Lettres & Philosophie specific skills (literature philosophy, arabic syntax, literature math)
+    const isLettresPhiloSkill =
+      item.skillId.startsWith("phi_lp_") ||
+      item.skillId.startsWith("ar_lp_") ||
+      item.skillId.startsWith("math_lp_") ||
+      item.skillId.startsWith("phil_lp_") ||
+      item.skillId.startsWith("arabic_lp_") ||
+      item.skillId.startsWith("fr_lp_") ||
+      item.skillId.startsWith("en_lp_");
+
+    if (isLettresPhiloSkill && streamId !== "lettres_philo" && streamId !== "langues_etrangeres") {
       return false;
     }
 
@@ -109,23 +125,28 @@ export function validateContentStreamCompatibility(
       return false;
     }
 
-    // Biology / SNV skills should not leak to pure Math stream or Gestion-Eco
+    // Biology / SNV skills belong EXCLUSIVELY to Sciences Expérimentales
     const isBioSkill =
       item.skillId.startsWith("snv_") ||
       item.skillId.includes("SNV") ||
       item.skillId.includes("BIO");
-    if ((streamId === "math" || streamId === "gestion_eco") && isBioSkill) {
+    if (streamId !== "sciences_exp" && isBioSkill) {
       return false;
     }
 
-    // Physics skills should not leak to Gestion-Eco
+    // Physics skills should NEVER leak to Gestion-Eco, Lettres-Philo, or Langues-Étrangères
     const isPhysicsSkill =
       item.skillId.startsWith("phy_") ||
-      item.skillId.includes("PHY");
-    if (streamId === "gestion_eco" && isPhysicsSkill) {
+      item.skillId.includes("PHY") ||
+      item.skillId.startsWith("physics_");
+    if (
+      (streamId === "gestion_eco" || streamId === "lettres_philo" || streamId === "langues_etrangeres") &&
+      isPhysicsSkill
+    ) {
       return false;
     }
   }
 
   return true;
 }
+

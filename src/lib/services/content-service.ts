@@ -16,6 +16,7 @@ import {
 import { Skill } from "@/domain/content/types";
 
 import { GESTION_ECO_SKILLS } from "@/data/skills/gestion-economie";
+import { LETTRES_PHILO_SKILLS } from "@/data/skills/lettres-philo";
 
 import { StreamId } from "@/types/education";
 import { validateContentStreamCompatibility } from "@/domain/student";
@@ -42,12 +43,24 @@ export const ContentService = {
     if (streamId === "gestion_eco") {
       return Object.values(GESTION_ECO_SKILLS) as unknown as Skill[];
     }
-    if (streamId === "math") {
-      // Return math and physics skills compatible with Math stream (excluding SNV)
-      return PROMPT11_SKILLS.filter((s) => s.subjectId === "math" || s.subjectId === "physics");
+    if (streamId === "lettres_philo") {
+      return Object.values(LETTRES_PHILO_SKILLS) as unknown as Skill[];
     }
-    // Default fallback
-    return PROMPT11_SKILLS.filter((s) => validateContentStreamCompatibility(streamId, { skillId: s.id, subjectId: s.subjectId }));
+    if (streamId === "math" || streamId === "technique_math") {
+      // Return math and physics skills strictly excluding SNV
+      return PROMPT11_SKILLS.filter(
+        (s) => s.subjectId === "math" || s.subjectId === "physics"
+      );
+    }
+    if (streamId === "langues_etrangeres") {
+      return Object.values(LETTRES_PHILO_SKILLS).filter((s) =>
+        validateContentStreamCompatibility(streamId, { skillId: s.id, subjectId: s.subjectId })
+      ) as unknown as Skill[];
+    }
+    // Default fallback with strict validation
+    return PROMPT11_SKILLS.filter((s) =>
+      validateContentStreamCompatibility(streamId, { skillId: s.id, subjectId: s.subjectId })
+    );
   },
 
   /**
@@ -55,8 +68,10 @@ export const ContentService = {
    */
   getAllSkills(): Skill[] {
     const gestionList = Object.values(GESTION_ECO_SKILLS) as unknown as Skill[];
-    return [...PROMPT11_SKILLS, ...gestionList];
+    const lettresList = Object.values(LETTRES_PHILO_SKILLS) as unknown as Skill[];
+    return [...PROMPT11_SKILLS, ...gestionList, ...lettresList];
   },
+
 
   /**
    * Get readiness for all skills

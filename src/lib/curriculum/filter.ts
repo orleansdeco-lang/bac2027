@@ -246,12 +246,12 @@ export function getDefaultSkillForStream(rawStream?: string | null): string {
     case "technique_math":
       return "math_derivatives_chain_rule";
     case "lettres_philo":
-      return "philo_essay_methodology";
+      return "phi_lp_perception_sensation";
     case "langues_etrangeres":
-      return "french_text_analysis";
+      return "ar_lp_ida_idhan_syntax";
     case "sciences_exp":
     default:
-      return "math_exp_limits_indeterminate";
+      return "math_derivatives_chain_rule";
   }
 }
 
@@ -278,19 +278,20 @@ export function getDefaultSkillTitleForStream(
         : "Dérivation et applications d'ingénierie";
     case "lettres_philo":
       return isAr
-        ? "منهجية المقالة الفلسفية المقارنة والجدلية"
-        : "Méthodologie de la dissertation philosophique";
+        ? "الإحساس والإدراك: التمييز بين النزعة الكلاسيكية والغشتالتية"
+        : "Sensation et Perception : Thèses classiques vs Gestalt";
     case "langues_etrangeres":
       return isAr
-        ? "تقنيات تحليل النص الحجاجي والتلخيص"
-        : "Techniques d'analyse de texte et compte rendu";
+        ? "أحكام وإعراب (إذا، إذ، حينئذ، إذن) وقضايا البناء اللغوي"
+        : "Syntaxe approfondie des particules et analyse textuelle";
     case "sciences_exp":
     default:
       return isAr
-        ? "حساب النهايات في الدوال الأسية وحالات عدم التعيين"
-        : "Calcul des limites exponentielles et indéterminations";
+        ? "اشتقاق الدوال المركبة وقاعدة السلسلة"
+        : "Dérivation des fonctions composées";
   }
 }
+
 
 /**
  * Detailed stream presentation metadata, strictly isolated per stream.
@@ -349,12 +350,18 @@ const STREAM_METADATA_REGISTRY: Record<StreamId, StreamMetadata> = {
     code: "LP",
     name_ar: "شعبة آداب وفلسفة",
     name_fr: "Lettres et Philosophie",
-    totalSkills: 20,
+    totalSkills: 23,
     subjects: [
-      { subjectId: "philosophy", name_ar: "فلسفة", name_fr: "Philosophie", coef: 6, color: "#C8796B", count: 10 },
-      { subjectId: "arabic", name_ar: "لغة عربية وآدابها", name_fr: "Langue Arabe", coef: 6, color: "#6E9B7B", count: 10 },
+      { subjectId: "philosophy", name_ar: "فلسفة", name_fr: "Philosophie", coef: 6, color: "#C8796B", count: 9 },
+      { subjectId: "arabic", name_ar: "لغة عربية وآدابها", name_fr: "Langue Arabe", coef: 6, color: "#6E9B7B", count: 5 },
+      { subjectId: "history_geography", name_ar: "تاريخ وجغرافيا", name_fr: "Histoire-Géo", coef: 4, color: "#D7A66A", count: 3 },
+      { subjectId: "islamic_studies", name_ar: "علوم إسلامية", name_fr: "Sciences Islamiques", coef: 2, color: "#5F8F86", count: 2 },
+      { subjectId: "math", name_ar: "رياضيات أدبية", name_fr: "Mathématiques", coef: 2, color: "#7986CB", count: 2 },
+      { subjectId: "french", name_ar: "لغة فرنسية", name_fr: "Français", coef: 3, color: "#4DB6AC", count: 1 },
+      { subjectId: "english", name_ar: "لغة إنجليزية", name_fr: "Anglais", coef: 3, color: "#FF8A65", count: 1 },
     ],
   },
+
   langues_etrangeres: {
     streamId: "langues_etrangeres",
     code: "LE",

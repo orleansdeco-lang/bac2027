@@ -35,7 +35,7 @@ import {
 } from "@/data/practice/sciences-exp";
 import { getStreamSubjects, ALL_SUBJECTS } from "@/lib/constants/streams";
 import { ContentService } from "@/lib/services/content-service";
-import { isSubjectAllowedForStream } from "@/domain/student";
+import { isSubjectAllowedForStream, validateContentStreamCompatibility } from "@/domain/student";
 import {
   normalizeStreamIdWithDefault,
   getDefaultSubjectForStream,
@@ -60,13 +60,21 @@ function resolveMission(
   }
 
   const streamSkills = ContentService.getSkillsForStream(streamId);
-  const skill =
-    getSkillById(skillId) ||
+  const foundSkill =
     streamSkills.find((s) => s.id === skillId) ||
-    SCIENCES_EXP_SKILLS[skillId] ||
-    streamSkills[0] ||
-    SCIENCES_EXP_SKILLS.math_derivatives_chain_rule;
+    getSkillById(skillId);
+
+  let skill = foundSkill;
+  if (!skill || !validateContentStreamCompatibility(streamId, { skillId: skill.id, subjectId: skill.subjectId })) {
+    const defaultSkillId = getDefaultSkillForStream(streamId);
+    skill =
+      streamSkills.find((s) => s.id === defaultSkillId) ||
+      getSkillById(defaultSkillId) ||
+      streamSkills[0] ||
+      SCIENCES_EXP_SKILLS.math_derivatives_chain_rule;
+  }
   const practiceQuestions = getPracticeQuestionsForSkill(skill.id);
+
   const retestQuestion = getRetestQuestionForSkill(skill.id);
 
   return {
@@ -131,11 +139,11 @@ export function getNextBestMission(input: AdaptiveRoadmapInput): {
   const allMissions = Object.values(missionsMap).filter((m) => {
     if (m.streamId && m.streamId !== streamId) return false;
     if (m.skillId && streamSkillIds.size > 0 && !streamSkillIds.has(m.skillId)) {
-      const skill = getSkillById(m.skillId);
-      if (skill && !isSubjectAllowedForStream(skill.subjectId, streamId)) return false;
+      return false;
     }
     return true;
   });
+
 
   const isMissionInNeedsMoreWork = (skillId: string) =>
     allMissions.some((m) => m.skillId === skillId && m.status === "needs_more_work");

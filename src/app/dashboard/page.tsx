@@ -51,6 +51,8 @@ import {
   getDefaultSkillTitleForStream,
 } from "@/lib/curriculum/filter";
 
+import { validateContentStreamCompatibility } from "@/domain/student";
+
 export default function DashboardPage() {
   const { t, locale } = useTranslation();
   const isAr = locale === "ar";
@@ -119,9 +121,11 @@ export default function DashboardPage() {
 
   const rawTodaysMission = data?.todaysMission;
   const isMissionAuthorized = rawTodaysMission?.subjectId
-    ? isSubjectAuthorizedForStream(rawTodaysMission.subjectId, streamId)
+    ? isSubjectAuthorizedForStream(rawTodaysMission.subjectId, streamId) &&
+      validateContentStreamCompatibility(streamId, { skillId: rawTodaysMission.skillId, subjectId: rawTodaysMission.subjectId })
     : false;
   const todaysMission = isMissionAuthorized ? rawTodaysMission : null;
+
 
   const metrics = data?.verifiedMetrics || {
     demonstratedSkillsCount: 0,
@@ -413,49 +417,126 @@ export default function DashboardPage() {
         </section>
 
         {/* ================================================================= */}
-        {/* NEW FEATURE: FULL TERM 1 CURRICULUM & D-DAY SIMULATOR BANNER      */}
+        {/* DYNAMIC STREAM-AWARE CURRICULUM BANNER                            */}
         {/* ================================================================= */}
-        <section className="rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/30 via-slate-900 to-slate-950 p-6 sm:p-7 shadow-clay text-white">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="space-y-2 max-w-2xl text-right" dir="rtl">
-              <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                  ✨ جديد المنهاج التفاعلي
-                </span>
-                <span className="text-xs text-slate-400">علوم الطبيعة والحياة · 3 ع ت</span>
-              </div>
-              <h2 className="text-lg sm:text-xl font-black text-white">
-                منهاج الفصل الأول الكامل (55 درساً مفصلاً + محاكي D-Day الرسمي)
-              </h2>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                استكشف جميع دروس الوحدات 1 إلى 4 ومعسكر المنهجية، مدعمة بفيديوهات موجهة بالدقيقة والثانية، رسومات تخطيطية تفاعلية، و11 محطة تفتيش أسبوعية.
-              </p>
-            </div>
+        {(() => {
+          const banner = (() => {
+            switch (streamId) {
+              case "lettres_philo":
+                return {
+                  tag: "آداب وفلسفة · 3 ت ق / 3 آداب",
+                  title: "منهاج الفلسفة واللغة العربية للفصل الأول (إشكاليات العالم الخارجي وبنك المقالات)",
+                  desc: "استكشف إشكاليات الفصل الأول: الإحساس والإدراك، اللغة والفكر، الشعور، الذاكرة، والعادة، مدعمة بأقوال الفلاسفة وأمثلة الواقع وسلم التنقيط الرسمي.",
+                  btn: "تصفح منهاج الفلسفة والأدب",
+                  border: "border-rose-500/30",
+                  bg: "from-rose-950/30 via-slate-900 to-slate-950",
+                  tagStyle: "bg-rose-500/20 text-rose-300 border-rose-500/30",
+                  btnStyle: "bg-rose-700 hover:bg-rose-600",
+                };
+              case "gestion_eco":
+                return {
+                  tag: "تسيير واقتصاد · 3 ت ق",
+                  title: "منهاج التسيير المحاسبي والمالي والاقتصاد للفصل الأول (أعمال نهاية السنة والقيود)",
+                  desc: "استكشف دروس الاهتلاكات، تسوية المخزونات، فروقات الجرد، ونظريات الاقتصاد والمناجمنت مع التطبيقات المحاسبية الموجهة.",
+                  btn: "تصفح منهاج التسيير والمحاسبة",
+                  border: "border-amber-500/30",
+                  bg: "from-amber-950/30 via-slate-900 to-slate-950",
+                  tagStyle: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+                  btnStyle: "bg-amber-600 hover:bg-amber-500",
+                };
+              case "math":
+                return {
+                  tag: "رياضيات · 3 ر",
+                  title: "منهاج الرياضيات والفيزياء المتقدمة للفصل الأول (التحليل الرياضي والميكانيك)",
+                  desc: "استكشف دروس الدوال اللوغاريتمية والأسية، التزايد المقارن، وحركة الكواكب والأقمار الاصطناعية بتمارين البرهان الصارم.",
+                  btn: "تصفح منهاج الرياضيات والفيزياء",
+                  border: "border-indigo-500/30",
+                  bg: "from-indigo-950/30 via-slate-900 to-slate-950",
+                  tagStyle: "bg-indigo-500/20 text-indigo-300 border-indigo-500/30",
+                  btnStyle: "bg-indigo-600 hover:bg-indigo-500",
+                };
+              case "technique_math":
+                return {
+                  tag: "تقني رياضي · 3 ت ر",
+                  title: "منهاج هندسة التخصص والرياضيات التقنية للفصل الأول (الوحدات التطبيقية)",
+                  desc: "استكشف وحدات الهندسة التخصصية (مدنية، ميكانيكية، كهربائية، طرائق) مع الرياضيات والفيزياء بتمارين تطبيقية تفصيلية.",
+                  btn: "تصفح منهاج التقني الرياضي",
+                  border: "border-blue-500/30",
+                  bg: "from-blue-950/30 via-slate-900 to-slate-950",
+                  tagStyle: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+                  btnStyle: "bg-blue-600 hover:bg-blue-500",
+                };
+              case "langues_etrangeres":
+                return {
+                  tag: "لغات أجنبية · 3 ل أ",
+                  title: "منهاج اللغات الحية والترجمة للفصل الأول (تقنيات Compte-Rendu والنصوص الفكرية)",
+                  desc: "استكشف تقنيات التلخيص والتحليل النقدي للنصوص التاريخية والجدلية باللغات الحية مع الأدب العربي.",
+                  btn: "تصفح منهاج اللغات الحية",
+                  border: "border-purple-500/30",
+                  bg: "from-purple-950/30 via-slate-900 to-slate-950",
+                  tagStyle: "bg-purple-500/20 text-purple-300 border-purple-500/30",
+                  btnStyle: "bg-purple-600 hover:bg-purple-500",
+                };
+              case "sciences_exp":
+              default:
+                return {
+                  tag: "علوم الطبيعة والحياة · 3 ع ت",
+                  title: "منهاج الفصل الأول الكامل (55 درساً مفصلاً + محاكي D-Day الرسمي)",
+                  desc: "استكشف جميع دروس الوحدات 1 إلى 4 ومعسكر المنهجية، مدعمة بفيديوهات موجهة بالدقيقة والثانية، رسومات تخطيطية تفاعلية، و11 محطة تفتيش أسبوعية.",
+                  btn: "تصفح الـ 55 درساً",
+                  border: "border-emerald-500/30",
+                  bg: "from-emerald-950/30 via-slate-900 to-slate-950",
+                  tagStyle: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
+                  btnStyle: "bg-emerald-600 hover:bg-emerald-500",
+                };
+            }
+          })();
 
-            <div className="flex flex-wrap items-center gap-3 shrink-0 w-full md:w-auto">
-              <Link href="/curriculum" className="w-full sm:w-auto">
-                <Button
-                  variant="primary"
-                  size="md"
-                  className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2"
-                >
-                  <BookOpen className="w-4 h-4" />
-                  <span>تصفح الـ 55 درساً</span>
-                </Button>
-              </Link>
-              <Link href="/exam" className="w-full sm:w-auto">
-                <Button
-                  variant="outline"
-                  size="md"
-                  className="w-full sm:w-auto border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl flex items-center justify-center gap-2"
-                >
-                  <Award className="w-4 h-4 text-amber-400" />
-                  <span>محاكي امتحان D-Day</span>
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
+          return (
+            <section className={`rounded-3xl border ${banner.border} bg-gradient-to-br ${banner.bg} p-6 sm:p-7 shadow-clay text-white`}>
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                <div className="space-y-2 max-w-2xl text-right" dir="rtl">
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${banner.tagStyle}`}>
+                      ✨ جديد المنهاج التفاعلي
+                    </span>
+                    <span className="text-xs text-slate-400">{banner.tag}</span>
+                  </div>
+                  <h2 className="text-lg sm:text-xl font-black text-white">
+                    {banner.title}
+                  </h2>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    {banner.desc}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3 shrink-0 w-full md:w-auto">
+                  <Link href="/curriculum" className="w-full sm:w-auto">
+                    <Button
+                      variant="primary"
+                      size="md"
+                      className={`w-full sm:w-auto ${banner.btnStyle} text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2`}
+                    >
+                      <BookOpen className="w-4 h-4" />
+                      <span>{banner.btn}</span>
+                    </Button>
+                  </Link>
+                  <Link href="/exam" className="w-full sm:w-auto">
+                    <Button
+                      variant="outline"
+                      size="md"
+                      className="w-full sm:w-auto border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl flex items-center justify-center gap-2"
+                    >
+                      <Award className="w-4 h-4 text-amber-400" />
+                      <span>محاكي امتحان D-Day</span>
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </section>
+          );
+        })()}
+
 
         {/* ================================================================= */}
         {/* 2. ROW OF 4 TACTILE STAT CARDS (REFERENCE #1 INSPIRATION)         */}
