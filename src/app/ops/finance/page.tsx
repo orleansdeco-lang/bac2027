@@ -29,30 +29,35 @@ export default function OpsFinancePage() {
   const [previewReceiptUrl, setPreviewReceiptUrl] = useState<string | null>(null);
   const [loadingReceiptId, setLoadingReceiptId] = useState<string | null>(null);
   const [directStudentId, setDirectStudentId] = useState("");
+  const [directPlan, setDirectPlan] = useState<"season" | "monthly">("season");
   const [directActivating, setDirectActivating] = useState(false);
   const [directMessage, setDirectMessage] = useState<string | null>(null);
 
   async function handleDirectActivate(e: React.FormEvent) {
     e.preventDefault();
-    if (!directStudentId.trim()) {
+    const cleanId = directStudentId.trim();
+    if (!cleanId) {
       alert("يرجى إدخال معرف الطالب (UUID أو البريد الإلكتروني).");
       return;
     }
     setDirectActivating(true);
     setDirectMessage(null);
+    const isSeason = directPlan === "season";
+    const planLabel = isSeason ? "سنة دراسية كاملة (365 يوم)" : "اشتراك شهري (30 يوم)";
     try {
-      const res = await opsFetch(`/api/ops/students/${directStudentId.trim()}/extend`, {
+      const res = await opsFetch(`/api/ops/students/${encodeURIComponent(cleanId)}/extend`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type: "custom",
-          days: 365,
-          reason: "تفعيل يدوي مباشر من صفحة المالية بعد مطابقة وصل واتساب",
+          type: isSeason ? "custom" : "1_month",
+          days: isSeason ? 365 : 30,
+          plan: directPlan,
+          reason: `تفعيل يدوي مباشر (${planLabel}) من صفحة المالية بعد مطابقة وصل واتساب`,
         }),
       });
       const data = await res.json();
       if (data?.success) {
-        setDirectMessage(`✓ تم تفعيل حساب الطالب (${directStudentId.trim()}) بنجاح كحساب مدفوع لمدة عام.`);
+        setDirectMessage(`✓ تم تفعيل حساب الطالب (${cleanId}) بنجاح (${planLabel}).`);
         setDirectStudentId("");
         fetchOrders();
       } else {
@@ -239,33 +244,62 @@ export default function OpsFinancePage() {
             <span>تفعيل طالب يدوي فوراً (1-Click Student Activation)</span>
           </div>
           <p className="text-[11px] text-slate-400 leading-relaxed">
-            عند استلام وصل الطالب عبر واتساب دون تسجيل طلب في الموقع، ألصق معرف الطالب (UUID) لتفعيله فوراً:
+            عند استلام وصل الطالب عبر واتساب، ألصق معرف الطالب (UUID) أو بريده الإلكتروني لتفعيله مباشرة:
           </p>
-          <form onSubmit={handleDirectActivate} className="flex gap-2">
-            <input
-              type="text"
-              value={directStudentId}
-              onChange={(e) => setDirectStudentId(e.target.value)}
-              placeholder="معرف الطالب (e.g. 7f7f704e... or usr_...)"
-              className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 font-mono focus:outline-none focus:border-indigo-500"
-            />
-            <button
-              type="submit"
-              disabled={directActivating || !directStudentId.trim()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold transition-colors cursor-pointer shrink-0"
-            >
-              {directActivating ? (
-                <>
-                  <RefreshCw className="w-3 h-3 animate-spin" />
-                  <span>تفعيل...</span>
-                </>
-              ) : (
-                <>
-                  <Zap className="w-3 h-3" />
-                  <span>تفعيل Paid</span>
-                </>
-              )}
-            </button>
+
+          <form onSubmit={handleDirectActivate} className="space-y-2">
+            {/* Plan selector toggle */}
+            <div className="inline-flex rounded-lg bg-slate-950 p-0.5 border border-slate-800 text-[11px]">
+              <button
+                type="button"
+                onClick={() => setDirectPlan("season")}
+                className={`px-2.5 py-1 rounded-md font-bold transition-all cursor-pointer ${
+                  directPlan === "season"
+                    ? "bg-emerald-600 text-white shadow-sm"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                🎓 سنة دراسية كاملة (365 يوم)
+              </button>
+              <button
+                type="button"
+                onClick={() => setDirectPlan("monthly")}
+                className={`px-2.5 py-1 rounded-md font-bold transition-all cursor-pointer ml-1 ${
+                  directPlan === "monthly"
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                📅 اشتراك شهري (30 يوم)
+              </button>
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={directStudentId}
+                onChange={(e) => setDirectStudentId(e.target.value)}
+                placeholder="معرف الطالب (UUID) أو بريده الإلكتروني..."
+                className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 font-mono focus:outline-none focus:border-indigo-500"
+              />
+              <button
+                type="submit"
+                disabled={directActivating || !directStudentId.trim()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold transition-colors cursor-pointer shrink-0"
+              >
+                {directActivating ? (
+                  <>
+                    <RefreshCw className="w-3 h-3 animate-spin" />
+                    <span>تفعيل...</span>
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-3 h-3" />
+                    <span>تفعيل {directPlan === "season" ? "سنوي" : "شهري"}</span>
+                  </>
+                )}
+              </button>
+            </div>
           </form>
         </div>
       </div>
