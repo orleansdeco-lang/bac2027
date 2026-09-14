@@ -24,6 +24,9 @@ import {
   ArrowRight,
   ArrowLeft,
   BookOpen,
+  Headphones,
+  MessageCircle,
+  ExternalLink,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -237,6 +240,32 @@ export function Sidebar({ className }: SidebarProps) {
           >
             {isPaid ? (isAr ? "تفاصيل اشتراكي" : "Mon Abonnement") : (isAr ? "ترقية الحساب ←" : "Passer en Pro →")}
           </Link>
+        </div>
+
+        {/* Customer Service & Technical Support Button */}
+        <div className="mt-3">
+          <a
+            href={`https://wa.me/213550853234?text=${encodeURIComponent("مرحباً، أحتاج إلى مساعدة ودعم فني في منصة BAC Mastery.")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-testid="sidebar-whatsapp-support-btn"
+            className="flex items-center justify-between gap-2 p-2.5 rounded-2xl bg-surface/70 hover:bg-emerald-500/10 border border-theme hover:border-emerald-500/40 text-theme-secondary hover:text-emerald-500 transition-all group cursor-pointer text-xs"
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                <MessageCircle className="w-4 h-4 fill-current" />
+              </div>
+              <div className="text-start">
+                <span className="font-bold text-[11px] text-theme-text block leading-none group-hover:text-emerald-500 font-sans">
+                  {isAr ? "خدمة العملاء والدعم الفني" : "Support technique WhatsApp"}
+                </span>
+                <span className="text-[10px] text-theme-muted font-mono leading-none mt-1 block">
+                  +213 550 85 32 34
+                </span>
+              </div>
+            </div>
+            <ExternalLink className="w-3.5 h-3.5 text-theme-muted group-hover:text-emerald-500 shrink-0" />
+          </a>
         </div>
       </div>
     </aside>

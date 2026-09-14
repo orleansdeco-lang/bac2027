@@ -35,6 +35,11 @@ import {
   UploadCloud,
   FileCheck,
   AlertCircle,
+  Copy,
+  Check,
+  ExternalLink,
+  MessageCircle,
+  Headphones,
 } from "lucide-react";
 
 export default function SubscribePage() {
@@ -56,10 +61,28 @@ export default function SubscribePage() {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptUploadStatus, setReceiptUploadStatus] = useState<"idle" | "uploading" | "uploaded" | "error">("idle");
   const [receiptError, setReceiptError] = useState<string | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  const supportWhatsApp = process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP;
-  const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
-  const hasSupportContact = Boolean(supportWhatsApp || supportEmail);
+  const ACTIVATION_WHATSAPP_NUMBER = "213550303286";
+  const SUPPORT_WHATSAPP_NUMBER = "213550853234";
+
+  const BARIDIMOB_RIP = "00799999002233445566";
+  const CCP_ACCOUNT = "22334455";
+  const CCP_KEY = "66";
+
+  const activationMessage = `مرحباً، قمت بالدفع لتفعيل حساب BAC Mastery.\nالبريد الإلكتروني: ${user?.email || "غير مسجل"}\nمعرف الحساب: ${user?.id || "غير متوفر"}\nمرفق صورة الوصل.`;
+  const activationWhatsAppUrl = `https://wa.me/${ACTIVATION_WHATSAPP_NUMBER}?text=${encodeURIComponent(activationMessage)}`;
+
+  const supportMessage = "مرحباً، أحتاج إلى مساعدة ودعم فني في منصة BAC Mastery.";
+  const supportWhatsAppUrl = `https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(supportMessage)}`;
+
+  const copyToClipboard = (text: string, field: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2500);
+    }
+  };
 
   useEffect(() => {
     trackEvent("conversion_viewed", { userId: user?.id || null });
@@ -337,40 +360,132 @@ export default function SubscribePage() {
               ))}
             </div>
 
-            {/* Plan Closed Notice or Action Buttons */}
-            {plan.active === false ? (
-              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs text-center font-medium">
-                {isAr
-                  ? "عذراً، باب التسجيل في هذه الخطة مغلق حالياً بقرار من إدارة المنصة."
-                  : "Désolé, les inscriptions pour ce pass sont temporairement fermées."}
+            {/* Manual Payment Information & Coordinates Box */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-surface/80 border border-theme space-y-4 shadow-sm">
+              <div className="flex items-center justify-between border-b border-theme/60 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs sm:text-sm font-bold text-theme-text">
+                    {isAr ? "معلومات الدفع اليدوي (بريدي موب / CCP)" : "Coordonnées de paiement manuel"}
+                  </span>
+                </div>
+                <span className="text-[11px] font-mono text-[var(--color-primary)] font-semibold">
+                  3,900 DZD
+                </span>
               </div>
-            ) : (
-              <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+
+              {/* BaridiMob RIP Field */}
+              <div className="p-3 rounded-xl bg-card border border-theme flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div>
+                  <span className="text-[10px] font-mono text-theme-muted uppercase tracking-wider block">
+                    {isAr ? "بريدي موب (BaridiMob RIP):" : "Compte BaridiMob (RIP) :"}
+                  </span>
+                  <span className="font-mono font-bold text-theme-text text-xs sm:text-sm tracking-wide select-all">
+                    {BARIDIMOB_RIP}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(BARIDIMOB_RIP, "rip")}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--color-primary-soft)] hover:bg-[var(--color-primary)]/20 text-[var(--color-primary)] text-xs font-semibold transition-all self-start sm:self-center"
+                >
+                  {copiedField === "rip" ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                      <span className="text-emerald-500">{isAr ? "تم النسخ!" : "Copié !"}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>{isAr ? "نسخ الـ RIP" : "Copier RIP"}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* CCP Account Field */}
+              <div className="p-3 rounded-xl bg-card border border-theme flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div>
+                  <span className="text-[10px] font-mono text-theme-muted uppercase tracking-wider block">
+                    {isAr ? "الحساب البريدي الجاري (CCP):" : "Compte postal CCP :"}
+                  </span>
+                  <div className="flex items-center gap-2 font-mono font-bold text-theme-text text-xs sm:text-sm select-all">
+                    <span>{isAr ? `الحساب: ${CCP_ACCOUNT}` : `Compte: ${CCP_ACCOUNT}`}</span>
+                    <span className="text-theme-muted">|</span>
+                    <span>{isAr ? `المفتاح (Clé): ${CCP_KEY}` : `Clé: ${CCP_KEY}`}</span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(`${CCP_ACCOUNT} ${CCP_KEY}`, "ccp")}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--color-primary-soft)] hover:bg-[var(--color-primary)]/20 text-[var(--color-primary)] text-xs font-semibold transition-all self-start sm:self-center"
+                >
+                  {copiedField === "ccp" ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-500" />
+                      <span className="text-emerald-500">{isAr ? "تم النسخ!" : "Copié !"}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5" />
+                      <span>{isAr ? "نسخ الـ CCP" : "Copier CCP"}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Notice */}
+              <div className="flex items-start gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <p className="leading-relaxed">
+                  {isAr
+                    ? "تنبيه هام: بعد إتمام التحويل عبر بريدي موب أو مركز البريد، يرجى التقاط صورة واضحة للوصل (Screenshot / Photo) وإرسالها فوراً عبر زر واتساب بالأسفل ليتم تفعيل حسابك بنقرة واحدة."
+                    : "Important : après le transfert, prenez une photo nette du reçu et envoyez-la via WhatsApp ci-dessous pour activer votre compte instantanément."}
+                </p>
+              </div>
+            </div>
+
+            {/* Primary Action Buttons */}
+            <div className="pt-2 space-y-3">
+              {/* WhatsApp Activation Button (Primary Required CTA) */}
+              <a
+                href={activationWhatsAppUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="whatsapp-activation-cta"
+                className="w-full min-h-[54px] rounded-2xl font-extrabold text-sm sm:text-base flex items-center justify-center gap-2.5 bg-[#25D366] hover:bg-[#20bd5a] text-white shadow-lg shadow-emerald-600/25 active:scale-[0.99] transition-all cursor-pointer"
+              >
+                <MessageCircle className="w-5 h-5 fill-current shrink-0" />
+                <span>{isAr ? "إرسال وصل الدفع لتفعيل الحساب" : "Envoyer le reçu pour activer le compte"}</span>
+                <ExternalLink className="w-4 h-4 opacity-80 shrink-0" />
+              </a>
+
+              <div className="flex flex-col sm:flex-row items-center gap-2.5">
                 <Button
                   data-testid="subscribe-primary-cta"
-                  size="lg"
-                  variant="primary"
+                  size="md"
+                  variant="outline"
                   fullWidth
                   onClick={handleStartCheckout}
-                  className="min-h-[50px] font-bold text-sm flex items-center justify-center gap-2 shadow-clay rounded-full bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white"
+                  className="min-h-[44px] text-xs font-semibold text-theme-text rounded-xl"
                 >
-                  <span>{isAr ? "كمّل BAC Mastery" : "Continuer avec BAC Mastery"}</span>
-                  <NextArrow className="w-4 h-4" />
+                  <Info className="w-4 h-4 text-[var(--color-primary)] shrink-0" />
+                  <span>{isAr ? "تعليمات ورمز مرجعي للطلب" : "Instructions détaillées & référence"}</span>
                 </Button>
 
                 <Link href="/progress" className="w-full sm:w-auto">
                   <Button
                     data-testid="subscribe-secondary-cta"
-                    size="lg"
-                    variant="outline"
+                    size="md"
+                    variant="ghost"
                     fullWidth
-                    className="min-h-[50px] text-xs font-medium text-theme-secondary rounded-full"
+                    className="min-h-[44px] text-xs font-medium text-theme-muted hover:text-theme-text rounded-xl"
                   >
-                    <span>{isAr ? "شوف واش بنيت حتى الآن" : "Consulter mes acquis"}</span>
+                    <span>{isAr ? "متابعة مكتسباتي" : "Consulter mes acquis"}</span>
                   </Button>
                 </Link>
               </div>
-            )}
+            </div>
           </Card>
         )}
 
@@ -499,44 +614,38 @@ export default function SubscribePage() {
                 {isAr ? checkoutData.instructions_ar : checkoutData.instructions_fr}
               </p>
 
-              {/* Support contact section */}
-              <div className="p-3.5 rounded-xl bg-surface border border-theme space-y-2">
-                <span className="text-[11px] font-semibold text-theme-text block">
-                  {isAr ? "قناة التواصل لإرسال وصل التحويل:" : "Canal de transmission du justificatif :"}
+              {/* Support contact & direct WhatsApp submission section */}
+              <div className="p-4 rounded-xl bg-surface border border-theme space-y-3">
+                <span className="text-xs font-bold text-theme-text block">
+                  {isAr ? "إرسال الوصل لتفعيل الحساب:" : "Canal d'activation WhatsApp :"}
                 </span>
-                {hasSupportContact ? (
-                  <div className="space-y-1.5 text-xs">
-                    {supportWhatsApp && (
-                      <a
-                        href={`https://wa.me/${supportWhatsApp.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`السلام عليكم، قمت بطلب تفعيل BAC Mastery بالرمز: ${checkoutData.referenceId}`)}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-2 text-[var(--color-success)] hover:underline transition-colors"
-                      >
-                        <Phone className="w-3.5 h-3.5" />
-                        <span dir="ltr">{supportWhatsApp} (WhatsApp)</span>
-                      </a>
-                    )}
-                    {supportEmail && (
-                      <a
-                        href={`mailto:${supportEmail}?subject=${encodeURIComponent(`BAC Mastery Activation - ${checkoutData.referenceId}`)}`}
-                        className="flex items-center gap-2 text-[var(--color-primary)] hover:underline transition-colors"
-                      >
-                        <Mail className="w-3.5 h-3.5" />
-                        <span>{supportEmail}</span>
-                      </a>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 text-xs text-[var(--color-warning)] bg-[var(--color-warning-soft)] p-2 rounded-lg border border-[var(--color-warning)]/20">
-                    <ShieldAlert className="w-3.5 h-3.5 shrink-0 text-[var(--color-warning)]" />
-                    <span>
-                      {isAr
-                        ? "SUPPORT_CONTACT_REQUIRED: يرجى التواصل مع المشرف المباشر للدفعة التجريبية لتأكيد التحويل."
-                        : "SUPPORT_CONTACT_REQUIRED: Veuillez contacter le superviseur du projet pilote."}
-                    </span>
-                  </div>
-                )}
+
+                <a
+                  href={activationWhatsAppUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full min-h-[46px] rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#20bd5a] text-white shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
+                >
+                  <MessageCircle className="w-4 h-4 fill-current shrink-0" />
+                  <span>{isAr ? "إرسال وصل الدفع لتفعيل الحساب (واتساب)" : "Envoyer le reçu via WhatsApp"}</span>
+                  <ExternalLink className="w-3.5 h-3.5 opacity-80 shrink-0" />
+                </a>
+
+                <div className="pt-2 border-t border-theme/50 flex items-center justify-between text-xs text-theme-secondary">
+                  <span className="flex items-center gap-1.5">
+                    <Headphones className="w-3.5 h-3.5 text-[var(--color-primary)]" />
+                    <span>{isAr ? "دعم فني واستفسار:" : "Support technique :"}</span>
+                  </span>
+                  <a
+                    href={supportWhatsAppUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-mono text-[var(--color-primary)] hover:underline flex items-center gap-1"
+                  >
+                    <span dir="ltr">+213 550 85 32 34</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
               </div>
 
               {/* Receipt upload attachment section */}

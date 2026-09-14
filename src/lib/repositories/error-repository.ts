@@ -107,4 +107,47 @@ export const ErrorRepository = {
       }
     }
   },
+
+  /**
+   * Directly queries the student_error_lab database view with fallback to getErrors
+   */
+  async getStudentErrorLabRecords(userId?: string): Promise<Record<string, ErrorRecord>> {
+    if (isSupabaseConfigured && supabase && userId) {
+      try {
+        const { data, error } = await supabase
+          .from("student_error_lab")
+          .select("*")
+          .eq("user_id", userId);
+
+        if (!error && data && data.length > 0) {
+          const map: Record<string, ErrorRecord> = {};
+          for (const row of data) {
+            map[row.id] = {
+              id: row.id,
+              sessionId: "session_diag",
+              skillId: row.skill_id,
+              questionId: row.question_id,
+              subjectId: row.subject_id,
+              missionId: row.mission_id || "mission_" + row.skill_id,
+              selectedAnswer: "opt_b",
+              correctAnswer: "opt_a",
+              suspectedErrorType: row.system_inferred_error_type || "methodology_error",
+              errorSource: row.student_selected_error_type ? "student_selected" : "system_inferred",
+              confidence: 4,
+              repairStatus: (row.status as any) || "identified",
+              isRecurring: Boolean(row.is_recurring),
+              attemptCount: row.occurrence_count || 1,
+              createdAt: row.created_at || new Date().toISOString(),
+              updatedAt: row.updated_at || new Date().toISOString(),
+            };
+          }
+          return map;
+        }
+      } catch (err) {
+        console.warn("Querying student_error_lab view fallback:", err);
+      }
+    }
+    return this.getErrors(userId);
+  },
 };
+

@@ -8,6 +8,7 @@ import { SubjectId } from "./education";
 export type ErrorCategory =
   | "forgot_information"   // نسيان المعلومة أو القاعدة
   | "did_not_understand"   // عدم فهم المفهوم أو الظاهرة
+  | "misunderstood_concept" // عدم فهم المفهوم الأساسي
   | "method_unknown"       // عدم معرفة طريقة الحل
   | "calculation_error"    // خطأ في الحساب أو الإشارة
   | "misread_question"     // سوء قراءة نص السؤال

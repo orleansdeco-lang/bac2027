@@ -14,6 +14,8 @@ import {
   GraduationCap,
   ShieldCheck,
   UserX,
+  Zap,
+  RefreshCw,
 } from "lucide-react";
 import { StudentOperationalSummary } from "@/lib/operations/types";
 import { opsFetch } from "@/lib/operations/client-api";
@@ -26,6 +28,48 @@ export default function OpsStudentsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [wilayaFilter, setWilayaFilter] = useState("all");
   const [subscriptionFilter, setSubscriptionFilter] = useState("all");
+  const [activatingId, setActivatingId] = useState<string | null>(null);
+
+  async function handleQuickActivate(studentId: string, studentName: string) {
+    if (!confirm(`هل أنت متأكد من تفعيل اشتراك الطالب "${studentName}" فورياً كحساب مدفوع (PAID) لمدة عام كامل؟`)) {
+      return;
+    }
+    setActivatingId(studentId);
+    try {
+      const res = await opsFetch(`/api/ops/students/${studentId}/extend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "custom",
+          days: 365,
+          reason: "تفعيل يدوي فوري من قبل المشرف بعد التحقق من وصل واتساب",
+        }),
+      });
+      const data = await res.json();
+      if (data?.success) {
+        setStudents((prev) =>
+          prev.map((s) =>
+            s.id === studentId
+              ? {
+                  ...s,
+                  accessStatus: "PAID",
+                  plan: "season",
+                  remainingHours: 8760,
+                  subscriptionExpiresAt: data.newExpiresAt,
+                }
+              : s
+          )
+        );
+        alert(`✓ تم تفعيل حساب الطالب "${studentName}" بنجاح.`);
+      } else {
+        alert(`فشل التفعيل: ${data?.error || "خطأ غير معروف"}`);
+      }
+    } catch {
+      alert("حدث خطأ أثناء محاولة التفعيل.");
+    } finally {
+      setActivatingId(null);
+    }
+  }
 
   useEffect(() => {
     async function fetchStudents() {
@@ -308,13 +352,36 @@ export default function OpsStudentsPage() {
 
                     {/* Action */}
                     <td className="px-4 py-3 text-right">
-                      <Link
-                        href={`/ops/students/${student.id}`}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-medium transition-colors"
-                      >
-                        <span>Dossier</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </Link>
+                      <div className="flex items-center justify-end gap-1.5">
+                        {student.accessStatus !== "PAID" && (
+                          <button
+                            type="button"
+                            disabled={activatingId === student.id}
+                            onClick={() => handleQuickActivate(student.id, student.fullName)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-[10px] font-bold shadow-sm transition-all cursor-pointer shrink-0"
+                            title="تفعيل الحساب فوراً كحساب مدفوع لمدة عام كامل بنقرة واحدة عند استلام الوصل عبر واتساب"
+                          >
+                            {activatingId === student.id ? (
+                              <>
+                                <RefreshCw className="w-3 h-3 animate-spin" />
+                                <span>Activating...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Zap className="w-3 h-3" />
+                                <span>تفعيل Paid</span>
+                              </>
+                            )}
+                          </button>
+                        )}
+                        <Link
+                          href={`/ops/students/${student.id}`}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-medium transition-colors"
+                        >
+                          <span>Dossier</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}

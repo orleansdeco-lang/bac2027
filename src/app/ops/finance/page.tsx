@@ -11,6 +11,9 @@ import {
   AlertTriangle,
   RefreshCw,
   FileText,
+  Zap,
+  MessageCircle,
+  ExternalLink,
 } from "lucide-react";
 import { PaymentOrder, PaymentOrderStatus } from "@/lib/operations/types";
 import { opsFetch } from "@/lib/operations/client-api";
@@ -25,6 +28,42 @@ export default function OpsFinancePage() {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [previewReceiptUrl, setPreviewReceiptUrl] = useState<string | null>(null);
   const [loadingReceiptId, setLoadingReceiptId] = useState<string | null>(null);
+  const [directStudentId, setDirectStudentId] = useState("");
+  const [directActivating, setDirectActivating] = useState(false);
+  const [directMessage, setDirectMessage] = useState<string | null>(null);
+
+  async function handleDirectActivate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!directStudentId.trim()) {
+      alert("يرجى إدخال معرف الطالب (UUID أو البريد الإلكتروني).");
+      return;
+    }
+    setDirectActivating(true);
+    setDirectMessage(null);
+    try {
+      const res = await opsFetch(`/api/ops/students/${directStudentId.trim()}/extend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "custom",
+          days: 365,
+          reason: "تفعيل يدوي مباشر من صفحة المالية بعد مطابقة وصل واتساب",
+        }),
+      });
+      const data = await res.json();
+      if (data?.success) {
+        setDirectMessage(`✓ تم تفعيل حساب الطالب (${directStudentId.trim()}) بنجاح كحساب مدفوع لمدة عام.`);
+        setDirectStudentId("");
+        fetchOrders();
+      } else {
+        alert(`فشل التفعيل: ${data?.error || "خطأ غير معروف"}`);
+      }
+    } catch {
+      alert("حدث خطأ أثناء محاولة التفعيل.");
+    } finally {
+      setDirectActivating(false);
+    }
+  }
 
   async function handleViewReceipt(orderId: string) {
     setLoadingReceiptId(orderId);
@@ -155,6 +194,81 @@ export default function OpsFinancePage() {
           <span>{actionMessage}</span>
         </div>
       )}
+
+      {directMessage && (
+        <div className="p-3 bg-emerald-950/60 border border-emerald-800 rounded-xl text-xs text-emerald-300 flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{directMessage}</span>
+        </div>
+      )}
+
+      {/* WhatsApp Manual Payment Workflow & Direct Activation Box */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Card 1: Official WhatsApp Channel */}
+        <div className="p-4 rounded-xl bg-slate-900/90 border border-emerald-800/40 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold">
+              <MessageCircle className="w-4 h-4 fill-current" />
+              <span>قناة استقبال وصولات الدفع (WhatsApp Receipts)</span>
+            </div>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">
+              Active Channel
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            يتم توجيه الطلاب تلقائياً لإرسال وصل الدفع ومعرف الحساب إلى الرقم المخصص:
+          </p>
+          <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-950 border border-slate-800 font-mono text-xs">
+            <span className="text-white font-bold tracking-wider" dir="ltr">+213 550 30 32 86</span>
+            <a
+              href="https://wa.me/213550303286"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-[11px] text-emerald-400 hover:text-emerald-300 font-sans font-semibold"
+            >
+              <span>فتح المحادثة</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+        </div>
+
+        {/* Card 2: 1-Click Direct Student Activation */}
+        <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2.5">
+          <div className="flex items-center gap-2 text-indigo-400 text-xs font-bold">
+            <Zap className="w-4 h-4" />
+            <span>تفعيل طالب يدوي فوراً (1-Click Student Activation)</span>
+          </div>
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            عند استلام وصل الطالب عبر واتساب دون تسجيل طلب في الموقع، ألصق معرف الطالب (UUID) لتفعيله فوراً:
+          </p>
+          <form onSubmit={handleDirectActivate} className="flex gap-2">
+            <input
+              type="text"
+              value={directStudentId}
+              onChange={(e) => setDirectStudentId(e.target.value)}
+              placeholder="معرف الطالب (e.g. 7f7f704e... or usr_...)"
+              className="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 font-mono focus:outline-none focus:border-indigo-500"
+            />
+            <button
+              type="submit"
+              disabled={directActivating || !directStudentId.trim()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold transition-colors cursor-pointer shrink-0"
+            >
+              {directActivating ? (
+                <>
+                  <RefreshCw className="w-3 h-3 animate-spin" />
+                  <span>تفعيل...</span>
+                </>
+              ) : (
+                <>
+                  <Zap className="w-3 h-3" />
+                  <span>تفعيل Paid</span>
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+      </div>
 
       {/* Filter Tabs */}
       <div className="flex items-center gap-2 border-b border-slate-800 pb-3">

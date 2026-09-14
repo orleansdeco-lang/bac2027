@@ -10,3 +10,5 @@ export * from "./mappings";
 export * from "./language";
 export * from "./mini-exams";
 export * from "./snv-daily-lessons";
+export * from "./philosophy";
+
