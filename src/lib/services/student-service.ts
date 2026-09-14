@@ -74,26 +74,26 @@ export const StudentService = {
 
     const access = getStudentAccess(profile);
     const stream = normalizeStreamIdWithDefault(profile.streamId || (profile as any).stream, "sciences_exp");
-    const studentStatus = (profile as any).student_status || "schooled";
+    const studentStatus = (profile as any).student_status || (profile as any).studentStatus || "schooled";
 
     return {
       userId: profile.id || userId || "anonymous",
       stream,
       studentStatus,
-      wilayaCode: (profile as any).wilaya_code || "",
-      wilayaName: (profile as any).wilaya_name,
-      communeCode: (profile as any).commune_code || "",
-      communeName: (profile as any).commune_name,
-      schoolName: (profile as any).school_name || null,
+      wilayaCode: (profile as any).wilaya_code || (profile as any).wilayaCode || "",
+      wilayaName: (profile as any).wilaya_name || (profile as any).wilayaName,
+      communeCode: (profile as any).commune_code || (profile as any).communeCode || "",
+      communeName: (profile as any).commune_name || (profile as any).communeName,
+      schoolName: (profile as any).school_name !== undefined ? (profile as any).school_name : (profile as any).schoolName || null,
       targetScore: profile.targetScore || 16.0,
-      targetSpecialty: (profile as any).target_specialty,
+      targetSpecialty: (profile as any).target_specialty || (profile as any).targetSpecialty,
       techniqueMathSpecialty: profile.techniqueMathSpecialty,
       trialStartedAt: access.trialStartedAt || new Date().toISOString(),
       trialExpiresAt: access.trialExpiresAt || new Date(Date.now() + 72 * 3600 * 1000).toISOString(),
       isTrialActive: access.status === "TRIAL_ACTIVE" || access.status === "PAID_ACTIVE",
       canUseProduct: access.canUseProduct,
-      registrationCompletedAt: (profile as any).registration_completed_at,
-      academicProfileCompletedAt: (profile as any).academic_profile_completed_at,
+      registrationCompletedAt: (profile as any).registration_completed_at || (profile as any).registrationCompletedAt,
+      academicProfileCompletedAt: (profile as any).academic_profile_completed_at || (profile as any).academicProfileCompletedAt,
     };
   },
 

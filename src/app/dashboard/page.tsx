@@ -67,7 +67,7 @@ export default function DashboardPage() {
     async function loadDashboard() {
       if (!gate.isAuthorized || !gate.profile) return;
       try {
-        const dashData = await DashboardService.getDashboardData();
+        const dashData = await DashboardService.getDashboardData(gate.profile.id);
         setData(dashData);
         trackEvent("dashboard_viewed", { streamId: normalizeStreamIdWithDefault(gate.profile.streamId) });
       } catch (err) {
