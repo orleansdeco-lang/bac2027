@@ -27,6 +27,7 @@ import {
   normalizeAlgerianPhone,
 } from "@/domain/administrative/phone-validation";
 import { StudentService } from "@/lib/services";
+import { StudentRepository } from "@/lib/repositories/student-repository";
 import {
   getRegistrationDraft,
   saveRegistrationDraft,
@@ -87,14 +88,29 @@ export default function StudentRegistrationPage() {
       if (effectiveUserId) {
         StudentService.getProfile(effectiveUserId).then((p) => {
           const regDraft = getRegistrationDraft(effectiveUserId);
-          // If registration is already done for THIS user, forward to academic profile
+          // If registration is already done for THIS user, forward to dashboard
           const isRegistered = Boolean(
             p?.registrationCompletedAt ||
             (p as any)?.registration_completed_at ||
             (p?.firstName && p?.streamId) ||
+            ((p as any)?.first_name && (p as any)?.stream_id) ||
             (regDraft?.registrationCompletedAt && (regDraft?.firstName || regDraft?.streamId))
           );
           if (isRegistered) {
+            // Ensure local repository has the profile cached before navigating to dashboard
+            if (!p && regDraft) {
+              StudentRepository.getProfile(effectiveUserId);
+            }
+            // Loop guard: prevent rapid ping-pong bounce
+            if (typeof window !== "undefined") {
+              const lastBounce = sessionStorage.getItem("bac_reg_bounce_time");
+              const now = Date.now();
+              if (lastBounce && now - parseInt(lastBounce, 10) < 3000) {
+                console.warn("Rapid redirect loop prevented in register page");
+                return;
+              }
+              sessionStorage.setItem("bac_reg_bounce_time", String(now));
+            }
             router.replace("/dashboard");
           }
         });

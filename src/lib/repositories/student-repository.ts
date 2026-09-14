@@ -56,10 +56,8 @@ export const StudentRepository = {
 
         if (error) {
           console.error("StudentRepository.getProfile error:", error);
-          return null;
-        }
-
-        if (data) {
+          // Do not return null immediately; fall back to local data below
+        } else if (data) {
           const localFallback = getStrategicProfile(effectiveUserId) || ({} as any);
           const createdAt = data.created_at || localFallback.created_at || localFallback.createdAt || new Date().toISOString();
           const trialStarted = data.trial_started_at || data.raw_draft?.trial_started_at || createdAt;
@@ -127,15 +125,92 @@ export const StudentRepository = {
           memoryStudentProfiles.set(effectiveUserId, merged);
           return merged;
         }
-
-        // Supabase returned no row for this user: they have no profile yet
-        return null;
       } catch (err) {
         console.error("StudentRepository.getProfile exception:", err);
       }
     }
 
-    return getStrategicProfile(effectiveUserId);
+    // Supabase returned null or failed, or Supabase is unconfigured:
+    // Gracefully recover from local storage mirrors (strategic profile, registration draft, academic draft)
+    const localProfile = getStrategicProfile(effectiveUserId);
+    const regDraft = getRegistrationDraft(effectiveUserId);
+    const academicDraft = getAcademicProfileDraft(effectiveUserId);
+
+    if (localProfile || regDraft) {
+      const baseStreamId = localProfile?.streamId || regDraft?.streamId || "sciences_exp";
+      const createdAt = localProfile?.createdAt || (localProfile as any)?.created_at || new Date().toISOString();
+      const trialStarted = (localProfile as any)?.trial_started_at || createdAt;
+      const trialExpires = (localProfile as any)?.trial_expires_at || calculateTrialExpiration(new Date(createdAt)).toISOString();
+
+      const reconstructed: any = {
+        ...(localProfile || {}),
+        id: effectiveUserId,
+        educationLevel: localProfile?.educationLevel || "secondary",
+        examType: ((localProfile?.examType || "bac").toUpperCase() as any),
+        streamId: baseStreamId,
+        techniqueMathSpecialty: localProfile?.techniqueMathSpecialty || regDraft?.techniqueMathSpecialty || undefined,
+        targetScore: Number(academicDraft?.targetScore || localProfile?.targetScore || 16.0),
+        subjectEstimates: localProfile?.subjectEstimates || ({} as any),
+        availableTime: localProfile?.availableTime || "12_to_18",
+        futureObjective: localProfile?.futureObjective || { preset: "higher_school_ens_esi" },
+        obstacles: localProfile?.obstacles || [],
+        studyEnergy: localProfile?.studyEnergy || "normal",
+        createdAt: createdAt,
+        created_at: createdAt,
+        trial_started_at: trialStarted,
+        trial_expires_at: trialExpires,
+        access_status: localProfile?.access_status || "TRIAL",
+        plan: localProfile?.plan || "PILOT_TRIAL",
+        first_name: regDraft?.firstName || localProfile?.firstName || (localProfile as any)?.first_name,
+        firstName: regDraft?.firstName || localProfile?.firstName || (localProfile as any)?.first_name,
+        last_name: regDraft?.lastName || localProfile?.lastName || (localProfile as any)?.last_name,
+        lastName: regDraft?.lastName || localProfile?.lastName || (localProfile as any)?.last_name,
+        student_phone: regDraft?.studentPhone || localProfile?.studentPhone || (localProfile as any)?.student_phone,
+        studentPhone: regDraft?.studentPhone || localProfile?.studentPhone || (localProfile as any)?.student_phone,
+        parent_phone: regDraft?.parentPhone || localProfile?.parentPhone || (localProfile as any)?.parent_phone,
+        parentPhone: regDraft?.parentPhone || localProfile?.parentPhone || (localProfile as any)?.parent_phone,
+        student_status: regDraft?.studentStatus || localProfile?.studentStatus || (localProfile as any)?.student_status || "schooled",
+        studentStatus: regDraft?.studentStatus || localProfile?.studentStatus || (localProfile as any)?.student_status || "schooled",
+        wilaya_code: regDraft?.wilayaCode || localProfile?.wilayaCode || (localProfile as any)?.wilaya_code,
+        wilayaCode: regDraft?.wilayaCode || localProfile?.wilayaCode || (localProfile as any)?.wilaya_code,
+        wilaya_name: regDraft?.wilayaName || localProfile?.wilayaName || (localProfile as any)?.wilaya_name,
+        wilayaName: regDraft?.wilayaName || localProfile?.wilayaName || (localProfile as any)?.wilaya_name,
+        commune_code: regDraft?.communeCode || localProfile?.communeCode || (localProfile as any)?.commune_code,
+        communeCode: regDraft?.communeCode || localProfile?.communeCode || (localProfile as any)?.commune_code,
+        commune_name: regDraft?.communeName || localProfile?.communeName || (localProfile as any)?.commune_name,
+        communeName: regDraft?.communeName || localProfile?.communeName || (localProfile as any)?.commune_name,
+        school_name: regDraft?.schoolName !== undefined ? regDraft.schoolName : (localProfile?.schoolName !== undefined ? localProfile.schoolName : (localProfile as any)?.school_name),
+        schoolName: regDraft?.schoolName !== undefined ? regDraft.schoolName : (localProfile?.schoolName !== undefined ? localProfile.schoolName : (localProfile as any)?.school_name),
+        annual_average_year_1: academicDraft?.annualAverageYear1 ?? (localProfile as any)?.annual_average_year_1 ?? localProfile?.annualAverageYear1,
+        annualAverageYear1: academicDraft?.annualAverageYear1 ?? (localProfile as any)?.annual_average_year_1 ?? localProfile?.annualAverageYear1,
+        annual_average_year_2: academicDraft?.annualAverageYear2 ?? (localProfile as any)?.annual_average_year_2 ?? localProfile?.annualAverageYear2,
+        annualAverageYear2: academicDraft?.annualAverageYear2 ?? (localProfile as any)?.annual_average_year_2 ?? localProfile?.annualAverageYear2,
+        has_target_specialty: academicDraft?.hasTargetSpecialty ?? (localProfile as any)?.has_target_specialty ?? localProfile?.hasTargetSpecialty,
+        target_specialty: academicDraft?.targetSpecialty || (localProfile as any)?.target_specialty || localProfile?.targetSpecialty,
+        targetSpecialty: academicDraft?.targetSpecialty || (localProfile as any)?.target_specialty || localProfile?.targetSpecialty,
+        study_methods: academicDraft?.studyMethods || (localProfile as any)?.study_methods || localProfile?.studyMethods,
+        studyMethods: academicDraft?.studyMethods || (localProfile as any)?.study_methods || localProfile?.studyMethods,
+        current_self_assessment: academicDraft?.currentSelfAssessment || (localProfile as any)?.current_self_assessment || localProfile?.currentSelfAssessment,
+        registration_completed_at: regDraft?.registrationCompletedAt || localProfile?.registrationCompletedAt || (localProfile as any)?.registration_completed_at,
+        registrationCompletedAt: regDraft?.registrationCompletedAt || localProfile?.registrationCompletedAt || (localProfile as any)?.registration_completed_at,
+        academic_profile_completed_at: academicDraft?.academicProfileCompletedAt || (localProfile as any)?.academicProfileCompletedAt || (localProfile as any)?.academic_profile_completed_at,
+        academicProfileCompletedAt: academicDraft?.academicProfileCompletedAt || (localProfile as any)?.academicProfileCompletedAt || (localProfile as any)?.academic_profile_completed_at,
+      };
+
+      saveStrategicProfile(reconstructed, effectiveUserId);
+      memoryStudentProfiles.set(effectiveUserId, reconstructed);
+
+      // Opportunistically attempt background sync to Supabase if configured and authenticated
+      if (isSupabaseConfigured && supabase) {
+        StudentRepository.saveProfile(reconstructed, effectiveUserId).catch((err) => {
+          console.warn("StudentRepository: background sync of recovered local profile failed:", err);
+        });
+      }
+
+      return reconstructed;
+    }
+
+    return null;
   },
 
   /**

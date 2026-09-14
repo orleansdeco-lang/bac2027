@@ -19,6 +19,17 @@ export interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function syncAuthCookies(token?: string | null) {
+  if (typeof window === "undefined") return;
+  const isHttps = window.location.protocol === "https:";
+  const secureAttr = isHttps ? "; Secure" : "";
+  if (token) {
+    document.cookie = `sb-access-token=${encodeURIComponent(token)}; path=/; max-age=604800; SameSite=Lax${secureAttr}`;
+  } else {
+    document.cookie = `sb-access-token=; path=/; max-age=0; SameSite=Lax${secureAttr}`;
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -41,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.user) {
         setSession(session);
         setUser(session.user);
+        syncAuthCookies(session.access_token);
       } else if (typeof window !== "undefined") {
         try {
           const localAuth = localStorage.getItem("bac_auth_user");
@@ -74,16 +86,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (session?.user) {
           setSession(session);
           setUser(session.user);
-        } else if (typeof window !== "undefined") {
-          try {
-            const localAuth = localStorage.getItem("bac_auth_user");
-            if (localAuth) setUser(JSON.parse(localAuth));
-            else setUser(null);
-          } catch {
+          syncAuthCookies(session.access_token);
+        } else {
+          syncAuthCookies(null);
+          if (typeof window !== "undefined") {
+            try {
+              const localAuth = localStorage.getItem("bac_auth_user");
+              if (localAuth) setUser(JSON.parse(localAuth));
+              else setUser(null);
+            } catch {
+              setUser(null);
+            }
+          } else {
             setUser(null);
           }
-        } else {
-          setUser(null);
         }
         setIsLoading(false);
       }
@@ -198,6 +214,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== "undefined") {
       localStorage.removeItem("bac_auth_user");
     }
+    syncAuthCookies(null);
     return { error: null };
   };
 

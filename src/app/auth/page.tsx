@@ -25,7 +25,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { StudentService } from "@/lib/services";
-import { purgeUserAndLegacyStorage } from "@/lib/onboarding/profile";
+import { purgeUserAndLegacyStorage, getRegistrationDraft } from "@/lib/onboarding/profile";
 
 function AuthContent() {
   const router = useRouter();
@@ -57,14 +57,24 @@ function AuthContent() {
   React.useEffect(() => {
     if (!isLoading && user) {
       StudentService.getProfile(user.id).then((p) => {
-        if (!p || (!p.registrationCompletedAt && !(p.firstName && p.streamId))) {
-          router.push("/auth/register");
+        const regDraft = getRegistrationDraft(user.id);
+        const rawRedirect = searchParams.get("redirectTo");
+        const target = rawRedirect && rawRedirect.startsWith("/") ? rawRedirect : "/dashboard";
+        const isRegistered = Boolean(
+          p?.registrationCompletedAt ||
+          (p as any)?.registration_completed_at ||
+          (p?.firstName && p?.streamId) ||
+          ((p as any)?.first_name && (p as any)?.stream_id) ||
+          (regDraft?.registrationCompletedAt && (regDraft?.firstName || regDraft?.streamId))
+        );
+        if (!isRegistered) {
+          router.push(rawRedirect ? `/auth/register?redirectTo=${encodeURIComponent(rawRedirect)}` : "/auth/register");
         } else {
-          router.push("/dashboard");
+          router.push(target);
         }
       });
     }
-  }, [user, isLoading, router]);
+  }, [user, isLoading, router, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,12 +118,22 @@ function AuthContent() {
         } else if (loggedInUser) {
           await StudentService.handleAuthSessionMigration(loggedInUser.id);
           const profile = await StudentService.getProfile(loggedInUser.id);
+          const regDraft = getRegistrationDraft(loggedInUser.id);
           const { trackEvent } = await import("@/lib/analytics");
           trackEvent("login_completed", { userId: loggedInUser.id });
-          if (!profile || (!profile.registrationCompletedAt && !(profile.firstName && profile.streamId))) {
-            router.push("/auth/register");
+          const rawRedirect = searchParams.get("redirectTo");
+          const target = rawRedirect && rawRedirect.startsWith("/") ? rawRedirect : "/dashboard";
+          const isRegistered = Boolean(
+            profile?.registrationCompletedAt ||
+            (profile as any)?.registration_completed_at ||
+            (profile?.firstName && profile?.streamId) ||
+            ((profile as any)?.first_name && (profile as any)?.stream_id) ||
+            (regDraft?.registrationCompletedAt && (regDraft?.firstName || regDraft?.streamId))
+          );
+          if (!isRegistered) {
+            router.push(rawRedirect ? `/auth/register?redirectTo=${encodeURIComponent(rawRedirect)}` : "/auth/register");
           } else {
-            router.push("/dashboard");
+            router.push(target);
           }
         }
       } else {

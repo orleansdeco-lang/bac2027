@@ -113,13 +113,36 @@ export function saveStrategicProfile(profile: StrategicProfile, userId?: string 
 
 export function getStrategicProfile(userId?: string | null): StrategicProfile | null {
   if (typeof window === "undefined") return null;
-  if (!userId || typeof userId !== "string" || userId.trim() === "") return null;
+  const effectiveId = (userId && typeof userId === "string" && userId.trim() !== "") ? userId.trim() : null;
 
   try {
-    const key = `${STRATEGIC_PROFILE_KEY}:${userId.trim()}`;
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    return JSON.parse(raw) as StrategicProfile;
+    if (effectiveId) {
+      const key = `${STRATEGIC_PROFILE_KEY}:${effectiveId}`;
+      const raw = localStorage.getItem(key);
+      if (raw) return JSON.parse(raw) as StrategicProfile;
+    }
+
+    // Fallback to legacy or unscoped keys
+    const fallbackKeys = [
+      STRATEGIC_PROFILE_KEY,
+      "bac_mastery_student_profile",
+      "bac_student_profile",
+      "bac_strategic_profile",
+    ];
+    for (const fbKey of fallbackKeys) {
+      const raw = localStorage.getItem(fbKey);
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object") {
+            if (!effectiveId || !parsed.id || parsed.id === effectiveId || String(parsed.id).startsWith("profile_")) {
+              return parsed as StrategicProfile;
+            }
+          }
+        } catch {}
+      }
+    }
+    return null;
   } catch {
     return null;
   }
@@ -158,13 +181,17 @@ export function saveRegistrationDraft(draft: any, userId?: string | null): void 
 
 export function getRegistrationDraft(userId?: string | null): any | null {
   if (typeof window === "undefined") return null;
-  if (!userId || typeof userId !== "string" || userId.trim() === "") return null;
+  const effectiveId = (userId && typeof userId === "string" && userId.trim() !== "") ? userId.trim() : null;
 
   try {
-    const key = `${REGISTRATION_DRAFT_KEY}:${userId.trim()}`;
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    return JSON.parse(raw);
+    if (effectiveId) {
+      const key = `${REGISTRATION_DRAFT_KEY}:${effectiveId}`;
+      const raw = localStorage.getItem(key);
+      if (raw) return JSON.parse(raw);
+    }
+    const legacyRaw = localStorage.getItem(REGISTRATION_DRAFT_KEY);
+    if (legacyRaw) return JSON.parse(legacyRaw);
+    return null;
   } catch {
     return null;
   }
@@ -200,13 +227,17 @@ export function saveAcademicProfileDraft(draft: any, userId?: string | null): vo
 
 export function getAcademicProfileDraft(userId?: string | null): any | null {
   if (typeof window === "undefined") return null;
-  if (!userId || typeof userId !== "string" || userId.trim() === "") return null;
+  const effectiveId = (userId && typeof userId === "string" && userId.trim() !== "") ? userId.trim() : null;
 
   try {
-    const key = `${ACADEMIC_PROFILE_DRAFT_KEY}:${userId.trim()}`;
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    return JSON.parse(raw);
+    if (effectiveId) {
+      const key = `${ACADEMIC_PROFILE_DRAFT_KEY}:${effectiveId}`;
+      const raw = localStorage.getItem(key);
+      if (raw) return JSON.parse(raw);
+    }
+    const legacyRaw = localStorage.getItem(ACADEMIC_PROFILE_DRAFT_KEY) || localStorage.getItem("bac_academic_profile_draft");
+    if (legacyRaw) return JSON.parse(legacyRaw);
+    return null;
   } catch {
     return null;
   }

@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth/context";
 import { StudentService } from "@/lib/services";
 import { StudentProfile } from "@/types/student";
 import { StudentLearningContext, getStudentSubjects } from "@/domain/student";
+import { getRegistrationDraft } from "@/lib/onboarding/profile";
 
 export interface LearningAccessGateState {
   isLoading: boolean;
@@ -62,27 +63,32 @@ export function useLearningAccessGate(options?: {
       }
 
       try {
-        const studentProfile = await StudentService.getProfile(effectiveUserId);
+        let studentProfile = await StudentService.getProfile(effectiveUserId);
+        const regDraft = getRegistrationDraft(effectiveUserId);
 
-        if (!studentProfile) {
-          // No profile at all -> redirect to registration
-          if (options?.redirectToAuth !== false) {
-            router.replace("/auth/register");
-          }
-          if (isMounted) {
-            setIsLoading(false);
-            setIsAuthorized(false);
-          }
-          return;
-        }
-
-        // 2. Personal registration completion
+        // 2. Personal registration completion: check both camelCase and snake_case properties
         const isRegistrationComplete = Boolean(
-          studentProfile.registrationCompletedAt ||
-          (studentProfile.firstName && studentProfile.streamId)
+          studentProfile?.registrationCompletedAt ||
+          (studentProfile as any)?.registration_completed_at ||
+          (studentProfile?.firstName && studentProfile?.streamId) ||
+          ((studentProfile as any)?.first_name && (studentProfile as any)?.stream_id) ||
+          (regDraft?.registrationCompletedAt && (regDraft?.firstName || regDraft?.streamId))
         );
 
         if (!isRegistrationComplete) {
+          // Loop guard: ensure rapid bounces do not freeze the UI
+          if (typeof window !== "undefined") {
+            const lastBounce = sessionStorage.getItem("bac_gate_bounce_time");
+            const now = Date.now();
+            if (lastBounce && now - parseInt(lastBounce, 10) < 3000) {
+              console.warn("Rapid redirect loop prevented in useLearningAccessGate");
+              setIsLoading(false);
+              setIsAuthorized(true);
+              return;
+            }
+            sessionStorage.setItem("bac_gate_bounce_time", String(now));
+          }
+
           if (options?.redirectToAuth !== false) {
             router.replace("/auth/register");
           }
@@ -92,6 +98,16 @@ export function useLearningAccessGate(options?: {
             setIsAuthorized(false);
           }
           return;
+        }
+
+        // If registered, make sure studentProfile is populated
+        if (!studentProfile) {
+          studentProfile = await StudentService.getProfile(effectiveUserId);
+        }
+
+        // Clear bounce tracker on authorized entrance
+        if (typeof window !== "undefined") {
+          sessionStorage.removeItem("bac_gate_bounce_time");
         }
 
         // 3. Authorized - establish learning context
