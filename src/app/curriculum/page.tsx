@@ -8,7 +8,11 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { MathRenderer } from "@/components/ui/MathRenderer";
-import { EmbeddedVideoPlayer } from "@/components/curriculum/EmbeddedVideoPlayer";
+import {
+  EmbeddedVideoPlayer,
+  extractYoutubeVideoId,
+  parseTimestampToSeconds,
+} from "@/components/curriculum/EmbeddedVideoPlayer";
 import { DiagramViewer } from "@/components/curriculum/DiagramViewer";
 import {
   snvTerm1Lessons,
@@ -38,7 +42,7 @@ import {
 const CURRICULUM_DIAGRAMS: Record<number, { caption_ar: string; diagramUrl: string; labels: { id: number; text_ar: string }[] }> = {
   1: {
     caption_ar: "رسم تخطيطي لبنية الخلية حقيقية النواة ومقر تركيب البروتين",
-    diagramUrl: "/illustrations/characters/scholar.jpg",
+    diagramUrl: "/diagrams/snv-d01-protein-site.svg",
     labels: [
       { id: 1, text_ar: "غشاء هيولي محيط بالخلية" },
       { id: 2, text_ar: "شبكة هيولية داخلية محببة (مقر التركيب)" },
@@ -50,7 +54,7 @@ const CURRICULUM_DIAGRAMS: Record<number, { caption_ar: string; diagramUrl: stri
   },
   2: {
     caption_ar: "رسم تخطيطي تفسيري لآلية الاستنساخ الحيوي عند حقيقيات النوى",
-    diagramUrl: "/illustrations/characters/scholar.jpg",
+    diagramUrl: "/diagrams/snv-d02-transcription.svg",
     labels: [
       { id: 1, text_ar: "إنزيم ARN بوليميراز الوظيفي" },
       { id: 2, text_ar: "سلسلة الـ ADN المستنسخة (3' -> 5')" },
@@ -61,7 +65,7 @@ const CURRICULUM_DIAGRAMS: Record<number, { caption_ar: string; diagramUrl: stri
   },
   5: {
     caption_ar: "رسم تخطيطي لمراحل الترجمة وتشكل المعقد ريبوزوم-ARNm",
-    diagramUrl: "/illustrations/characters/scholar.jpg",
+    diagramUrl: "/diagrams/snv-d05-translation.svg",
     labels: [
       { id: 1, text_ar: "تحت وحدة ريبوزومية صغرى (تثبت الـ ARNm)" },
       { id: 2, text_ar: "تحت وحدة ريبوزومية كبرى (تحوي موقعي P و A)" },
@@ -73,7 +77,7 @@ const CURRICULUM_DIAGRAMS: Record<number, { caption_ar: string; diagramUrl: stri
   },
   36: {
     caption_ar: "رسم تخطيطي مقارن بين جزيئات التوافق النسيجي CMH-I و CMH-II",
-    diagramUrl: "/illustrations/characters/scholar.jpg",
+    diagramUrl: "/diagrams/snv-d36-cmh.svg",
     labels: [
       { id: 1, text_ar: "سلسلة ببتيدية ثقيلة ألفا (α1, α2, α3)" },
       { id: 2, text_ar: "سلسلة بيتا 2 ميكروغلوبولين (β2m)" },
@@ -83,7 +87,7 @@ const CURRICULUM_DIAGRAMS: Record<number, { caption_ar: string; diagramUrl: stri
   },
   38: {
     caption_ar: "رسم تخطيطي للبنية الفراغية للجسم المضاد النوعي (IgG)",
-    diagramUrl: "/illustrations/characters/scholar.jpg",
+    diagramUrl: "/diagrams/snv-d38-antibody.svg",
     labels: [
       { id: 1, text_ar: "سلسلة ثقيلة H (Heavy chain)" },
       { id: 2, text_ar: "سلسلة خفيفة L (Light chain)" },
@@ -98,18 +102,9 @@ const CURRICULUM_DIAGRAMS: Record<number, { caption_ar: string; diagramUrl: stri
 // Helper: Parse YouTube URL and timestamp into videoId and startSeconds
 function parseYoutubeData(url?: string, timestamp?: string): { videoId: string; startSeconds: number } | null {
   if (!url) return null;
-  const match = url.match(/(?:v=|youtu\.be\/)([\w-]{11})/);
-  if (!match) return null;
-  const videoId = match[1];
-  let startSeconds = 0;
-  if (timestamp) {
-    const parts = timestamp.split(":").map(Number);
-    if (parts.length === 2) {
-      startSeconds = (parts[0] || 0) * 60 + (parts[1] || 0);
-    } else if (parts.length === 3) {
-      startSeconds = (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0);
-    }
-  }
+  const videoId = extractYoutubeVideoId(url);
+  if (!videoId) return null;
+  const startSeconds = parseTimestampToSeconds(timestamp || 0);
   return { videoId, startSeconds };
 }
 
@@ -300,8 +295,8 @@ export default function CurriculumPage() {
                     key={lesson.id}
                     className={`border transition-all duration-200 overflow-hidden ${
                       isExpanded
-                        ? "border-emerald-500/40 bg-card shadow-md ring-1 ring-emerald-500/20"
-                        : "border-theme bg-card hover:border-emerald-500/30"
+                        ? "border-emerald-500/60 bg-card shadow-md ring-1 ring-emerald-500/20"
+                        : "border-theme bg-card hover:border-emerald-500/40"
                     }`}
                   >
                     {/* Header Row */}
@@ -310,92 +305,90 @@ export default function CurriculumPage() {
                       className="p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer select-none"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-mono font-black text-sm flex items-center justify-center shrink-0">
+                        <span className="w-10 h-10 rounded-2xl bg-emerald-100 border border-emerald-300 text-emerald-800 font-mono font-black text-sm flex items-center justify-center shrink-0 shadow-sm">
                           {lesson.dayNumber.toString().padStart(2, "0")}
                         </span>
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[11px] text-theme-muted font-medium">
+                            <span className="text-[11px] text-theme-muted font-bold">
                               {lesson.unitTitle_ar}
                             </span>
                             {videoData && (
-                              <Badge variant="outline" size="sm" className="text-[10px] text-blue-400 border-blue-500/30">
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-lg">
                                 📹 فيديو موجه
-                              </Badge>
+                              </span>
                             )}
                             {diagramData && (
-                              <Badge variant="outline" size="sm" className="text-[10px] text-purple-400 border-purple-500/30">
+                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-lg">
                                 📊 رسم تخطيطي
-                              </Badge>
+                              </span>
                             )}
                           </div>
-                          <h3 className="text-sm sm:text-base font-bold text-theme-text mt-0.5">
+                          <h3 className="text-sm sm:text-base font-bold text-slate-900 mt-0.5">
                             {lesson.title_ar}
                           </h3>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-xs text-theme-muted hidden sm:inline">
+                        <span className="text-xs text-slate-600 font-medium hidden sm:inline">
                           {isExpanded ? "طي التفاصيل" : "عرض الدرس"}
                         </span>
                         {isExpanded ? (
-                          <ChevronUp className="h-5 w-5 text-emerald-400" />
+                          <ChevronUp className="h-5 w-5 text-emerald-700" />
                         ) : (
-                          <ChevronDown className="h-5 w-5 text-theme-muted" />
+                          <ChevronDown className="h-5 w-5 text-slate-400" />
                         )}
                       </div>
                     </div>
 
                     {/* Expanded Lesson Content */}
                     {isExpanded && (
-                      <div className="p-4 sm:p-6 border-t border-theme bg-surface-soft/40 space-y-6 animate-fade-in">
+                      <div className="p-4 sm:p-6 border-t border-theme bg-surface-soft/60 space-y-6 animate-fade-in">
                         {/* Target Capability */}
-                        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-1">
-                          <span className="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
-                            <Target className="h-4 w-4" />
+                        <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/90 border-2 border-emerald-200/90 space-y-2 shadow-sm">
+                          <span className="text-xs sm:text-sm font-bold text-emerald-950 flex items-center gap-1.5">
+                            <Target className="h-4 w-4 text-emerald-700" />
                             الكفاءة المستهدفة (المطلوبة في البكالوريا):
                           </span>
-                          <p className="text-xs sm:text-sm font-semibold text-slate-200 leading-relaxed">
+                          <p className="text-xs sm:text-sm font-bold text-slate-900 leading-relaxed">
                             {lesson.targetCapability_ar}
                           </p>
                         </div>
 
                         {/* Core Concept */}
-                        <div className="p-4 rounded-2xl bg-card border border-theme space-y-2">
-                          <span className="text-xs font-bold text-[var(--color-primary)] flex items-center gap-1.5">
-                            <Sparkles className="h-4 w-4" />
+                        <div className="p-4 sm:p-5 rounded-2xl bg-white border-2 border-slate-200/90 space-y-2 shadow-sm">
+                          <span className="text-xs sm:text-sm font-bold text-emerald-900 flex items-center gap-1.5">
+                            <Sparkles className="h-4 w-4 text-emerald-600" />
                             الفكرة الجوهرية (المفهوم الأساسي):
                           </span>
                           <MathRenderer
                             content={lesson.coreConcept_ar}
-                            className="text-xs sm:text-sm text-theme-text leading-relaxed font-medium"
+                            className="text-xs sm:text-sm text-slate-900 leading-relaxed font-medium"
                           />
                         </div>
 
                         {/* Simple Explanation */}
-                        <div className="p-4 rounded-2xl bg-card border border-theme space-y-2">
-                          <span className="text-xs font-bold text-theme-text flex items-center gap-1.5">
-                            <BookOpen className="h-4 w-4 text-[var(--color-primary)]" />
+                        <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border-2 border-slate-200/80 space-y-2 shadow-sm">
+                          <span className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                            <BookOpen className="h-4 w-4 text-emerald-700" />
                             الشرح المبسط والدلائل التجريبية:
                           </span>
                           <MathRenderer
                             content={lesson.simpleExplanation_ar}
-                            className="text-xs sm:text-sm text-theme-secondary leading-relaxed"
+                            className="text-xs sm:text-sm text-slate-800 leading-relaxed"
                           />
                         </div>
 
                         {/* Embedded Video Player */}
                         {videoData && lesson.externalResource && (
                           <div className="space-y-2">
-                            <div className="flex items-center gap-2 text-xs font-bold text-slate-300">
-                              <Video className="h-4 w-4 text-emerald-400" />
-                              <span>فيديو توجيهي مباشر: {lesson.externalResource.channelName}</span>
-                            </div>
                             <EmbeddedVideoPlayer
                               videoId={videoData.videoId}
                               startSeconds={videoData.startSeconds}
                               title_ar={lesson.externalResource.title}
+                              channelName={lesson.externalResource.channelName}
+                              timestampStr={lesson.externalResource.targetTimestamp}
                             />
                           </div>
                         )}
@@ -414,27 +407,27 @@ export default function CurriculumPage() {
                         {/* Common Mistakes & Traps */}
                         {lesson.commonMistakes && lesson.commonMistakes.length > 0 && (
                           <div className="space-y-3">
-                            <span className="text-xs font-bold text-rose-400 flex items-center gap-1.5">
-                              <AlertTriangle className="h-4 w-4" />
+                            <span className="text-xs sm:text-sm font-bold text-rose-950 flex items-center gap-1.5">
+                              <AlertTriangle className="h-4 w-4 text-rose-700" />
                               فخاخ منهجية وأخطاء شائعة في تصحيح البكالوريا:
                             </span>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                               {lesson.commonMistakes.map((m, idx) => (
                                 <div
                                   key={idx}
-                                  className="p-3.5 rounded-2xl bg-rose-950/20 border border-rose-900/30 space-y-1.5"
+                                  className="p-4 rounded-2xl bg-rose-50/90 border-2 border-rose-200 shadow-sm space-y-2"
                                 >
-                                  <span className="text-xs font-bold text-rose-300 block">
+                                  <span className="text-xs sm:text-sm font-bold text-rose-950 block leading-snug">
                                     ⚠️ {m.trap_ar}
                                   </span>
-                                  <p className="text-xs text-slate-300 leading-relaxed">
-                                    <strong>السبب: </strong>
+                                  <p className="text-xs sm:text-sm text-slate-900 leading-relaxed font-normal">
+                                    <strong className="text-rose-900 font-bold">السبب وتفسير الخطأ: </strong>
                                     {m.explanation_ar}
                                   </p>
-                                  <p className="text-xs text-emerald-400 leading-relaxed font-semibold">
-                                    <strong>العلاج: </strong>
+                                  <div className="p-2.5 rounded-xl bg-emerald-100/90 border border-emerald-300 text-xs sm:text-sm text-emerald-950 leading-relaxed font-semibold">
+                                    <strong className="text-emerald-900 font-bold">العلاج المنهجي المعتمد: </strong>
                                     {m.remedy_ar}
-                                  </p>
+                                  </div>
                                 </div>
                               ))}
                             </div>
@@ -442,25 +435,27 @@ export default function CurriculumPage() {
                         )}
 
                         {/* Quick Recall Interactive Card */}
-                        <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
-                              <Brain className="h-4 w-4" />
+                        <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/90 border-2 border-amber-200 shadow-sm space-y-3">
+                          <div className="flex items-center justify-between gap-3 flex-wrap">
+                            <span className="text-xs sm:text-sm font-bold text-amber-950 flex items-center gap-1.5">
+                              <Brain className="h-4 w-4 text-amber-700" />
                               اختبار الاسترجاع السريع (Active Recall):
                             </span>
                             <button
+                              type="button"
                               onClick={() => toggleRecall(lesson.dayNumber)}
-                              className="text-xs px-3 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors"
+                              className="text-xs px-3.5 py-1.5 rounded-xl bg-amber-700 hover:bg-amber-600 text-white font-bold transition-colors shadow-sm"
                             >
                               {isRecallOpen ? "إخفاء الجواب" : "اكشف الإجابة النموذجية"}
                             </button>
                           </div>
-                          <p className="text-xs sm:text-sm font-semibold text-slate-200">
+                          <p className="text-xs sm:text-sm font-bold text-slate-900 leading-relaxed">
                             ❓ {lesson.quickRecallPrompt_ar}
                           </p>
                           {isRecallOpen && (
-                            <div className="p-3 rounded-xl bg-emerald-950/40 border border-emerald-900/50 text-xs sm:text-sm text-emerald-300 animate-fade-in font-medium">
-                              💡 {lesson.quickRecallAnswer_ar}
+                            <div className="p-3.5 rounded-xl bg-white border-2 border-emerald-500 text-xs sm:text-sm text-slate-900 animate-fade-in font-semibold shadow-sm leading-relaxed">
+                              <span className="text-emerald-800 font-bold block mb-1">💡 الإجابة النموذجية:</span>
+                              {lesson.quickRecallAnswer_ar}
                             </div>
                           )}
                         </div>
@@ -478,36 +473,36 @@ export default function CurriculumPage() {
         {/* ================================================================= */}
         {activeSection === "checkpoints" && (
           <div className="space-y-6">
-            <p className="text-xs text-theme-muted">
+            <p className="text-xs sm:text-sm text-slate-700 font-medium">
               نقاط التفتيش الأسبوعية صُممت لتقويم الحصيلة وتثبيت المفاهيم عبر تمارين توأمية تعالج الثغرات الشائعة في نهاية كل أسبوع.
             </p>
 
             <div className="space-y-4">
               {snvTerm1Checkpoints.map((cp, idx) => (
-                <Card key={cp.id} className="p-5 sm:p-6 border-theme bg-card space-y-4 shadow-card">
+                <Card key={cp.id} className="p-5 sm:p-6 border-2 border-slate-200/90 bg-card space-y-4 shadow-card">
                   <div className="flex items-center justify-between border-b border-theme pb-3">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <Badge variant="primary" size="sm" className="font-mono">
+                        <Badge variant="primary" size="sm" className="font-mono bg-emerald-600 text-white font-bold">
                           المحطة {idx + 1}
                         </Badge>
-                        <span className="text-xs text-theme-muted font-mono">{cp.id}</span>
+                        <span className="text-xs text-slate-500 font-mono">{cp.id}</span>
                       </div>
-                      <h3 className="text-base font-bold text-theme-text">{cp.title_ar}</h3>
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900">{cp.title_ar}</h3>
                     </div>
                   </div>
 
                   {/* Context */}
-                  <div className="p-4 rounded-2xl bg-surface-soft border border-theme space-y-2">
-                    <span className="text-xs font-bold text-[var(--color-primary)]">سياق التمرين:</span>
-                    <MathRenderer content={cp.context_ar} className="text-xs text-theme-secondary leading-relaxed" />
+                  <div className="p-4 rounded-2xl bg-slate-50 border-2 border-slate-200/80 space-y-2">
+                    <span className="text-xs sm:text-sm font-bold text-emerald-800 block">سياق التمرين:</span>
+                    <MathRenderer content={cp.context_ar} className="text-xs sm:text-sm text-slate-800 leading-relaxed" />
                   </div>
 
                   {/* Task Step */}
-                  <div className="p-4 rounded-2xl bg-card border border-theme space-y-3">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-white border-2 border-slate-200 space-y-3 shadow-sm">
                     <div>
-                      <span className="text-xs font-bold text-theme-text block mb-1">التعليمة والمهمة المطلوبة:</span>
-                      <p className="text-xs sm:text-sm font-semibold text-theme-text leading-relaxed">
+                      <span className="text-xs sm:text-sm font-bold text-slate-900 block mb-1">التعليمة والمهمة المطلوبة:</span>
+                      <p className="text-xs sm:text-sm font-bold text-slate-900 leading-relaxed">
                         {cp.taskStep.instruction_ar}
                       </p>
                     </div>
@@ -515,14 +510,14 @@ export default function CurriculumPage() {
                     {/* Expected Keywords */}
                     {cp.taskStep.expectedKeywords && cp.taskStep.expectedKeywords.length > 0 && (
                       <div className="space-y-1.5 pt-1">
-                        <span className="text-[11px] font-bold text-theme-muted block">
+                        <span className="text-xs font-bold text-slate-700 block">
                           الكلمات المفتاحية والمؤشرات المنهجية المطلوبة في شبكة التقويم:
                         </span>
                         <div className="flex flex-wrap gap-1.5">
                           {cp.taskStep.expectedKeywords.map((kw, kwIdx) => (
                             <span
                               key={kwIdx}
-                              className="px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                              className="px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-900 border border-emerald-300"
                             >
                               ✓ {kw}
                             </span>
@@ -532,33 +527,35 @@ export default function CurriculumPage() {
                     )}
 
                     {/* Full Solution */}
-                    <div className="mt-3 pt-3 border-t border-theme/60 space-y-1.5">
-                      <span className="text-xs font-bold text-emerald-400 block">الحل المنهجي المفصل:</span>
-                      <MathRenderer
-                        content={cp.taskStep.fullSolution_ar}
-                        className="text-xs text-theme-secondary leading-relaxed bg-surface-soft/60 p-3.5 rounded-xl border border-theme"
-                      />
+                    <div className="mt-3 pt-3 border-t border-slate-200 space-y-2">
+                      <span className="text-xs sm:text-sm font-bold text-emerald-900 block">الحل المنهجي المفصل:</span>
+                      <div className="bg-slate-50 p-4 rounded-xl border-2 border-slate-200">
+                        <MathRenderer
+                          content={cp.taskStep.fullSolution_ar}
+                          className="text-xs sm:text-sm text-slate-800 leading-relaxed"
+                        />
+                      </div>
                     </div>
                   </div>
 
                   {/* Twin Retest for Error Lab */}
                   {cp.twinRetest && (
-                    <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-2">
+                    <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/90 border-2 border-amber-200 space-y-3 shadow-sm">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
-                          <ShieldCheck className="h-4 w-4" />
+                        <span className="text-xs sm:text-sm font-bold text-amber-950 flex items-center gap-1.5">
+                          <ShieldCheck className="h-4 w-4 text-amber-700" />
                           {cp.twinRetest.title_ar} (Twin Retest - Error Lab)
                         </span>
                       </div>
-                      <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                      <p className="text-xs sm:text-sm text-slate-900 leading-relaxed font-medium">
                         {cp.twinRetest.context_ar}
                       </p>
-                      <div className="p-3 rounded-xl bg-card border border-amber-500/30 text-xs text-amber-200">
-                        <strong>سؤال الاختبار التوأمي: </strong>
+                      <div className="p-3.5 rounded-xl bg-white border-2 border-amber-300 text-xs sm:text-sm text-amber-950 font-bold shadow-sm">
+                        <strong className="text-amber-900 block mb-0.5">سؤال الاختبار التوأمي: </strong>
                         {cp.twinRetest.question_ar}
                       </div>
-                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300">
-                        <strong className="text-emerald-400">الإجابة النموذجية المصححة: </strong>
+                      <div className="p-3.5 rounded-xl bg-white border-2 border-emerald-500 text-xs sm:text-sm text-slate-900 shadow-sm font-medium">
+                        <strong className="text-emerald-800 font-bold block mb-0.5">الإجابة النموذجية المصححة: </strong>
                         {cp.twinRetest.correctAnswer_ar}
                       </div>
                     </div>

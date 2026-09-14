@@ -11,7 +11,7 @@
 
 import { PaymentOrder, PaymentOrderStatus, PaymentMethod, AuthoritativePlan } from "./types";
 import { recordAuditLog } from "./audit";
-import { supabase, isSupabaseConfigured } from "../supabase/client";
+import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "../supabase/client";
 import { StudentRepository } from "../repositories/student-repository";
 import { getSubscriptionPlanById } from "./subscriptions";
 
@@ -142,27 +142,22 @@ export async function createPaymentOrder(input: CreatePaymentOrderInput): Promis
   return newOrder;
 }
 
-export async function getPaymentOrders(filters?: {
-  status?: PaymentOrderStatus;
-  userId?: string;
-  limit?: number;
-}): Promise<PaymentOrder[]> {
+export async function getPaymentOrders(
+  filters?: {
+    status?: PaymentOrderStatus;
+    userId?: string;
+    limit?: number;
+  },
+  token?: string | null
+): Promise<PaymentOrder[]> {
   const limit = filters?.limit || 100;
+  const client = token ? createAuthenticatedSupabaseClient(token) : supabase;
 
-  if (isSupabaseConfigured && supabase) {
+  if (isSupabaseConfigured && client) {
     try {
-      let query = supabase
+      let query = client
         .from("payment_orders")
-        .select(`
-          *,
-          student_profiles (
-            first_name,
-            last_name,
-            student_phone,
-            stream_id,
-            wilaya_name
-          )
-        `)
+        .select("*")
         .order("submitted_at", { ascending: false })
         .limit(limit);
 
@@ -175,27 +170,49 @@ export async function getPaymentOrders(filters?: {
 
       const { data, error } = await query;
       if (!error && data) {
-        return data.map((d: any) => ({
-          id: d.id,
-          userId: d.user_id,
-          plan: d.plan,
-          amount: Number(d.amount),
-          currency: d.currency || "DZD",
-          paymentMethod: d.payment_method,
-          status: d.status,
-          receiptPath: d.receipt_path,
-          notes: d.notes,
-          submittedAt: d.submitted_at,
-          reviewedAt: d.reviewed_at,
-          reviewedBy: d.reviewed_by,
-          rejectionReason: d.rejection_reason,
-          createdAt: d.created_at,
-          updatedAt: d.updated_at,
-          studentName: d.student_profiles ? `${d.student_profiles.first_name || ""} ${d.student_profiles.last_name || ""}`.trim() : undefined,
-          studentPhone: d.student_profiles?.student_phone,
-          streamId: d.student_profiles?.stream_id,
-          wilayaName: d.student_profiles?.wilaya_name,
-        }));
+        // Look up matching student profiles cleanly without PostgREST schema relationship errors
+        const userIds = Array.from(new Set(data.map((d: any) => d.user_id).filter(Boolean)));
+        const profileMap = new Map<string, any>();
+
+        if (userIds.length > 0) {
+          try {
+            const { data: profiles } = await client
+              .from("student_profiles")
+              .select("id, first_name, last_name, student_phone, stream_id, wilaya_name")
+              .in("id", userIds);
+
+            if (profiles) {
+              for (const p of profiles) {
+                profileMap.set(p.id, p);
+              }
+            }
+          } catch {}
+        }
+
+        return data.map((d: any) => {
+          const profile = profileMap.get(d.user_id);
+          return {
+            id: d.id,
+            userId: d.user_id,
+            plan: d.plan,
+            amount: Number(d.amount),
+            currency: d.currency || "DZD",
+            paymentMethod: d.payment_method,
+            status: d.status,
+            receiptPath: d.receipt_path,
+            notes: d.notes,
+            submittedAt: d.submitted_at,
+            reviewedAt: d.reviewed_at,
+            reviewedBy: d.reviewed_by,
+            rejectionReason: d.rejection_reason,
+            createdAt: d.created_at,
+            updatedAt: d.updated_at,
+            studentName: profile ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() : undefined,
+            studentPhone: profile?.student_phone,
+            streamId: profile?.stream_id,
+            wilayaName: profile?.wilaya_name,
+          };
+        });
       }
     } catch {
       // Fallback only if unconfigured

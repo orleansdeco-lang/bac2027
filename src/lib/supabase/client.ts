@@ -18,3 +18,23 @@ export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 export const supabase = isSupabaseConfigured && typeof createClient === "function"
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
+
+/**
+ * Creates an authenticated Supabase client using an operator/student Bearer token.
+ * Passes the Authorization header so RLS policies and SECURITY DEFINER RPCs evaluate auth.uid().
+ */
+export function createAuthenticatedSupabaseClient(token?: string | null) {
+  if (!isSupabaseConfigured || typeof createClient !== "function") return null;
+  if (!token) return supabase;
+  return createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    auth: {
+      persistSession: false,
+    },
+  });
+}
+

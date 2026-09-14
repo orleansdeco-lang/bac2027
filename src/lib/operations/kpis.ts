@@ -10,15 +10,19 @@
 import { OperationsOverviewKPIs, StudentOperationalSummary } from "./types";
 import { getPaymentOrders } from "./payments";
 import { getStoredTelemetryEvents } from "./telemetry";
-import { supabase, isSupabaseConfigured } from "../supabase/client";
+import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "../supabase/client";
 import { getCapturedClientErrors } from "../monitoring";
 
-export async function getOperationsOverviewKPIs(operatorId?: string): Promise<OperationsOverviewKPIs> {
+export async function getOperationsOverviewKPIs(
+  operatorId?: string,
+  token?: string | null
+): Promise<OperationsOverviewKPIs> {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+  const client = token ? createAuthenticatedSupabaseClient(token) : supabase;
 
-  // 1. Fetch Orders
-  const allOrders = await getPaymentOrders({ limit: 500 });
+  // 1. Fetch Orders with operator token
+  const allOrders = await getPaymentOrders({ limit: 500 }, token);
   const pendingOrders = allOrders.filter((o) => o.status === "PENDING");
   const approvedOrders = allOrders.filter((o) => o.status === "APPROVED");
   const rejectedOrders = allOrders.filter((o) => o.status === "REJECTED");
@@ -28,7 +32,7 @@ export async function getOperationsOverviewKPIs(operatorId?: string): Promise<Op
   const telemetry = getStoredTelemetryEvents(1000);
   const todayTelemetry = telemetry.filter((e) => e.occurredAt >= todayStart);
   const todayUniqueUsers = new Set(todayTelemetry.map((e) => e.userId || e.sessionId).filter(Boolean)).size;
-  const todayRegistrations = todayTelemetry.filter((e) => e.eventName === "registration_completed").length;
+  const todayRegistrationsTelemetry = todayTelemetry.filter((e) => e.eventName === "registration_completed").length;
   const todayMissionsStarted = todayTelemetry.filter((e) => e.eventName === "mission_started").length;
   const todayCompletedLearningEvents = todayTelemetry.filter(
     (e) => e.eventName === "practice_completed" || e.eventName === "retest_completed"
@@ -41,6 +45,7 @@ export async function getOperationsOverviewKPIs(operatorId?: string): Promise<Op
   let paidSubscribers = approvedOrders.length;
   let totalStudents = 0;
   let completedOnboarding = 0;
+  let firstActivityStudents = 0;
 
   let completedMissions = 0;
   let totalPracticeAttempts = 0;
@@ -49,101 +54,182 @@ export async function getOperationsOverviewKPIs(operatorId?: string): Promise<Op
   let totalRetestsPassed = 0;
   let totalDemonstratedSkills = 0;
 
-  if (isSupabaseConfigured && supabase) {
+  let todayRegistrationsDb = 0;
+  let todayTrialStartsDb = 0;
+  let todayErrorsRecorded = 0;
+  let todayRetestsDone = 0;
+  let subscriptionsExpiringSoon = 0;
+  let expiredSubscriptions = 0;
+
+  if (isSupabaseConfigured && client) {
     try {
-      // 3a. Student aggregation: Use safe operator RPC if operatorId provided
-      let countsLoadedFromRpc = false;
+      // 3a. Try unified cockpit RPC first
+      let rpcHandled = false;
       if (operatorId) {
-        const { data: kpiCounts, error: kpiCountsError } = await supabase.rpc(
-          "ops_get_student_kpi_counts",
-          { p_operator_id: operatorId }
-        );
-        if (!kpiCountsError && kpiCounts) {
-          totalStudents = Number(kpiCounts.total_students) || 0;
-          activeTrials = Number(kpiCounts.active_trials) || 0;
-          trialsExpiringWithin24h = Number(kpiCounts.trials_expiring_24h) || 0;
-          expiredTrials = Number(kpiCounts.expired_trials) || 0;
-          paidSubscribers = Number(kpiCounts.paid_subscribers) || approvedOrders.length;
-          completedOnboarding = Number(kpiCounts.completed_onboarding) || 0;
-          countsLoadedFromRpc = true;
-        }
+        try {
+          const { data: cockpitData, error: cockpitError } = await client.rpc(
+            "ops_get_cockpit_kpis",
+            { p_operator_id: operatorId }
+          );
+          if (!cockpitError && cockpitData) {
+            const p = cockpitData.productStatus || {};
+            const t = cockpitData.todayDetailed || {};
+            const l = cockpitData.learningSignals || {};
+            const c = cockpitData.commercialOverview || {};
+
+            totalStudents = Number(p.totalRegistered) || 0;
+            activeTrials = Number(p.studentsInTrial) || 0;
+            paidSubscribers = Number(p.activePaidStudents) || paidSubscribers;
+            expiredTrials = Number(p.expiredStudents) || 0;
+            completedOnboarding = Number(p.completedOnboarding) || 0;
+            firstActivityStudents = Number(p.reachedFirstLearningActivity) || 0;
+
+            todayRegistrationsDb = Number(t.newRegistrationsToday) || 0;
+            todayTrialStartsDb = Number(t.newTrialStartsToday) || 0;
+            todayErrorsRecorded = Number(t.errorsRecordedToday) || 0;
+            todayRetestsDone = Number(t.retestsToday) || 0;
+
+            completedMissions = Number(l.completedAtLeastOneMission) || 0;
+            totalPracticeAttempts = Number(l.completedPractice) || 0;
+            totalErrorsRecorded = Number(l.triggeredErrorLab) || 0;
+            totalRetestsPassed = Number(l.completedRetest) || 0;
+            totalDemonstratedSkills = Number(l.demonstratingMasteryEvidence) || 0;
+
+            subscriptionsExpiringSoon = Number(c.subscriptionsExpiringSoon) || 0;
+            expiredSubscriptions = Number(c.expiredSubscriptions) || 0;
+
+            rpcHandled = true;
+          }
+        } catch {}
       }
 
-      // Fallback: Direct table aggregation
-      if (!countsLoadedFromRpc) {
-        const { data: profiles } = await supabase
-          .from("student_profiles")
-          .select("id, access_status, plan, trial_expires_at, created_at, onboarding_completed, academic_profile_completed_at");
+      // 3b. Fallback: Query ops_get_student_kpi_counts if unified RPC not available
+      if (!rpcHandled && operatorId) {
+        try {
+          const { data: kpiCounts, error: kpiCountsError } = await client.rpc(
+            "ops_get_student_kpi_counts",
+            { p_operator_id: operatorId }
+          );
+          if (!kpiCountsError && kpiCounts) {
+            totalStudents = Number(kpiCounts.total_students) || 0;
+            activeTrials = Number(kpiCounts.active_trials) || 0;
+            trialsExpiringWithin24h = Number(kpiCounts.trials_expiring_24h) || 0;
+            expiredTrials = Number(kpiCounts.expired_trials) || 0;
+            paidSubscribers = Number(kpiCounts.paid_subscribers) || approvedOrders.length;
+            completedOnboarding = Number(kpiCounts.completed_onboarding) || 0;
+          }
+        } catch {}
+      }
 
-        if (profiles && profiles.length > 0) {
-          totalStudents = profiles.length;
-          const nowMs = now.getTime();
-          const in24hMs = nowMs + 24 * 60 * 60 * 1000;
+      // 3c. Direct Table Fallbacks for student profiles
+      if (!totalStudents) {
+        try {
+          const { data: profiles } = await client
+            .from("student_profiles")
+            .select("id, access_status, plan, trial_expires_at, subscription_expires_at, created_at, onboarding_completed, academic_profile_completed_at");
 
-          for (const p of profiles) {
-            if (p.onboarding_completed || p.academic_profile_completed_at) {
-              completedOnboarding++;
-            }
-            if (p.access_status === "PAID" || p.plan === "PAID") {
-              paidSubscribers++;
-            } else if (p.access_status === "EXPIRED") {
-              expiredTrials++;
-            } else {
-              const expMs = p.trial_expires_at ? new Date(p.trial_expires_at).getTime() : nowMs;
-              if (expMs <= nowMs) {
+          if (profiles && profiles.length > 0) {
+            totalStudents = profiles.length;
+            const nowMs = now.getTime();
+            const in24hMs = nowMs + 24 * 60 * 60 * 1000;
+
+            for (const p of profiles) {
+              if (p.onboarding_completed || p.academic_profile_completed_at) {
+                completedOnboarding++;
+              }
+              const isPaid = p.access_status === "PAID" || p.plan === "PAID" || (p.subscription_expires_at && new Date(p.subscription_expires_at).getTime() > nowMs);
+              if (isPaid) {
+                paidSubscribers++;
+                if (p.subscription_expires_at) {
+                  const subExpMs = new Date(p.subscription_expires_at).getTime();
+                  if (subExpMs <= in24hMs && subExpMs > nowMs) {
+                    subscriptionsExpiringSoon++;
+                  }
+                }
+              } else if (p.access_status === "EXPIRED") {
                 expiredTrials++;
               } else {
-                activeTrials++;
-                if (expMs <= in24hMs) {
-                  trialsExpiringWithin24h++;
+                const expMs = p.trial_expires_at ? new Date(p.trial_expires_at).getTime() : nowMs;
+                if (expMs <= nowMs) {
+                  expiredTrials++;
+                } else {
+                  activeTrials++;
+                  if (expMs <= in24hMs) {
+                    trialsExpiringWithin24h++;
+                  }
                 }
+              }
+
+              if (p.created_at && p.created_at >= todayStart) {
+                todayRegistrationsDb++;
               }
             }
           }
-        }
+        } catch {}
       }
 
-      // Missions aggregation
-      const { count: mCount } = await supabase
-        .from("missions")
-        .select("*", { count: "exact", head: true })
-        .in("status", ["completed", "mastered"]);
-      completedMissions = mCount || 0;
+      // 3d. Learning Signals Aggregation from database
+      if (!completedMissions) {
+        const { count: mCount } = await client
+          .from("missions")
+          .select("*", { count: "exact", head: true })
+          .in("status", ["completed", "mastered"]);
+        completedMissions = mCount || 0;
+      }
 
-      // Practice attempts aggregation
-      const { count: pCount } = await supabase
-        .from("practice_attempts")
-        .select("*", { count: "exact", head: true });
-      totalPracticeAttempts = pCount || 0;
+      if (!totalPracticeAttempts) {
+        const { count: pCount } = await client
+          .from("practice_attempts")
+          .select("*", { count: "exact", head: true });
+        totalPracticeAttempts = pCount || 0;
 
-      // Exact correct practice attempts aggregation
-      const { count: cpCount } = await supabase
-        .from("practice_attempts")
-        .select("*", { count: "exact", head: true })
-        .eq("is_correct", true);
-      correctPracticeAttempts = cpCount || 0;
+        const { count: cpCount } = await client
+          .from("practice_attempts")
+          .select("*", { count: "exact", head: true })
+          .eq("is_correct", true);
+        correctPracticeAttempts = cpCount || 0;
+      }
 
-      // Errors recorded in error book aggregation
-      const { count: eCount } = await supabase
-        .from("errors")
-        .select("*", { count: "exact", head: true });
-      totalErrorsRecorded = eCount || 0;
+      if (!totalErrorsRecorded) {
+        const { count: eCount } = await client
+          .from("errors")
+          .select("*", { count: "exact", head: true });
+        totalErrorsRecorded = eCount || 0;
 
-      // Retests passed aggregation
-      const { count: rCount } = await supabase
-        .from("retests")
-        .select("*", { count: "exact", head: true })
-        .eq("is_passed", true);
-      totalRetestsPassed = rCount || 0;
+        const { count: eTodayCount } = await client
+          .from("errors")
+          .select("*", { count: "exact", head: true })
+          .gte("created_at", todayStart);
+        todayErrorsRecorded = eTodayCount || 0;
+      }
 
-      // Skills demonstrated aggregation
-      const { count: sCount } = await supabase
-        .from("skill_mastery")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "demonstrated");
-      totalDemonstratedSkills = sCount || 0;
+      if (!totalRetestsPassed) {
+        const { count: rCount } = await client
+          .from("retests")
+          .select("*", { count: "exact", head: true })
+          .eq("is_passed", true);
+        totalRetestsPassed = rCount || 0;
+
+        const { count: rTodayCount } = await client
+          .from("retests")
+          .select("*", { count: "exact", head: true })
+          .gte("attempted_at", todayStart);
+        todayRetestsDone = rTodayCount || 0;
+      }
+
+      if (!totalDemonstratedSkills) {
+        const { count: sCount } = await client
+          .from("skill_mastery")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "demonstrated");
+        totalDemonstratedSkills = sCount || 0;
+      }
+
+      if (!firstActivityStudents) {
+        firstActivityStudents = Math.max(completedMissions, totalPracticeAttempts > 0 ? 1 : 0);
+      }
     } catch {
-      // Retain authentic defaults (0)
+      // Retain authentic fallbacks
     }
   }
 
@@ -159,6 +245,7 @@ export async function getOperationsOverviewKPIs(operatorId?: string): Promise<Op
   const todayApprovedOrders = approvedOrders.filter((o) => o.reviewedAt && o.reviewedAt >= todayStart);
   const todayRejectedOrders = rejectedOrders.filter((o) => o.reviewedAt && o.reviewedAt >= todayStart);
   const todayNewOrders = allOrders.filter((o) => o.submittedAt && o.submittedAt >= todayStart);
+  const todayRegistrations = Math.max(todayRegistrationsDb, todayRegistrationsTelemetry);
 
   const attentionItems = [
     ...(pendingOrders.length > 0
@@ -259,14 +346,14 @@ export async function getOperationsOverviewKPIs(operatorId?: string): Promise<Op
       reachedFirstLearningActivity: completedMissions,
     },
     todayDetailed: {
-      newRegistrationsToday: todayRegistrations,
-      newTrialStartsToday: todayRegistrations,
+      newRegistrationsToday: todayRegistrationsDb || todayRegistrationsTelemetry,
+      newTrialStartsToday: todayTrialStartsDb || todayRegistrationsTelemetry,
       newPaymentOrdersToday: todayNewOrders.length,
       approvedPaymentsToday: todayApprovedOrders.length,
       rejectedPaymentsToday: todayRejectedOrders.length,
-      activeLearningSessionsToday: todayCompletedLearningEvents,
-      errorsRecordedToday: Math.max(clientErrors.length, 0),
-      retestsToday: todayTelemetry.filter((e) => e.eventName === "retest_completed").length,
+      activeLearningSessionsToday: Math.max(todayCompletedLearningEvents, todayUniqueUsers),
+      errorsRecordedToday: todayErrorsRecorded || Math.max(clientErrors.length, 0),
+      retestsToday: todayRetestsDone || todayTelemetry.filter((e) => e.eventName === "retest_completed").length,
     },
     learningSignals: {
       completedAtLeastOneMission: completedMissions,
@@ -281,25 +368,29 @@ export async function getOperationsOverviewKPIs(operatorId?: string): Promise<Op
       approvedToday: todayApprovedOrders.length,
       rejectedToday: todayRejectedOrders.length,
       activeSubscriptions: paidSubscribers,
-      subscriptionsExpiringSoon: 0,
-      expiredSubscriptions: 0,
+      subscriptionsExpiringSoon: subscriptionsExpiringSoon,
+      expiredSubscriptions: expiredSubscriptions,
     },
     attentionItems,
   };
 }
 
-export async function getStudentsOperationalList(operatorId?: string): Promise<StudentOperationalSummary[]> {
+export async function getStudentsOperationalList(
+  operatorId?: string,
+  token?: string | null
+): Promise<StudentOperationalSummary[]> {
   const summaries: StudentOperationalSummary[] = [];
-  const pendingOrders = await getPaymentOrders({ status: "PENDING" });
+  const client = token ? createAuthenticatedSupabaseClient(token) : supabase;
+  const pendingOrders = await getPaymentOrders({ status: "PENDING" }, token);
   const pendingUserIds = new Set(pendingOrders.map((o) => o.userId));
 
-  if (isSupabaseConfigured && supabase) {
+  if (isSupabaseConfigured && client) {
     try {
       let profiles: any[] | null = null;
 
       // 1. Try safe operator directory RPC if operatorId is provided
       if (operatorId) {
-        const { data: rpcProfiles, error: rpcError } = await supabase.rpc(
+        const { data: rpcProfiles, error: rpcError } = await client.rpc(
           "ops_get_student_directory",
           { p_operator_id: operatorId, p_limit: 100 }
         );
@@ -311,7 +402,7 @@ export async function getStudentsOperationalList(operatorId?: string): Promise<S
 
       // 2. Direct query fallback
       if (!profiles) {
-        const { data: directProfiles } = await supabase
+        const { data: directProfiles } = await client
           .from("student_profiles")
           .select("*")
           .order("created_at", { ascending: false })

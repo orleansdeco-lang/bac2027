@@ -3,7 +3,7 @@ import ReactMarkdown from "react-markdown";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 
-interface MathRendererProps {
+export interface MathRendererProps {
   content?: string | null;
   className?: string;
 }
@@ -12,16 +12,25 @@ export const MathRenderer: React.FC<MathRendererProps> = ({ content, className =
   if (!content) return null;
 
   return (
-    <div className={`prose-sm max-w-none text-theme-text font-sans ${className}`}>
+    <div className={`prose-sm max-w-none text-theme-text font-sans math-container ${className}`}>
       <ReactMarkdown
         remarkPlugins={[remarkMath]}
-        rehypePlugins={[rehypeKatex]}
+        rehypePlugins={[[rehypeKatex, { strict: false, throwOnError: false }]]}
         components={{
-          p: ({ children }) => <span className="inline-block leading-relaxed mb-1">{children}</span>,
-          code: ({ children }) => (
-            <span className="font-mono bg-surface-soft px-1.5 py-0.5 rounded text-xs">
+          p: ({ children }) => (
+            <p className="leading-relaxed mb-2 last:mb-0 text-inherit">
               {children}
-            </span>
+            </p>
+          ),
+          code: ({ children }) => (
+            <code className="font-mono bg-surface-soft px-1.5 py-0.5 rounded text-xs border border-theme/60 text-emerald-800">
+              {children}
+            </code>
+          ),
+          strong: ({ children }) => (
+            <strong className="font-bold text-slate-900">
+              {children}
+            </strong>
           ),
         }}
       >
@@ -30,3 +39,4 @@ export const MathRenderer: React.FC<MathRendererProps> = ({ content, className =
     </div>
   );
 };
+
