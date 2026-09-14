@@ -94,25 +94,7 @@ export function useLearningAccessGate(options?: {
           return;
         }
 
-        // 3. Academic profile completion
-        const isAcademicProfileComplete = Boolean(
-          studentProfile.academicProfileCompletedAt ||
-          (studentProfile.targetScore && studentProfile.studyMethods && studentProfile.studyMethods.length > 0)
-        );
-
-        if (!isAcademicProfileComplete) {
-          if (options?.redirectToAuth !== false) {
-            router.replace("/profile/academic");
-          }
-          if (isMounted) {
-            setProfile(studentProfile);
-            setIsLoading(false);
-            setIsAuthorized(false);
-          }
-          return;
-        }
-
-        // 4. Authorized - establish learning context
+        // 3. Authorized - establish learning context
         const ctx = await StudentService.getLearningContext(effectiveUserId);
 
         if (isMounted) {

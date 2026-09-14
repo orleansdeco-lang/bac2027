@@ -59,8 +59,6 @@ function AuthContent() {
       StudentService.getProfile(user.id).then((p) => {
         if (!p || (!p.registrationCompletedAt && !(p.firstName && p.streamId))) {
           router.push("/auth/register");
-        } else if (!p.academicProfileCompletedAt && !(p.targetScore && p.studyMethods?.length)) {
-          router.push("/profile/academic");
         } else {
           router.push("/dashboard");
         }
@@ -114,8 +112,6 @@ function AuthContent() {
           trackEvent("login_completed", { userId: loggedInUser.id });
           if (!profile || (!profile.registrationCompletedAt && !(profile.firstName && profile.streamId))) {
             router.push("/auth/register");
-          } else if (!profile.academicProfileCompletedAt && !(profile.targetScore && profile.studyMethods?.length)) {
-            router.push("/profile/academic");
           } else {
             router.push("/dashboard");
           }

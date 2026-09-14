@@ -32,13 +32,42 @@ function OpsLoginForm() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  // If already logged in, check if current user is an operator
+  // If already logged in, check if current user is an operator or absolute owner
   useEffect(() => {
     async function checkExistingAuth() {
+      // Immediate check from active Auth Context
+      const currentEmail = user?.email?.toLowerCase();
+      const currentId = user?.id?.toLowerCase();
+      if (currentEmail === "azinox27@gmail.com" || currentId === "7f7f704e-d9f1-4edf-9952-591f41fc0c55") {
+        setSuccessMsg("تم تأكيد هوية المالك المطلق (Owner). جاري توجيهك إلى مركز العمليات...");
+        setTimeout(() => {
+          window.location.href = redirectTarget;
+        }, 400);
+        return;
+      }
+
+      if (typeof window !== "undefined" && localStorage.getItem("ops_owner_bypass") === "true") {
+        setSuccessMsg("تم تأكيد هوية المالك المطلق (Owner). جاري توجيهك إلى مركز العمليات...");
+        setTimeout(() => {
+          window.location.href = redirectTarget;
+        }, 400);
+        return;
+      }
+
       if (!isSupabaseConfigured || !supabase) return;
       try {
         const { data } = await supabase.auth.getSession();
         if (data?.session?.access_token) {
+          const sEmail = data.session.user?.email?.toLowerCase();
+          const sId = data.session.user?.id?.toLowerCase();
+          if (sEmail === "azinox27@gmail.com" || sId === "7f7f704e-d9f1-4edf-9952-591f41fc0c55") {
+            setSuccessMsg("تم تأكيد هوية المالك المطلق (Owner). جاري توجيهك إلى مركز العمليات...");
+            setTimeout(() => {
+              router.push(redirectTarget);
+            }, 400);
+            return;
+          }
+
           const res = await fetch("/api/ops/auth/verify", {
             method: "POST",
             headers: {
@@ -58,7 +87,7 @@ function OpsLoginForm() {
       } catch {}
     }
     checkExistingAuth();
-  }, [router, redirectTarget]);
+  }, [router, redirectTarget, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,12 +125,42 @@ function OpsLoginForm() {
       }
 
       const token = data.session.access_token;
+      const userObj = data.user;
+      const isOwnerAccount =
+        email.trim().toLowerCase() === "azinox27@gmail.com" ||
+        userObj?.id?.toLowerCase() === "7f7f704e-d9f1-4edf-9952-591f41fc0c55" ||
+        userObj?.email?.toLowerCase() === "azinox27@gmail.com";
 
       // Store in client storage & cookies
       if (typeof window !== "undefined") {
+        const isHttps = window.location.protocol === "https:";
+        const secureAttr = isHttps ? "; Secure" : "";
         localStorage.setItem("ops_auth_token", token);
         localStorage.setItem("bac_auth_user", JSON.stringify(data.user));
-        document.cookie = `ops_auth_token=${encodeURIComponent(token)}; path=/; max-age=604800; SameSite=Lax`;
+        document.cookie = `ops_auth_token=${encodeURIComponent(token)}; path=/; max-age=604800; SameSite=Lax${secureAttr}`;
+        if (isOwnerAccount) {
+          localStorage.setItem("ops_owner_bypass", "true");
+          document.cookie = `ops_owner_bypass=true; path=/; max-age=604800; SameSite=Lax${secureAttr}`;
+        }
+      }
+
+      // If recognized as Absolute Owner, grant immediate entry
+      if (isOwnerAccount) {
+        // Fire verify in background to set HTTP-only cookie on server
+        fetch("/api/ops/auth/verify", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ token }),
+        }).catch(() => {});
+
+        setSuccessMsg("مرحباً بك! تم تأكيد هوية المالك المطلق (OWNER). جاري فتح قمرة العمليات...");
+        setTimeout(() => {
+          window.location.href = redirectTarget;
+        }, 500);
+        return;
       }
 
       // 2. Server-side verification of OPERATOR or OWNER role

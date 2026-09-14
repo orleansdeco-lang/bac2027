@@ -25,6 +25,18 @@ export async function getOperatorToken(): Promise<string | null> {
       const directOpsToken = localStorage.getItem("ops_auth_token");
       if (directOpsToken) return directOpsToken;
 
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.includes("-auth-token")) {
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed?.access_token) return parsed.access_token;
+            if (Array.isArray(parsed) && parsed[0]) return parsed[0];
+          }
+        }
+      }
+
       const rawAuth = localStorage.getItem("bac_auth_user");
       if (rawAuth) {
         const parsed = JSON.parse(rawAuth);
@@ -33,11 +45,15 @@ export async function getOperatorToken(): Promise<string | null> {
     } catch {}
   }
 
-  // 3. Check document cookie for ops_auth_token
+  // 3. Check document cookie for ops_auth_token or sb-access-token
   if (typeof document !== "undefined") {
     const match = document.cookie.match(/(?:^|; )ops_auth_token=([^;]*)/);
     if (match && match[1]) {
       return decodeURIComponent(match[1]);
+    }
+    const sbMatch = document.cookie.match(/(?:^|; )sb-access-token=([^;]*)/);
+    if (sbMatch && sbMatch[1]) {
+      return decodeURIComponent(sbMatch[1]);
     }
   }
 

@@ -63,7 +63,9 @@ export function OpsSidebar() {
     if (typeof window !== "undefined") {
       try {
         localStorage.removeItem("ops_auth_token");
+        localStorage.removeItem("ops_owner_bypass");
         document.cookie = "ops_auth_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        document.cookie = "ops_owner_bypass=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
       } catch {}
     }
     try {

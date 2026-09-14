@@ -95,7 +95,7 @@ export default function StudentRegistrationPage() {
             (regDraft?.registrationCompletedAt && (regDraft?.firstName || regDraft?.streamId))
           );
           if (isRegistered) {
-            router.replace("/profile/academic");
+            router.replace("/dashboard");
           }
         });
       }

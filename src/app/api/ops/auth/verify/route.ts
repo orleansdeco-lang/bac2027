@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   extractAuthenticatedUserId,
   getServerUserRole,
+  isAbsoluteOwner,
 } from "@/lib/operations/auth";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
 
@@ -58,9 +59,10 @@ export async function POST(req: Request) {
       );
     }
 
-    // 4. Check role in database
-    const role = await getServerUserRole(userId);
-    const isOperator = role === "OWNER" || role === "OPERATOR";
+    // 4. Absolute Owner immediate check or database role verification
+    const isOwner = isAbsoluteOwner(userId, userEmail);
+    const role = isOwner ? "OWNER" : await getServerUserRole(userId);
+    const isOperator = isOwner || role === "OWNER" || role === "OPERATOR";
 
     if (!isOperator) {
       return NextResponse.json(
@@ -121,8 +123,9 @@ export async function GET(req: Request) {
     );
   }
 
-  const role = await getServerUserRole(userId);
-  const isOperator = role === "OWNER" || role === "OPERATOR";
+  const isOwner = isAbsoluteOwner(userId);
+  const role = isOwner ? "OWNER" : await getServerUserRole(userId);
+  const isOperator = isOwner || role === "OWNER" || role === "OPERATOR";
 
   if (!isOperator) {
     return NextResponse.json(
@@ -134,7 +137,7 @@ export async function GET(req: Request) {
   return NextResponse.json({
     success: true,
     authorized: true,
-    role,
+    role: isOwner ? "OWNER" : role,
     userId,
   });
 }

@@ -212,8 +212,13 @@ export default function AcademicProfilePage() {
 
       await StudentService.saveAcademicProfile(academicData, effectiveUserId);
 
-      // Start existing diagnostic flow
-      router.push("/diagnostic");
+      // If already has diagnostic or coming from edit, return to dashboard
+      const hasDiag = typeof window !== "undefined" && Boolean(localStorage.getItem(`bac_diagnostic_result_${effectiveUserId}`));
+      if (!hasDiag) {
+        router.push("/diagnostic");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err) {
       console.error("Failed to save academic profile:", err);
       setErrorMsg(isAr ? "حدث خطأ أثناء حفظ الملف. يرجى المحاولة." : "Erreur lors de l'enregistrement.");
@@ -262,9 +267,16 @@ export default function AcademicProfilePage() {
           <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
             <Logo size="sm" />
           </Link>
-          <Badge variant="outline" className="text-xs font-mono text-cyan-400 border-cyan-500/30">
-            {isAr ? "الملف الأكاديمي" : "Profil Académique"}
-          </Badge>
+          <div className="flex items-center gap-2.5">
+            <Link href="/dashboard">
+              <Button variant="outline" size="sm" className="text-xs">
+                <span>{isAr ? "العودة للرئيسية" : "Retour"}</span>
+              </Button>
+            </Link>
+            <Badge variant="outline" className="text-xs font-mono text-cyan-400 border-cyan-500/30">
+              {isAr ? "الملف الأكاديمي" : "Profil Académique"}
+            </Badge>
+          </div>
         </Container>
       </header>
 
