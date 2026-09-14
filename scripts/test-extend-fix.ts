@@ -1,5 +1,5 @@
-import { extendStudentSubscription } from "./src/lib/operations/subscriptions";
-import { OWNER_UUID, OWNER_EMAIL } from "./src/lib/operations/auth";
+import { extendStudentSubscription } from "../src/lib/operations/subscriptions";
+import { OWNER_UUID, OWNER_EMAIL } from "../src/lib/operations/auth";
 
 async function run() {
   console.log("Testing extendStudentSubscription with Owner UUID:", OWNER_UUID);

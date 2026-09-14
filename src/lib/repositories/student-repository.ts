@@ -11,7 +11,7 @@ import {
   AcademicProfileData,
   CompleteStudentProfile,
 } from "@/types/registration";
-import { supabase, isSupabaseConfigured } from "../supabase/client";
+import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "../supabase/client";
 import {
   getStrategicProfile,
   saveStrategicProfile,
@@ -30,7 +30,7 @@ export const StudentRepository = {
    * Fetch student profile for an authenticated user.
    * If Supabase is unconfigured or returns null, gracefully falls back to memory/LocalStorage.
    */
-  async getProfile(userId?: string): Promise<StrategicProfile | null> {
+  async getProfile(userId?: string, token?: string | null): Promise<StrategicProfile | null> {
     let effectiveUserId = userId;
     if (!effectiveUserId && typeof window !== "undefined") {
       try {
@@ -46,9 +46,10 @@ export const StudentRepository = {
       return memoryStudentProfiles.get(effectiveUserId);
     }
 
-    if (isSupabaseConfigured && supabase && effectiveUserId) {
+    const dbClient = token ? createAuthenticatedSupabaseClient(token) : supabase;
+    if (isSupabaseConfigured && dbClient && effectiveUserId) {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await dbClient
           .from("student_profiles")
           .select("*")
           .eq("id", effectiveUserId)
@@ -217,7 +218,7 @@ export const StudentRepository = {
    * Save student profile to Supabase and keep LocalStorage in sync
    * Always satisfies the database constraint: id = user_id
    */
-  async saveProfile(profile: StrategicProfile, userId?: string): Promise<void> {
+  async saveProfile(profile: StrategicProfile, userId?: string, token?: string | null): Promise<void> {
     const targetId = (typeof userId === "string" && userId.trim()) ? userId.trim() : profile.id;
     const existing = targetId ? memoryStudentProfiles.get(targetId) : null;
     const canBePaid = Boolean(
@@ -247,7 +248,8 @@ export const StudentRepository = {
       memoryStudentProfiles.set(targetId, { ...sanitizedProfile, id: targetId });
     }
 
-    if (isSupabaseConfigured && supabase && userId) {
+    const dbClient = token ? createAuthenticatedSupabaseClient(token) : supabase;
+    if (isSupabaseConfigured && dbClient && userId) {
       try {
         const createdAt = (profile as any).created_at || (profile as any).createdAt || new Date().toISOString();
         const trialStarted = (profile as any).trial_started_at || createdAt;
@@ -279,7 +281,7 @@ export const StudentRepository = {
         };
 
         // Attempt upsert with trial columns first
-        const { error: fullError } = await supabase
+        const { error: fullError } = await dbClient
           .from("student_profiles")
           .upsert(
             {
@@ -295,7 +297,7 @@ export const StudentRepository = {
         // If trial columns not yet in DB schema, fallback to base payload with enriched raw_draft
         if (fullError) {
           if (fullError.message?.includes("column") || fullError.code === "PGRST204") {
-            const { error: fallbackError } = await supabase
+            const { error: fallbackError } = await dbClient
               .from("student_profiles")
               .upsert(basePayload, { onConflict: "id" });
             if (fallbackError) {

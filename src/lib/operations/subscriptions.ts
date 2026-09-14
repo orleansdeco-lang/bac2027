@@ -12,9 +12,9 @@
  */
 
 import { SubscriptionPlan, SubscriptionAlert } from "./types";
-import { supabase, isSupabaseConfigured } from "../supabase/client";
+import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "../supabase/client";
 import { recordAuditLog } from "./audit";
-import { hasFinanceAccess, getServerUserRole } from "./auth";
+import { hasFinanceAccess, getServerUserRole, isAbsoluteOwner, OWNER_UUID } from "./auth";
 import { StudentRepository } from "../repositories/student-repository";
 import { getPaymentOrders } from "./payments";
 
