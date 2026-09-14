@@ -30,19 +30,22 @@ export default function OpsStudentsPage() {
   const [subscriptionFilter, setSubscriptionFilter] = useState("all");
   const [activatingId, setActivatingId] = useState<string | null>(null);
 
-  async function handleQuickActivate(studentId: string, studentName: string) {
-    if (!confirm(`هل أنت متأكد من تفعيل اشتراك الطالب "${studentName}" فورياً كحساب مدفوع (PAID) لمدة عام كامل؟`)) {
+  async function handleQuickActivate(studentId: string, studentName: string, planType: "season" | "monthly" = "season") {
+    const isSeason = planType === "season";
+    const label = isSeason ? "سنة دراسية كاملة (365 يوم)" : "شهر كامل (30 يوم)";
+    if (!confirm(`هل أنت متأكد من تفعيل اشتراك الطالب "${studentName}" فورياً كحساب مدفوع (${label})؟`)) {
       return;
     }
-    setActivatingId(studentId);
+    setActivatingId(`${studentId}_${planType}`);
     try {
-      const res = await opsFetch(`/api/ops/students/${studentId}/extend`, {
+      const res = await opsFetch(`/api/ops/students/${encodeURIComponent(studentId)}/extend`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type: "custom",
-          days: 365,
-          reason: "تفعيل يدوي فوري من قبل المشرف بعد التحقق من وصل واتساب",
+          type: isSeason ? "custom" : "1_month",
+          days: isSeason ? 365 : 30,
+          plan: planType,
+          reason: `تفعيل يدوي فوري (${label}) من قبل المشرف بعد التحقق من وصل واتساب`,
         }),
       });
       const data = await res.json();
@@ -53,14 +56,14 @@ export default function OpsStudentsPage() {
               ? {
                   ...s,
                   accessStatus: "PAID",
-                  plan: "season",
-                  remainingHours: 8760,
+                  plan: data.plan || planType,
+                  remainingHours: isSeason ? 8760 : 720,
                   subscriptionExpiresAt: data.newExpiresAt,
                 }
               : s
           )
         );
-        alert(`✓ تم تفعيل حساب الطالب "${studentName}" بنجاح.`);
+        alert(`✓ تم تفعيل حساب الطالب "${studentName}" بنجاح (${label}).`);
       } else {
         alert(`فشل التفعيل: ${data?.error || "خطأ غير معروف"}`);
       }
@@ -354,25 +357,37 @@ export default function OpsStudentsPage() {
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         {student.accessStatus !== "PAID" && (
-                          <button
-                            type="button"
-                            disabled={activatingId === student.id}
-                            onClick={() => handleQuickActivate(student.id, student.fullName)}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-[10px] font-bold shadow-sm transition-all cursor-pointer shrink-0"
-                            title="تفعيل الحساب فوراً كحساب مدفوع لمدة عام كامل بنقرة واحدة عند استلام الوصل عبر واتساب"
-                          >
-                            {activatingId === student.id ? (
-                              <>
-                                <RefreshCw className="w-3 h-3 animate-spin" />
-                                <span>Activating...</span>
-                              </>
-                            ) : (
-                              <>
-                                <Zap className="w-3 h-3" />
-                                <span>تفعيل Paid</span>
-                              </>
-                            )}
-                          </button>
+                          <div className="inline-flex items-center rounded-lg bg-slate-900 border border-slate-700/60 p-0.5 shadow-sm">
+                            <button
+                              type="button"
+                              disabled={activatingId !== null}
+                              onClick={() => handleQuickActivate(student.id, student.fullName, "season")}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-[10px] font-bold transition-all cursor-pointer shrink-0"
+                              title="تفعيل اشتراك سنة دراسية كاملة (365 يوم)"
+                            >
+                              {activatingId === `${student.id}_season` ? (
+                                <RefreshCw className="w-2.5 h-2.5 animate-spin" />
+                              ) : (
+                                <Zap className="w-2.5 h-2.5" />
+                              )}
+                              <span>سنوي</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              disabled={activatingId !== null}
+                              onClick={() => handleQuickActivate(student.id, student.fullName, "monthly")}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-[10px] font-bold transition-all cursor-pointer shrink-0 ml-1"
+                              title="تفعيل اشتراك شهري (30 يوم)"
+                            >
+                              {activatingId === `${student.id}_monthly` ? (
+                                <RefreshCw className="w-2.5 h-2.5 animate-spin" />
+                              ) : (
+                                <Clock className="w-2.5 h-2.5" />
+                              )}
+                              <span>شهري</span>
+                            </button>
+                          </div>
                         )}
                         <Link
                           href={`/ops/students/${student.id}`}
