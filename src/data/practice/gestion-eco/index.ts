@@ -1,4 +1,8 @@
 import { PracticeQuestion } from "@/types/mission";
+import {
+  GESTION_ECO_JOURNAL_QUESTION,
+  GESTION_ECO_STEPS_QUESTION,
+} from "./interactive-exercises";
 
 /**
  * BAC Mastery — Gestion & Économie Practice & Retest Question Bank
@@ -7,7 +11,13 @@ import { PracticeQuestion } from "@/types/mission";
  */
 export const GESTION_ECO_PRACTICE_QUESTIONS: PracticeQuestion[] = [
   // ===========================================================================
-  // 1. ACCOUNTING & FINANCE
+  // 1. ACCOUNTING & FINANCE - AUTHENTIC INTERACTIVE EXERCISES
+  // ===========================================================================
+  GESTION_ECO_JOURNAL_QUESTION,
+  GESTION_ECO_STEPS_QUESTION,
+
+  // ===========================================================================
+  // 1. ACCOUNTING & FINANCE - MCQ ITEMS
   // ===========================================================================
   {
     id: "pq-acc-deprec-01",

@@ -54,6 +54,8 @@ export interface Skill {
   repairSteps_fr: string[];
 }
 
+import { ExerciseType, InteractiveQuestionConfig } from "./interactive-exercise";
+
 /**
  * Practice question option
  */
@@ -69,14 +71,16 @@ export interface PracticeOption {
  */
 export interface PracticeQuestion {
   id: string;
-  educationLevel: "secondary";
-  examType: "bac";
+  educationLevel: "secondary" | EducationLevel;
+  examType: "bac" | ExamType;
   streamId: StreamId;
   subjectId: SubjectId;
   skillId: string;
   dimension: DiagnosticDimension;
   difficulty: 1 | 2 | 3;
-  type: "mcq" | "short_answer" | "true_false";
+  type: "mcq" | "short_answer" | "true_false" | "journal_entry" | "step_by_step" | string;
+  exerciseType?: ExerciseType;
+  interactiveConfig?: InteractiveQuestionConfig;
   prompt_ar: string;
   prompt_fr: string;
   options: PracticeOption[];

@@ -24,6 +24,7 @@ import {
   Brain,
   ShieldAlert,
 } from "lucide-react";
+import { normalizeStreamIdWithDefault } from "@/lib/curriculum/filter";
 import {
   DiagnosticQuestion,
   DiagnosticSession,
@@ -77,7 +78,7 @@ export default function DiagnosticPage() {
         try {
           const profile = await StudentService.getProfile(effectiveUserId);
           if (profile) {
-            if (profile.streamId) activeStream = profile.streamId;
+            if (profile.streamId) activeStream = normalizeStreamIdWithDefault(profile.streamId, activeStream);
             if (profile.techniqueMathSpecialty) activeSpecialty = profile.techniqueMathSpecialty;
             if (profile.targetScore) estimate = Math.max(8, profile.targetScore - 4);
           }

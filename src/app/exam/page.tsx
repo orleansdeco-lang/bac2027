@@ -18,6 +18,7 @@ import { SUBJECT_REGISTRY } from "@/domain/curriculum/subjects";
 import { PROMPT11_PAST_BAC_REFERENCES } from "@/domain/content/past-bac-references";
 import { SubjectId, StreamId } from "@/types/education";
 import { trackEvent } from "@/lib/analytics";
+import { normalizeStreamIdWithDefault } from "@/lib/curriculum/filter";
 import {
   Target,
   Clock,
@@ -54,7 +55,8 @@ export default function ExamModePage() {
         setReport(prog);
 
         const demonstrated = prog?.demonstratedSkills?.length || 0;
-        const streamSkills = ContentService.getSkillsForStream(gate.profile.streamId as StreamId);
+        const currentStream = normalizeStreamIdWithDefault(gate.profile.streamId, "sciences_exp");
+        const streamSkills = ContentService.getSkillsForStream(currentStream);
         const totalSkills = streamSkills.length || 31;
         const mathCount = prog?.subjectBreakdown?.mathematics?.demonstrated || 0;
         const physCount = prog?.subjectBreakdown?.physics?.demonstrated || 0;
@@ -111,7 +113,7 @@ export default function ExamModePage() {
   }
 
   const profile = gate.profile;
-  const streamId = (profile.streamId || "sciences_exp") as StreamId;
+  const streamId = normalizeStreamIdWithDefault(profile.streamId || (profile as any)?.stream, "sciences_exp");
   const authorizedSubjects = getStudentSubjects(streamId, profile.techniqueMathSpecialty);
 
   const getStatusBadge = (status?: string) => {

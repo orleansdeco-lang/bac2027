@@ -36,6 +36,11 @@ import {
 import { getStreamSubjects, ALL_SUBJECTS } from "@/lib/constants/streams";
 import { ContentService } from "@/lib/services/content-service";
 import { isSubjectAllowedForStream } from "@/domain/student";
+import {
+  normalizeStreamIdWithDefault,
+  getDefaultSubjectForStream,
+  getDefaultSkillForStream,
+} from "@/lib/curriculum/filter";
 
 /**
  * Pure in-memory mission resolver
@@ -54,7 +59,13 @@ function resolveMission(
     return existing;
   }
 
-  const skill = getSkillById(skillId) || SCIENCES_EXP_SKILLS[skillId] || SCIENCES_EXP_SKILLS.math_derivatives_chain_rule;
+  const streamSkills = ContentService.getSkillsForStream(streamId);
+  const skill =
+    getSkillById(skillId) ||
+    streamSkills.find((s) => s.id === skillId) ||
+    SCIENCES_EXP_SKILLS[skillId] ||
+    streamSkills[0] ||
+    SCIENCES_EXP_SKILLS.math_derivatives_chain_rule;
   const practiceQuestions = getPracticeQuestionsForSkill(skill.id);
   const retestQuestion = getRetestQuestionForSkill(skill.id);
 
@@ -102,7 +113,8 @@ export function getNextBestMission(input: AdaptiveRoadmapInput): {
   mission: Mission | null;
   rationale: MissionRationale | null;
 } {
-  const streamId: StreamId = input.onboardingProfile?.streamId || "sciences_exp";
+  const rawStream = input.onboardingProfile?.streamId || (input.onboardingProfile as any)?.stream;
+  const streamId: StreamId = normalizeStreamIdWithDefault(rawStream, "sciences_exp");
   const missionsMap: Record<string, Mission> = Array.isArray(input.missions)
     ? Object.fromEntries(input.missions.map((m) => [m.id, m]))
     : (input.missions || {});
@@ -300,7 +312,7 @@ export function getNextBestMission(input: AdaptiveRoadmapInput): {
     const specialty = input.onboardingProfile?.techniqueMathSpecialty || undefined;
     const streamRules = getStreamSubjects(streamId, specialty);
     const sorted = [...streamRules].sort((a, b) => b.coefficient - a.coefficient);
-    currentSubjectId = sorted[0]?.subjectId || (streamId === "gestion_eco" ? "accounting" : "math");
+    currentSubjectId = sorted[0]?.subjectId || getDefaultSubjectForStream(streamId);
   }
 
   const subjectSkills = getSkillsForSubject(currentSubjectId, streamId);
@@ -413,7 +425,8 @@ export function buildAdaptiveRoadmap(input: AdaptiveRoadmapInput): AdaptiveRoadm
   const targetScore = profile?.targetScore ?? 16;
   const educationLevel = profile?.educationLevel ?? "secondary";
   const examType = profile?.examType ?? "BAC";
-  const streamId = profile?.streamId ?? "sciences_exp";
+  const rawStream = profile?.streamId || (profile as any)?.stream;
+  const streamId = normalizeStreamIdWithDefault(rawStream, "sciences_exp");
   const specialtyId = profile?.techniqueMathSpecialty || undefined;
 
   const missionsMap: Record<string, Mission> = Array.isArray(input.missions)
@@ -619,10 +632,11 @@ export function buildAdaptiveRoadmap(input: AdaptiveRoadmapInput): AdaptiveRoadm
   let stage: LearningStage = "move_forward";
   let focusTitleAr = "مواصلة التقدم في المسار";
   let focusTitleFr = "Progression continue dans le parcours";
-  const defaultSubj = streamSubjectRules[0]?.subjectId || (streamId === "gestion_eco" ? "accounting" : "math");
+  const defaultSubj = streamSubjectRules[0]?.subjectId || getDefaultSubjectForStream(streamId);
   let focusSubjectId: SubjectId = defaultSubj;
   const streamSkills = ContentService.getSkillsForStream(streamId);
-  let focusSkillId = streamSkills[0]?.id || "math_derivatives_chain_rule";
+  const defaultSkill = streamSkills[0]?.id || getDefaultSkillForStream(streamId);
+  let focusSkillId = defaultSkill;
 
   if (nextMission) {
     focusSubjectId = nextMission.subjectId;

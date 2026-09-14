@@ -22,6 +22,11 @@ import { trackEvent } from "@/lib/analytics";
 import { submitPilotFeedback, PilotFeedbackRating } from "@/lib/feedback";
 import { StudentService } from "@/lib/services/student-service";
 import { getStudentAccess } from "@/lib/access";
+import { MathRenderer } from "@/components/ui/MathRenderer";
+import {
+  normalizeStreamId,
+  isSubjectAuthorizedForStream,
+} from "@/lib/curriculum/filter";
 import {
   Compass,
   Lock,
@@ -60,6 +65,13 @@ import {
 import { ExternalResourceWithReturnTicket } from "@/components/ui/ExternalResourceWithReturnTicket";
 import { TeacherEscalationModal } from "@/components/ui/TeacherEscalationModal";
 import { getExternalResourcesForSkill } from "@/domain/learning-ecosystem/external-resources";
+import { InteractiveJournal } from "@/components/interactive/InteractiveJournal";
+import { InteractiveSteps } from "@/components/interactive/InteractiveSteps";
+import {
+  JournalEntryPayload,
+  JournalValidationResult,
+  StepValidationResult,
+} from "@/types/interactive-exercise";
 
 type MissionStep =
   | "learn"
@@ -87,6 +99,7 @@ export default function MissionPage() {
   const [loading, setLoading] = useState(true);
   const [mission, setMission] = useState<Mission | null>(null);
   const [bundle, setBundle] = useState<SkillLearningBundle | null>(null);
+  const [isUnauthorizedStream, setIsUnauthorizedStream] = useState(false);
 
   // Active step in the 8-step product loop
   const [currentStep, setCurrentStep] = useState<MissionStep>("learn");
@@ -102,6 +115,78 @@ export default function MissionPage() {
   const [confidenceRating, setConfidenceRating] = useState<1 | 2 | 3 | 4 | 5 | null>(null);
   const [timeSpentSeconds, setTimeSpentSeconds] = useState(0);
   const [isPracticeCorrect, setIsPracticeCorrect] = useState<boolean | null>(null);
+
+  // Interactive exercise state
+  const [journalPayload, setJournalPayload] = useState<JournalEntryPayload | null>(null);
+  const [journalValidation, setJournalValidation] = useState<JournalValidationResult | null>(null);
+  const [stepValidationResults, setStepValidationResults] = useState<StepValidationResult[]>([]);
+  const [isAllStepsCompleted, setIsAllStepsCompleted] = useState<boolean>(false);
+  const [savedJournalDraft, setSavedJournalDraft] = useState<Partial<JournalEntryPayload> | undefined>(undefined);
+  const [savedStepsDraft, setSavedStepsDraft] = useState<Record<number, string | number> | undefined>(undefined);
+
+  // Draft restoration from localStorage
+  useEffect(() => {
+    if (!mission?.id || !activeQuestion?.id || typeof window === "undefined") return;
+    if (activeQuestion.exerciseType === "journal_entry") {
+      try {
+        const key = `bac_draft_journal_${mission.id}_${activeQuestion.id}`;
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          setSavedJournalDraft(parsed);
+          setJournalPayload(parsed);
+        }
+      } catch (e) {
+        console.warn("Failed to load journal draft:", e);
+      }
+    } else if (activeQuestion.exerciseType === "step_by_step") {
+      try {
+        const key = `bac_draft_steps_${mission.id}_${activeQuestion.id}`;
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          setSavedStepsDraft(parsed);
+        }
+      } catch (e) {
+        console.warn("Failed to load steps draft:", e);
+      }
+    }
+  }, [mission?.id, activeQuestion?.id]);
+
+  const handleJournalValidate = (result: JournalValidationResult, payload: JournalEntryPayload) => {
+    setJournalPayload(payload);
+    setJournalValidation(result);
+    if (mission?.id && activeQuestion?.id && typeof window !== "undefined") {
+      try {
+        localStorage.setItem(`bac_draft_journal_${mission.id}_${activeQuestion.id}`, JSON.stringify(payload));
+      } catch (e) {}
+    }
+  };
+
+  const handleStepsValidate = (allCorrect: boolean, results: StepValidationResult[]) => {
+    setIsAllStepsCompleted(allCorrect);
+    setStepValidationResults(results);
+    if (mission?.id && activeQuestion?.id && typeof window !== "undefined") {
+      try {
+        const answersMap: Record<number, string | number> = {};
+        results.forEach((r, idx) => {
+          if (r.userValue !== undefined) answersMap[idx] = r.userValue;
+        });
+        localStorage.setItem(`bac_draft_steps_${mission.id}_${activeQuestion.id}`, JSON.stringify(answersMap));
+      } catch (e) {}
+    }
+  };
+
+  const isPracticeReadyToSubmit = () => {
+    if (!confidenceRating || isSubmitting) return false;
+    if (activeQuestion?.exerciseType === "journal_entry") {
+      return journalValidation !== null;
+    }
+    if (activeQuestion?.exerciseType === "step_by_step") {
+      return stepValidationResults.length > 0;
+    }
+    return Boolean(selectedOptionId);
+  };
 
   // Error & Repair state
   const [activeErrorRecord, setActiveErrorRecord] = useState<ErrorRecord | null>(null);
@@ -149,6 +234,15 @@ export default function MissionPage() {
         ]);
         if (p) setProfile(p);
         if (res) {
+          const studentStream = normalizeStreamId(p?.streamId || (p as any)?.stream);
+          const missionSubj = res.bundle?.skill?.subjectId || res.mission?.subjectId;
+
+          if (studentStream && missionSubj && !isSubjectAuthorizedForStream(missionSubj, studentStream)) {
+            setIsUnauthorizedStream(true);
+            setLoading(false);
+            return;
+          }
+
           setMission(res.mission);
           setBundle(res.bundle);
 
@@ -265,6 +359,37 @@ export default function MissionPage() {
     );
   }
 
+  if (isUnauthorizedStream) {
+    return (
+      <AppShell>
+        <Container size="sm" className="py-16 text-center space-y-6">
+          <div className="p-6 sm:p-8 rounded-3xl bg-card border border-theme space-y-5 shadow-clay animate-fade-in">
+            <div className="h-12 w-12 rounded-2xl bg-[var(--color-accent-soft)] border border-[var(--color-accent)]/30 flex items-center justify-center text-[var(--color-accent)] mx-auto">
+              <Lock className="h-6 w-6" />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-xl sm:text-2xl font-bold text-theme-text">
+                {isAr ? "هذه المهمة لا تنتمي لمنهاج شعبتك" : "Mission non autorisée pour votre filière"}
+              </h1>
+              <p className="text-xs sm:text-sm text-theme-secondary leading-relaxed max-w-md mx-auto">
+                {isAr
+                  ? "تم عزل محتوى هذه المادة لأنها خارج المواد الرسمية المعتمدة لشعبتك في البكالوريا. تم تصميم منصتك لتركز فقط على المواد التي تمتحن فيها."
+                  : "Cette discipline ne fait pas partie du cursus officiel de votre filière. Votre parcours est calibré pour maximiser vos points d'examen."}
+              </p>
+            </div>
+            <div className="pt-2 flex justify-center">
+              <Link href="/dashboard">
+                <Button size="lg" variant="primary" className="font-bold text-sm shadow-clay">
+                  <span>{isAr ? "العودة إلى مهام شعبتي" : "Retour à mon tableau de bord"}</span>
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </Container>
+      </AppShell>
+    );
+  }
+
   if (!mission || !bundle) {
     return (
       <AppShell>
@@ -307,10 +432,35 @@ export default function MissionPage() {
   // Practice Submission Handler
   // --------------------------------------------------------------------------
   const handlePracticeSubmit = async () => {
-    if (!activeQuestion || !selectedOptionId || !confidenceRating) return;
-    setIsSubmitting(true);
+    if (!activeQuestion || !confidenceRating) return;
 
-    const isCorrect = selectedOptionId === activeQuestion.correctAnswerId;
+    let isCorrect = false;
+    let selectedAnswerVal = "";
+    let suspectedError: SuspectedErrorType = "misunderstood_concept";
+
+    if (activeQuestion.exerciseType === "journal_entry") {
+      if (!journalValidation) return;
+      isCorrect = journalValidation.isValid;
+      selectedAnswerVal = JSON.stringify(journalPayload || {});
+      if (!isCorrect && journalValidation.errors.length > 0) {
+        const f = journalValidation.errors[0].field;
+        if (f === "balance" || f === "amount") {
+          suspectedError = "calculation_error";
+        } else if (f === "debit_code" || f === "credit_code") {
+          suspectedError = "methodology_error";
+        }
+      }
+    } else if (activeQuestion.exerciseType === "step_by_step") {
+      isCorrect = isAllStepsCompleted;
+      selectedAnswerVal = JSON.stringify(stepValidationResults.map((s) => s.userValue));
+      suspectedError = "calculation_error";
+    } else {
+      if (!selectedOptionId) return;
+      isCorrect = selectedOptionId === activeQuestion.correctAnswerId;
+      selectedAnswerVal = selectedOptionId;
+    }
+
+    setIsSubmitting(true);
     setIsPracticeCorrect(isCorrect);
 
     try {
@@ -318,7 +468,7 @@ export default function MissionPage() {
         missionId: mission.id,
         skillId: bundle.skill.id,
         questionId: activeQuestion.id,
-        selectedAnswer: selectedOptionId,
+        selectedAnswer: selectedAnswerVal,
         isCorrect,
         confidence: confidenceRating,
         timeSpentSeconds,
@@ -343,13 +493,19 @@ export default function MissionPage() {
           skillId: bundle.skill.id,
           questionId: activeQuestion.id,
           subjectId: bundle.skill.subjectId,
-          suspectedErrorType: "misunderstood_concept",
-          selectedAnswer: selectedOptionId,
-          correctAnswer: activeQuestion.correctAnswerId,
+          suspectedErrorType: suspectedError,
+          selectedAnswer: selectedAnswerVal,
+          correctAnswer: activeQuestion.correctAnswerId || "valid_interactive_entry",
           confidence: confidenceRating,
           userId: user?.id,
         });
         setActiveErrorRecord(errRec);
+      } else {
+        // Clear saved draft on successful mastery
+        if (typeof window !== "undefined") {
+          localStorage.removeItem(`bac_draft_journal_${mission.id}_${activeQuestion.id}`);
+          localStorage.removeItem(`bac_draft_steps_${mission.id}_${activeQuestion.id}`);
+        }
       }
 
       setCurrentStep("practice_feedback");
@@ -628,9 +784,7 @@ export default function MissionPage() {
                   <BookOpen className="h-4 w-4" />
                   <span>{isAr ? "2. الشرح المبسط والمباشر" : "Explication Simple"}</span>
                 </h3>
-                <p className="text-xs sm:text-sm text-theme-secondary leading-relaxed whitespace-pre-line">
-                  {lesson.simpleExplanation_ar}
-                </p>
+                <MathRenderer content={lesson.simpleExplanation_ar} className="text-xs sm:text-sm text-theme-secondary leading-relaxed" />
               </div>
 
               {/* Why this matters for BAC */}
@@ -802,8 +956,8 @@ export default function MissionPage() {
                 <h3 className="text-xs font-bold text-theme-muted uppercase tracking-wider">
                   {isAr ? "نص المسألة / التمرين" : "Énoncé"}
                 </h3>
-                <div className="p-4 rounded-xl bg-surface-soft border border-theme text-sm sm:text-base font-semibold text-theme-text leading-relaxed">
-                  {workedExample.problem_ar}
+                <div className="p-4 rounded-xl bg-surface-soft border border-theme leading-relaxed">
+                  <MathRenderer content={workedExample.problem_ar} className="text-sm sm:text-base font-semibold" />
                 </div>
               </div>
 
@@ -865,9 +1019,7 @@ export default function MissionPage() {
                       <Award className="h-4 w-4" />
                       <span>{isAr ? "النتيجة النهائية وصياغة الإجابة" : "Réponse finale"}</span>
                     </div>
-                    <p className="text-sm font-bold text-theme-text font-mono">
-                      {workedExample.finalAnswer_ar}
-                    </p>
+                    <MathRenderer content={workedExample.finalAnswer_ar} className="text-sm font-bold font-mono" />
                     <p className="text-xs text-theme-secondary leading-relaxed pt-1 border-t border-[var(--color-success)]/20">
                       <strong className="text-[var(--color-success)]">{isAr ? "طريقة التحقق: " : "Vérification : "}</strong>
                       {workedExample.verificationTip_ar}
@@ -912,10 +1064,57 @@ export default function MissionPage() {
         {/* ================================================================= */}
         {currentStep === "practice" && activeQuestion && (
           <div dir={educationalDir} className="space-y-6 animate-fade-in">
+            {/* Multiple Exercise Switcher Tabs if bundle has more than 1 practice question */}
+            {bundle.practiceQuestions.length > 1 && (
+              <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                <span className="text-xs font-bold text-theme-muted shrink-0">
+                  {isAr ? "التمارين التفاعلية:" : "Exercices :"}
+                </span>
+                {bundle.practiceQuestions.map((q, idx) => (
+                  <button
+                    key={q.id}
+                    type="button"
+                    onClick={() => {
+                      setActiveQuestion(q);
+                      setSelectedOptionId(null);
+                      setConfidenceRating(null);
+                      setJournalValidation(null);
+                      setIsAllStepsCompleted(false);
+                    }}
+                    className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-all shrink-0 ${
+                      activeQuestion.id === q.id
+                        ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white shadow-sm"
+                        : "border-theme bg-surface-soft text-theme-muted hover:text-theme-text hover:bg-card-hover"
+                    }`}
+                  >
+                    {q.exerciseType === "journal_entry"
+                      ? isAr
+                        ? "1. اليومية المحاسبية (SCF)"
+                        : "1. Journal SCF"
+                      : q.exerciseType === "step_by_step"
+                      ? isAr
+                        ? "2. الحل المنهجي (خطوة بخطوة)"
+                        : "2. Étapes méthodologiques"
+                      : `${idx + 1}. ${isAr ? "سؤال اختياري (QCM)" : "Question QCM"}`}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <Card className="border-theme bg-card shadow-card p-6 sm:p-7 space-y-6">
               <div className="flex items-center justify-between border-b border-theme pb-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-primary)]">
-                  {isAr ? "تطبيق تطبيقي لقياس التمكن" : "Pratique d'évaluation"}
+                  {activeQuestion.exerciseType === "journal_entry"
+                    ? isAr
+                      ? "دفتر اليومية المحاسبي التفاعلي (SCF)"
+                      : "Journal Comptable Interactif (SCF)"
+                    : activeQuestion.exerciseType === "step_by_step"
+                    ? isAr
+                      ? "المسار المنهجي لحل وضعيات البكالوريا"
+                      : "Résolution Méthodologique Progressive"
+                    : isAr
+                    ? "تطبيق تطبيقي لقياس التمكن"
+                    : "Pratique d'évaluation"}
                 </span>
                 <div className="flex items-center gap-1.5 text-xs text-theme-muted font-mono">
                   <Clock className="h-3.5 w-3.5 text-[var(--color-primary)]" />
@@ -928,38 +1127,54 @@ export default function MissionPage() {
                 {isAr ? activeQuestion.prompt_ar : activeQuestion.prompt_fr}
               </div>
 
-              {/* Options */}
-              <div className="space-y-3">
-                {activeQuestion.options.map((opt, idx) => {
-                  const isSelected = selectedOptionId === opt.id;
-                  const letter = String.fromCharCode(65 + idx);
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => setSelectedOptionId(opt.id)}
-                      className={`w-full min-h-[52px] text-start p-4 rounded-xl border-2 transition-all flex items-center gap-3.5 active:scale-[0.99] ${
-                        isSelected
-                          ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-theme-text shadow-sm"
-                          : "border-theme bg-surface-soft text-theme-secondary hover:border-[var(--color-primary)]/40 hover:bg-card-hover"
-                      }`}
-                    >
-                      <span
-                        className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
+              {/* Interactive Journal / Steps / MCQ Options */}
+              {activeQuestion.exerciseType === "journal_entry" ? (
+                <InteractiveJournal
+                  solution={activeQuestion.interactiveConfig?.journalSolution}
+                  initialPayload={savedJournalDraft}
+                  onValidate={handleJournalValidate}
+                  locale={locale}
+                />
+              ) : activeQuestion.exerciseType === "step_by_step" && activeQuestion.interactiveConfig?.stepSolution ? (
+                <InteractiveSteps
+                  solution={activeQuestion.interactiveConfig.stepSolution}
+                  initialAnswers={savedStepsDraft}
+                  onValidate={handleStepsValidate}
+                  locale={locale}
+                />
+              ) : (
+                <div className="space-y-3">
+                  {activeQuestion.options.map((opt, idx) => {
+                    const isSelected = selectedOptionId === opt.id;
+                    const letter = String.fromCharCode(65 + idx);
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setSelectedOptionId(opt.id)}
+                        className={`w-full min-h-[52px] text-start p-4 rounded-xl border-2 transition-all flex items-center gap-3.5 active:scale-[0.99] ${
                           isSelected
-                            ? "bg-[var(--color-primary)] text-white"
-                            : "bg-card border border-theme text-theme-muted"
+                            ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)] text-theme-text shadow-sm"
+                            : "border-theme bg-surface-soft text-theme-secondary hover:border-[var(--color-primary)]/40 hover:bg-card-hover"
                         }`}
                       >
-                        {letter}
-                      </span>
-                      <span className="text-xs sm:text-sm font-sans flex-1">
-                        {isAr ? opt.text_ar : opt.text_fr}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+                        <span
+                          className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
+                            isSelected
+                              ? "bg-[var(--color-primary)] text-white"
+                              : "bg-card border border-theme text-theme-muted"
+                          }`}
+                        >
+                          {letter}
+                        </span>
+                        <span className="text-xs sm:text-sm font-sans flex-1">
+                          {isAr ? opt.text_ar : opt.text_fr}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
 
               {/* Metacognitive Confidence Rating */}
               <div className="pt-4 border-t border-theme space-y-3">
@@ -998,7 +1213,7 @@ export default function MissionPage() {
                 data-testid="practice-submit-button"
                 variant="primary"
                 size="lg"
-                disabled={!selectedOptionId || !confidenceRating || isSubmitting}
+                disabled={!isPracticeReadyToSubmit()}
                 onClick={handlePracticeSubmit}
                 className="font-bold shadow-clay"
               >

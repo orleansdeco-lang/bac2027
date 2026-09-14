@@ -16,6 +16,7 @@ import { StudentRegistrationData } from "@/types/registration";
 import { StudentService } from "@/lib/services";
 import { getStudentAccess, formatTrialCountdown, formatTrialExpiryDate } from "@/lib/access";
 import { getStoredPaymentRecords, PilotPaymentRecord } from "@/lib/payment";
+import { formatEnergyState } from "@/lib/i18n/statusMapper";
 import {
   User,
   ShieldCheck,
@@ -315,7 +316,7 @@ export default function AccountPage() {
             <div className="p-3 rounded-2xl bg-card-muted border border-theme space-y-1">
               <span className="text-theme-muted block">{isAr ? "مستوى الطاقة" : "Énergie"}</span>
               <span className="font-bold text-theme-text">
-                {profile?.studyEnergy ? profile.studyEnergy : "normal"}
+                {formatEnergyState(profile?.studyEnergy, isAr)}
               </span>
             </div>
           </div>

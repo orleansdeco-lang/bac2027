@@ -11,11 +11,13 @@ import {
   RepairRepository,
   RetestRepository,
   MasteryRepository,
+  StudentRepository,
 } from "@/lib/repositories";
 import { ContentService } from "./content-service";
 import { loadMissions, saveMission, setActiveMissionId, getActiveMissionId } from "@/lib/mission/storage";
 import { getComputedAdaptiveRoadmap, getNextBestMission } from "@/lib/roadmap";
-import { SubjectId } from "@/types/education";
+import { SubjectId, StreamId } from "@/types/education";
+import { normalizeStreamIdWithDefault } from "@/lib/curriculum/filter";
 
 export const MissionService = {
   /**
@@ -36,11 +38,19 @@ export const MissionService = {
 
     // If mission still not found in store, create default mission from bundle
     if (!mission && bundle) {
+      let resolvedStream: StreamId = (bundle.skill as any).streamId || "sciences_exp";
+      if (userId) {
+        const p = await StudentRepository.getProfile(userId);
+        if (p?.streamId) {
+          resolvedStream = normalizeStreamIdWithDefault(p.streamId, resolvedStream);
+        }
+      }
+
       mission = {
         id: `mission-${skillId}`,
         educationLevel: "secondary",
         examType: "bac",
-        streamId: "sciences_exp",
+        streamId: resolvedStream,
         subjectId: bundle.skill.subjectId,
         skillId: bundle.skill.id,
         title: bundle.skill.title_ar,

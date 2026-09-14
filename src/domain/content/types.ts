@@ -13,6 +13,7 @@
 import { SubjectId, StreamId, ExamType, EducationLevel } from "@/types/education";
 import { DiagnosticDimension } from "@/types/diagnostic";
 import { SuspectedErrorType } from "@/types/mission";
+import { ExerciseType, InteractiveQuestionConfig } from "@/types/interactive-exercise";
 
 // ============================================================================
 // 1. PROVENANCE & RIGHTS ENUMS / UNIONS
@@ -361,6 +362,8 @@ export interface PracticeQuestion {
   tags: string[];
   version: number;
   isRetestVariant: false;
+  exerciseType?: ExerciseType;
+  interactiveConfig?: InteractiveQuestionConfig;
   sourceId: string;
   sourceType: ContentSourceType;
   rightsStatus: ContentRightsStatus;
@@ -397,6 +400,8 @@ export interface RetestQuestion {
   tags: string[];
   version: number;
   isRetestVariant: true;
+  exerciseType?: ExerciseType;
+  interactiveConfig?: InteractiveQuestionConfig;
   retestForQuestionId: string; // Links strictly to parent practice question
   sourceId: string;
   sourceType: ContentSourceType;

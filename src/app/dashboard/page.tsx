@@ -42,6 +42,14 @@ import { ALL_SUBJECTS } from "@/lib/constants/streams";
 import { SubjectId } from "@/types/education";
 import { useLearningAccessGate } from "@/lib/hooks";
 import { TeacherEscalationModal } from "@/components/ui/TeacherEscalationModal";
+import {
+  normalizeStreamIdWithDefault,
+  getStreamMetadata,
+  isSubjectAuthorizedForStream,
+  getDefaultSubjectForStream,
+  getDefaultSkillForStream,
+  getDefaultSkillTitleForStream,
+} from "@/lib/curriculum/filter";
 
 export default function DashboardPage() {
   const { t, locale } = useTranslation();
@@ -61,7 +69,7 @@ export default function DashboardPage() {
       try {
         const dashData = await DashboardService.getDashboardData();
         setData(dashData);
-        trackEvent("dashboard_viewed", { streamId: gate.profile.streamId });
+        trackEvent("dashboard_viewed", { streamId: normalizeStreamIdWithDefault(gate.profile.streamId) });
       } catch (err) {
         console.error("Failed to load dashboard data:", err);
       } finally {
@@ -106,7 +114,15 @@ export default function DashboardPage() {
     data?.roadPosition?.gap ??
     Math.max(0, Math.round((targetScore - currentScore) * 10) / 10);
 
-  const todaysMission = data?.todaysMission;
+  const streamId = normalizeStreamIdWithDefault(profile?.streamId || (profile as any)?.stream, "sciences_exp");
+  const activeStreamMeta = getStreamMetadata(streamId);
+
+  const rawTodaysMission = data?.todaysMission;
+  const isMissionAuthorized = rawTodaysMission?.subjectId
+    ? isSubjectAuthorizedForStream(rawTodaysMission.subjectId, streamId)
+    : false;
+  const todaysMission = isMissionAuthorized ? rawTodaysMission : null;
+
   const metrics = data?.verifiedMetrics || {
     demonstratedSkillsCount: 0,
     emergingSkillsCount: 0,
@@ -131,78 +147,6 @@ export default function DashboardPage() {
       default: return isAr ? "طبيعية" : "Normale";
     }
   };
-
-  const streamId = profile?.streamId || "sciences_exp";
-
-  interface StreamMetaItem {
-    name_ar: string;
-    name_fr: string;
-    totalSkills: number;
-    subjects: { name_ar: string; name_fr: string; coef: number; color: string; count: number }[];
-  }
-
-  const streamMeta: Record<string, StreamMetaItem> = {
-    sciences_exp: {
-      name_ar: "شعبة العلوم التجريبية",
-      name_fr: "Sciences Expérimentales",
-      totalSkills: 31,
-      subjects: [
-        { name_ar: "رياضيات", name_fr: "Math", coef: 7, color: "#5F8F86", count: 10 },
-        { name_ar: "علوم الطبيعة والحياة", name_fr: "SNV", coef: 6, color: "#6E9B7B", count: 10 },
-        { name_ar: "علوم فيزيائية", name_fr: "Physique", coef: 6, color: "#D7A66A", count: 11 },
-      ],
-    },
-    gestion_eco: {
-      name_ar: "شعبة التسيير والاقتصاد",
-      name_fr: "Gestion & Économie",
-      totalSkills: 33,
-      subjects: [
-        { name_ar: "تسيير مالي ومحاسبي", name_fr: "Gestion Fin.", coef: 6, color: "#5F8F86", count: 9 },
-        { name_ar: "اقتصاد ومناجمنت", name_fr: "Économie", coef: 5, color: "#D7A66A", count: 8 },
-        { name_ar: "رياضيات", name_fr: "Math", coef: 5, color: "#6E9B7B", count: 8 },
-        { name_ar: "قانون", name_fr: "Droit", coef: 2, color: "#C8796B", count: 8 },
-      ],
-    },
-    math: {
-      name_ar: "شعبة الرياضيات",
-      name_fr: "Mathématiques",
-      totalSkills: 30,
-      subjects: [
-        { name_ar: "رياضيات", name_fr: "Math", coef: 7, color: "#5F8F86", count: 15 },
-        { name_ar: "علوم فيزيائية", name_fr: "Physique", coef: 6, color: "#D7A66A", count: 15 },
-      ],
-    },
-    technique_math: {
-      name_ar: "شعبة تقني رياضي",
-      name_fr: "Technique Mathématiques",
-      totalSkills: 30,
-      subjects: [
-        { name_ar: "تكنولوجيا وهندسة", name_fr: "Génie", coef: 7, color: "#D7A66A", count: 15 },
-        { name_ar: "رياضيات", name_fr: "Math", coef: 6, color: "#5F8F86", count: 15 },
-      ],
-    },
-    lettres_philo: {
-      name_ar: "شعبة آداب وفلسفة",
-      name_fr: "Lettres et Philosophie",
-      totalSkills: 20,
-      subjects: [
-        { name_ar: "فلسفة", name_fr: "Philosophie", coef: 6, color: "#C8796B", count: 10 },
-        { name_ar: "لغة عربية وآدابها", name_fr: "Langue Arabe", coef: 6, color: "#6E9B7B", count: 10 },
-      ],
-    },
-    langues_etrangeres: {
-      name_ar: "شعبة لغات أجنبية",
-      name_fr: "Langues Étrangères",
-      totalSkills: 20,
-      subjects: [
-        { name_ar: "لغة أجنبية ثالثة", name_fr: "Langue 3", coef: 5, color: "#C8796B", count: 10 },
-        { name_ar: "لغة فرنسية", name_fr: "Français", coef: 5, color: "#5F8F86", count: 5 },
-        { name_ar: "لغة إنجليزية", name_fr: "Anglais", coef: 5, color: "#D7A66A", count: 5 },
-      ],
-    },
-  };
-
-  const activeStreamMeta = streamMeta[streamId] || streamMeta.sciences_exp;
 
   const getSubjectName = (subjectId?: string) => {
     if (!subjectId) return isAr ? "مادة دراسية" : "Discipline";
@@ -1015,9 +959,9 @@ export default function DashboardPage() {
         <TeacherEscalationModal
           isOpen={isTeacherModalOpen}
           onClose={() => setIsTeacherModalOpen(false)}
-          skillId={todaysMission?.mission?.skillId || "math_exp_limits_indeterminate"}
-          skillTitle={todaysMission?.skillTitle_ar || "حساب النهايات في الدوال الأسية"}
-          subjectId={(todaysMission?.subjectId as SubjectId) || "math"}
+          skillId={todaysMission?.mission?.skillId || getDefaultSkillForStream(streamId)}
+          skillTitle={todaysMission?.skillTitle_ar || getDefaultSkillTitleForStream(streamId, isAr)}
+          subjectId={(todaysMission?.subjectId as SubjectId) || getDefaultSubjectForStream(streamId)}
           streamId={streamId as any}
           locale={locale}
         />

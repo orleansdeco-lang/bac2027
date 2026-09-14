@@ -1229,6 +1229,10 @@ export interface SkillLearningBundle {
 }
 
 import { getGestionEcoContentPackage } from "./gestion-eco-mappings";
+import {
+  getGestionEcoPracticeQuestionsForSkill,
+  getGestionEcoRetestQuestionForSkill,
+} from "@/data/practice/gestion-eco";
 
 export function getSkillLearningBundle(skillId: string): SkillLearningBundle | null {
   const mathPkg = MATH_BATCH_01_PACKAGES[skillId] || getGestionEcoContentPackage(skillId);
@@ -1309,71 +1313,78 @@ export function getSkillLearningBundle(skillId: string): SkillLearningBundle | n
       isActive: true,
     };
 
-    const mathPractice: PracticeQuestion[] = mathPkg.practice.map((p) => ({
-      id: p.id,
-      educationLevel: "secondary",
-      examType: "bac",
-      streamId: mathPkg.streamId as any,
-      subjectId: mathPkg.subjectId as any,
-      skillId: mathPkg.skillId,
-      dimension: "application",
-      difficulty: 2,
-      type: "mcq",
-      prompt_ar: p.prompt_ar,
-      prompt_fr: p.prompt_fr || p.prompt_ar,
-      options: [
-        { id: p.correctAnswerId, text_ar: p.explanation_ar.slice(0, 50) + " (الصحيح)", text_fr: "" },
-        ...Object.keys(p.distractorErrorMappings).map((k) => ({
-          id: k,
-          text_ar: "خيار بديل " + k,
-          text_fr: "",
-          suspectedErrorType: p.distractorErrorMappings[k],
-        })),
-      ],
-      correctAnswerId: p.correctAnswerId,
-      explanation_ar: p.explanation_ar,
-      explanation_fr: "",
-      expectedTimeSeconds: 120,
-      tags: [mathPkg.subjectId, mathPkg.topicId],
-      version: 1,
-      isRetestVariant: false,
-      sourceId: mathPkg.provenance.sourceId,
-      sourceType: "original_bac_mastery",
-      rightsStatus: "original",
-      verificationStatus: "verified",
-      academicYear: "2026-2027",
-    }));
+    const gestionPractice = getGestionEcoPracticeQuestionsForSkill(mathPkg.skillId);
+    const mathPractice: PracticeQuestion[] =
+      gestionPractice.length > 0
+        ? (gestionPractice as unknown as PracticeQuestion[])
+        : mathPkg.practice.map((p) => ({
+            id: p.id,
+            educationLevel: "secondary",
+            examType: "bac",
+            streamId: mathPkg.streamId as any,
+            subjectId: mathPkg.subjectId as any,
+            skillId: mathPkg.skillId,
+            dimension: "application",
+            difficulty: 2,
+            type: "mcq",
+            prompt_ar: p.prompt_ar,
+            prompt_fr: p.prompt_fr || p.prompt_ar,
+            options: [
+              { id: p.correctAnswerId, text_ar: p.explanation_ar.slice(0, 50) + " (الصحيح)", text_fr: "" },
+              ...Object.keys(p.distractorErrorMappings).map((k) => ({
+                id: k,
+                text_ar: "خيار بديل " + k,
+                text_fr: "",
+                suspectedErrorType: p.distractorErrorMappings[k],
+              })),
+            ],
+            correctAnswerId: p.correctAnswerId,
+            explanation_ar: p.explanation_ar,
+            explanation_fr: "",
+            expectedTimeSeconds: 120,
+            tags: [mathPkg.subjectId, mathPkg.topicId],
+            version: 1,
+            isRetestVariant: false,
+            sourceId: mathPkg.provenance.sourceId,
+            sourceType: "original_bac_mastery",
+            rightsStatus: "original",
+            verificationStatus: "verified",
+            academicYear: "2026-2027",
+          }));
 
-    const mathRetest: RetestQuestion = {
-      id: mathPkg.retest.id,
-      educationLevel: "secondary",
-      examType: "bac",
-      streamId: mathPkg.streamId as any,
-      subjectId: mathPkg.subjectId as any,
-      skillId: mathPkg.skillId,
-      dimension: "application",
-      difficulty: 2,
-      type: "mcq",
-      prompt_ar: mathPkg.retest.prompt_ar,
-      prompt_fr: mathPkg.retest.prompt_fr || mathPkg.retest.prompt_ar,
-      options: [
-        { id: mathPkg.retest.correctAnswerId, text_ar: "الإجابة الصحيحة", text_fr: "" },
-        { id: "opt_rq_distractor", text_ar: "إجابة خاطئة شائعة", text_fr: "", suspectedErrorType: "calculation_error" },
-      ],
-      correctAnswerId: mathPkg.retest.correctAnswerId,
-      explanation_ar: mathPkg.retest.explanation_ar,
-      explanation_fr: "",
-      expectedTimeSeconds: 120,
-      tags: [mathPkg.subjectId, "retest"],
-      version: 1,
-      isRetestVariant: true,
-      retestForQuestionId: mathPkg.retest.parentPracticeQuestionId,
-      sourceId: mathPkg.provenance.sourceId,
-      sourceType: "original_bac_mastery",
-      rightsStatus: "original",
-      verificationStatus: "verified",
-      academicYear: "2026-2027",
-    };
+    const gestionRetest = getGestionEcoRetestQuestionForSkill(mathPkg.skillId);
+    const mathRetest: RetestQuestion = gestionRetest
+      ? (gestionRetest as unknown as RetestQuestion)
+      : {
+          id: mathPkg.retest.id,
+          educationLevel: "secondary",
+          examType: "bac",
+          streamId: mathPkg.streamId as any,
+          subjectId: mathPkg.subjectId as any,
+          skillId: mathPkg.skillId,
+          dimension: "application",
+          difficulty: 2,
+          type: "mcq",
+          prompt_ar: mathPkg.retest.prompt_ar,
+          prompt_fr: mathPkg.retest.prompt_fr || mathPkg.retest.prompt_ar,
+          options: [
+            { id: mathPkg.retest.correctAnswerId, text_ar: "الإجابة الصحيحة", text_fr: "" },
+            { id: "opt_rq_distractor", text_ar: "إجابة خاطئة شائعة", text_fr: "", suspectedErrorType: "calculation_error" },
+          ],
+          correctAnswerId: mathPkg.retest.correctAnswerId,
+          explanation_ar: mathPkg.retest.explanation_ar,
+          explanation_fr: "",
+          expectedTimeSeconds: 120,
+          tags: [mathPkg.subjectId, "retest"],
+          version: 1,
+          isRetestVariant: true,
+          retestForQuestionId: mathPkg.retest.parentPracticeQuestionId,
+          sourceId: mathPkg.provenance.sourceId,
+          sourceType: "original_bac_mastery",
+          rightsStatus: "original",
+          verificationStatus: "verified",
+          academicYear: "2026-2027",
+        };
 
     const mathRepairGuide: RepairGuide = {
       id: "repair_" + mathPkg.skillId,

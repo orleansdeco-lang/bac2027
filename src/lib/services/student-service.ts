@@ -10,6 +10,7 @@ import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
 import { StudentLearningContext, getStudentSubjects } from "@/domain/student";
 import { StreamSubjectRule } from "@/domain/curriculum/streams";
 import { getStudentAccess, calculateTrialExpiration } from "@/lib/access";
+import { normalizeStreamIdWithDefault } from "@/lib/curriculum/filter";
 
 export const StudentService = {
   /**
@@ -72,7 +73,7 @@ export const StudentService = {
     if (!profile) return null;
 
     const access = getStudentAccess(profile);
-    const stream = (profile.streamId as any) || "sciences_exp";
+    const stream = normalizeStreamIdWithDefault(profile.streamId || (profile as any).stream, "sciences_exp");
     const studentStatus = (profile as any).student_status || "schooled";
 
     return {

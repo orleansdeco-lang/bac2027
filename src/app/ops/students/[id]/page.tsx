@@ -25,6 +25,7 @@ import {
   Flame,
 } from "lucide-react";
 import { PaymentOrder, OperationsAuditLog, IngestedTelemetryEvent } from "@/lib/operations/types";
+import { formatEnergyState } from "@/lib/i18n/statusMapper";
 
 export default function StudentDossierPage() {
   const params = useParams();
@@ -303,7 +304,7 @@ export default function StudentDossierPage() {
               </div>
               <div className="flex justify-between py-1">
                 <span className="text-slate-400">Energy State:</span>
-                <span className="font-mono text-slate-200">{p.energy_state || "normal"}</span>
+                <span className="font-sans text-slate-200">{formatEnergyState(p.energy_state, false)}</span>
               </div>
             </div>
           </div>

@@ -13,6 +13,7 @@ import { StudentRepository } from "@/lib/repositories/student-repository";
 import { getStrategicProfile } from "@/lib/onboarding/profile";
 import { StreamId } from "@/types/education";
 import { getStudentSubjects } from "@/domain/student";
+import { normalizeStreamIdWithDefault } from "@/lib/curriculum/filter";
 
 export interface ProgressReport {
   streamId: StreamId;
@@ -45,11 +46,10 @@ export const ProgressService = {
     ]);
 
     const localProfile = getStrategicProfile(userId);
-    const effectiveStream: StreamId =
-      streamIdParam ||
-      (profile?.streamId as StreamId) ||
-      (localProfile?.streamId as StreamId) ||
-      "sciences_exp";
+    const effectiveStream: StreamId = normalizeStreamIdWithDefault(
+      streamIdParam || profile?.streamId || localProfile?.streamId,
+      "sciences_exp"
+    );
 
     // Strictly scope all skills to the student's authorized stream
     const streamSkills = ContentService.getSkillsForStream(effectiveStream);

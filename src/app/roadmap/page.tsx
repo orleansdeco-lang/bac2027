@@ -31,6 +31,10 @@ import { getAllTopics, getSkillsForTopic } from "@/data/curriculum";
 import { getSkillsForSubject } from "@/data/skills";
 import { useLearningAccessGate } from "@/lib/hooks";
 import {
+  normalizeStreamIdWithDefault,
+  getStreamMetadata,
+} from "@/lib/curriculum/filter";
+import {
   Compass,
   ArrowRight,
   ArrowLeft,
@@ -135,6 +139,8 @@ export default function RoadmapPage() {
   }
 
   const profile = gate.profile;
+  const streamId = normalizeStreamIdWithDefault(profile.streamId || (profile as any)?.stream, "sciences_exp");
+  const streamMeta = getStreamMetadata(streamId);
 
   const isEmpirical = diagnosticResults !== null;
   const nextMission = roadmapState?.nextMission;
@@ -381,8 +387,8 @@ export default function RoadmapPage() {
                 </h3>
                 <p className="text-xs text-theme-muted">
                   {isAr
-                    ? `${roadmapState?.masteredSkills.length || 0} مهارات مثبتة من أصل 31 مهارة في خريطة التعلم`
-                    : `${roadmapState?.masteredSkills.length || 0} compétences validées sur 31 dans la carte d'apprentissage`}
+                    ? `${roadmapState?.masteredSkills.length || 0} مهارات مثبتة من أصل ${streamMeta.totalSkills} مهارة في خريطة التعلم`
+                    : `${roadmapState?.masteredSkills.length || 0} compétences validées sur ${streamMeta.totalSkills} dans la carte d'apprentissage`}
                 </p>
               </div>
               <Badge variant="outline" size="sm" className="text-[10px]">
@@ -404,7 +410,7 @@ export default function RoadmapPage() {
                   reasonText: locale === "ar" ? rationale?.shortExplanation_ar : rationale?.shortExplanation_fr,
                 } : null}
                 masteredCount={roadmapState?.masteredSkills.length || 0}
-                totalSkills={31}
+                totalSkills={streamMeta.totalSkills}
                 locale={locale}
                 onStartMission={() => nextMission && handleStartMission(nextMission.id)}
               />
@@ -506,15 +512,11 @@ export default function RoadmapPage() {
               {/* Collapsible Expanded Curriculum Learning Map */}
               <div className="pt-2 border-t border-theme">
                 {(() => {
-                  const streamId = profile?.streamId || "sciences_exp";
                   const activeStreamSubjects: any[] = roadmapState?.subjectProgress
                     ? (Object.values(roadmapState.subjectProgress) as any[]).filter((sp: any) => sp.status !== "not_assessed")
                     : [];
                   const streamActiveSkillsCount = activeStreamSubjects.reduce((acc, sp) => acc + sp.totalPilotSkills, 0);
-                  const streamLabel =
-                    streamId === "gestion_eco" ? (locale === "ar" ? "التسيير والاقتصاد" : "Gestion & Économie") :
-                    streamId === "math" ? (locale === "ar" ? "الرياضيات" : "Mathématiques") :
-                    (locale === "ar" ? "العلوم التجريبية" : "Sciences Expérimentales");
+                  const streamLabel = isAr ? streamMeta.name_ar : streamMeta.name_fr;
 
                   return (
                     <>
