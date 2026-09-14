@@ -509,6 +509,27 @@ export default function RoadmapPage() {
                 </Badge>
               </div>
 
+              {/* Direct Access to Full 55 Daily Lessons */}
+              <div className="pt-2 border-t border-theme">
+                <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                      <BookOpen className="h-4 w-4" />
+                      {isAr ? "منهاج علوم الطبيعة والحياة (55 يوماً تفصيلياً)" : "Programme SVT (55 Jours détaillés)"}
+                    </span>
+                    <p className="text-xs text-theme-secondary">
+                      {isAr ? "دروس يومية مفصلة مع فيديوهات موجهة ورسومات تخطيطية ومحطات تفتيش أسبوعية." : "55 leçons quotidiennes guidées avec vidéos, schémas et retests jumeaux."}
+                    </p>
+                  </div>
+                  <Link href="/curriculum" className="shrink-0 w-full sm:w-auto">
+                    <Button variant="primary" size="sm" className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-sm">
+                      <span>{isAr ? "فتح فهرس الدروس (55)" : "Explorer les 55 jours"}</span>
+                      <Arrow className="h-3.5 w-3.5" />
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+
               {/* Collapsible Expanded Curriculum Learning Map */}
               <div className="pt-2 border-t border-theme">
                 {(() => {

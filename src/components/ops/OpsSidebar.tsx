@@ -59,6 +59,19 @@ export function OpsSidebar() {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
 
+  const handleSignOut = async () => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem("ops_auth_token");
+        document.cookie = "ops_auth_token=; path=/; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      } catch {}
+    }
+    try {
+      await signOut();
+    } catch {}
+    window.location.href = "/ops/login";
+  };
+
   return (
     <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 select-none min-h-screen text-slate-200">
       <div>
@@ -124,7 +137,7 @@ export function OpsSidebar() {
             </div>
           </div>
           <button
-            onClick={() => signOut()}
+            onClick={handleSignOut}
             title="Sign out"
             className="p-1 rounded text-slate-500 hover:text-slate-300 hover:bg-slate-800"
           >

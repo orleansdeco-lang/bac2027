@@ -1,27 +1,32 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth/context";
 import { OpsSidebar } from "@/components/ops/OpsSidebar";
-import { ShieldAlert, Lock, ArrowLeft } from "lucide-react";
+import { ShieldAlert, Lock, ArrowLeft, KeyRound } from "lucide-react";
 import Link from "next/link";
+import { opsFetch } from "@/lib/operations/client-api";
 
 export default function OpsLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const [authorized, setAuthorized] = useState<boolean | null>(null);
 
-  useEffect(() => {
-    if (isLoading) return;
+  // 1. Immediately exempt /ops/login from authorization lock
+  const isLoginPage = pathname === "/ops/login";
 
-    if (!user) {
-      setAuthorized(false);
+  useEffect(() => {
+    if (isLoginPage) {
+      setAuthorized(true);
       return;
     }
 
-    // Check operator role
-    fetch("/api/ops/overview")
+    if (isLoading) return;
+
+    // Check operator role via authenticated opsFetch
+    opsFetch("/api/ops/overview")
       .then((res) => {
         if (res.status === 403 || res.status === 401) {
           setAuthorized(false);
@@ -32,12 +37,20 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
       .catch(() => {
         setAuthorized(false);
       });
-  }, [user, isLoading]);
+  }, [user, isLoading, isLoginPage, pathname]);
+
+  // If this is the dedicated login page, render without the admin sidebar or auth gate
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
 
   if (isLoading || authorized === null) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400 font-mono text-xs">
-        Verifying operator authorization...
+        <div className="flex items-center gap-2">
+          <span className="w-3.5 h-3.5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <span>Verifying operator authorization...</span>
+        </div>
       </div>
     );
   }
@@ -45,24 +58,32 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
   if (!authorized) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-slate-900 border border-red-900/50 rounded-xl p-6 text-center space-y-4 shadow-2xl">
-          <div className="w-12 h-12 rounded-full bg-red-950 border border-red-800 flex items-center justify-center mx-auto text-red-400">
-            <ShieldAlert className="w-6 h-6" />
+        <div className="max-w-md w-full bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-7 text-center space-y-5 shadow-2xl">
+          <div className="w-14 h-14 rounded-2xl bg-red-950/60 border border-red-800/60 flex items-center justify-center mx-auto text-red-400">
+            <ShieldAlert className="w-7 h-7" />
           </div>
-          <div>
-            <h1 className="text-lg font-bold text-white">403 — Unauthorized Access</h1>
-            <p className="text-xs text-slate-400 mt-1">
-              This area is restricted to authorized BAC Mastery operators and administrators.
-              Student accounts are strictly forbidden from accessing the Operations Center.
+          <div className="space-y-1.5">
+            <h1 className="text-lg font-bold text-white">403 — Unauthorized Operator Access</h1>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              هذه المنطقة مخصصة حصرياً لمشغلي وإدارة منصة BAC Mastery. إذا كنت تملك حساب إدارة، يرجى تسجيل الدخول من صفحة الدخول المخصصة للمشغلين.
             </p>
           </div>
-          <div className="pt-2">
+
+          <div className="pt-2 flex flex-col gap-2.5">
+            <Link
+              href={`/ops/login?redirect=${encodeURIComponent(pathname || "/ops/overview")}`}
+              className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/30"
+            >
+              <KeyRound className="w-4 h-4" />
+              <span>تسجيل الدخول كمشغل (Operator Sign In)</span>
+            </Link>
+
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Return to Student Dashboard</span>
+              <span>العودة إلى منصة الطلاب (Student App)</span>
             </Link>
           </div>
         </div>

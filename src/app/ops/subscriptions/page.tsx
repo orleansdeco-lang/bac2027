@@ -18,6 +18,7 @@ import {
   Users,
 } from "lucide-react";
 import { SubscriptionPlan, SubscriptionAlert } from "@/lib/operations/types";
+import { opsFetch } from "@/lib/operations/client-api";
 
 export default function OpsSubscriptionsPage() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
@@ -33,7 +34,7 @@ export default function OpsSubscriptionsPage() {
   async function loadData() {
     setLoading(true);
     try {
-      const res = await fetch("/api/ops/subscriptions");
+      const res = await opsFetch("/api/ops/subscriptions");
       if (res.ok) {
         const data = await res.json();
         if (data.plans) {
@@ -81,7 +82,7 @@ export default function OpsSubscriptionsPage() {
         body.duration_months = Number(duration);
       }
 
-      const res = await fetch("/api/ops/subscriptions", {
+      const res = await opsFetch("/api/ops/subscriptions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

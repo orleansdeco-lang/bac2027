@@ -16,6 +16,7 @@ import {
   UserX,
 } from "lucide-react";
 import { StudentOperationalSummary } from "@/lib/operations/types";
+import { opsFetch } from "@/lib/operations/client-api";
 
 export default function OpsStudentsPage() {
   const [students, setStudents] = useState<StudentOperationalSummary[]>([]);
@@ -30,7 +31,7 @@ export default function OpsStudentsPage() {
     async function fetchStudents() {
       setLoading(true);
       try {
-        const res = await fetch("/api/ops/students");
+        const res = await opsFetch("/api/ops/students");
         if (res.ok) {
           const data = await res.json();
           if (data?.students) setStudents(data.students);

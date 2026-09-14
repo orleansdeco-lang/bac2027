@@ -17,6 +17,7 @@ import {
   ContentVerificationStatus,
   ContentProvenanceSource,
 } from "@/lib/operations/types";
+import { opsFetch } from "@/lib/operations/client-api";
 
 export default function OpsContentPage() {
   const [skills, setSkills] = useState<ContentSkillSummary[]>([]);
@@ -43,7 +44,7 @@ export default function OpsContentPage() {
       if (missingVerificationOnly) params.set("missingVerificationOnly", "true");
       if (missingResourcesOnly) params.set("missingResourcesOnly", "true");
 
-      const res = await fetch(`/api/ops/content?${params.toString()}`);
+      const res = await opsFetch(`/api/ops/content?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         setReport(data);

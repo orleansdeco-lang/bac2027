@@ -15,6 +15,7 @@ import {
   Activity,
 } from "lucide-react";
 import { OperationsOverviewKPIs } from "@/lib/operations/types";
+import { opsFetch } from "@/lib/operations/client-api";
 
 interface FunnelStep {
   name: string;
@@ -31,7 +32,7 @@ export default function OpsLearningPage() {
     async function loadData() {
       setLoading(true);
       try {
-        const res = await fetch("/api/ops/overview");
+        const res = await opsFetch("/api/ops/overview");
         if (res.ok) {
           const data = await res.json();
           if (data?.kpis) setKpis(data.kpis);

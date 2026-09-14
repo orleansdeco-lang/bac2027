@@ -13,6 +13,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { OperationsIssue, IssueCategory, IssueSeverity, IssueStatus } from "@/lib/operations/types";
+import { opsFetch } from "@/lib/operations/client-api";
 
 export default function OpsIssuesPage() {
   const [issues, setIssues] = useState<OperationsIssue[]>([]);
@@ -35,7 +36,7 @@ export default function OpsIssuesPage() {
   const loadIssues = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/ops/issues");
+      const res = await opsFetch("/api/ops/issues");
       if (res.ok) {
         const data = await res.json();
         setIssues(data.issues || []);
@@ -59,7 +60,7 @@ export default function OpsIssuesPage() {
 
     try {
       setActionLoading(true);
-      const res = await fetch("/api/ops/issues", {
+      const res = await opsFetch("/api/ops/issues", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -91,7 +92,7 @@ export default function OpsIssuesPage() {
 
     try {
       setActionLoading(true);
-      const res = await fetch("/api/ops/issues", {
+      const res = await opsFetch("/api/ops/issues", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

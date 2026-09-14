@@ -13,6 +13,7 @@ import {
   FileText,
 } from "lucide-react";
 import { PaymentOrder, PaymentOrderStatus } from "@/lib/operations/types";
+import { opsFetch } from "@/lib/operations/client-api";
 
 export default function OpsFinancePage() {
   const [orders, setOrders] = useState<PaymentOrder[]>([]);
@@ -28,7 +29,7 @@ export default function OpsFinancePage() {
   async function handleViewReceipt(orderId: string) {
     setLoadingReceiptId(orderId);
     try {
-      const res = await fetch(`/api/ops/payments/receipt/view?orderId=${orderId}`);
+      const res = await opsFetch(`/api/ops/payments/receipt/view?orderId=${orderId}`);
       const data = await res.json();
       if (data?.success && data?.url) {
         setPreviewReceiptUrl(data.url);
@@ -46,7 +47,7 @@ export default function OpsFinancePage() {
     setLoading(true);
     try {
       const url = statusFilter === "all" ? "/api/ops/payments" : `/api/ops/payments?status=${statusFilter}`;
-      const res = await fetch(url);
+      const res = await opsFetch(url);
       if (res.ok) {
         const data = await res.json();
         if (data?.orders) setOrders(data.orders);
@@ -70,7 +71,7 @@ export default function OpsFinancePage() {
     setProcessingId(orderId);
     setActionMessage(null);
     try {
-      const res = await fetch("/api/ops/payments/approve", {
+      const res = await opsFetch("/api/ops/payments/approve", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId, reason: "Payment verified by operator in Operations Center" }),
@@ -99,7 +100,7 @@ export default function OpsFinancePage() {
     setProcessingId(rejectingOrder.id);
     setActionMessage(null);
     try {
-      const res = await fetch("/api/ops/payments/reject", {
+      const res = await opsFetch("/api/ops/payments/reject", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId: rejectingOrder.id, reason: rejectionReason.trim() }),

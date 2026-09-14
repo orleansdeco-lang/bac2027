@@ -23,6 +23,7 @@ import {
   Sparkles,
   ArrowRight,
   ArrowLeft,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -103,6 +104,12 @@ export function Sidebar({ className }: SidebarProps) {
       label: isAr ? "خريطة الطريق" : "Feuille de route",
       icon: Map,
       matches: (p: string) => p.startsWith("/roadmap"),
+    },
+    {
+      href: "/curriculum",
+      label: isAr ? "دروس المنهاج (55 يوماً)" : "Programme (55 Jours)",
+      icon: BookOpen,
+      matches: (p: string) => p.startsWith("/curriculum"),
     },
     {
       href: "/error-lab",

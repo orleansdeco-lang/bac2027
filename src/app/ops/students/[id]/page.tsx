@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { PaymentOrder, OperationsAuditLog, IngestedTelemetryEvent } from "@/lib/operations/types";
 import { formatEnergyState } from "@/lib/i18n/statusMapper";
+import { opsFetch } from "@/lib/operations/client-api";
 
 export default function StudentDossierPage() {
   const params = useParams();
@@ -45,7 +46,7 @@ export default function StudentDossierPage() {
   async function loadDossier() {
     setLoading(true);
     try {
-      const res = await fetch(`/api/ops/students/${studentId}`);
+      const res = await opsFetch(`/api/ops/students/${studentId}`);
       if (res.ok) {
         const data = await res.json();
         if (data?.profile) {
@@ -77,7 +78,7 @@ export default function StudentDossierPage() {
         body.days = Number(customDays);
       }
 
-      const res = await fetch(`/api/ops/students/${studentId}/extend`, {
+      const res = await opsFetch(`/api/ops/students/${studentId}/extend`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),

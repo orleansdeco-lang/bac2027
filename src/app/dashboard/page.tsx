@@ -413,6 +413,51 @@ export default function DashboardPage() {
         </section>
 
         {/* ================================================================= */}
+        {/* NEW FEATURE: FULL TERM 1 CURRICULUM & D-DAY SIMULATOR BANNER      */}
+        {/* ================================================================= */}
+        <section className="rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/30 via-slate-900 to-slate-950 p-6 sm:p-7 shadow-clay text-white">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="space-y-2 max-w-2xl text-right" dir="rtl">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  ✨ جديد المنهاج التفاعلي
+                </span>
+                <span className="text-xs text-slate-400">علوم الطبيعة والحياة · 3 ع ت</span>
+              </div>
+              <h2 className="text-lg sm:text-xl font-black text-white">
+                منهاج الفصل الأول الكامل (55 درساً مفصلاً + محاكي D-Day الرسمي)
+              </h2>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                استكشف جميع دروس الوحدات 1 إلى 4 ومعسكر المنهجية، مدعمة بفيديوهات موجهة بالدقيقة والثانية، رسومات تخطيطية تفاعلية، و11 محطة تفتيش أسبوعية.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 shrink-0 w-full md:w-auto">
+              <Link href="/curriculum" className="w-full sm:w-auto">
+                <Button
+                  variant="primary"
+                  size="md"
+                  className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  <span>تصفح الـ 55 درساً</span>
+                </Button>
+              </Link>
+              <Link href="/exam" className="w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  size="md"
+                  className="w-full sm:w-auto border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl flex items-center justify-center gap-2"
+                >
+                  <Award className="w-4 h-4 text-amber-400" />
+                  <span>محاكي امتحان D-Day</span>
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* ================================================================= */}
         {/* 2. ROW OF 4 TACTILE STAT CARDS (REFERENCE #1 INSPIRATION)         */}
         {/* ================================================================= */}
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">

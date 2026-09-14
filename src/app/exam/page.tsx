@@ -35,6 +35,9 @@ import {
   Zap,
 } from "lucide-react";
 
+import { DDaySimulator } from "@/components/exam/DDaySimulator";
+import { snvTerm1Exam } from "@/domain/content/snv-daily-lessons";
+
 export default function ExamModePage() {
   const { t, locale } = useTranslation();
   const isAr = locale === "ar";
@@ -42,7 +45,7 @@ export default function ExamModePage() {
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState<ExamReadinessMetrics | null>(null);
   const [report, setReport] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<"strategy" | "readiness" | "archives">("strategy");
+  const [activeTab, setActiveTab] = useState<"simulator" | "strategy" | "readiness" | "archives">("simulator");
 
   const NextArrow = isAr ? ArrowLeft : ArrowRight;
   const BackArrow = isAr ? ArrowRight : ArrowLeft;
@@ -275,6 +278,17 @@ export default function ExamModePage() {
         {/* ================================================================= */}
         <div className="flex items-center gap-2 border-b border-theme pb-2 text-xs font-semibold overflow-x-auto">
           <button
+            onClick={() => setActiveTab("simulator")}
+            className={`px-4 py-2 rounded-xl transition-all shrink-0 flex items-center gap-2 ${
+              activeTab === "simulator"
+                ? "bg-emerald-600 text-white shadow-clay font-bold"
+                : "text-theme-secondary hover:text-theme-text hover:bg-card-hover"
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>{isAr ? "محاكي D-Day (امتحان الفصل الأول)" : "Simulateur D-Day"}</span>
+          </button>
+          <button
             onClick={() => setActiveTab("strategy")}
             className={`px-4 py-2 rounded-xl transition-all shrink-0 ${
               activeTab === "strategy"
@@ -305,6 +319,13 @@ export default function ExamModePage() {
             {isAr ? "أرشيف تمارين البكالوريا السابقة" : "Annales Officielles"}
           </button>
         </div>
+
+        {/* TAB 0: D-DAY EXAM SIMULATOR */}
+        {activeTab === "simulator" && (
+          <div className="space-y-6 animate-fade-in">
+            <DDaySimulator examData={snvTerm1Exam} />
+          </div>
+        )}
 
         {/* TAB 1: 30-MINUTE GOLDEN RULE */}
         {activeTab === "strategy" && (

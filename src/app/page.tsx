@@ -347,6 +347,65 @@ export default function HomePage() {
       </section>
 
       {/* =================================================================== */}
+      {/* 4.5 NEW: CURRICULUM & D-DAY SIMULATOR SHOWCASE                      */}
+      {/* =================================================================== */}
+      <section className="py-14 sm:py-20 border-b border-theme bg-gradient-to-b from-surface to-canvas">
+        <Container size="lg" className="space-y-8 text-center">
+          <div className="space-y-3 max-w-2xl mx-auto">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-500 font-mono">
+              {isAr ? "جديد الفصل الأول • منهاج 2026-2027" : "NOUVEAU PROGRAMME TRIMESTRE 1"}
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-theme-text font-sans">
+              {isAr ? "55 درساً يومياً ومحاكي الامتحان الشامل (D-Day)" : "55 Leçons Quotidiennes & Simulateur D-Day"}
+            </h2>
+            <p className="text-sm sm:text-base text-theme-secondary">
+              {isAr
+                ? "تغطية شاملة لوحدات العلوم الطبيعية الأربع ومعسكر المنهجية، مع فيديوهات موجهة بدقة ومحاكي امتحان البكالوريا بمؤقت حسم الـ 30 دقيقة."
+                : "Couverture intégrale du programme de sciences avec vidéos calées à la seconde et simulation réelle du BAC."}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto text-right" dir={isAr ? "rtl" : "ltr"}>
+            <div className="p-5 rounded-3xl border border-theme bg-card shadow-sm space-y-2">
+              <span className="text-xs font-bold text-emerald-500 block font-mono">01 الدروس اليومية</span>
+              <h4 className="font-bold text-theme-text text-sm">55 درساً مفصلاً خطوة بخطوة</h4>
+              <p className="text-xs text-theme-secondary leading-relaxed">
+                كل يوم مخصص لمفهوم محدد، كفاءة مستهدفة، وأخطاء شائعة في تصحيح البكالوريا.
+              </p>
+            </div>
+            <div className="p-5 rounded-3xl border border-theme bg-card shadow-sm space-y-2">
+              <span className="text-xs font-bold text-blue-500 block font-mono">02 محطات التفتيش</span>
+              <h4 className="font-bold text-theme-text text-sm">11 نقطة تفتيش أسبوعية</h4>
+              <p className="text-xs text-theme-secondary leading-relaxed">
+                تمارين تطبيقية بسلالم التنقيط الوزارية واختبارات توأمية لترميم الثغرات فوراً.
+              </p>
+            </div>
+            <div className="p-5 rounded-3xl border border-theme bg-card shadow-sm space-y-2">
+              <span className="text-xs font-bold text-purple-500 block font-mono">03 محاكي D-Day</span>
+              <h4 className="font-bold text-theme-text text-sm">محاكاة امتحان البكالوريا</h4>
+              <p className="text-xs text-theme-secondary leading-relaxed">
+                موضوعان رسميان متكاملان بمؤقت قاعدة الـ 30 دقيقة لاختيار الموضوع وقفل القرار.
+              </p>
+            </div>
+          </div>
+
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+            <Link href="/curriculum">
+              <Button variant="primary" size="md" className="rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md">
+                <span>{isAr ? "استكشف المنهاج كاملاً (55 يوماً)" : "Découvrir le programme"}</span>
+                <Arrow className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href="/exam">
+              <Button variant="outline" size="md" className="rounded-full border-theme font-semibold">
+                <span>{isAr ? "جرب محاكي D-Day" : "Essayer le simulateur"}</span>
+              </Button>
+            </Link>
+          </div>
+        </Container>
+      </section>
+
+      {/* =================================================================== */}
       {/* 5. FINAL CALL TO ACTION                                             */}
       {/* =================================================================== */}
       <section className="py-16 sm:py-24 bg-canvas">

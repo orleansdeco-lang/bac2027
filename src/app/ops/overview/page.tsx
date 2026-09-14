@@ -19,6 +19,7 @@ import {
   ShieldAlert,
 } from "lucide-react";
 import { OperationsOverviewKPIs } from "@/lib/operations/types";
+import { opsFetch } from "@/lib/operations/client-api";
 
 export default function OpsOverviewPage() {
   const [kpis, setKpis] = useState<OperationsOverviewKPIs | null>(null);
@@ -27,7 +28,7 @@ export default function OpsOverviewPage() {
   async function fetchOverview() {
     setLoading(true);
     try {
-      const res = await fetch("/api/ops/overview");
+      const res = await opsFetch("/api/ops/overview");
       if (res.ok) {
         const data = await res.json();
         if (data?.kpis) setKpis(data.kpis);

@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 import { getCapturedClientErrors, CapturedError } from "@/lib/monitoring";
+import { opsFetch } from "@/lib/operations/client-api";
 
 export default function OpsSystemPage() {
   const { user } = useAuth();
@@ -30,7 +31,7 @@ export default function OpsSystemPage() {
     try {
       const [timeRes, overRes] = await Promise.all([
         fetch("/api/server-time"),
-        fetch("/api/ops/overview"),
+        opsFetch("/api/ops/overview"),
       ]);
 
       if (timeRes.ok) {

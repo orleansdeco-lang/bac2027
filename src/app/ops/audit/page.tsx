@@ -11,6 +11,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { OperationsAuditLog } from "@/lib/operations/types";
+import { opsFetch } from "@/lib/operations/client-api";
 
 export default function OpsAuditPage() {
   const [logs, setLogs] = useState<OperationsAuditLog[]>([]);
@@ -22,7 +23,7 @@ export default function OpsAuditPage() {
     setLoading(true);
     try {
       const url = actionFilter === "all" ? "/api/ops/audit" : `/api/ops/audit?action=${actionFilter}`;
-      const res = await fetch(url);
+      const res = await opsFetch(url);
       if (res.ok) {
         const data = await res.json();
         if (data?.logs) setLogs(data.logs);

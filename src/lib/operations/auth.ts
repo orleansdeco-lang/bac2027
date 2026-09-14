@@ -117,25 +117,61 @@ export async function hasRoleManagementAccess(userId: string): Promise<boolean> 
 }
 
 /**
- * Extract authenticated user ID from request headers
+ * Extract token from Cookie header (supports ops_auth_token and Supabase cookies)
+ */
+export function extractTokenFromCookies(cookieHeader: string | null): string | null {
+  if (!cookieHeader) return null;
+  const parts = cookieHeader.split(";").map((c) => c.trim());
+  for (const part of parts) {
+    if (part.startsWith("ops_auth_token=")) {
+      return decodeURIComponent(part.substring("ops_auth_token=".length));
+    }
+    if (part.startsWith("sb-access-token=")) {
+      return decodeURIComponent(part.substring("sb-access-token=".length));
+    }
+    if (part.includes("-auth-token=")) {
+      try {
+        const val = decodeURIComponent(part.split("=")[1]);
+        const parsed = JSON.parse(val);
+        if (parsed?.access_token) return parsed.access_token;
+        if (Array.isArray(parsed) && parsed[0]) return parsed[0];
+      } catch {}
+    }
+  }
+  return null;
+}
+
+/**
+ * Extract authenticated user ID from request headers or cookies
  */
 export async function extractAuthenticatedUserId(req: Request): Promise<string | null> {
+  let token: string | null = null;
+
+  // 1. Try Authorization header
   const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
   if (authHeader && authHeader.startsWith("Bearer ")) {
-    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
-    if (isSupabaseConfigured && supabase) {
-      try {
-        const { data: { user }, error } = await supabase.auth.getUser(token);
-        if (!error && user?.id) {
-          return user.id;
-        }
-      } catch {
-        // Continue
+    token = authHeader.replace(/^Bearer\s+/i, "").trim();
+  }
+
+  // 2. Try Cookies
+  if (!token) {
+    const cookieHeader = req.headers.get("cookie") || req.headers.get("Cookie");
+    token = extractTokenFromCookies(cookieHeader);
+  }
+
+  // 3. Verify token with Supabase
+  if (token && isSupabaseConfigured && supabase) {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      if (!error && user?.id) {
+        return user.id;
       }
+    } catch {
+      // Continue
     }
   }
 
-  // Testing/development header support
+  // 4. Testing/development header support
   if (process.env.NODE_ENV !== "production") {
     const headerUid = req.headers.get("x-test-user-id") || req.headers.get("x-user-id");
     if (headerUid) return headerUid;
