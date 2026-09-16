@@ -911,6 +911,56 @@ export const SCIENCES_EXP_SKILLS: Record<string, Skill> = {
       "Comparer le bilan énergétique et le rendement entre la respiration cellulaire complète et la fermentation.",
     ],
   },
+  // ---------------------------------------------------------------------------
+  // ARABIC LANGUAGE & LITERATURE SKILLS (اللغة العربية وآدابها)
+  // ---------------------------------------------------------------------------
+  arabic_text_analysis_poetry_prose: {
+    id: "arabic_text_analysis_poetry_prose",
+    subjectId: "arabic",
+    title_ar: "البناء الفكري: تحليل النص الشعري والنثري وتحديد النزعة والحقل المعجمي",
+    title_fr: "Compréhension et analyse textuelle (poésie et prose), visée et champs lexicaux",
+    description_ar: "تحديد النمط ومؤشراته، تحليل الحقول المعجمية والدلالية وعلاقتها بالفكرة العامة، وتحديد النزعات والقيم ومنهجية التلخيص.",
+    description_fr: "Identifier les types de textes, analyser les champs lexicaux, repérer la visée de l'auteur et maîtriser la technique de synthèse.",
+    dimensions: ["understanding", "methodology", "application"],
+    repairStrategy_ar: "التركيز على الشواهد النصية المباشرة عند الإجابة عن أسئلة الفهم، والالتزام بتقنية التلخيص المنهجية (الأفكار الأساسية بأسلوب الطالب).",
+    repairStrategy_fr: "S'appuyer systématiquement sur des citations textuelles et respecter la technique de synthèse.",
+    repairSteps_ar: [
+      "تحديد النمط النصي ومؤشراته (وصفي، سردي، حجاجي، تفسيري) مع التمثيل من النص.",
+      "استخراج الحقول المعجمية والدلالية وتبيان علاقتها بالفكرة العامة للموضوع.",
+      "تحديد نزعة الكاتب أو الشاعر (وطنية، قومية، إنسانية، دينية) وإبراز القيم المتضمنة.",
+      "صياغة التلخيص بمراعاة الحجم (الربع)، الأسلوب الخاص، والالتزام الصارم بمضمون النص دون إبداء الرأي.",
+    ],
+    repairSteps_fr: [
+      "Identifier le type de texte et ses indicateurs avec justification textuelle.",
+      "Extraire les champs lexicaux et expliciter leur lien avec le thème central.",
+      "Déterminer la visée et les valeurs de l'auteur (nationale, patriotique, humaniste).",
+      "Rédiger un résumé fidèle respectant le quart de la longueur sans jugement personnel.",
+    ],
+  },
+
+  arabic_linguistic_grammar_imagery: {
+    id: "arabic_linguistic_grammar_imagery",
+    subjectId: "arabic",
+    title_ar: "البناء اللغوي: الإعراب التقديري والمحلي والصور البيانية والمحسنات",
+    title_fr: "Analyse linguistique : grammaire, figures de style et cohérence textuelle",
+    description_ar: "إعراب المفردات والجمل المقررة، وتحليل بلاغة الصور البيانية والمحسنات البديعية ودور أدوات الاتساق والانسجام في بناء النص.",
+    description_fr: "Maîtriser l'analyse syntaxique, expliciter les figures de style et appréhender les mécanismes de cohésion textuelle.",
+    dimensions: ["knowledge", "application", "methodology"],
+    repairStrategy_ar: "تفكيك الصورة البيانية إلى أصلها التشبيهي أولاً للتعرف على المشبه والمشبه به المحذوف وتفادي الخلط بين الاستعارة والكناية.",
+    repairStrategy_fr: "Décomposer l'image poétique en éléments comparatifs pour distinguer la métaphore de la métonymie.",
+    repairSteps_ar: [
+      "التمييز بين إعراب المفردات (إعراب 'إذ'، 'إذا'، 'إذن'، 'حينئذ' والتمييز والحال) وإعراب الجمل (التي لها محل والتي لا محل لها).",
+      "تحديد نوع الصورة البيانية (تشبيه، استعارة مكنية/تصريحية، كناية) وشرح أركانها وتبيان بلاغتها وأثرها في المعنى.",
+      "استخراج مظاهر الاتساق والانسجام (حروف العطف، الضمائر، التكرار، والأسماء الموصولة) وبيان دورها في بناء النص.",
+      "استخراج المحسنات البديعية اللفظية والمعنوية (الطباق، الجناس، المقابلة) وتبيان أثرها.",
+    ],
+    repairSteps_fr: [
+      "Distinguer l'analyse grammaticale des termes clés et la fonction syntaxique des propositions.",
+      "Identifier et expliciter les figures de style (métaphore, métonymie, comparaison) et leur valeur rhétorique.",
+      "Analyser la cohésion et la cohérence textuelle (anaphores, connecteurs logiques).",
+      "Repérer les procédés stylistiques (antithèse, assonance) et leur impact sémantique.",
+    ],
+  },
 };
 
 import { ALL_CURRICULUM_SKILLS } from "@/data/curriculum/skills";
