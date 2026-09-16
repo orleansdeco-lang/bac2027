@@ -425,6 +425,105 @@ export const SCIENCES_EXP_SKILLS: Record<string, Skill> = {
   },
 
   // ---------------------------------------------------------------------------
+  // PROBABILITY, COMBINATORICS & ARITHMETIC SKILLS (الاحتمالات، العد والحساب في Z)
+  // ---------------------------------------------------------------------------
+  math_counting_combinatorics: {
+    id: "math_counting_combinatorics",
+    subjectId: "math",
+    title_ar: "طرائق العد، التبديلات، الترتيبات والتوفيقات",
+    title_fr: "Dénombrement, permutations, arrangements et combinaisons",
+    description_ar: "تحديد نوع السحب ونموذج العد الملائم (آني، متتالي مع أو بدون إرجاع) وحساب التوفيقات والترتيبات مع مراعاة معاملات الترتيب.",
+    description_fr: "Identifier le mode de tirage et l'outil de dénombrement adapté (combinaisons, arrangements, p-listes) en tenant compte de l'ordre.",
+    dimensions: ["knowledge", "application", "methodology"],
+    repairStrategy_ar: "تحديد طبيعة السحب كخطوة أولى حاسمة لاختيار النموذج الرياضي (C أو A أو n^p)، وتفادي نسيان معامل الترتيب في السحب المتتالي.",
+    repairStrategy_fr: "Qualifier formellement la modalité du tirage avant tout calcul pour sélectionner l'outil de dénombrement adéquat.",
+    repairSteps_ar: [
+      "تحديد نوع السحب من نص المسألة: في آن واحد (توفيقة C)، على التوالي بدون إرجاع (ترتيبات A)، أو على التوالي بإرجاع (قوائم n^p).",
+      "استعمال التوفيقات C(n, p) = n! / (p!(n-p)!) عند عدم الاهتمام بالترتيب، وتطبيق خواصها التناظرية.",
+      "مراعاة معامل الترتيب عند السحب المتتالي مع تمييز العناصر (الألوان أو الأرقام).",
+      "توظيف مبدأ الشجرة أو المخطط لتفكيك الحالات المعقدة وحساب الحالات الملائمة بدقة.",
+    ],
+    repairSteps_fr: [
+      "Identifier le type de tirage: simultané (combinaisons C), successif sans remise (arrangements A), ou avec remise (listes n^p).",
+      "Utiliser les combinaisons C(n, p) = n! / (p!(n-p)!) lorsque l'ordre n'intervient pas.",
+      "Prendre en compte le coefficient d'ordre lors d'un tirage successif avec distinction d'éléments.",
+      "Construire un arbre de choix pour dénombrer méthodiquement les cas favorables.",
+    ],
+  },
+
+  math_conditional_probability_trees: {
+    id: "math_conditional_probability_trees",
+    subjectId: "math",
+    title_ar: "الاحتمال الشرطي، شجرة الاحتمالات ودستور الاحتمال الكلي",
+    title_fr: "Probabilités conditionnelles, arbres pondérés et formule des probabilités totales",
+    description_ar: "بناء وموازنة شجرة الاحتمالات الموزونة وحساب الاحتمالات الشرطية وتطبيق دستور الاحتمال الكلي وفحص استقلالية الحوادث.",
+    description_fr: "Construire un arbre pondéré, calculer les probabilités conditionnelles, appliquer la formule des probabilités totales et tester l'indépendance.",
+    dimensions: ["understanding", "application", "methodology"],
+    repairStrategy_ar: "الرسم الإلزامي لشجرة الاحتمالات الموزونة لترجمة نص المسألة بيانياً وتطبيق دستور الاحتمالات الكلية دون خلط بين التقاطع P(A∩B) والاحتمال الشرطي PA(B).",
+    repairStrategy_fr: "Systématiser l'arbre pondéré pour distinguer sans ambiguïté la probabilité de l'intersection et la probabilité conditionnelle.",
+    repairSteps_ar: [
+      "رسم شجرة احتمالات موزونة مع وضع الاحتمالات الشرطية على الفروع الثانوية.",
+      "التحقق من أن مجموع احتمالات الفروع المنطلقة من نفس العقدة يساوي دائماً 1.",
+      "تطبيق دستور الاحتمال الكلي لحساب احتمال حدث B يتقاطع مع تجزئة كاملة: P(B) = Σ P(Ai ∩ B).",
+      "حساب الاحتمال الشرطي العكسي بدقة: PA(B) = P(A ∩ B) / P(A) واستنتاج استقلالية حادثتين إذا كان P(A ∩ B) = P(A)·P(B).",
+    ],
+    repairSteps_fr: [
+      "Construire un arbre pondéré en plaçant rigoureusement les probabilités conditionnelles sur les branches.",
+      "Vérifier que la somme des probabilités issues d'un même nœud est égale à 1.",
+      "Appliquer la formule des probabilités totales pour déduire P(B) à partir d'une partition.",
+      "Calculer la probabilité conditionnelle PA(B) = P(A ∩ B) / P(A) et tester l'indépendance de deux événements.",
+    ],
+  },
+
+  math_random_variables_binomial: {
+    id: "math_random_variables_binomial",
+    subjectId: "math",
+    title_ar: "المتغيرات العشوائية، قانون الاحتمال وقانون ثنائي الحدين",
+    title_fr: "Variables aléatoires, loi de probabilité et loi binomiale",
+    description_ar: "تعيين قانون احتمال المتغير العشوائي وحساب مؤشراته (الأمل، التباين، الانحراف المعياري) ونمذجة تجارب برنولي المتكررة بقانون ثنائي الحدين.",
+    description_fr: "Déterminer la loi d'une variable aléatoire, calculer l'espérance et la variance, et modéliser par la loi binomiale B(n, p).",
+    dimensions: ["application", "methodology", "understanding"],
+    repairStrategy_ar: "إثبات شروط مخطط برنولي (تجربة ذات مخرجين تعاد n مرة بشكل متماثل ومستقل) قبل استخدام قانون ثنائي الحدين مباشرة.",
+    repairStrategy_fr: "Vérifier formellement les hypothèses du schéma de Bernoulli avant de déployer la formule de la loi binomiale.",
+    repairSteps_ar: [
+      "تحديد مجموعة قيم المتغير العشوائي X(Ω) بدقة وربط كل قيمة بحادثة جزئية.",
+      "كتابة قانون الاحتمال في جدول والتحقق الصارم من أن مجموع الاحتمالات Σ P(X = xi) = 1.",
+      "حساب الأمل الرياضياتي E(X)، التباين V(X) والانحراف المعياري σ(X) بالقوانين المعتمدة.",
+      "التعرف على مخطط برنولي وتطبيق قانون ثنائي الحدين B(n, p): P(X = k) = C(n, k)·p^k·(1-p)^(n-k).",
+    ],
+    repairSteps_fr: [
+      "Déterminer l'ensemble des valeurs de la variable aléatoire X(Ω) selon l'expérience.",
+      "Dresser la loi de probabilité dans un tableau et s'assurer que la somme des probabilités vaut 1.",
+      "Calculer l'espérance mathématique E(X), la variance V(X) et l'écart-type σ(X).",
+      "Identifier un schéma de Bernoulli et appliquer la loi binomiale B(n, p): P(X = k) = C(n, k)·p^k·(1-p)^(n-k).",
+    ],
+  },
+
+  math_arithmetic_divisibility_congruence: {
+    id: "math_arithmetic_divisibility_congruence",
+    subjectId: "math",
+    title_ar: "القسمة الإقليدية في Z، الموافِقات والمعادلات الديوفانتية",
+    title_fr: "Division euclidienne dans ℤ, congruences et équations diophantiennes",
+    description_ar: "توظيف خواص الموافقات ودورية البواقي لحل مسائل قابلية القسمة في Z، وتطبيق مبرهنتي بيزو وغاوس لحل المعادلات الديوفانتية.",
+    description_fr: "Exploiter les congruences et la périodicité des restes dans ℤ, et appliquer les théorèmes de Bézout et Gauss pour résoudre ax + by = c.",
+    dimensions: ["knowledge", "application", "methodology"],
+    repairStrategy_ar: "إثبات الأولية بين المعاملات أولاً بمبرهنة بيزو قبل استخدام مبرهنة غاوس لتفادي استنتاجات خاطئة في حل المعادلات في Z.",
+    repairStrategy_fr: "Valider la primalité entre les coefficients via Bézout avant d'invoquer le théorème de Gauss pour résoudre les équations diophantiennes.",
+    repairSteps_ar: [
+      "توظيف خواص الموافقة بترديد n (التوافق مع الجمع والضرب والقوى) لتعيين بواقي قسمة a^k على n.",
+      "دراسة دورية بواقي قوى العدد وفق قيم العدد الطبيعي n وتلخيصها في جدول قيم.",
+      "استعمال خوارزمية إقليدس لحساب PGCD(a, b) وإيجاد حل خاص للمعادلة ax + by = c بمبرهنة بيزو.",
+      "استنتاج الحل العام للمعادلات الديوفانتية بتطبيق مبرهنة غاوس وتعيين الحلول الطبيعية إن طُلبت.",
+    ],
+    repairSteps_fr: [
+      "Exploiter les propriétés des congruences modulo n pour déterminer les restes de a^k modulo n.",
+      "Étudier la périodicité des restes des puissances et résumer les résultats dans un tableau.",
+      "Appliquer l'algorithme d'Euclide pour calculer le PGCD et déduire une solution particulière via Bézout.",
+      "Résoudre l'équation diophantienne ax + by = c en utilisant le théorème de Gauss.",
+    ],
+  },
+
+  // ---------------------------------------------------------------------------
   // PHYSICS-CHEMISTRY SKILLS
   // ---------------------------------------------------------------------------
   physics_rc_time_constant: {
