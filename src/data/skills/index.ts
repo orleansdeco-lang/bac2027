@@ -598,6 +598,126 @@ export const SCIENCES_EXP_SKILLS: Record<string, Skill> = {
     ],
   },
 
+  physics_chemical_kinetics: {
+    id: "physics_chemical_kinetics",
+    subjectId: "physics",
+    title_ar: "المتابعة الزمنية لتحول كيميائي وسرعات التفاعل",
+    title_fr: "Suivi temporel d'une transformation chimique et vitesses de réaction",
+    description_ar: "استغلال جدول التقدم لتعيين المتفاعل المحد والتقدم الأعظمي، واستخراج زمن نصف التفاعل، وحساب السرعات الحجمية للتفاعل وميول المماسات.",
+    description_fr: "Exploiter le tableau d'avancement, déterminer le temps de demi-réaction et calculer la vitesse volumique de réaction via la pente de la tangente.",
+    dimensions: ["application", "methodology", "understanding"],
+    repairStrategy_ar: "التركيز على تحديد معامل توجيه المماس (الميل) بدقة باختيار نقطتين واضحتين، ومراعاة التحويل الصحيح لوحدات الحجم والزمن قبل الحساب.",
+    repairStrategy_fr: "Calculer rigoureusement la pente de la tangente avec deux points distincts et convertir impérativement les unités de volume et de temps.",
+    repairSteps_ar: [
+      "إنشاء جدول التقدم بدقة وتحديد المتفاعل المحد والتقدم الأعظمي x_max.",
+      "تعريف واستخراج زمن نصف التفاعل t_(1/2) بيانياً بإسقاط القيمة x_f / 2 على محور الأزمنة.",
+      "كتابة عبارة السرعة الحجمية للتفاعل v_vol = (1/V_tot) · (dx/dt) وحساب ميل المماس بيانياً عند اللحظة t.",
+      "ربط سرعة التفاعل بسرعات اختفاء أو تشكل الأنواع الكيميائية المرافقة عبر المعاملات الستوكيومترية.",
+    ],
+    repairSteps_fr: [
+      "Dresser le tableau d'avancement et identifier le réactif limitant et x_max.",
+      "Déterminer graphiquement le temps de demi-réaction t_(1/2) par projection de x_f / 2.",
+      "Exprimer la vitesse volumique de réaction v_vol et calculer la pente de la tangente à l'instant t.",
+      "Relier la vitesse de réaction aux vitesses de disparition/formation via les coefficients stœchiométriques.",
+    ],
+  },
+
+  physics_rc_rl_circuits: {
+    id: "physics_rc_rl_circuits",
+    subjectId: "physics",
+    title_ar: "الدارات الكهربائية RC و RL: المعادلات التفاضلية والاستجابة لدرجة توتر",
+    title_fr: "Circuits électriques RC et RL : équations différentielles et réponse à un échelon de tension",
+    description_ar: "تأسيس وحل المعادلات التفاضلية لثنائي القطب RC و RL وفق قانون جمع التوترات، وتعيين ثابت الزمن وحساب الطاقة المخزنة.",
+    description_fr: "Établir et résoudre les équations différentielles des dipôles RC et RL, déterminer la constante de temps τ et calculer l'énergie emmagasinée.",
+    dimensions: ["knowledge", "application", "methodology"],
+    repairStrategy_ar: "الاعتماد الدائم على قانون جمع التوترات كمنطلق رسمي للمعادلة التفاضلية، ومطابقة الثوابت A و α بالتعويض المباشر لحل المعادلة.",
+    repairStrategy_fr: "Partir systématiquement de la loi d'additivité des tensions et identifier les constantes analytiques par substitution du حل général.",
+    repairSteps_ar: [
+      "تطبيق قانون جمع التوترات مع توجيه الدارة وتحديد جهة شدة التيار والأسهم الممثلة للتوترات.",
+      "تأسيس المعادلة التفاضلية للتوتر u_C(t) أو الشحنة q(t) أو شدة التيار i(t) وتبيان حلها الأسي.",
+      "تعيين ثابت الزمن τ بيانياً (طريقة المماس عند المبدأ أو قيمة 0.63 من القيمة الأعظمية في الشحن) وحسابه تحليلياً (RC أو L/R_tot).",
+      "حساب الطاقة الكهرومغناطيسية المخزنة في المكثفة E_e = (1/2)Cu_C² أو الوشيعة E_m = (1/2)Li² في النظام الدائم.",
+    ],
+    repairSteps_fr: [
+      "Appliquer la loi d'additivité des tensions avec convention récepteur/générateur correcte.",
+      "Établir l'équation différentielle pour u_C(t), q(t) ou i(t) et identifier la solution exponentielle.",
+      "Déterminer la constante de temps τ graphiquement (tangente à l'origine ou 0.63 max) et analytiquement.",
+      "Calculer l'énergie emmagasinée dans le condensateur ou la bobine en régime permanent.",
+    ],
+  },
+
+  physics_nuclear_reactions: {
+    id: "physics_nuclear_reactions",
+    subjectId: "physics",
+    title_ar: "التحولات النووية: قانون التناقص وطاقة الربط والحصيلة الطاقوية",
+    title_fr: "Transformations nucléaires : décroissance, énergie de liaison et bilan énergétique",
+    description_ar: "موازنة التفاعلات النووية بقوانين صودي، وحساب النقص الكتلي وطاقة الربط لكل نوية، وتحديد الحصيلة الطاقوية للانشطار والاندماج.",
+    description_fr: "Appliquer les lois de Soddy, calculer le défaut de masse, l'énergie de liaison par nucléon et le bilan énergétique des réactions de fission et fusion.",
+    dimensions: ["knowledge", "application", "understanding"],
+    repairStrategy_ar: "الانتباه الشديد للوحدات: استخدام MeV عند الحساب بكتل مقدرة بوحدة الكتل الذرية (u)، واستخدام الجول (J) عند الاعتماد على الكيلوغرام والسرعة c بالمتر/ثانية.",
+    repairStrategy_fr: "Faire attention aux conversions d'unités: MeV avec l'unité de masse atomique (u), et Joules avec les masses en kg.",
+    repairSteps_ar: [
+      "موازنة التفاعلات النووية (الانبعاثات α، β⁻، β⁺، والأشعة γ) بتطبيق قانوني صودي لانحفاظ العدد الكتلي والشحني.",
+      "توظيف قانون التناقص الإشعاعي N(t) = N_0·e^(-λt) والنشاط الإشعاعي A(t) وحساب زمن نصف العمر t_(1/2) = ln(2) / λ.",
+      "حساب النقص الكتلي Δm وطاقة الربط للنواة E_l = Δm·c² ومؤشر الاستقرار (E_l / A).",
+      "حساب الطاقة المحررة E_liberée من تفاعل انشطار أو اندماج عبر الحصيلة الكتلية أو مخطط الحصيلة الطاقوية.",
+    ],
+    repairSteps_fr: [
+      "Équilibrer les réactions nucléaires (α, β⁻, β⁺, γ) en appliquant les lois de conservation de Soddy.",
+      "Exploiter la loi de décroissance N(t) = N_0·e^(-λt), l'activité A(t) et relier t_(1/2) à λ.",
+      "Calculer le défaut de masse Δm, l'énergie de liaison E_l et l'énergie de liaison par nucléon E_l / A.",
+      "Déterminer l'énergie libérée par fission ou fusion via le bilan massique ou diagramme énergétique.",
+    ],
+  },
+
+  physics_newton_mechanics: {
+    id: "physics_newton_mechanics",
+    subjectId: "physics",
+    title_ar: "الميكانيك وقوانين نيوتن: حركة السقوط، القذائف، والكواكب والأقمار",
+    title_fr: "Mécanique newtonienne : chute verticale, projectiles et mouvements des satellites et planètes",
+    description_ar: "تطبيق القانون الثاني لنيوتن في المراجع الغاليلية، وإيجاد المعادلات التفاضلية للسرعة والحركة في السقوط والقذائف وحركة الأقمار والكواكب.",
+    description_fr: "Appliquer la 2ème loi de Newton dans les référentiels galiléens, établir les équations différentielles pour la chute, les projectiles et les satellites.",
+    dimensions: ["understanding", "application", "methodology"],
+    repairStrategy_ar: "الالتزام بالخطوات المنهجية الرسمية لتصحيح البكالوريا: الجملة ➔ المرجع ➔ تمثيل القوى ➔ الإسقاط، دون القفز مباشرة لكتابة المعادلة التفاضلية.",
+    repairStrategy_fr: "Respecter scrupuleusement la démarche méthodologique: système, référentiel, bilan des forces, puis projection.",
+    repairSteps_ar: [
+      "تحديد الجملة المدروسة والمرجع الغاليلي المناسب (مركزي أرضي، شمسي، أو سطحي أرضي).",
+      "إحصاء القوى الخارجية المؤثرة وتمثيلها بدقة (الثقل، دافعة أرخميدس، وقوى الاحتكاك f = k·v^n).",
+      "تطبيق القانون الثاني لنيوتن Σ F_ext = m·a⃗ وإسقاطه على المحاور الموجهة للوصول إلى المعادلة التفاضلية للسرعة.",
+      "استنتاج السرعة الحدية v_lim في السقوط الشاقولي، أو تعيين معادلة المسار والمدى والذروة في حركة القذائف.",
+    ],
+    repairSteps_fr: [
+      "Définir le système mécanique et le référentiel galiléen approprié (géocentrique, héliocentrique, terrestre).",
+      "Bilan des forces extérieures et représentation vectorielle (poids, poussée d'Archimède, frottements).",
+      "Appliquer la 2ème loi de Newton Σ F_ext = m·a⃗ et projeter sur les axes pour établir l'équation différentielle.",
+      "Déduire la vitesse limite v_lim ou déterminer l'équation de la trajectoire et la portée d'un projectile.",
+    ],
+  },
+
+  physics_acids_bases_equilibrium: {
+    id: "physics_acids_bases_equilibrium",
+    subjectId: "physics",
+    title_ar: "تطور جملة كيميائية نحو حالة التوازن: الأحماض والأسس والمعايرة",
+    title_fr: "Évolution d'un système chimique vers l'état d'équilibre : acides, bases et titrage",
+    description_ar: "دراسة تفاعلات الأحماض والأسس، حساب نسبة التقدم النهائي وثابت التوازن و Ka، واستثمار منحنيات المعايرة ونقطة التكافؤ.",
+    description_fr: "Étudier les équilibres acide-base, calculer le taux d'avancement final τ_f, Ka et exploiter les courbes de titrage pH-métrique et le point d'équivalence.",
+    dimensions: ["application", "methodology", "understanding"],
+    repairStrategy_ar: "التمييز الدقيق بين التفاعل التام (حمض/أساس قوي، τ_f = 1) والتفاعل غير التام المحدود (حمض/أساس ضعيف، τ_f < 1)، وتوظيف نقطة التكافؤ للمعايرة عبر المساواة الستوكيومترية.",
+    repairStrategy_fr: "Distinguer formellement les transformations totales des équilibres limités et exploiter l'équivalence stœchiométrique.",
+    repairSteps_ar: [
+      "كتابة معادلة تفاعل حمض-أساس وحساب نسبة التقدم النهائي τ_f = x_f / x_max للحكم على قوة الحمض أو الأساس.",
+      "كتابة عبارة كسر التفاعل Q_r واستنتاج ثابت التوازن K وثابت الحموضة K_a للثنائية.",
+      "توظيف علاقة هندرسون: pH = pK_a + log([A⁻]/[HA]) لتعيين النوع الكيميائي المهيمن في المحلول.",
+      "استغلال منحنى المعايرة الـ pH-مترية لتحديد نقطة التكافؤ E بطريقة المماسات المتوازية واستنتاج التركيز المجهول.",
+    ],
+    repairSteps_fr: [
+      "Écrire la réaction acide-base et calculer le taux d'avancement final τ_f pour évaluer la force de l'acide/base.",
+      "Exprimer le quotient de réaction Q_r et déduire la constante d'équilibre K et K_a du couple.",
+      "Exploiter la relation pH = pK_a + log([A⁻]/[HA]) pour déterminer l'espèce prédominante.",
+      "Exploiter la courbe de titrage pH-métrique pour identifier le point d'équivalence E par la méthode des tangentes.",
+    ],
+  },
+
   // ---------------------------------------------------------------------------
   // NATURAL SCIENCES (SVT) SKILLS
   // ---------------------------------------------------------------------------
