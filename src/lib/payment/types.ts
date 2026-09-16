@@ -27,6 +27,7 @@ export interface CheckoutResult {
   status: "PENDING" | "READY" | "UNAVAILABLE";
   provider: string;
   referenceId: string;
+  orderId?: string;
   instructions_ar: string;
   instructions_fr: string;
   checkoutUrl?: string;

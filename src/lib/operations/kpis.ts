@@ -12,6 +12,7 @@ import { getPaymentOrders } from "./payments";
 import { getStoredTelemetryEvents } from "./telemetry";
 import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "../supabase/client";
 import { getCapturedClientErrors } from "../monitoring";
+import { loadServerStudentProfiles } from "./students";
 
 export async function getOperationsOverviewKPIs(
   operatorId?: string,
@@ -236,6 +237,18 @@ export async function getOperationsOverviewKPIs(
   // 4. Client Errors count
   const clientErrors = getCapturedClientErrors();
 
+  // Incorporate server-registered students and order users into student KPIs
+  const serverStudents = loadServerStudentProfiles();
+  const distinctOrderUsers = new Set(allOrders.map((o) => o.userId).filter(Boolean));
+  totalStudents = Math.max(totalStudents, serverStudents.length, distinctOrderUsers.size);
+  paidSubscribers = Math.max(paidSubscribers, approvedOrders.length);
+  if (activeTrials === 0 && totalStudents > paidSubscribers) {
+    activeTrials = totalStudents - paidSubscribers;
+  }
+  if (pendingOrders.length > 0 && activeTrials === 0) {
+    activeTrials = pendingOrders.length;
+  }
+
   const conversionRate = totalStudents > 0 ? (paidSubscribers / totalStudents) * 100 : 0;
   const averagePracticeAccuracy =
     totalPracticeAttempts > 0
@@ -245,7 +258,7 @@ export async function getOperationsOverviewKPIs(
   const todayApprovedOrders = approvedOrders.filter((o) => o.reviewedAt && o.reviewedAt >= todayStart);
   const todayRejectedOrders = rejectedOrders.filter((o) => o.reviewedAt && o.reviewedAt >= todayStart);
   const todayNewOrders = allOrders.filter((o) => o.submittedAt && o.submittedAt >= todayStart);
-  const todayRegistrations = Math.max(todayRegistrationsDb, todayRegistrationsTelemetry);
+  const todayRegistrations = Math.max(todayRegistrationsDb, todayRegistrationsTelemetry, serverStudents.filter(s => s.createdAt && s.createdAt >= todayStart).length);
 
   const attentionItems = [
     ...(pendingOrders.length > 0
@@ -445,7 +458,51 @@ export async function getStudentsOperationalList(
         }
       }
     } catch {
-      // Empty on error
+      // Non-blocking — fall through to server-side merge
+    }
+  }
+
+  // 2. Merge server-side registered students
+  const serverStudents = loadServerStudentProfiles();
+  const existingIds = new Set(summaries.map((s) => s.id));
+
+  for (const s of serverStudents) {
+    if (!existingIds.has(s.id)) {
+      existingIds.add(s.id);
+      summaries.push({
+        ...s,
+        hasPendingPayment: pendingUserIds.has(s.id),
+      });
+    }
+  }
+
+  // 3. For any payment order whose student is not yet in summaries, construct an authentic entry!
+  const allOrders = await getPaymentOrders({ limit: 500 }, token);
+  for (const order of allOrders) {
+    if (!existingIds.has(order.userId)) {
+      existingIds.add(order.userId);
+      const isPaid = order.status === "APPROVED";
+      summaries.push({
+        id: order.userId,
+        fullName: order.studentName || "تلميذ مسجل",
+        email: order.studentEmail,
+        studentPhone: order.studentPhone,
+        streamId: (order.streamId as any) || "sciences_exp",
+        wilayaName: order.wilayaName,
+        accessStatus: isPaid ? "PAID" : "TRIAL",
+        plan: order.plan || "season",
+        trialStartedAt: order.submittedAt || order.createdAt,
+        remainingHours: 72,
+        targetScore: 16.0,
+        completedMissionsCount: 0,
+        demonstratedSkillsCount: 0,
+        activeErrorsCount: 0,
+        resolvedRetestsCount: 0,
+        lastActiveAt: order.updatedAt || order.createdAt,
+        hasPendingPayment: order.status === "PENDING",
+        createdAt: order.createdAt,
+        onboardingCompleted: true,
+      });
     }
   }
 

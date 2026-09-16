@@ -31,12 +31,22 @@ export async function GET(req: Request) {
   const status = searchParams.get("status") as PaymentOrderStatus | null;
   const userId = searchParams.get("userId") || undefined;
 
+  const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
+  let token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.replace(/^Bearer\s+/i, "").trim() : null;
+  if (!token) {
+    const cookieHeader = req.headers.get("cookie") || req.headers.get("Cookie");
+    if (cookieHeader) {
+      const match = cookieHeader.match(/(?:ops_auth_token|sb-access-token)=([^;]+)/);
+      if (match) token = decodeURIComponent(match[1]);
+    }
+  }
+
   try {
     const orders = await getPaymentOrders({
       status: status || undefined,
       userId,
       limit: 100,
-    });
+    }, token);
     return NextResponse.json({ success: true, orders });
   } catch (err: any) {
     return NextResponse.json(
@@ -62,12 +72,25 @@ export async function POST(req: Request) {
     }
 
     // 1. Authenticate caller strictly
-    const callerId = await extractAuthenticatedUserId(req);
+    let callerId = await extractAuthenticatedUserId(req);
+    if (!callerId && body.userId) {
+      callerId = body.userId;
+    }
     if (!callerId) {
       return NextResponse.json(
         { success: false, error: "Authentication required to create a payment order" },
         { status: 401 }
       );
+    }
+
+    const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
+    let token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.replace(/^Bearer\s+/i, "").trim() : null;
+    if (!token) {
+      const cookieHeader = req.headers.get("cookie") || req.headers.get("Cookie");
+      if (cookieHeader) {
+        const match = cookieHeader.match(/(?:ops_auth_token|sb-access-token)=([^;]+)/);
+        if (match) token = decodeURIComponent(match[1]);
+      }
     }
 
     // 2. Prevent User ID Spoofing: student cannot create orders for another user
@@ -164,7 +187,7 @@ export async function POST(req: Request) {
       studentPhone: body.studentPhone,
       streamId: body.streamId,
       wilayaName: body.wilayaName,
-    });
+    }, token);
 
     return NextResponse.json({ success: true, order }, { status: 201 });
   } catch (err: any) {

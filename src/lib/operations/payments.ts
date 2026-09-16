@@ -14,6 +14,7 @@ import { recordAuditLog } from "./audit";
 import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "../supabase/client";
 import { StudentRepository } from "../repositories/student-repository";
 import { getSubscriptionPlanById } from "./subscriptions";
+import { saveServerStudentProfile } from "./students";
 
 export const AUTHORITATIVE_PLANS: Record<string, AuthoritativePlan> = {
   season: {
@@ -48,7 +49,51 @@ export const AUTHORITATIVE_PLANS: Record<string, AuthoritativePlan> = {
   },
 };
 
+import fs from "fs";
+import path from "path";
+
+function getDurableOrdersPath(): string {
+  const dir = path.join(process.cwd(), ".runtime");
+  if (!fs.existsSync(dir)) {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+    } catch {}
+  }
+  return path.join(dir, "payment_orders.json");
+}
+
+function loadDurableOrders(): PaymentOrder[] {
+  if (typeof window !== "undefined") return [];
+  try {
+    const filePath = getDurableOrdersPath();
+    if (fs.existsSync(filePath)) {
+      const raw = fs.readFileSync(filePath, "utf8");
+      const list = JSON.parse(raw);
+      if (Array.isArray(list)) return list;
+    }
+  } catch {}
+  return [];
+}
+
+function saveDurableOrders(orders: PaymentOrder[]): void {
+  if (typeof window !== "undefined") return;
+  try {
+    const filePath = getDurableOrdersPath();
+    fs.writeFileSync(filePath, JSON.stringify(orders, null, 2), "utf8");
+  } catch {}
+}
+
 const memoryPaymentOrders: PaymentOrder[] = [];
+if (typeof window === "undefined") {
+  try {
+    const loaded = loadDurableOrders();
+    for (const item of loaded) {
+      if (!memoryPaymentOrders.some((o) => o.id === item.id)) {
+        memoryPaymentOrders.push(item);
+      }
+    }
+  } catch {}
+}
 
 export interface CreatePaymentOrderInput {
   userId: string;
@@ -65,7 +110,10 @@ export interface CreatePaymentOrderInput {
   wilayaName?: string;
 }
 
-export async function createPaymentOrder(input: CreatePaymentOrderInput): Promise<PaymentOrder> {
+export async function createPaymentOrder(
+  input: CreatePaymentOrderInput,
+  token?: string | null
+): Promise<PaymentOrder> {
   const rawPlanKey = input.plan || "season";
   const normalizedKey = rawPlanKey === "bac_season_pass_pilot" ? "season" : rawPlanKey;
 
@@ -111,11 +159,30 @@ export async function createPaymentOrder(input: CreatePaymentOrderInput): Promis
   };
 
   memoryPaymentOrders.unshift(newOrder);
+  saveDurableOrders(memoryPaymentOrders);
 
-  // Attempt database insertion
-  if (isSupabaseConfigured && supabase) {
+  // Register student in server directory for immediate ops visibility
+  try {
+    saveServerStudentProfile({
+      id: input.userId,
+      fullName: input.studentName || "طالب مسجل",
+      email: input.studentEmail,
+      studentPhone: input.studentPhone,
+      streamId: (input.streamId as any) || "sciences_exp",
+      wilayaName: input.wilayaName,
+      accessStatus: "TRIAL",
+      plan: finalPlanId,
+      hasPendingPayment: true,
+    });
+  } catch {}
+
+  // Attempt database insertion with authenticated client if token provided
+  const client = token ? createAuthenticatedSupabaseClient(token) : supabase;
+
+  if (isSupabaseConfigured && client) {
     try {
-      const { data, error } = await supabase
+
+      const { data, error } = await client
         .from("payment_orders")
         .insert({
           user_id: newOrder.userId,
@@ -133,9 +200,10 @@ export async function createPaymentOrder(input: CreatePaymentOrderInput): Promis
 
       if (!error && data?.id) {
         newOrder.id = data.id;
+        saveDurableOrders(memoryPaymentOrders);
       }
     } catch {
-      // Retained in memory fallback
+      // Retained in durable fallback
     }
   }
 
@@ -152,6 +220,7 @@ export async function getPaymentOrders(
 ): Promise<PaymentOrder[]> {
   const limit = filters?.limit || 100;
   const client = token ? createAuthenticatedSupabaseClient(token) : supabase;
+  const dbOrders: PaymentOrder[] = [];
 
   if (isSupabaseConfigured && client) {
     try {
@@ -189,7 +258,7 @@ export async function getPaymentOrders(
           } catch {}
         }
 
-        return data.map((d: any) => {
+        const dbList = data.map((d: any) => {
           const profile = profileMap.get(d.user_id);
           return {
             id: d.id,
@@ -213,17 +282,30 @@ export async function getPaymentOrders(
             wilayaName: profile?.wilaya_name,
           };
         });
+
+        // Collect DB orders
+        for (const o of dbList) {
+          dbOrders.push(o);
+        }
       }
     } catch {
-      // Fallback only if unconfigured
+      // Fallback to durable orders
     }
   }
 
-  if (isSupabaseConfigured) {
-    return [];
+  // Load durable / in-memory orders and merge
+  const durableOrders = loadDurableOrders();
+  const allMerged: PaymentOrder[] = [...dbOrders];
+  const seenIds = new Set(dbOrders.map((o) => o.id));
+
+  for (const o of [...memoryPaymentOrders, ...durableOrders]) {
+    if (!seenIds.has(o.id)) {
+      seenIds.add(o.id);
+      allMerged.push(o);
+    }
   }
 
-  let result = [...memoryPaymentOrders];
+  let result = allMerged;
   if (filters?.status) {
     result = result.filter((o) => o.status === filters.status);
   }
@@ -235,7 +317,18 @@ export async function getPaymentOrders(
 
 export async function getPaymentOrderById(orderId: string): Promise<PaymentOrder | null> {
   const all = await getPaymentOrders({ limit: 500 });
-  return all.find((o) => o.id === orderId) || null;
+  const direct = all.find((o) => o.id === orderId);
+  if (direct) return direct;
+
+  const clean = orderId.trim().toLowerCase();
+  const byMatch = all.find(
+    (o) =>
+      o.id.toLowerCase() === clean ||
+      (o.notes && o.notes.toLowerCase().includes(clean))
+  );
+  if (byMatch) return byMatch;
+
+  return null;
 }
 
 export async function approvePaymentOrder(
@@ -261,12 +354,26 @@ export async function approvePaymentOrder(
   }
 
   // 2. Memory / App-level fallback execution
-  const orderIndex = memoryPaymentOrders.findIndex((o) => o.id === orderId);
-  if (orderIndex === -1) {
+  const cleanId = orderId.trim().toLowerCase();
+  let order = memoryPaymentOrders.find(
+    (o) => o.id === orderId || o.id.toLowerCase() === cleanId || (o.notes && o.notes.toLowerCase().includes(cleanId))
+  );
+
+  if (!order) {
+    const durable = loadDurableOrders();
+    const fromDurable = durable.find(
+      (o) => o.id === orderId || o.id.toLowerCase() === cleanId || (o.notes && o.notes.toLowerCase().includes(cleanId))
+    );
+    if (fromDurable) {
+      memoryPaymentOrders.push(fromDurable);
+      order = fromDurable;
+    }
+  }
+
+  if (!order) {
     return { success: false, error: "Payment order not found." };
   }
 
-  const order = memoryPaymentOrders[orderIndex];
   // Idempotency: If already approved, return success without duplicating audit logs
   if (order.status === "APPROVED") {
     return { success: true, order };
@@ -313,6 +420,7 @@ export async function approvePaymentOrder(
   order.reviewedBy = operatorId;
   order.notes = reason;
   order.updatedAt = now;
+  saveDurableOrders(memoryPaymentOrders);
 
   // Elevate student profile authoritatively with subscription duration
   try {
@@ -353,7 +461,7 @@ export async function approvePaymentOrder(
     actorRole: "OPERATOR",
     action: "PAYMENT_APPROVED",
     targetType: "payment_order",
-    targetId: orderId,
+    targetId: order.id,
     reason,
     beforeState,
     afterState,
@@ -375,7 +483,7 @@ export async function rejectPaymentOrder(
     try {
       const { data, error } = await supabase.rpc("reject_payment_order", {
         p_order_id: orderId,
-        p_rejection_reason: rejectionReason.trim(),
+        p_reason: rejectionReason.trim(),
       });
 
       if (!error && data?.success) {
@@ -383,16 +491,30 @@ export async function rejectPaymentOrder(
         return { success: true, order: updated || undefined };
       }
     } catch {
-      // Fallback to app update
+      // Fallback
     }
   }
 
-  const orderIndex = memoryPaymentOrders.findIndex((o) => o.id === orderId);
-  if (orderIndex === -1) {
+  const cleanId = orderId.trim().toLowerCase();
+  let order = memoryPaymentOrders.find(
+    (o) => o.id === orderId || o.id.toLowerCase() === cleanId || (o.notes && o.notes.toLowerCase().includes(cleanId))
+  );
+
+  if (!order) {
+    const durable = loadDurableOrders();
+    const fromDurable = durable.find(
+      (o) => o.id === orderId || o.id.toLowerCase() === cleanId || (o.notes && o.notes.toLowerCase().includes(cleanId))
+    );
+    if (fromDurable) {
+      memoryPaymentOrders.push(fromDurable);
+      order = fromDurable;
+    }
+  }
+
+  if (!order) {
     return { success: false, error: "Payment order not found." };
   }
 
-  const order = memoryPaymentOrders[orderIndex];
   if (order.status === "REJECTED") {
     return { success: true, order };
   }
@@ -400,32 +522,23 @@ export async function rejectPaymentOrder(
     return { success: false, error: "Cannot reject an already APPROVED payment order." };
   }
 
-  const beforeState = {
-    order_status: order.status,
-    amount: order.amount,
-    currency: order.currency,
-  };
   const now = new Date().toISOString();
+  const beforeState = { order_status: order.status };
+  const afterState = { order_status: "REJECTED", rejection_reason: rejectionReason };
 
   order.status = "REJECTED";
+  order.rejectionReason = rejectionReason.trim();
   order.reviewedAt = now;
   order.reviewedBy = operatorId;
-  order.rejectionReason = rejectionReason.trim();
   order.updatedAt = now;
-
-  const afterState = {
-    order_status: "REJECTED",
-    rejection_reason: rejectionReason.trim(),
-    reviewed_by: operatorId,
-    reviewed_at: now,
-  };
+  saveDurableOrders(memoryPaymentOrders);
 
   await recordAuditLog({
     actorUserId: operatorId,
     actorRole: "OPERATOR",
     action: "PAYMENT_REJECTED",
     targetType: "payment_order",
-    targetId: orderId,
+    targetId: order.id,
     reason: rejectionReason.trim(),
     beforeState,
     afterState,
@@ -435,23 +548,39 @@ export async function rejectPaymentOrder(
 }
 
 export async function updateOrderReceiptPath(orderId: string, receiptPath: string): Promise<boolean> {
-  const order = memoryPaymentOrders.find((o) => o.id === orderId);
+  const cleanId = orderId.trim().toLowerCase();
+  let order = memoryPaymentOrders.find(
+    (o) => o.id === orderId || o.id.toLowerCase() === cleanId || (o.notes && o.notes.toLowerCase().includes(cleanId))
+  );
+
+  if (!order) {
+    const durable = loadDurableOrders();
+    const fromDurable = durable.find(
+      (o) => o.id === orderId || o.id.toLowerCase() === cleanId || (o.notes && o.notes.toLowerCase().includes(cleanId))
+    );
+    if (fromDurable) {
+      memoryPaymentOrders.push(fromDurable);
+      order = fromDurable;
+    }
+  }
+
   if (order) {
     order.receiptPath = receiptPath;
     order.updatedAt = new Date().toISOString();
+    saveDurableOrders(memoryPaymentOrders);
   }
 
   if (isSupabaseConfigured && supabase) {
     try {
+      const targetId = order?.id || orderId;
       await supabase
         .from("payment_orders")
         .update({ receipt_path: receiptPath, updated_at: new Date().toISOString() })
-        .eq("id", orderId);
+        .eq("id", targetId);
     } catch {
-      // Retained in memory fallback
+      // Retained in durable fallback
     }
   }
 
   return true;
 }
-

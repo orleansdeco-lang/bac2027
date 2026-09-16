@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { getStudentAccess } from "@/lib/access";
 import { getPaymentProvider, PaymentPlan, CheckoutResult, markPaymentPendingVerification } from "@/lib/payment";
+import { getAuthToken } from "@/lib/operations/client-api";
 import { StudentService } from "@/lib/services";
 import {
   DiagnosticRepository,
@@ -127,10 +128,22 @@ export default function SubscribePage() {
     trackEvent("payment_started", { planId: plan?.id, userId: user?.id || null });
 
     const provider = getPaymentProvider();
+    const effectiveUserId =
+      user?.id ||
+      profile?.id ||
+      (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id : undefined) ||
+      "guest_pilot";
+
     const res = await provider.createCheckout({
-      userId: user?.id || "guest_pilot",
+      userId: effectiveUserId,
       planId: plan?.id || "season",
-      studentEmail: user?.email || undefined,
+      studentEmail: user?.email || (profile as any)?.email,
+      metadata: {
+        studentName: `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim() || undefined,
+        studentPhone: (profile as any)?.studentPhone || (profile as any)?.student_phone,
+        streamId: profile?.streamId,
+        wilayaName: (profile as any)?.wilayaName || (profile as any)?.wilaya_name,
+      },
     });
     setCheckoutData(res);
     setPaymentState("PAYMENT_REQUESTED");
@@ -159,15 +172,27 @@ export default function SubscribePage() {
   const handleNotifySupervisor = async () => {
     if (!checkoutData?.referenceId) return;
 
+    const targetOrderId = checkoutData.orderId || checkoutData.referenceId;
+
     if (receiptFile) {
       setReceiptUploadStatus("uploading");
       try {
         const formData = new FormData();
-        formData.append("orderId", checkoutData.referenceId);
+        formData.append("orderId", targetOrderId);
+        formData.append("referenceId", checkoutData.referenceId);
+        formData.append("userId", user?.id || profile?.id || "");
         formData.append("file", receiptFile);
+
+        const token = await getAuthToken();
+        const headers: Record<string, string> = {};
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
 
         const res = await fetch("/api/ops/payments/receipt/upload", {
           method: "POST",
+          headers,
+          credentials: "include",
           body: formData,
         });
         if (res.ok) {

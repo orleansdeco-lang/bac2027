@@ -117,6 +117,36 @@ export const StudentService = {
       throw new Error("Cannot save registration without an authenticated userId: profile must not exist outside an account");
     }
     await StudentRepository.saveRegistrationData(data, userId);
+
+    if (typeof window !== "undefined") {
+      try {
+        const { getAuthToken } = await import("@/lib/operations/client-api");
+        const token = await getAuthToken();
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        fetch("/api/student/sync", {
+          method: "POST",
+          headers,
+          credentials: "include",
+          body: JSON.stringify({
+            id: userId,
+            firstName: data.firstName,
+            lastName: data.lastName,
+            studentPhone: data.studentPhone,
+            parentPhone: data.parentPhone,
+            studentStatus: data.studentStatus,
+            streamId: data.streamId,
+            wilayaCode: data.wilayaCode,
+            wilayaName: data.wilayaName,
+            communeCode: data.communeCode,
+            communeName: data.communeName,
+            schoolName: data.schoolName,
+            registrationCompletedAt: data.registrationCompletedAt,
+          }),
+        }).catch(() => {});
+      } catch {}
+    }
   },
 
   /**

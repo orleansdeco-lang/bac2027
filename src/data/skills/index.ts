@@ -31,6 +31,78 @@ export const SCIENCES_EXP_SKILLS: Record<string, Skill> = {
     ],
   },
 
+  math_functions_limits_factoring: {
+    id: "math_functions_limits_factoring",
+    subjectId: "math",
+    title_ar: "إزالة عدم التعيين بالتحليل والاختزال",
+    title_fr: "Levée des indéterminations par factorisation et simplification",
+    description_ar: "رفع الصور المنعدمة (0/0) و(∞−∞) من خلال التحليل بعامل مشترك أو إضافة تعبيرات مترافقة ثم الاختزال.",
+    description_fr: "Éliminer les formes indéterminées 0/0 et ∞−∞ par factorisation, conjugaison ou simplification algébrique.",
+    dimensions: ["application", "methodology"],
+    repairStrategy_ar: "تحديد الصيغة غير المحددة أولاً، ثم اختيار التقنية المناسبة (تحليل / مرافق / تقسيم بحد أعلى درجة).",
+    repairStrategy_fr: "Identifier la forme indéterminée, puis choisir la technique : factorisation, conjugué, ou division par le terme dominant.",
+    repairSteps_ar: [
+      "احسب النهاية المباشرة أولاً لتحديد نوع عدم التعيين (0/0 أم ∞/∞ أم ∞−∞).",
+      "إذا كانت 0/0: حلل البسط والمقام بعامل مشترك هو (x − a) ثم اختزل.",
+      "إذا كانت ∞−∞: أخرج العامل الأعلى درجة أو اضرب بالمرافق.",
+      "بعد الاختزال أو التبسيط، أعد حساب النهاية وتحقق من النتيجة بقراءة البيان.",
+    ],
+    repairSteps_fr: [
+      "Calculer la limite directe pour identifier la forme indéterminée.",
+      "Pour 0/0 : factoriser numérateur et dénominateur par (x − a) et simplifier.",
+      "Pour ∞ − ∞ : extraire le terme dominant ou multiplier par la quantité conjuguée.",
+      "Recalculer la limite après simplification et vérifier graphiquement si possible.",
+    ],
+  },
+
+  math_functions_asymptotes: {
+    id: "math_functions_asymptotes",
+    subjectId: "math",
+    title_ar: "المستقيمات المقاربة والوضع النسبي للمنحنى",
+    title_fr: "Asymptotes (verticales, horizontales, obliques) et position relative",
+    description_ar: "تحديد المقاربات الرأسية والأفقية والمائلة وتحليل وضع المنحنى بالنسبة للمقارب المائل (فوقه أو تحته).",
+    description_fr: "Déterminer les asymptotes verticales, horizontales et obliques, puis étudier la position du courbe par rapport à son asymptote oblique.",
+    dimensions: ["knowledge", "application"],
+    repairStrategy_ar: "المقارب الرأسي عند نقاط انعدام المقام، الأفقي عند نهاية الدالة عند ±∞، والمائل بحساب m = lim(f(x)/x) ثم p = lim(f(x)−mx).",
+    repairStrategy_fr: "Asymptote verticale aux zéros du dénominateur, horizontale par la limite en ±∞, oblique via m = lim f(x)/x puis p = lim(f(x) − mx).",
+    repairSteps_ar: [
+      "المقارب الرأسي: حل المعادلة (مقام = 0) وتحقق أن النهاية عندها ±∞.",
+      "المقارب الأفقي: احسب lim f(x) عند x→+∞ وx→−∞، فإن كانت قيمة محدودة L فـ y = L مقارب أفقي.",
+      "المقارب المائل: احسب m = lim(f(x)/x)، ثم p = lim(f(x) − mx)؛ المعادلة: y = mx + p.",
+      "الوضع النسبي: ادرس إشارة f(x) − (mx + p) لتحديد موضع المنحنى فوق أو تحت المقارب المائل.",
+    ],
+    repairSteps_fr: [
+      "Asymptote verticale : résoudre dénominateur = 0 et vérifier que la limite est ±∞.",
+      "Asymptote horizontale : calculer la limite en ±∞ ; si elle est finie L, alors y = L est asymptote.",
+      "Asymptote oblique : m = lim f(x)/x en ±∞, puis p = lim(f(x) − mx).",
+      "Position relative : étudier le signe de f(x) − (mx + p) pour déterminer si la courbe est au-dessus ou en-dessous.",
+    ],
+  },
+
+  math_functions_intermediate_value_theorem: {
+    id: "math_functions_intermediate_value_theorem",
+    subjectId: "math",
+    title_ar: "مبرهنة القيم المتوسطة وحصر حلول المعادلات",
+    title_fr: "Théorème des Valeurs Intermédiaires (TVI) : encadrement des solutions",
+    description_ar: "توظيف TVI لإثبات وجود حل للمعادلة f(x)=k في مجال [a,b] والتمييز بين الوجود والوحدانية بشرط الرتابة التامة.",
+    description_fr: "Appliquer le TVI pour prouver l'existence d'un antécédent et distinguer existence/unicité selon la stricte monotonie.",
+    dimensions: ["understanding", "methodology"],
+    repairStrategy_ar: "التحقق من ثلاثة شروط: استمرار f على [a,b] + f(a) و f(b) يحصران k + رتابة تامة للوحدانية.",
+    repairStrategy_fr: "Vérifier trois conditions : continuité sur [a,b] + encadrement de k par f(a) et f(b) + stricte monotonie pour l'unicité.",
+    repairSteps_ar: [
+      "أثبت استمرار الدالة f على المجال المغلق [a, b] (ذكر نوع الدالة كافٍ للدوال المألوفة).",
+      "احسب f(a) و f(b) وتحقق أن k محصور بينهما: (f(a) < k < f(b)) أو العكس.",
+      "استنتج وجود عدد c في ]a, b[ بحيث f(c) = k بموجب مبرهنة القيم المتوسطة.",
+      "للوحدانية: أثبت أن f رتيبة تماماً على [a, b]، ثم صغ: 'المعادلة تقبل حلاً وحيداً α في المجال ]a,b['.",
+    ],
+    repairSteps_fr: [
+      "Justifier la continuité de f sur [a, b] en précisant la nature de la fonction.",
+      "Calculer f(a) et f(b) et encadrer k : f(a) < k < f(b) ou inversement.",
+      "Conclure l'existence de c dans ]a, b[ tel que f(c) = k par le TVI.",
+      "Pour l'unicité : montrer la stricte monotonie sur [a, b] et conclure avec la formulation standard du barème.",
+    ],
+  },
+
   math_intermediate_value_method: {
     id: "math_intermediate_value_method",
     subjectId: "math",
@@ -76,6 +148,105 @@ export const SCIENCES_EXP_SKILLS: Record<string, Skill> = {
       "Poser la limite L telle que lim u_n = L.",
       "Résoudre l'équation du point fixe f(L) = L.",
       "Valider la solution compatible avec l'encadrement des termes de la suite.",
+    ],
+  },
+
+  // ---------------------------------------------------------------------------
+  // COMPLEX NUMBERS & POINT TRANSFORMATIONS SKILLS
+  // ---------------------------------------------------------------------------
+  math_complex_forms: {
+    id: "math_complex_forms",
+    subjectId: "math",
+    title_ar: "\u0627\u0644\u0623\u0634\u0643\u0627\u0644 \u0627\u0644\u062c\u0628\u0631\u064a\u0629 \u0648\u0627\u0644\u0645\u062b\u0644\u062b\u064a\u0629 \u0648\u0627\u0644\u0623\u0633\u064a\u0629 \u0644\u0644\u0623\u0639\u062f\u0627\u062f \u0627\u0644\u0645\u0631\u0643\u0628\u0629",
+    title_fr: "Formes alg\u00e9brique, trigonom\u00e9trique et exponentielle des nombres complexes",
+    description_ar: "\u0625\u062a\u0642\u0627\u0646 \u0627\u0644\u062a\u062d\u0648\u064a\u0644 \u0628\u064a\u0646 \u0627\u0644\u0623\u0634\u0643\u0627\u0644 \u0627\u0644\u062b\u0644\u0627\u062b\u0629 \u0648\u062d\u0633\u0627\u0628 \u0627\u0644\u0637\u0648\u064a\u0644\u0629 \u0648\u0627\u0644\u0639\u0645\u062f\u0629 \u0628\u062f\u0642\u0629\u060c \u0645\u0639 \u062a\u0637\u0628\u064a\u0642 \u0635\u064a\u063a\u0629 \u062f\u064a\u0645\u0648\u0627\u0641\u0631 \u0644\u062d\u0633\u0627\u0628 \u0627\u0644\u0642\u0648\u0649.",
+    description_fr: "Ma\u00eetriser la conversion entre les trois formes d'un nombre complexe et le calcul du module/argument, avec application de la formule de De Moivre pour les puissances.",
+    dimensions: ["knowledge", "application", "understanding"],
+    repairStrategy_ar: "\u0625\u062a\u0642\u0627\u0646 \u0627\u0644\u062d\u0633\u0627\u0628 \u0627\u0644\u062f\u0642\u064a\u0642 \u0644\u0644\u0645\u0631\u0627\u0641\u0642 \u0648\u0627\u0644\u0637\u0648\u064a\u0644\u0629\u060c \u0648\u0627\u0644\u0631\u0628\u0637 \u0627\u0644\u062d\u062a\u0645\u064a \u0628\u064a\u0646 \u0625\u0634\u0627\u0631\u0627\u062a cos \u0648 sin \u0648\u0645\u0648\u0642\u0639 \u0627\u0644\u0632\u0627\u0648\u064a\u0629 \u0639\u0644\u0649 \u0627\u0644\u062f\u0627\u0626\u0631\u0629 \u0627\u0644\u0645\u062b\u0644\u062b\u064a\u0629 \u0644\u062a\u0641\u0627\u062f\u064a \u0623\u062e\u0637\u0627\u0621 \u0627\u0644\u0639\u0645\u062f\u0629 \u0627\u0644\u0634\u0627\u0626\u0639\u0629 \u0641\u064a \u0627\u0644\u0628\u0643\u0627\u0644\u0648\u0631\u064a\u0627.",
+    repairStrategy_fr: "Ma\u00eetriser le calcul du conjugu\u00e9 et du module, et utiliser le cercle trigonom\u00e9trique pour d\u00e9terminer l'argument exact sans erreur de signe.",
+    repairSteps_ar: [
+      "\u062a\u062d\u062f\u064a\u062f \u0627\u0644\u062c\u0632\u0621 \u0627\u0644\u062d\u0642\u064a\u0642\u064a Re(z) \u0648\u0627\u0644\u062c\u0632\u0621 \u0627\u0644\u062a\u062e\u064a\u0644\u064a Im(z) \u0648\u0627\u0644\u062a\u062e\u0644\u0635 \u0645\u0646 i \u0641\u064a \u0627\u0644\u0645\u0642\u0627\u0645 \u0628\u0627\u0644\u0636\u0631\u0628 \u0641\u064a \u0627\u0644\u0645\u0631\u0627\u0641\u0642.",
+      "\u062d\u0633\u0627\u0628 \u0627\u0644\u0637\u0648\u064a\u0644\u0629 \u0628\u062f\u0642\u0629: |z| = \u221a(x\u00b2 + y\u00b2) \u0648\u0627\u0644\u062a\u062d\u0642\u0642 \u0645\u0646 \u0643\u0648\u0646\u0647\u0627 \u0645\u0648\u062c\u0628\u0629 \u062a\u0645\u0627\u0645\u0627\u064b \u0644\u0640 z \u2260 0.",
+      "\u062a\u0639\u064a\u064a\u0646 \u0627\u0644\u0639\u0645\u062f\u0629 arg(z) \u0639\u0628\u0631 \u062d\u0644 \u062c\u0645\u0644\u0629: cos \u03b8 = x/|z| \u0648 sin \u03b8 = y/|z| \u0645\u0639 \u0645\u0631\u0627\u0639\u0627\u0629 \u0627\u0644\u0631\u0628\u0639 \u0627\u0644\u0645\u0646\u0627\u0633\u0628 \u0639\u0644\u0649 \u0627\u0644\u062f\u0627\u0626\u0631\u0629 \u0627\u0644\u0645\u062b\u0644\u062b\u064a\u0629.",
+      "\u0627\u0644\u0627\u0646\u062a\u0642\u0627\u0644 \u0627\u0644\u0633\u0644\u064a\u0645 \u0628\u064a\u0646 \u0627\u0644\u0634\u0643\u0644 \u0627\u0644\u0645\u062b\u0644\u062b\u064a [r(cos\u03b8 + i\u00b7sin\u03b8)] \u0648\u0627\u0644\u0623\u0633\u064a r\u00b7e^(i\u03b8) \u0648\u062a\u0637\u0628\u064a\u0642 \u062e\u0648\u0627\u0635 \u0642\u0648\u0649 \u062f\u064a\u0645\u0648\u0627\u0641\u0631 (z^n).",
+    ],
+    repairSteps_fr: [
+      "Identifier Re(z) et Im(z), et \u00e9liminer i du d\u00e9nominateur en multipliant par le conjugu\u00e9.",
+      "Calculer le module avec pr\u00e9cision: |z| = \u221a(x\u00b2 + y\u00b2) en v\u00e9rifiant qu'il est strictement positif.",
+      "D\u00e9terminer l'argument arg(z) via cos \u03b8 = x/|z| et sin \u03b8 = y/|z| selon le quadrant.",
+      "Convertir rigoureusement entre les formes trigonom\u00e9trique et exponentielle, et appliquer De Moivre.",
+    ],
+  },
+
+  math_complex_equations: {
+    id: "math_complex_equations",
+    subjectId: "math",
+    title_ar: "\u062d\u0644 \u0627\u0644\u0645\u0639\u0627\u062f\u0644\u0627\u062a \u0641\u064a \u0645\u062c\u0645\u0648\u0639\u0629 \u0627\u0644\u0623\u0639\u062f\u0627\u062f \u0627\u0644\u0645\u0631\u0643\u0628\u0629 C",
+    title_fr: "R\u00e9solution des \u00e9quations dans l'ensemble des nombres complexes C",
+    description_ar: "\u062d\u0633\u0627\u0628 \u0627\u0644\u0645\u0645\u064a\u0632 \u0641\u064a C \u0648\u0627\u0633\u062a\u062e\u0631\u0627\u062c \u062c\u0630\u0648\u0631\u0647 \u0627\u0644\u062a\u0631\u0628\u064a\u0639\u064a\u0629 \u0648\u062a\u062d\u0644\u064a\u0644 \u0643\u062b\u064a\u0631\u0627\u062a \u0627\u0644\u062d\u062f\u0648\u062f \u0639\u0628\u0631 \u0627\u0644\u0645\u0637\u0627\u0628\u0642\u0629 \u0623\u0648 \u062e\u0648\u0627\u0631\u0632\u0645\u064a\u0629 \u0647\u0648\u0631\u0646\u0631.",
+    description_fr: "Calculer le discriminant dans C, extraire ses racines carr\u00e9es et factoriser les polyn\u00f4mes par identification ou l'algorithme de Horner.",
+    dimensions: ["application", "methodology"],
+    repairStrategy_ar: "\u0627\u0644\u062a\u0631\u0643\u064a\u0632 \u0639\u0644\u0649 \u062a\u0641\u0643\u064a\u0643 \u0627\u0644\u0645\u0639\u0627\u062f\u0644\u0627\u062a \u0628\u0627\u0644\u062a\u062d\u0644\u064a\u0644 \u0648\u0643\u062a\u0627\u0628\u0629 \u0627\u0644\u062c\u0630\u0648\u0631 \u0627\u0644\u062a\u0631\u0628\u064a\u0639\u064a\u0629 \u0628\u062f\u0642\u0629\u060c \u0648\u062a\u0641\u0627\u062f\u064a \u0641\u062e \u0646\u0633\u064a\u0627\u0646 i \u0639\u0646\u062f \u0643\u062a\u0627\u0628\u0629 \u0627\u0644\u062d\u0644\u0648\u0644 \u0641\u064a \u062d\u0627\u0644\u0629 \u0627\u0644\u0645\u0645\u064a\u0632 \u0627\u0644\u0633\u0627\u0644\u0628.",
+    repairStrategy_fr: "Se concentrer sur la factorisation m\u00e9thodique et l'extraction des racines carr\u00e9es dans C en \u00e9vitant les erreurs de signe sur le discriminant.",
+    repairSteps_ar: [
+      "\u062a\u062d\u062f\u064a\u062f \u0645\u0639\u0627\u0645\u0644\u0627\u062a \u0627\u0644\u0645\u0639\u0627\u062f\u0644\u0629 \u0628\u062f\u0642\u0629\u060c \u0648\u062d\u0633\u0627\u0628 \u0627\u0644\u0645\u0645\u064a\u0632 \u0394 \u0641\u064a C \u0648\u0627\u0633\u062a\u062e\u0631\u0627\u062c \u062c\u0630\u0631\u064a\u0647 \u0627\u0644\u062a\u0631\u0628\u064a\u0639\u064a\u064a\u0646 \u03b4.",
+      "\u0643\u062a\u0627\u0628\u0629 \u0627\u0644\u062d\u0644\u0648\u0644 \u0627\u0644\u0645\u0631\u0643\u0628\u0629 \u0627\u0644\u0645\u062a\u0631\u0627\u0641\u0642\u0629 \u0628\u062f\u0642\u0629 \u0641\u064a \u062d\u0627\u0644\u0629 \u0627\u0644\u0645\u0645\u064a\u0632 \u0627\u0644\u0633\u0627\u0644\u0628: z = (-b \u00b1 i\u221a(-\u0394)) / (2a).",
+      "\u0645\u0639\u0627\u0644\u062c\u0629 \u0645\u0639\u0627\u062f\u0644\u0627\u062a \u0627\u0644\u062f\u0631\u062c\u0627\u062a \u0627\u0644\u0623\u0639\u0644\u0649 \u0639\u0628\u0631 \u0627\u0644\u062a\u062d\u0644\u064a\u0644 \u0628\u0627\u0644\u0645\u0637\u0627\u0628\u0642\u0629 \u0623\u0648 \u062e\u0648\u0627\u0631\u0632\u0645\u064a\u0629 \u0647\u0648\u0631\u0646\u0631 \u0628\u0639\u062f \u0625\u064a\u062c\u0627\u062f \u0627\u0644\u062d\u0644 \u0627\u0644\u0638\u0627\u0647\u0631.",
+      "\u0627\u0644\u062a\u062d\u0642\u0642 \u0645\u0646 \u0635\u062d\u0629 \u0627\u0644\u062d\u0644\u0648\u0644 \u0639\u0628\u0631 \u0645\u062c\u0645\u0648\u0639 \u0648\u062c\u062f\u0627\u0621 \u0627\u0644\u062c\u0630\u0631\u064a\u0646 (S = -b/a \u0648 P = c/a).",
+    ],
+    repairSteps_fr: [
+      "Identifier les coefficients et calculer le discriminant \u0394 dans C pour extraire ses racines carr\u00e9es \u03b4.",
+      "Exprimer les solutions complexes conjugu\u00e9es pour \u0394 < 0: z = (-b \u00b1 i\u221a(-\u0394)) / (2a).",
+      "Factoriser les \u00e9quations de degr\u00e9 sup\u00e9rieur via identification ou Horner apr\u00e8s la racine \u00e9vidente.",
+      "V\u00e9rifier les solutions trouv\u00e9es avec la somme et le produit des racines (S = -b/a, P = c/a).",
+    ],
+  },
+
+  math_complex_geometry: {
+    id: "math_complex_geometry",
+    subjectId: "math",
+    title_ar: "\u0627\u0644\u062a\u0641\u0633\u064a\u0631 \u0627\u0644\u0647\u0646\u062f\u0633\u064a \u0644\u0644\u0623\u0639\u062f\u0627\u062f \u0627\u0644\u0645\u0631\u0643\u0628\u0629 \u0648\u0637\u0628\u064a\u0639\u0629 \u0627\u0644\u0645\u062b\u0644\u062b\u0627\u062a \u0648\u0627\u0644\u0631\u0628\u0627\u0639\u064a\u0627\u062a",
+    title_fr: "Interpr\u00e9tation g\u00e9om\u00e9trique des nombres complexes et nature des triangles et quadrilat\u00e8res",
+    description_ar: "\u062a\u0648\u0638\u064a\u0641 \u0627\u0644\u0646\u0633\u0628\u0629 \u0627\u0644\u0645\u0631\u0643\u0628\u0629 Z = (z_C - z_A)/(z_B - z_A) \u0644\u0627\u0633\u062a\u0646\u062a\u0627\u062c \u0637\u0628\u064a\u0639\u0629 \u0627\u0644\u0623\u0634\u0643\u0627\u0644 \u0627\u0644\u0647\u0646\u062f\u0633\u064a\u0629 \u0645\u0646 \u0637\u0648\u064a\u0644\u0629 Z \u0648\u0639\u0645\u062f\u062a\u0647.",
+    description_fr: "Utiliser le rapport complexe Z = (z_C - z_A)/(z_B - z_A) pour d\u00e9duire la nature g\u00e9om\u00e9trique des figures \u00e0 partir du module et de l'argument de Z.",
+    dimensions: ["understanding", "application", "methodology"],
+    repairStrategy_ar: "\u0627\u0644\u062a\u062f\u0631\u064a\u0628 \u0639\u0644\u0649 \u0627\u0644\u0631\u0628\u0637 \u0627\u0644\u0645\u064a\u0643\u0627\u0646\u064a\u0643\u064a \u0628\u064a\u0646 \u0646\u062a\u0627\u0626\u062c \u0627\u0644\u0646\u0633\u0628\u0629 (\u0645\u062b\u0644 i \u0623\u0648 e^(i\u03c0/3) \u0623\u0648 \u0639\u062f\u062f \u062d\u0642\u064a\u0642\u064a) \u0648\u0627\u0644\u062f\u0644\u0627\u0644\u0629 \u0627\u0644\u0647\u0646\u062f\u0633\u064a\u0629 \u0627\u0644\u0645\u0628\u0627\u0634\u0631\u0629.",
+    repairStrategy_fr: "Associer syst\u00e9matiquement la forme de Z (ex: purement imaginaire, e^(i\u03c0/3)) avec la conclusion g\u00e9om\u00e9trique (orthogonalit\u00e9, triangle \u00e9quilat\u00e9ral, alignement).",
+    repairSteps_ar: [
+      "\u062d\u0633\u0627\u0628 \u0627\u0644\u0646\u0633\u0628\u0629 \u0627\u0644\u0645\u0631\u0643\u0628\u0629 Z = (z_C - z_A) / (z_B - z_A) \u0648\u0643\u062a\u0627\u0628\u062a\u0647\u0627 \u0639\u0644\u0649 \u0627\u0644\u0634\u0643\u0644\u064a\u0646 \u0627\u0644\u062c\u0628\u0631\u064a \u0648\u0627\u0644\u0623\u0633\u064a.",
+      "\u062a\u0631\u062c\u0645\u0629 \u0627\u0644\u0637\u0648\u064a\u0644\u0629 |Z| \u0625\u0644\u0649 \u0646\u0633\u0628\u0629 \u0623\u0637\u0648\u0627\u0644 \u0647\u0646\u062f\u0633\u064a\u0629: AC / AB.",
+      "\u062a\u0631\u062c\u0645\u0629 \u0627\u0644\u0639\u0645\u062f\u0629 arg(Z) \u0625\u0644\u0649 \u0642\u064a\u0633 \u0627\u0644\u0632\u0627\u0648\u064a\u0629 \u0627\u0644\u0645\u0648\u062c\u0647\u0629: (\u0041\u0042\u20d7, \u0041\u0043\u20d7) [2\u03c0].",
+      "\u0627\u0633\u062a\u0646\u062a\u0627\u062c \u0637\u0628\u064a\u0639\u0629 \u0627\u0644\u0645\u062b\u0644\u062b (\u0642\u0627\u0626\u0645\u060c \u0645\u062a\u0633\u0627\u0648\u064a \u0627\u0644\u0633\u0627\u0642\u064a\u0646\u060c \u0645\u062a\u0642\u0627\u064a\u0633 \u0627\u0644\u0623\u0636\u0644\u0627\u0639) \u0623\u0648 \u0627\u0644\u0631\u0628\u0627\u0639\u064a \u0628\u0646\u0627\u0621\u064b \u0639\u0644\u0649 |Z| \u0648 arg(Z).",
+    ],
+    repairSteps_fr: [
+      "Calculer le rapport complexe Z = (z_C - z_A) / (z_B - z_A) sous forme alg\u00e9brique et exponentielle.",
+      "Interpr\u00e9ter le module |Z| en tant que rapport de distances g\u00e9om\u00e9triques: AC / AB.",
+      "Interpr\u00e9ter l'argument arg(Z) comme mesure de l'angle orient\u00e9: (AB\u20d7, AC\u20d7) [2\u03c0].",
+      "D\u00e9duire rigoureusement la nature du triangle ou du quadrilat\u00e8re selon |Z| et arg(Z).",
+    ],
+  },
+
+  math_complex_transformations: {
+    id: "math_complex_transformations",
+    subjectId: "math",
+    title_ar: "\u0627\u0644\u062a\u062d\u0648\u064a\u0644\u0627\u062a \u0627\u0644\u0646\u0642\u0637\u064a\u0629 \u0641\u064a \u0627\u0644\u0645\u0633\u062a\u0648\u064a \u0627\u0644\u0645\u0631\u0643\u0628 (\u0627\u0644\u0627\u0646\u0633\u062d\u0627\u0628\u060c \u0627\u0644\u062a\u062d\u0627\u0643\u064a\u060c \u0627\u0644\u062f\u0648\u0631\u0627\u0646)",
+    title_fr: "Transformations ponctuelles dans le plan complexe (translation, homoth\u00e9tie, rotation)",
+    description_ar: "\u0642\u0631\u0627\u0621\u0629 \u0627\u0644\u0639\u0628\u0627\u0631\u0629 z' = a\u00b7z + b \u0648\u062a\u0635\u0646\u064a\u0641 \u0627\u0644\u062a\u062d\u0648\u064a\u0644 (\u0627\u0646\u0633\u062d\u0627\u0628 \u0623\u0648 \u062a\u062d\u0627\u0643\u064a \u0623\u0648 \u062f\u0648\u0631\u0627\u0646) \u0645\u0646 \u0637\u0628\u064a\u0639\u0629 \u0627\u0644\u0645\u0639\u0627\u0645\u0644 a \u0648\u062a\u0639\u064a\u064a\u0646 \u0639\u0646\u0627\u0635\u0631\u0647 \u0628\u0648\u0627\u0633\u0637\u0629 \u0645\u0639\u0627\u062f\u0644\u0629 \u0627\u0644\u0646\u0642\u0637\u0629 \u0627\u0644\u0635\u0627\u0645\u062f\u0629.",
+    description_fr: "Lire l'\u00e9criture z' = a\u00b7z + b et classifier la transformation selon la nature de a (module et argument) pour d\u00e9terminer ses \u00e9l\u00e9ments caract\u00e9ristiques.",
+    dimensions: ["knowledge", "application", "methodology"],
+    repairStrategy_ar: "\u062a\u0635\u0646\u064a\u0641 \u0627\u0644\u062a\u062d\u0648\u064a\u0644 \u0627\u0644\u0646\u0642\u0637\u064a \u0641\u0648\u0631\u0627\u064b \u0627\u0646\u0637\u0644\u0627\u0642\u0627\u064b \u0645\u0646 \u0637\u0628\u064a\u0639\u0629 \u0648\u0642\u064a\u0645\u0629 \u0627\u0644\u0645\u0639\u0627\u0645\u0644 a (\u0637\u0648\u064a\u0644\u062a\u0647 \u0648\u0639\u0645\u062f\u062a\u0647)\u060c \u062b\u0645 \u062d\u0633\u0627\u0628 \u0644\u0627\u062d\u0642\u0629 \u0627\u0644\u0645\u0631\u0643\u0632 \u0639\u0628\u0631 \u0645\u0639\u0627\u062f\u0644\u0629 \u0627\u0644\u0646\u0642\u0637\u0629 \u0627\u0644\u0635\u0627\u0645\u062f\u0629 \u062f\u0648\u0646 \u062d\u0641\u0638 \u0639\u0634\u0648\u0627\u0626\u064a.",
+    repairStrategy_fr: "Classifier la transformation selon la nature de a (module et argument), puis calculer l'affixe du centre via le point invariant z = az + b.",
+    repairSteps_ar: [
+      "\u0642\u0631\u0627\u0621\u0629 \u0627\u0644\u0639\u0628\u0627\u0631\u0629 \u0627\u0644\u0645\u0631\u0643\u0628\u0629 z' = a\u00b7z + b \u0648\u0627\u0633\u062a\u062e\u0631\u0627\u062c \u0627\u0644\u0645\u0639\u0627\u0645\u0644 a \u0648\u0627\u0644\u0639\u062f\u062f b.",
+      "\u0625\u0630\u0627 \u0643\u0627\u0646 a = 1: \u0627\u0644\u0627\u0633\u062a\u0646\u062a\u0627\u062c \u0627\u0644\u0645\u0628\u0627\u0634\u0631 \u0623\u0646\u0647 \u0627\u0646\u0633\u062d\u0627\u0628 \u0634\u0639\u0627\u0639\u0647 u\u20d7 \u0644\u0627\u062d\u0642\u062a\u0647 b.",
+      "\u0625\u0630\u0627 \u0643\u0627\u0646 a \u2208 R* \\ {1}: \u062a\u062d\u0627\u0643\u064a \u0646\u0633\u0628\u062a\u0647 k = a \u0648\u0645\u0631\u0643\u0632\u0647 \u0627\u0644\u0646\u0642\u0637\u0629 \u0627\u0644\u0635\u0627\u0645\u062f\u0629 \u03c9 = b / (1 - a).",
+      "\u0625\u0630\u0627 \u0643\u0627\u0646 |a| = 1 \u0648 a \u2260 1 (a = e^(i\u03b8)): \u062f\u0648\u0631\u0627\u0646 \u0632\u0627\u0648\u064a\u062a\u0647 \u03b8 = arg(a) \u0648\u0645\u0631\u0643\u0632\u0647 \u03c9 = b / (1 - a).",
+    ],
+    repairSteps_fr: [
+      "Analyser l'\u00e9criture complexe z' = a\u00b7z + b et extraire les constantes a et b.",
+      "Si a = 1 : d\u00e9duire qu'il s'agit d'une translation de vecteur d'affixe b.",
+      "Si a \u2208 R* \\ {1} : d\u00e9duire une homoth\u00e9tie de rapport k = a et de centre invariant \u03c9 = b / (1 - a).",
+      "Si |a| = 1 et a \u2260 1 (a = e^(i\u03b8)) : d\u00e9duire une rotation d'angle \u03b8 = arg(a) et de centre \u03c9 = b / (1 - a).",
     ],
   },
 
@@ -272,9 +443,14 @@ export function getSkillsForSubject(subjectId: string, streamId?: string): Skill
 
   // 4. Strict Math & Technique Math Stream Isolation
   if (normStream === "math" || normStream === "technique_math") {
-    return Object.values(ALL_CURRICULUM_SKILLS).filter(
+    // Pull from ALL_CURRICULUM_SKILLS first, then fall back to SCIENCES_EXP_SKILLS math entries
+    const curriculumMath = Object.values(ALL_CURRICULUM_SKILLS).filter(
       (s) => (s.subjectId === "math" || s.subjectId === "physics") && s.subjectId === subjectId
     ) as unknown as Skill[];
+    if (curriculumMath.length > 0) return curriculumMath;
+    return Object.values(SCIENCES_EXP_SKILLS).filter(
+      (s) => s.subjectId === subjectId
+    );
   }
 
   // 5. Langues Étrangères Stream

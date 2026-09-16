@@ -17,6 +17,7 @@ import {
   PilotPaymentRecord,
   PilotPaymentState,
 } from "./types";
+import { getAuthToken } from "@/lib/operations/client-api";
 
 export const CANONICAL_PLANS: Record<string, PaymentPlan> = {
   season: {
@@ -136,18 +137,30 @@ export function markPaymentPendingVerification(requestId: string): PilotPaymentR
     savePaymentRecord(updatedRecord);
 
     // Sync to authoritative server endpoint
-    fetch("/api/ops/payments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: target.userId,
-        plan: target.planId,
-        amount: target.amountDZD,
-        paymentMethod: "baridimob",
-        notes: `Verification requested for ref: ${requestId}`,
-        studentEmail: target.studentEmail,
-      }),
-    }).catch(() => {});
+    (async () => {
+      try {
+        const token = await getAuthToken();
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+        await fetch("/api/ops/payments", {
+          method: "POST",
+          headers,
+          credentials: "include",
+          body: JSON.stringify({
+            userId: target.userId,
+            plan: target.planId,
+            amount: target.amountDZD,
+            paymentMethod: "baridimob",
+            notes: `Verification requested for ref: ${requestId}`,
+            studentEmail: target.studentEmail,
+          }),
+        });
+      } catch (err) {
+        console.warn("Failed to sync markPaymentPendingVerification:", err);
+      }
+    })();
 
     return updatedRecord;
   } catch {
@@ -209,25 +222,47 @@ export class ManualPilotPaymentProvider implements PaymentProvider {
     savePaymentRecord(record);
 
     // Also persist server-side payment order
+    let serverOrderId: string | undefined = undefined;
     if (typeof window !== "undefined") {
-      fetch("/api/ops/payments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: req.userId,
-          plan: finalPlanId,
-          amount: finalAmount,
-          paymentMethod: "baridimob",
-          notes: `Reference ID: ${referenceId}`,
-          studentEmail: req.studentEmail,
-        }),
-      }).catch(() => {});
+      try {
+        const token = await getAuthToken();
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+        const res = await fetch("/api/ops/payments", {
+          method: "POST",
+          headers,
+          credentials: "include",
+          body: JSON.stringify({
+            userId: req.userId,
+            plan: finalPlanId,
+            amount: finalAmount,
+            paymentMethod: "baridimob",
+            notes: `Reference ID: ${referenceId}`,
+            studentEmail: req.studentEmail,
+            studentName: req.metadata?.studentName,
+            studentPhone: req.metadata?.studentPhone,
+            streamId: req.metadata?.streamId,
+            wilayaName: req.metadata?.wilayaName,
+          }),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.order?.id) {
+            serverOrderId = json.order.id;
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to persist server-side payment order:", err);
+      }
     }
 
     return {
       status: "READY",
       provider: this.id,
       referenceId,
+      orderId: serverOrderId,
       instructions_ar:
         "تم تسجيل طلب التفعيل بنجاح. يرجى إرسال الرمز المرجعي إلى فريق الدعم البيداغوجي لتأكيد العملية والتحقق منها وتفعيل اشتراكك يدويّاً.",
       instructions_fr:

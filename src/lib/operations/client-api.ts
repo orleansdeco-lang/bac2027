@@ -5,10 +5,7 @@
 
 import { supabase } from "@/lib/supabase/client";
 
-/**
- * Get current operator auth token from Supabase session, localStorage, or cookie
- */
-export async function getOperatorToken(): Promise<string | null> {
+export async function getAuthToken(): Promise<string | null> {
   // 1. Check active Supabase session
   if (supabase) {
     try {
@@ -59,6 +56,11 @@ export async function getOperatorToken(): Promise<string | null> {
 
   return null;
 }
+
+/**
+ * Get current operator auth token (alias of getAuthToken)
+ */
+export const getOperatorToken = getAuthToken;
 
 /**
  * Authenticated fetch helper for /api/ops endpoints

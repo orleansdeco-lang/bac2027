@@ -30,6 +30,8 @@ export async function POST(req: Request) {
     const contentType = req.headers.get("content-type") || "";
 
     let orderId: string = "";
+    let referenceId: string = "";
+    let studentUserId: string = "";
     let fileName: string = "";
     let mimeType: string = "";
     let fileBuffer: Buffer;
@@ -37,6 +39,8 @@ export async function POST(req: Request) {
     if (contentType.includes("multipart/form-data")) {
       const formData = await req.formData();
       orderId = (formData.get("orderId") as string) || "";
+      referenceId = (formData.get("referenceId") as string) || "";
+      studentUserId = (formData.get("userId") as string) || "";
       const file = formData.get("file") as File | null;
 
       if (!file) {
@@ -61,20 +65,26 @@ export async function POST(req: Request) {
       }
 
       orderId = body.orderId;
+      referenceId = body.referenceId || "";
+      studentUserId = body.userId || "";
       fileName = body.fileName || "receipt.png";
       mimeType = body.mimeType || "image/png";
       fileBuffer = Buffer.from(body.fileBase64, "base64");
     }
 
-    if (!orderId) {
+    if (!orderId && !referenceId) {
       return NextResponse.json(
         { success: false, error: "orderId is required" },
         { status: 400 }
       );
     }
 
-    // Validate order ownership
-    const order = await getPaymentOrderById(orderId);
+    // Validate order ownership: check by orderId first, then by referenceId
+    let order = orderId ? await getPaymentOrderById(orderId) : null;
+    if (!order && referenceId) {
+      order = await getPaymentOrderById(referenceId);
+    }
+
     if (!order) {
       return NextResponse.json(
         { success: false, error: "Payment order not found" },
@@ -82,10 +92,18 @@ export async function POST(req: Request) {
       );
     }
 
-    const isOperator = await isServerOperator(caller.userId);
-    if (!isOperator && order.userId !== caller.userId) {
+    // Authorization check
+    if (caller?.userId) {
+      const isOperator = await isServerOperator(caller.userId);
+      if (!isOperator && order.userId !== caller.userId && (!studentUserId || order.userId !== studentUserId)) {
+        return NextResponse.json(
+          { success: false, error: "Forbidden: Cannot upload receipt for another student's order" },
+          { status: 403 }
+        );
+      }
+    } else if (studentUserId && order.userId !== studentUserId) {
       return NextResponse.json(
-        { success: false, error: "Forbidden: Cannot upload receipt for another student's order" },
+        { success: false, error: "Forbidden: User ID does not match order owner" },
         { status: 403 }
       );
     }
@@ -107,10 +125,10 @@ export async function POST(req: Request) {
     // Execute upload
     const uploadRes = await uploadReceipt({
       userId: order.userId,
-      orderId,
-      fileBuffer,
+      orderId: order.id,
       fileName,
       mimeType,
+      fileBuffer,
     });
 
     if (!uploadRes.success || !uploadRes.receiptPath) {
@@ -121,7 +139,7 @@ export async function POST(req: Request) {
     }
 
     // Attach receipt path to order
-    await updateOrderReceiptPath(orderId, uploadRes.receiptPath);
+    await updateOrderReceiptPath(order.id, uploadRes.receiptPath);
 
     return NextResponse.json({
       success: true,
