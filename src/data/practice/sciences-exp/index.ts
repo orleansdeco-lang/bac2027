@@ -899,14 +899,28 @@ export const SCIENCES_EXP_PRACTICE_QUESTIONS: PracticeQuestion[] = [
 
 import { EXPANDED_PRACTICE_QUESTIONS } from "@/data/curriculum/practice-questions";
 import { GESTION_ECO_PRACTICE_QUESTIONS } from "../gestion-eco";
+import {
+  newSkillsPracticeQuestions,
+  NEW_SKILLS_PRACTICE_QUESTIONS,
+  DiagnosticPracticeItem,
+} from "./new-skills-practice";
+
+export {
+  newSkillsPracticeQuestions,
+  NEW_SKILLS_PRACTICE_QUESTIONS,
+  type DiagnosticPracticeItem,
+};
 
 export function getPracticeQuestionById(id: string): PracticeQuestion | undefined {
-  return GESTION_ECO_PRACTICE_QUESTIONS.find((q) => q.id === id) ||
+  return NEW_SKILLS_PRACTICE_QUESTIONS.find((q) => q.id === id) ||
+    GESTION_ECO_PRACTICE_QUESTIONS.find((q) => q.id === id) ||
     SCIENCES_EXP_PRACTICE_QUESTIONS.find((q) => q.id === id) ||
     EXPANDED_PRACTICE_QUESTIONS.find((q) => q.id === id);
 }
 
 export function getPracticeQuestionsForSkill(skillId: string): PracticeQuestion[] {
+  const newPractice = NEW_SKILLS_PRACTICE_QUESTIONS.filter((q) => q.skillId === skillId && !q.isRetestVariant);
+  if (newPractice.length > 0) return newPractice;
   const gestion = GESTION_ECO_PRACTICE_QUESTIONS.filter((q) => q.skillId === skillId && !q.isRetestVariant);
   if (gestion.length > 0) return gestion;
   const pilot = SCIENCES_EXP_PRACTICE_QUESTIONS.filter((q) => q.skillId === skillId && !q.isRetestVariant);
@@ -915,7 +929,8 @@ export function getPracticeQuestionsForSkill(skillId: string): PracticeQuestion[
 }
 
 export function getRetestQuestionForSkill(skillId: string): PracticeQuestion | undefined {
-  return GESTION_ECO_PRACTICE_QUESTIONS.find((q) => q.skillId === skillId && q.isRetestVariant) ||
+  return NEW_SKILLS_PRACTICE_QUESTIONS.find((q) => q.skillId === skillId && q.isRetestVariant) ||
+    GESTION_ECO_PRACTICE_QUESTIONS.find((q) => q.skillId === skillId && q.isRetestVariant) ||
     SCIENCES_EXP_PRACTICE_QUESTIONS.find((q) => q.skillId === skillId && q.isRetestVariant) ||
     EXPANDED_PRACTICE_QUESTIONS.find((q) => q.skillId === skillId && q.isRetestVariant);
 }
