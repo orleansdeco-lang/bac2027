@@ -1063,6 +1063,56 @@ export const SCIENCES_EXP_SKILLS: Record<string, Skill> = {
       "Déduire méthodiquement les règles juridiques et enseignements éthiques des versets.",
     ],
   },
+  // ---------------------------------------------------------------------------
+  // FOREIGN LANGUAGES SKILLS (اللغات الأجنبية: الفرنسية والإنجليزية)
+  // ---------------------------------------------------------------------------
+  languages_foreign_comprehension_production: {
+    id: "languages_foreign_comprehension_production",
+    subjectId: "french",
+    title_ar: "اللغات الأجنبية (الفرنسية): تقنيات فهم النص وتحرير فقرة التلخيص أو التعبير الكتابي",
+    title_fr: "Langues étrangères (Français) : compréhension de l'écrit et compte-rendu objectif / critique",
+    description_ar: "تحديد النمط والنموذج النصي في الفرنسية (تاريخي، جدلي، نداء)، استخراج نية الكاتب، والإجابة عن أسئلة إعادة الصياغة وتحرير الـ Compte-rendu.",
+    description_fr: "Identifier la typologie textuelle et la visée communicative en français, répondre par reformulation et rédiger un compte-rendu objectif conforme aux normes du BAC.",
+    dimensions: ["understanding", "application", "methodology"],
+    repairStrategy_ar: "الالتزام بهيكل الـ Compte-rendu (الفقرة التمهيدية التوثيقية ثم ملخص الأفكار بأفعال القول) لضمان علامة التعبير كاملة.",
+    repairStrategy_fr: "Suivre strictement le canevas institutionnel du compte-rendu objectif pour sécuriser la note de production écrite.",
+    repairSteps_ar: [
+      "تحديد نوع النص في الفرنسية (Texte d'histoire, texte d'appel, texte argumentatif) أو نوع الفكرة في الإنجليزية.",
+      "استخراج مؤشرات الحضور وتوجه الكاتب (Visée communicative / Author's attitude/purpose).",
+      "الإجابة المنهجية عن أسئلة إعادة الصياغة (Reformulation) وتجنب النسخ الحرفي من السند.",
+      "تحرير التقرير النقدي أو التلخيص (Compte-rendu objectif/critique) وفق المعايير الرسمية في الفرنسية، أو كتابة فقرة متماسكة (Guided/Free writing) في الإنجليزية.",
+    ],
+    repairSteps_fr: [
+      "Identifier la typologie textuelle et la visée communicative de l'auteur.",
+      "Répondre aux questions de compréhension par reformulation ciblée.",
+      "Rédiger un compte-rendu objectif respectant le canevas officiel.",
+      "Structurer une production écrite cohérente avec connecteurs logiques appropriés.",
+    ],
+  },
+
+  english_foreign_comprehension_production: {
+    id: "english_foreign_comprehension_production",
+    subjectId: "english",
+    title_ar: "اللغة الإنجليزية: تقنيات فهم النص والإنتاج الكتابي الموجه والحر",
+    title_fr: "Anglais : techniques de compréhension de l'écrit et expression écrite (guided/free writing)",
+    description_ar: "تحليل النصوص في الإنجليزية، استخراج الفكرة العامة وتوجه الكاتب (Author's attitude/purpose)، وإتقان التعبير الكتابي الموجه والحر باستخدام أدوات الربط المنطقية.",
+    description_fr: "Analyser le texte en anglais, identifier l'intention de l'auteur, répondre aux questions d'inférence et rédiger une production écrite cohérente avec connecteurs.",
+    dimensions: ["understanding", "application", "methodology"],
+    repairStrategy_ar: "التركيز على هيكلة الفقرة باللغة الإنجليزية: الجملة الافتتاحية (Topic Sentence)، الأفكار الداعمة مع الروابط (Supporting Details)، والخاتمة (Conclusion).",
+    repairStrategy_fr: "Structurer la production écrite selon le modèle standard : Topic sentence, supporting arguments avec connecteurs logiques, et phrase de conclusion.",
+    repairSteps_ar: [
+      "تحديد نوع النص وموضوعه الرئيسي عبر القراءة الاستكشافية السريعة (Skimming & Scanning).",
+      "استخراج توجه وموقف الكاتب (Author's purpose / attitude) وتحديد الكلمات الدالة على المرجع (Reference words).",
+      "الإجابة المنهجية عن أسئلة الفهم وإعادة الصياغة وتجنب النسخ الحرفي للجمل من النص.",
+      "تحرير فقرة متماسكة (Guided or Free writing) باحترام علامات الوقف، أدوات الربط، والتوافق الزمني والنحوي.",
+    ],
+    repairSteps_fr: [
+      "Identifier le thème et la visée du texte par lecture globale et repérage ciblé.",
+      "Repérer les mots de référence et déterminer l'attitude de l'auteur.",
+      "Répondre aux questions de compréhension par reformulation sans recopie servile.",
+      "Rédiger un paragraphe cohérent en respectant la syntaxe, la ponctuation et les connecteurs.",
+    ],
+  },
 };
 
 import { ALL_CURRICULUM_SKILLS } from "@/data/curriculum/skills";
