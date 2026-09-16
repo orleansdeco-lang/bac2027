@@ -1011,6 +1011,32 @@ export const SCIENCES_EXP_SKILLS: Record<string, Skill> = {
       "Identifier les obstacles épistémologiques dans l'application de la méthode aux sciences du vivant.",
     ],
   },
+  // ---------------------------------------------------------------------------
+  // HISTORY & GEOGRAPHY SKILLS (التاريخ والجغرافيا)
+  // ---------------------------------------------------------------------------
+  hist_geo_methodology_terms_maps: {
+    id: "hist_geo_methodology_terms_maps",
+    subjectId: "history_geography",
+    title_ar: "منهجية التاريخ والجغرافيا: المقال، تحليل المصطلحات، التوقيع على الخرائط",
+    title_fr: "Méthodologie d'histoire-géographie : dissertation, termes, commentaire et cartographie",
+    description_ar: "إتقان المنهجية الرسمية للتاريخ والجغرافيا: كتابة المقال بعناصر محددة، تعريف الشخصيات والمصطلحات، التعليق على الجداول، والتوقيع على الخرائط الصماء.",
+    description_fr: "Maîtriser la méthodologie officielle : rédaction structurée, définition rigoureuse des concepts, commentaire de données et cartographie.",
+    dimensions: ["methodology", "knowledge", "application"],
+    repairStrategy_ar: "استخدام الأسلوب التلغرافي المنظم (مطّات واضحة) في المقال كما يطلبه سلم التصحيح الوزاري، وتجنب الفقرات الإنشائية الطويلة.",
+    repairStrategy_fr: "Adopter la structure par tirets synthétiques préconisée par les barèmes officiels d'examen.",
+    repairSteps_ar: [
+      "كتابة مقال تاريخي أو جغرافي منظم: مقدمة بإشكالية، عرض في شكل عناصر ومطّات مجيبة مباشرة، وخاتمة كاستنتاج.",
+      "تعريف الشخصيات والمصطلحات التاريخية بذكر الجنسية، المنصب، وأهم إنجازين تاريخيين مرتبطين بالبرنامج.",
+      "التعليق على الجداول الإحصائية وفق المنهجية: تقديم الوثيقة، الملاحظة العامة (التفاوت/التنوع/التطور)، والتعليل والتفسير.",
+      "التوقيع الدقيق على الخرائط الصماء وإرفاقها بعنوان وإطار ومفتاح واضح.",
+    ],
+    repairSteps_fr: [
+      "Rédiger une synthèse historique/géographique structurée répondant aux consignes.",
+      "Définir rigoureusement les concepts et figures historiques clés selon le barème officiel.",
+      "Commenter des tableaux statistiques: présentation, constats majeurs et interprétation causale.",
+      "Localiser avec précision les données sur un fond de carte (titre, légende, orientation).",
+    ],
+  },
 };
 
 import { ALL_CURRICULUM_SKILLS } from "@/data/curriculum/skills";
