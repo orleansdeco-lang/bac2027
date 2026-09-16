@@ -1037,6 +1037,32 @@ export const SCIENCES_EXP_SKILLS: Record<string, Skill> = {
       "Localiser avec précision les données sur un fond de carte (titre, légende, orientation).",
     ],
   },
+  // ---------------------------------------------------------------------------
+  // ISLAMIC STUDIES SKILLS (العلوم الإسلامية)
+  // ---------------------------------------------------------------------------
+  islamic_creed_sharia_analysis: {
+    id: "islamic_creed_sharia_analysis",
+    subjectId: "islamic_studies",
+    title_ar: "العلوم الإسلامية: العقيدة، مقاصد الشريعة، واستخراج الفوائد والأحكام",
+    title_fr: "Sciences islamiques : foi, finalités de la Sharia, règles juridiques et enseignements",
+    description_ar: "تحديد وسائل تثبيت العقيدة، تصنيف مقاصد الشريعة الإسلامية والكليات الخمس، وتطبيق منهجية استخراج الأحكام التكليفية والفوائد من النصوص.",
+    description_fr: "Identifier les méthodes de consolidation de la foi, classifier les finalités de la Sharia et déduire rigoureusement les statuts légaux et enseignements.",
+    dimensions: ["knowledge", "understanding", "methodology"],
+    repairStrategy_ar: "التمييز بين 'الحكم الشرعي' (يبدأ دائماً بـ: وجوب، تحريم، استحباب، جواز) و'الفائدة' (تبدأ بـ: الدعوة إلى، بيان أهمية، الحث على).",
+    repairStrategy_fr: "Distinguer formellement les règles prescriptives (obligation, interdiction) des enseignements généraux.",
+    repairSteps_ar: [
+      "تحديد وسائل القرآن في تثبيت العقيدة الإسلامية من الآيات (التذكير بقدرة الله، إثارة العقل، رسم صور المحبين).",
+      "تصنيف مقاصد الشريعة الإسلامية (ضرورية، حاجية، تحسينية) والكليات الخمس مع ترتيب أولوياتها.",
+      "فهم مصادر التشريع الإسلامي التبعية (الإجماع، القياس، المصلحة المرسلة) وتطبيق أركان القياس وشروطه.",
+      "استخراج الأحكام الشرعية التكليفية والفوائد التربوية والقيم من النصوص الشرعية بصياغة منهجية صحيحة.",
+    ],
+    repairSteps_fr: [
+      "Identifier les méthodes coraniques de consolidation de la foi à partir des textes scripturaires.",
+      "Classifier les finalités de la Sharia (essentielles, complémentaires, d'embellissement).",
+      "Comprendre les sources du droit musulman (consensus, analogie, intérêt public).",
+      "Déduire méthodiquement les règles juridiques et enseignements éthiques des versets.",
+    ],
+  },
 };
 
 import { ALL_CURRICULUM_SKILLS } from "@/data/curriculum/skills";
