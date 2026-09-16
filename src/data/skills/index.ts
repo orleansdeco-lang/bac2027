@@ -350,6 +350,81 @@ export const SCIENCES_EXP_SKILLS: Record<string, Skill> = {
   },
 
   // ---------------------------------------------------------------------------
+  // SPACE GEOMETRY SKILLS (الهندسة في الفضاء)
+  // ---------------------------------------------------------------------------
+  math_space_planes_lines: {
+    id: "math_space_planes_lines",
+    subjectId: "math",
+    title_ar: "المستويات والمستقيمات في الفضاء: التمثيل الوسيطي والمعادلة الديكارتية",
+    title_fr: "Plans et droites dans l'espace : représentation paramétrique et équation cartésienne",
+    description_ar: "كتابة واستخراج التمثيلات الوسيطية للمستقيمات والمعادلات الديكارتية للمستويات في الفضاء، وتحديد نقاط التقاطع بتوظيف الجداء السلمي والتعامد.",
+    description_fr: "Déterminer et manipuler les représentations paramétriques de droites et équations cartésiennes de plans, et calculer leurs intersections.",
+    dimensions: ["knowledge", "application", "methodology"],
+    repairStrategy_ar: "التمييز الدقيق بين شعاع التوجيه (موازٍ للمستقيم) والشعاع الناظمي (عمودي على المستوي)، واستعمال الجداء السلمي المعدوم n⃗·u⃗ = 0 كأداة لإثبات التعامد والتوازي.",
+    repairStrategy_fr: "Distinguer rigoureusement vecteur directeur et vecteur normal, et exploiter le produit scalaire nul pour les conditions d'orthogonalité.",
+    repairSteps_ar: [
+      "استخراج شعاع التوجيه u⃗ للمستقيم من تمثيله الوسيطي، أو الشعاع الناظمي n⃗ للمستوي من معادلته ax + by + cz + d = 0.",
+      "كتابة التمثيل الوسيطي لمستقيم بمعرفة نقطة A(x0, y0, z0) وشعاع توجيه u⃗(a, b, c).",
+      "تعيين المعادلة الديكارتية لمستوٍ عبر إيجاد شعاع ناظمي n⃗ بالتعامد (الجداء السلمي)، ثم تعويض إحداثيات نقطة لإيجاد d.",
+      "تحديد نقطة تقاطع مستقيم ومستوٍ بتعويض التمثيل الوسيطي للمستقيم في معادلة المستوي واستخراج قيمة الوسيط t.",
+    ],
+    repairSteps_fr: [
+      "Extraire le vecteur directeur u⃗ d'une droite ou le vecteur normal n⃗ d'un plan ax + by + cz + d = 0.",
+      "Écrire la représentation paramétrique d'une droite à partir d'un point A et d'un vecteur directeur u⃗.",
+      "Déterminer l'équation cartésienne d'un plan via son vecteur normal n⃗ et trouver d par substitution d'un point.",
+      "Trouver le point d'intersection droite-plan en substituant les équations paramétriques dans l'équation du plan.",
+    ],
+  },
+
+  math_space_distances_spheres: {
+    id: "math_space_distances_spheres",
+    subjectId: "math",
+    title_ar: "المسافات في الفضاء ومعادلة سطح الكرة وتقاطعها مع مستوٍ",
+    title_fr: "Distances dans l'espace, équation de la sphère et intersection avec un plan",
+    description_ar: "حساب مسافة نقطة عن مستوٍ في الفضاء، وكتابة معادلة سطح الكرة وتحديد وضعها النسبي مع مستوٍ وحساب عناصر دائرة التقاطع.",
+    description_fr: "Calculer la distance d'un point à un plan, déterminer l'équation d'une sphère et étudier son intersection avec un plan (cercle de section).",
+    dimensions: ["application", "methodology", "understanding"],
+    repairStrategy_ar: "مقارنة d مع R كنقطة ارتكاز حتمية لتحديد طبيعة التقاطع، وتطبيق مبرهنة فيثاغورس الهندسية لاستنتاج نصف قطر دائرة التقاطع r.",
+    repairStrategy_fr: "Comparer systématiquement d(Ω, P) à R pour déduire l'intersection et appliquer Pythagore pour trouver le rayon du cercle.",
+    repairSteps_ar: [
+      "تطبيق قانون المسافة بين نقطة A ومستوٍ (P): d(A, P) = |axA + byA + czA + d| / √(a² + b² + c²).",
+      "كتابة معادلة سطح الكرة (S) ذات المركز Ω ونصف القطر R: (x-x0)² + (y-y0)² + (z-z0)² = R²، أو إتمام المربعات لاستخراجها.",
+      "مقارنة المسافة d(Ω, P) بنصف القطر R لتحديد وضع المستوي بالنسبة لسطح الكرة (خارجي، مماس، يقطع وفق دائرة).",
+      "تعيين نصف قطر دائرة التقاطع r = √(R² - d²) والبحث عن إحداثيات مركزها H كمسقط عمودي للمركز Ω على المستوي.",
+    ],
+    repairSteps_fr: [
+      "Appliquer la formule de la distance point-plan: d(A, P) = |axA + byA + czA + d| / √(a² + b² + c²).",
+      "Écrire l'équation de la sphère (S) de centre Ω et rayon R, ou utiliser la forme canonique pour extraire le centre.",
+      "Comparer d(Ω, P) avec R pour déterminer la position relative (disjoints, tangent, intersection selon un cercle).",
+      "Calculer le rayon du cercle d'intersection r = √(R² - d²) et déterminer son centre H par projection orthogonale.",
+    ],
+  },
+
+  math_space_relative_positions: {
+    id: "math_space_relative_positions",
+    subjectId: "math",
+    title_ar: "الأوضاع النسبية للمستقيمات والمستويات في الفضاء",
+    title_fr: "Positions relatives de droites et de plans dans l'espace",
+    description_ar: "دراسة التوازي والتعامد والتقاطع بين المستقيمات والمستويات في الفضاء والتمييز بين المستقيمات المتقاطعة والمتوازية وغير المتلاقية في نفس المستوي.",
+    description_fr: "Étudier le parallélisme, l'orthogonalité et l'intersection de droites et de plans, et distinguer droites sécantes, parallèles ou non coplanaires.",
+    dimensions: ["application", "methodology", "understanding"],
+    repairStrategy_ar: "استخدام حرفين مختلفين للوسيط عند دراسة تقاطع مستقيمين (t و k مثلاً) لمنع الخطأ الجبري الشائع بافتراض تساوي الوسائط.",
+    repairStrategy_fr: "Toujours utiliser deux paramètres distincts (t et k) lors de la résolution du système d'intersection de deux droites.",
+    repairSteps_ar: [
+      "دراسة الارتباط الخطي لشعاعي التوجيه أو الشعاعين الناظميين لاختبار التوازي والتطابق.",
+      "فحص تقاطع مستقيمين بحل جملة المعادلات الناتجة عن وسيطين مختلفين t و k.",
+      "استنتاج الوضع النسبي لمستقيمين: متقاطعان في نقطة، متوازيان، أو ليسا من نفس المستوي (منفصلان فضائياً).",
+      "استخراج مستقيم تقاطع مستويين غير متوازيين عبر اتخاذ أحد المجاهيل (x أو y أو z) كوسيط t.",
+    ],
+    repairSteps_fr: [
+      "Étudier la colinéarité des vecteurs pour vérifier le parallélisme ou la superposition.",
+      "Résoudre le système formé par les équations paramétriques à deux paramètres distincts t et k.",
+      "Conclure la position de deux droites: sécantes, parallèles ou non coplanaires.",
+      "Déterminer la droite d'intersection de deux plans sécants en fixant une inconnue comme paramètre t.",
+    ],
+  },
+
+  // ---------------------------------------------------------------------------
   // PHYSICS-CHEMISTRY SKILLS
   // ---------------------------------------------------------------------------
   physics_rc_time_constant: {
