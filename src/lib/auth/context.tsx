@@ -30,6 +30,39 @@ function syncAuthCookies(token?: string | null) {
   }
 }
 
+function syncLocalStudentProfileIfPresent(userObj?: User | null, token?: string | null) {
+  if (typeof window === "undefined") return;
+  try {
+    const regRaw = localStorage.getItem("bac_student_profile_data_v1");
+    const stratRaw = localStorage.getItem("bac_strategic_profile_v1");
+    const regData = regRaw ? JSON.parse(regRaw) : null;
+    const stratData = stratRaw ? JSON.parse(stratRaw) : null;
+
+    const uid = userObj?.id || regData?.id || stratData?.id;
+    if (!uid) return;
+
+    const payload = {
+      id: uid,
+      email: userObj?.email || regData?.email,
+      fullName: regData?.studentName || stratData?.studentName,
+      studentPhone: regData?.studentPhone || stratData?.studentPhone,
+      streamId: regData?.streamId || stratData?.streamId,
+      wilayaName: regData?.wilayaName || stratData?.wilayaName,
+      communeName: regData?.communeName || stratData?.communeName,
+      source: "session_restore"
+    };
+
+    fetch("/api/student/sync", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify(payload)
+    }).catch(() => {});
+  } catch {}
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -40,7 +73,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (typeof window !== "undefined") {
         try {
           const localAuth = localStorage.getItem("bac_auth_user");
-          if (localAuth) setUser(JSON.parse(localAuth));
+          if (localAuth) {
+            const parsedUser = JSON.parse(localAuth);
+            setUser(parsedUser);
+            syncLocalStudentProfileIfPresent(parsedUser);
+          }
         } catch {}
       }
       setIsLoading(false);
@@ -53,11 +90,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session);
         setUser(session.user);
         syncAuthCookies(session.access_token);
+        syncLocalStudentProfileIfPresent(session.user, session.access_token);
       } else if (typeof window !== "undefined") {
         try {
           const localAuth = localStorage.getItem("bac_auth_user");
-          if (localAuth) setUser(JSON.parse(localAuth));
-          else setUser(null);
+          if (localAuth) {
+            const parsedUser = JSON.parse(localAuth);
+            setUser(parsedUser);
+            syncLocalStudentProfileIfPresent(parsedUser);
+          } else {
+            setUser(null);
+          }
         } catch {
           setUser(null);
         }
@@ -69,8 +112,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (typeof window !== "undefined") {
         try {
           const localAuth = localStorage.getItem("bac_auth_user");
-          if (localAuth) setUser(JSON.parse(localAuth));
-          else setUser(null);
+          if (localAuth) {
+            const parsedUser = JSON.parse(localAuth);
+            setUser(parsedUser);
+            syncLocalStudentProfileIfPresent(parsedUser);
+          } else {
+            setUser(null);
+          }
         } catch {
           setUser(null);
         }
@@ -87,6 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setSession(session);
           setUser(session.user);
           syncAuthCookies(session.access_token);
+          syncLocalStudentProfileIfPresent(session.user, session.access_token);
         } else {
           syncAuthCookies(null);
           if (typeof window !== "undefined") {
