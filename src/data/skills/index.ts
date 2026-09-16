@@ -961,6 +961,56 @@ export const SCIENCES_EXP_SKILLS: Record<string, Skill> = {
       "Repérer les procédés stylistiques (antithèse, assonance) et leur impact sémantique.",
     ],
   },
+  // ---------------------------------------------------------------------------
+  // PHILOSOPHY SKILLS (الفلسفة للشعب العلمية)
+  // ---------------------------------------------------------------------------
+  philosophy_methodology_essay_scientific: {
+    id: "philosophy_methodology_essay_scientific",
+    subjectId: "philosophy",
+    title_ar: "المنهجية الفلسفية: المقارنة، الجدل، والاستقصاء بالوضع للشعب العلمية",
+    title_fr: "Méthodologie de la dissertation philosophique : comparaison, dialectique et plaidoyer",
+    description_ar: "إتقان المنهجية الفلسفية لكتابة مقال متماسك (طرح المشكلة، محاجة ومناقشة ونقد، تركيب، وحل نهائي) وتجنب السرد الحفظي.",
+    description_fr: "Maîtriser la méthodologie de l'essai philosophique (introduction, argumentation, critique, synthèse et conclusion argumentée).",
+    dimensions: ["methodology", "understanding", "application"],
+    repairStrategy_ar: "الابتعاد عن السرد الحفظي الجاف، والتركيز على الروابط المنطقية وبناء الحجة الفلسفية ونقد الموقف قبل الانتقال إلى الموقف المقابل.",
+    repairStrategy_fr: "Privilégier l'argumentation rigoureuse et la transition logique plutôt que la récitation passive.",
+    repairSteps_ar: [
+      "ضبط مقدمة المقال: تمهيد وظيفي، إبراز العناد الفلسفي، وطرح الإشكال بصياغة سليمة.",
+      "عرض الموقف الأول بحججه وبراهينه وأقوال الفلاسفة، ثم إتباعه بالمناقشة والنقد الموضوعي (شكلاً ومضموناً).",
+      "عرض نقيض الموقف بنفس الهيكلة والدقة المنهجية مع نقد حججه.",
+      "صياغة التركيب أو التجاوز مع التبرير، والخاتمة كحل نهائي منسجم مع مسار التحليل.",
+    ],
+    repairSteps_fr: [
+      "Rédiger une introduction philosophique: mise en contexte, paradoxe et problématique.",
+      "Développer la première thèse avec arguments et citations, suivie d'une critique objective.",
+      "Présenter l'antithèse avec la même rigueur méthodologique et son évaluation critique.",
+      "Formuler la synthèse argumentée et la conclusion répondant au problème initial.",
+    ],
+  },
+
+  philosophy_epistemology_scientific_thinking: {
+    id: "philosophy_epistemology_scientific_thinking",
+    subjectId: "philosophy",
+    title_ar: "فلسفة العلوم: المعرفة الرياضية والتجريبية والملاحظة والفرضية",
+    title_fr: "Épistémologie et philosophie des sciences : mathématiques et méthode expérimentale",
+    description_ar: "تحليل إشكاليات فلسفة العلوم: أصل المفاهيم الرياضية واليقين الرياضي، خطوات وحدود المنهج التجريبي، وعوائق التجريب في علوم المادة الحية.",
+    description_fr: "Analyser les fondements épistémologiques : origine des mathématiques, valeur de la méthode expérimentale et sciences du vivant.",
+    dimensions: ["knowledge", "understanding", "methodology"],
+    repairStrategy_ar: "استثمار المعطيات والخبرة العلمية للطالب كأمثلة واقعية في المقال لتدعيم الحجج الإبستمولوجية المعاصرة.",
+    repairStrategy_fr: "Illustrer les arguments philosophiques par des exemples scientifiques concrets tirés du programme.",
+    repairSteps_ar: [
+      "تحليل مشكلة أصل المفاهيم الرياضية (العقل مقابل التجربة والحواس).",
+      "استيعاب خطوات المنهج التجريبي في علوم المادة الجامدة والحية وحدود تطبيقها (الحتمية واللاحتمية).",
+      "مناقشة قيمة الفرضية العلمية بين التجريبيين والعقلانيين المعاصرين.",
+      "فهم عوائق تطبيق المنهج التجريبي على الحادثة البيولوجية والإنسانية.",
+    ],
+    repairSteps_fr: [
+      "Analyser l'origine des concepts mathématiques (rationalisme vs empirisme).",
+      "Comprendre les étapes de la démarche expérimentale et les limites du déterminisme.",
+      "Discuter de la valeur de l'hypothèse scientifique dans l'épistémologie moderne.",
+      "Identifier les obstacles épistémologiques dans l'application de la méthode aux sciences du vivant.",
+    ],
+  },
 };
 
 import { ALL_CURRICULUM_SKILLS } from "@/data/curriculum/skills";
