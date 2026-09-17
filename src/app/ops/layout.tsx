@@ -42,6 +42,7 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const router = useRouter();
   const [authorized, setAuthorized] = useState<boolean | null>(null);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   // 1. Immediately exempt /ops/login from authorization lock
   const isLoginPage = pathname === "/ops/login";
@@ -133,8 +134,6 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
-
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#080D1A] text-slate-100 antialiased font-sans">

@@ -77,6 +77,44 @@ interface VisitorAnalyticsData {
   }>;
 }
 
+function safeFormatDate(iso?: string | null): string {
+  if (!iso) return "—";
+  try {
+    const d = new Date(iso);
+    return isNaN(d.getTime()) ? "—" : d.toLocaleDateString("ar-DZ");
+  } catch {
+    return "—";
+  }
+}
+
+function safeFormatDateTime(iso?: string | null): string {
+  if (!iso) return "—";
+  try {
+    const d = new Date(iso);
+    return isNaN(d.getTime())
+      ? "—"
+      : d.toLocaleDateString("ar-DZ", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+  } catch {
+    return "—";
+  }
+}
+
+function safeFormatTime(dateOrIso?: Date | string | null): string {
+  if (!dateOrIso) return "—";
+  try {
+    const d = typeof dateOrIso === "string" ? new Date(dateOrIso) : dateOrIso;
+    return isNaN(d.getTime()) ? "—" : d.toLocaleTimeString("ar-DZ");
+  } catch {
+    return "—";
+  }
+}
+
 export default function OpsOverviewPage() {
   // Navigation
   const [activeTab, setActiveTab] = useState<CockpitTab>("pulse");
@@ -132,26 +170,32 @@ export default function OpsOverviewPage() {
       ]);
 
       if (kpisRes && kpisRes.ok) {
-        const kpisData = await kpisRes.json();
+        const kpisData = await kpisRes.json().catch(() => null);
         if (kpisData?.kpis) setKpis(kpisData.kpis);
       }
 
       if (ordersRes && ordersRes.ok) {
-        const ordersData = await ordersRes.json();
-        if (ordersData?.orders) setOrders(ordersData.orders);
+        const ordersData = await ordersRes.json().catch(() => null);
+        if (Array.isArray(ordersData?.orders)) {
+          setOrders(ordersData.orders);
+        } else {
+          setOrders([]);
+        }
+      } else {
+        setOrders([]);
       }
 
       if (plansRes && plansRes.ok) {
-        const plansData = await plansRes.json();
-        if (plansData?.plans) {
+        const plansData = await plansRes.json().catch(() => null);
+        if (Array.isArray(plansData?.plans)) {
           setPlans(plansData.plans);
           // Initialize edit form buffer
           const map: { [id: string]: { price_dzd: number; duration_months: number; active: boolean } } = {};
           plansData.plans.forEach((p: SubscriptionPlan) => {
             map[p.id] = {
-              price_dzd: p.price_dzd,
-              duration_months: p.duration_months,
-              active: p.active !== false,
+              price_dzd: p?.price_dzd ?? 0,
+              duration_months: p?.duration_months ?? 1,
+              active: p?.active !== false,
             };
           });
           setEditingPlans(map);
@@ -159,13 +203,21 @@ export default function OpsOverviewPage() {
       }
 
       if (visitorsRes && visitorsRes.ok) {
-        const visitorsData = await visitorsRes.json();
-        setVisitors(visitorsData);
+        const visitorsData = await visitorsRes.json().catch(() => null);
+        if (visitorsData && typeof visitorsData === "object" && !visitorsData.error) {
+          setVisitors(visitorsData);
+        }
       }
 
       if (studentsRes && studentsRes.ok) {
-        const studentsData = await studentsRes.json();
-        if (studentsData?.students) setStudents(studentsData.students);
+        const studentsData = await studentsRes.json().catch(() => null);
+        if (Array.isArray(studentsData?.students)) {
+          setStudents(studentsData.students);
+        } else {
+          setStudents([]);
+        }
+      } else {
+        setStudents([]);
       }
 
       setLastRefreshed(new Date());
@@ -404,9 +456,11 @@ export default function OpsOverviewPage() {
 
   // ─── Filtered Orders ───────────────────────────────────────────────────────
   const filteredOrders = useMemo(() => {
+    if (!Array.isArray(orders)) return [];
     return orders.filter((order) => {
+      if (!order) return false;
       const matchStatus = orderStatusFilter === "ALL" || order.status === orderStatusFilter;
-      const q = orderSearchQuery.trim().toLowerCase();
+      const q = (orderSearchQuery || "").trim().toLowerCase();
       const matchQuery =
         !q ||
         (order.studentName && order.studentName.toLowerCase().includes(q)) ||
@@ -420,7 +474,9 @@ export default function OpsOverviewPage() {
 
   // ─── Filtered Students ─────────────────────────────────────────────────────
   const filteredStudents = useMemo(() => {
+    if (!Array.isArray(students)) return [];
     return students.filter((st) => {
+      if (!st) return false;
       const matchStatus =
         studentStatusFilter === "all" ||
         (studentStatusFilter === "PAID" && st.accessStatus === "PAID") ||
@@ -428,7 +484,7 @@ export default function OpsOverviewPage() {
         (studentStatusFilter === "REJECTED" && st.accessStatus === "REJECTED") ||
         (studentStatusFilter === "EXPIRED" && st.accessStatus === "EXPIRED");
 
-      const q = studentSearchQuery.trim().toLowerCase();
+      const q = (studentSearchQuery || "").trim().toLowerCase();
       const matchQuery =
         !q ||
         (st.fullName && st.fullName.toLowerCase().includes(q)) ||
@@ -441,9 +497,9 @@ export default function OpsOverviewPage() {
   }, [students, studentStatusFilter, studentSearchQuery]);
 
   // Derived counts
-  const pendingOrdersCount = useMemo(() => orders.filter((o) => o.status === "PENDING").length, [orders]);
-  const approvedOrdersCount = useMemo(() => orders.filter((o) => o.status === "APPROVED").length, [orders]);
-  const rejectedOrdersCount = useMemo(() => orders.filter((o) => o.status === "REJECTED").length, [orders]);
+  const pendingOrdersCount = useMemo(() => Array.isArray(orders) ? orders.filter((o) => o?.status === "PENDING").length : 0, [orders]);
+  const approvedOrdersCount = useMemo(() => Array.isArray(orders) ? orders.filter((o) => o?.status === "APPROVED").length : 0, [orders]);
+  const rejectedOrdersCount = useMemo(() => Array.isArray(orders) ? orders.filter((o) => o?.status === "REJECTED").length : 0, [orders]);
 
   const liveVisitorsCount = visitors?.liveCount ?? 0;
   const totalVisitorsCount = visitors?.uniqueVisitors ?? 0;
@@ -513,7 +569,7 @@ export default function OpsOverviewPage() {
         <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-center shrink-0">
           {lastRefreshed && (
             <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">
-              آخر تحديث: {lastRefreshed.toLocaleTimeString("ar-DZ")}
+              آخر تحديث: {safeFormatTime(lastRefreshed)}
             </span>
           )}
 
@@ -948,13 +1004,7 @@ export default function OpsOverviewPage() {
                         )}
 
                         <span className="text-[11px] text-slate-500 font-mono">
-                          {new Date(order.createdAt).toLocaleDateString("ar-DZ", {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {safeFormatDateTime(order.createdAt)}
                         </span>
                       </div>
 
@@ -1356,7 +1406,7 @@ export default function OpsOverviewPage() {
                       <span className="font-mono text-cyan-300 font-bold">{hit.path}</span>
                     </div>
                     <span className="text-[11px] font-mono text-slate-500">
-                      {new Date(hit.timestamp).toLocaleTimeString("ar-DZ")}
+                      {safeFormatTime(hit.timestamp)}
                     </span>
                   </div>
                 ))}
