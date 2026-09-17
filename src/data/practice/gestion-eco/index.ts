@@ -7,6 +7,10 @@ import {
   gestionEcoT1Practice,
   GESTION_ECO_T1_PRACTICE_QUESTIONS,
 } from "./trimestre1-accounting";
+import {
+  gestionEcoT1FullPractice,
+  GESTION_ECO_T1_FULL_PRACTICE_QUESTIONS,
+} from "./trimestre1-full";
 
 /**
  * BAC Mastery — Gestion & Économie Practice & Retest Question Bank
@@ -15,6 +19,7 @@ import {
  */
 export const GESTION_ECO_PRACTICE_QUESTIONS: PracticeQuestion[] = [
   ...GESTION_ECO_T1_PRACTICE_QUESTIONS,
+  ...GESTION_ECO_T1_FULL_PRACTICE_QUESTIONS,
 
   // ===========================================================================
   // 1. ACCOUNTING & FINANCE - AUTHENTIC INTERACTIVE EXERCISES
@@ -527,4 +532,9 @@ export function getGestionEcoRetestQuestionForSkill(skillId: string): PracticeQu
   return GESTION_ECO_PRACTICE_QUESTIONS.find((q) => q.skillId === skillId && q.isRetestVariant);
 }
 
-export { gestionEcoT1Practice, GESTION_ECO_T1_PRACTICE_QUESTIONS };
+export {
+  gestionEcoT1Practice,
+  GESTION_ECO_T1_PRACTICE_QUESTIONS,
+  gestionEcoT1FullPractice,
+  GESTION_ECO_T1_FULL_PRACTICE_QUESTIONS,
+};
