@@ -9,7 +9,7 @@ import { Container } from "@/components/ui/Container";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { getStudentAccess } from "@/lib/access";
+import { getStudentAccess, formatTrialExpiryDate } from "@/lib/access";
 import { getPaymentProvider, PaymentPlan, CheckoutResult, markPaymentPendingVerification } from "@/lib/payment";
 import { getAuthToken } from "@/lib/operations/client-api";
 import { StudentService } from "@/lib/services";
@@ -36,6 +36,7 @@ import {
   UploadCloud,
   FileCheck,
   AlertCircle,
+  AlertTriangle,
   Copy,
   Check,
   ExternalLink,
@@ -218,6 +219,46 @@ export default function SubscribePage() {
   return (
     <AppShell activeNav="home">
       <Container size="sm" className="py-6 sm:py-10 space-y-6">
+        {/* Active Subscription Banner if Already Paid */}
+        {access.status === "PAID_ACTIVE" ? (
+          <div className="p-6 rounded-3xl bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-emerald-500/15 border border-emerald-500/30 text-center space-y-3 shadow-clay">
+            <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center mx-auto shadow-sm">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+            <h2 className="text-xl font-black text-theme-text">
+              {isAr ? "أنت مشترك رسمي في BAC Mastery Pro!" : "Vous êtes abonné à BAC Mastery Pro !"}
+            </h2>
+            <p className="text-xs sm:text-sm text-theme-secondary max-w-md mx-auto">
+              {isAr
+                ? `اشتراكك مفعل بالكامل${access.subscriptionExpiresAt ? ` حتى ${formatTrialExpiryDate(access.subscriptionExpiresAt, isAr)}` : ""}. جميع المواد والمهام التكيفية مفتوحة أمامك.`
+                : `Votre abonnement est actif.`}
+            </p>
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full font-bold text-xs bg-[var(--color-primary)] text-white shadow-md hover:opacity-95 transition-all"
+            >
+              <span>{isAr ? "الانتقال إلى لوحة التلميذ" : "Aller au tableau de bord"}</span>
+            </Link>
+          </div>
+        ) : null}
+
+        {/* Rejected Receipt Banner */}
+        {(profile as any)?.access_status === "REJECTED" ? (
+          <div className="p-5 rounded-3xl bg-rose-500/15 border border-rose-500/30 text-center space-y-2 shadow-clay">
+            <div className="w-10 h-10 rounded-2xl bg-rose-500/20 text-rose-500 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <h3 className="font-bold text-sm text-rose-900 dark:text-rose-100">
+              {isAr ? "تم رفض وصل الدفع السابق" : "Reçu précédent rejeté"}
+            </h3>
+            <p className="text-xs text-rose-700 dark:text-rose-300">
+              {isAr
+                ? `سبب الرفض: ${(profile as any)?.rejection_reason || "الوصل غير واضح أو لم يتم تأكيد العملية"}. يمكنك اختيار الباقة وإعادة رفع وصل صحيح بالأسفل.`
+                : `Raison: ${(profile as any)?.rejection_reason || "Reçu non confirmé"}.`}
+            </p>
+          </div>
+        ) : null}
+
         {/* Header Banner */}
         <div className="text-center space-y-3">
           <Badge variant="primary" size="md" className="mx-auto flex items-center gap-1.5 w-fit">

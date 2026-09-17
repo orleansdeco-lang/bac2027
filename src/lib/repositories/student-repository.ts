@@ -63,9 +63,15 @@ export const StudentRepository = {
           const createdAt = data.created_at || localFallback.created_at || localFallback.createdAt || new Date().toISOString();
           const trialStarted = data.trial_started_at || data.raw_draft?.trial_started_at || createdAt;
           const trialExpires = data.trial_expires_at || calculateTrialExpiration(new Date(createdAt)).toISOString();
-          // Server authoritative access status: localFallback MUST NOT be able to grant PAID
-          const accessStatus = data.access_status || (localFallback.access_status === "PAID" ? "TRIAL" : localFallback.access_status) || "TRIAL";
-          const plan = data.plan || (localFallback.plan === "PAID" ? "PILOT_TRIAL" : localFallback.plan) || "PILOT_TRIAL";
+          // Server authoritative access status: localFallback can be PAID if isServerAuthoritativePaid is true
+          const accessStatus =
+            data.access_status ||
+            (localFallback.isServerAuthoritativePaid ? "PAID" : (localFallback.access_status === "PAID" ? "TRIAL" : localFallback.access_status)) ||
+            "TRIAL";
+          const plan =
+            data.plan ||
+            (localFallback.isServerAuthoritativePaid ? (localFallback.plan || "season") : (localFallback.plan === "PAID" ? "PILOT_TRIAL" : localFallback.plan)) ||
+            "PILOT_TRIAL";
 
           const merged: any = {
             ...localFallback,

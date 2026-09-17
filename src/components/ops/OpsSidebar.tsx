@@ -58,7 +58,12 @@ const navGroups: NavGroup[] = [
   },
 ];
 
-export function OpsSidebar() {
+interface OpsSidebarProps {
+  className?: string;
+  onClose?: () => void;
+}
+
+export function OpsSidebar({ className = "", onClose }: OpsSidebarProps) {
   const pathname = usePathname();
   const { user, signOut } = useAuth();
 
@@ -83,7 +88,7 @@ export function OpsSidebar() {
     : "OP";
 
   return (
-    <aside className="w-64 bg-[#080D1A]/95 backdrop-blur-2xl border-r border-[#1E293B]/80 flex flex-col justify-between shrink-0 select-none min-h-screen text-slate-200 shadow-2xl relative z-20">
+    <aside className={`w-64 bg-[#080D1A]/95 backdrop-blur-2xl border-r border-[#1E293B]/80 flex flex-col justify-between shrink-0 select-none min-h-screen text-slate-200 shadow-2xl relative z-20 ${className}`}>
       <div>
         {/* Brand Header */}
         <div className="px-5 py-5 border-b border-[#1E293B]/80 bg-gradient-to-b from-[#0D1526]/80 to-transparent">
@@ -110,6 +115,16 @@ export function OpsSidebar() {
                 </div>
               </div>
             </div>
+
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                title="إغلاق القائمة"
+              >
+                <ChevronRight className="w-5 h-5 rotate-180" />
+              </button>
+            )}
           </div>
         </div>
 

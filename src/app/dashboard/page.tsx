@@ -199,7 +199,35 @@ export default function DashboardPage() {
         {/* ================================================================= */}
         {/* TRIAL NOTIFICATION / STATUS BANNER                                */}
         {/* ================================================================= */}
-        {access.status === "TRIAL_EXPIRED" ? (
+        {(profile as any)?.access_status === "REJECTED" || (profile as any)?.accessStatus === "REJECTED" ? (
+          <div
+            data-testid="dashboard-rejected-banner"
+            className="p-4 sm:p-5 rounded-3xl bg-rose-500/10 dark:bg-rose-950/30 border border-rose-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-clay animate-fade-in"
+          >
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-2xl bg-rose-500/20 text-rose-500 flex items-center justify-center shrink-0 shadow-sm">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div className="text-xs sm:text-sm">
+                <span className="font-bold text-rose-800 dark:text-rose-200 block">
+                  {isAr ? "تم رفض وصل الدفع المرسل" : "Reçu de paiement rejeté"}
+                </span>
+                <span className="text-rose-700 dark:text-rose-300 text-xs">
+                  {isAr
+                    ? `السبب: ${(profile as any)?.rejection_reason || (profile as any)?.rejectionReason || "الوصل غير واضح أو لم يتم تأكيد التحويل"}`
+                    : `Raison: ${(profile as any)?.rejection_reason || "Reçu illisible ou non confirmé"}`}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Link href="/subscribe" className="shrink-0 flex-1 sm:flex-initial">
+                <Button size="sm" variant="primary" className="w-full sm:w-auto rounded-full font-bold shadow-md bg-rose-600 hover:bg-rose-700 text-white">
+                  <span>{isAr ? "إعادة إرسال الوصل" : "Renvoyer le reçu"}</span>
+                </Button>
+              </Link>
+            </div>
+          </div>
+        ) : access.status === "TRIAL_EXPIRED" ? (
           <div
             data-testid="dashboard-trial-banner"
             className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/15 via-rose-500/10 to-amber-500/15 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-clay animate-fade-in"

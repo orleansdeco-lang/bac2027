@@ -8,6 +8,7 @@ import {
   GraduationCap,
   AlertTriangle,
   CheckCircle2,
+  XCircle,
   Activity,
   ArrowRight,
   RefreshCw,
@@ -23,914 +24,1723 @@ import {
   Clock,
   Send,
   UserCheck,
+  Search,
+  Filter,
+  Eye,
+  Tag,
+  Calendar,
+  Smartphone,
+  Monitor,
+  ExternalLink,
+  ChevronRight,
+  Check,
+  X,
+  PlusCircle,
+  ShieldCheck,
+  Phone,
+  Mail,
+  FileText,
+  Percent,
 } from "lucide-react";
-import { OperationsOverviewKPIs } from "@/lib/operations/types";
+import {
+  OperationsOverviewKPIs,
+  PaymentOrder,
+  SubscriptionPlan,
+  StudentOperationalSummary,
+} from "@/lib/operations/types";
 import { opsFetch } from "@/lib/operations/client-api";
 
-type CockpitTab = "all" | "commercial" | "learning" | "system";
+type CockpitTab = "pulse" | "orders" | "pricing" | "visitors" | "students";
+
+interface DailyVisitorStat {
+  date: string;
+  totalViews: number;
+  uniqueVisitors: number;
+  mobileViews: number;
+  desktopViews: number;
+  topRoutes: Array<{ route: string; count: number }>;
+}
+
+interface VisitorAnalyticsData {
+  liveCount: number;
+  totalHits: number;
+  uniqueVisitors: number;
+  dailyStats: DailyVisitorStat[];
+  deviceStats: { mobile: number; desktop: number; tablet: number };
+  recentHits: Array<{
+    id: string;
+    path: string;
+    visitorId: string;
+    timestamp: string;
+    deviceType: string;
+    referrer?: string;
+  }>;
+}
 
 export default function OpsOverviewPage() {
-  const [kpis, setKpis] = useState<OperationsOverviewKPIs | null>(null);
+  // Navigation
+  const [activeTab, setActiveTab] = useState<CockpitTab>("pulse");
   const [loading, setLoading] = useState(true);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
-  const [activeTab, setActiveTab] = useState<CockpitTab>("all");
 
-  async function fetchOverview() {
+  // Core Data States
+  const [kpis, setKpis] = useState<OperationsOverviewKPIs | null>(null);
+  const [orders, setOrders] = useState<PaymentOrder[]>([]);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [visitors, setVisitors] = useState<VisitorAnalyticsData | null>(null);
+  const [students, setStudents] = useState<StudentOperationalSummary[]>([]);
+
+  // Filtering states
+  const [orderStatusFilter, setOrderStatusFilter] = useState<string>("PENDING");
+  const [orderSearchQuery, setOrderSearchQuery] = useState("");
+  const [studentSearchQuery, setStudentSearchQuery] = useState("");
+  const [studentStatusFilter, setStudentStatusFilter] = useState("all");
+
+  // Action states
+  const [processingOrderId, setProcessingOrderId] = useState<string | null>(null);
+  const [actionNotice, setActionNotice] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  // Modals
+  const [previewReceiptUrl, setPreviewReceiptUrl] = useState<string | null>(null);
+  const [loadingReceiptId, setLoadingReceiptId] = useState<string | null>(null);
+  const [rejectModalOrder, setRejectModalOrder] = useState<PaymentOrder | null>(null);
+  const [rejectReason, setRejectReason] = useState("إيصال غير واضح أو غير مكتمل");
+  const [customRejectReason, setCustomRejectReason] = useState("");
+
+  // Plan editing states
+  const [editingPlans, setEditingPlans] = useState<{ [planId: string]: { price_dzd: number; duration_months: number; active: boolean } }>({});
+  const [savingPlanId, setSavingPlanId] = useState<string | null>(null);
+
+  // Direct manual activation modal
+  const [directStudentId, setDirectStudentId] = useState("");
+  const [directPlan, setDirectPlan] = useState<"season" | "monthly">("season");
+  const [isActivatingDirect, setIsActivatingDirect] = useState(false);
+  const [showDirectModal, setShowDirectModal] = useState(false);
+
+  // ─── Fetch All Operations Data ─────────────────────────────────────────────
+  async function fetchAllData() {
     setLoading(true);
+    setActionNotice(null);
+
     try {
-      const res = await opsFetch("/api/ops/overview");
-      if (res.ok) {
-        const data = await res.json();
-        if (data?.kpis) {
-          setKpis(data.kpis);
-          setLastRefreshed(new Date());
+      const [kpisRes, ordersRes, plansRes, visitorsRes, studentsRes] = await Promise.all([
+        opsFetch("/api/ops/overview").catch(() => null),
+        opsFetch("/api/ops/payments").catch(() => null),
+        opsFetch("/api/ops/subscriptions").catch(() => null),
+        opsFetch("/api/ops/analytics/visitors?days=30").catch(() => null),
+        opsFetch("/api/ops/students").catch(() => null),
+      ]);
+
+      if (kpisRes && kpisRes.ok) {
+        const kpisData = await kpisRes.json();
+        if (kpisData?.kpis) setKpis(kpisData.kpis);
+      }
+
+      if (ordersRes && ordersRes.ok) {
+        const ordersData = await ordersRes.json();
+        if (ordersData?.orders) setOrders(ordersData.orders);
+      }
+
+      if (plansRes && plansRes.ok) {
+        const plansData = await plansRes.json();
+        if (plansData?.plans) {
+          setPlans(plansData.plans);
+          // Initialize edit form buffer
+          const map: { [id: string]: { price_dzd: number; duration_months: number; active: boolean } } = {};
+          plansData.plans.forEach((p: SubscriptionPlan) => {
+            map[p.id] = {
+              price_dzd: p.price_dzd,
+              duration_months: p.duration_months,
+              active: p.active !== false,
+            };
+          });
+          setEditingPlans(map);
         }
       }
+
+      if (visitorsRes && visitorsRes.ok) {
+        const visitorsData = await visitorsRes.json();
+        setVisitors(visitorsData);
+      }
+
+      if (studentsRes && studentsRes.ok) {
+        const studentsData = await studentsRes.json();
+        if (studentsData?.students) setStudents(studentsData.students);
+      }
+
+      setLastRefreshed(new Date());
     } catch (err) {
-      console.error("Failed to load overview KPIs:", err);
+      console.error("Ops overview full sync error:", err);
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    fetchOverview();
+    fetchAllData();
+    // Refresh live visitor count every 30 seconds
+    const interval = setInterval(async () => {
+      try {
+        const res = await opsFetch("/api/ops/analytics/visitors?days=7");
+        if (res.ok) {
+          const data = await res.json();
+          setVisitors(data);
+        }
+      } catch {
+        // silent background poll
+      }
+    }, 30000);
+    return () => clearInterval(interval);
   }, []);
 
-  // Derived statistics for Bento presentation
-  const derivedStats = useMemo(() => {
-    const total = kpis?.productStatus?.totalRegistered || 0;
-    const paid = kpis?.productStatus?.activePaidStudents || 0;
-    const onboarded = kpis?.productStatus?.completedOnboarding || 0;
-    const firstAct = kpis?.productStatus?.reachedFirstLearningActivity || 0;
-    const inTrial = kpis?.productStatus?.studentsInTrial || 0;
+  // ─── Order Approval Handler ───────────────────────────────────────────────
+  async function handleApproveOrder(order: PaymentOrder) {
+    if (processingOrderId) return;
+    setProcessingOrderId(order.id);
+    setActionNotice(null);
 
-    const conversionRate = total > 0 ? ((paid / total) * 100).toFixed(1) : "0.0";
-    const onboardingRate = total > 0 ? Math.round((onboarded / total) * 100) : 0;
-    const firstActRate = onboarded > 0 ? Math.round((firstAct / onboarded) * 100) : 0;
+    try {
+      const res = await opsFetch("/api/ops/payments/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: order.id,
+          reason: "تم التحقق والمطابقة اليدوية بنجاح",
+        }),
+      });
 
-    const pendingOrders = kpis?.commercialOverview?.pendingPaymentOrders || 0;
-    const attentionCount = kpis?.attentionItems?.length || 0;
-    const expiringSoon = kpis?.commercialOverview?.subscriptionsExpiringSoon || 0;
+      const data = await res.json();
+      if (res.ok && data?.success) {
+        setActionNotice({
+          type: "success",
+          message: `✓ تم قبول الطلب وتفعيل اشتراك الطالب (${order.studentName || order.userId}) بنجاح!`,
+        });
+        // Optimistically update orders in list
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.id === order.id
+              ? { ...o, status: "APPROVED", resolvedAt: new Date().toISOString() }
+              : o
+          )
+        );
+        // Refresh full overview to reflect updated KPIs
+        opsFetch("/api/ops/overview").then((r) => r.json()).then((d) => d?.kpis && setKpis(d.kpis));
+      } else {
+        setActionNotice({
+          type: "error",
+          message: `فشل قبول الطلب: ${data?.error || "خطأ غير متوقع"}`,
+        });
+      }
+    } catch (err: any) {
+      setActionNotice({ type: "error", message: `تعذر الاتصال بالخادم: ${err?.message}` });
+    } finally {
+      setProcessingOrderId(null);
+    }
+  }
 
-    return {
-      conversionRate,
-      onboardingRate,
-      firstActRate,
-      pendingOrders,
-      attentionCount,
-      expiringSoon,
-    };
-  }, [kpis]);
+  // ─── Order Rejection Handler ───────────────────────────────────────────────
+  async function handleConfirmRejectOrder() {
+    if (!rejectModalOrder) return;
+    setProcessingOrderId(rejectModalOrder.id);
+    setActionNotice(null);
+
+    const finalReason = customRejectReason.trim() || rejectReason;
+
+    try {
+      const res = await opsFetch("/api/ops/payments/reject", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId: rejectModalOrder.id,
+          reason: finalReason,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data?.success) {
+        setActionNotice({
+          type: "success",
+          message: `✓ تم رفض الطلب وإعلام حساب الطالب بالسبب: "${finalReason}"`,
+        });
+        setOrders((prev) =>
+          prev.map((o) =>
+            o.id === rejectModalOrder.id
+              ? { ...o, status: "REJECTED", notes: finalReason, resolvedAt: new Date().toISOString() }
+              : o
+          )
+        );
+        setRejectModalOrder(null);
+        setCustomRejectReason("");
+      } else {
+        setActionNotice({
+          type: "error",
+          message: `فشل الرفض: ${data?.error || "خطأ غير متوقع"}`,
+        });
+      }
+    } catch (err: any) {
+      setActionNotice({ type: "error", message: `تعذر الاتصال بالخادم: ${err?.message}` });
+    } finally {
+      setProcessingOrderId(null);
+    }
+  }
+
+  // ─── View Receipt Modal ───────────────────────────────────────────────────
+  async function handleViewReceipt(orderId: string) {
+    setLoadingReceiptId(orderId);
+    try {
+      const res = await opsFetch(`/api/ops/payments/receipt/view?orderId=${orderId}`);
+      const data = await res.json();
+      if (data?.success && data?.url) {
+        setPreviewReceiptUrl(data.url);
+      } else {
+        alert(data?.error || "تعذر فتح وصل الدفع");
+      }
+    } catch {
+      alert("حدث خطأ أثناء تحميل صورة الوصل");
+    } finally {
+      setLoadingReceiptId(null);
+    }
+  }
+
+  // ─── Save Subscription Plan Price ──────────────────────────────────────────
+  async function handleSavePlanPrice(planId: string) {
+    const edit = editingPlans[planId];
+    if (!edit) return;
+
+    if (edit.price_dzd < 0) {
+      alert("يرجى إدخال سعر صحيح بالدينار الجزائري.");
+      return;
+    }
+
+    setSavingPlanId(planId);
+    setActionNotice(null);
+
+    try {
+      const res = await opsFetch("/api/ops/subscriptions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId,
+          price_dzd: edit.price_dzd,
+          duration_months: edit.duration_months,
+          active: edit.active,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data?.success) {
+        setActionNotice({
+          type: "success",
+          message: `✓ تم تحديث سعر باقة (${planId}) إلى ${edit.price_dzd.toLocaleString()} دج بنجاح! سيظهر السعر الجديد فوراً للطلبة.`,
+        });
+        setPlans((prev) =>
+          prev.map((p) =>
+            p.id === planId
+              ? { ...p, price_dzd: edit.price_dzd, duration_months: edit.duration_months, active: edit.active }
+              : p
+          )
+        );
+      } else {
+        setActionNotice({
+          type: "error",
+          message: `فشل حفظ السعر: ${data?.error || "خطأ غير متوقع"}`,
+        });
+      }
+    } catch (err: any) {
+      setActionNotice({ type: "error", message: `تعذر الاتصال بالخادم: ${err?.message}` });
+    } finally {
+      setSavingPlanId(null);
+    }
+  }
+
+  // ─── Direct Student Activation ────────────────────────────────────────────
+  async function handleDirectActivateStudent(e: React.FormEvent) {
+    e.preventDefault();
+    const cleanId = directStudentId.trim();
+    if (!cleanId) {
+      alert("يرجى إدخال معرف الطالب أو بريده الإلكتروني.");
+      return;
+    }
+
+    setIsActivatingDirect(true);
+    setActionNotice(null);
+
+    const isSeason = directPlan === "season";
+    const planLabel = isSeason ? "سنة دراسية كاملة (Pass Saison)" : "اشتراك شهري (Mensuel)";
+
+    try {
+      const res = await opsFetch(`/api/ops/students/${encodeURIComponent(cleanId)}/extend`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: isSeason ? "custom" : "1_month",
+          days: isSeason ? 365 : 30,
+          plan: directPlan,
+          reason: `تفعيل يدوي مباشر (${planLabel}) عبر لوحة القيادة`,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data?.success) {
+        setActionNotice({
+          type: "success",
+          message: `✓ تم تفعيل اشتراك الطالب (${cleanId}) بنجاح كحساب مدفوع (${planLabel}).`,
+        });
+        setShowDirectModal(false);
+        setDirectStudentId("");
+        fetchAllData();
+      } else {
+        setActionNotice({
+          type: "error",
+          message: `فشل التفعيل المباشر: ${data?.error || "خطأ غير متوقع"}`,
+        });
+      }
+    } catch (err: any) {
+      setActionNotice({ type: "error", message: `تعذر الاتصال بالخادم: ${err?.message}` });
+    } finally {
+      setIsActivatingDirect(false);
+    }
+  }
+
+  // ─── Filtered Orders ───────────────────────────────────────────────────────
+  const filteredOrders = useMemo(() => {
+    return orders.filter((order) => {
+      const matchStatus = orderStatusFilter === "ALL" || order.status === orderStatusFilter;
+      const q = orderSearchQuery.trim().toLowerCase();
+      const matchQuery =
+        !q ||
+        (order.studentName && order.studentName.toLowerCase().includes(q)) ||
+        (order.studentPhone && order.studentPhone.includes(q)) ||
+        (order.studentEmail && order.studentEmail.toLowerCase().includes(q)) ||
+        (order.id && order.id.toLowerCase().includes(q)) ||
+        (order.userId && order.userId.toLowerCase().includes(q));
+      return matchStatus && matchQuery;
+    });
+  }, [orders, orderStatusFilter, orderSearchQuery]);
+
+  // ─── Filtered Students ─────────────────────────────────────────────────────
+  const filteredStudents = useMemo(() => {
+    return students.filter((st) => {
+      const matchStatus =
+        studentStatusFilter === "all" ||
+        (studentStatusFilter === "PAID" && st.accessStatus === "PAID") ||
+        (studentStatusFilter === "TRIAL" && st.accessStatus === "TRIAL") ||
+        (studentStatusFilter === "REJECTED" && st.accessStatus === "REJECTED") ||
+        (studentStatusFilter === "EXPIRED" && st.accessStatus === "EXPIRED");
+
+      const q = studentSearchQuery.trim().toLowerCase();
+      const matchQuery =
+        !q ||
+        (st.fullName && st.fullName.toLowerCase().includes(q)) ||
+        (st.studentPhone && st.studentPhone.includes(q)) ||
+        (st.email && st.email.toLowerCase().includes(q)) ||
+        (st.id && st.id.toLowerCase().includes(q));
+
+      return matchStatus && matchQuery;
+    });
+  }, [students, studentStatusFilter, studentSearchQuery]);
+
+  // Derived counts
+  const pendingOrdersCount = useMemo(() => orders.filter((o) => o.status === "PENDING").length, [orders]);
+  const approvedOrdersCount = useMemo(() => orders.filter((o) => o.status === "APPROVED").length, [orders]);
+  const rejectedOrdersCount = useMemo(() => orders.filter((o) => o.status === "REJECTED").length, [orders]);
+
+  const liveVisitorsCount = visitors?.liveCount ?? 0;
+  const totalVisitorsCount = visitors?.uniqueVisitors ?? 0;
+  const totalPageviewsCount = visitors?.totalHits ?? 0;
 
   return (
-    <div className="min-h-screen bg-[#080D1A] text-slate-100 p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto relative selection:bg-indigo-500/30">
-      {/* Ambient background lighting mesh */}
+    <div className="min-h-screen bg-[#070B14] text-slate-100 p-3 sm:p-6 lg:p-8 space-y-6 max-w-[1700px] mx-auto relative selection:bg-indigo-500/30">
+      {/* Dynamic Ambient Background */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-        <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-indigo-600/10 rounded-full blur-[120px]" />
-        <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-emerald-600/5 rounded-full blur-[120px]" />
-        <div className="absolute bottom-10 right-10 w-[500px] h-[500px] bg-purple-600/5 rounded-full blur-[120px]" />
+        <div className="absolute top-0 right-1/3 w-[600px] h-[600px] bg-indigo-600/10 rounded-full blur-[140px]" />
+        <div className="absolute top-1/2 left-1/4 w-[600px] h-[600px] bg-emerald-600/5 rounded-full blur-[140px]" />
+        <div className="absolute bottom-10 right-10 w-[500px] h-[500px] bg-amber-600/5 rounded-full blur-[140px]" />
       </div>
 
-      {/* Cockpit Top Bar */}
-      <header className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-5 sm:p-6 rounded-2xl bg-[#0D1526]/80 backdrop-blur-xl border border-[#1E293B]/80 shadow-2xl">
+      {/* Global Notification Banner */}
+      {actionNotice && (
+        <div
+          className={`p-4 rounded-2xl border flex items-center justify-between gap-3 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-300 ${
+            actionNotice.type === "success"
+              ? "bg-emerald-950/80 border-emerald-500/50 text-emerald-200"
+              : "bg-rose-950/80 border-rose-500/50 text-rose-200"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            {actionNotice.type === "success" ? (
+              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            ) : (
+              <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+            )}
+            <span className="text-sm font-semibold">{actionNotice.message}</span>
+          </div>
+          <button
+            onClick={() => setActionNotice(null)}
+            className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
+      {/* Header Bar */}
+      <header className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 p-5 sm:p-6 rounded-3xl bg-[#0C1322]/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl">
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-2.5">
-              Operations Command Cockpit
-            </h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[11px] font-mono font-bold tracking-wide">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center gap-3">
+              <span className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 text-white shadow-lg shadow-indigo-500/20">
+                <ShieldCheck className="w-5 h-5" />
               </span>
-              REALTIME LIVE
-            </span>
+              مركز القيادة والعمليات الموحد
+            </h1>
+
+            {/* Live Visitors Pill */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 text-xs font-mono font-bold tracking-wide shadow-sm">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <span>{liveVisitorsCount} زوار متواجدون الآن</span>
+            </div>
           </div>
           <p className="text-xs text-slate-400 max-w-3xl leading-relaxed">
-            المركز القيادي الموحد لمنصة BAC Mastery: مراقبة التحويلات البيداغوجية، تفعيل الاشتراكات اليدوي عبر واتساب، وتدفق الاختبارات التوأمية.
+            التحكم الشامل في الاشتراكات، مطابقة إيصالات BaridiMob/CCP، تعديل أسعار الباقات، ومراقبة تدفق الزوار الحية واليومية.
           </p>
         </div>
 
-        {/* Header Actions */}
+        {/* Header Action Controls */}
         <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-center shrink-0">
           {lastRefreshed && (
-            <span className="text-[11px] text-slate-500 font-mono hidden sm:inline">
-              آخر تحديث: {lastRefreshed.toLocaleTimeString()}
+            <span className="text-[11px] text-slate-400 font-mono hidden sm:inline">
+              آخر تحديث: {lastRefreshed.toLocaleTimeString("ar-DZ")}
             </span>
           )}
 
           <button
-            onClick={fetchOverview}
+            onClick={fetchAllData}
             disabled={loading}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#131D31] hover:bg-[#1A2640] border border-[#1E293B] text-xs font-semibold text-slate-200 transition-all shadow-sm active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#131D31] hover:bg-[#1A2640] border border-slate-700 text-xs font-semibold text-slate-200 transition-all shadow-sm active:scale-95 disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 text-indigo-400 ${loading ? "animate-spin" : ""}`} />
             <span>{loading ? "جارِ التحديث..." : "تحديث فوري"}</span>
           </button>
 
-          <Link
-            href="/ops/subscriptions"
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-semibold transition-all shadow-sm group"
+          <button
+            onClick={() => setShowDirectModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition-all shadow-lg shadow-emerald-600/20 active:scale-95"
           >
-            <Zap className="w-3.5 h-3.5 text-emerald-400" />
+            <Zap className="w-3.5 h-3.5" />
             <span>تفعيل اشتراك يدوي</span>
-            <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
+          </button>
         </div>
       </header>
 
-      {/* WHATSAPP MANUAL PAYMENT WORKFLOW BANNER */}
-      <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-[#0D1526]/90 to-[#0D1526]/70 border border-emerald-500/30 backdrop-blur-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
-        <div className="flex items-start sm:items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-            <MessageCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-white">مسار التحقق والتفعيل اليدوي عبر واتساب</span>
-              <span className="text-[10px] px-2 py-0.2 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 font-mono">
-                WhatsApp Active
-              </span>
+      {/* Main Navigation Tabs */}
+      <nav className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none border-b border-slate-800/80">
+        <button
+          onClick={() => setActiveTab("pulse")}
+          className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all shrink-0 border ${
+            activeTab === "pulse"
+              ? "bg-indigo-600/20 text-indigo-300 border-indigo-500/40 shadow-lg shadow-indigo-600/10"
+              : "bg-[#0C1322]/60 text-slate-400 hover:text-slate-200 border-transparent hover:border-slate-800"
+          }`}
+        >
+          <Activity className="w-4 h-4" />
+          <span>⚡ النبض والملخص القيادي</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("orders")}
+          className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all shrink-0 border relative ${
+            activeTab === "orders"
+              ? "bg-emerald-600/20 text-emerald-300 border-emerald-500/40 shadow-lg shadow-emerald-600/10"
+              : "bg-[#0C1322]/60 text-slate-400 hover:text-slate-200 border-transparent hover:border-slate-800"
+          }`}
+        >
+          <CreditCard className="w-4 h-4" />
+          <span>💳 طلبات الدفع والاشتراك</span>
+          {pendingOrdersCount > 0 && (
+            <span className="px-2 py-0.5 rounded-full bg-amber-500 text-black font-black text-[10px] animate-pulse">
+              {pendingOrdersCount}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => setActiveTab("pricing")}
+          className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all shrink-0 border ${
+            activeTab === "pricing"
+              ? "bg-amber-600/20 text-amber-300 border-amber-500/40 shadow-lg shadow-amber-600/10"
+              : "bg-[#0C1322]/60 text-slate-400 hover:text-slate-200 border-transparent hover:border-slate-800"
+          }`}
+        >
+          <Tag className="w-4 h-4" />
+          <span>🏷️ تغيير أسعار باقات الاشتراك</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("visitors")}
+          className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all shrink-0 border ${
+            activeTab === "visitors"
+              ? "bg-cyan-600/20 text-cyan-300 border-cyan-500/40 shadow-lg shadow-cyan-600/10"
+              : "bg-[#0C1322]/60 text-slate-400 hover:text-slate-200 border-transparent hover:border-slate-800"
+          }`}
+        >
+          <Users className="w-4 h-4" />
+          <span>👥 تحليلات الزوار بالتفصيل وبالتاريخ</span>
+          <span className="px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-[10px] font-mono">
+            {liveVisitorsCount} حي
+          </span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("students")}
+          className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl text-xs font-bold transition-all shrink-0 border ${
+            activeTab === "students"
+              ? "bg-purple-600/20 text-purple-300 border-purple-500/40 shadow-lg shadow-purple-600/10"
+              : "bg-[#0C1322]/60 text-slate-400 hover:text-slate-200 border-transparent hover:border-slate-800"
+          }`}
+        >
+          <GraduationCap className="w-4 h-4" />
+          <span>🎓 دليل الطلاب وحالة الحسابات</span>
+        </button>
+      </nav>
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* TAB 1: النبض والملخص القيادي (Pulse & Cockpit)                      */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {activeTab === "pulse" && (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          {/* Quick WhatsApp Support Banner */}
+          <div className="p-5 rounded-3xl bg-gradient-to-r from-emerald-950/50 via-[#0C1322]/90 to-[#0C1322]/70 border border-emerald-500/30 backdrop-blur-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xl">
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                <MessageCircle className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-white">مسار التحقق والتفعيل اليدوي السريع عبر واتساب</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono font-bold">
+                    WhatsApp Active
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400 mt-1">
+                  عند قبول أي طلب، يتم ترقية حساب الطالب فورياً إلى وضع الاشتراك المدفوع (PAID) بدون الحاجة لإعادة التسجيل أو مسح التخزين المؤقت.
+                </p>
+              </div>
             </div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              يتم استلام الإيصالات (BaridiMob / CCP) مباشرة عبر واتساب ثم إطلاق وتمديد الاشتراك بنقرة واحدة من لوحة التحكم.
-            </p>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => setActiveTab("orders")}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/20"
+              >
+                <span>طابور المراجعة ({pendingOrdersCount})</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
+
+          {/* Hero 4 Bento Grid */}
+          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Card 1: Pending Orders */}
+            <div
+              onClick={() => {
+                setOrderStatusFilter("PENDING");
+                setActiveTab("orders");
+              }}
+              className="cursor-pointer relative overflow-hidden rounded-3xl bg-gradient-to-br from-amber-950/30 via-[#0C1322]/90 to-[#0C1322]/60 backdrop-blur-2xl border border-amber-500/30 p-5 shadow-xl hover:border-amber-500/60 transition-all duration-300 group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                  <Clock className="w-4 h-4" />
+                  طلبات تنتظر المعاينة
+                </span>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 font-mono font-bold">
+                  يحتاج تدخلاً
+                </span>
+              </div>
+              <div className="mt-4 flex items-baseline justify-between">
+                <div className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-white">
+                  {pendingOrdersCount}
+                </div>
+                <span className="text-xs font-medium text-slate-400 group-hover:text-amber-300 transition-colors flex items-center gap-1">
+                  معاينة الآن <ChevronRight className="w-3 h-3" />
+                </span>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                <span>المقبولة إجمالاً:</span>
+                <span className="font-mono font-bold text-emerald-400">{approvedOrdersCount}</span>
+              </div>
+            </div>
+
+            {/* Card 2: Active Paid Students */}
+            <div
+              onClick={() => {
+                setStudentStatusFilter("PAID");
+                setActiveTab("students");
+              }}
+              className="cursor-pointer relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-950/30 via-[#0C1322]/90 to-[#0C1322]/60 backdrop-blur-2xl border border-emerald-500/30 p-5 shadow-xl hover:border-emerald-500/60 transition-all duration-300 group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+                  <ShieldCheck className="w-4 h-4" />
+                  الطلاب المشتركون (Paid)
+                </span>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 font-mono font-bold">
+                  ساري المفعول
+                </span>
+              </div>
+              <div className="mt-4 flex items-baseline justify-between">
+                <div className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-white">
+                  {kpis?.productStatus?.activePaidStudents ?? 0}
+                </div>
+                <span className="text-xs text-slate-400">حساب نشط</span>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                <span>إجمالي المسجلين:</span>
+                <span className="font-mono font-bold text-white">{kpis?.productStatus?.totalRegistered ?? 0}</span>
+              </div>
+            </div>
+
+            {/* Card 3: Live Visitors */}
+            <div
+              onClick={() => setActiveTab("visitors")}
+              className="cursor-pointer relative overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-950/30 via-[#0C1322]/90 to-[#0C1322]/60 backdrop-blur-2xl border border-cyan-500/30 p-5 shadow-xl hover:border-cyan-500/60 transition-all duration-300 group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                  <Users className="w-4 h-4" />
+                  زوار المنصة الحالية
+                </span>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/30 font-mono font-bold">
+                  مباشر 15m
+                </span>
+              </div>
+              <div className="mt-4 flex items-baseline justify-between">
+                <div className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-cyan-300 flex items-center gap-2">
+                  <span>{liveVisitorsCount}</span>
+                  <span className="text-xs font-mono font-normal text-slate-400">متواجد</span>
+                </div>
+                <span className="text-xs font-medium text-slate-400 group-hover:text-cyan-300 transition-colors flex items-center gap-1">
+                  التفاصيل <ChevronRight className="w-3 h-3" />
+                </span>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                <span>المشاهدات الكلية:</span>
+                <span className="font-mono font-bold text-white">{totalPageviewsCount.toLocaleString()}</span>
+              </div>
+            </div>
+
+            {/* Card 4: Trial Students */}
+            <div
+              onClick={() => {
+                setStudentStatusFilter("TRIAL");
+                setActiveTab("students");
+              }}
+              className="cursor-pointer relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-950/30 via-[#0C1322]/90 to-[#0C1322]/60 backdrop-blur-2xl border border-indigo-500/30 p-5 shadow-xl hover:border-indigo-500/60 transition-all duration-300 group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4" />
+                  في التجربة المجانية (Trial)
+                </span>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 font-mono font-bold">
+                  72 ساعة
+                </span>
+              </div>
+              <div className="mt-4 flex items-baseline justify-between">
+                <div className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-white">
+                  {kpis?.productStatus?.studentsInTrial ?? 0}
+                </div>
+                <span className="text-xs text-slate-400">طالب</span>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                <span>أكملوا التهيئة:</span>
+                <span className="font-mono font-bold text-indigo-300">
+                  {kpis?.productStatus?.completedOnboarding ?? 0}
+                </span>
+              </div>
+            </div>
+          </section>
+
+          {/* Quick Plans & Pricing Overview Block */}
+          <section className="p-6 rounded-3xl bg-[#0C1322]/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                  <Tag className="w-5 h-5 text-amber-400" />
+                  أسعار الاشتراكات المطبقة حالياً على المنصة
+                </h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  تستطيع تعديل هذه الأسعار مباشرة وتطبيقها فوراً دون الحاجة لتعديل الكود البرمجي.
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveTab("pricing")}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all self-start sm:self-auto"
+              >
+                <span>تعديل الأسعار الآن</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {plans.map((p) => (
+                <div
+                  key={p.id}
+                  className="p-5 rounded-2xl bg-[#111A2E]/80 border border-slate-700/60 flex items-center justify-between"
+                >
+                  <div className="space-y-1">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider font-mono">
+                      {p.id === "season" ? "Pass Saison BAC 2026" : "Abonnement Mensuel"}
+                    </span>
+                    <h3 className="text-lg font-black text-white">{p.name}</h3>
+                    <p className="text-xs text-slate-400">
+                      المدة: {p.duration_months} أشهر | الحالة:{" "}
+                      {p.active !== false ? (
+                        <span className="text-emerald-400 font-bold">مفتوح للطلب</span>
+                      ) : (
+                        <span className="text-rose-400 font-bold">مغلق مؤقتاً</span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-black font-mono text-amber-400">
+                      {p.price_dzd.toLocaleString()} دج
+                    </div>
+                    <span className="text-[11px] text-slate-400">سعر الاشتراك الحالي</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
         </div>
+      )}
 
-        <div className="flex items-center gap-2 shrink-0">
-          <Link
-            href="/ops/students"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#131D31] hover:bg-[#1A2640] border border-[#1E293B] text-xs font-medium text-slate-200 transition-colors"
-          >
-            <Users className="w-3.5 h-3.5 text-indigo-400" />
-            <span>دليل الطلاب</span>
-          </Link>
-          <Link
-            href="/ops/finance"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-all shadow-md shadow-emerald-600/20"
-          >
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>طابور المراجعة ({derivedStats.pendingOrders})</span>
-          </Link>
-        </div>
-      </div>
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* TAB 2: طلبات الدفع والاشتراك (Payment Orders Management)             */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {activeTab === "orders" && (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          {/* Filters & Search Header */}
+          <div className="p-5 rounded-3xl bg-[#0C1322]/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Status Pills */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setOrderStatusFilter("PENDING")}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${
+                  orderStatusFilter === "PENDING"
+                    ? "bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-md"
+                    : "bg-[#111A2E] text-slate-400 border-slate-800 hover:text-white"
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>قيد الانتظار ({pendingOrdersCount})</span>
+              </button>
 
-      {/* HERO METRIC BAR (Primary Bento Tier) */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Hero Card 1: Active Paid */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-950/30 via-[#0D1526]/90 to-[#0D1526]/60 backdrop-blur-xl border border-emerald-500/30 p-5 shadow-xl hover:border-emerald-500/50 transition-all duration-300 group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-400/90 flex items-center gap-1.5">
-              <ShieldAlert className="w-4 h-4 text-emerald-400" />
-              المشتركون المفعلون (Paid)
-            </span>
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 font-mono font-semibold">
-              {derivedStats.conversionRate}% نسبة التحويل
-            </span>
-          </div>
+              <button
+                onClick={() => setOrderStatusFilter("APPROVED")}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${
+                  orderStatusFilter === "APPROVED"
+                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-md"
+                    : "bg-[#111A2E] text-slate-400 border-slate-800 hover:text-white"
+                }`}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>المقبولة والمفعلة ({approvedOrdersCount})</span>
+              </button>
 
-          <div className="mt-3 flex items-baseline justify-between">
-            <div className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-white">
-              {kpis?.productStatus?.activePaidStudents ?? "0"}
+              <button
+                onClick={() => setOrderStatusFilter("REJECTED")}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${
+                  orderStatusFilter === "REJECTED"
+                    ? "bg-rose-500/20 text-rose-300 border-rose-500/50 shadow-md"
+                    : "bg-[#111A2E] text-slate-400 border-slate-800 hover:text-white"
+                }`}
+              >
+                <XCircle className="w-3.5 h-3.5" />
+                <span>المرفوضة ({rejectedOrdersCount})</span>
+              </button>
+
+              <button
+                onClick={() => setOrderStatusFilter("ALL")}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${
+                  orderStatusFilter === "ALL"
+                    ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/50 shadow-md"
+                    : "bg-[#111A2E] text-slate-400 border-slate-800 hover:text-white"
+                }`}
+              >
+                <span>جميع الطلبات ({orders.length})</span>
+              </button>
             </div>
-            <div className="text-right">
-              <span className="text-xs font-medium text-slate-400">اشتراك نشط</span>
-            </div>
-          </div>
 
-          <div className="mt-4 pt-3 border-t border-[#1E293B]/80 flex items-center justify-between text-xs text-slate-400">
-            <span>الاشتراكات السارية:</span>
-            <span className="font-mono font-semibold text-emerald-400">
-              {kpis?.commercialOverview?.activeSubscriptions ?? 0}
-            </span>
-          </div>
-
-          <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
-            <span>تنتهي خلال 24 ساعة:</span>
-            <span className={`font-mono font-semibold ${derivedStats.expiringSoon > 0 ? "text-amber-400 animate-pulse" : "text-slate-400"}`}>
-              {derivedStats.expiringSoon}
-            </span>
-          </div>
-
-          <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:scale-125 transition-transform" />
-        </div>
-
-        {/* Hero Card 2: Total Registered */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-950/30 via-[#0D1526]/90 to-[#0D1526]/60 backdrop-blur-xl border border-indigo-500/30 p-5 shadow-xl hover:border-indigo-500/50 transition-all duration-300 group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-indigo-400/90 flex items-center gap-1.5">
-              <Users className="w-4 h-4 text-indigo-400" />
-              إجمالي الطلاب المسجلين
-            </span>
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 font-mono font-semibold">
-              {derivedStats.onboardingRate}% أكملوا التسجيل
-            </span>
-          </div>
-
-          <div className="mt-3 flex items-baseline justify-between">
-            <div className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-white">
-              {kpis?.productStatus?.totalRegistered ?? "0"}
-            </div>
-            <div className="text-right">
-              <span className="text-xs font-medium text-slate-400">كل الحسابات</span>
-            </div>
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-[#1E293B]/80">
-            <div className="flex items-center justify-between text-xs text-slate-400 mb-1">
-              <span>إكمال اختيار الشعبة:</span>
-              <span className="font-mono font-semibold text-white">
-                {kpis?.productStatus?.completedOnboarding ?? 0} / {kpis?.productStatus?.totalRegistered ?? 0}
-              </span>
-            </div>
-            <div className="w-full bg-[#131D31] h-1.5 rounded-full overflow-hidden">
-              <div
-                className="bg-indigo-500 h-full rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(derivedStats.onboardingRate, 100)}%` }}
+            {/* Search Input */}
+            <div className="relative w-full md:w-80">
+              <Search className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="ابحث باسم الطالب، الهاتف، الإيميل..."
+                value={orderSearchQuery}
+                onChange={(e) => setOrderSearchQuery(e.target.value)}
+                className="w-full pl-4 pr-10 py-2.5 rounded-xl bg-[#111A2E] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-colors"
               />
             </div>
           </div>
 
-          <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
-            <span>في الفترة التجريبية (72h):</span>
-            <span className="font-mono font-semibold text-blue-400">
-              {kpis?.productStatus?.studentsInTrial ?? 0}
-            </span>
-          </div>
-
-          <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-indigo-500/10 rounded-full blur-2xl group-hover:scale-125 transition-transform" />
-        </div>
-
-        {/* Hero Card 3: Today's Orders & Flow */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-950/30 via-[#0D1526]/90 to-[#0D1526]/60 backdrop-blur-xl border border-amber-500/30 p-5 shadow-xl hover:border-amber-500/50 transition-all duration-300 group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-400/90 flex items-center gap-1.5">
-              <CreditCard className="w-4 h-4 text-amber-400" />
-              تدفق طلبات اليوم
-            </span>
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 font-mono font-semibold">
-              {derivedStats.pendingOrders} بانتظار التأكيد
-            </span>
-          </div>
-
-          <div className="mt-3 flex items-baseline justify-between">
-            <div className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-white">
-              {kpis?.todayDetailed?.newPaymentOrdersToday ?? "0"}
+          {/* Orders Cards Grid */}
+          {filteredOrders.length === 0 ? (
+            <div className="p-12 text-center rounded-3xl bg-[#0C1322]/80 border border-slate-800 text-slate-400 space-y-2">
+              <CreditCard className="w-10 h-10 mx-auto text-slate-600 mb-2" />
+              <p className="text-sm font-bold text-white">لا توجد طلبات تطابق هذا التصنيف</p>
+              <p className="text-xs text-slate-500">جرب تغيير حالة الفلترة أو مسح عبارة البحث</p>
             </div>
-            <div className="text-right">
-              <span className="text-xs font-medium text-slate-400">طلب جديد اليوم</span>
-            </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {filteredOrders.map((order) => {
+                const isPending = order.status === "PENDING";
+                const isApproved = order.status === "APPROVED";
+                const isRejected = order.status === "REJECTED";
+                const isProcessing = processingOrderId === order.id;
 
-          <div className="mt-4 pt-3 border-t border-[#1E293B]/80 flex items-center justify-between text-xs">
-            <span className="text-slate-400">المفعلة اليوم:</span>
-            <span className="font-mono font-semibold text-emerald-400">
-              +{kpis?.todayDetailed?.approvedPaymentsToday ?? 0}
-            </span>
-          </div>
+                // Format whatsapp link
+                const cleanPhone = (order.studentPhone || "").replace(/[^0-9]/g, "");
+                const waNumber = cleanPhone.startsWith("0") ? `213${cleanPhone.slice(1)}` : cleanPhone;
+                const waMessage = encodeURIComponent(
+                  `مرحباً ${order.studentName || "عزيزي الطالب"}، معك إدارة منصة BAC Mastery بخصوص طلب اشتراكك (${order.amount.toLocaleString()} دج)...`
+                );
+                const waUrl = waNumber ? `https://wa.me/${waNumber}?text=${waMessage}` : null;
 
-          <div className="mt-1 flex items-center justify-between text-xs">
-            <span className="text-slate-400">المرفوضة اليوم:</span>
-            <span className="font-mono font-semibold text-rose-400">
-              -{kpis?.todayDetailed?.rejectedPaymentsToday ?? 0}
-            </span>
-          </div>
+                return (
+                  <div
+                    key={order.id}
+                    className={`p-5 rounded-3xl border transition-all duration-300 shadow-xl flex flex-col lg:flex-row lg:items-center justify-between gap-5 ${
+                      isPending
+                        ? "bg-[#0C1322]/90 border-amber-500/40 hover:border-amber-500/60"
+                        : isApproved
+                        ? "bg-[#0C1322]/70 border-emerald-500/30 hover:border-emerald-500/50"
+                        : "bg-[#0C1322]/60 border-rose-500/30 hover:border-rose-500/50"
+                    }`}
+                  >
+                    {/* Left: Student & Order Info */}
+                    <div className="flex-1 space-y-2">
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <span className="text-sm sm:text-base font-black text-white">
+                          {order.studentName || "طالب بدون اسم"}
+                        </span>
 
-          <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl group-hover:scale-125 transition-transform" />
-        </div>
+                        {/* Status Badge */}
+                        {isPending && (
+                          <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[11px] font-bold">
+                            قيد المراجعة
+                          </span>
+                        )}
+                        {isApproved && (
+                          <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] font-bold flex items-center gap-1">
+                            <Check className="w-3 h-3" /> اشتراك مفعل ومؤكد
+                          </span>
+                        )}
+                        {isRejected && (
+                          <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[11px] font-bold flex items-center gap-1">
+                            <X className="w-3 h-3" /> طلب مرفوض
+                          </span>
+                        )}
 
-        {/* Hero Card 4: Learning Velocity */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-950/30 via-[#0D1526]/90 to-[#0D1526]/60 backdrop-blur-xl border border-purple-500/30 p-5 shadow-xl hover:border-purple-500/50 transition-all duration-300 group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-purple-400/90 flex items-center gap-1.5">
-              <Activity className="w-4 h-4 text-purple-400" />
-              النشاط البيداغوجي الحي
-            </span>
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/30 font-mono font-semibold">
-              Live Evidence
-            </span>
-          </div>
+                        <span className="text-[11px] text-slate-500 font-mono">
+                          {new Date(order.createdAt).toLocaleDateString("ar-DZ", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
 
-          <div className="mt-3 flex items-baseline justify-between">
-            <div className="text-3xl sm:text-4xl font-black font-mono tracking-tight text-white">
-              {kpis?.todayDetailed?.activeLearningSessionsToday ?? "0"}
-            </div>
-            <div className="text-right">
-              <span className="text-xs font-medium text-slate-400">جلسة تدريب اليوم</span>
-            </div>
-          </div>
+                      {/* Contact & Meta Line */}
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400">
+                        {order.studentPhone && (
+                          <span className="flex items-center gap-1">
+                            <Phone className="w-3.5 h-3.5 text-slate-500" />
+                            <span className="font-mono text-slate-300">{order.studentPhone}</span>
+                          </span>
+                        )}
+                        {order.studentEmail && (
+                          <span className="flex items-center gap-1">
+                            <Mail className="w-3.5 h-3.5 text-slate-500" />
+                            <span className="text-slate-300">{order.studentEmail}</span>
+                          </span>
+                        )}
+                        {order.streamId && (
+                          <span className="px-2 py-0.5 rounded bg-slate-800/80 text-slate-300 text-[10px] font-semibold">
+                            {order.streamId}
+                          </span>
+                        )}
+                        <span className="text-slate-500">طريقة الدفع: {order.paymentMethod || "BaridiMob"}</span>
+                      </div>
 
-          <div className="mt-4 pt-3 border-t border-[#1E293B]/80 flex items-center justify-between text-xs text-slate-400">
-            <span>إعادة اختبار منجزة:</span>
-            <span className="font-mono font-semibold text-indigo-400">
-              {kpis?.todayDetailed?.retestsToday ?? 0}
-            </span>
-          </div>
+                      {/* Rejection reason or notes if present */}
+                      {order.notes && (
+                        <div className="text-xs p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-amber-300">
+                          <span className="font-bold">ملاحظات / سبب الرفض:</span> {order.notes}
+                        </div>
+                      )}
+                    </div>
 
-          <div className="mt-1 flex items-center justify-between text-xs text-slate-400">
-            <span>أخطاء مسجلة اليوم:</span>
-            <span className="font-mono font-semibold text-yellow-400">
-              {kpis?.todayDetailed?.errorsRecordedToday ?? 0}
-            </span>
-          </div>
+                    {/* Middle: Plan & Price Badge */}
+                    <div className="flex items-center justify-between lg:flex-col lg:items-end gap-1 px-4 py-2 rounded-2xl bg-[#111A2E] border border-slate-800 shrink-0">
+                      <span className="text-[11px] text-slate-400 font-semibold uppercase">
+                        {order.plan === "season" ? "Pass Saison BAC" : "Abonnement Mensuel"}
+                      </span>
+                      <span className="text-xl sm:text-2xl font-black font-mono text-white">
+                        {order.amount.toLocaleString()}{" "}
+                        <span className="text-xs text-amber-400 font-sans">{order.currency || "دج"}</span>
+                      </span>
+                    </div>
 
-          <div className="absolute -bottom-8 -right-8 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:scale-125 transition-transform" />
-        </div>
-      </section>
+                    {/* Right: Actions Bar */}
+                    <div className="flex flex-wrap items-center gap-2 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-800">
+                      {/* Receipt Preview Button */}
+                      <button
+                        onClick={() => handleViewReceipt(order.id)}
+                        disabled={loadingReceiptId === order.id}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#111A2E] hover:bg-[#1A2640] border border-slate-700 text-xs font-semibold text-slate-200 transition-all active:scale-95"
+                      >
+                        {loadingReceiptId === order.id ? (
+                          <RefreshCw className="w-3.5 h-3.5 animate-spin text-indigo-400" />
+                        ) : (
+                          <Eye className="w-3.5 h-3.5 text-indigo-400" />
+                        )}
+                        <span>معاينة الوصل</span>
+                      </button>
 
-      {/* Navigation Filter Tabs */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-[#1E293B]/80 pb-3">
-        <button
-          onClick={() => setActiveTab("all")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === "all"
-              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
-              : "bg-[#0D1526]/80 text-slate-400 hover:text-slate-200 hover:bg-[#131D31] border border-[#1E293B]"
-          }`}
-        >
-          <Layers className="w-3.5 h-3.5" />
-          <span>كل اللوحة (All Cockpit)</span>
-        </button>
+                      {/* WhatsApp Direct Chat */}
+                      {waUrl && (
+                        <a
+                          href={waUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-semibold transition-all"
+                        >
+                          <MessageCircle className="w-3.5 h-3.5" />
+                          <span>واتساب</span>
+                        </a>
+                      )}
 
-        <button
-          onClick={() => setActiveTab("commercial")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === "commercial"
-              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
-              : "bg-[#0D1526]/80 text-slate-400 hover:text-slate-200 hover:bg-[#131D31] border border-[#1E293B]"
-          }`}
-        >
-          <CreditCard className="w-3.5 h-3.5" />
-          <span>المالية والتفعيل (WhatsApp & Finance)</span>
-          {derivedStats.pendingOrders > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-mono font-bold">
-              {derivedStats.pendingOrders}
-            </span>
-          )}
-        </button>
+                      {/* Pending Controls: Approve / Reject */}
+                      {isPending && (
+                        <>
+                          <button
+                            onClick={() => handleApproveOrder(order)}
+                            disabled={isProcessing}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold transition-all shadow-md shadow-emerald-600/20 active:scale-95 disabled:opacity-50"
+                          >
+                            {isProcessing ? (
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Check className="w-3.5 h-3.5" />
+                            )}
+                            <span>قبول وتفعيل فوري</span>
+                          </button>
 
-        <button
-          onClick={() => setActiveTab("learning")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === "learning"
-              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
-              : "bg-[#0D1526]/80 text-slate-400 hover:text-slate-200 hover:bg-[#131D31] border border-[#1E293B]"
-          }`}
-        >
-          <GraduationCap className="w-3.5 h-3.5" />
-          <span>إشارات التعلم (Learning Signals)</span>
-        </button>
-
-        <button
-          onClick={() => setActiveTab("system")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
-            activeTab === "system"
-              ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/30"
-              : "bg-[#0D1526]/80 text-slate-400 hover:text-slate-200 hover:bg-[#131D31] border border-[#1E293B]"
-          }`}
-        >
-          <AlertTriangle className="w-3.5 h-3.5" />
-          <span>التنبيهات والأعطال (Anomalies)</span>
-          {derivedStats.attentionCount > 0 && (
-            <span className="px-1.5 py-0.2 rounded-full bg-rose-500/20 text-rose-300 text-[10px] font-mono font-bold">
-              {derivedStats.attentionCount}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* BENTO GRID: SECTION A & B (PRODUCT FUNNEL & TODAY'S VELOCITY) */}
-      {(activeTab === "all" || activeTab === "commercial") && (
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-          {/* Bento Card: Conversion Pipeline Funnel (Col Span 7) */}
-          <div className="lg:col-span-7 rounded-2xl bg-[#0D1526]/80 backdrop-blur-xl border border-[#1E293B]/80 p-5 sm:p-6 shadow-xl flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b border-[#1E293B]/80">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400">
-                    <TrendingUp className="w-4 h-4" />
+                          <button
+                            onClick={() => {
+                              setRejectModalOrder(order);
+                              setRejectReason("إيصال غير واضح أو غير مكتمل");
+                              setCustomRejectReason("");
+                            }}
+                            disabled={isProcessing}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs font-bold transition-all active:scale-95 disabled:opacity-50"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                            <span>رفض</span>
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-white">قمع تحويل الطلاب (Conversion Pipeline)</h2>
-                    <p className="text-[11px] text-slate-400">تتبع مسار التلميذ من التسجيل وحتى التفعيل الدائم</p>
-                  </div>
-                </div>
-                <Link
-                  href="/ops/students"
-                  className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-medium transition-colors"
-                >
-                  <span>دليل الطلاب</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* TAB 3: تغيير أسعار باقات الاشتراك (Pricing & Plans Control)          */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {activeTab === "pricing" && (
+        <div className="space-y-6 animate-in fade-in duration-300 max-w-5xl mx-auto">
+          <div className="p-6 rounded-3xl bg-[#0C1322]/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                <Tag className="w-6 h-6" />
               </div>
-
-              {/* Visual Funnel Steps */}
-              <div className="mt-5 space-y-4">
-                {/* Step 1: Registered */}
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="text-slate-300 font-medium flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-slate-400" />
-                      1. إجمالي الطلاب المسجلين
-                    </span>
-                    <span className="font-mono font-bold text-white">
-                      {kpis?.productStatus?.totalRegistered ?? 0}
-                    </span>
-                  </div>
-                  <div className="w-full bg-[#131D31] h-2 rounded-full overflow-hidden">
-                    <div className="bg-slate-400 h-full rounded-full w-full" />
-                  </div>
-                </div>
-
-                {/* Step 2: Onboarded */}
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="text-slate-300 font-medium flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-indigo-400" />
-                      2. إكمال الـ Onboarding واختيار الشعبة
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-slate-400 font-mono">({derivedStats.onboardingRate}%)</span>
-                      <span className="font-mono font-bold text-indigo-300">
-                        {kpis?.productStatus?.completedOnboarding ?? 0}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="w-full bg-[#131D31] h-2 rounded-full overflow-hidden">
-                    <div
-                      className="bg-indigo-500 h-full rounded-full transition-all duration-500"
-                      style={{ width: `${Math.min(derivedStats.onboardingRate, 100)}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Step 3: First Activity */}
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="text-slate-300 font-medium flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-purple-400" />
-                      3. بدء أول نشاط تعليمي (First Activity)
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-slate-400 font-mono">
-                        ({derivedStats.firstActRate}% من المسجلين)
-                      </span>
-                      <span className="font-mono font-bold text-purple-300">
-                        {kpis?.productStatus?.reachedFirstLearningActivity ?? 0}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="w-full bg-[#131D31] h-2 rounded-full overflow-hidden">
-                    <div
-                      className="bg-purple-500 h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${
-                          (kpis?.productStatus?.totalRegistered || 0) > 0
-                            ? Math.min(
-                                Math.round(
-                                  ((kpis?.productStatus?.reachedFirstLearningActivity || 0) /
-                                    (kpis?.productStatus?.totalRegistered || 1)) *
-                                    100
-                                ),
-                                100
-                              )
-                            : 0
-                        }%`,
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Step 4: Active Trial */}
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="text-slate-300 font-medium flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-blue-400" />
-                      4. في التجربة المجانية (72h Free Window)
-                    </span>
-                    <span className="font-mono font-bold text-blue-300">
-                      {kpis?.productStatus?.studentsInTrial ?? 0}
-                    </span>
-                  </div>
-                  <div className="w-full bg-[#131D31] h-2 rounded-full overflow-hidden">
-                    <div
-                      className="bg-blue-500 h-full rounded-full transition-all duration-500"
-                      style={{
-                        width: `${
-                          (kpis?.productStatus?.totalRegistered || 0) > 0
-                            ? Math.min(
-                                Math.round(
-                                  ((kpis?.productStatus?.studentsInTrial || 0) /
-                                    (kpis?.productStatus?.totalRegistered || 1)) *
-                                    100
-                                ),
-                                100
-                              )
-                            : 0
-                        }%`,
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Step 5: Active Paid Subscribed */}
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="text-emerald-400 font-semibold flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                      5. الاشتراكات المدفوعة المفعلة (Paid Access)
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] text-emerald-400/80 font-mono">
-                        ({derivedStats.conversionRate}%)
-                      </span>
-                      <span className="font-mono font-bold text-emerald-400">
-                        {kpis?.productStatus?.activePaidStudents ?? 0}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="w-full bg-[#131D31] h-2 rounded-full overflow-hidden">
-                    <div
-                      className="bg-emerald-500 h-full rounded-full transition-all duration-500 shadow-sm shadow-emerald-500"
-                      style={{
-                        width: `${Math.min(parseFloat(derivedStats.conversionRate), 100)}%`,
-                      }}
-                    />
-                  </div>
-                </div>
+              <div>
+                <h2 className="text-lg font-black text-white">إدارة وتعديل أسعار باقات الاشتراك</h2>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  أي تعديل تقوم بحفظه هنا يتم تطبيقه فورياً على واجهات الطلاب وصفحة الدفع دون الحاجة لأي إعادة تشغيل.
+                </p>
               </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-[#1E293B]/80 flex items-center justify-between text-xs text-slate-400">
-              <span>حسابات انتهت فترتها التجريبية (Expired Access):</span>
-              <span className="font-mono font-medium text-slate-400">
-                {kpis?.productStatus?.expiredStudents ?? 0}
-              </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+              {plans.map((plan) => {
+                const edit = editingPlans[plan.id] || {
+                  price_dzd: plan.price_dzd,
+                  duration_months: plan.duration_months,
+                  active: plan.active !== false,
+                };
+                const isSaving = savingPlanId === plan.id;
+
+                return (
+                  <div
+                    key={plan.id}
+                    className="p-6 rounded-3xl bg-[#111A2E]/90 border border-slate-700/80 space-y-5 shadow-2xl flex flex-col justify-between"
+                  >
+                    <div className="space-y-4">
+                      {/* Plan Header */}
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">
+                          Plan ID: {plan.id}
+                        </span>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={edit.active}
+                            onChange={(e) =>
+                              setEditingPlans((prev) => ({
+                                ...prev,
+                                [plan.id]: { ...edit, active: e.target.checked },
+                              }))
+                            }
+                            className="rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-0 w-4 h-4 cursor-pointer"
+                          />
+                          <span className={`text-xs font-bold ${edit.active ? "text-emerald-400" : "text-rose-400"}`}>
+                            {edit.active ? "متاح للطلب" : "مغلق مؤقتاً"}
+                          </span>
+                        </label>
+                      </div>
+
+                      <h3 className="text-xl font-black text-white">{plan.name}</h3>
+
+                      {/* Price Field */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-300">السعر بالدينار الجزائري (DZD):</label>
+                        <div className="relative">
+                          <input
+                            type="number"
+                            min="0"
+                            step="100"
+                            value={edit.price_dzd}
+                            onChange={(e) =>
+                              setEditingPlans((prev) => ({
+                                ...prev,
+                                [plan.id]: { ...edit, price_dzd: Number(e.target.value) },
+                              }))
+                            }
+                            className="w-full pl-12 pr-4 py-3 rounded-xl bg-[#080D1A] border border-slate-700 text-white font-mono font-black text-lg focus:outline-none focus:border-amber-500 transition-colors"
+                          />
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-bold text-amber-400 font-sans">
+                            دج
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500">السعر السابق: {plan.price_dzd.toLocaleString()} دج</p>
+                      </div>
+
+                      {/* Duration Field */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-300">مدة الاشتراك (بالأشهر):</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="24"
+                          value={edit.duration_months}
+                          onChange={(e) =>
+                            setEditingPlans((prev) => ({
+                              ...prev,
+                              [plan.id]: { ...edit, duration_months: Number(e.target.value) },
+                            }))
+                          }
+                          className="w-full px-4 py-2.5 rounded-xl bg-[#080D1A] border border-slate-700 text-white font-mono font-bold text-sm focus:outline-none focus:border-amber-500 transition-colors"
+                        />
+                      </div>
+
+                      {/* Features Preview */}
+                      {plan.features && plan.features.length > 0 && (
+                        <div className="space-y-1.5 pt-2">
+                          <span className="text-[11px] font-bold text-slate-400">مميزات الباقة المعروضة للطالب:</span>
+                          <ul className="text-xs text-slate-300 space-y-1 pr-2">
+                            {plan.features.slice(0, 4).map((f, i) => (
+                              <li key={i} className="flex items-center gap-1.5">
+                                <Check className="w-3 h-3 text-emerald-400 shrink-0" />
+                                <span>{f}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Save Button */}
+                    <button
+                      onClick={() => handleSavePlanPrice(plan.id)}
+                      disabled={isSaving}
+                      className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-black font-black text-xs transition-all shadow-lg shadow-amber-600/20 active:scale-98 disabled:opacity-50"
+                    >
+                      {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                      <span>حفظ وتطبيق السعر فوراً ({edit.price_dzd.toLocaleString()} دج)</span>
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Bento Card: Today's Operational Velocity Matrix (Col Span 5) */}
-          <div className="lg:col-span-5 rounded-2xl bg-[#0D1526]/80 backdrop-blur-xl border border-[#1E293B]/80 p-5 sm:p-6 shadow-xl flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between pb-3 border-b border-[#1E293B]/80">
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* TAB 4: تحليلات الزوار بالتفصيل وبالتاريخ (Visitor Analytics by Date) */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {activeTab === "visitors" && (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          {/* Top Realtime Pulse Counter Banner */}
+          <div className="p-6 rounded-3xl bg-gradient-to-r from-cyan-950/40 via-[#0C1322]/90 to-[#0C1322]/70 border border-cyan-500/30 backdrop-blur-2xl flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-2xl">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-center text-cyan-400 shrink-0">
+                <Users className="w-8 h-8" />
+              </div>
+              <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-                    <Flame className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-white">مصفوفة السرعة التشغيلية لليوم</h2>
-                    <p className="text-[11px] text-slate-400">معدل الدخول، الإجابات، والتحقق خلال 24 ساعة</p>
-                  </div>
+                  <span className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-widest">
+                    LIVE REALTIME PULSE
+                  </span>
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-500"></span>
+                  </span>
                 </div>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#131D31] border border-[#1E293B] text-slate-400 font-mono">
-                  24h Window
+                <h2 className="text-2xl sm:text-3xl font-black text-white flex items-baseline gap-2">
+                  <span>{liveVisitorsCount}</span>
+                  <span className="text-sm font-normal text-slate-300">زائر متواجدون الآن على المنصة</span>
+                </h2>
+                <p className="text-xs text-slate-400">
+                  يتم رصد الزيارات النشطة اللحظية خلال آخر 15 دقيقة مع التحديث التلقائي المستمر.
+                </p>
+              </div>
+            </div>
+
+            {/* Breakdown Mini-Stats */}
+            <div className="flex flex-wrap items-center gap-4 shrink-0">
+              <div className="px-4 py-3 rounded-2xl bg-[#111A2E] border border-slate-800 text-center min-w-[120px]">
+                <span className="text-[11px] text-slate-400 block font-semibold">إجمالي المشاهدات</span>
+                <span className="text-xl font-black font-mono text-white">{totalPageviewsCount.toLocaleString()}</span>
+              </div>
+              <div className="px-4 py-3 rounded-2xl bg-[#111A2E] border border-slate-800 text-center min-w-[120px]">
+                <span className="text-[11px] text-slate-400 block font-semibold">الزوار الفريدون</span>
+                <span className="text-xl font-black font-mono text-cyan-300">
+                  {totalVisitorsCount.toLocaleString()}
                 </span>
               </div>
-
-              <div className="grid grid-cols-2 gap-3 mt-4">
-                <div className="p-3.5 rounded-xl bg-[#131D31]/70 border border-[#1E293B] hover:border-[#1E293B]/80 transition-colors">
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">تسجيلات جديدة</div>
-                  <div className="text-xl font-black font-mono text-white mt-1">
-                    {kpis?.todayDetailed?.newRegistrationsToday ?? "0"}
-                  </div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">حسابات تم إنشاؤها</div>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-[#131D31]/70 border border-[#1E293B] hover:border-[#1E293B]/80 transition-colors">
-                  <div className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">بدء التجربة</div>
-                  <div className="text-xl font-black font-mono text-blue-400 mt-1">
-                    {kpis?.todayDetailed?.newTrialStartsToday ?? "0"}
-                  </div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">تجارب مفعلة</div>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-[#131D31]/70 border border-[#1E293B] hover:border-[#1E293B]/80 transition-colors">
-                  <div className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">طلبات دفع جديدة</div>
-                  <div className="text-xl font-black font-mono text-white mt-1">
-                    {kpis?.todayDetailed?.newPaymentOrdersToday ?? "0"}
-                  </div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">إيصالات مرفوعة</div>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-[#131D31]/70 border border-[#1E293B] hover:border-[#1E293B]/80 transition-colors">
-                  <div className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">تمت ترقيتها اليوم</div>
-                  <div className="text-xl font-black font-mono text-emerald-400 mt-1">
-                    {kpis?.todayDetailed?.approvedPaymentsToday ?? "0"}
-                  </div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">تم تفعيل PAID</div>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-[#131D31]/70 border border-[#1E293B] hover:border-[#1E293B]/80 transition-colors">
-                  <div className="text-[10px] font-bold text-yellow-400 uppercase tracking-wider">أخطاء مرصودة</div>
-                  <div className="text-xl font-black font-mono text-yellow-400 mt-1">
-                    {kpis?.todayDetailed?.errorsRecordedToday ?? "0"}
-                  </div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">معمل الأخطاء</div>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-[#131D31]/70 border border-[#1E293B] hover:border-[#1E293B]/80 transition-colors">
-                  <div className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">إعادة اختبار توأمي</div>
-                  <div className="text-xl font-black font-mono text-indigo-400 mt-1">
-                    {kpis?.todayDetailed?.retestsToday ?? "0"}
-                  </div>
-                  <div className="text-[10px] text-slate-500 mt-0.5">Twin Retests</div>
-                </div>
+              <div className="px-4 py-3 rounded-2xl bg-[#111A2E] border border-slate-800 text-center min-w-[120px]">
+                <span className="text-[11px] text-slate-400 block font-semibold">الهواتف vs الحواسيب</span>
+                <span className="text-xs font-mono font-bold text-slate-200">
+                  {visitors?.deviceStats?.mobile || 0} 📱 / {visitors?.deviceStats?.desktop || 0} 💻
+                </span>
               </div>
-            </div>
-
-            <div className="mt-4 pt-3 border-t border-[#1E293B]/80 flex items-center justify-between text-xs">
-              <span className="text-slate-400">طلبات مرفوضة اليوم:</span>
-              <span className="font-mono font-semibold text-rose-400">
-                {kpis?.todayDetailed?.rejectedPaymentsToday ?? "0"}
-              </span>
             </div>
           </div>
-        </section>
-      )}
 
-      {/* BENTO GRID: SECTION C (LEARNING LOOP HEALTH & OBSERVABLE EVIDENCE) */}
-      {(activeTab === "all" || activeTab === "learning") && (
-        <section className="rounded-2xl bg-[#0D1526]/80 backdrop-blur-xl border border-[#1E293B]/80 p-5 sm:p-6 shadow-xl space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 border-b border-[#1E293B]/80">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-400">
-                <GraduationCap className="w-4 h-4" />
-              </div>
+          {/* Daily Table: الزوار بالتاريخ */}
+          <div className="p-6 rounded-3xl bg-[#0C1322]/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-bold text-white">إشارات التعلم والتمكن البيداغوجي (Observable Evidence)</h2>
-                <p className="text-[11px] text-slate-400">
-                  حقائق رقمية مباشرة من جداول Supabase للدروس والتدريبات ومعمل الأخطاء
+                <h3 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-cyan-400" />
+                  جدول عدد الزوار بالتفصيل وبالتاريخ اليومي
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  إحصائيات يومية مفصلة: الزوار الفريدون، إجمالي المشاهدات، نوع الجهاز، وأكثر الصفحات زيارة.
                 </p>
               </div>
             </div>
-            <Link
-              href="/ops/learning"
-              className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-medium transition-colors self-start sm:self-auto"
-            >
-              <span>تحليلات التعلم التفصيلية</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            {/* Step 1: Missions */}
-            <div className="p-4 rounded-xl bg-[#131D31]/60 border border-[#1E293B] hover:border-slate-700 transition-all flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">مهام مكتملة</span>
-                  <span className="w-2 h-2 rounded-full bg-indigo-400" />
-                </div>
-                <div className="text-2xl font-black font-mono text-white mt-2">
-                  {kpis?.learningSignals?.completedAtLeastOneMission ?? "0"}
-                </div>
+            {(!visitors?.dailyStats || visitors.dailyStats.length === 0) ? (
+              <div className="p-12 text-center text-slate-500 text-xs">
+                جارِ تجميع بيانات الزوار بالتواريخ...
               </div>
-              <div className="mt-3 text-[11px] text-slate-500 border-t border-[#1E293B]/60 pt-2">
-                أكمل &ge; 1 مهمة بنجاح
-              </div>
-            </div>
-
-            {/* Step 2: Practice */}
-            <div className="p-4 rounded-xl bg-[#131D31]/60 border border-[#1E293B] hover:border-slate-700 transition-all flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">محاولات التدريب</span>
-                  <span className="w-2 h-2 rounded-full bg-blue-400" />
-                </div>
-                <div className="text-2xl font-black font-mono text-white mt-2">
-                  {kpis?.learningSignals?.completedPractice ?? "0"}
-                </div>
-              </div>
-              <div className="mt-3 text-[11px] text-slate-500 border-t border-[#1E293B]/60 pt-2">
-                تمارين تدريبية مكتملة
-              </div>
-            </div>
-
-            {/* Step 3: Error Lab */}
-            <div className="p-4 rounded-xl bg-[#131D31]/60 border border-[#1E293B] hover:border-slate-700 transition-all flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-yellow-400 uppercase tracking-wider">معمل الأخطاء</span>
-                  <span className="w-2 h-2 rounded-full bg-yellow-400" />
-                </div>
-                <div className="text-2xl font-black font-mono text-yellow-400 mt-2">
-                  {kpis?.learningSignals?.triggeredErrorLab ?? "0"}
-                </div>
-              </div>
-              <div className="mt-3 text-[11px] text-slate-500 border-t border-[#1E293B]/60 pt-2">
-                أخطاء مفاهيمية تم رصدها
-              </div>
-            </div>
-
-            {/* Step 4: Repair */}
-            <div className="p-4 rounded-xl bg-[#131D31]/30 border border-dashed border-[#1E293B] hover:border-slate-700 transition-all flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">حلقة المعالجة</span>
-                  <span className="w-2 h-2 rounded-full bg-slate-600" />
-                </div>
-                <div className="text-2xl font-black font-mono text-slate-600 mt-2">
-                  {kpis?.learningSignals?.completedRepair ? kpis.learningSignals.completedRepair : "—"}
-                </div>
-              </div>
-              <div className="mt-3 text-[10px] text-amber-400/90 font-semibold border-t border-[#1E293B]/60 pt-2">
-                NOT TELEMETRIED
-              </div>
-            </div>
-
-            {/* Step 5: Retest */}
-            <div className="p-4 rounded-xl bg-[#131D31]/60 border border-[#1E293B] hover:border-slate-700 transition-all flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">إعادة اختبار ناجحة</span>
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                </div>
-                <div className="text-2xl font-black font-mono text-emerald-400 mt-2">
-                  {kpis?.learningSignals?.completedRetest ?? "0"}
-                </div>
-              </div>
-              <div className="mt-3 text-[11px] text-slate-500 border-t border-[#1E293B]/60 pt-2">
-                اجتازوا الاختبار التوأمي
-              </div>
-            </div>
-
-            {/* Step 6: Mastery Evidence */}
-            <div className="p-4 rounded-xl bg-[#131D31]/60 border border-[#1E293B] hover:border-slate-700 transition-all flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">مهارات متمكن منها</span>
-                  <span className="w-2 h-2 rounded-full bg-purple-400" />
-                </div>
-                <div className="text-2xl font-black font-mono text-purple-400 mt-2">
-                  {kpis?.learningSignals?.demonstratingMasteryEvidence ?? "0"}
-                </div>
-              </div>
-              <div className="mt-3 text-[11px] text-slate-500 border-t border-[#1E293B]/60 pt-2">
-                مهارات مثبتة بالأدلة
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* BENTO GRID: SECTION D (COMMERCIAL PIPELINE & FINANCE) */}
-      {(activeTab === "all" || activeTab === "commercial") && (
-        <section className="rounded-2xl bg-[#0D1526]/80 backdrop-blur-xl border border-[#1E293B]/80 p-5 sm:p-6 shadow-xl space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 border-b border-[#1E293B]/80">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-                <CreditCard className="w-4 h-4" />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-white">الاشتراكات المالية وإدارة التفعيل اليدوي</h2>
-                <p className="text-[11px] text-slate-400">التحقق من إيصالات الدفع، الاشتراكات السارية، ورصد انتهاء الصلاحية</p>
-              </div>
-            </div>
-            <Link
-              href="/ops/subscriptions"
-              className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-medium transition-colors self-start sm:self-auto"
-            >
-              <span>إدارة خطط الاشتراكات والتفعيل</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-            <div className={`p-4 rounded-xl border transition-all ${
-              (kpis?.commercialOverview?.pendingPaymentOrders || 0) > 0
-                ? "bg-amber-950/30 border-amber-500/50 shadow-md shadow-amber-500/10"
-                : "bg-[#131D31]/60 border-[#1E293B]"
-            }`}>
-              <div className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">طلبات معلقة</div>
-              <div className="text-2xl font-black font-mono text-amber-400 mt-2">
-                {kpis?.commercialOverview?.pendingPaymentOrders ?? "0"}
-              </div>
-              <div className="mt-2 text-[11px] text-slate-400">تحتاج تأكيد عبر واتساب</div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-[#131D31]/60 border border-[#1E293B]">
-              <div className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">مفعلة اليوم</div>
-              <div className="text-2xl font-black font-mono text-emerald-400 mt-2">
-                {kpis?.commercialOverview?.approvedToday ?? "0"}
-              </div>
-              <div className="mt-2 text-[11px] text-slate-400">تم رفعها لـ PAID</div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-[#131D31]/60 border border-[#1E293B]">
-              <div className="text-[10px] font-bold text-rose-400 uppercase tracking-wider">مرفوضة اليوم</div>
-              <div className="text-2xl font-black font-mono text-rose-400 mt-2">
-                {kpis?.commercialOverview?.rejectedToday ?? "0"}
-              </div>
-              <div className="mt-2 text-[11px] text-slate-400">إيصال غير صالح</div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-[#131D31]/60 border border-[#1E293B]">
-              <div className="text-[10px] font-bold text-white uppercase tracking-wider">اشتراكات سارية</div>
-              <div className="text-2xl font-black font-mono text-white mt-2">
-                {kpis?.commercialOverview?.activeSubscriptions ?? "0"}
-              </div>
-              <div className="mt-2 text-[11px] text-slate-400">مشتركون دائمون</div>
-            </div>
-
-            <div className={`p-4 rounded-xl border transition-all ${
-              (kpis?.commercialOverview?.subscriptionsExpiringSoon || 0) > 0
-                ? "bg-amber-950/30 border-amber-500/50 animate-pulse"
-                : "bg-[#131D31]/60 border-[#1E293B]"
-            }`}>
-              <div className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">تنتهي قريباً</div>
-              <div className="text-2xl font-black font-mono text-amber-400 mt-2">
-                {kpis?.commercialOverview?.subscriptionsExpiringSoon ?? "0"}
-              </div>
-              <div className="mt-2 text-[11px] text-slate-400">&le; 24 ساعة (تواصل واتساب)</div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-[#131D31]/60 border border-[#1E293B]">
-              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">اشتراكات منتهية</div>
-              <div className="text-2xl font-black font-mono text-slate-400 mt-2">
-                {kpis?.commercialOverview?.expiredSubscriptions ?? "0"}
-              </div>
-              <div className="mt-2 text-[11px] text-slate-400">بحاجة لتجديد</div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* BENTO GRID: SECTION E (ACTIONABLE ATTENTION & ANOMALIES) */}
-      {(activeTab === "all" || activeTab === "system") && (
-        <section className="rounded-2xl bg-[#0D1526]/80 backdrop-blur-xl border border-[#1E293B]/80 p-5 sm:p-6 shadow-xl space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 border-b border-[#1E293B]/80">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400">
-                <AlertTriangle className="w-4 h-4" />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-white">طابور التدخل والعمليات العاجلة (Attention Required)</h2>
-                <p className="text-[11px] text-slate-400">بنود تحتاج قراراً فورياً من المشرف أو المالك</p>
-              </div>
-            </div>
-            <Link
-              href="/ops/issues"
-              className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-medium transition-colors self-start sm:self-auto"
-            >
-              <span>فتح سجل الأعطال</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          <div className="space-y-3">
-            {kpis?.attentionItems && kpis.attentionItems.length > 0 ? (
-              kpis.attentionItems.map((item) => (
-                <Link
-                  key={item.id}
-                  href={item.targetHref}
-                  className="block p-4 rounded-xl bg-[#131D31]/80 hover:bg-[#1A2640] border border-[#1E293B] hover:border-[#1E293B]/80 transition-all duration-150 group shadow-md"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-start gap-3">
-                      <span
-                        className={`px-2.5 py-1 rounded-md text-[10px] font-mono font-bold mt-0.5 shrink-0 shadow-sm ${
-                          item.severity === "P0"
-                            ? "bg-rose-950/80 text-rose-300 border border-rose-700 animate-pulse"
-                            : item.severity === "P1"
-                            ? "bg-amber-950/80 text-amber-300 border border-amber-700"
-                            : item.severity === "P2"
-                            ? "bg-yellow-950/80 text-yellow-300 border border-yellow-700"
-                            : "bg-slate-800 text-slate-300 border border-slate-700"
-                        }`}
-                      >
-                        {item.severity}
-                      </span>
-                      <div>
-                        <div className="text-xs font-bold text-white group-hover:text-indigo-300 transition-colors">
-                          {item.title}
-                        </div>
-                        <div className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">
-                          {item.description}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-400 group-hover:text-indigo-300 self-end sm:self-auto shrink-0">
-                      <span>{item.actionLabel}</span>
-                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                </Link>
-              ))
             ) : (
-              <div className="p-8 rounded-xl bg-[#131D31]/30 border border-[#1E293B]/80 text-center space-y-2">
-                <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto text-emerald-400">
-                  <CheckCircle2 className="w-5 h-5" />
-                </div>
-                <div className="text-sm font-bold text-slate-200">كافة العمليات منتظمة</div>
-                <p className="text-xs text-slate-400 max-w-md mx-auto">
-                  لا توجد طلبات معلقة أو أعطال حرجة تحتاج إلى تدخل فوري.
-                </p>
+              <div className="overflow-x-auto">
+                <table className="w-full text-right text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-slate-400">
+                      <th className="py-3 px-4 font-bold">التاريخ (Date)</th>
+                      <th className="py-3 px-4 font-bold">الزوار الفريدون</th>
+                      <th className="py-3 px-4 font-bold">عدد المشاهدات</th>
+                      <th className="py-3 px-4 font-bold">الأجهزة (الهاتف / الحاسوب)</th>
+                      <th className="py-3 px-4 font-bold">أكثر الصفحات زيارة</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {visitors.dailyStats.map((day) => {
+                      const totalD = day.mobileViews + day.desktopViews;
+                      const mobilePct = totalD > 0 ? Math.round((day.mobileViews / totalD) * 100) : 0;
+
+                      return (
+                        <tr key={day.date} className="hover:bg-slate-900/40 transition-colors">
+                          <td className="py-3 px-4 font-mono font-bold text-white whitespace-nowrap">
+                            {day.date}
+                          </td>
+                          <td className="py-3 px-4 font-mono font-black text-cyan-400">
+                            {day.uniqueVisitors.toLocaleString()}
+                          </td>
+                          <td className="py-3 px-4 font-mono text-slate-200">
+                            {day.totalViews.toLocaleString()}
+                          </td>
+                          <td className="py-3 px-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[11px] font-mono text-slate-400">
+                                {mobilePct}% هاتف ({day.mobileViews})
+                              </span>
+                              <div className="w-16 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                                <div
+                                  className="h-full bg-cyan-500 rounded-full"
+                                  style={{ width: `${mobilePct}%` }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex flex-wrap gap-1.5">
+                              {day.topRoutes.slice(0, 3).map((r, i) => (
+                                <span
+                                  key={i}
+                                  className="px-2 py-0.5 rounded bg-slate-900 text-slate-300 font-mono text-[10px] border border-slate-800"
+                                >
+                                  {r.route} <span className="text-cyan-400 font-bold">({r.count})</span>
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             )}
           </div>
-        </section>
+
+          {/* Recent Live Hits Feed */}
+          {visitors?.recentHits && visitors.recentHits.length > 0 && (
+            <div className="p-6 rounded-3xl bg-[#0C1322]/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl space-y-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Activity className="w-4 h-4 text-cyan-400" />
+                آخر الزيارات اللحظية المسجلة (Live Activity Feed)
+              </h3>
+              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                {visitors.recentHits.slice(0, 15).map((hit) => (
+                  <div
+                    key={hit.id}
+                    className="p-2.5 rounded-xl bg-[#111A2E]/60 border border-slate-800 flex items-center justify-between text-xs"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="p-1 rounded bg-slate-800 text-slate-400">
+                        {hit.deviceType === "mobile" ? (
+                          <Smartphone className="w-3.5 h-3.5" />
+                        ) : (
+                          <Monitor className="w-3.5 h-3.5" />
+                        )}
+                      </span>
+                      <span className="font-mono text-cyan-300 font-bold">{hit.path}</span>
+                    </div>
+                    <span className="text-[11px] font-mono text-slate-500">
+                      {new Date(hit.timestamp).toLocaleTimeString("ar-DZ")}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* TAB 5: دليل الطلاب وحالة الحسابات (Students Directory)              */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {activeTab === "students" && (
+        <div className="space-y-6 animate-in fade-in duration-300">
+          {/* Search & Filter Header */}
+          <div className="p-5 rounded-3xl bg-[#0C1322]/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setStudentStatusFilter("all")}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                  studentStatusFilter === "all"
+                    ? "bg-purple-500/20 text-purple-300 border-purple-500/50"
+                    : "bg-[#111A2E] text-slate-400 border-slate-800"
+                }`}
+              >
+                جميع الطلاب ({students.length})
+              </button>
+              <button
+                onClick={() => setStudentStatusFilter("PAID")}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                  studentStatusFilter === "PAID"
+                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/50"
+                    : "bg-[#111A2E] text-slate-400 border-slate-800"
+                }`}
+              >
+                المشتركون (PAID)
+              </button>
+              <button
+                onClick={() => setStudentStatusFilter("TRIAL")}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                  studentStatusFilter === "TRIAL"
+                    ? "bg-indigo-500/20 text-indigo-300 border-indigo-500/50"
+                    : "bg-[#111A2E] text-slate-400 border-slate-800"
+                }`}
+              >
+                تجربة (TRIAL)
+              </button>
+              <button
+                onClick={() => setStudentStatusFilter("REJECTED")}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                  studentStatusFilter === "REJECTED"
+                    ? "bg-rose-500/20 text-rose-300 border-rose-500/50"
+                    : "bg-[#111A2E] text-slate-400 border-slate-800"
+                }`}
+              >
+                مرفوض (REJECTED)
+              </button>
+            </div>
+
+            <div className="relative w-full md:w-80">
+              <Search className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                placeholder="ابحث بالاسم، الهاتف، البريد..."
+                value={studentSearchQuery}
+                onChange={(e) => setStudentSearchQuery(e.target.value)}
+                className="w-full pl-4 pr-10 py-2.5 rounded-xl bg-[#111A2E] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 transition-colors"
+              />
+            </div>
+          </div>
+
+          {/* Students Table */}
+          <div className="p-6 rounded-3xl bg-[#0C1322]/80 backdrop-blur-2xl border border-slate-800/80 shadow-2xl">
+            {filteredStudents.length === 0 ? (
+              <div className="p-12 text-center text-slate-400 text-xs">
+                لا يوجد طلاب مطابقون لهذا البحث
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-right text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-slate-400">
+                      <th className="py-3 px-4 font-bold">الطالب</th>
+                      <th className="py-3 px-4 font-bold">معلومات الاتصال</th>
+                      <th className="py-3 px-4 font-bold">الشعبة والولاية</th>
+                      <th className="py-3 px-4 font-bold">حالة الحساب</th>
+                      <th className="py-3 px-4 font-bold">تاريخ الانضمام</th>
+                      <th className="py-3 px-4 font-bold text-center">إجراءات</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {filteredStudents.map((st) => (
+                      <tr key={st.id} className="hover:bg-slate-900/40 transition-colors">
+                        <td className="py-3 px-4">
+                          <span className="font-bold text-white block">{st.fullName || "طالب بدون اسم"}</span>
+                          <span className="text-[10px] text-slate-500 font-mono">{st.id}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="text-slate-300 block">{st.studentPhone || "—"}</span>
+                          <span className="text-[11px] text-slate-500">{st.email || "—"}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="px-2 py-0.5 rounded bg-slate-900 text-slate-300 text-[10px] font-semibold">
+                            {st.streamId || "غير محدد"}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          {st.accessStatus === "PAID" ? (
+                            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold">
+                              ✓ مشترك (PAID)
+                            </span>
+                          ) : st.accessStatus === "REJECTED" ? (
+                            <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/40 text-[10px] font-bold">
+                              ✕ مرفوض (REJECTED)
+                            </span>
+                          ) : st.accessStatus === "EXPIRED" ? (
+                            <span className="px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-400 text-[10px] font-bold">
+                              منتهي (EXPIRED)
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold">
+                              تجريبي (TRIAL)
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 font-mono text-[11px] text-slate-400">
+                          {st.createdAt ? new Date(st.createdAt).toLocaleDateString("ar-DZ") : "—"}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <button
+                            onClick={() => {
+                              setDirectStudentId(st.id);
+                              setShowDirectModal(true);
+                            }}
+                            className="px-2.5 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[11px] font-semibold transition-all"
+                          >
+                            تفعيل يدوي
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* MODAL 1: معاينة إيصال الدفع (Receipt Viewer)                         */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {previewReceiptUrl && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setPreviewReceiptUrl(null)}
+        >
+          <div
+            className="relative max-w-2xl w-full bg-[#0C1322] border border-slate-700 rounded-3xl p-5 overflow-hidden shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Eye className="w-4 h-4 text-indigo-400" />
+                معاينة وصل الدفع والتحويل (Receipt Preview)
+              </h3>
+              <button
+                onClick={() => setPreviewReceiptUrl(null)}
+                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="max-h-[70vh] overflow-auto rounded-2xl bg-black flex items-center justify-center p-2">
+              <img
+                src={previewReceiptUrl}
+                alt="Receipt"
+                className="max-h-[65vh] w-auto object-contain rounded-xl shadow-lg"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-1">
+              <a
+                href={previewReceiptUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-colors"
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                <span>فتح في نافذة كاملة</span>
+              </a>
+              <button
+                onClick={() => setPreviewReceiptUrl(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+              >
+                إغلاق
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* MODAL 2: تأكيد رفض الطلب مع السبب (Reject Reason Modal)             */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {rejectModalOrder && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setRejectModalOrder(null)}
+        >
+          <div
+            className="relative max-w-md w-full bg-[#0C1322] border border-rose-500/40 rounded-3xl p-6 shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-bold text-rose-400 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" />
+                تحديد سبب رفض طلب الاشتراك
+              </h3>
+              <button
+                onClick={() => setRejectModalOrder(null)}
+                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              اختر السبب الدقيق لرفض طلب الطالب ({rejectModalOrder.studentName || rejectModalOrder.userId}).
+              سيظهر هذا السبب مباشرة للطالب في حسابه ليتمكن من تصحيح الوصل وإعادة رفعه.
+            </p>
+
+            <div className="space-y-2">
+              {[
+                "إيصال غير واضح أو مقصوص",
+                "المبلغ المدفوع غير مطابق لسعر الباقة",
+                "رقم الحوالة مستعمل سابقاً أو مكرر",
+                "اسم أو بيانات الحساب غير متطابقة",
+                "أخرى (يرجى التحديد أدناه)",
+              ].map((r) => (
+                <label
+                  key={r}
+                  className="flex items-center gap-2.5 p-2.5 rounded-xl bg-[#111A2E] hover:bg-[#16223D] border border-slate-800 text-xs text-slate-200 cursor-pointer transition-colors"
+                >
+                  <input
+                    type="radio"
+                    name="rejectReason"
+                    value={r}
+                    checked={rejectReason === r}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    className="text-rose-500 focus:ring-0"
+                  />
+                  <span>{r}</span>
+                </label>
+              ))}
+            </div>
+
+            {rejectReason === "أخرى (يرجى التحديد أدناه)" && (
+              <textarea
+                placeholder="اكتب سبب الرفض بالتفصيل هنا..."
+                value={customRejectReason}
+                onChange={(e) => setCustomRejectReason(e.target.value)}
+                rows={3}
+                className="w-full p-3 rounded-xl bg-[#111A2E] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 transition-colors"
+              />
+            )}
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+              <button
+                onClick={() => setRejectModalOrder(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+              >
+                إلغاء
+              </button>
+              <button
+                onClick={handleConfirmRejectOrder}
+                disabled={processingOrderId === rejectModalOrder.id}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-colors shadow-md shadow-rose-600/20 disabled:opacity-50"
+              >
+                {processingOrderId === rejectModalOrder.id ? (
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <X className="w-3.5 h-3.5" />
+                )}
+                <span>تأكيد الرفض وإعلام الطالب</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* MODAL 3: التفعيل اليدوي المباشر (Manual Direct Activation)           */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {showDirectModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+          onClick={() => setShowDirectModal(false)}
+        >
+          <div
+            className="relative max-w-md w-full bg-[#0C1322] border border-emerald-500/40 rounded-3xl p-6 shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-bold text-emerald-400 flex items-center gap-2">
+                <Zap className="w-4 h-4" />
+                تفعيل اشتراك يدوي مباشر لطالب
+              </h3>
+              <button
+                onClick={() => setShowDirectModal(false)}
+                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleDirectActivateStudent} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-300">
+                  معرف الطالب (UUID أو البريد الإلكتروني أو الهاتف):
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="مثال: student@gmail.com أو UUID..."
+                  value={directStudentId}
+                  onChange={(e) => setDirectStudentId(e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#111A2E] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-300">باقة الاشتراك:</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setDirectPlan("season")}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all ${
+                      directPlan === "season"
+                        ? "bg-emerald-600/20 text-emerald-300 border-emerald-500"
+                        : "bg-[#111A2E] text-slate-400 border-slate-800"
+                    }`}
+                  >
+                    Pass Saison (سنة كاملة)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDirectPlan("monthly")}
+                    className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all ${
+                      directPlan === "monthly"
+                        ? "bg-emerald-600/20 text-emerald-300 border-emerald-500"
+                        : "bg-[#111A2E] text-slate-400 border-slate-800"
+                    }`}
+                  >
+                    شهري (30 يوم)
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setShowDirectModal(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-colors"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="submit"
+                  disabled={isActivatingDirect}
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-colors shadow-md shadow-emerald-600/20 disabled:opacity-50"
+                >
+                  {isActivatingDirect ? (
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Check className="w-3.5 h-3.5" />
+                  )}
+                  <span>تفعيل الحساب الآن</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

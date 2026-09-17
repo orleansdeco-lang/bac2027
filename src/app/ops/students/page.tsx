@@ -133,7 +133,7 @@ export default function OpsStudentsPage() {
     return true;
   });
 
-  const getStatusBadge = (status: "TRIAL" | "PAID" | "EXPIRED", hours: number) => {
+  const getStatusBadge = (status: "TRIAL" | "PAID" | "EXPIRED" | "REJECTED", hours: number) => {
     switch (status) {
       case "PAID":
         return "bg-emerald-950 text-emerald-300 border border-emerald-800 font-semibold";
@@ -142,6 +142,8 @@ export default function OpsStudentsPage() {
           return "bg-amber-950 text-amber-300 border border-amber-800 animate-pulse";
         }
         return "bg-blue-950 text-blue-300 border border-blue-800";
+      case "REJECTED":
+        return "bg-rose-950 text-rose-300 border border-rose-800";
       case "EXPIRED":
         return "bg-slate-800 text-slate-400 border border-slate-700";
     }

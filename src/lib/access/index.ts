@@ -102,12 +102,36 @@ export function getStudentAccess(
     };
   }
 
-  // 2. Explicit Paid Subscriber
-  const rawStatus = (profile as any).access_status;
+  // 2. Check for Explicit Rejected State
+  const rawStatus = (profile as any).access_status || (profile as any).accessStatus;
   const rawPlan = (profile as any).plan;
-  const subExpiresAt = (profile as any).subscription_expires_at;
-  const subStartedAt = (profile as any).subscription_started_at;
+  const subExpiresAt = (profile as any).subscription_expires_at || (profile as any).subscriptionExpiresAt;
+  const subStartedAt = (profile as any).subscription_started_at || (profile as any).subscriptionStartedAt;
 
+  if (rawStatus === "REJECTED") {
+    const rejectionReason =
+      (profile as any).rejection_reason || (profile as any).rejectionReason || "تم رفض وصل الدفع من قبل الإدارة";
+    return {
+      status: "EXPIRED",
+      trialStatus: "EXPIRED",
+      accessStatus: "EXPIRED",
+      plan: rawPlan || "season",
+      trialStartedAt: (profile as any).trial_started_at || null,
+      trialExpiresAt: (profile as any).trial_expires_at || null,
+      subscriptionStartedAt: subStartedAt || null,
+      subscriptionExpiresAt: null,
+      remainingMilliseconds: 0,
+      remainingHours: 0,
+      remainingMinutes: 0,
+      remainingDays: 0,
+      remainingHoursOnly: 0,
+      canUseProduct: false,
+      isExpiringSoon: false,
+      reason: rejectionReason,
+    };
+  }
+
+  // 3. Explicit Paid Subscriber
   if (rawStatus === "PAID" || rawPlan === "PAID" || (subExpiresAt && rawStatus !== "TRIAL")) {
     // If subscription_expires_at is present, verify expiration dynamically against server time
     if (subExpiresAt) {

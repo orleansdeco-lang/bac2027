@@ -52,8 +52,14 @@ export function saveServerStudentProfile(student: Partial<StudentOperationalSumm
     streamId: student.streamId || existing?.streamId || "sciences_exp",
     wilayaName: student.wilayaName || existing?.wilayaName,
     communeName: student.communeName || existing?.communeName,
-    accessStatus: student.accessStatus || existing?.accessStatus || "TRIAL",
-    plan: student.plan || existing?.plan || "season",
+    accessStatus:
+      existing?.accessStatus === "PAID" && student.accessStatus !== "EXPIRED" && student.accessStatus !== "REJECTED"
+        ? "PAID"
+        : student.accessStatus || existing?.accessStatus || "TRIAL",
+    plan:
+      existing?.accessStatus === "PAID" && (!student.plan || student.plan === "PILOT_TRIAL")
+        ? existing.plan || "season"
+        : student.plan || existing?.plan || "season",
     trialStartedAt: student.trialStartedAt || existing?.trialStartedAt || new Date().toISOString(),
     trialExpiresAt: student.trialExpiresAt || existing?.trialExpiresAt,
     remainingHours: student.remainingHours !== undefined ? student.remainingHours : existing?.remainingHours ?? 72,
@@ -66,6 +72,7 @@ export function saveServerStudentProfile(student: Partial<StudentOperationalSumm
     hasPendingPayment: student.hasPendingPayment !== undefined ? student.hasPendingPayment : existing?.hasPendingPayment ?? false,
     subscriptionStartedAt: student.subscriptionStartedAt || existing?.subscriptionStartedAt,
     subscriptionExpiresAt: student.subscriptionExpiresAt || existing?.subscriptionExpiresAt,
+    rejectionReason: student.rejectionReason !== undefined ? student.rejectionReason : existing?.rejectionReason,
     createdAt: student.createdAt || existing?.createdAt || new Date().toISOString(),
     onboardingCompleted: student.onboardingCompleted !== undefined ? student.onboardingCompleted : existing?.onboardingCompleted ?? true,
   };

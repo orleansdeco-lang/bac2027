@@ -59,6 +59,16 @@ export function Sidebar({ className }: SidebarProps) {
     }
   }, [user]);
 
+  useEffect(() => {
+    const handleAccessUpdated = (e: any) => {
+      if (e?.detail) {
+        setProfileDraft((prev: any) => ({ ...prev, ...e.detail }));
+      }
+    };
+    window.addEventListener("bac_student_access_updated", handleAccessUpdated);
+    return () => window.removeEventListener("bac_student_access_updated", handleAccessUpdated);
+  }, []);
+
   const firstName =
     studentProfile?.firstName ||
     profileDraft?.firstName ||
@@ -229,6 +239,8 @@ export function Sidebar({ className }: SidebarProps) {
           <p className="text-[11px] text-theme-secondary mt-1 leading-snug line-clamp-2">
             {isPaid
               ? (isAr ? "وصول كامل مفعل لكامل مهارات شعبتك" : "Accès illimité actif")
+              : (studentProfile || profileDraft)?.access_status === "REJECTED" || (studentProfile || profileDraft)?.accessStatus === "REJECTED"
+              ? (isAr ? "تم رفض وصل الدفع — راجع التفاصيل" : "Reçu rejeté — voir détails")
               : isTrial
               ? (isAr ? `فترة تجريبية: باقي ${access.remainingHours} ساعة` : `Essai actif : ${access.remainingHours}h restantes`)
               : (isAr ? "افتح كل المهارات والتصحيح الذكي" : "Débloquez tout le programme")}
@@ -238,7 +250,11 @@ export function Sidebar({ className }: SidebarProps) {
             href="/subscribe"
             className="mt-3 block w-full py-2 px-3 rounded-xl text-xs font-bold bg-[var(--color-primary)] text-white hover:opacity-95 active:scale-95 shadow-sm transition-all"
           >
-            {isPaid ? (isAr ? "تفاصيل اشتراكي" : "Mon Abonnement") : (isAr ? "ترقية الحساب ←" : "Passer en Pro →")}
+            {isPaid
+              ? (isAr ? "تفاصيل اشتراكي" : "Mon Abonnement")
+              : (studentProfile || profileDraft)?.access_status === "REJECTED" || (studentProfile || profileDraft)?.accessStatus === "REJECTED"
+              ? (isAr ? "إعادة إرسال الوصل ←" : "Renvoyer le reçu →")
+              : (isAr ? "ترقية الحساب ←" : "Passer en Pro →")}
           </Link>
         </div>
 

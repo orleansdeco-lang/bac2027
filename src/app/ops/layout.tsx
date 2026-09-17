@@ -134,12 +134,109 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+
   return (
-    <div className="min-h-screen flex bg-[#080D1A] text-slate-100 antialiased font-sans">
-      <OpsSidebar />
-      <main className="flex-1 overflow-y-auto min-w-0 bg-[#080D1A] pb-16">
+    <div className="min-h-screen flex flex-col md:flex-row bg-[#080D1A] text-slate-100 antialiased font-sans">
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex shrink-0">
+        <OpsSidebar />
+      </div>
+
+      {/* Mobile Top Navigation Bar */}
+      <header className="md:hidden flex items-center justify-between px-4 py-3 bg-[#080D1A]/95 backdrop-blur-xl border-b border-[#1E293B] sticky top-0 z-30">
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => setIsMobileDrawerOpen(true)}
+            className="p-2 rounded-xl bg-[#0D1526] border border-[#1E293B] text-slate-300 hover:text-white"
+            title="فتح القائمة"
+          >
+            <div className="space-y-1 w-4">
+              <span className="block h-0.5 w-4 bg-current rounded-full"></span>
+              <span className="block h-0.5 w-3 bg-current rounded-full"></span>
+              <span className="block h-0.5 w-4 bg-current rounded-full"></span>
+            </div>
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center text-[10px] font-black text-white">
+              BAC
+            </div>
+            <span className="text-xs font-bold text-white tracking-tight">Operations Cockpit</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-mono font-bold">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+            LIVE
+          </span>
+          <Link
+            href="/dashboard"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-400 bg-[#0D1526] border border-[#1E293B]"
+            title="العودة لتطبيق الطالب"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
+        </div>
+      </header>
+
+      {/* Mobile Slide-Over Drawer Modal */}
+      {isMobileDrawerOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex">
+          <div
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
+            onClick={() => setIsMobileDrawerOpen(false)}
+          />
+          <div className="relative z-50 w-72 max-w-[80vw] h-full shadow-2xl">
+            <OpsSidebar onClose={() => setIsMobileDrawerOpen(false)} className="w-full h-full" />
+          </div>
+        </div>
+      )}
+
+      {/* Main Content Area */}
+      <main className="flex-1 overflow-y-auto min-w-0 bg-[#080D1A] pb-24 md:pb-12">
         {children}
       </main>
+
+      {/* Mobile Bottom Quick Navigation Bar */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#080D1A]/95 backdrop-blur-2xl border-t border-[#1E293B] flex items-center justify-around py-2 px-1 text-slate-400">
+        <Link
+          href="/ops/overview"
+          className={`flex flex-col items-center gap-1 p-1.5 rounded-xl text-[10px] transition-colors ${
+            pathname === "/ops/overview" ? "text-indigo-400 font-bold" : "hover:text-slate-200"
+          }`}
+        >
+          <div className="w-4 h-4 flex items-center justify-center">⚡</div>
+          <span>الرئيسية</span>
+        </Link>
+        <Link
+          href="/ops/finance"
+          className={`flex flex-col items-center gap-1 p-1.5 rounded-xl text-[10px] transition-colors ${
+            pathname === "/ops/finance" ? "text-indigo-400 font-bold" : "hover:text-slate-200"
+          }`}
+        >
+          <div className="w-4 h-4 flex items-center justify-center">💳</div>
+          <span>الطلبات</span>
+        </Link>
+        <Link
+          href="/ops/subscriptions"
+          className={`flex flex-col items-center gap-1 p-1.5 rounded-xl text-[10px] transition-colors ${
+            pathname === "/ops/subscriptions" ? "text-indigo-400 font-bold" : "hover:text-slate-200"
+          }`}
+        >
+          <div className="w-4 h-4 flex items-center justify-center">🏷️</div>
+          <span>الأسعار</span>
+        </Link>
+        <Link
+          href="/ops/students"
+          className={`flex flex-col items-center gap-1 p-1.5 rounded-xl text-[10px] transition-colors ${
+            pathname === "/ops/students" ? "text-indigo-400 font-bold" : "hover:text-slate-200"
+          }`}
+        >
+          <div className="w-4 h-4 flex items-center justify-center">👥</div>
+          <span>الطلاب</span>
+        </Link>
+      </nav>
     </div>
   );
 }

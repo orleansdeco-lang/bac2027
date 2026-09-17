@@ -18,60 +18,80 @@ import { hasFinanceAccess, getServerUserRole, isAbsoluteOwner, OWNER_UUID } from
 import { StudentRepository } from "../repositories/student-repository";
 import { getPaymentOrders } from "./payments";
 
-// In-memory fallback plans registry for testing / offline environments (neutral unconfigured pricing)
-const memorySubscriptionPlans: Map<string, SubscriptionPlan> = new Map([
-  [
-    "season",
-    {
-      id: "season",
-      name: "اشتراك الموسم الدراسي",
-      price_dzd: 0.0,
-      duration_months: 10,
-      active: false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-  ],
-  [
-    "monthly",
-    {
-      id: "monthly",
-      name: "الاشتراك الشهري",
-      price_dzd: 0.0,
-      duration_months: 1,
-      active: false,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-  ],
-]);
+import fs from "fs";
+import path from "path";
+
+function getDurablePlansPath(): string {
+  const dir = path.join(process.cwd(), ".runtime");
+  if (!fs.existsSync(dir)) {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+    } catch {}
+  }
+  return path.join(dir, "subscription_plans.json");
+}
+
+function loadDurablePlans(): SubscriptionPlan[] {
+  if (typeof window !== "undefined") return [];
+  try {
+    const filePath = getDurablePlansPath();
+    if (fs.existsSync(filePath)) {
+      const raw = fs.readFileSync(filePath, "utf8");
+      const list = JSON.parse(raw);
+      if (Array.isArray(list) && list.length > 0) return list;
+    }
+  } catch {}
+  return [];
+}
+
+function saveDurablePlans(plans: SubscriptionPlan[]): void {
+  if (typeof window !== "undefined") return;
+  try {
+    const filePath = getDurablePlansPath();
+    fs.writeFileSync(filePath, JSON.stringify(plans, null, 2), "utf8");
+  } catch {}
+}
+
+const DEFAULT_PLANS: SubscriptionPlan[] = [
+  {
+    id: "season",
+    name: "اشتراك الموسم الدراسي",
+    price_dzd: 2900.0,
+    duration_months: 10,
+    active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: "monthly",
+    name: "الاشتراك الشهري",
+    price_dzd: 900.0,
+    duration_months: 1,
+    active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+];
+
+// In-memory fallback plans registry initialized with durable storage or defaults
+const memorySubscriptionPlans: Map<string, SubscriptionPlan> = new Map();
+const initialPlans = typeof window === "undefined" && loadDurablePlans().length > 0 ? loadDurablePlans() : DEFAULT_PLANS;
+for (const p of initialPlans) {
+  memorySubscriptionPlans.set(p.id, p);
+}
 
 /**
  * Resets memory plans for testing
  */
 export function resetMemorySubscriptionPlans(): void {
-  memorySubscriptionPlans.set("season", {
-    id: "season",
-    name: "اشتراك الموسم الدراسي",
-    price_dzd: 0.0,
-    duration_months: 10,
-    active: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  });
-  memorySubscriptionPlans.set("monthly", {
-    id: "monthly",
-    name: "الاشتراك الشهري",
-    price_dzd: 0.0,
-    duration_months: 1,
-    active: false,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  });
+  for (const p of DEFAULT_PLANS) {
+    memorySubscriptionPlans.set(p.id, { ...p, price_dzd: 0.0, active: false });
+  }
+  saveDurablePlans(Array.from(memorySubscriptionPlans.values()));
 }
 
 /**
- * Retrieves all subscription plans from database / memory
+ * Retrieves all subscription plans from database / durable store / memory
  */
 export async function getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
   if (isSupabaseConfigured && supabase) {
@@ -81,7 +101,7 @@ export async function getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
         .select("*")
         .order("duration_months", { ascending: false });
 
-      if (!error && data) {
+      if (!error && data && data.length > 0) {
         return data.map((d: any) => ({
           id: d.id,
           name: d.name,
@@ -93,12 +113,13 @@ export async function getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
         }));
       }
     } catch {
-      // Memory fallback only if unconfigured
+      // Durable fallback
     }
   }
 
-  if (isSupabaseConfigured) {
-    return [];
+  const durable = loadDurablePlans();
+  if (durable.length > 0) {
+    return durable;
   }
 
   return Array.from(memorySubscriptionPlans.values());
@@ -109,7 +130,6 @@ export async function getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
  */
 export async function getSubscriptionPlanById(planId: string): Promise<SubscriptionPlan | null> {
   const normalizedId = (planId || "").toLowerCase().trim();
-  // Map legacy IDs if needed
   const targetId = normalizedId === "bac_season_pass_pilot" ? "season" : normalizedId;
 
   if (isSupabaseConfigured && supabase) {
@@ -131,18 +151,14 @@ export async function getSubscriptionPlanById(planId: string): Promise<Subscript
           updated_at: data.updated_at,
         };
       }
-      if (!error && !data) {
-        // Authoritatively not found in remote Supabase
-        return null;
-      }
     } catch {
-      // Memory fallback only if unconfigured
+      // Fallback
     }
   }
 
-  if (isSupabaseConfigured) {
-    return null;
-  }
+  const durable = loadDurablePlans();
+  const foundDurable = durable.find((p) => p.id === targetId);
+  if (foundDurable) return foundDurable;
 
   return memorySubscriptionPlans.get(targetId) || null;
 }
@@ -196,8 +212,9 @@ export async function updateSubscriptionPlan(
     updated_at: now,
   };
 
-  // 3. Persist in memory registry
+  // 3. Persist in memory & durable file registry
   memorySubscriptionPlans.set(updatedPlan.id, updatedPlan);
+  saveDurablePlans(Array.from(memorySubscriptionPlans.values()));
 
   // 4. Persist in Supabase if configured
   if (isSupabaseConfigured && supabase) {

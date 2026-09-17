@@ -25,7 +25,30 @@ export async function POST(req: Request) {
       }
     }
 
-    // 1. Save to durable server registry for immediate /ops visibility
+    // 1. Authoritative check: Look up payment orders and existing records
+    const { getPaymentOrders } = await import("@/lib/operations/payments");
+    const userOrders = await getPaymentOrders({ userId: body.id, limit: 10 }, token);
+    const approvedOrder = userOrders.find((o) => o.status === "APPROVED");
+    const latestOrder = userOrders[0];
+
+    let effectiveAccessStatus: "TRIAL" | "PAID" | "EXPIRED" | "REJECTED" = body.accessStatus || "TRIAL";
+    let effectivePlan = body.plan || "season";
+    let subStartedAt: string | undefined = undefined;
+    let subExpiresAt: string | undefined = undefined;
+    let rejectionReason: string | undefined = undefined;
+
+    if (approvedOrder) {
+      effectiveAccessStatus = "PAID";
+      effectivePlan = approvedOrder.plan || "season";
+      subStartedAt = approvedOrder.reviewedAt || approvedOrder.updatedAt || approvedOrder.submittedAt;
+      const durationMonths = effectivePlan === "monthly" ? 1 : 10;
+      subExpiresAt = new Date(new Date(subStartedAt).getTime() + durationMonths * 30 * 86400000).toISOString();
+    } else if (latestOrder && latestOrder.status === "REJECTED") {
+      effectiveAccessStatus = "REJECTED";
+      rejectionReason = latestOrder.rejectionReason || "تم رفض وصل التحويل";
+    }
+
+    // 2. Save to durable server registry for immediate /ops visibility
     const student = saveServerStudentProfile({
       id: body.id,
       fullName: body.fullName || `${body.firstName || ""} `.trim() || undefined,
@@ -35,8 +58,11 @@ export async function POST(req: Request) {
       wilayaName: body.wilayaName,
       communeName: body.communeName,
       targetScore: body.targetScore,
-      accessStatus: body.accessStatus,
-      plan: body.plan,
+      accessStatus: effectiveAccessStatus,
+      plan: effectivePlan,
+      subscriptionStartedAt: subStartedAt,
+      subscriptionExpiresAt: subExpiresAt,
+      rejectionReason,
       onboardingCompleted: body.onboardingCompleted !== undefined ? body.onboardingCompleted : true,
     });
 
@@ -70,7 +96,7 @@ export async function POST(req: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, student });
+    return NextResponse.json({ success: true, student, latestOrder });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ success: false, error: message }, { status: 500 });

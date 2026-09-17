@@ -193,7 +193,7 @@ export interface StudentOperationalSummary {
   streamId?: string;
   wilayaName?: string;
   communeName?: string;
-  accessStatus: "TRIAL" | "PAID" | "EXPIRED";
+  accessStatus: "TRIAL" | "PAID" | "EXPIRED" | "REJECTED";
   plan: string;
   trialStartedAt?: string;
   trialExpiresAt?: string;
@@ -207,6 +207,7 @@ export interface StudentOperationalSummary {
   hasPendingPayment: boolean;
   subscriptionStartedAt?: string;
   subscriptionExpiresAt?: string;
+  rejectionReason?: string;
   createdAt?: string;
   onboardingCompleted?: boolean;
 }
@@ -217,6 +218,7 @@ export interface SubscriptionPlan {
   price_dzd: number;
   duration_months: number;
   active: boolean;
+  features?: string[];
   created_at?: string;
   updated_at?: string;
 }

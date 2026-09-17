@@ -59,7 +59,30 @@ function syncLocalStudentProfileIfPresent(userObj?: User | null, token?: string 
         ...(token ? { Authorization: `Bearer ${token}` } : {})
       },
       body: JSON.stringify(payload)
-    }).catch(() => {});
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.success && data?.student && typeof window !== "undefined") {
+          const s = data.student;
+          const targetKey = `bac_mastery_strategic_profile:${uid}`;
+          try {
+            const currentRaw = localStorage.getItem(targetKey);
+            const current = currentRaw ? JSON.parse(currentRaw) : {};
+            const updated = {
+              ...current,
+              access_status: s.accessStatus,
+              plan: s.plan,
+              subscription_started_at: s.subscriptionStartedAt,
+              subscription_expires_at: s.subscriptionExpiresAt,
+              rejection_reason: s.rejectionReason,
+              isServerAuthoritativePaid: s.accessStatus === "PAID",
+            };
+            localStorage.setItem(targetKey, JSON.stringify(updated));
+            window.dispatchEvent(new CustomEvent("bac_student_access_updated", { detail: updated }));
+          } catch {}
+        }
+      })
+      .catch(() => {});
   } catch {}
 }
 

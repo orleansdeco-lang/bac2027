@@ -4,6 +4,7 @@ import "./globals.css";
 import { I18nProvider } from "@/lib/i18n/context";
 import { AuthProvider } from "@/lib/auth/context";
 import { ThemeProvider } from "@/lib/theme/context";
+import { VisitorTracker } from "@/components/analytics/VisitorTracker";
 
 export const metadata: Metadata = {
   title: "BAC Mastery — ماشي واش تقرا. كيفاش توصل.",
@@ -40,7 +41,10 @@ export default function RootLayout({
       <body className="min-h-screen antialiased bg-canvas text-theme-text selection:bg-[var(--color-primary)] selection:text-[var(--color-primary-text)]">
         <ThemeProvider>
           <I18nProvider>
-            <AuthProvider>{children}</AuthProvider>
+            <AuthProvider>
+              <VisitorTracker />
+              {children}
+            </AuthProvider>
           </I18nProvider>
         </ThemeProvider>
       </body>

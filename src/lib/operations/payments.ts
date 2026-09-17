@@ -424,6 +424,17 @@ export async function approvePaymentOrder(
 
   // Elevate student profile authoritatively with subscription duration
   try {
+    saveServerStudentProfile({
+      id: order.userId,
+      accessStatus: "PAID",
+      plan: order.plan || "season",
+      hasPendingPayment: false,
+      subscriptionStartedAt,
+      subscriptionExpiresAt,
+    });
+  } catch {}
+
+  try {
     const profileToUpdate = studentProfileBefore || {
       id: order.userId,
       educationLevel: "secondary",
@@ -443,6 +454,32 @@ export async function approvePaymentOrder(
     } as any, order.userId);
   } catch {
     // Non-blocking
+  }
+
+  // Also update Supabase student_profiles table directly if configured
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase
+        .from("student_profiles")
+        .update({
+          access_status: "PAID",
+          plan: order.plan || "season",
+          subscription_started_at: subscriptionStartedAt,
+          subscription_expires_at: subscriptionExpiresAt,
+          updated_at: now,
+        })
+        .eq("id", order.userId);
+      await supabase
+        .from("payment_orders")
+        .update({
+          status: "APPROVED",
+          reviewed_at: now,
+          reviewed_by: operatorId,
+          notes: reason,
+          updated_at: now,
+        })
+        .eq("id", order.id);
+    } catch {}
   }
 
   const afterState = {
@@ -532,6 +569,39 @@ export async function rejectPaymentOrder(
   order.reviewedBy = operatorId;
   order.updatedAt = now;
   saveDurableOrders(memoryPaymentOrders);
+
+  // Authoritatively update student profile to REJECTED in durable storage
+  try {
+    saveServerStudentProfile({
+      id: order.userId,
+      accessStatus: "REJECTED",
+      hasPendingPayment: false,
+      rejectionReason: rejectionReason.trim(),
+    });
+  } catch {}
+
+  // Update Supabase student_profiles and payment_orders if configured
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase
+        .from("student_profiles")
+        .update({
+          access_status: "REJECTED",
+          updated_at: now,
+        })
+        .eq("id", order.userId);
+      await supabase
+        .from("payment_orders")
+        .update({
+          status: "REJECTED",
+          rejection_reason: rejectionReason.trim(),
+          reviewed_at: now,
+          reviewed_by: operatorId,
+          updated_at: now,
+        })
+        .eq("id", order.id);
+    } catch {}
+  }
 
   await recordAuditLog({
     actorUserId: operatorId,
