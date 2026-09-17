@@ -814,6 +814,37 @@ export const GESTION_ECO_SKILLS: Record<string, CurriculumSkill> = {
     ],
   },
 
+  math_sequences_reasoning: {
+    id: "math_sequences_reasoning",
+    topicId: "math_topic_suites_financieres",
+    subjectId: "math",
+    streamId: "gestion_eco",
+    title_ar: "المتتاليات العددية (الحسابية والهندسية) واتجاه التغير والتقارب",
+    title_fr: "Suites numériques (arithmétiques et géométriques), sens de variation et limites",
+    description_ar: "دراسة اتجاه تغير المتتاليات الحسابية والهندسية، حساب الحدود العامة، وتطبيق خواص الأساس في المسائل المالية والاقتصادية.",
+    description_fr: "Étude des suites arithmétiques et géométriques, sens de variation, formule du terme général et convergence.",
+    prerequisites: [],
+    cognitiveDimensions: ["knowledge", "application"],
+    dimensions: ["knowledge", "application"],
+    difficulty: 2,
+    order: 23,
+    isActive: true,
+    repairStrategy_ar: "في المتتالية الهندسية ذات الحدود الموجبة تماماً: إذا كان الأساس q > 1 فالمتتالية متزايدة تماماً، وإذا كان 0 < q < 1 فالمتتالية متناقصة تماماً، والحد العام u_n = u_0 * q^n.",
+    repairStrategy_fr: "Pour une suite géométrique à termes strictement positifs : si q > 1 elle est strictement croissante, si 0 < q < 1 elle est strictement décroissante.",
+    repairSteps_ar: [
+      "حدد نوع المتتالية والأساس q وحدها الأول u_0 وإشارتهما.",
+      "طبق مبرهنة اتجاه التغير: إذا كان u_0 > 0 و q > 1 فالمتتالية متزايدة تماماً، وإذا كان 0 < q < 1 فالمتتالية متناقصة تماماً.",
+      "لحساب الحد العام u_n: طبق الصيغة u_n = u_0 * q^n أو u_n = u_p * q^(n-p).",
+      "احسب مجموع الحدود Sn = u_0 * (1 - q^n) / (1 - q) أو Sn = u_1 * (q^n - 1) / (q - 1).",
+    ],
+    repairSteps_fr: [
+      "Identifier la raison q et le premier terme u_0 ainsi que leur signe.",
+      "Déterminer la monotonie selon la valeur de la raison q.",
+      "Appliquer la formule du terme général u_n = u_0 * q^n.",
+      "Calculer la somme des termes consécutifs Sn.",
+    ],
+  },
+
   math_ge_cost_revenue_marginal_profit: {
     id: "math_ge_cost_revenue_marginal_profit",
     topicId: "math_topic_fonctions_economiques",

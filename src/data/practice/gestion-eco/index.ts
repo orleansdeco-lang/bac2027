@@ -11,6 +11,10 @@ import {
   gestionEcoT1FullPractice,
   GESTION_ECO_T1_FULL_PRACTICE_QUESTIONS,
 } from "./trimestre1-full";
+import {
+  gestionEcoT1AllSubjectsPractice,
+  GESTION_ECO_T1_ALL_SUBJECTS_PRACTICE_QUESTIONS,
+} from "./trimestre1-all-subjects";
 
 /**
  * BAC Mastery — Gestion & Économie Practice & Retest Question Bank
@@ -20,6 +24,7 @@ import {
 export const GESTION_ECO_PRACTICE_QUESTIONS: PracticeQuestion[] = [
   ...GESTION_ECO_T1_PRACTICE_QUESTIONS,
   ...GESTION_ECO_T1_FULL_PRACTICE_QUESTIONS,
+  ...GESTION_ECO_T1_ALL_SUBJECTS_PRACTICE_QUESTIONS,
 
   // ===========================================================================
   // 1. ACCOUNTING & FINANCE - AUTHENTIC INTERACTIVE EXERCISES
@@ -537,4 +542,7 @@ export {
   GESTION_ECO_T1_PRACTICE_QUESTIONS,
   gestionEcoT1FullPractice,
   GESTION_ECO_T1_FULL_PRACTICE_QUESTIONS,
+  gestionEcoT1AllSubjectsPractice,
+  GESTION_ECO_T1_ALL_SUBJECTS_PRACTICE_QUESTIONS,
 };
+
