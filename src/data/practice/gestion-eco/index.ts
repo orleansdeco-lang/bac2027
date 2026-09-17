@@ -3,6 +3,10 @@ import {
   GESTION_ECO_JOURNAL_QUESTION,
   GESTION_ECO_STEPS_QUESTION,
 } from "./interactive-exercises";
+import {
+  gestionEcoT1Practice,
+  GESTION_ECO_T1_PRACTICE_QUESTIONS,
+} from "./trimestre1-accounting";
 
 /**
  * BAC Mastery — Gestion & Économie Practice & Retest Question Bank
@@ -10,6 +14,8 @@ import {
  * Provides paired Practice (pq-*) and Isomorphic Retest (rq-*) items with distractor error mappings.
  */
 export const GESTION_ECO_PRACTICE_QUESTIONS: PracticeQuestion[] = [
+  ...GESTION_ECO_T1_PRACTICE_QUESTIONS,
+
   // ===========================================================================
   // 1. ACCOUNTING & FINANCE - AUTHENTIC INTERACTIVE EXERCISES
   // ===========================================================================
@@ -520,3 +526,5 @@ export function getGestionEcoPracticeQuestionsForSkill(skillId: string): Practic
 export function getGestionEcoRetestQuestionForSkill(skillId: string): PracticeQuestion | undefined {
   return GESTION_ECO_PRACTICE_QUESTIONS.find((q) => q.skillId === skillId && q.isRetestVariant);
 }
+
+export { gestionEcoT1Practice, GESTION_ECO_T1_PRACTICE_QUESTIONS };

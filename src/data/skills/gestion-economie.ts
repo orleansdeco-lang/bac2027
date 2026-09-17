@@ -41,6 +41,35 @@ export const GESTION_ECO_SKILLS: Record<string, CurriculumSkill> = {
     ],
   },
 
+  mgmt_accounting_amortization_provisions: {
+    id: "mgmt_accounting_amortization_provisions",
+    topicId: "acc_topic_amortissements",
+    subjectId: "accounting_finance",
+    streamId: "gestion_eco",
+    title_ar: "الاهتلاكات ونقص القيمة والمؤونات وتسوية حسابات نهاية السنة",
+    title_fr: "Amortissements, pertes de valeur et provisions de fin d'exercice",
+    description_ar: "حساب قسط الاهتلاك الخطي بالتناسب الزمني، واختبار خسارة القيمة للتثبيتات، وتسوية حسابات الزبائن المشكوك فيهم خارج الرسم (HT).",
+    description_fr: "Calcul des annuités linéaires au prorata temporis, dépréciation des immobilisations et régularisation des créances clients.",
+    prerequisites: [],
+    cognitiveDimensions: ["knowledge", "application"],
+    dimensions: ["knowledge", "application"],
+    difficulty: 2,
+    order: 1,
+    isActive: true,
+    repairStrategy_ar: "تطبيق التناسب الزمني بدقة، والتمييز بين الاهتلاك وخسارة القيمة، وحساب خسارة القيمة دوماً على المبلغ خارج الرسم HT حصراً.",
+    repairStrategy_fr: "Appliquer le prorata temporis et calculer systématiquement la dépréciation sur le montant HT.",
+    repairSteps_ar: [
+      "حدد تاريخ الحيازة وطبق قاعدة التناسب الزمني للسنة الأولى: A = Vo × t × (m/12).",
+      "احسب VNC وقارنها بسعر السوق لاختبار خسارة القيمة (ح/681 إلى ح/29).",
+      "في ديون الزبائن: حول رصيد الزبون خارج الرسم HT = TTC / 1.19 قبل حساب أي خسارة قيمة.",
+    ],
+    repairSteps_fr: [
+      "Calculer l'annuité au prorata temporis.",
+      "Tester la dépréciation VNC vs prix du marché.",
+      "Calculer la perte sur créances strictement sur le montant HT.",
+    ],
+  },
+
   acc_inventory_regularization_depreciation: {
     id: "acc_inventory_regularization_depreciation",
     topicId: "acc_topic_stocks",
