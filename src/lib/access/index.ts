@@ -131,8 +131,9 @@ export function getStudentAccess(
     };
   }
 
-  // 3. Explicit Paid Subscriber
-  if (rawStatus === "PAID" || rawPlan === "PAID" || (subExpiresAt && rawStatus !== "TRIAL")) {
+  // 3. Explicit Paid Subscriber or Active Subscription
+  const hasFutureSubscription = Boolean(subExpiresAt && new Date(subExpiresAt).getTime() > nowMs);
+  if (rawStatus === "PAID" || rawPlan === "PAID" || hasFutureSubscription || (subExpiresAt && rawStatus !== "TRIAL")) {
     // If subscription_expires_at is present, verify expiration dynamically against server time
     if (subExpiresAt) {
       const subExpiryMs = new Date(subExpiresAt).getTime();

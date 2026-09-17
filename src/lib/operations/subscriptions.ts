@@ -17,9 +17,12 @@ import { recordAuditLog } from "./audit";
 import { hasFinanceAccess, getServerUserRole, isAbsoluteOwner, OWNER_UUID } from "./auth";
 import { StudentRepository } from "../repositories/student-repository";
 import { getPaymentOrders } from "./payments";
+import { saveServerStudentProfile } from "./students";
 
 import fs from "fs";
 import path from "path";
+
+import os from "os";
 
 function getDurablePlansPath(): string {
   const dir = path.join(process.cwd(), ".runtime");
@@ -31,21 +34,61 @@ function getDurablePlansPath(): string {
   return path.join(dir, "subscription_plans.json");
 }
 
+function getTmpPlansPath(): string {
+  return path.join(os.tmpdir(), "bac_subscription_plans.json");
+}
+
 function loadDurablePlans(): SubscriptionPlan[] {
   if (typeof window !== "undefined") return [];
+
+  // 1. Check globalThis in-memory cache
+  const globalCache = (globalThis as any).__BAC_SUBSCRIPTION_PLANS__;
+  if (Array.isArray(globalCache) && globalCache.length > 0) {
+    return globalCache;
+  }
+
+  // 2. Check /tmp durable storage (writable on Vercel / serverless)
+  try {
+    const tmpPath = getTmpPlansPath();
+    if (fs.existsSync(tmpPath)) {
+      const raw = fs.readFileSync(tmpPath, "utf8");
+      const list = JSON.parse(raw);
+      if (Array.isArray(list) && list.length > 0) {
+        (globalThis as any).__BAC_SUBSCRIPTION_PLANS__ = list;
+        return list;
+      }
+    }
+  } catch {}
+
+  // 3. Check bundled .runtime storage
   try {
     const filePath = getDurablePlansPath();
     if (fs.existsSync(filePath)) {
       const raw = fs.readFileSync(filePath, "utf8");
       const list = JSON.parse(raw);
-      if (Array.isArray(list) && list.length > 0) return list;
+      if (Array.isArray(list) && list.length > 0) {
+        (globalThis as any).__BAC_SUBSCRIPTION_PLANS__ = list;
+        return list;
+      }
     }
   } catch {}
+
   return [];
 }
 
 function saveDurablePlans(plans: SubscriptionPlan[]): void {
   if (typeof window !== "undefined") return;
+
+  // 1. Update globalThis cache
+  (globalThis as any).__BAC_SUBSCRIPTION_PLANS__ = plans;
+
+  // 2. Persist to /tmp (always writable in serverless environments)
+  try {
+    const tmpPath = getTmpPlansPath();
+    fs.writeFileSync(tmpPath, JSON.stringify(plans, null, 2), "utf8");
+  } catch {}
+
+  // 3. Persist to .runtime (local development / build cache)
   try {
     const filePath = getDurablePlansPath();
     fs.writeFileSync(filePath, JSON.stringify(plans, null, 2), "utf8");
@@ -56,7 +99,7 @@ const DEFAULT_PLANS: SubscriptionPlan[] = [
   {
     id: "season",
     name: "اشتراك الموسم الدراسي",
-    price_dzd: 2900.0,
+    price_dzd: 4900.0,
     duration_months: 10,
     active: true,
     created_at: new Date().toISOString(),
@@ -397,6 +440,18 @@ export async function extendStudentSubscription(
   };
 
   await StudentRepository.saveProfile(updatedProfile as any, effectiveStudentId);
+
+  // Persist into server student registry for immediate /ops directory visibility
+  try {
+    saveServerStudentProfile({
+      id: effectiveStudentId,
+      accessStatus: "PAID",
+      plan: chosenPlan,
+      hasPendingPayment: false,
+      subscriptionStartedAt: updatedProfile.subscription_started_at,
+      subscriptionExpiresAt: newExpiration,
+    });
+  } catch {}
 
   // Directly upsert into Supabase student_profiles table if database is configured
   if (isSupabaseConfigured && client) {

@@ -50,19 +50,23 @@ export default function OpsStudentsPage() {
       });
       const data = await res.json();
       if (data?.success) {
-        setStudents((prev) =>
-          prev.map((s) =>
+        setStudents((prev) => {
+          const updated = prev.map((s) =>
             s.id === studentId
               ? {
                   ...s,
-                  accessStatus: "PAID",
+                  accessStatus: "PAID" as const,
                   plan: data.plan || planType,
                   remainingHours: isSeason ? 8760 : 720,
                   subscriptionExpiresAt: data.newExpiresAt,
                 }
               : s
-          )
-        );
+          );
+          try {
+            localStorage.setItem("bac_ops_cached_students", JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
         alert(`✓ تم تفعيل حساب الطالب "${studentName}" بنجاح (${label}).`);
       } else {
         alert(`فشل التفعيل: ${data?.error || "خطأ غير معروف"}`);
@@ -75,13 +79,37 @@ export default function OpsStudentsPage() {
   }
 
   useEffect(() => {
+    // 1. Immediately hydrate from persistent local storage to prevent blank flicker
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("bac_ops_cached_students");
+        if (cached) {
+          const list = JSON.parse(cached);
+          if (Array.isArray(list) && list.length > 0) {
+            setStudents(list);
+            setLoading(false);
+          }
+        }
+      } catch {}
+    }
+
     async function fetchStudents() {
-      setLoading(true);
       try {
         const res = await opsFetch("/api/ops/students");
         if (res.ok) {
           const data = await res.json();
-          if (data?.students) setStudents(data.students);
+          if (Array.isArray(data?.students) && data.students.length > 0) {
+            setStudents((prev) => {
+              const map = new Map<string, StudentOperationalSummary>();
+              prev.forEach((s) => map.set(s.id, s));
+              data.students.forEach((s: StudentOperationalSummary) => map.set(s.id, s));
+              const merged = Array.from(map.values());
+              try {
+                localStorage.setItem("bac_ops_cached_students", JSON.stringify(merged));
+              } catch {}
+              return merged;
+            });
+          }
         }
       } catch (err) {
         console.error("Failed to load students:", err);

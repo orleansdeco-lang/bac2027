@@ -1,0 +1,19 @@
+[
+  {
+    "id": "ord_1789655186425_zf2sr",
+    "userId": "test-user-persist-1",
+    "plan": "season",
+    "amount": 4900,
+    "currency": "DZD",
+    "paymentMethod": "baridimob",
+    "status": "APPROVED",
+    "receiptPath": null,
+    "notes": "Verified payment",
+    "submittedAt": "2026-09-17T14:26:26.425Z",
+    "createdAt": "2026-09-17T14:26:26.425Z",
+    "updatedAt": "2026-09-17T14:26:27.662Z",
+    "studentEmail": "ahmed@test.dz",
+    "reviewedAt": "2026-09-17T14:26:27.662Z",
+    "reviewedBy": "op-1"
+  }
+]

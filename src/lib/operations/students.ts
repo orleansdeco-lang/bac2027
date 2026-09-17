@@ -5,6 +5,7 @@
 
 import fs from "fs";
 import path from "path";
+import os from "os";
 import { StudentOperationalSummary } from "./types";
 
 function getDurableStudentsPath(): string {
@@ -17,11 +18,42 @@ function getDurableStudentsPath(): string {
   return path.join(dir, "students.json");
 }
 
+function getTmpStudentsPath(): string {
+  return path.join(os.tmpdir(), "bac_students.json");
+}
+
 const memoryServerStudents = new Map<string, StudentOperationalSummary>();
 
 export function loadServerStudentProfiles(): StudentOperationalSummary[] {
   if (typeof window !== "undefined") return Array.from(memoryServerStudents.values());
 
+  // 1. Check globalThis registry
+  const globalList = (globalThis as any).__BAC_STUDENTS_REGISTRY__;
+  if (Array.isArray(globalList) && globalList.length > 0) {
+    for (const item of globalList) {
+      if (item?.id && !memoryServerStudents.has(item.id)) {
+        memoryServerStudents.set(item.id, item);
+      }
+    }
+  }
+
+  // 2. Check /tmp durable storage
+  try {
+    const tmpPath = getTmpStudentsPath();
+    if (fs.existsSync(tmpPath)) {
+      const raw = fs.readFileSync(tmpPath, "utf8");
+      const list = JSON.parse(raw);
+      if (Array.isArray(list)) {
+        for (const item of list) {
+          if (item?.id && !memoryServerStudents.has(item.id)) {
+            memoryServerStudents.set(item.id, item);
+          }
+        }
+      }
+    }
+  } catch {}
+
+  // 3. Check bundled .runtime storage
   try {
     const filePath = getDurableStudentsPath();
     if (fs.existsSync(filePath)) {
@@ -37,13 +69,33 @@ export function loadServerStudentProfiles(): StudentOperationalSummary[] {
     }
   } catch {}
 
-  return Array.from(memoryServerStudents.values());
+  const all = Array.from(memoryServerStudents.values());
+  (globalThis as any).__BAC_STUDENTS_REGISTRY__ = all;
+  return all;
 }
 
 export function saveServerStudentProfile(student: Partial<StudentOperationalSummary> & { id: string }): StudentOperationalSummary {
   loadServerStudentProfiles();
 
   const existing = memoryServerStudents.get(student.id);
+
+  // Protect PAID status if currently PAID or if subscription expires in the future
+  const subExpiresAt = student.subscriptionExpiresAt || existing?.subscriptionExpiresAt;
+  const isPaidActive = Boolean(
+    (existing?.accessStatus === "PAID" || student.accessStatus === "PAID") &&
+    subExpiresAt &&
+    new Date(subExpiresAt).getTime() > Date.now()
+  );
+
+  let finalAccessStatus: "TRIAL" | "PAID" | "EXPIRED" | "REJECTED" = "TRIAL";
+  if (isPaidActive || student.accessStatus === "PAID" || (existing?.accessStatus === "PAID" && student.accessStatus !== "EXPIRED" && student.accessStatus !== "REJECTED")) {
+    finalAccessStatus = "PAID";
+  } else if (student.accessStatus) {
+    finalAccessStatus = student.accessStatus;
+  } else if (existing?.accessStatus) {
+    finalAccessStatus = existing.accessStatus;
+  }
+
   const updated: StudentOperationalSummary = {
     id: student.id,
     fullName: student.fullName || existing?.fullName || "طالب مسجل",
@@ -52,13 +104,10 @@ export function saveServerStudentProfile(student: Partial<StudentOperationalSumm
     streamId: student.streamId || existing?.streamId || "sciences_exp",
     wilayaName: student.wilayaName || existing?.wilayaName,
     communeName: student.communeName || existing?.communeName,
-    accessStatus:
-      existing?.accessStatus === "PAID" && student.accessStatus !== "EXPIRED" && student.accessStatus !== "REJECTED"
-        ? "PAID"
-        : student.accessStatus || existing?.accessStatus || "TRIAL",
+    accessStatus: finalAccessStatus,
     plan:
-      existing?.accessStatus === "PAID" && (!student.plan || student.plan === "PILOT_TRIAL")
-        ? existing.plan || "season"
+      finalAccessStatus === "PAID" && (!student.plan || student.plan === "PILOT_TRIAL")
+        ? existing?.plan || "season"
         : student.plan || existing?.plan || "season",
     trialStartedAt: student.trialStartedAt || existing?.trialStartedAt || new Date().toISOString(),
     trialExpiresAt: student.trialExpiresAt || existing?.trialExpiresAt,
@@ -71,18 +120,27 @@ export function saveServerStudentProfile(student: Partial<StudentOperationalSumm
     lastActiveAt: new Date().toISOString(),
     hasPendingPayment: student.hasPendingPayment !== undefined ? student.hasPendingPayment : existing?.hasPendingPayment ?? false,
     subscriptionStartedAt: student.subscriptionStartedAt || existing?.subscriptionStartedAt,
-    subscriptionExpiresAt: student.subscriptionExpiresAt || existing?.subscriptionExpiresAt,
+    subscriptionExpiresAt: subExpiresAt,
     rejectionReason: student.rejectionReason !== undefined ? student.rejectionReason : existing?.rejectionReason,
     createdAt: student.createdAt || existing?.createdAt || new Date().toISOString(),
     onboardingCompleted: student.onboardingCompleted !== undefined ? student.onboardingCompleted : existing?.onboardingCompleted ?? true,
   };
 
   memoryServerStudents.set(student.id, updated);
+  const all = Array.from(memoryServerStudents.values());
+  (globalThis as any).__BAC_STUDENTS_REGISTRY__ = all;
 
   if (typeof window === "undefined") {
+    // 1. Write to /tmp
+    try {
+      const tmpPath = getTmpStudentsPath();
+      fs.writeFileSync(tmpPath, JSON.stringify(all, null, 2), "utf8");
+    } catch {}
+
+    // 2. Write to .runtime
     try {
       const filePath = getDurableStudentsPath();
-      fs.writeFileSync(filePath, JSON.stringify(Array.from(memoryServerStudents.values()), null, 2), "utf8");
+      fs.writeFileSync(filePath, JSON.stringify(all, null, 2), "utf8");
     } catch {}
   }
 

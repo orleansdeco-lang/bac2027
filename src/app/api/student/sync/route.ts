@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { saveServerStudentProfile } from "@/lib/operations/students";
+import { saveServerStudentProfile, loadServerStudentProfiles } from "@/lib/operations/students";
 import { createAuthenticatedSupabaseClient, isSupabaseConfigured, supabase } from "@/lib/supabase/client";
 
 export const dynamic = "force-dynamic";
@@ -25,45 +25,81 @@ export async function POST(req: Request) {
       }
     }
 
-    // 1. Authoritative check: Look up payment orders and existing records
+    // 1. Authoritative check: Search existing server profiles
+    const serverProfiles = loadServerStudentProfiles();
+    const existingServerProfile = serverProfiles.find(
+      (s) =>
+        s.id === body.id ||
+        (body.email && s.email && s.email.toLowerCase() === body.email.toLowerCase()) ||
+        (body.studentPhone && s.studentPhone && s.studentPhone === body.studentPhone)
+    );
+
+    // 2. Authoritative check: Look up all payment orders matching id, email, or phone
     const { getPaymentOrders } = await import("@/lib/operations/payments");
-    const userOrders = await getPaymentOrders({ userId: body.id, limit: 10 }, token);
+    const allOrders = await getPaymentOrders({ limit: 200 }, token);
+    const userOrders = allOrders.filter(
+      (o) =>
+        o.userId === body.id ||
+        (body.email && o.studentEmail && o.studentEmail.toLowerCase() === body.email.toLowerCase()) ||
+        (body.studentPhone && o.studentPhone && o.studentPhone === body.studentPhone)
+    );
     const approvedOrder = userOrders.find((o) => o.status === "APPROVED");
     const latestOrder = userOrders[0];
 
-    let effectiveAccessStatus: "TRIAL" | "PAID" | "EXPIRED" | "REJECTED" = body.accessStatus || "TRIAL";
-    let effectivePlan = body.plan || "season";
-    let subStartedAt: string | undefined = undefined;
-    let subExpiresAt: string | undefined = undefined;
-    let rejectionReason: string | undefined = undefined;
+    // Check if student has valid active paid subscription
+    const existingSubExpires = existingServerProfile?.subscriptionExpiresAt;
+    const isExistingPaidActive = Boolean(
+      existingServerProfile?.accessStatus === "PAID" &&
+      existingSubExpires &&
+      new Date(existingSubExpires).getTime() > Date.now()
+    );
 
-    if (approvedOrder) {
+    const isAuthoritativePaid = Boolean(
+      approvedOrder ||
+      isExistingPaidActive ||
+      (body.isServerAuthoritativePaid && body.accessStatus === "PAID")
+    );
+
+    let effectiveAccessStatus: "TRIAL" | "PAID" | "EXPIRED" | "REJECTED" = "TRIAL";
+    let effectivePlan = approvedOrder?.plan || existingServerProfile?.plan || body.plan || "season";
+    let subStartedAt = approvedOrder?.reviewedAt || existingServerProfile?.subscriptionStartedAt;
+    let subExpiresAt = existingSubExpires;
+    let rejectionReason = existingServerProfile?.rejectionReason;
+
+    if (isAuthoritativePaid) {
       effectiveAccessStatus = "PAID";
-      effectivePlan = approvedOrder.plan || "season";
-      subStartedAt = approvedOrder.reviewedAt || approvedOrder.updatedAt || approvedOrder.submittedAt;
-      const durationMonths = effectivePlan === "monthly" ? 1 : 10;
-      subExpiresAt = new Date(new Date(subStartedAt).getTime() + durationMonths * 30 * 86400000).toISOString();
+      if (approvedOrder) {
+        effectivePlan = approvedOrder.plan || "season";
+        subStartedAt = approvedOrder.reviewedAt || approvedOrder.updatedAt || approvedOrder.submittedAt || new Date().toISOString();
+        const durationMonths = effectivePlan === "monthly" ? 1 : 10;
+        subExpiresAt = new Date(new Date(subStartedAt).getTime() + durationMonths * 30 * 86400000).toISOString();
+      } else if (!subExpiresAt) {
+        const durationMonths = effectivePlan === "monthly" ? 1 : 10;
+        subExpiresAt = new Date(Date.now() + durationMonths * 30 * 86400000).toISOString();
+      }
     } else if (latestOrder && latestOrder.status === "REJECTED") {
       effectiveAccessStatus = "REJECTED";
       rejectionReason = latestOrder.rejectionReason || "تم رفض وصل التحويل";
+    } else {
+      effectiveAccessStatus = body.accessStatus || existingServerProfile?.accessStatus || "TRIAL";
     }
 
-    // 2. Save to durable server registry for immediate /ops visibility
+    // 3. Save to durable server registry for immediate /ops visibility
     const student = saveServerStudentProfile({
       id: body.id,
-      fullName: body.fullName || `${body.firstName || ""} `.trim() || undefined,
-      email: body.email,
-      studentPhone: body.studentPhone,
-      streamId: body.streamId,
-      wilayaName: body.wilayaName,
-      communeName: body.communeName,
-      targetScore: body.targetScore,
+      fullName: body.fullName || `${body.firstName || ""} ${body.lastName || ""}`.trim() || existingServerProfile?.fullName || undefined,
+      email: body.email || existingServerProfile?.email,
+      studentPhone: body.studentPhone || existingServerProfile?.studentPhone,
+      streamId: body.streamId || existingServerProfile?.streamId,
+      wilayaName: body.wilayaName || existingServerProfile?.wilayaName,
+      communeName: body.communeName || existingServerProfile?.communeName,
+      targetScore: body.targetScore ?? existingServerProfile?.targetScore,
       accessStatus: effectiveAccessStatus,
       plan: effectivePlan,
       subscriptionStartedAt: subStartedAt,
       subscriptionExpiresAt: subExpiresAt,
       rejectionReason,
-      onboardingCompleted: body.onboardingCompleted !== undefined ? body.onboardingCompleted : true,
+      onboardingCompleted: body.onboardingCompleted !== undefined ? body.onboardingCompleted : (existingServerProfile?.onboardingCompleted ?? true),
     });
 
     // 2. Also attempt Supabase upsert if configured and client available

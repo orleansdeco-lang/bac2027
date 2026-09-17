@@ -24,7 +24,7 @@ export const CANONICAL_PLANS: Record<string, PaymentPlan> = {
     id: "season",
     name_ar: "اشتراك السنة الدراسية (موسم كامل)",
     name_fr: "Pass Année Scolaire (Saison Complète)",
-    priceDZD: 0,
+    priceDZD: 4900,
     durationMonths: 10,
     description_ar: "وصول غير محدود وشامل لجميع الدروس، الاختبارات، ومعمل الأخطاء حتى يوم امتحان البكالوريا.",
     description_fr: "Accès illimité à toutes les missions, entraînements et retests jusqu'aux épreuves du BAC.",
@@ -50,7 +50,7 @@ export const CANONICAL_PLANS: Record<string, PaymentPlan> = {
     id: "monthly",
     name_ar: "الاشتراك الشهري (30 يوماً)",
     name_fr: "Pass Mensuel (30 jours)",
-    priceDZD: 0,
+    priceDZD: 900,
     durationMonths: 1,
     description_ar: "وصول كامل وشامل لمدة شهر كامل (30 يوماً) قابل للتجديد بكل مرونة.",
     description_fr: "Accès complet pendant 1 mois (30 jours) renouvelable.",
@@ -72,7 +72,7 @@ export const CANONICAL_PLANS: Record<string, PaymentPlan> = {
     id: "bac_season_pass_pilot",
     name_ar: "اشتراك السنة الدراسية (موسم كامل)",
     name_fr: "Pass Année Scolaire",
-    priceDZD: 0,
+    priceDZD: 4900,
     durationMonths: 10,
     description_ar: "وصول غير محدود لجميع الدروس، التدريبات، والتصحيحات حتى يوم امتحان البكالوريا.",
     description_fr: "Accès illimité à toutes les missions, entraînements et retests jusqu'aux épreuves du BAC.",
@@ -206,7 +206,15 @@ export class ManualPilotPaymentProvider implements PaymentProvider {
     const rawPlanId = req.planId || "season";
     const canonical = CANONICAL_PLANS[rawPlanId] || CANONICAL_PLANS.season;
     const finalPlanId = rawPlanId;
-    const finalAmount = canonical.priceDZD;
+
+    let finalAmount = canonical.priceDZD;
+    try {
+      const plans = await this.getAvailablePlans();
+      const matched = plans.find((p) => p.id === rawPlanId || (rawPlanId === "bac_season_pass_pilot" && p.id === "season"));
+      if (matched && typeof matched.priceDZD === "number" && matched.priceDZD > 0) {
+        finalAmount = matched.priceDZD;
+      }
+    } catch {}
 
     const record: PilotPaymentRecord = {
       requestId: referenceId,

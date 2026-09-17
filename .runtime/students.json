@@ -1,0 +1,24 @@
+[
+  {
+    "id": "test-user-persist-1",
+    "fullName": "طالب مسجل",
+    "email": "ahmed@test.dz",
+    "studentPhone": "0555123456",
+    "streamId": "sciences_exp",
+    "accessStatus": "PAID",
+    "plan": "season",
+    "trialStartedAt": "2026-09-17T14:26:25.146Z",
+    "remainingHours": 72,
+    "targetScore": 16,
+    "completedMissionsCount": 0,
+    "demonstratedSkillsCount": 0,
+    "activeErrorsCount": 0,
+    "resolvedRetestsCount": 0,
+    "lastActiveAt": "2026-09-17T14:26:31.410Z",
+    "hasPendingPayment": false,
+    "subscriptionStartedAt": "2026-09-17T14:26:27.662Z",
+    "subscriptionExpiresAt": "2027-07-14T14:26:27.662Z",
+    "createdAt": "2026-09-17T14:26:25.146Z",
+    "onboardingCompleted": true
+  }
+]

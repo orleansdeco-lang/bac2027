@@ -176,25 +176,29 @@ export default function OpsOverviewPage() {
 
       if (ordersRes && ordersRes.ok) {
         const ordersData = await ordersRes.json().catch(() => null);
-        if (Array.isArray(ordersData?.orders)) {
-          setOrders(ordersData.orders);
-        } else {
-          setOrders([]);
+        if (Array.isArray(ordersData?.orders) && ordersData.orders.length > 0) {
+          setOrders((prev) => {
+            const map = new Map<string, PaymentOrder>();
+            prev.forEach((o) => map.set(o.id, o));
+            ordersData.orders.forEach((o: PaymentOrder) => map.set(o.id, o));
+            const merged = Array.from(map.values());
+            try { localStorage.setItem("bac_ops_cached_orders", JSON.stringify(merged)); } catch {}
+            return merged;
+          });
         }
-      } else {
-        setOrders([]);
       }
 
       if (plansRes && plansRes.ok) {
         const plansData = await plansRes.json().catch(() => null);
-        if (Array.isArray(plansData?.plans)) {
+        if (Array.isArray(plansData?.plans) && plansData.plans.length > 0) {
           setPlans(plansData.plans);
+          try { localStorage.setItem("bac_ops_cached_plans", JSON.stringify(plansData.plans)); } catch {}
           // Initialize edit form buffer
           const map: { [id: string]: { price_dzd: number; duration_months: number; active: boolean } } = {};
           plansData.plans.forEach((p: SubscriptionPlan) => {
             map[p.id] = {
-              price_dzd: p?.price_dzd ?? 0,
-              duration_months: p?.duration_months ?? 1,
+              price_dzd: p?.price_dzd ?? 4900,
+              duration_months: p?.duration_months ?? 10,
               active: p?.active !== false,
             };
           });
@@ -211,13 +215,16 @@ export default function OpsOverviewPage() {
 
       if (studentsRes && studentsRes.ok) {
         const studentsData = await studentsRes.json().catch(() => null);
-        if (Array.isArray(studentsData?.students)) {
-          setStudents(studentsData.students);
-        } else {
-          setStudents([]);
+        if (Array.isArray(studentsData?.students) && studentsData.students.length > 0) {
+          setStudents((prev) => {
+            const map = new Map<string, StudentOperationalSummary>();
+            prev.forEach((s) => map.set(s.id, s));
+            studentsData.students.forEach((s: StudentOperationalSummary) => map.set(s.id, s));
+            const merged = Array.from(map.values());
+            try { localStorage.setItem("bac_ops_cached_students", JSON.stringify(merged)); } catch {}
+            return merged;
+          });
         }
-      } else {
-        setStudents([]);
       }
 
       setLastRefreshed(new Date());
@@ -229,6 +236,38 @@ export default function OpsOverviewPage() {
   }
 
   useEffect(() => {
+    // 1. Immediately hydrate from persistent local storage to prevent blank states
+    if (typeof window !== "undefined") {
+      try {
+        const cachedStudents = localStorage.getItem("bac_ops_cached_students");
+        if (cachedStudents) {
+          const list = JSON.parse(cachedStudents);
+          if (Array.isArray(list) && list.length > 0) setStudents(list);
+        }
+        const cachedOrders = localStorage.getItem("bac_ops_cached_orders");
+        if (cachedOrders) {
+          const list = JSON.parse(cachedOrders);
+          if (Array.isArray(list) && list.length > 0) setOrders(list);
+        }
+        const cachedPlans = localStorage.getItem("bac_ops_cached_plans");
+        if (cachedPlans) {
+          const list = JSON.parse(cachedPlans);
+          if (Array.isArray(list) && list.length > 0) {
+            setPlans(list);
+            const map: { [id: string]: { price_dzd: number; duration_months: number; active: boolean } } = {};
+            list.forEach((p: SubscriptionPlan) => {
+              map[p.id] = {
+                price_dzd: p?.price_dzd ?? 4900,
+                duration_months: p?.duration_months ?? 10,
+                active: p?.active !== false,
+              };
+            });
+            setEditingPlans(map);
+          }
+        }
+      } catch {}
+    }
+
     fetchAllData();
     // Refresh live visitor count every 30 seconds
     const interval = setInterval(async () => {
@@ -268,13 +307,33 @@ export default function OpsOverviewPage() {
           message: `✓ تم قبول الطلب وتفعيل اشتراك الطالب (${order.studentName || order.userId}) بنجاح!`,
         });
         // Optimistically update orders in list
-        setOrders((prev) =>
-          prev.map((o) =>
+        setOrders((prev) => {
+          const updated = prev.map((o) =>
             o.id === order.id
-              ? { ...o, status: "APPROVED", resolvedAt: new Date().toISOString() }
+              ? { ...o, status: "APPROVED" as const, resolvedAt: new Date().toISOString() }
               : o
-          )
-        );
+          );
+          try { localStorage.setItem("bac_ops_cached_orders", JSON.stringify(updated)); } catch {}
+          return updated;
+        });
+        // Optimistically elevate student in directory list
+        setStudents((prev) => {
+          const updated = prev.map((s) => {
+            if (s.id === order.userId || (order.studentEmail && s.email === order.studentEmail)) {
+              return {
+                ...s,
+                accessStatus: "PAID" as const,
+                plan: order.plan || "season",
+                hasPendingPayment: false,
+                remainingHours: (order.plan === "monthly" ? 720 : 8760),
+                subscriptionExpiresAt: new Date(Date.now() + (order.plan === "monthly" ? 30 : 300) * 86400000).toISOString(),
+              };
+            }
+            return s;
+          });
+          try { localStorage.setItem("bac_ops_cached_students", JSON.stringify(updated)); } catch {}
+          return updated;
+        });
         // Refresh full overview to reflect updated KPIs
         opsFetch("/api/ops/overview").then((r) => r.json()).then((d) => d?.kpis && setKpis(d.kpis));
       } else {
@@ -314,13 +373,15 @@ export default function OpsOverviewPage() {
           type: "success",
           message: `✓ تم رفض الطلب وإعلام حساب الطالب بالسبب: "${finalReason}"`,
         });
-        setOrders((prev) =>
-          prev.map((o) =>
+        setOrders((prev) => {
+          const updated = prev.map((o) =>
             o.id === rejectModalOrder.id
-              ? { ...o, status: "REJECTED", notes: finalReason, resolvedAt: new Date().toISOString() }
+              ? { ...o, status: "REJECTED" as const, notes: finalReason, resolvedAt: new Date().toISOString() }
               : o
-          )
-        );
+          );
+          try { localStorage.setItem("bac_ops_cached_orders", JSON.stringify(updated)); } catch {}
+          return updated;
+        });
         setRejectModalOrder(null);
         setCustomRejectReason("");
       } else {
@@ -385,13 +446,15 @@ export default function OpsOverviewPage() {
           type: "success",
           message: `✓ تم تحديث سعر باقة (${planId}) إلى ${edit.price_dzd.toLocaleString()} دج بنجاح! سيظهر السعر الجديد فوراً للطلبة.`,
         });
-        setPlans((prev) =>
-          prev.map((p) =>
+        setPlans((prev) => {
+          const updated = prev.map((p) =>
             p.id === planId
               ? { ...p, price_dzd: edit.price_dzd, duration_months: edit.duration_months, active: edit.active }
               : p
-          )
-        );
+          );
+          try { localStorage.setItem("bac_ops_cached_plans", JSON.stringify(updated)); } catch {}
+          return updated;
+        });
       } else {
         setActionNotice({
           type: "error",

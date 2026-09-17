@@ -14,14 +14,15 @@ import { recordAuditLog } from "./audit";
 import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "../supabase/client";
 import { StudentRepository } from "../repositories/student-repository";
 import { getSubscriptionPlanById } from "./subscriptions";
-import { saveServerStudentProfile } from "./students";
+import { saveServerStudentProfile, loadServerStudentProfiles } from "./students";
+import os from "os";
 
 export const AUTHORITATIVE_PLANS: Record<string, AuthoritativePlan> = {
   season: {
     id: "season",
     name_ar: "اشتراك الموسم الدراسي",
     name_fr: "Pass Saison BAC",
-    priceDZD: 0,
+    priceDZD: 4900,
     currency: "DZD",
     durationMonths: 10,
     description_ar: "وصول غير محدود لجميع الدروس، التدريبات، والتصحيحات حتى يوم امتحان البكالوريا.",
@@ -31,7 +32,7 @@ export const AUTHORITATIVE_PLANS: Record<string, AuthoritativePlan> = {
     id: "monthly",
     name_ar: "الاشتراك الشهري",
     name_fr: "Abonnement Mensuel",
-    priceDZD: 0,
+    priceDZD: 900,
     currency: "DZD",
     durationMonths: 1,
     description_ar: "وصول كامل لمدة 30 يوماً قابلة للتجديد.",
@@ -41,11 +42,11 @@ export const AUTHORITATIVE_PLANS: Record<string, AuthoritativePlan> = {
     id: "bac_season_pass_pilot",
     name_ar: "موسم البكالوريا الكامل",
     name_fr: "Pass Saison BAC",
-    priceDZD: 0,
+    priceDZD: 4900,
     currency: "DZD",
     durationMonths: 10,
     description_ar: "وصول غير محدود لجميع الدروس، التدريبات، والتصحيحات حتى يوم امتحان البكالوريا.",
-    description_fr: "Accès illimité à toutes les missions, entraînements et retests jusqu'aux épreuves du BAC.",
+    description_fr: "Accès illimité à toutes les missions, entraînements et retests حتى يوم امتحان البكالوريا.",
   },
 };
 
@@ -62,21 +63,61 @@ function getDurableOrdersPath(): string {
   return path.join(dir, "payment_orders.json");
 }
 
+function getTmpOrdersPath(): string {
+  return path.join(os.tmpdir(), "bac_payment_orders.json");
+}
+
 function loadDurableOrders(): PaymentOrder[] {
   if (typeof window !== "undefined") return [];
+
+  // 1. Check globalThis cache
+  const globalCache = (globalThis as any).__BAC_PAYMENT_ORDERS__;
+  if (Array.isArray(globalCache) && globalCache.length > 0) {
+    return globalCache;
+  }
+
+  // 2. Check /tmp durable storage
+  try {
+    const tmpPath = getTmpOrdersPath();
+    if (fs.existsSync(tmpPath)) {
+      const raw = fs.readFileSync(tmpPath, "utf8");
+      const list = JSON.parse(raw);
+      if (Array.isArray(list) && list.length > 0) {
+        (globalThis as any).__BAC_PAYMENT_ORDERS__ = list;
+        return list;
+      }
+    }
+  } catch {}
+
+  // 3. Check bundled .runtime storage
   try {
     const filePath = getDurableOrdersPath();
     if (fs.existsSync(filePath)) {
       const raw = fs.readFileSync(filePath, "utf8");
       const list = JSON.parse(raw);
-      if (Array.isArray(list)) return list;
+      if (Array.isArray(list)) {
+        (globalThis as any).__BAC_PAYMENT_ORDERS__ = list;
+        return list;
+      }
     }
   } catch {}
+
   return [];
 }
 
 function saveDurableOrders(orders: PaymentOrder[]): void {
   if (typeof window !== "undefined") return;
+
+  // 1. Update globalThis cache
+  (globalThis as any).__BAC_PAYMENT_ORDERS__ = orders;
+
+  // 2. Persist to /tmp
+  try {
+    const tmpPath = getTmpOrdersPath();
+    fs.writeFileSync(tmpPath, JSON.stringify(orders, null, 2), "utf8");
+  } catch {}
+
+  // 3. Persist to .runtime
   try {
     const filePath = getDurableOrdersPath();
     fs.writeFileSync(filePath, JSON.stringify(orders, null, 2), "utf8");
@@ -426,12 +467,35 @@ export async function approvePaymentOrder(
   try {
     saveServerStudentProfile({
       id: order.userId,
+      email: order.studentEmail,
+      studentPhone: order.studentPhone,
+      fullName: order.studentName,
+      streamId: order.streamId,
+      wilayaName: order.wilayaName,
       accessStatus: "PAID",
       plan: order.plan || "season",
       hasPendingPayment: false,
       subscriptionStartedAt,
       subscriptionExpiresAt,
     });
+
+    // Also link and elevate any existing server profile matching studentEmail or studentPhone
+    const serverStudents = loadServerStudentProfiles();
+    for (const s of serverStudents) {
+      if (
+        (order.studentEmail && s.email && s.email.toLowerCase() === order.studentEmail.toLowerCase()) ||
+        (order.studentPhone && s.studentPhone && s.studentPhone === order.studentPhone)
+      ) {
+        saveServerStudentProfile({
+          id: s.id,
+          accessStatus: "PAID",
+          plan: order.plan || "season",
+          hasPendingPayment: false,
+          subscriptionStartedAt,
+          subscriptionExpiresAt,
+        });
+      }
+    }
   } catch {}
 
   try {
