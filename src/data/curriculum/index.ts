@@ -7,7 +7,7 @@
 import { CurriculumTopic, CurriculumSkill } from "@/types/content";
 import { PracticeQuestion } from "@/types/mission";
 import { CURRICULUM_TOPICS } from "./topics";
-import { ALL_CURRICULUM_SKILLS } from "./skills";
+import { ALL_CURRICULUM_SKILLS } from "@/data/skills";
 import { EXPANDED_PRACTICE_QUESTIONS } from "./practice-questions";
 import { EXPANDED_PRACTICE_QUESTIONS_SET2 } from "./practice-questions-set2";
 import { SCIENCES_EXP_PRACTICE_QUESTIONS } from "@/data/practice/sciences-exp";
@@ -15,7 +15,7 @@ import { GESTION_ECO_PRACTICE_QUESTIONS } from "@/data/practice/gestion-eco";
 
 // Re-export core datasets
 export { CURRICULUM_TOPICS } from "./topics";
-export { ALL_CURRICULUM_SKILLS } from "./skills";
+export { ALL_CURRICULUM_SKILLS } from "@/data/skills";
 export { EXPANDED_PRACTICE_QUESTIONS } from "./practice-questions";
 export { EXPANDED_PRACTICE_QUESTIONS_SET2 } from "./practice-questions-set2";
 export { GESTION_ECO_PRACTICE_QUESTIONS } from "@/data/practice/gestion-eco";

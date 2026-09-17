@@ -3,7 +3,7 @@ import { Skill } from "@/types/mission";
 /**
  * 9 Core Targeted Skills for Sciences Expérimentales (3 per core subject)
  */
-export const SCIENCES_EXP_SKILLS: Record<string, Skill> = {
+const LEGACY_SCIENCES_EXP_SKILLS: Record<string, Skill> = {
   // ---------------------------------------------------------------------------
   // MATHEMATICS SKILLS
   // ---------------------------------------------------------------------------
@@ -1115,18 +1115,41 @@ export const SCIENCES_EXP_SKILLS: Record<string, Skill> = {
   },
 };
 
-import { ALL_CURRICULUM_SKILLS } from "@/data/curriculum/skills";
+import {
+  CANONICAL_SCIENCES_EXP_SKILLS,
+  ALL_CURRICULUM_SKILLS,
+  getCurriculumSkillsForSubject,
+  getSkillsForTopic,
+  getCurriculumSkillById,
+} from "./canonical-sciences";
 import { GESTION_ECO_SKILLS } from "./gestion-economie";
 import { LETTRES_PHILO_SKILLS } from "./lettres-philo";
 import { normalizeStreamId } from "@/lib/curriculum/filter";
 
-export { GESTION_ECO_SKILLS, LETTRES_PHILO_SKILLS };
+export {
+  CANONICAL_SCIENCES_EXP_SKILLS,
+  ALL_CURRICULUM_SKILLS,
+  getCurriculumSkillsForSubject,
+  getSkillsForTopic,
+  getCurriculumSkillById,
+  GESTION_ECO_SKILLS,
+  LETTRES_PHILO_SKILLS,
+};
+
+/**
+ * Unified Sciences Expérimentales Skills Registry
+ * Integrates the canonical 31 skills with fallback capabilities
+ */
+export const SCIENCES_EXP_SKILLS: Record<string, Skill> = {
+  ...LEGACY_SCIENCES_EXP_SKILLS,
+  ...(CANONICAL_SCIENCES_EXP_SKILLS as unknown as Record<string, Skill>),
+};
 
 export function getSkillById(skillId: string): Skill | undefined {
   return (
     (LETTRES_PHILO_SKILLS as unknown as Record<string, Skill>)[skillId] ||
     (GESTION_ECO_SKILLS as unknown as Record<string, Skill>)[skillId] ||
-    (ALL_CURRICULUM_SKILLS as unknown as Record<string, Skill>)[skillId] ||
+    (CANONICAL_SCIENCES_EXP_SKILLS as unknown as Record<string, Skill>)[skillId] ||
     SCIENCES_EXP_SKILLS[skillId]
   );
 }
@@ -1150,18 +1173,18 @@ export function getSkillsForSubject(subjectId: string, streamId?: string): Skill
 
   // 3. Strict Sciences Expérimentales Stream Isolation
   if (normStream === "sciences_exp") {
-    const curriculumSkills = Object.values(ALL_CURRICULUM_SKILLS).filter((s) => s.subjectId === subjectId);
-    if (curriculumSkills.length > 0) return curriculumSkills as unknown as Skill[];
+    const canonicalSkills = Object.values(CANONICAL_SCIENCES_EXP_SKILLS).filter((s) => s.subjectId === subjectId);
+    if (canonicalSkills.length > 0) return canonicalSkills as unknown as Skill[];
     return Object.values(SCIENCES_EXP_SKILLS).filter((s) => s.subjectId === subjectId);
   }
 
   // 4. Strict Math & Technique Math Stream Isolation
   if (normStream === "math" || normStream === "technique_math") {
-    // Pull from ALL_CURRICULUM_SKILLS first, then fall back to SCIENCES_EXP_SKILLS math entries
-    const curriculumMath = Object.values(ALL_CURRICULUM_SKILLS).filter(
+    // Pull from CANONICAL_SCIENCES_EXP_SKILLS first, then fall back to SCIENCES_EXP_SKILLS math entries
+    const canonicalMath = Object.values(CANONICAL_SCIENCES_EXP_SKILLS).filter(
       (s) => (s.subjectId === "math" || s.subjectId === "physics") && s.subjectId === subjectId
     ) as unknown as Skill[];
-    if (curriculumMath.length > 0) return curriculumMath;
+    if (canonicalMath.length > 0) return canonicalMath;
     return Object.values(SCIENCES_EXP_SKILLS).filter(
       (s) => s.subjectId === subjectId
     );
@@ -1186,8 +1209,8 @@ export function getSkillsForSubject(subjectId: string, streamId?: string): Skill
     return gestionMatch as unknown as Skill[];
   }
 
-  const curriculumSkills = Object.values(ALL_CURRICULUM_SKILLS).filter((s) => s.subjectId === subjectId);
-  if (curriculumSkills.length > 0) return curriculumSkills as unknown as Skill[];
+  const canonicalSkills = Object.values(CANONICAL_SCIENCES_EXP_SKILLS).filter((s) => s.subjectId === subjectId);
+  if (canonicalSkills.length > 0) return canonicalSkills as unknown as Skill[];
   return Object.values(SCIENCES_EXP_SKILLS).filter((s) => s.subjectId === subjectId);
 }
 

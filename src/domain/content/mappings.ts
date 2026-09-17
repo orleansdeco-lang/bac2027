@@ -33,7 +33,7 @@ import {
 } from "./types";
 import { ContentDataset } from "./validation";
 import { CURRICULUM_TOPICS } from "@/data/curriculum/topics";
-import { ALL_CURRICULUM_SKILLS } from "@/data/curriculum/skills";
+import { ALL_CURRICULUM_SKILLS } from "@/data/skills";
 import { ALL_PRACTICE_QUESTIONS } from "@/data/curriculum";
 
 import { PROMPT12_LESSONS } from "./lessons";

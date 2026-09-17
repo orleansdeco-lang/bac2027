@@ -33,6 +33,7 @@ import {
   getPracticeQuestionsForSkill,
   getRetestQuestionForSkill,
 } from "@/data/practice/sciences-exp";
+import { evaluateReviewUrgency } from "@/domain/learning/spaced-review";
 import { getStreamSubjects, ALL_SUBJECTS } from "@/lib/constants/streams";
 import { ContentService } from "@/lib/services/content-service";
 import { isSubjectAllowedForStream, validateContentStreamCompatibility } from "@/domain/student";
@@ -191,6 +192,58 @@ export function getNextBestMission(input: AdaptiveRoadmapInput): {
     };
 
     return { mission: chosen, rationale };
+  }
+
+  // ---------------------------------------------------------------------------
+  // PRIORITY 2: Critical & Overdue Spaced Retrieval Review
+  // Evaluated right after unclosed repair loops to prevent memory decay.
+  // ---------------------------------------------------------------------------
+  if (input.retentionSchedules) {
+    const schedules = Object.values(input.retentionSchedules);
+    const urgentReviews = schedules
+      .map((sched) => {
+        const evalResult = evaluateReviewUrgency(sched);
+        return { sched, evalResult };
+      })
+      .filter(({ sched, evalResult }) => {
+        if (!evalResult.isDue) return false;
+        if (evalResult.urgency !== "critical" && evalResult.urgency !== "overdue") return false;
+        const skill = getSkillById(sched.skillId);
+        if (!skill) return false;
+        return isSubjectAllowedForStream(skill.subjectId, streamId);
+      });
+
+    if (urgentReviews.length > 0) {
+      // Sort critical first, then highest overdue days
+      urgentReviews.sort((a, b) => {
+        if (a.evalResult.urgency === "critical" && b.evalResult.urgency !== "critical") return -1;
+        if (b.evalResult.urgency === "critical" && a.evalResult.urgency !== "critical") return 1;
+        return b.evalResult.overdueDays - a.evalResult.overdueDays;
+      });
+
+      const { sched, evalResult } = urgentReviews[0];
+      const mission = resolveMission(sched.skillId, missionsMap, "manual", "high", streamId);
+      const skill = getSkillById(sched.skillId);
+      const skillTitle = skill?.title_ar || sched.skillId;
+      const isCritical = evalResult.urgency === "critical";
+
+      const rationale: MissionRationale = {
+        reasonCode: "spaced_retrieval_review",
+        priority: 2,
+        reasonLabel_ar: isCritical
+          ? "مراجعة استبقاء تباعدية حرجة (خطر تلاشي المفهوم)"
+          : "مراجعة استبقاء تباعدية مستحقة (تثبيت الأثر المعرفي)",
+        reasonLabel_fr: isCritical
+          ? "Rappel espacé critique (risque d'estompement mnésique)"
+          : "Rappel espacé dû (consolidation de la trace mnésique)",
+        evidence_ar: `مرت ${evalResult.overdueDays} أيام على موعد استحقاق مراجعة مهارة [${skillTitle}]؛ الأولوية لمراجعة استرجاعية سريعة قبل فتح دروس جديدة.`,
+        evidence_fr: `Le rappel pour la compétence [${skill?.title_fr || skillTitle}] est en retard de ${evalResult.overdueDays} jours. Une réactivation immédiate est prioritaire.`,
+        shortExplanation_ar: "حماية المفاهيم السابقة من النسيان أولى من مراكمة دروس جديدة؛ جلسة استرجاع سريعة لتثبيت المعلومة.",
+        shortExplanation_fr: "Consolidons vos acquis précédents avant d'avancer : une courte session de rappel actif.",
+      };
+
+      return { mission, rationale };
+    }
   }
 
   // ---------------------------------------------------------------------------

@@ -1,4 +1,5 @@
 import { Mission, PracticeSession, ErrorRecord, MasteryEvidence } from "@/types/mission";
+import { SpacedReviewSchedule } from "@/domain/learning/types";
 
 export const STORAGE_KEYS = {
   MISSIONS: "bac_mastery_missions",
@@ -6,6 +7,7 @@ export const STORAGE_KEYS = {
   PRACTICE_SESSIONS: "bac_mastery_practice_sessions",
   ERRORS: "bac_mastery_errors",
   MASTERY: "bac_mastery_mastery",
+  SPACED_SCHEDULES: "bac_mastery_spaced_schedules",
 } as const;
 
 // -----------------------------------------------------------------------------
@@ -196,6 +198,32 @@ export function isSkillMastered(skillId: string): boolean {
 }
 
 // -----------------------------------------------------------------------------
+// Spaced Review Storage
+// -----------------------------------------------------------------------------
+
+export function loadSpacedReviewSchedules(): Record<string, SpacedReviewSchedule> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.SPACED_SCHEDULES);
+    return raw ? (JSON.parse(raw) as Record<string, SpacedReviewSchedule>) : {};
+  } catch (e) {
+    console.error("Failed to load spaced review schedules from storage", e);
+    return {};
+  }
+}
+
+export function saveSpacedReviewSchedule(schedule: SpacedReviewSchedule): void {
+  if (typeof window === "undefined") return;
+  try {
+    const all = loadSpacedReviewSchedules();
+    all[schedule.skillId] = schedule;
+    localStorage.setItem(STORAGE_KEYS.SPACED_SCHEDULES, JSON.stringify(all));
+  } catch (e) {
+    console.error("Failed to save spaced review schedule to storage", e);
+  }
+}
+
+// -----------------------------------------------------------------------------
 // Development Reset Utility
 // -----------------------------------------------------------------------------
 
@@ -207,6 +235,7 @@ export function clearAllMissionData(): void {
     localStorage.removeItem(STORAGE_KEYS.PRACTICE_SESSIONS);
     localStorage.removeItem(STORAGE_KEYS.ERRORS);
     localStorage.removeItem(STORAGE_KEYS.MASTERY);
+    localStorage.removeItem(STORAGE_KEYS.SPACED_SCHEDULES);
   } catch (e) {
     console.error("Failed to clear mission data", e);
   }

@@ -4,8 +4,14 @@
  */
 
 import { MasteryEvidence } from "@/types/mission";
+import { SpacedReviewSchedule } from "@/domain/learning/types";
 import { supabase, isSupabaseConfigured } from "../supabase/client";
-import { loadMasteryRecords, saveMasteryEvidence as saveLocalMasteryEvidence } from "../mission/storage";
+import {
+  loadMasteryRecords,
+  saveMasteryEvidence as saveLocalMasteryEvidence,
+  loadSpacedReviewSchedules,
+  saveSpacedReviewSchedule as saveLocalSpacedSchedule,
+} from "../mission/storage";
 
 export const MasteryRepository = {
   async getMasteryRecords(userId?: string): Promise<Record<string, MasteryEvidence>> {
@@ -95,6 +101,39 @@ export const MasteryRepository = {
         }
       } catch (err) {
         console.error("MasteryRepository.syncLocalToCloud error:", err);
+      }
+    }
+  },
+
+  async getSpacedReviewSchedules(userId?: string): Promise<Record<string, SpacedReviewSchedule>> {
+    return loadSpacedReviewSchedules();
+  },
+
+  async saveSpacedReviewSchedule(schedule: SpacedReviewSchedule, userId?: string): Promise<void> {
+    saveLocalSpacedSchedule(schedule);
+
+    if (isSupabaseConfigured && supabase && userId) {
+      try {
+        const payload = {
+          user_id: userId,
+          skill_id: schedule.skillId,
+          subject_id: schedule.subjectId,
+          interval_days: schedule.intervalDays,
+          last_tested_at: schedule.lastTestedAt,
+          next_review_due_at: schedule.nextReviewDueAt,
+          urgency: schedule.urgency,
+          consecutive_successes: schedule.consecutiveSuccesses,
+          lapse_count: schedule.lapseCount,
+          decay_rate: schedule.decayRate,
+          updated_at: new Date().toISOString(),
+        };
+
+        await supabase
+          .from("retention_schedules")
+          .upsert(payload, { onConflict: "user_id,skill_id" });
+      } catch (err) {
+        // Non-blocking: table might not exist in Supabase yet
+        console.warn("MasteryRepository.saveSpacedReviewSchedule cloud sync skipped/failed:", err);
       }
     }
   },

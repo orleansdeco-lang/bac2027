@@ -95,15 +95,17 @@ export default function DiagnosticPage() {
       setQuestions(pack);
 
       const existingSession = loadDiagnosticSession();
-      if (existingSession && existingSession.status === "in_progress") {
+      if (existingSession && existingSession.status === "in_progress" && pack.length > 0) {
         setSession(existingSession);
-        const resumeIndex = Math.min(existingSession.currentQuestionIndex, pack.length - 1);
+        const resumeIndex = Math.max(0, Math.min(existingSession.currentQuestionIndex, pack.length - 1));
         setCurrentIndex(resumeIndex);
         const currentQ = pack[resumeIndex];
-        const existingResp = existingSession.responses[currentQ.id];
-        if (existingResp) {
-          setSelectedOptionId(existingResp.selectedOptionId);
-          setConfidenceRating(existingResp.confidenceRating);
+        if (currentQ) {
+          const existingResp = existingSession.responses[currentQ.id];
+          if (existingResp) {
+            setSelectedOptionId(existingResp.selectedOptionId);
+            setConfidenceRating(existingResp.confidenceRating);
+          }
         }
       }
 
@@ -246,6 +248,48 @@ export default function DiagnosticPage() {
     physics: { ar: "الفيزياء", fr: "Physique" },
     natural_sciences: { ar: "العلوم الطبيعية", fr: "Sciences Naturelles" },
   };
+
+  if (hasLoaded && questions.length === 0) {
+    return (
+      <AppShell activeNav="roadmap">
+        <div className="py-6 sm:py-10">
+          <Container size="sm" className="w-full">
+            <Card className="p-6 sm:p-8 bg-[#111827] border-slate-800 shadow-xl text-center space-y-6">
+              <div className="h-16 w-16 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+                <Compass className="h-8 w-8" />
+              </div>
+              <div className="space-y-2">
+                <h1 className="text-xl sm:text-2xl font-bold text-white">
+                  {locale === "ar"
+                    ? "حزمة التشخيص قيد الإعداد لهذه الشعبة"
+                    : "Pack diagnostic en cours de préparation"}
+                </h1>
+                <p className="text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
+                  {locale === "ar"
+                    ? "التشخيص التكيفي التأسيسي مفعل حالياً لشعبة العلوم التجريبية، الرياضيات، وتسيير واقتصاد. يتم حالياً تدقيق الأسئلة المعيارية لشعبتك وفق أحدث المواصفات الرسمية."
+                    : "Le diagnostic adaptatif est actuellement actif pour les filières Sciences Expérimentales, Mathématiques et Gestion. Votre filière sera prochainement intégrée."}
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                <Link href="/curriculum">
+                  <Button variant="secondary" className="w-full sm:w-auto">
+                    <BookOpen className="h-4 w-4 me-2" />
+                    {locale === "ar" ? "تصفح المنهج والمحتوى" : "Consulter le programme"}
+                  </Button>
+                </Link>
+                <Link href="/onboarding">
+                  <Button variant="outline" className="w-full sm:w-auto">
+                    {locale === "ar" ? "تغيير الشعبة" : "Changer de filière"}
+                  </Button>
+                </Link>
+              </div>
+            </Card>
+          </Container>
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell activeNav="roadmap">

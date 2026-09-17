@@ -13,6 +13,7 @@ import {
 import { StrategicProfile } from "./onboarding";
 import { DiagnosticAnalysisResult } from "./diagnostic";
 import { ErrorRecord, MasteryEvidence, Mission } from "./mission";
+import { SpacedReviewSchedule } from "@/domain/learning/types";
 
 export type RoadmapConfidence = "pilot" | "emerging" | "supported";
 
@@ -21,6 +22,7 @@ export type LearningStage = "fix" | "verify" | "demonstrate" | "move_forward";
 export type MissionReasonCode =
   | "continuation_repair"
   | "continuation_retest"
+  | "spaced_retrieval_review"
   | "delayed_needs_more_work"
   | "recurring_error_cause"
   | "diagnostic_bottleneck"
@@ -138,6 +140,7 @@ export interface AdaptiveRoadmapInput {
   missions?: Record<string, Mission> | Mission[];
   masteryEvidence?: Record<string, MasteryEvidence>;
   errors?: ErrorRecord[];
+  retentionSchedules?: Record<string, SpacedReviewSchedule>;
   energyState?: "good" | "normal" | "tired" | "stressed";
 }
 

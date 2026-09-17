@@ -10,7 +10,7 @@
  */
 
 import { StreamId, SubjectId, TechniqueMathSpecialty } from "@/types/education";
-import { ALL_CURRICULUM_SKILLS } from "@/data/curriculum/skills";
+import { ALL_CURRICULUM_SKILLS } from "@/data/skills";
 import { CoverageSkillItem, CoverageStatus, ContentLifecycleState } from "./types";
 
 // 1. Build the active 31 canonical Sciences Expérimentales entries

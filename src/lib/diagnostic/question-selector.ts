@@ -45,6 +45,13 @@ export function getDiagnosticQuestionsForStream(streamId: StreamId): DiagnosticQ
 export const selectDiagnosticQuestions = getDiagnosticQuestionsForStream;
 
 /**
+ * Checks whether diagnostic assessment questions are available for the given stream.
+ */
+export function isStreamDiagnosticAvailable(streamId: StreamId): boolean {
+  return getDiagnosticQuestionsForStream(streamId).length > 0;
+}
+
+/**
  * Validates that a question pack meets the 4 cognitive core dimensions
  */
 export function validateQuestionPackCompleteness(questions: DiagnosticQuestion[]): boolean {
