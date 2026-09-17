@@ -23,6 +23,7 @@ export async function POST(req: Request) {
     const body = await req.json().catch(() => ({}));
     const orderId = body.orderId;
     const reason = body.reason || "Payment verified by operator";
+    const fallbackOrder = body.fallbackOrder || body.order;
 
     if (!orderId) {
       return NextResponse.json(
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const result = await approvePaymentOrder(orderId, authRes.userId, reason);
+    const result = await approvePaymentOrder(orderId, authRes.userId, reason, fallbackOrder);
     if (!result.success) {
       return NextResponse.json(
         { success: false, error: result.error || "Approval failed" },

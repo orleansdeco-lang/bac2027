@@ -85,7 +85,8 @@ export default function StudentRegistrationPage() {
     }
     if (!isLoading) {
       const effectiveUserId = user?.id || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id : undefined);
-      if (effectiveUserId) {
+      const isEditMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("edit") === "true";
+      if (effectiveUserId && !isEditMode) {
         StudentService.getProfile(effectiveUserId).then((p) => {
           const regDraft = getRegistrationDraft(effectiveUserId);
           // If registration is already done for THIS user, forward to dashboard
@@ -145,31 +146,45 @@ export default function StudentRegistrationPage() {
   const wilayas: Wilaya[] = getAlgerianWilayas();
   const [availableCommunes, setAvailableCommunes] = useState<Commune[]>([]);
 
-  // Load saved draft on mount (scoped strictly to active user)
+  // Load saved draft or current profile on mount (scoped strictly to active user)
   useEffect(() => {
     const effectiveUserId = user?.id || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id : undefined);
+    if (!effectiveUserId) return;
     const draft = getRegistrationDraft(effectiveUserId);
-    if (draft) {
-      if (draft.characterId) setCharacterId(draft.characterId);
-      if (draft.firstName) setFirstName(draft.firstName);
-      if (draft.lastName) setLastName(draft.lastName);
-      if (draft.studentPhone) setStudentPhone(draft.studentPhone);
-      if (draft.parentPhone) setParentPhone(draft.parentPhone);
-      if (draft.studentStatus) setStudentStatus(draft.studentStatus);
-      if (draft.streamId) setStreamId(draft.streamId);
-      if (draft.techniqueMathSpecialty) setTechniqueMathSpecialty(draft.techniqueMathSpecialty);
-      if (draft.wilayaCode) {
-        setWilayaCode(draft.wilayaCode);
-        setWilayaName(draft.wilayaName || "");
-        const communes = getCommunesByWilayaCode(draft.wilayaCode);
+    StudentService.getProfile(effectiveUserId).then((p: any) => {
+      const char = draft?.characterId || p?.characterId || (p as any)?.character_id;
+      if (char) setCharacterId(char);
+      const fn = draft?.firstName || p?.firstName || (p as any)?.first_name;
+      if (fn) setFirstName(fn);
+      const ln = draft?.lastName || p?.lastName || (p as any)?.last_name;
+      if (ln) setLastName(ln);
+      const sp = draft?.studentPhone || p?.studentPhone || (p as any)?.student_phone;
+      if (sp) setStudentPhone(sp);
+      const pp = draft?.parentPhone || p?.parentPhone || (p as any)?.parent_phone;
+      if (pp) setParentPhone(pp);
+      const st = draft?.studentStatus || p?.studentStatus || (p as any)?.student_status;
+      if (st) setStudentStatus(st);
+      const sm = draft?.streamId || p?.streamId || (p as any)?.stream_id;
+      if (sm) setStreamId(sm);
+      const tms = draft?.techniqueMathSpecialty || p?.techniqueMathSpecialty || (p as any)?.specialty_id;
+      if (tms) setTechniqueMathSpecialty(tms);
+      const wc = draft?.wilayaCode || p?.wilayaCode || (p as any)?.wilaya_code;
+      if (wc) {
+        setWilayaCode(wc);
+        const wn = draft?.wilayaName || p?.wilayaName || (p as any)?.wilaya_name || "";
+        setWilayaName(wn);
+        const communes = getCommunesByWilayaCode(wc);
         setAvailableCommunes(communes);
-        if (draft.communeCode) {
-          setCommuneCode(draft.communeCode);
-          setCommuneName(draft.communeName || "");
+        const cc = draft?.communeCode || p?.communeCode || (p as any)?.commune_code;
+        if (cc) {
+          setCommuneCode(cc);
+          const cn = draft?.communeName || p?.communeName || (p as any)?.commune_name || "";
+          setCommuneName(cn);
         }
       }
-      if (draft.schoolName) setSchoolName(draft.schoolName);
-    }
+      const sn = draft?.schoolName || p?.schoolName || (p as any)?.school_name;
+      if (sn) setSchoolName(sn);
+    });
   }, [user]);
 
   // Update dynamic communes when wilaya changes
@@ -380,8 +395,13 @@ export default function StudentRegistrationPage() {
       // 3. Persist to service (LocalStorage + Supabase if auth user exists)
       await StudentService.saveRegistration(finalPayload, effectiveUserId);
 
-      // 4. Transition immediately to the Academic Profile page
-      router.push("/profile/academic");
+      // 4. Transition immediately
+      const isEditMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("edit") === "true";
+      if (isEditMode) {
+        router.push("/account");
+      } else {
+        router.push("/profile/academic");
+      }
     } catch (err: any) {
       console.error("Registration error:", err);
       setErrorMsg(
@@ -417,6 +437,14 @@ export default function StudentRegistrationPage() {
             <Logo size="sm" />
           </Link>
           <div className="flex items-center gap-3">
+            {typeof window !== "undefined" && new URLSearchParams(window.location.search).get("edit") === "true" && (
+              <Link
+                href="/account"
+                className="text-xs font-bold text-theme-muted hover:text-theme-text px-3 py-1.5 rounded-xl border border-theme hover:bg-surface transition-all"
+              >
+                {isAr ? "الرجوع للحساب" : "Retour au compte"}
+              </Link>
+            )}
             <Badge variant="outline" className="text-xs font-mono text-cyan-400 border-cyan-500/30">
               {isAr ? `الخطوة ${displayStepNumber} من ${totalSteps}` : `Étape ${displayStepNumber} sur ${totalSteps}`}
             </Badge>
@@ -1039,7 +1067,11 @@ export default function StudentRegistrationPage() {
                     <span>{isAr ? "جاري الحفظ..." : "Enregistrement..."}</span>
                   ) : (
                     <>
-                      <span>{isAr ? "كلش صحيح — نكمل" : "Tout est correct — Continuer"}</span>
+                      <span>
+                        {typeof window !== "undefined" && new URLSearchParams(window.location.search).get("edit") === "true"
+                          ? (isAr ? "حفظ وتحديث البيانات والعودة للحساب" : "Enregistrer et retourner au compte")
+                          : (isAr ? "كلش صحيح — نكمل" : "Tout est correct — Continuer")}
+                      </span>
                       <NextIcon className="w-4 h-4 ml-2 rtl:mr-2 rtl:ml-0" />
                     </>
                   )}

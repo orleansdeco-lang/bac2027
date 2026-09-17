@@ -158,6 +158,18 @@ export async function uploadReceipt(params: {
     orderId,
   });
 
+  // Store in /tmp for cross-request filesystem durability
+  if (typeof window === "undefined") {
+    try {
+      const fs = require("node:fs");
+      const path = require("node:path");
+      const os = require("node:os");
+      const tmpPath = path.join(os.tmpdir(), "bac_receipts", objectPath);
+      fs.mkdirSync(path.dirname(tmpPath), { recursive: true });
+      fs.writeFileSync(tmpPath, Buffer.from(fileBuffer));
+    } catch {}
+  }
+
   // Attempt Supabase Storage upload
   if (isSupabaseConfigured && supabase) {
     try {
@@ -188,6 +200,14 @@ export async function getReceiptViewUrl(
 ): Promise<ReceiptViewResult> {
   if (!receiptPath || !caller?.userId) {
     return { success: false, error: "Receipt path and authenticated caller required", status: 400 };
+  }
+
+  // If receipt is already a data: URL or web URL, return directly
+  if (receiptPath.startsWith("data:") || receiptPath.startsWith("http://") || receiptPath.startsWith("https://")) {
+    return {
+      success: true,
+      url: receiptPath,
+    };
   }
 
   // Normalize path
@@ -246,6 +266,25 @@ export async function getReceiptViewUrl(
       success: true,
       url: `data:${item.mimeType};base64,${base64}`,
     };
+  }
+
+  // Fallback: Check /tmp storage
+  if (typeof window === "undefined") {
+    try {
+      const fs = require("node:fs");
+      const path = require("node:path");
+      const os = require("node:os");
+      const tmpPath = path.join(os.tmpdir(), "bac_receipts", normalizedPath);
+      if (fs.existsSync(tmpPath)) {
+        const fileBytes = fs.readFileSync(tmpPath);
+        const ext = path.extname(tmpPath).toLowerCase();
+        const mime = ext === ".pdf" ? "application/pdf" : ext === ".png" ? "image/png" : "image/jpeg";
+        return {
+          success: true,
+          url: `data:${mime};base64,${fileBytes.toString("base64")}`,
+        };
+      }
+    } catch {}
   }
 
   // Fallback signed representation

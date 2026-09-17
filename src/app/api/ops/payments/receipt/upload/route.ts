@@ -86,10 +86,15 @@ export async function POST(req: Request) {
     }
 
     if (!order) {
-      return NextResponse.json(
-        { success: false, error: "Payment order not found" },
-        { status: 404 }
-      );
+      const effectiveUserId = studentUserId || caller?.userId || "student_user";
+      const { createPaymentOrder } = await import("@/lib/operations/payments");
+      order = await createPaymentOrder({
+        userId: effectiveUserId,
+        plan: "season",
+        amount: 4900,
+        paymentMethod: "baridimob",
+        notes: `Receipt uploaded for ref: ${referenceId || orderId}`,
+      });
     }
 
     // Authorization check
@@ -138,8 +143,16 @@ export async function POST(req: Request) {
       );
     }
 
+    // For images under 4MB, create a base64 Data URL so preview works across all serverless lambdas seamlessly
+    const isImage = mimeType.startsWith("image/");
+    const dataUrl = isImage && fileBuffer.length <= 4 * 1024 * 1024
+      ? `data:${mimeType};base64,${fileBuffer.toString("base64")}`
+      : null;
+
+    const finalReceiptPath = dataUrl || uploadRes.receiptPath;
+
     // Attach receipt path to order
-    await updateOrderReceiptPath(order.id, uploadRes.receiptPath);
+    await updateOrderReceiptPath(order.id, finalReceiptPath);
 
     return NextResponse.json({
       success: true,

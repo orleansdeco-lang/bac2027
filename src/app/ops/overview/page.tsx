@@ -297,6 +297,7 @@ export default function OpsOverviewPage() {
         body: JSON.stringify({
           orderId: order.id,
           reason: "تم التحقق والمطابقة اليدوية بنجاح",
+          fallbackOrder: order,
         }),
       });
 
@@ -398,7 +399,11 @@ export default function OpsOverviewPage() {
   }
 
   // ─── View Receipt Modal ───────────────────────────────────────────────────
-  async function handleViewReceipt(orderId: string) {
+  async function handleViewReceipt(orderId: string, order?: PaymentOrder) {
+    if (order?.receiptPath && (order.receiptPath.startsWith("data:") || order.receiptPath.startsWith("http"))) {
+      setPreviewReceiptUrl(order.receiptPath);
+      return;
+    }
     setLoadingReceiptId(orderId);
     try {
       const res = await opsFetch(`/api/ops/payments/receipt/view?orderId=${orderId}`);
@@ -1116,7 +1121,7 @@ export default function OpsOverviewPage() {
                     <div className="flex flex-wrap items-center gap-2 shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 border-slate-800">
                       {/* Receipt Preview Button */}
                       <button
-                        onClick={() => handleViewReceipt(order.id)}
+                        onClick={() => handleViewReceipt(order.id, order)}
                         disabled={loadingReceiptId === order.id}
                         className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#111A2E] hover:bg-[#1A2640] border border-slate-700 text-xs font-semibold text-slate-200 transition-all active:scale-95"
                       >

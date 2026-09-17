@@ -42,6 +42,7 @@ import {
   ExternalLink,
   MessageCircle,
   Headphones,
+  RefreshCw,
 } from "lucide-react";
 
 export default function SubscribePage() {
@@ -62,15 +63,16 @@ export default function SubscribePage() {
   const [paymentState, setPaymentState] = useState<string>("PAYMENT_REQUESTED");
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptUploadStatus, setReceiptUploadStatus] = useState<"idle" | "uploading" | "uploaded" | "error">("idle");
+  const [receiptDataUrl, setReceiptDataUrl] = useState<string | null>(null);
   const [receiptError, setReceiptError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const ACTIVATION_WHATSAPP_NUMBER = "213550303286";
   const SUPPORT_WHATSAPP_NUMBER = "213550853234";
 
-  const BARIDIMOB_RIP = "00799999002233445566";
-  const CCP_ACCOUNT = "22334455";
-  const CCP_KEY = "66";
+  const BARIDIMOB_RIP = "00799999004125624964";
+  const CCP_ACCOUNT = "0041256249";
+  const CCP_KEY = "64";
 
   const selectedPlanName = plan?.id === "monthly"
     ? (isAr ? "الاشتراك الشهري (30 يوماً)" : "Pass Mensuel (30 jours)")
@@ -168,6 +170,84 @@ export default function SubscribePage() {
     }
 
     setReceiptFile(file);
+
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setReceiptDataUrl(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setReceiptDataUrl(null);
+    }
+  };
+
+  const handleDirectSubmitReceipt = async () => {
+    if (!receiptFile) {
+      setReceiptError(isAr ? "يرجى اختيار صورة الوصل أولاً" : "Veuillez joindre le reçu");
+      return;
+    }
+
+    setReceiptUploadStatus("uploading");
+    setReceiptError(null);
+
+    try {
+      const effectiveUserId =
+        user?.id ||
+        profile?.id ||
+        (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id : undefined) ||
+        "guest_pilot";
+
+      const provider = getPaymentProvider();
+      const checkout = checkoutData || await provider.createCheckout({
+        userId: effectiveUserId,
+        planId: plan?.id || "season",
+        studentEmail: user?.email || (profile as any)?.email,
+        metadata: {
+          studentName: `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim() || undefined,
+          studentPhone: (profile as any)?.studentPhone || (profile as any)?.student_phone,
+          streamId: profile?.streamId,
+          wilayaName: (profile as any)?.wilayaName || (profile as any)?.wilaya_name,
+        },
+      });
+
+      if (!checkoutData) {
+        setCheckoutData(checkout);
+      }
+
+      const targetOrderId = checkout.orderId || checkout.referenceId;
+
+      const formData = new FormData();
+      formData.append("orderId", targetOrderId);
+      formData.append("referenceId", checkout.referenceId);
+      formData.append("userId", effectiveUserId);
+      formData.append("file", receiptFile);
+      if (receiptDataUrl) {
+        formData.append("fileBase64", receiptDataUrl.split(",")[1] || "");
+      }
+
+      const token = await getAuthToken();
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      await fetch("/api/ops/payments/receipt/upload", {
+        method: "POST",
+        headers,
+        credentials: "include",
+        body: formData,
+      });
+
+      markPaymentPendingVerification(checkout.referenceId);
+      setPaymentState("PAYMENT_PENDING_VERIFICATION");
+      setReceiptUploadStatus("uploaded");
+      trackEvent("payment_pending_verification", { userId: effectiveUserId });
+    } catch (err: any) {
+      console.error("Direct receipt upload error:", err);
+      setReceiptUploadStatus("error");
+      setReceiptError(isAr ? "تعذر رفع الوصل. يمكنك المحاولة مجدداً أو التواصل عبر الدعم" : "Erreur d'envoi");
+    }
   };
 
   const handleNotifySupervisor = async () => {
@@ -449,7 +529,7 @@ export default function SubscribePage() {
                   </span>
                 </div>
                 <span className="text-[11px] font-mono text-[var(--color-primary)] font-semibold">
-                  3,900 DZD
+                  {plan.priceDZD?.toLocaleString()} DZD
                 </span>
               </div>
 
@@ -518,26 +598,148 @@ export default function SubscribePage() {
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                 <p className="leading-relaxed">
                   {isAr
-                    ? "تنبيه هام: بعد إتمام التحويل عبر بريدي موب أو مركز البريد، يرجى التقاط صورة واضحة للوصل (Screenshot / Photo) وإرسالها فوراً عبر زر واتساب بالأسفل ليتم تفعيل حسابك بنقرة واحدة."
-                    : "Important : après le transfert, prenez une photo nette du reçu et envoyez-la via WhatsApp ci-dessous pour activer votre compte instantanément."}
+                    ? "بعد إتمام التحويل، التقط صورة واضحة للوصل وقم برفعها مباشرة بالأسفل، ثم اضغط على زر تأكيد الإرسال لتفعيل حسابك فور التحقق."
+                    : "Après le transfert, prenez une photo nette du reçu, téléchargez-la ci-dessous et confirmez l'envoi pour activer votre compte."}
                 </p>
+              </div>
+
+              {/* Primary: Direct Receipt Upload Card (Main Required Flow) */}
+              <div className="p-4 rounded-2xl bg-card border-2 border-[var(--color-primary)]/30 space-y-3.5 shadow-md">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center">
+                      <UploadCloud className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs sm:text-sm font-bold text-theme-text">
+                        {isAr ? "إرسال وصل الدفع لتفعيل الحساب (الخطوة الأساسية)" : "Envoi du reçu pour activation (Obligatoire)"}
+                      </h4>
+                      <span className="text-[10px] text-theme-muted">
+                        {isAr ? "الصور المدعومة: PNG, JPG أو مستند PDF (أقصى حد 5 ميغابايت)" : "Format PNG, JPG ou PDF (max 5 Mo)"}
+                      </span>
+                    </div>
+                  </div>
+                  {receiptUploadStatus === "uploaded" && (
+                    <Badge variant="success" size="sm" className="text-[10px]">
+                      {isAr ? "تم الإرسال ✓" : "Envoyé ✓"}
+                    </Badge>
+                  )}
+                </div>
+
+                {/* File picker drop area */}
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    id="receipt-file-input"
+                    accept="image/jpeg,image/png,application/pdf"
+                    onChange={handleFileChange}
+                    className="w-full text-xs text-theme-secondary file:mr-2 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-[var(--color-primary-soft)] file:text-[var(--color-primary)] hover:file:bg-[var(--color-primary)]/20 cursor-pointer"
+                  />
+
+                  {receiptFile && (
+                    <div className="p-2.5 rounded-xl bg-[var(--color-success-soft)] border border-[var(--color-success)]/30 flex items-center justify-between text-xs text-[var(--color-success)]">
+                      <div className="flex items-center gap-2 truncate">
+                        <FileCheck className="w-4 h-4 shrink-0 text-emerald-500" />
+                        <span className="truncate font-semibold">{receiptFile.name} ({(receiptFile.size / 1024).toFixed(1)} KB)</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReceiptFile(null);
+                          setReceiptDataUrl(null);
+                          setReceiptUploadStatus("idle");
+                        }}
+                        className="text-[11px] text-rose-500 hover:underline shrink-0 ps-2"
+                      >
+                        {isAr ? "تغيير الملف" : "Changer"}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Thumbnail preview if image */}
+                  {receiptDataUrl && (
+                    <div className="mt-2 text-center">
+                      <img
+                        src={receiptDataUrl}
+                        alt="معاينة الوصل"
+                        className="max-h-36 mx-auto rounded-xl border border-theme object-contain shadow-sm"
+                      />
+                    </div>
+                  )}
+
+                  {receiptError && (
+                    <div className="flex items-center gap-2 text-xs text-rose-400 bg-rose-950/40 p-2.5 rounded-xl border border-rose-800/40">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{receiptError}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Submit button / Success confirmation */}
+                {receiptUploadStatus === "uploaded" ? (
+                  <div className="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-center space-y-1">
+                    <div className="flex items-center justify-center gap-1.5 font-bold text-xs">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                      <span>{isAr ? "تم إرسال وصل الدفع بنجاح!" : "Reçu envoyé avec succès !"}</span>
+                    </div>
+                    <p className="text-[11px] text-theme-secondary">
+                      {isAr
+                        ? "طلبك الآن قيد التحقق اليدوي من قبل المشرف. سيتم تفعيل حسابك مباشرة فور المطابقة."
+                        : "Votre demande est en cours de vérification. Votre compte sera activé après validation."}
+                    </p>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleDirectSubmitReceipt}
+                    disabled={receiptUploadStatus === "uploading" || !receiptFile}
+                    data-testid="submit-receipt-primary-cta"
+                    className="w-full min-h-[50px] rounded-2xl font-extrabold text-sm sm:text-base flex items-center justify-center gap-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white shadow-lg shadow-indigo-600/25 active:scale-[0.99] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {receiptUploadStatus === "uploading" ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
+                        <span>{isAr ? "جاري إرسال وتوثيق الوصل..." : "Envoi en cours..."}</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-5 h-5 shrink-0" />
+                        <span>{isAr ? "تأكيد وإرسال وصل الدفع للتفعيل" : "Confirmer et envoyer le reçu pour activer"}</span>
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Primary Action Buttons */}
+            {/* Secondary Support & Actions */}
             <div className="pt-2 space-y-3">
-              {/* WhatsApp Activation Button (Primary Required CTA) */}
-              <a
-                href={activationWhatsAppUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                data-testid="whatsapp-activation-cta"
-                className="w-full min-h-[54px] rounded-2xl font-extrabold text-sm sm:text-base flex items-center justify-center gap-2.5 bg-[#25D366] hover:bg-[#20bd5a] text-white shadow-lg shadow-emerald-600/25 active:scale-[0.99] transition-all cursor-pointer"
-              >
-                <MessageCircle className="w-5 h-5 fill-current shrink-0" />
-                <span>{isAr ? "إرسال وصل الدفع لتفعيل الحساب" : "Envoyer le reçu pour activer le compte"}</span>
-                <ExternalLink className="w-4 h-4 opacity-80 shrink-0" />
-              </a>
+              {/* WhatsApp Technical Support Button */}
+              <div className="p-3.5 rounded-2xl bg-surface border border-theme flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5 text-xs text-theme-secondary text-center sm:text-start">
+                  <Headphones className="w-4 h-4 text-[var(--color-primary)] shrink-0" />
+                  <div>
+                    <span className="font-semibold text-theme-text block">
+                      {isAr ? "هل تحتاج مساعدة أو لديك استفسار؟" : "Besoin d'aide ou d'une question ?"}
+                    </span>
+                    <span className="text-[11px] text-theme-muted">
+                      {isAr ? "فريق الدعم الفني جاهز لمساعدتك عبر واتساب" : "Support technique disponible sur WhatsApp"}
+                    </span>
+                  </div>
+                </div>
+
+                <a
+                  href={supportWhatsAppUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-testid="whatsapp-support-cta"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold transition-all shrink-0 cursor-pointer"
+                >
+                  <MessageCircle className="w-4 h-4 fill-current shrink-0" />
+                  <span>{isAr ? "زر الواتساب للدعم" : "Support WhatsApp"}</span>
+                  <ExternalLink className="w-3 h-3 opacity-70 shrink-0" />
+                </a>
+              </div>
 
               <div className="flex flex-col sm:flex-row items-center gap-2.5">
                 <Button

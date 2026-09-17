@@ -52,6 +52,13 @@ export default function AccountPage() {
   }, [user, authLoading, router]);
 
   const access = getStudentAccess(profile);
+  const isPaidActive = Boolean(
+    access.status === "PAID_ACTIVE" ||
+    (profile as any)?.access_status === "PAID" ||
+    (profile as any)?.accessStatus === "PAID" ||
+    access.plan === "PAID" ||
+    (access.plan === "season" && access.status !== "TRIAL_ACTIVE" && access.status !== "TRIAL_EXPIRED")
+  );
   const NextArrow = isAr ? ArrowLeft : ArrowRight;
 
   const handleExportPilotData = () => {
@@ -143,15 +150,15 @@ export default function AccountPage() {
             </h1>
             <p className="text-xs text-theme-secondary mt-1">
               {isAr
-                ? "متابعة تقدمك، الاشتراك، ومزامنة بياناتك السحابية تلقائياً."
-                : "Suivi de votre progression, abonnement et synchronisation automatique."}
+                ? "متابعة تقدمك الدراسي، اشتراكك، وإعدادات حسابك."
+                : "Suivi de votre progression, abonnement et profil."}
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <Badge variant="success" size="sm" className="flex items-center gap-1.5 px-3 py-1">
-              <Cloud className="h-3.5 w-3.5 text-emerald-500" />
-              <span>{isAr ? "المزامنة تلقائية مفعّلة" : "Sync auto active"}</span>
+            <Badge variant="outline" size="sm" className="flex items-center gap-1.5 px-3 py-1 border-emerald-500/30 text-emerald-600 dark:text-emerald-400">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
+              <span>{isAr ? "حساب موثق" : "Compte vérifié"}</span>
             </Badge>
           </div>
         </div>
@@ -184,8 +191,10 @@ export default function AccountPage() {
             <div className="flex justify-between items-center text-xs">
               <span className="text-theme-muted">{isAr ? "نوع الخطة الحالية:" : "Plan actuel :"}</span>
               <span className="font-bold text-theme-text">
-                {access.plan === "PAID"
-                  ? (isAr ? "Pass BAC كامل (موسم 2026)" : "Pass BAC Intégral")
+                {isPaidActive
+                  ? (access.plan === "monthly"
+                      ? (isAr ? "الاشتراك الشهري (30 يوماً)" : "Pass Mensuel (30 jours)")
+                      : (isAr ? "اشتراك السنة الدراسية (موسم كامل)" : "Pass Année Scolaire (Saison Complète)"))
                   : (isAr ? "تجربة مجانية استكشافية (72 ساعة)" : "Essai Découverte (72h)")}
               </span>
             </div>
@@ -241,8 +250,8 @@ export default function AccountPage() {
             )}
           </div>
 
-          {/* Pending Payment Record Display */}
-          {paymentRecord && paymentRecord.state !== "PAYMENT_CONFIRMED" && (
+          {/* Pending Payment Record Display (Hidden when account is already PAID) */}
+          {!isPaidActive && paymentRecord && paymentRecord.state !== "PAYMENT_CONFIRMED" && (
             <div data-testid="account-payment-record" className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-xs space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="text-amber-700 font-bold flex items-center gap-1.5">
@@ -346,7 +355,7 @@ export default function AccountPage() {
                 <NextArrow className="h-3.5 w-3.5" />
               </Button>
             </Link>
-            <Link href="/auth/register">
+            <Link href="/auth/register?edit=true">
               <Button variant="outline" size="sm" className="w-full text-xs rounded-xl py-4">
                 <span>{isAr ? "تعديل بيانات التسجيل" : "Modifier l'inscription"}</span>
                 <NextArrow className="h-3.5 w-3.5" />
@@ -363,8 +372,8 @@ export default function AccountPage() {
           </div>
           <p className="text-theme-muted leading-relaxed">
             {isAr
-              ? "بياناتك الأكاديمية محمية بسياسات أمان صارمة ومزامنة سحابية مؤمنة. لا يتم استخدام أي ذكاء اصطناعي خارجي أو مشاركة بياناتك الشخصية مع أطراف ثالثة."
-              : "Vos données d'apprentissage sont strictement protégées et synchronisées sans partage externe."}
+              ? "بياناتك الأكاديمية وتقدمك في المواد محفوظ بأمان تام وخاص بك وحدك."
+              : "Vos données d'apprentissage sont protégées en toute confidentialité."}
           </p>
         </Card>
 
@@ -422,15 +431,15 @@ export default function AccountPage() {
               </div>
             </div>
 
-            <Badge variant="success" size="sm" className="flex items-center gap-1">
-              <Check className="h-3 w-3" />
-              <span>{isAr ? "متزامن سحابياً" : "Synchronisé"}</span>
+            <Badge variant="outline" size="sm" className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+              <Check className="h-3 w-3 text-emerald-500" />
+              <span>{isAr ? "حساب نشط" : "Compte actif"}</span>
             </Badge>
           </div>
 
           <div className="pt-3 border-t border-theme flex items-center justify-between">
             <span className="text-xs text-theme-muted">
-              {isAr ? "المزامنة مستمرة تلقائياً مع كل مهمة وتمرين." : "Synchronisation cloud continue."}
+              {isAr ? "يتم حفظ تقدمك تلقائياً مع كل تمرين ومهمة تنجزها." : "Votre progression est enregistrée automatiquement."}
             </span>
             <Button
               variant="outline"
