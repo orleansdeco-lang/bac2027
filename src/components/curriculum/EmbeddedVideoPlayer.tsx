@@ -5,7 +5,8 @@ import { Play, ExternalLink, Clock, Youtube, Sparkles } from "lucide-react";
 
 export interface EmbeddedVideoPlayerProps {
   videoId: string;
-  startSeconds: number;
+  videoUrl?: string;
+  startSeconds?: number;
   title_ar: string;
   channelName?: string;
   timestampStr?: string;
@@ -38,19 +39,57 @@ export function extractYoutubeVideoId(url: string): string {
 
 export const EmbeddedVideoPlayer: React.FC<EmbeddedVideoPlayerProps> = ({
   videoId,
-  startSeconds,
+  videoUrl,
+  startSeconds = 0,
   title_ar,
   channelName = "قناة الأستاذ المعتمدة",
   timestampStr,
 }) => {
   const [imgError, setImgError] = useState(false);
 
-  const cleanVideoId = extractYoutubeVideoId(videoId);
+  // Determine actual target URL
+  const rawTarget = videoUrl || videoId || "";
+  const isSearchQuery =
+    rawTarget.includes("results?search_query=") || rawTarget.includes("search_query=");
+  const isHttp = rawTarget.startsWith("http://") || rawTarget.startsWith("https://");
+
+  let cleanVideoId = "";
+  let directYoutubeUrl = "";
+
+  if (isSearchQuery) {
+    directYoutubeUrl = rawTarget;
+  } else {
+    cleanVideoId = extractYoutubeVideoId(rawTarget);
+    const isValidId =
+      cleanVideoId &&
+      cleanVideoId.length === 11 &&
+      !cleanVideoId.includes("/") &&
+      !cleanVideoId.includes("?") &&
+      !cleanVideoId.includes("&");
+
+    if (isValidId) {
+      directYoutubeUrl = `https://www.youtube.com/watch?v=${cleanVideoId}${
+        startSeconds > 0 ? `&t=${startSeconds}s` : ""
+      }`;
+    } else if (isHttp) {
+      directYoutubeUrl = rawTarget;
+    } else {
+      directYoutubeUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(
+        `${channelName} ${title_ar} علوم طبيعية بكالوريا`
+      )}`;
+    }
+  }
+
+  const fallbackSearchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(
+    `${channelName} ${title_ar} بكالوريا`
+  )}`;
+
   const formattedTime = timestampStr || formatSecondsToTime(startSeconds);
-  const directYoutubeUrl = `https://www.youtube.com/watch?v=${cleanVideoId}${
-    startSeconds > 0 ? `&t=${startSeconds}s` : ""
-  }`;
-  const thumbnailUrl = `https://img.youtube.com/vi/${cleanVideoId}/hqdefault.jpg`;
+  const hasValidThumbnailId =
+    cleanVideoId && cleanVideoId.length === 11 && !cleanVideoId.includes("/");
+  const thumbnailUrl = hasValidThumbnailId
+    ? `https://img.youtube.com/vi/${cleanVideoId}/hqdefault.jpg`
+    : "";
 
   return (
     <div
@@ -87,7 +126,7 @@ export const EmbeddedVideoPlayer: React.FC<EmbeddedVideoPlayerProps> = ({
           className="group relative w-full md:w-64 aspect-video rounded-xl overflow-hidden bg-slate-900 border border-slate-300 shadow-inner shrink-0 block cursor-pointer"
           title="فتح الفيديو في تبويب جديد على يوتيوب"
         >
-          {!imgError ? (
+          {thumbnailUrl && !imgError ? (
             <img
               src={thumbnailUrl}
               alt={title_ar}
@@ -96,9 +135,14 @@ export const EmbeddedVideoPlayer: React.FC<EmbeddedVideoPlayerProps> = ({
               loading="lazy"
             />
           ) : (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-800 to-slate-950 text-white p-3 text-center">
-              <Youtube className="w-10 h-10 text-red-500 mb-1" />
-              <span className="text-xs font-bold">{title_ar}</span>
+            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-red-950/40 text-white p-4 text-center">
+              <Youtube className="w-10 h-10 text-red-500 mb-2 group-hover:scale-110 transition-transform" />
+              <span className="text-xs font-bold line-clamp-2 leading-relaxed text-slate-200">
+                {title_ar}
+              </span>
+              <span className="text-[10px] text-red-300 mt-1 font-medium bg-red-950/60 px-2 py-0.5 rounded border border-red-800/40">
+                {channelName}
+              </span>
             </div>
           )}
 
@@ -117,7 +161,7 @@ export const EmbeddedVideoPlayer: React.FC<EmbeddedVideoPlayerProps> = ({
           )}
         </a>
 
-        {/* Video description & Direct action button */}
+        {/* Video description & Direct action buttons */}
         <div className="flex-1 w-full space-y-3">
           <div>
             <span className="text-[11px] font-bold text-slate-500 block mb-0.5">
@@ -129,26 +173,34 @@ export const EmbeddedVideoPlayer: React.FC<EmbeddedVideoPlayerProps> = ({
           </div>
 
           <p className="text-xs text-slate-600 leading-relaxed">
-            تم ضبط الرابط للانتقال مباشرة إلى المقطع المنهجي المحدد (
-            <strong className="text-emerald-700 font-bold">{formattedTime}</strong>
-            ) لتوفير الوقت وتفادي البحث اليدوي ومشكلات التضمين المقيدة على المنصات.
+            رابط مباشر موجه إلى القناة المعتمدة للأستاذ مع إمكانية البحث الفوري عن الدرس والتمارين المرافقة لتوفير الوقت وتفادي مشكلات الروابط المعطلة.
           </p>
 
-          <div className="pt-1 flex flex-wrap items-center gap-3">
+          <div className="pt-1 flex flex-wrap items-center gap-2 sm:gap-3">
             <a
               href={directYoutubeUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs sm:text-sm shadow-sm hover:shadow-md transition-all active:scale-[0.98] w-full sm:w-auto"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs sm:text-sm shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
             >
               <Youtube className="w-4 h-4 fill-white" />
-              <span>مشاهدة الشرح الموجه على يوتيوب ↗</span>
+              <span>مشاهدة الشرح على يوتيوب ↗</span>
               <ExternalLink className="w-3.5 h-3.5 opacity-80" />
             </a>
 
-            <span className="text-[11px] text-slate-500 flex items-center gap-1">
+            <a
+              href={fallbackSearchUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-300 transition-all active:scale-[0.98]"
+              title="البحث عن شروحات إضافية لنفس الدرس على يوتيوب"
+            >
+              <span>بحث شامل في يوتيوب 🔍</span>
+            </a>
+
+            <span className="text-[11px] text-slate-500 flex items-center gap-1 mr-auto">
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              يفتح بجودة عالية في تبويب جديد بدون تقطيع
+              روابط موثوقة ومحدثة 2026/2027
             </span>
           </div>
         </div>

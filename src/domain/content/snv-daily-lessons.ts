@@ -80,9 +80,9 @@ export const snvWeek01Lessons: SnvDailyLesson[] = [
 `,
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "الوحدة 01: مقر تركيب البروتين وإبراز دور الـ ARNm بالتفصيل",
-      videoUrl: "https://www.youtube.com/watch?v=1oW_wB7yG0M",
+      videoUrl: "https://www.youtube.com/watch?v=1v9H3IsxHYo",
       targetTimestamp: "03:15"
     },
     commonMistakes: [
@@ -130,7 +130,7 @@ $$A \\rightarrow U \\quad , \\quad T \\rightarrow A \\quad , \\quad C \\rightarr
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "مراحل الاستنساخ ثلاثية الأبعاد - كيفية كتابة نص علمي دقيق",
-      videoUrl: "https://www.youtube.com/watch?v=X2PZ4N6K9t8",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D9%85%D8%B1%D8%A7%D8%AD%D9%84%20%D8%A7%D9%84%D8%A7%D8%B3%D8%AA%D9%86%D8%B3%D8%A7%D8%AE%20%D8%AB%D9%84%D8%A7%D8%AB%D9%8A%D8%A9%20%D8%A7%D9%84%D8%A3%D8%A8%D8%B9%D8%A7%D8%AF%20-%20%D9%83%D9%8A%D9%81%D9%8A%D8%A9%20%D9%83%D8%AA%D8%A7%D8%A8%D8%A9%20%D9%86%D8%B5%20%D8%B9%D9%84%D9%85%D9%8A%20%D8%AF%D9%82%D9%8A%D9%82%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "05:40"
     },
     commonMistakes: [
@@ -177,7 +177,7 @@ $$A \\rightarrow U \\quad , \\quad T \\rightarrow A \\quad , \\quad C \\rightarr
       platform: "youtube",
       channelName: "الأستاذ مصطفى بن خريف",
       title: "الشفرة الوراثية وكيفية تجنب فخاخ جدول الرامزات في التمارين",
-      videoUrl: "https://www.youtube.com/watch?v=0kL9vU8wWqE",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D9%85%D8%B5%D8%B7%D9%81%D9%89%20%D8%A8%D9%86%20%D8%AE%D8%B1%D9%8A%D9%81%20%D8%A7%D9%84%D8%B4%D9%81%D8%B1%D8%A9%20%D8%A7%D9%84%D9%88%D8%B1%D8%A7%D8%AB%D9%8A%D8%A9%20%D9%88%D9%83%D9%8A%D9%81%D9%8A%D8%A9%20%D8%AA%D8%AC%D9%86%D8%A8%20%D9%81%D8%AE%D8%A7%D8%AE%20%D8%AC%D8%AF%D9%88%D9%84%20%D8%A7%D9%84%D8%B1%D8%A7%D9%85%D8%B2%D8%A7%D8%AA%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%AA%D9%85%D8%A7%D8%B1%D9%8A%D9%86%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "02:10"
     },
     commonMistakes: [
@@ -217,9 +217,9 @@ $$A \\rightarrow U \\quad , \\quad T \\rightarrow A \\quad , \\quad C \\rightarr
 `,
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "تنشيط الأحماض الأمينية: البنية والتجربة والرسومات التخطيطية الرسمية",
-      videoUrl: "https://www.youtube.com/watch?v=aG3Yq9P5wZo",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D8%AA%D9%86%D8%B4%D9%8A%D8%B7%20%D8%A7%D9%84%D8%A3%D8%AD%D9%85%D8%A7%D8%B6%20%D8%A7%D9%84%D8%A3%D9%85%D9%8A%D9%86%D9%8A%D8%A9%3A%20%D8%A7%D9%84%D8%A8%D9%86%D9%8A%D8%A9%20%D9%88%D8%A7%D9%84%D8%AA%D8%AC%D8%B1%D8%A8%D8%A9%20%D9%88%D8%A7%D9%84%D8%B1%D8%B3%D9%88%D9%85%D8%A7%D8%AA%20%D8%A7%D9%84%D8%AA%D8%AE%D8%B7%D9%8A%D8%B7%D9%8A%D8%A9%20%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A%D8%A9%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "07:30"
     },
     commonMistakes: [
@@ -271,7 +271,7 @@ $$A \\rightarrow U \\quad , \\quad T \\rightarrow A \\quad , \\quad C \\rightarr
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "حركة الريبوزوم وتفاصيل مرحلة الاستطالة بدقة المنهجية الوزارية",
-      videoUrl: "https://www.youtube.com/watch?v=R9K4Z_bLqA1",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D8%AD%D8%B1%D9%83%D8%A9%20%D8%A7%D9%84%D8%B1%D9%8A%D8%A8%D9%88%D8%B2%D9%88%D9%85%20%D9%88%D8%AA%D9%81%D8%A7%D8%B5%D9%8A%D9%84%20%D9%85%D8%B1%D8%AD%D9%84%D8%A9%20%D8%A7%D9%84%D8%A7%D8%B3%D8%AA%D8%B7%D8%A7%D9%84%D8%A9%20%D8%A8%D8%AF%D9%82%D8%A9%20%D8%A7%D9%84%D9%85%D9%86%D9%87%D8%AC%D9%8A%D8%A9%20%D8%A7%D9%84%D9%88%D8%B2%D8%A7%D8%B1%D9%8A%D8%A9%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "04:45"
     },
     commonMistakes: [
@@ -350,9 +350,9 @@ export const snvWeek02Lessons: SnvDailyLesson[] = [
 `,
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "متعدد الريبوزوم (البوليزوم) وتحديد اتجاه الترجمة في مواضيع البكالوريا",
-      videoUrl: "https://www.youtube.com/watch?v=kY6T5U2cR3A",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D9%85%D8%AA%D8%B9%D8%AF%D8%AF%20%D8%A7%D9%84%D8%B1%D9%8A%D8%A8%D9%88%D8%B2%D9%88%D9%85%20(%D8%A7%D9%84%D8%A8%D9%88%D9%84%D9%8A%D8%B2%D9%88%D9%85)%20%D9%88%D8%AA%D8%AD%D8%AF%D9%8A%D8%AF%20%D8%A7%D8%AA%D8%AC%D8%A7%D9%87%20%D8%A7%D9%84%D8%AA%D8%B1%D8%AC%D9%85%D8%A9%20%D9%81%D9%8A%20%D9%85%D9%88%D8%A7%D8%B6%D9%8A%D8%B9%20%D8%A7%D9%84%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "04:12"
     },
     commonMistakes: [
@@ -395,7 +395,7 @@ export const snvWeek02Lessons: SnvDailyLesson[] = [
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "مسار البروتين داخل الخلية والتجارب الكلاسيكية في البكالوريا",
-      videoUrl: "https://www.youtube.com/watch?v=J6mP7V8vK0c",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D9%85%D8%B3%D8%A7%D8%B1%20%D8%A7%D9%84%D8%A8%D8%B1%D9%88%D8%AA%D9%8A%D9%86%20%D8%AF%D8%A7%D8%AE%D9%84%20%D8%A7%D9%84%D8%AE%D9%84%D9%8A%D8%A9%20%D9%88%D8%A7%D9%84%D8%AA%D8%AC%D8%A7%D8%B1%D8%A8%20%D8%A7%D9%84%D9%83%D9%84%D8%A7%D8%B3%D9%8A%D9%83%D9%8A%D8%A9%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "03:50"
     },
     commonMistakes: [
@@ -434,7 +434,7 @@ export const snvWeek02Lessons: SnvDailyLesson[] = [
       platform: "youtube",
       channelName: "الأستاذ مصطفى بن خريف",
       title: "تأثير الطفرات على تركيب البروتين وحل تمارين المقارنة خطوة بخطوة",
-      videoUrl: "https://www.youtube.com/watch?v=T1w8R4YxP2m",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D9%85%D8%B5%D8%B7%D9%81%D9%89%20%D8%A8%D9%86%20%D8%AE%D8%B1%D9%8A%D9%81%20%D8%AA%D8%A3%D8%AB%D9%8A%D8%B1%20%D8%A7%D9%84%D8%B7%D9%81%D8%B1%D8%A7%D8%AA%20%D8%B9%D9%84%D9%89%20%D8%AA%D8%B1%D9%83%D9%8A%D8%A8%20%D8%A7%D9%84%D8%A8%D8%B1%D9%88%D8%AA%D9%8A%D9%86%20%D9%88%D8%AD%D9%84%20%D8%AA%D9%85%D8%A7%D8%B1%D9%8A%D9%86%20%D8%A7%D9%84%D9%85%D9%82%D8%A7%D8%B1%D9%86%D8%A9%20%D8%AE%D8%B7%D9%88%D8%A9%20%D8%A8%D8%AE%D8%B7%D9%88%D8%A9%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "06:15"
     },
     commonMistakes: [
@@ -474,7 +474,7 @@ $$\\text{التعريف بالوثيقة} \\longrightarrow \\text{التحليل
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "كيف تتحصل على العلامة الكاملة في تمارين الاستدلال العلمي (المهمة المركبة)",
-      videoUrl: "https://www.youtube.com/watch?v=F5q8M2K1N9s",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D9%83%D9%8A%D9%81%20%D8%AA%D8%AA%D8%AD%D8%B5%D9%84%20%D8%B9%D9%84%D9%89%20%D8%A7%D9%84%D8%B9%D9%84%D8%A7%D9%85%D8%A9%20%D8%A7%D9%84%D9%83%D8%A7%D9%85%D9%84%D8%A9%20%D9%81%D9%8A%20%D8%AA%D9%85%D8%A7%D8%B1%D9%8A%D9%86%20%D8%A7%D9%84%D8%A7%D8%B3%D8%AA%D8%AF%D9%84%D8%A7%D9%84%20%D8%A7%D9%84%D8%B9%D9%84%D9%85%D9%8A%20(%D8%A7%D9%84%D9%85%D9%87%D9%85%D8%A9%20%D8%A7%D9%84%D9%85%D8%B1%D9%83%D8%A8%D8%A9)%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "08:00"
     },
     commonMistakes: [
@@ -515,9 +515,9 @@ $$\\text{التعريف بالوثيقة} \\longrightarrow \\text{التحليل
 `,
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "كيفية كتابة نص علمي احترافي في الوحدة الأولى وحصد العلامة الكاملة",
-      videoUrl: "https://www.youtube.com/watch?v=V8n3X9L2W1k",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D9%83%D9%8A%D9%81%D9%8A%D8%A9%20%D9%83%D8%AA%D8%A7%D8%A8%D8%A9%20%D9%86%D8%B5%20%D8%B9%D9%84%D9%85%D9%8A%20%D8%A7%D8%AD%D8%AA%D8%B1%D8%A7%D9%81%D9%8A%20%D9%81%D9%8A%20%D8%A7%D9%84%D9%88%D8%AD%D8%AF%D8%A9%20%D8%A7%D9%84%D8%A3%D9%88%D9%84%D9%89%20%D9%88%D8%AD%D8%B5%D8%AF%20%D8%A7%D9%84%D8%B9%D9%84%D8%A7%D9%85%D8%A9%20%D8%A7%D9%84%D9%83%D8%A7%D9%85%D9%84%D8%A9%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "05:15"
     },
     commonMistakes: [
@@ -604,9 +604,9 @@ $$H_2N - \\underset{\\underset{R}{|}}{CH} - COOH$$
 `,
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "الوحدة 02: الصيغة العامة للأحماض الأمينية والتصنيف المضمون في البكالوريا",
-      videoUrl: "https://www.youtube.com/watch?v=M5K3P9vY1wQ",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D8%A7%D9%84%D8%B5%D9%8A%D8%BA%D8%A9%20%D8%A7%D9%84%D8%B9%D8%A7%D9%85%D8%A9%20%D9%84%D9%84%D8%A3%D8%AD%D9%85%D8%A7%D8%B6%20%D8%A7%D9%84%D8%A3%D9%85%D9%8A%D9%86%D9%8A%D8%A9%20%D9%88%D8%A7%D9%84%D8%AA%D8%B5%D9%86%D9%8A%D9%81%20%D8%A7%D9%84%D9%85%D8%B6%D9%85%D9%88%D9%86%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "03:40"
     },
     commonMistakes: [
@@ -654,7 +654,7 @@ $$H_2N - \\underset{\\underset{R}{|}}{CH} - COOH$$
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "السلوك الأمفوتيري للأحماض الأمينية وحساب الشحنات بطريقة مبسطة",
-      videoUrl: "https://www.youtube.com/watch?v=L2v8N9X5kP4",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D8%A7%D9%84%D8%B3%D9%84%D9%88%D9%83%20%D8%A7%D9%84%D8%A3%D9%85%D9%81%D9%88%D8%AA%D9%8A%D8%B1%D9%8A%20%D9%84%D9%84%D8%A3%D8%AD%D9%85%D8%A7%D8%B6%20%D8%A7%D9%84%D8%A3%D9%85%D9%8A%D9%86%D9%8A%D8%A9%20%D9%88%D8%AD%D8%B3%D8%A7%D8%A8%20%D8%A7%D9%84%D8%B4%D8%AD%D9%86%D8%A7%D8%AA%20%D8%A8%D8%B7%D8%B1%D9%8A%D9%82%D8%A9%20%D9%85%D8%A8%D8%B3%D8%B7%D8%A9%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "05:10"
     },
     commonMistakes: [
@@ -698,7 +698,7 @@ $$\\text{شحنة معدومة (0)} \\longrightarrow \\text{البقاء في م
       platform: "youtube",
       channelName: "الأستاذ مصطفى بن خريف",
       title: "تمارين الهجرة الكهربائية وتحديد اتجاه البقع بالأدلة المنهجية",
-      videoUrl: "https://www.youtube.com/watch?v=W3n7T8kP1xZ",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D9%85%D8%B5%D8%B7%D9%81%D9%89%20%D8%A8%D9%86%20%D8%AE%D8%B1%D9%8A%D9%81%20%D8%AA%D9%85%D8%A7%D8%B1%D9%8A%D9%86%20%D8%A7%D9%84%D9%87%D8%AC%D8%B1%D8%A9%20%D8%A7%D9%84%D9%83%D9%87%D8%B1%D8%A8%D8%A7%D8%A6%D9%8A%D8%A9%20%D9%88%D8%AA%D8%AD%D8%AF%D9%8A%D8%AF%20%D8%A7%D8%AA%D8%AC%D8%A7%D9%87%20%D8%A7%D9%84%D8%A8%D9%82%D8%B9%20%D8%A8%D8%A7%D9%84%D8%A3%D8%AF%D9%84%D8%A9%20%D8%A7%D9%84%D9%85%D9%86%D9%87%D8%AC%D9%8A%D8%A9%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "06:40"
     },
     commonMistakes: [
@@ -736,7 +736,7 @@ $$\\text{شحنة معدومة (0)} \\longrightarrow \\text{البقاء في م
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "مستويات البنية الفراغية للبروتينات والروابط الكيميائية بدقة التصحيح الوزاري",
-      videoUrl: "https://www.youtube.com/watch?v=J9x4T2bL6aQ",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D9%85%D8%B3%D8%AA%D9%88%D9%8A%D8%A7%D8%AA%20%D8%A7%D9%84%D8%A8%D9%86%D9%8A%D8%A9%20%D8%A7%D9%84%D9%81%D8%B1%D8%A7%D8%BA%D9%8A%D8%A9%20%D9%84%D9%84%D8%A8%D8%B1%D9%88%D8%AA%D9%8A%D9%86%D8%A7%D8%AA%20%D9%88%D8%A7%D9%84%D8%B1%D9%88%D8%A7%D8%A8%D8%B7%20%D8%A7%D9%84%D9%83%D9%8A%D9%85%D9%8A%D8%A7%D8%A6%D9%8A%D8%A9%20%D8%A8%D8%AF%D9%82%D8%A9%20%D8%A7%D9%84%D8%AA%D8%B5%D8%AD%D9%8A%D8%AD%20%D8%A7%D9%84%D9%88%D8%B2%D8%A7%D8%B1%D9%8A%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "04:15"
     },
     commonMistakes: [
@@ -775,9 +775,9 @@ $$\\text{شحنة معدومة (0)} \\longrightarrow \\text{البقاء في م
 `,
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "العلاقة بين بنية ووظيفة البروتين - الروابط وتأثير الطفرات والعوامل الفيزيائية",
-      videoUrl: "https://www.youtube.com/watch?v=N4t7Z1qW8xR",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D8%A7%D9%84%D8%B9%D9%84%D8%A7%D9%82%D8%A9%20%D8%A8%D9%8A%D9%86%20%D8%A8%D9%86%D9%8A%D8%A9%20%D9%88%D9%88%D8%B8%D9%8A%D9%81%D8%A9%20%D8%A7%D9%84%D8%A8%D8%B1%D9%88%D8%AA%D9%8A%D9%86%20-%20%D8%A7%D9%84%D8%B1%D9%88%D8%A7%D8%A8%D8%B7%20%D9%88%D8%AA%D8%A3%D8%AB%D9%8A%D8%B1%20%D8%A7%D9%84%D8%B7%D9%81%D8%B1%D8%A7%D8%AA%20%D9%88%D8%A7%D9%84%D8%B9%D9%88%D8%A7%D9%85%D9%84%20%D8%A7%D9%84%D9%81%D9%8A%D8%B2%D9%8A%D8%A7%D8%A6%D9%8A%D8%A9%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "08:25"
     },
     commonMistakes: [
@@ -898,9 +898,9 @@ export const snvWeek04Lessons: SnvEnhancedDailyLesson[] = [
     },
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "البنية الثالثية ومناطق الانعطاف والتمثيل الفراغي ثلاثي الأبعاد",
-      videoUrl: "https://www.youtube.com/watch?v=kR2M9L4X7zE",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D8%A7%D9%84%D8%A8%D9%86%D9%8A%D8%A9%20%D8%A7%D9%84%D8%AB%D8%A7%D9%84%D8%AB%D9%8A%D8%A9%20%D9%88%D9%85%D9%86%D8%A7%D8%B7%D9%82%20%D8%A7%D9%84%D8%A7%D9%86%D8%B9%D8%B7%D8%A7%D9%81%20%D9%88%D8%A7%D9%84%D8%AA%D9%85%D8%AB%D9%8A%D9%84%20%D8%A7%D9%84%D9%81%D8%B1%D8%A7%D8%BA%D9%8A%20%D8%AB%D9%84%D8%A7%D8%AB%D9%8A%20%D8%A7%D9%84%D8%A3%D8%A8%D8%B9%D8%A7%D8%AF%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "05:10"
     },
     commonMistakes: [
@@ -949,7 +949,7 @@ export const snvWeek04Lessons: SnvEnhancedDailyLesson[] = [
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "البنية الرابعية والفرق بينها وبين البنية الثالثية في أسئلة المقارنة",
-      videoUrl: "https://www.youtube.com/watch?v=P4m8K2vY9wQ",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D8%A7%D9%84%D8%A8%D9%86%D9%8A%D8%A9%20%D8%A7%D9%84%D8%B1%D8%A7%D8%A8%D8%B9%D9%8A%D8%A9%20%D9%88%D8%A7%D9%84%D9%81%D8%B1%D9%82%20%D8%A8%D9%8A%D9%86%D9%87%D8%A7%20%D9%88%D8%A8%D9%8A%D9%86%20%D8%A7%D9%84%D8%A8%D9%86%D9%8A%D8%A9%20%D8%A7%D9%84%D8%AB%D8%A7%D9%84%D8%AB%D9%8A%D8%A9%20%D9%81%D9%8A%20%D8%A3%D8%B3%D8%A6%D9%84%D8%A9%20%D8%A7%D9%84%D9%85%D9%82%D8%A7%D8%B1%D9%86%D8%A9%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "03:30"
     },
     commonMistakes: [
@@ -1003,7 +1003,7 @@ export const snvWeek04Lessons: SnvEnhancedDailyLesson[] = [
       platform: "youtube",
       channelName: "الأستاذ مصطفى بن خريف",
       title: "طريقة حساب شحنة السلسلة الببتيدية وتحديد نقطة الانطلاق في الهجرة الكهربائية",
-      videoUrl: "https://www.youtube.com/watch?v=K7x9W1vL3pQ",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D9%85%D8%B5%D8%B7%D9%81%D9%89%20%D8%A8%D9%86%20%D8%AE%D8%B1%D9%8A%D9%81%20%D8%B7%D8%B1%D9%8A%D9%82%D8%A9%20%D8%AD%D8%B3%D8%A7%D8%A8%20%D8%B4%D8%AD%D9%86%D8%A9%20%D8%A7%D9%84%D8%B3%D9%84%D8%B3%D9%84%D8%A9%20%D8%A7%D9%84%D8%A8%D8%A8%D8%AA%D9%8A%D8%AF%D9%8A%D8%A9%20%D9%88%D8%AA%D8%AD%D8%AF%D9%8A%D8%AF%20%D9%86%D9%82%D8%B7%D8%A9%20%D8%A7%D9%84%D8%A7%D9%86%D8%B7%D9%84%D8%A7%D9%82%20%D9%81%D9%8A%20%D8%A7%D9%84%D9%87%D8%AC%D8%B1%D8%A9%20%D8%A7%D9%84%D9%83%D9%87%D8%B1%D8%A8%D8%A7%D8%A6%D9%8A%D8%A9%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "07:20"
     },
     commonMistakes: [
@@ -1052,9 +1052,9 @@ export const snvWeek04Lessons: SnvEnhancedDailyLesson[] = [
     },
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "تجربة أنفينسن (Anfinsen) الشهيرة وإثبات العلاقة الحتمية بين البنية والوظيفة",
-      videoUrl: "https://www.youtube.com/watch?v=R3n8X4mK1wQ",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D8%AA%D8%AC%D8%B1%D8%A8%D8%A9%20%D8%A3%D9%86%D9%81%D9%8A%D9%86%D8%B3%D9%86%20(Anfinsen)%20%D8%A7%D9%84%D8%B4%D9%87%D9%8A%D8%B1%D8%A9%20%D9%88%D8%A5%D8%AB%D8%A8%D8%A7%D8%AA%20%D8%A7%D9%84%D8%B9%D9%84%D8%A7%D9%82%D8%A9%20%D8%A7%D9%84%D8%AD%D8%AA%D9%85%D9%8A%D8%A9%20%D8%A8%D9%8A%D9%86%20%D8%A7%D9%84%D8%A8%D9%86%D9%8A%D8%A9%20%D9%88%D8%A7%D9%84%D9%88%D8%B8%D9%8A%D9%81%D8%A9%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "06:15"
     },
     commonMistakes: [
@@ -1102,7 +1102,7 @@ export const snvWeek04Lessons: SnvEnhancedDailyLesson[] = [
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "بنية الجسم المضاد والمناطق الوظيفية ومسائل التكامل البنيوي",
-      videoUrl: "https://www.youtube.com/watch?v=B9x4M2qL5rT",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D8%A8%D9%86%D9%8A%D8%A9%20%D8%A7%D9%84%D8%AC%D8%B3%D9%85%20%D8%A7%D9%84%D9%85%D8%B6%D8%A7%D8%AF%20%D9%88%D8%A7%D9%84%D9%85%D9%86%D8%A7%D8%B7%D9%82%20%D8%A7%D9%84%D9%88%D8%B8%D9%8A%D9%81%D9%8A%D8%A9%20%D9%88%D9%85%D8%B3%D8%A7%D8%A6%D9%84%20%D8%A7%D9%84%D8%AA%D9%83%D8%A7%D9%85%D9%84%20%D8%A7%D9%84%D8%A8%D9%86%D9%8A%D9%88%D9%8A%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "04:50"
     },
     commonMistakes: [
@@ -1216,9 +1216,9 @@ $$\\text{تشوه الشكل الفراغي للموقع الوظيفي} \\longr
 `,
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "كيف تجيب على أسئلة 'بين أثر الطفرة على الوظيفة' بحصد كامل أجزاء النقطة",
-      videoUrl: "https://www.youtube.com/watch?v=T5m8Q1wY4pK",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D9%83%D9%8A%D9%81%20%D8%AA%D8%AC%D9%8A%D8%A8%20%D8%B9%D9%84%D9%89%20%D8%A3%D8%B3%D8%A6%D9%84%D8%A9%20'%D8%A8%D9%8A%D9%86%20%D8%A3%D8%AB%D8%B1%20%D8%A7%D9%84%D8%B7%D9%81%D8%B1%D8%A9%20%D8%B9%D9%84%D9%89%20%D8%A7%D9%84%D9%88%D8%B8%D9%8A%D9%81%D8%A9'%20%D8%A8%D8%AD%D8%B5%D8%AF%20%D9%83%D8%A7%D9%85%D9%84%20%D8%A3%D8%AC%D8%B2%D8%A7%D8%A1%20%D8%A7%D9%84%D9%86%D9%82%D8%B7%D8%A9%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "08:10"
     },
     commonMistakes: [
@@ -1267,7 +1267,7 @@ $$\\text{تشوه الشكل الفراغي للموقع الوظيفي} \\longr
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "تحليل منحنيات الفصل الكهربائي لبروتينات مصل الدم في البكالوريا",
-      videoUrl: "https://www.youtube.com/watch?v=M2x8K5vT9wZ",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D8%AA%D8%AD%D9%84%D9%8A%D9%84%20%D9%85%D9%86%D8%AD%D9%86%D9%8A%D8%A7%D8%AA%20%D8%A7%D9%84%D9%81%D8%B5%D9%84%20%D8%A7%D9%84%D9%83%D9%87%D8%B1%D8%A8%D8%A7%D8%A6%D9%8A%20%D9%84%D8%A8%D8%B1%D9%88%D8%AA%D9%8A%D9%86%D8%A7%D8%AA%20%D9%85%D8%B5%D9%84%20%D8%A7%D9%84%D8%AF%D9%85%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "06:30"
     },
     commonMistakes: [
@@ -1308,7 +1308,7 @@ $$\\text{تشوه الشكل الفراغي للموقع الوظيفي} \\longr
       platform: "youtube",
       channelName: "الأستاذ مصطفى بن خريف",
       title: "صياغة نص علمي كامل حول العلاقة بين بنية ووظيفة البروتين بدون أخطاء",
-      videoUrl: "https://www.youtube.com/watch?v=F3t8M9wY2pK",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D9%85%D8%B5%D8%B7%D9%81%D9%89%20%D8%A8%D9%86%20%D8%AE%D8%B1%D9%8A%D9%81%20%D8%B5%D9%8A%D8%A7%D8%BA%D8%A9%20%D9%86%D8%B5%20%D8%B9%D9%84%D9%85%D9%8A%20%D9%83%D8%A7%D9%85%D9%84%20%D8%AD%D9%88%D9%84%20%D8%A7%D9%84%D8%B9%D9%84%D8%A7%D9%82%D8%A9%20%D8%A8%D9%8A%D9%86%20%D8%A8%D9%86%D9%8A%D8%A9%20%D9%88%D9%88%D8%B8%D9%8A%D9%81%D8%A9%20%D8%A7%D9%84%D8%A8%D8%B1%D9%88%D8%AA%D9%8A%D9%86%20%D8%A8%D8%AF%D9%88%D9%86%20%D8%A3%D8%AE%D8%B7%D8%A7%D8%A1%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "05:40"
     },
     commonMistakes: [
@@ -1344,9 +1344,9 @@ $$\\text{تشوه الشكل الفراغي للموقع الوظيفي} \\longr
 `,
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "حل تمرين تركيبي رائع يدمج بين الاستنساخ والترجمة وحساب شحنات الببتيد",
-      videoUrl: "https://www.youtube.com/watch?v=J8n3T7vK9pM",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D8%AD%D9%84%20%D8%AA%D9%85%D8%B1%D9%8A%D9%86%20%D8%AA%D8%B1%D9%83%D9%8A%D8%A8%D9%8A%20%D8%B1%D8%A7%D8%A6%D8%B9%20%D9%8A%D8%AF%D9%85%D8%AC%20%D8%A8%D9%8A%D9%86%20%D8%A7%D9%84%D8%A7%D8%B3%D8%AA%D9%86%D8%B3%D8%A7%D8%AE%20%D9%88%D8%A7%D9%84%D8%AA%D8%B1%D8%AC%D9%85%D8%A9%20%D9%88%D8%AD%D8%B3%D8%A7%D8%A8%20%D8%B4%D8%AD%D9%86%D8%A7%D8%AA%20%D8%A7%D9%84%D8%A8%D8%A8%D8%AA%D9%8A%D8%AF%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "10:15"
     },
     commonMistakes: [
@@ -1383,7 +1383,7 @@ $$\\text{تشوه الشكل الفراغي للموقع الوظيفي} \\longr
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "كيف تصيغ فرضية علمية صحيحة تضمن نقطتها الكاملة في تمرين الـ 8 نقاط",
-      videoUrl: "https://www.youtube.com/watch?v=D4m9X2vK8wL",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D9%83%D9%8A%D9%81%20%D8%AA%D8%B5%D9%8A%D8%BA%20%D9%81%D8%B1%D8%B6%D9%8A%D8%A9%20%D8%B9%D9%84%D9%85%D9%8A%D8%A9%20%D8%B5%D8%AD%D9%8A%D8%AD%D8%A9%20%D8%AA%D8%B6%D9%85%D9%86%20%D9%86%D9%82%D8%B7%D8%AA%D9%87%D8%A7%20%D8%A7%D9%84%D9%83%D8%A7%D9%85%D9%84%D8%A9%20%D9%81%D9%8A%20%D8%AA%D9%85%D8%B1%D9%8A%D9%86%20%D8%A7%D9%84%D9%80%208%20%D9%86%D9%82%D8%A7%D8%B7%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "04:40"
     },
     commonMistakes: [
@@ -1494,9 +1494,9 @@ $$E + S \\rightleftharpoons [ES] \\longrightarrow E + P$$
     },
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "الوحدة 03: مفهوم الإنزيم والنوعية المزدوجة وتجارب الإثبات في البكالوريا",
-      videoUrl: "https://www.youtube.com/watch?v=H7m3K9vX2wQ",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D9%85%D9%81%D9%87%D9%88%D9%85%20%D8%A7%D9%84%D8%A5%D9%86%D8%B2%D9%8A%D9%85%20%D9%88%D8%A7%D9%84%D9%86%D9%88%D8%B9%D9%8A%D8%A9%20%D8%A7%D9%84%D9%85%D8%B2%D8%AF%D9%88%D8%AC%D8%A9%20%D9%88%D8%AA%D8%AC%D8%A7%D8%B1%D8%A8%20%D8%A7%D9%84%D8%A5%D8%AB%D8%A8%D8%A7%D8%AA%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "04:20"
     },
     commonMistakes: [
@@ -1547,7 +1547,7 @@ $$E + S \\rightleftharpoons [ES] \\longrightarrow E + P$$
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "الموقع الفعال ومكوناته: أحماض التثبيت والتحفيز وتطبيقات الطفرات الموجهة",
-      videoUrl: "https://www.youtube.com/watch?v=W4n8L2qP9zM",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D8%A7%D9%84%D9%85%D9%88%D9%82%D8%B9%20%D8%A7%D9%84%D9%81%D8%B9%D8%A7%D9%84%20%D9%88%D9%85%D9%83%D9%88%D9%86%D8%A7%D8%AA%D9%87%3A%20%D8%A3%D8%AD%D9%85%D8%A7%D8%B6%20%D8%A7%D9%84%D8%AA%D8%AB%D8%A8%D9%8A%D8%AA%20%D9%88%D8%A7%D9%84%D8%AA%D8%AD%D9%81%D9%8A%D8%B2%20%D9%88%D8%AA%D8%B7%D8%A8%D9%8A%D9%82%D8%A7%D8%AA%20%D8%A7%D9%84%D8%B7%D9%81%D8%B1%D8%A7%D8%AA%20%D8%A7%D9%84%D9%85%D9%88%D8%AC%D9%87%D8%A9%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "06:10"
     },
     commonMistakes: [
@@ -1595,9 +1595,9 @@ $$E + S \\rightleftharpoons [ES] \\longrightarrow E + P$$
     },
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "التكامل المحفز وكيف تشرحه بنص علمي دقيق دون خلط مع القفل والمفتاح",
-      videoUrl: "https://www.youtube.com/watch?v=J3n7X9vL2wP",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D8%A7%D9%84%D8%AA%D9%83%D8%A7%D9%85%D9%84%20%D8%A7%D9%84%D9%85%D8%AD%D9%81%D8%B2%20%D9%88%D9%83%D9%8A%D9%81%20%D8%AA%D8%B4%D8%B1%D8%AD%D9%87%20%D8%A8%D9%86%D8%B5%20%D8%B9%D9%84%D9%85%D9%8A%20%D8%AF%D9%82%D9%8A%D9%82%20%D8%AF%D9%88%D9%86%20%D8%AE%D9%84%D8%B7%20%D9%85%D8%B9%20%D8%A7%D9%84%D9%82%D9%81%D9%84%20%D9%88%D8%A7%D9%84%D9%85%D9%81%D8%AA%D8%A7%D8%AD%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "05:45"
     },
     commonMistakes: [
@@ -1649,7 +1649,7 @@ $$V_i = \\frac{\\Delta P}{\\Delta t} = \\frac{P_2 - P_1}{t_2 - t_1} \\quad (\\te
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "كيف تحسب السرعة الابتدائية Vi بيانيا وما هو التفسير الإنزيمي للثبات",
-      videoUrl: "https://www.youtube.com/watch?v=F9m4K2vL7wQ",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D9%83%D9%8A%D9%81%20%D8%AA%D8%AD%D8%B3%D8%A8%20%D8%A7%D9%84%D8%B3%D8%B1%D8%B9%D8%A9%20%D8%A7%D9%84%D8%A7%D8%A8%D8%AA%D8%AF%D8%A7%D8%A6%D9%8A%D8%A9%20Vi%20%D8%A8%D9%8A%D8%A7%D9%86%D9%8A%D8%A7%20%D9%88%D9%85%D8%A7%20%D9%87%D9%88%20%D8%A7%D9%84%D8%AA%D9%81%D8%B3%D9%8A%D8%B1%20%D8%A7%D9%84%D8%A5%D9%86%D8%B2%D9%8A%D9%85%D9%8A%20%D9%84%D9%84%D8%AB%D8%A8%D8%A7%D8%AA%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "07:15"
     },
     commonMistakes: [
@@ -1696,7 +1696,7 @@ $$V_i = \\frac{\\Delta P}{\\Delta t} = \\frac{P_2 - P_1}{t_2 - t_1} \\quad (\\te
       platform: "youtube",
       channelName: "الأستاذ مصطفى بن خريف",
       title: "تأثير تركيز مادة التفاعل على النشاط الإنزيمي وظاهرة التشبع بالتفصيل",
-      videoUrl: "https://www.youtube.com/watch?v=L5m8R2qP1zK",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D9%85%D8%B5%D8%B7%D9%81%D9%89%20%D8%A8%D9%86%20%D8%AE%D8%B1%D9%8A%D9%81%20%D8%AA%D8%A3%D8%AB%D9%8A%D8%B1%20%D8%AA%D8%B1%D9%83%D9%8A%D8%B2%20%D9%85%D8%A7%D8%AF%D8%A9%20%D8%A7%D9%84%D8%AA%D9%81%D8%A7%D8%B9%D9%84%20%D8%B9%D9%84%D9%89%20%D8%A7%D9%84%D9%86%D8%B4%D8%A7%D8%B7%20%D8%A7%D9%84%D8%A5%D9%86%D8%B2%D9%8A%D9%85%D9%8A%20%D9%88%D8%B8%D8%A7%D9%87%D8%B1%D8%A9%20%D8%A7%D9%84%D8%AA%D8%B4%D8%A8%D8%B9%20%D8%A8%D8%A7%D9%84%D8%AA%D9%81%D8%B5%D9%8A%D9%84%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "08:30"
     },
     commonMistakes: [
@@ -1796,9 +1796,9 @@ export const snvWeek07Lessons: SnvEnhancedDailyLesson[] = [
     },
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "تأثير درجة الحرارة على النشاط الإنزيمي والفرق بين التثبيط والتخريب في التصحيح",
-      videoUrl: "https://www.youtube.com/watch?v=M9n4K7vL2wQ",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D8%AA%D8%A3%D8%AB%D9%8A%D8%B1%20%D8%AF%D8%B1%D8%AC%D8%A9%20%D8%A7%D9%84%D8%AD%D8%B1%D8%A7%D8%B1%D8%A9%20%D8%B9%D9%84%D9%89%20%D8%A7%D9%84%D9%86%D8%B4%D8%A7%D8%B7%20%D8%A7%D9%84%D8%A5%D9%86%D8%B2%D9%8A%D9%85%D9%8A%20%D9%88%D8%A7%D9%84%D9%81%D8%B1%D9%82%20%D8%A8%D9%8A%D9%86%20%D8%A7%D9%84%D8%AA%D8%AB%D8%A8%D9%8A%D8%B7%20%D9%88%D8%A7%D9%84%D8%AA%D8%AE%D8%B1%D9%8A%D8%A8%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%AA%D8%B5%D8%AD%D9%8A%D8%AD%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "06:40"
     },
     commonMistakes: [
@@ -1852,7 +1852,7 @@ export const snvWeek07Lessons: SnvEnhancedDailyLesson[] = [
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "الحالة الشاردية للموقع الفعال وتأثير الـ pH على النشاط الإنزيمي بالتفصيل",
-      videoUrl: "https://www.youtube.com/watch?v=K3n8M2vL9wT",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D8%A7%D9%84%D8%AD%D8%A7%D9%84%D8%A9%20%D8%A7%D9%84%D8%B4%D8%A7%D8%B1%D8%AF%D9%8A%D8%A9%20%D9%84%D9%84%D9%85%D9%88%D9%82%D8%B9%20%D8%A7%D9%84%D9%81%D8%B9%D8%A7%D9%84%20%D9%88%D8%AA%D8%A3%D8%AB%D9%8A%D8%B1%20%D8%A7%D9%84%D9%80%20pH%20%D8%B9%D9%84%D9%89%20%D8%A7%D9%84%D9%86%D8%B4%D8%A7%D8%B7%20%D8%A7%D9%84%D8%A5%D9%86%D8%B2%D9%8A%D9%85%D9%8A%20%D8%A8%D8%A7%D9%84%D8%AA%D9%81%D8%B5%D9%8A%D9%84%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "08:15"
     },
     commonMistakes: [
@@ -1904,7 +1904,7 @@ export const snvWeek07Lessons: SnvEnhancedDailyLesson[] = [
       platform: "youtube",
       channelName: "الأستاذ مصطفى بن خريف",
       title: "المثبطات التنافسية وغير التنافسية وكيفية قراءة منحنياتها في أسئلة البكالوريا",
-      videoUrl: "https://www.youtube.com/watch?v=T4m9X2vL1wK",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D9%85%D8%B5%D8%B7%D9%81%D9%89%20%D8%A8%D9%86%20%D8%AE%D8%B1%D9%8A%D9%81%20%D8%A7%D9%84%D9%85%D8%AB%D8%A8%D8%B7%D8%A7%D8%AA%20%D8%A7%D9%84%D8%AA%D9%86%D8%A7%D9%81%D8%B3%D9%8A%D8%A9%20%D9%88%D8%BA%D9%8A%D8%B1%20%D8%A7%D9%84%D8%AA%D9%86%D8%A7%D9%81%D8%B3%D9%8A%D8%A9%20%D9%88%D9%83%D9%8A%D9%81%D9%8A%D8%A9%20%D9%82%D8%B1%D8%A7%D8%A1%D8%A9%20%D9%85%D9%86%D8%AD%D9%86%D9%8A%D8%A7%D8%AA%D9%87%D8%A7%20%D9%81%D9%8A%20%D8%A3%D8%B3%D8%A6%D9%84%D8%A9%20%D8%A7%D9%84%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "09:10"
     },
     commonMistakes: [
@@ -1945,7 +1945,7 @@ export const snvWeek07Lessons: SnvEnhancedDailyLesson[] = [
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "تقنية الطفرة الموجهة وحل أصعب تمارين التمييز بين موقع التثبيت والتحفيز",
-      videoUrl: "https://www.youtube.com/watch?v=J8m4L2vP9zW",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D8%AA%D9%82%D9%86%D9%8A%D8%A9%20%D8%A7%D9%84%D8%B7%D9%81%D8%B1%D8%A9%20%D8%A7%D9%84%D9%85%D9%88%D8%AC%D9%87%D8%A9%20%D9%88%D8%AD%D9%84%20%D8%A3%D8%B5%D8%B9%D8%A8%20%D8%AA%D9%85%D8%A7%D8%B1%D9%8A%D9%86%20%D8%A7%D9%84%D8%AA%D9%85%D9%8A%D9%8A%D8%B2%20%D8%A8%D9%8A%D9%86%20%D9%85%D9%88%D9%82%D8%B9%20%D8%A7%D9%84%D8%AA%D8%AB%D8%A8%D9%8A%D8%AA%20%D9%88%D8%A7%D9%84%D8%AA%D8%AD%D9%81%D9%8A%D8%B2%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "07:30"
     },
     commonMistakes: [
@@ -1995,9 +1995,9 @@ export const snvWeek07Lessons: SnvEnhancedDailyLesson[] = [
     },
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "النص العلمي الشامل للوحدة 03: النشاط الإنزيمي وحصد النقطة الكاملة في البكالوريا",
-      videoUrl: "https://www.youtube.com/watch?v=M5n8P2qL4zW",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D8%A7%D9%84%D9%86%D8%B5%20%D8%A7%D9%84%D8%B9%D9%84%D9%85%D9%8A%20%D8%A7%D9%84%D8%B4%D8%A7%D9%85%D9%84%20%D9%84%D9%84%D9%88%D8%AD%D8%AF%D8%A9%2003%3A%20%D8%A7%D9%84%D9%86%D8%B4%D8%A7%D8%B7%20%D8%A7%D9%84%D8%A5%D9%86%D8%B2%D9%8A%D9%85%D9%8A%20%D9%88%D8%AD%D8%B5%D8%AF%20%D8%A7%D9%84%D9%86%D9%82%D8%B7%D8%A9%20%D8%A7%D9%84%D9%83%D8%A7%D9%85%D9%84%D8%A9%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "06:10"
     },
     commonMistakes: [
@@ -2110,9 +2110,9 @@ export const snvWeek08Lessons: SnvEnhancedDailyLesson[] = [
     },
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "الوحدة 04: الذات واللاذات وبنية معقد التوافق النسيجي CMH بالتفصيل",
-      videoUrl: "https://www.youtube.com/watch?v=N8m3P4xL2wQ",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D8%A7%D9%84%D8%B0%D8%A7%D8%AA%20%D9%88%D8%A7%D9%84%D9%84%D8%A7%D8%B0%D8%A7%D8%AA%20%D9%88%D8%A8%D9%86%D9%8A%D8%A9%20%D9%85%D8%B9%D9%82%D8%AF%20%D8%A7%D9%84%D8%AA%D9%88%D8%A7%D9%81%D9%82%20%D8%A7%D9%84%D9%86%D8%B3%D9%8A%D8%AC%D9%8A%20CMH%20%D8%A8%D8%A7%D9%84%D8%AA%D9%81%D8%B5%D9%8A%D9%84%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "05:15"
     },
     commonMistakes: [
@@ -2171,7 +2171,7 @@ $$\\text{عدم التقاء مولد الضد الغشائي للـمعطي م�
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "الزمر الدموية ونظام ABO والريزوس: القواعد والتفسير الكيميائي للارتصاص",
-      videoUrl: "https://www.youtube.com/watch?v=R2m7K9vL5pT",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D8%A7%D9%84%D8%B2%D9%85%D8%B1%20%D8%A7%D9%84%D8%AF%D9%85%D9%88%D9%8A%D8%A9%20%D9%88%D9%86%D8%B8%D8%A7%D9%85%20ABO%20%D9%88%D8%A7%D9%84%D8%B1%D9%8A%D8%B2%D9%88%D8%B3%3A%20%D8%A7%D9%84%D9%82%D9%88%D8%A7%D8%B9%D8%AF%20%D9%88%D8%A7%D9%84%D8%AA%D9%81%D8%B3%D9%8A%D8%B1%20%D8%A7%D9%84%D9%83%D9%8A%D9%85%D9%8A%D8%A7%D8%A6%D9%8A%20%D9%84%D9%84%D8%A7%D8%B1%D8%AA%D8%B5%D8%A7%D8%B5%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "06:40"
     },
     commonMistakes: [
@@ -2220,7 +2220,7 @@ $$\\text{عدم التقاء مولد الضد الغشائي للـمعطي م�
       platform: "youtube",
       channelName: "الأستاذ مصطفى بن خريف",
       title: "بنية الأجسام المضادة وتشكل المعقد المناعي بالتفصيل الدقيق للبكالوريا",
-      videoUrl: "https://www.youtube.com/watch?v=J7n3M8vL9xW",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D9%85%D8%B5%D8%B7%D9%81%D9%89%20%D8%A8%D9%86%20%D8%AE%D8%B1%D9%8A%D9%81%20%D8%A8%D9%86%D9%8A%D8%A9%20%D8%A7%D9%84%D8%A3%D8%AC%D8%B3%D8%A7%D9%85%20%D8%A7%D9%84%D9%85%D8%B6%D8%A7%D8%AF%D8%A9%20%D9%88%D8%AA%D8%B4%D9%83%D9%84%20%D8%A7%D9%84%D9%85%D8%B9%D9%82%D8%AF%20%D8%A7%D9%84%D9%85%D9%86%D8%A7%D8%B9%D9%8A%20%D8%A8%D8%A7%D9%84%D8%AA%D9%81%D8%B5%D9%8A%D9%84%20%D8%A7%D9%84%D8%AF%D9%82%D9%8A%D9%82%20%D9%84%D9%84%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "08:15"
     },
     commonMistakes: [
@@ -2269,7 +2269,7 @@ $$\\text{عدم التقاء مولد الضد الغشائي للـمعطي م�
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "المعقد المناعي وظواهر الترسيب والارتصاص وتجربة أوشترلوني Ouchterlony",
-      videoUrl: "https://www.youtube.com/watch?v=F4m9K2vL7wT",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D8%A7%D9%84%D9%85%D8%B9%D9%82%D8%AF%20%D8%A7%D9%84%D9%85%D9%86%D8%A7%D8%B9%D9%8A%20%D9%88%D8%B8%D9%88%D8%A7%D9%87%D8%B1%20%D8%A7%D9%84%D8%AA%D8%B1%D8%B3%D9%8A%D8%A8%20%D9%88%D8%A7%D9%84%D8%A7%D8%B1%D8%AA%D8%B5%D8%A7%D8%B5%20%D9%88%D8%AA%D8%AC%D8%B1%D8%A8%D8%A9%20%D8%A3%D9%88%D8%B4%D8%AA%D8%B1%D9%84%D9%88%D9%86%D9%8A%20Ouchterlony%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "05:50"
     },
     commonMistakes: [
@@ -2322,9 +2322,9 @@ $$\\text{عدم التقاء مولد الضد الغشائي للـمعطي م�
     },
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "مراحل البلعمة الخمس وكيف ترسم مخططاً واضحاً يضمن النقطة في البكالوريا",
-      videoUrl: "https://www.youtube.com/watch?v=M7m3X8vK2pQ",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D9%85%D8%B1%D8%A7%D8%AD%D9%84%20%D8%A7%D9%84%D8%A8%D9%84%D8%B9%D9%85%D8%A9%20%D8%A7%D9%84%D8%AE%D9%85%D8%B3%20%D9%88%D9%83%D9%8A%D9%81%20%D8%AA%D8%B1%D8%B3%D9%85%20%D9%85%D8%AE%D8%B7%D8%B7%D8%A7%D9%8B%20%D9%88%D8%A7%D8%B6%D8%AD%D8%A7%D9%8B%20%D9%8A%D8%B6%D9%85%D9%86%20%D8%A7%D9%84%D9%86%D9%82%D8%B7%D8%A9%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "06:10"
     },
     commonMistakes: [
@@ -2424,7 +2424,7 @@ export const snvWeek09Lessons: SnvEnhancedDailyLesson[] = [
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "منشأ ونضج الخلايا اللمفاوية LB والانتقاء النسيلاتي بدقة المنهجية الرسمية",
-      videoUrl: "https://www.youtube.com/watch?v=B3m8N4vL1xW",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D9%85%D9%86%D8%B4%D8%A3%20%D9%88%D9%86%D8%B6%D8%AC%20%D8%A7%D9%84%D8%AE%D9%84%D8%A7%D9%8A%D8%A7%20%D8%A7%D9%84%D9%84%D9%85%D9%81%D8%A7%D9%88%D9%8A%D8%A9%20LB%20%D9%88%D8%A7%D9%84%D8%A7%D9%86%D8%AA%D9%82%D8%A7%D8%A1%20%D8%A7%D9%84%D9%86%D8%B3%D9%8A%D9%84%D8%A7%D8%AA%D9%8A%20%D8%A8%D8%AF%D9%82%D8%A9%20%D8%A7%D9%84%D9%85%D9%86%D9%87%D8%AC%D9%8A%D8%A9%20%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A%D8%A9%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "06:15"
     },
     commonMistakes: [
@@ -2472,9 +2472,9 @@ export const snvWeek09Lessons: SnvEnhancedDailyLesson[] = [
     },
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "تمايز الخلايا LB إلى خلايا بلازمية وبنيتها الفائقة في أسئلة التحليل المقارن",
-      videoUrl: "https://www.youtube.com/watch?v=F8m4K1vP9zL",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D8%AA%D9%85%D8%A7%D9%8A%D8%B2%20%D8%A7%D9%84%D8%AE%D9%84%D8%A7%D9%8A%D8%A7%20LB%20%D8%A5%D9%84%D9%89%20%D8%AE%D9%84%D8%A7%D9%8A%D8%A7%20%D8%A8%D9%84%D8%A7%D8%B2%D9%85%D9%8A%D8%A9%20%D9%88%D8%A8%D9%86%D9%8A%D8%AA%D9%87%D8%A7%20%D8%A7%D9%84%D9%81%D8%A7%D8%A6%D9%82%D8%A9%20%D9%81%D9%8A%20%D8%A3%D8%B3%D8%A6%D9%84%D8%A9%20%D8%A7%D9%84%D8%AA%D8%AD%D9%84%D9%8A%D9%84%20%D8%A7%D9%84%D9%85%D9%82%D8%A7%D8%B1%D9%86%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "07:45"
     },
     commonMistakes: [
@@ -2525,7 +2525,7 @@ export const snvWeek09Lessons: SnvEnhancedDailyLesson[] = [
       platform: "youtube",
       channelName: "الأستاذ مصطفى بن خريف",
       title: "الاستجابة الأولية والثانوية وقراءة منحنيات التلقيح والمصل العلاجي في البكالوريا",
-      videoUrl: "https://www.youtube.com/watch?v=W9m4R2vK7pL",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D9%85%D8%B5%D8%B7%D9%81%D9%89%20%D8%A8%D9%86%20%D8%AE%D8%B1%D9%8A%D9%81%20%D8%A7%D9%84%D8%A7%D8%B3%D8%AA%D8%AC%D8%A7%D8%A8%D8%A9%20%D8%A7%D9%84%D8%A3%D9%88%D9%84%D9%8A%D8%A9%20%D9%88%D8%A7%D9%84%D8%AB%D8%A7%D9%86%D9%88%D9%8A%D8%A9%20%D9%88%D9%82%D8%B1%D8%A7%D8%A1%D8%A9%20%D9%85%D9%86%D8%AD%D9%86%D9%8A%D8%A7%D8%AA%20%D8%A7%D9%84%D8%AA%D9%84%D9%82%D9%8A%D8%AD%20%D9%88%D8%A7%D9%84%D9%85%D8%B5%D9%84%20%D8%A7%D9%84%D8%B9%D9%84%D8%A7%D8%AC%D9%8A%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "08:50"
     },
     commonMistakes: [
@@ -2578,7 +2578,7 @@ $$\\text{البالعات الكبيرة (CPA)} \\quad + \\quad \\text{اللم�
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "تجارب التعاون الخلوي (موشييه وكلين) وتفسير شروط إفراز الأجسام المضادة",
-      videoUrl: "https://www.youtube.com/watch?v=J3m8L2qP9zM",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D8%AA%D8%AC%D8%A7%D8%B1%D8%A8%20%D8%A7%D9%84%D8%AA%D8%B9%D8%A7%D9%88%D9%86%20%D8%A7%D9%84%D8%AE%D9%84%D9%88%D9%8A%20(%D9%85%D9%88%D8%B4%D9%8A%D9%8A%D9%87%20%D9%88%D9%83%D9%84%D9%8A%D9%86)%20%D9%88%D8%AA%D9%81%D8%B3%D9%8A%D8%B1%20%D8%B4%D8%B1%D9%88%D8%B7%20%D8%A5%D9%81%D8%B1%D8%A7%D8%B2%20%D8%A7%D9%84%D8%A3%D8%AC%D8%B3%D8%A7%D9%85%20%D8%A7%D9%84%D9%85%D8%B6%D8%A7%D8%AF%D8%A9%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "09:20"
     },
     commonMistakes: [
@@ -2615,9 +2615,9 @@ $$\\text{البالعات الكبيرة (CPA)} \\quad + \\quad \\text{اللم�
 `,
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "نص علمي كامل وشامل للاستجابة الخلطية بالمعايير الرسمية لحصد 5 نقاط",
-      videoUrl: "https://www.youtube.com/watch?v=H5m8K2vP7zW",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D9%86%D8%B5%20%D8%B9%D9%84%D9%85%D9%8A%20%D9%83%D8%A7%D9%85%D9%84%20%D9%88%D8%B4%D8%A7%D9%85%D9%84%20%D9%84%D9%84%D8%A7%D8%B3%D8%AA%D8%AC%D8%A7%D8%A8%D8%A9%20%D8%A7%D9%84%D8%AE%D9%84%D8%B7%D9%8A%D8%A9%20%D8%A8%D8%A7%D9%84%D9%85%D8%B9%D8%A7%D9%8A%D9%8A%D8%B1%20%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A%D8%A9%20%D9%84%D8%AD%D8%B5%D8%AF%205%20%D9%86%D9%82%D8%A7%D8%B7%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "06:50"
     },
     commonMistakes: [
@@ -2727,9 +2727,9 @@ export const snvWeek10Lessons: SnvEnhancedDailyLesson[] = [
     },
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "منشأ ونضج الخلايا التائية LT8 وآليات الانتقاء في الغدة السعترية للبكالوريا",
-      videoUrl: "https://www.youtube.com/watch?v=J7n4M9vL3xW",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D9%85%D9%86%D8%B4%D8%A3%20%D9%88%D9%86%D8%B6%D8%AC%20%D8%A7%D9%84%D8%AE%D9%84%D8%A7%D9%8A%D8%A7%20%D8%A7%D9%84%D8%AA%D8%A7%D8%A6%D9%8A%D8%A9%20LT8%20%D9%88%D8%A2%D9%84%D9%8A%D8%A7%D8%AA%20%D8%A7%D9%84%D8%A7%D9%86%D8%AA%D9%82%D8%A7%D8%A1%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%BA%D8%AF%D8%A9%20%D8%A7%D9%84%D8%B3%D8%B9%D8%AA%D8%B1%D9%8A%D8%A9%20%D9%84%D9%84%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "06:20"
     },
     commonMistakes: [
@@ -2781,7 +2781,7 @@ export const snvWeek10Lessons: SnvEnhancedDailyLesson[] = [
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "التعرف المزدوج وشروط تنشيط خلايا LT8 بالأنترلوكين 2 في البكالوريا",
-      videoUrl: "https://www.youtube.com/watch?v=F3n8K2vL7xM",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D8%A7%D9%84%D8%AA%D8%B9%D8%B1%D9%81%20%D8%A7%D9%84%D9%85%D8%B2%D8%AF%D9%88%D8%AC%20%D9%88%D8%B4%D8%B1%D9%88%D8%B7%20%D8%AA%D9%86%D8%B4%D9%8A%D8%B7%20%D8%AE%D9%84%D8%A7%D9%8A%D8%A7%20LT8%20%D8%A8%D8%A7%D9%84%D8%A3%D9%86%D8%AA%D8%B1%D9%84%D9%88%D9%83%D9%8A%D9%86%202%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "07:10"
     },
     commonMistakes: [
@@ -2837,7 +2837,7 @@ export const snvWeek10Lessons: SnvEnhancedDailyLesson[] = [
       platform: "youtube",
       channelName: "الأستاذ مصطفى بن خريف",
       title: "آلية عمل LTc وإفراز البيرفورين والغرانزيم بالتفصيل ثلاثي الأبعاد",
-      videoUrl: "https://www.youtube.com/watch?v=K8m3R4vL2wZ",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D9%85%D8%B5%D8%B7%D9%81%D9%89%20%D8%A8%D9%86%20%D8%AE%D8%B1%D9%8A%D9%81%20%D8%A2%D9%84%D9%8A%D8%A9%20%D8%B9%D9%85%D9%84%20LTc%20%D9%88%D8%A5%D9%81%D8%B1%D8%A7%D8%B2%20%D8%A7%D9%84%D8%A8%D9%8A%D8%B1%D9%81%D9%88%D8%B1%D9%8A%D9%86%20%D9%88%D8%A7%D9%84%D8%BA%D8%B1%D8%A7%D9%86%D8%B2%D9%8A%D9%85%20%D8%A8%D8%A7%D9%84%D8%AA%D9%81%D8%B5%D9%8A%D9%84%20%D8%AB%D9%84%D8%A7%D8%AB%D9%8A%20%D8%A7%D9%84%D8%A3%D8%A8%D8%B9%D8%A7%D8%AF%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "08:35"
     },
     commonMistakes: [
@@ -2888,9 +2888,9 @@ export const snvWeek10Lessons: SnvEnhancedDailyLesson[] = [
     },
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "بنية فيروس VIH ودورة التكاثر وسبب شلل الجهاز المناعي بالتفصيل في البكالوريا",
-      videoUrl: "https://www.youtube.com/watch?v=N9m4X2vL7wT",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D8%A8%D9%86%D9%8A%D8%A9%20%D9%81%D9%8A%D8%B1%D9%88%D8%B3%20VIH%20%D9%88%D8%AF%D9%88%D8%B1%D8%A9%20%D8%A7%D9%84%D8%AA%D9%83%D8%A7%D8%AB%D8%B1%20%D9%88%D8%B3%D8%A8%D8%A8%20%D8%B4%D9%84%D9%84%20%D8%A7%D9%84%D8%AC%D9%87%D8%A7%D8%B2%20%D8%A7%D9%84%D9%85%D9%86%D8%A7%D8%B9%D9%8A%20%D8%A8%D8%A7%D9%84%D8%AA%D9%81%D8%B5%D9%8A%D9%84%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "09:40"
     },
     commonMistakes: [
@@ -2943,7 +2943,7 @@ export const snvWeek10Lessons: SnvEnhancedDailyLesson[] = [
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "المخطط التحصيلي الأقوى لربط كل دروس المناعة في ورقة واحدة للبكالوريا",
-      videoUrl: "https://www.youtube.com/watch?v=M8m4P2vL1xW",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D8%A7%D9%84%D9%85%D8%AE%D8%B7%D8%B7%20%D8%A7%D9%84%D8%AA%D8%AD%D8%B5%D9%8A%D9%84%D9%8A%20%D8%A7%D9%84%D8%A3%D9%82%D9%88%D9%89%20%D9%84%D8%B1%D8%A8%D8%B7%20%D9%83%D9%84%20%D8%AF%D8%B1%D9%88%D8%B3%20%D8%A7%D9%84%D9%85%D9%86%D8%A7%D8%B9%D8%A9%20%D9%81%D9%8A%20%D9%88%D8%B1%D9%82%D8%A9%20%D9%88%D8%A7%D8%AD%D8%AF%D8%A9%20%D9%84%D9%84%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "10:15"
     },
     commonMistakes: [
@@ -3043,9 +3043,9 @@ export const snvWeek11Lessons: SnvEnhancedDailyLesson[] = [
     },
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "دليل المنهجية الرسمية لمادة العلوم الطبيعية وشرح الأفعال الأدائية لحصد 20/20",
-      videoUrl: "https://www.youtube.com/watch?v=K9n4X2vL7wM",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D8%AF%D9%84%D9%8A%D9%84%20%D8%A7%D9%84%D9%85%D9%86%D9%87%D8%AC%D9%8A%D8%A9%20%D8%A7%D9%84%D8%B1%D8%B3%D9%85%D9%8A%D8%A9%20%D9%84%D9%85%D8%A7%D8%AF%D8%A9%20%D8%A7%D9%84%D8%B9%D9%84%D9%88%D9%85%20%D8%A7%D9%84%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D9%88%D8%B4%D8%B1%D8%AD%20%D8%A7%D9%84%D8%A3%D9%81%D8%B9%D8%A7%D9%84%20%D8%A7%D9%84%D8%A3%D8%AF%D8%A7%D8%A6%D9%8A%D8%A9%20%D9%84%D8%AD%D8%B5%D8%AF%2020%2F20%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "05:30"
     },
     commonMistakes: [
@@ -3084,7 +3084,7 @@ export const snvWeek11Lessons: SnvEnhancedDailyLesson[] = [
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "كيف تستخرج وتصيغ الفرضية الصحيحة من سياق التمرين دون تردد",
-      videoUrl: "https://www.youtube.com/watch?v=F7n3M8vL9xW",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D9%83%D9%8A%D9%81%20%D8%AA%D8%B3%D8%AA%D8%AE%D8%B1%D8%AC%20%D9%88%D8%AA%D8%B5%D9%8A%D8%BA%20%D8%A7%D9%84%D9%81%D8%B1%D8%B6%D9%8A%D8%A9%20%D8%A7%D9%84%D8%B5%D8%AD%D9%8A%D8%AD%D8%A9%20%D9%85%D9%86%20%D8%B3%D9%8A%D8%A7%D9%82%20%D8%A7%D9%84%D8%AA%D9%85%D8%B1%D9%8A%D9%86%20%D8%AF%D9%88%D9%86%20%D8%AA%D8%B1%D8%AF%D8%AF%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "06:45"
     },
     commonMistakes: [
@@ -3125,7 +3125,7 @@ $$\\text{مورثة مشفرة (الوحدة 1)} \\xrightarrow{\\text{تعبير
       platform: "youtube",
       channelName: "الأستاذ مصطفى بن خريف",
       title: "حل تمرين تركيبي رائع يربط الوحدات الثلاث الأولى بالتفصيل للمتفوقين",
-      videoUrl: "https://www.youtube.com/watch?v=J8n4K2vL7wZ",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D9%85%D8%B5%D8%B7%D9%81%D9%89%20%D8%A8%D9%86%20%D8%AE%D8%B1%D9%8A%D9%81%20%D8%AD%D9%84%20%D8%AA%D9%85%D8%B1%D9%8A%D9%86%20%D8%AA%D8%B1%D9%83%D9%8A%D8%A8%D9%8A%20%D8%B1%D8%A7%D8%A6%D8%B9%20%D9%8A%D8%B1%D8%A8%D8%B7%20%D8%A7%D9%84%D9%88%D8%AD%D8%AF%D8%A7%D8%AA%20%D8%A7%D9%84%D8%AB%D9%84%D8%A7%D8%AB%20%D8%A7%D9%84%D8%A3%D9%88%D9%84%D9%89%20%D8%A8%D8%A7%D9%84%D8%AA%D9%81%D8%B5%D9%8A%D9%84%20%D9%84%D9%84%D9%85%D8%AA%D9%81%D9%88%D9%82%D9%8A%D9%86%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "11:20"
     },
     commonMistakes: [
@@ -3176,7 +3176,7 @@ $$\\text{مورثة مشفرة (الوحدة 1)} \\xrightarrow{\\text{تعبير
       platform: "youtube",
       channelName: "الأستاذ عقبة بن نافع - علوم البكالوريا",
       title: "حوصلة مراجعة شاملة: دور البروتينات في الدفاع عن الذات تحضيراً لاختبار الفصل 1",
-      videoUrl: "https://www.youtube.com/watch?v=M9m4K2vL7wZ",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B9%D9%82%D8%A8%D8%A9%20%D8%A8%D9%86%20%D9%86%D8%A7%D9%81%D8%B9%20%D8%AD%D9%88%D8%B5%D9%84%D8%A9%20%D9%85%D8%B1%D8%A7%D8%AC%D8%B9%D8%A9%20%D8%B4%D8%A7%D9%85%D9%84%D8%A9%3A%20%D8%AF%D9%88%D8%B1%20%D8%A7%D9%84%D8%A8%D8%B1%D9%88%D8%AA%D9%8A%D9%86%D8%A7%D8%AA%20%D9%81%D9%8A%20%D8%A7%D9%84%D8%AF%D9%81%D8%A7%D8%B9%20%D8%B9%D9%86%20%D8%A7%D9%84%D8%B0%D8%A7%D8%AA%20%D8%AA%D8%AD%D8%B6%D9%8A%D8%B1%D8%A7%D9%8B%20%D9%84%D8%A7%D8%AE%D8%AA%D8%A8%D8%A7%D8%B1%20%D8%A7%D9%84%D9%81%D8%B5%D9%84%201%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "08:15"
     },
     commonMistakes: [
@@ -3219,9 +3219,9 @@ $$\\text{مورثة مشفرة (الوحدة 1)} \\xrightarrow{\\text{تعبير
 `,
     externalResource: {
       platform: "youtube",
-      channelName: "الأستاذ خليل سعيد - علوم الطبيعة والحياة",
+      channelName: "الأستاذ شاوش - علوم الطبيعة والحياة",
       title: "كيف تدير وقت امتحان العلوم وتختار الموضوع الصحيح وتتجنب فخ تغيير الموضوع في المنتصف",
-      videoUrl: "https://www.youtube.com/watch?v=V7n4M8vL9xW",
+      videoUrl: "https://www.youtube.com/results?search_query=%D8%A7%D9%84%D8%A3%D8%B3%D8%AA%D8%A7%D8%B0%20%D8%B4%D8%A7%D9%88%D8%B4%20%D9%83%D9%8A%D9%81%20%D8%AA%D8%AF%D9%8A%D8%B1%20%D9%88%D9%82%D8%AA%20%D8%A7%D9%85%D8%AA%D8%AD%D8%A7%D9%86%20%D8%A7%D9%84%D8%B9%D9%84%D9%88%D9%85%20%D9%88%D8%AA%D8%AE%D8%AA%D8%A7%D8%B1%20%D8%A7%D9%84%D9%85%D9%88%D8%B6%D9%88%D8%B9%20%D8%A7%D9%84%D8%B5%D8%AD%D9%8A%D8%AD%20%D9%88%D8%AA%D8%AA%D8%AC%D9%86%D8%A8%20%D9%81%D8%AE%20%D8%AA%D8%BA%D9%8A%D9%8A%D8%B1%20%D8%A7%D9%84%D9%85%D9%88%D8%B6%D9%88%D8%B9%20%D9%81%D9%8A%20%D8%A7%D9%84%D9%85%D9%86%D8%AA%D8%B5%D9%81%20%D8%B9%D9%84%D9%88%D9%85%20%D8%B7%D8%A8%D9%8A%D8%B9%D9%8A%D8%A9%20%D8%A8%D9%83%D8%A7%D9%84%D9%88%D8%B1%D9%8A%D8%A7",
       targetTimestamp: "07:50"
     },
     commonMistakes: [

@@ -113,7 +113,8 @@ const CURRICULUM_DIAGRAMS: Record<number, { caption_ar: string; diagramUrl: stri
 // Helper: Parse YouTube URL and timestamp into videoId and startSeconds
 function parseYoutubeData(url?: string, timestamp?: string): { videoId: string; startSeconds: number } | null {
   if (!url) return null;
-  const videoId = extractYoutubeVideoId(url);
+  const isSearch = url.includes("results?search_query=") || url.includes("search_query=");
+  const videoId = isSearch ? url : extractYoutubeVideoId(url);
   if (!videoId) return null;
   const startSeconds = parseTimestampToSeconds(timestamp || 0);
   return { videoId, startSeconds };
@@ -952,6 +953,7 @@ export default function CurriculumPage() {
                             <div className="rounded-2xl overflow-hidden border-2 border-slate-200 bg-slate-900 shadow-sm">
                               <EmbeddedVideoPlayer
                                 videoId={videoData.videoId}
+                                videoUrl={lesson.externalResource.videoUrl}
                                 startSeconds={videoData.startSeconds}
                                 title_ar={lesson.externalResource.title}
                                 channelName={lesson.externalResource.channelName}
