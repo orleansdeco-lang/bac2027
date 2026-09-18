@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+// SHATER BAC 2027 Production Deployment - Automated SEO & Platform Release
 export default function robots(): MetadataRoute.Robots {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://shater.dz";
 
