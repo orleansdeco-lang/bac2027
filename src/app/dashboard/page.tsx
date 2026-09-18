@@ -36,6 +36,7 @@ import {
   TrendingUp,
   Layers,
   ChevronDown,
+  FileText,
 } from "lucide-react";
 
 import { ALL_SUBJECTS } from "@/lib/constants/streams";
@@ -677,6 +678,16 @@ export default function DashboardPage() {
                     >
                       <BookOpen className="w-4 h-4" />
                       <span>{banner.btn}</span>
+                    </Button>
+                  </Link>
+                  <Link href="/exams" className="w-full sm:w-auto">
+                    <Button
+                      variant="outline"
+                      size="md"
+                      className="w-full sm:w-auto border-indigo-500/40 bg-indigo-950/60 hover:bg-indigo-900/80 text-indigo-200 font-bold text-xs rounded-xl flex items-center justify-center gap-2"
+                    >
+                      <FileText className="w-4 h-4 text-indigo-400" />
+                      <span>بنك البكالوريات (2016-2026)</span>
                     </Button>
                   </Link>
                   <Link href="/exam" className="w-full sm:w-auto">

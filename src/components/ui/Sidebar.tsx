@@ -28,6 +28,7 @@ import {
   Headphones,
   MessageCircle,
   ExternalLink,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -118,6 +119,12 @@ export function Sidebar({ className }: SidebarProps) {
       label: isAr ? "المكتبة الشاملة الحرة" : "Bibliothèque libre",
       icon: BookOpen,
       matches: (p: string) => p.startsWith("/curriculum") || p.startsWith("/library"),
+    },
+    {
+      href: "/exams",
+      label: isAr ? "بنك البكالوريات (2016-2026)" : "Annales BAC (2016-2026)",
+      icon: FileText,
+      matches: (p: string) => p.startsWith("/exams") || p.startsWith("/annales"),
     },
     {
       href: "/diagnostic",
