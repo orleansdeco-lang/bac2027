@@ -45,15 +45,15 @@ export function AppShell({
 
       <div
         className={cn(
-          "flex-1 w-full mx-auto flex gap-6",
+          "flex-1 w-full mx-auto flex gap-4 md:gap-5 lg:gap-6 xl:gap-8",
           noPadding
             ? "p-0 max-w-none"
-            : "max-w-[1600px] px-3 sm:px-6 md:px-8 py-4 md:py-6 pb-24 md:pb-12"
+            : "max-w-[1920px] 3xl:max-w-[2400px] px-3 sm:px-4 md:px-6 lg:px-8 3xl:px-12 py-4 md:py-6 pb-24 md:pb-12"
         )}
       >
         {shouldShowSidebar && <Sidebar />}
 
-        <main className="flex-1 min-w-0">
+        <main className="flex-1 min-w-0 w-full">
           {children}
         </main>
       </div>

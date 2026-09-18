@@ -196,7 +196,7 @@ export default function DashboardPage() {
 
   return (
     <AppShell activeNav="home">
-      <Container size="lg" className="py-6 sm:py-8 space-y-6 sm:space-y-8">
+      <Container size="xl" className="py-4 md:py-6 space-y-6 sm:space-y-8">
         
         {/* ================================================================= */}
         {/* TRIAL NOTIFICATION / STATUS BANNER                                */}
@@ -305,15 +305,15 @@ export default function DashboardPage() {
         {/* ================================================================= */}
         {/* 1. TACTILE 3D HERO SECTION (REFERENCE #1 INSPIRATION)             */}
         {/* ================================================================= */}
-        <section className="relative overflow-hidden rounded-[32px] border border-theme bg-gradient-to-br from-[#EFE9DC] via-[#FFFCF7] to-[#F7F3EA] p-6 sm:p-8 md:p-10 shadow-clay transition-all">
+        <section className="relative overflow-hidden rounded-[32px] border border-theme bg-gradient-to-br from-[#EFE9DC] via-[#FFFCF7] to-[#F7F3EA] p-6 sm:p-8 md:p-10 3xl:p-12 shadow-clay transition-all">
           {/* Subtle Clay Background Blobs */}
           <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-[var(--color-accent)]/10 blur-3xl pointer-events-none" />
           <div className="absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-[var(--color-primary)]/10 blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 flex flex-col-reverse md:flex-row items-center justify-between gap-8 md:gap-12">
+          <div className="relative z-10 flex flex-col-reverse md:flex-row items-center justify-between gap-8 md:gap-12 lg:gap-16">
             
             {/* Left Content (Greeting, Current Mission, Tactile Pills) */}
-            <div className="flex-1 space-y-5 text-center md:text-start">
+            <div className="flex-1 space-y-5 text-center md:text-start min-w-0">
               
               {/* Top Tags & Stream Badge */}
               <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
@@ -337,10 +337,10 @@ export default function DashboardPage() {
 
               {/* Headline */}
               <div>
-                <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-theme-text tracking-tight leading-tight">
+                <h1 className="text-fluid-hero font-black text-theme-text tracking-tight leading-tight">
                   {isAr ? `سلام ${firstName} 👋` : `Bonjour ${firstName} 👋`}
                 </h1>
-                <p className="text-sm sm:text-base text-theme-secondary mt-2 max-w-xl leading-relaxed">
+                <p className="text-sm sm:text-base xl:text-lg text-theme-secondary mt-2 max-w-2xl leading-relaxed">
                   {isAr
                     ? "من مستواك الحالي إلى هدفك في البكالوريا • ماشي واش تقرا. كيفاش توصل."
                     : "Votre espace personnalisé BAC 2027 • Chaque minute investie rapproche de votre mention."}
@@ -420,7 +420,7 @@ export default function DashboardPage() {
 
             {/* Right Side: 3D Editorial Character Illustration */}
             <div className="relative shrink-0 flex items-center justify-center">
-              <div className="relative w-56 sm:w-64 md:w-72 aspect-square rounded-[36px] overflow-hidden shadow-2xl border-4 border-white bg-white rotate-1 hover:rotate-0 transition-transform duration-300">
+              <div className="relative w-56 sm:w-64 md:w-72 lg:w-80 xl:w-84 3xl:w-96 aspect-square rounded-[36px] overflow-hidden shadow-2xl border-4 border-white bg-white rotate-1 hover:rotate-0 transition-transform duration-300">
                 <Image
                   src={heroIllustration}
                   alt="3D Student Illustration"
@@ -474,7 +474,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5 xl:gap-6">
             {/* Mode 1: Smart Guided Road */}
             <div className="relative overflow-hidden rounded-3xl p-5 border border-emerald-500/25 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent flex flex-col justify-between shadow-sm hover:shadow-clay transition-all group">
               <div className="space-y-3">
@@ -710,7 +710,7 @@ export default function DashboardPage() {
         {/* ================================================================= */}
         {/* 2. ROW OF 4 TACTILE STAT CARDS (REFERENCE #1 INSPIRATION)         */}
         {/* ================================================================= */}
-        <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        <section className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 xl:gap-6">
           
           {/* Stat 1: Validated Skills (Warm Sage Mint) */}
           <div className="p-5 rounded-3xl bg-[#E8F2EB] border border-[#6E9B7B]/30 shadow-clay flex flex-col justify-between space-y-3">
@@ -724,7 +724,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl sm:text-3xl font-black text-[#2E5439] font-mono">
+                <span className="text-2xl sm:text-3xl xl:text-4xl font-black text-[#2E5439] font-mono">
                   {Math.max(metrics.demonstratedSkillsCount, masteredCount)}
                 </span>
                 <span className="text-xs text-[#3B6647]/80 font-mono">
@@ -749,7 +749,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl sm:text-3xl font-black text-[#8F5E1F] font-mono">
+                <span className="text-2xl sm:text-3xl xl:text-4xl font-black text-[#8F5E1F] font-mono">
                   {targetScore.toFixed(1)}
                 </span>
                 <span className="text-xs text-[#8F5E1F]/80 font-mono">/20</span>
@@ -777,7 +777,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <div>
-              <div className="text-xl sm:text-2xl font-black text-theme-text font-sans truncate">
+              <div className="text-xl sm:text-2xl xl:text-3xl font-black text-theme-text font-sans truncate">
                 {totalStudyTimeSeconds > 0
                   ? Math.floor(totalStudyTimeSeconds / 3600) > 0
                     ? `${Math.floor(totalStudyTimeSeconds / 3600)} سا ${Math.floor((totalStudyTimeSeconds % 3600) / 60)} د`
@@ -808,7 +808,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <div className="flex items-baseline gap-1.5">
-                <span className="text-2xl sm:text-3xl font-black text-[#2B4742] font-mono">
+                <span className="text-2xl sm:text-3xl xl:text-4xl font-black text-[#2B4742] font-mono">
                   {metrics.completedMissionsCount}
                 </span>
                 <span className="text-xs text-[#365A54]/80 font-mono">
@@ -828,7 +828,7 @@ export default function DashboardPage() {
         {/* ================================================================= */}
         {/* 3. MIDDLE ROW: PROGRESSION BAR CHART & STREAM SUBJECTS DONUT      */}
         {/* ================================================================= */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 xl:gap-8">
           
           {/* Left: 7-Day Tactile Progression Bar Chart (lg:col-span-7) */}
           <div className="lg:col-span-7 p-6 rounded-[32px] bg-card border border-stone-200/80 dark:border-white/10 shadow-clay flex flex-col justify-between space-y-6">
@@ -986,7 +986,7 @@ export default function DashboardPage() {
         {/* ================================================================= */}
         {/* 4. BOTTOM ROW: RECENT MISSIONS LIST & FOCUS REPAIR CARD           */}
         {/* ================================================================= */}
-        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <section className="grid grid-cols-1 lg:grid-cols-12 gap-6 xl:gap-8">
           
           {/* Left: Recent / Roadmap Missions List (lg:col-span-7) */}
           <div className="lg:col-span-7 p-6 rounded-[32px] bg-card border border-theme shadow-clay space-y-4">

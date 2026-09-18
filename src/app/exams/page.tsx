@@ -423,7 +423,7 @@ function ExamsContent() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 xl:gap-6">
             {filteredExams.map((exam) => {
               const stream = ALGERIAN_BAC_STREAMS[exam.streamId];
               const subject = ALL_SUBJECTS[exam.subjectId];

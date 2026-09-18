@@ -152,7 +152,7 @@ export default function RoadmapPage() {
       {/* 1. HEADER CONTEXT: YOUR GOAL, STARTING INDICATOR & APPROXIMATE GAP  */}
       {/* =================================================================== */}
       <div className="border-b border-theme bg-surface-soft/60 py-4 sm:py-6">
-        <Container size="md">
+        <Container size="lg">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             {/* Title & Badge */}
             <div className="space-y-1">
@@ -212,7 +212,7 @@ export default function RoadmapPage() {
       {/* =================================================================== */}
       {/* MAIN ROADMAP FLOW                                                   */}
       {/* =================================================================== */}
-      <Container size="md" className="py-6 sm:py-10 space-y-8 sm:space-y-10">
+      <Container size="lg" className="py-6 sm:py-10 space-y-8 sm:space-y-10">
 
         {/* ----------------------------------------------------------------- */}
         {/* SECTION 2: YOUR CURRENT NEXT ACTION (NOW — VISUALLY DOMINATING)   */}

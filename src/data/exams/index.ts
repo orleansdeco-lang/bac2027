@@ -25,11 +25,8 @@ export interface BacExamFilters {
 }
 
 /**
- * Base CDN and Public Archive mirrors for Algerian Ministry of National Education (ONEC) exams
+ * Public search and archive links for Algerian National Baccalaureate exams (ONEC / DzExams)
  */
-const ONEC_CDN_BASE = "https://assets.onec.dz/bac/archives";
-const ARCHIVE_MIRROR = "https://raw.githubusercontent.com/orleansdeco-lang/bac2027/main/public/exams";
-
 function buildExamItem(
   year: number,
   session: "regular" | "exceptional",
@@ -42,11 +39,18 @@ function buildExamItem(
   const sessionTag = session === "exceptional" ? "exc" : "reg";
   const id = `bac-${year}-${sessionTag}-${streamId}-${subjectId}`;
   
-  // Clean public URLs for both topic and official solution bareme
-  const subjectPdfUrl = `${ARCHIVE_MIRROR}/${year}/${sessionTag}/${streamId}/${subjectId}_sujet.pdf`;
-  const solutionPdfUrl = `${ARCHIVE_MIRROR}/${year}/${sessionTag}/${streamId}/${subjectId}_corrigé.pdf`;
-
   const stream = ALGERIAN_BAC_STREAMS[streamId];
+  const streamName = stream?.name_ar || "";
+  const subjectName = ALL_SUBJECTS[subjectId]?.name_ar || "";
+
+  // Direct safe queries for authentic scanned PDF on Algerian national portals
+  const subjectPdfUrl = `https://www.google.com/search?q=${encodeURIComponent(
+    `موضوع بكالوريا ${year} ${session === "exceptional" ? "دورة استثنائية" : ""} ${subjectName} شعبة ${streamName} pdf`
+  )}`;
+  const solutionPdfUrl = `https://www.google.com/search?q=${encodeURIComponent(
+    `تصحيح وسلم تنقيط بكالوريا ${year} ${session === "exceptional" ? "دورة استثنائية" : ""} ${subjectName} شعبة ${streamName} pdf`
+  )}`;
+
   const subjectRule = stream?.subjects.find((s) => s.subjectId === subjectId);
   const coefficient = subjectRule?.coefficient || 2;
 

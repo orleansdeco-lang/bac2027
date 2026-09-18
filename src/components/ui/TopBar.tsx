@@ -124,7 +124,7 @@ export function TopBar() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-theme bg-surface/95 backdrop-blur-md transition-colors duration-200">
-      <Container size="lg" className="flex h-16 items-center justify-between px-3 sm:px-6">
+      <div className="w-full max-w-[1920px] 3xl:max-w-[2400px] mx-auto flex h-16 items-center justify-between px-3.5 sm:px-6 md:px-8 3xl:px-12">
         {/* Left: Logo + Stream Badge + Trial Indicator */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <Logo size="md" showTagline={false} />
@@ -167,7 +167,7 @@ export function TopBar() {
 
         {/* Center Desktop: Landing Navigation Links or Search Pill */}
         {isLandingPage ? (
-          <nav className="hidden lg:flex items-center gap-6 mx-auto">
+          <nav className="hidden lg:flex items-center gap-6 xl:gap-8 mx-auto">
             <Link
               href="#two-modes"
               className="text-xs font-bold text-theme-secondary hover:text-[var(--color-primary)] transition-colors"
@@ -194,7 +194,7 @@ export function TopBar() {
             </Link>
           </nav>
         ) : (
-          <div className="hidden lg:flex items-center flex-1 max-w-xs xl:max-w-md mx-3 xl:mx-6 min-w-0">
+          <div className="hidden md:flex items-center flex-1 max-w-sm lg:max-w-md xl:max-w-lg 3xl:max-w-xl mx-3 lg:mx-6 min-w-0">
             <div className="relative w-full">
               <Search className={`w-4 h-4 text-theme-muted absolute top-2.5 ${isAr ? "right-3.5" : "left-3.5"}`} />
               <input
@@ -294,7 +294,7 @@ export function TopBar() {
             {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
-      </Container>
+      </div>
 
       {/* Mobile Drawer Menu */}
       {isMobileMenuOpen && (

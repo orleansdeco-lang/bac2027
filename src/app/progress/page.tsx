@@ -133,7 +133,7 @@ export default function ProgressPage() {
         </div>
 
         {/* 4 Core Evidence KPI Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 xl:gap-6">
           <Card className="border-[var(--color-success)]/30 bg-card p-5 space-y-2 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-success)]">

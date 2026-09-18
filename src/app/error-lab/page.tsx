@@ -128,7 +128,7 @@ export default function ErrorLabPage() {
   return (
     <AppShell activeNav="missions">
       <div className="py-6 sm:py-10">
-        <Container size="md" className="space-y-6">
+        <Container size="lg" className="space-y-6">
           {/* Header Banner */}
           <div className="space-y-2 text-center sm:text-start">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-accent)]/30 bg-[var(--color-accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--color-accent)]">
@@ -218,7 +218,7 @@ export default function ErrorLabPage() {
                 <span>{t.roadmap.repairStatusLabel}</span>
               </div>
 
-              <div className="grid grid-cols-1 gap-3.5">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 {errors.map((err) => {
                   const skill = getSkillById(err.skillId);
                   const errorLabel =

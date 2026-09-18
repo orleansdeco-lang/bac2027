@@ -5,8 +5,6 @@ import { BacExamItem } from "@/data/exams";
 import { getExamFullDetails, ExamFullDetails } from "@/data/exams/exam-details";
 import {
   getExamPageImageUrl,
-  getExamPdfDownloadUrl,
-  CLOUDINARY_CLOUD_NAME,
 } from "@/lib/cloudinary";
 import {
   X,
@@ -45,8 +43,8 @@ export function ExamPdfViewerModal({
   initialTab = "subject",
   onClose,
 }: ExamPdfViewerModalProps) {
-  // Main view modes: "photos" (Cloudinary Image pages) | "sheet" (Digital A4 Paper)
-  const [viewMode, setViewMode] = useState<"photos" | "sheet">("photos");
+  // Main view modes: "sheet" (Official Digital A4 Paper - Default & Reliable) | "photos" (Cloudinary Image pages)
+  const [viewMode, setViewMode] = useState<"sheet" | "photos">("sheet");
 
   // Document tabs: "topic" | "solution"
   const [activeTab, setActiveTab] = useState<"topic" | "solution">(
@@ -120,15 +118,6 @@ export function ExamPdfViewerModal({
     isSolution
   );
 
-  const downloadPdfUrl = getExamPdfDownloadUrl(
-    {
-      year: exam.year,
-      session: exam.session,
-      streamId: exam.streamId,
-      subjectId: exam.subjectId,
-    },
-    isSolution
-  );
 
   const currentTopic = selectedTopicNum === 2 ? details.topic2 : details.topic1;
 
@@ -200,17 +189,18 @@ export function ExamPdfViewerModal({
               )}
             </button>
 
-            {/* Direct Download PDF from Cloudinary */}
+            {/* National Archive Direct Link (DzExams / ONEC) */}
             <a
-              href={downloadPdfUrl}
+              href={`https://www.google.com/search?q=${encodeURIComponent(
+                `موضوع ${activeTab === "solution" ? "تصحيح وسلم تنقيط" : ""} بكالوريا ${exam.year} ${details.subjectName} شعبة ${details.streamName} pdf site:dzexams.com OR site:onec.dz`
+              )}`}
               target="_blank"
               rel="noopener noreferrer"
-              download={`${exam.id}-${activeTab}.pdf`}
-              title="تحميل وثيقة الـ PDF الكاملة"
+              title="البحث عن وثيقة الـ PDF الأصلية في الأرشيف الوطني (DzExams / ONEC)"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-card border border-theme hover:border-[var(--color-primary)]/50 text-theme-text text-xs font-bold transition-all shadow-xs"
             >
-              <Download className="w-3.5 h-3.5 text-[var(--color-primary)]" />
-              <span className="hidden sm:inline text-[11px]">تحميل PDF</span>
+              <ExternalLink className="w-3.5 h-3.5 text-theme-secondary" />
+              <span className="hidden sm:inline text-[11px]">الأرشيف الوطني (PDF أصلي)</span>
             </a>
 
             {/* Print & A4 Save Button */}
@@ -221,7 +211,7 @@ export function ExamPdfViewerModal({
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--color-primary)] text-white text-xs font-bold shadow-sm hover:opacity-90 active:scale-95 transition-all cursor-pointer"
             >
               <Printer className="w-3.5 h-3.5" />
-              <span className="text-[11px]">طباعة A4</span>
+              <span className="text-[11px]">طباعة وحفظ A4</span>
             </button>
 
             {/* Fullscreen Toggle */}
@@ -279,21 +269,8 @@ export function ExamPdfViewerModal({
             </button>
           </div>
 
-          {/* Right: Display Mode Switcher (Photo Pages vs Digital Paper) */}
+          {/* Right: Display Mode Switcher (Digital Paper vs Scanned Photos) */}
           <div className="flex items-center gap-1.5 bg-surface p-1 rounded-2xl border border-theme self-end sm:self-auto">
-            <button
-              type="button"
-              onClick={() => setViewMode("photos")}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                viewMode === "photos"
-                  ? "bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900 font-bold shadow-xs"
-                  : "text-theme-secondary hover:text-theme-text"
-              }`}
-            >
-              <ImageIcon className="w-3.5 h-3.5" />
-              <span>صفحات الصور (Cloudinary HD)</span>
-            </button>
-
             <button
               type="button"
               onClick={() => setViewMode("sheet")}
@@ -304,7 +281,20 @@ export function ExamPdfViewerModal({
               }`}
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span>نص الامتحان المنسق</span>
+              <span>ورقة الامتحان الرسمية (منسقة)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setViewMode("photos")}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                viewMode === "photos"
+                  ? "bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900 font-bold shadow-xs"
+                  : "text-theme-secondary hover:text-theme-text"
+              }`}
+            >
+              <ImageIcon className="w-3.5 h-3.5" />
+              <span>النسخة الممسوحة ضوئياً</span>
             </button>
           </div>
         </div>
@@ -312,9 +302,9 @@ export function ExamPdfViewerModal({
         {/* ================================================================= */}
         {/* 3. VIEWPORT CONTENT                                               */}
         {/* ================================================================= */}
-        {viewMode === "photos" && !photoError ? (
+        {viewMode === "photos" ? (
           /* =============================================================== */
-          /* CLOUDINARY HIGH-SPEED WEBP PHOTO PAGES VIEWER                   */
+          /* PHOTO PAGES VIEWER WITH CLEAN IN-PLACE FALLBACK                 */
           /* =============================================================== */
           <div className="flex-1 bg-stone-950 flex flex-col overflow-hidden relative select-none">
             {/* Gallery Top Navigation Toolbar */}
@@ -376,28 +366,66 @@ export function ExamPdfViewerModal({
 
             {/* Photo Canvas Area */}
             <div className="flex-1 overflow-auto flex items-center justify-center p-4 sm:p-6 bg-stone-950 relative">
-              {photoLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-stone-950/60 backdrop-blur-xs z-10">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-8 h-8 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin" />
-                    <span className="text-xs text-stone-300 font-sans">
-                      جاري تحميل الصفحة {currentPage} عبر شبكة Cloudinary السريعة...
-                    </span>
+              {photoError ? (
+                <div className="max-w-md mx-auto p-6 rounded-3xl bg-stone-900 border border-stone-800 text-center space-y-4 my-auto animate-fade-in">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 mx-auto flex items-center justify-center">
+                    <ImageIcon className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-bold text-white font-sans">
+                      النسخة الممسوحة غير متوفرة بالسحابة حالياً
+                    </h3>
+                    <p className="text-xs text-stone-400 leading-relaxed font-sans">
+                      يمكنك تصفح ورقة الامتحان المنسقة فوراً بجميع تمارينها وسلم التنقيط، أو فتح النسخة الممسوحة مباشرة من الأرشيف الوطني الرسمي.
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("sheet")}
+                      className="w-full py-2.5 px-4 rounded-xl bg-[var(--color-primary)] text-white text-xs font-bold shadow-sm hover:opacity-95 transition-all cursor-pointer font-sans"
+                    >
+                      الانتقال إلى ورقة الامتحان المنسقة (فورية وخفيفة)
+                    </button>
+                    <a
+                      href={`https://www.google.com/search?q=${encodeURIComponent(
+                        `موضوع ${activeTab === "solution" ? "تصحيح وسلم تنقيط" : ""} بكالوريا ${exam.year} ${details.subjectName} شعبة ${details.streamName} pdf site:dzexams.com OR site:onec.dz`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2.5 px-4 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold transition-all inline-flex items-center justify-center gap-1.5 font-sans"
+                    >
+                      <span>فتح في الأرشيف الوطني (DzExams / ONEC)</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
                   </div>
                 </div>
-              )}
+              ) : (
+                <>
+                  {photoLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-stone-950/60 backdrop-blur-xs z-10">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-8 h-8 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin" />
+                        <span className="text-xs text-stone-300 font-sans">
+                          جاري تحميل الصفحة {currentPage}...
+                        </span>
+                      </div>
+                    </div>
+                  )}
 
-              <img
-                src={currentImageUrl}
-                alt={`${exam.title_ar} - صفحة ${currentPage}`}
-                style={{ transform: `scale(${zoomLevel})`, transformOrigin: "center top" }}
-                onLoad={() => setPhotoLoading(false)}
-                onError={() => {
-                  setPhotoLoading(false);
-                  setPhotoError(true);
-                }}
-                className="max-h-full max-w-full object-contain rounded-lg shadow-2xl transition-transform duration-150 border border-stone-800"
-              />
+                  <img
+                    src={currentImageUrl}
+                    alt={`${exam.title_ar} - صفحة ${currentPage}`}
+                    style={{ transform: `scale(${zoomLevel})`, transformOrigin: "center top" }}
+                    onLoad={() => setPhotoLoading(false)}
+                    onError={() => {
+                      setPhotoLoading(false);
+                      setPhotoError(true);
+                    }}
+                    className="max-h-full max-w-full object-contain rounded-lg shadow-2xl transition-transform duration-150 border border-stone-800"
+                  />
+                </>
+              )}
             </div>
 
             {/* Gallery Bottom Navigation Footer */}
@@ -415,8 +443,8 @@ export function ExamPdfViewerModal({
                 <span>الصفحة السابقة</span>
               </button>
 
-              <span className="font-mono text-[11px]">
-                سيرفر Cloudinary CDN ({CLOUDINARY_CLOUD_NAME}) • WebP فائق السرعة
+              <span className="font-mono text-[11px] text-stone-400">
+                صفحة {currentPage} من {maxPages}
               </span>
 
               <button
@@ -435,30 +463,9 @@ export function ExamPdfViewerModal({
           </div>
         ) : (
           /* =============================================================== */
-          /* STRUCTURED DIGITAL EXAM PAPER (100% RELIABLE & PRINTABLE)       */
+          /* STRUCTURED DIGITAL EXAM PAPER (100% RELIABLE & ZERO ERROR BANNERS) */
           /* =============================================================== */
           <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-canvas text-theme-text select-text">
-            {photoError && (
-              <div className="max-w-4xl mx-auto mb-4 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between text-xs text-amber-700 dark:text-amber-300">
-                <div className="flex items-center gap-2">
-                  <Info className="w-4 h-4 shrink-0 text-amber-500" />
-                  <span>
-                    تم تحويلك إلى عارض نص الامتحان المنسق لعدم توفر نسخة ممسوحة في حساب Cloudinary حالياً.
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setPhotoError(false);
-                    setViewMode("photos");
-                  }}
-                  className="font-bold underline text-amber-600 dark:text-amber-400"
-                >
-                  إعادة المحاولة
-                </button>
-              </div>
-            )}
-
             <div className="max-w-4xl mx-auto space-y-6 bg-surface p-6 sm:p-10 rounded-3xl border border-theme shadow-clay print:p-0 print:border-0 print:shadow-none">
               {/* National Header */}
               <div className="text-center border-b-2 border-theme pb-5 space-y-2">
