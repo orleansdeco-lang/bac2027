@@ -34,6 +34,7 @@ import {
   Bell,
   FileText,
   GraduationCap,
+  MessageSquareQuote,
 } from "lucide-react";
 
 export function TopBar() {
@@ -73,6 +74,7 @@ export function TopBar() {
     { href: "/curriculum", label: isAr ? "المكتبة الشاملة" : "Bibliothèque", icon: BookOpen },
     { href: "/exams", label: isAr ? "بنك البكالوريات" : "Annales BAC", icon: FileText },
     { href: "/exams/terms", label: isAr ? "فروض واختبارات الفصول" : "Devoirs & Examens", icon: GraduationCap },
+    { href: "/experiences", label: isAr ? "بنك التجارب والعِبر" : "Témoignages & Conseils", icon: MessageSquareQuote },
     { href: "/diagnostic", label: isAr ? "تشخيص المواد" : "Diagnostics", icon: Stethoscope },
     { href: "/roadmap", label: isAr ? "الخريطة" : "Feuille de route", icon: Map },
     { href: "/error-lab", label: isAr ? "مختبر الأخطاء" : "Lab d'erreurs", icon: AlertTriangle },

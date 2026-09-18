@@ -30,6 +30,7 @@ import {
   ExternalLink,
   FileText,
   GraduationCap,
+  MessageSquareQuote,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -132,6 +133,12 @@ export function Sidebar({ className }: SidebarProps) {
       label: isAr ? "فروض واختبارات الفصول" : "Devoirs & Examens",
       icon: GraduationCap,
       matches: (p: string) => p.startsWith("/exams/terms"),
+    },
+    {
+      href: "/experiences",
+      label: isAr ? "بنك التجارب والعِبر" : "Témoignages & Conseils",
+      icon: MessageSquareQuote,
+      matches: (p: string) => p.startsWith("/experiences"),
     },
     {
       href: "/diagnostic",
