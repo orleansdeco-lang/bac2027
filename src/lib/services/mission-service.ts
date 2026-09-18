@@ -29,11 +29,13 @@ export const MissionService = {
 
     // If mission not found by ID, find by skillId or construct default
     if (!mission) {
-      const skillId = missionId.startsWith("mission-") ? missionId.replace("mission-", "") : missionId;
+      let skillId = missionId.startsWith("mission-") ? missionId.replace("mission-", "") : missionId;
+      if (skillId === "pilot-math") skillId = "math_derivatives_chain_rule";
       mission = Object.values(missions).find((m) => m.skillId === skillId) as Mission;
     }
 
-    const skillId = mission?.skillId || (missionId.startsWith("mission-") ? missionId.replace("mission-", "") : missionId);
+    let skillId = mission?.skillId || (missionId.startsWith("mission-") ? missionId.replace("mission-", "") : missionId);
+    if (skillId === "pilot-math") skillId = "math_derivatives_chain_rule";
     const bundle = ContentService.getBundle(skillId);
 
     // If mission still not found in store, create default mission from bundle

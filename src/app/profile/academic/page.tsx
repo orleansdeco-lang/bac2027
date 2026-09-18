@@ -16,6 +16,7 @@ import {
   CurrentSelfAssessmentType,
 } from "@/types/registration";
 import { StudentService } from "@/lib/services";
+import { ProgressService } from "@/lib/progress/progress-service";
 import {
   getAcademicProfileDraft,
   saveAcademicProfileDraft,
@@ -42,7 +43,7 @@ export default function AcademicProfilePage() {
   const isAr = locale === "ar";
   const { user, isLoading } = useAuth();
 
-  // Enforce auth & registration prerequisite
+  // Enforce auth & registration prerequisite and prevent redundant onboarding loop
   useEffect(() => {
     if (!isLoading && !user) {
       let hasLocalUser = false;
@@ -59,6 +60,16 @@ export default function AcademicProfilePage() {
     if (!isLoading) {
       const effectiveId = user?.id || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id : undefined);
       if (effectiveId) {
+        // Check if student already completed academic profile & diagnostic
+        const syncStatus = ProgressService.getSyncDiagnosticStatus(effectiveId);
+        if (syncStatus.completed) {
+          const isEditMode = typeof window !== "undefined" && window.location.search.includes("mode=edit");
+          if (!isEditMode) {
+            router.replace(syncStatus.lastLessonId ? `/mission/${syncStatus.lastLessonId}` : "/dashboard");
+            return;
+          }
+        }
+
         StudentService.getProfile(effectiveId).then((p) => {
           const regDraft = getRegistrationDraft(effectiveId);
           const isRegistered = Boolean(
@@ -69,7 +80,16 @@ export default function AcademicProfilePage() {
           );
           if (!isRegistered) {
             router.replace("/auth/register");
+            return;
           }
+
+          // Authoritative check on diagnostic completion
+          ProgressService.checkDiagnosticStatus(effectiveId).then((diag) => {
+            const isEditMode = typeof window !== "undefined" && window.location.search.includes("mode=edit");
+            if (diag.completed && !isEditMode) {
+              router.replace(diag.lastLessonId ? `/mission/${diag.lastLessonId}` : "/dashboard");
+            }
+          });
         });
       } else {
         router.replace("/auth/register");
@@ -212,12 +232,12 @@ export default function AcademicProfilePage() {
 
       await StudentService.saveAcademicProfile(academicData, effectiveUserId);
 
-      // If already has diagnostic or coming from edit, return to dashboard
-      const hasDiag = typeof window !== "undefined" && Boolean(localStorage.getItem(`bac_diagnostic_result_${effectiveUserId}`));
-      if (!hasDiag) {
-        router.push("/diagnostic");
+      // If already has diagnostic or coming from edit, return to dashboard or last lesson
+      const diagStatus = await ProgressService.checkDiagnosticStatus(effectiveUserId);
+      if (diagStatus.completed) {
+        router.push(diagStatus.lastLessonId ? `/mission/${diagStatus.lastLessonId}` : "/dashboard");
       } else {
-        router.push("/dashboard");
+        router.push("/diagnostic");
       }
     } catch (err) {
       console.error("Failed to save academic profile:", err);

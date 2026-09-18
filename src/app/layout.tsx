@@ -4,6 +4,7 @@ import "./globals.css";
 import { I18nProvider } from "@/lib/i18n/context";
 import { AuthProvider } from "@/lib/auth/context";
 import { ThemeProvider } from "@/lib/theme/context";
+import { ProgressProvider } from "@/lib/progress/progress-context";
 import { VisitorTracker } from "@/components/analytics/VisitorTracker";
 
 export const metadata: Metadata = {
@@ -50,8 +51,10 @@ export default function RootLayout({
         <ThemeProvider>
           <I18nProvider>
             <AuthProvider>
-              <VisitorTracker />
-              {children}
+              <ProgressProvider>
+                <VisitorTracker />
+                {children}
+              </ProgressProvider>
             </AuthProvider>
           </I18nProvider>
         </ThemeProvider>

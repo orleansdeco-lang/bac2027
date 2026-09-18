@@ -21,6 +21,7 @@ import {
 import { trackEvent } from "@/lib/analytics";
 import { submitPilotFeedback, PilotFeedbackRating } from "@/lib/feedback";
 import { StudentService } from "@/lib/services/student-service";
+import { ProgressService } from "@/lib/progress/progress-service";
 import { getStudentAccess } from "@/lib/access";
 import { MathRenderer } from "@/components/ui/MathRenderer";
 import {
@@ -227,6 +228,39 @@ export default function MissionPage() {
   useEffect(() => {
     async function loadData() {
       if (!missionId) return;
+
+      const effectiveUserId =
+        user?.id ||
+        (typeof window !== "undefined"
+          ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id
+          : undefined);
+
+      // Guard: if navigating to pilot-math and diagnostic is already completed, redirect to real progress
+      if (missionId === "pilot-math" && effectiveUserId) {
+        const syncStatus = ProgressService.getSyncDiagnosticStatus(effectiveUserId);
+        if (syncStatus.completed) {
+          const target =
+            syncStatus.lastLessonId && syncStatus.lastLessonId !== "pilot-math"
+              ? `/mission/${syncStatus.lastLessonId}`
+              : "/dashboard";
+          router.replace(target);
+          return;
+        }
+        try {
+          const diagStatus = await ProgressService.checkDiagnosticStatus(effectiveUserId);
+          if (diagStatus.completed) {
+            const target =
+              diagStatus.lastLessonId && diagStatus.lastLessonId !== "pilot-math"
+                ? `/mission/${diagStatus.lastLessonId}`
+                : "/dashboard";
+            router.replace(target);
+            return;
+          }
+        } catch (e) {
+          console.warn("Pilot-math guard check error:", e);
+        }
+      }
+
       try {
         const [res, p] = await Promise.all([
           MissionService.getMissionWithBundle(missionId, user?.id),
@@ -271,6 +305,19 @@ export default function MissionPage() {
               missionId,
               skillId: res.bundle.skill.id,
             });
+
+            // Persistently track last_lesson_id and activity in user_progress
+            if (effectiveUserId) {
+              ProgressService.recordLessonActivity({
+                userId: effectiveUserId,
+                streamId: studentStream || "sciences_exp",
+                subjectId: res.bundle.skill.subjectId,
+                skillId: res.bundle.skill.id,
+                lessonId: missionId,
+                status: res.mission?.status === "mastered" ? "mastered" : "in_progress",
+                timeSpentDeltaSeconds: 0,
+              }).catch(console.error);
+            }
           }
         }
 
@@ -475,6 +522,24 @@ export default function MissionPage() {
         userId: user?.id,
       });
 
+      const effectiveUserId =
+        user?.id ||
+        (typeof window !== "undefined"
+          ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id
+          : undefined);
+
+      if (effectiveUserId && mission && bundle) {
+        ProgressService.recordLessonActivity({
+          userId: effectiveUserId,
+          streamId: mission.streamId,
+          subjectId: bundle.skill.subjectId,
+          skillId: bundle.skill.id,
+          lessonId: mission.id,
+          status: isCorrect ? "mastered" : "in_progress",
+          timeSpentDeltaSeconds: timeSpentSeconds,
+        }).catch(console.error);
+      }
+
       trackEvent("practice_completed", {
         missionId: mission.id,
         skillId: bundle.skill.id,
@@ -592,6 +657,24 @@ export default function MissionPage() {
         confidence: retestConfidence,
         userId: user?.id,
       });
+
+      const effectiveUserId =
+        user?.id ||
+        (typeof window !== "undefined"
+          ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id
+          : undefined);
+
+      if (effectiveUserId && mission && bundle) {
+        ProgressService.recordLessonActivity({
+          userId: effectiveUserId,
+          streamId: mission.streamId,
+          subjectId: bundle.skill.subjectId,
+          skillId: bundle.skill.id,
+          lessonId: mission.id,
+          status: isPassed ? "mastered" : "in_progress",
+          timeSpentDeltaSeconds: timeSpentSeconds,
+        }).catch(console.error);
+      }
 
       trackEvent("retest_completed", {
         missionId: mission.id,

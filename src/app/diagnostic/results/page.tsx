@@ -34,6 +34,7 @@ import {
 import { loadDiagnosticResults } from "@/lib/diagnostic";
 import { useAuth } from "@/lib/auth/context";
 import { StudentService } from "@/lib/services";
+import { ProgressService } from "@/lib/progress/progress-service";
 import { getStrategicProfile, saveStrategicProfile } from "@/lib/onboarding/profile";
 
 export default function DiagnosticResultsPage() {
@@ -60,11 +61,18 @@ export default function DiagnosticResultsPage() {
     try {
       const effectiveUserId = user?.id || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id : undefined);
       if (effectiveUserId) {
+        const signalScore = results.coreDiagnosticSignal || results.observedDiagnosticScore || 12.0;
+
+        ProgressService.saveDiagnosticCompletion({
+          userId: effectiveUserId,
+          streamId: results.streamId || "sciences_exp",
+          overallScore: signalScore,
+        }).catch(console.error);
+
         StudentService.getProfile(effectiveUserId).then((profile) => {
           if (profile) {
             const prof = profile as any;
             prof.levelSource = "diagnostic_observed";
-            const signalScore = results.coreDiagnosticSignal || results.observedDiagnosticScore;
             prof.observedDiagnosticScore = signalScore;
             prof.estimatedBaselineScore = Math.round((signalScore / 5) * 10) / 10;
             prof.approximateGap = Math.max(

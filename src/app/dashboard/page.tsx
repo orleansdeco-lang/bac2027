@@ -40,7 +40,7 @@ import {
 
 import { ALL_SUBJECTS } from "@/lib/constants/streams";
 import { SubjectId } from "@/types/education";
-import { useLearningAccessGate } from "@/lib/hooks";
+import { useLearningAccessGate, useUserProgress } from "@/lib/hooks";
 import { TeacherEscalationModal } from "@/components/ui/TeacherEscalationModal";
 import {
   normalizeStreamIdWithDefault,
@@ -58,6 +58,7 @@ export default function DashboardPage() {
   const isAr = locale === "ar";
   const { theme } = useTheme();
   const gate = useLearningAccessGate();
+  const { masteredCount, totalStudyTimeSeconds, lastLessonId } = useUserProgress();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isTeacherModalOpen, setIsTeacherModalOpen] = useState(false);
@@ -584,7 +585,7 @@ export default function DashboardPage() {
             <div>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-2xl sm:text-3xl font-black text-[#2E5439] font-mono">
-                  {metrics.demonstratedSkillsCount}
+                  {Math.max(metrics.demonstratedSkillsCount, masteredCount)}
                 </span>
                 <span className="text-xs text-[#3B6647]/80 font-mono">
                   /{activeStreamMeta.totalSkills}
@@ -623,7 +624,13 @@ export default function DashboardPage() {
           <div className="p-5 rounded-3xl bg-[#EFE9DC] border border-[#E4DED2] shadow-clay flex flex-col justify-between space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-theme-secondary">
-                {isAr ? "الوقت المتاح" : "Temps disponible"}
+                {isAr
+                  ? totalStudyTimeSeconds > 0
+                    ? "وقت الدراسة الفعلي"
+                    : "الوقت المتاح"
+                  : totalStudyTimeSeconds > 0
+                  ? "Temps d'étude réel"
+                  : "Temps disponible"}
               </span>
               <div className="w-8 h-8 rounded-full bg-[var(--color-primary)]/15 text-[var(--color-primary)] flex items-center justify-center shadow-xs">
                 <Clock className="w-4 h-4" />
@@ -631,10 +638,20 @@ export default function DashboardPage() {
             </div>
             <div>
               <div className="text-xl sm:text-2xl font-black text-theme-text font-sans truncate">
-                {getTimeLabel(profile?.availableTime)}
+                {totalStudyTimeSeconds > 0
+                  ? Math.floor(totalStudyTimeSeconds / 3600) > 0
+                    ? `${Math.floor(totalStudyTimeSeconds / 3600)} سا ${Math.floor((totalStudyTimeSeconds % 3600) / 60)} د`
+                    : `${Math.max(1, Math.floor(totalStudyTimeSeconds / 60))} دقيقة`
+                  : getTimeLabel(profile?.availableTime)}
               </div>
               <p className="text-[11px] text-theme-secondary mt-1">
-                {isAr ? `الطاقة: ${getEnergyLabel(profile?.studyEnergy)}` : `Énergie : ${getEnergyLabel(profile?.studyEnergy)}`}
+                {isAr
+                  ? totalStudyTimeSeconds > 0
+                    ? "نشاطك المسجل على المنصة"
+                    : `الطاقة: ${getEnergyLabel(profile?.studyEnergy)}`
+                  : totalStudyTimeSeconds > 0
+                  ? "Activité enregistrée sur la plateforme"
+                  : `Énergie : ${getEnergyLabel(profile?.studyEnergy)}`}
               </p>
             </div>
           </div>

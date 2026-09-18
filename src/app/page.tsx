@@ -1,6 +1,6 @@
 import React from "react";
 import type { Metadata } from "next";
-import { LandingView } from "@/components/landing/LandingView";
+import { HomeClient } from "./HomeClient";
 
 export const metadata: Metadata = {
   title: "الشاطر | SHATER — من مستواك الحالي، إلى جاهز للباك",
@@ -31,5 +31,5 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  return <LandingView />;
+  return <HomeClient />;
 }

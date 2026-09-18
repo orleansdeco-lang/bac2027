@@ -44,6 +44,7 @@ import {
 import { trackEvent } from "@/lib/analytics";
 import { useAuth } from "@/lib/auth/context";
 import { StudentService } from "@/lib/services";
+import { ProgressService } from "@/lib/progress/progress-service";
 
 export default function DiagnosticPage() {
   const router = useRouter();
@@ -66,15 +67,40 @@ export default function DiagnosticPage() {
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load profile and existing session
+  // Load profile and existing session, guarding against redundant diagnostic loop
   useEffect(() => {
     let activeStream: StreamId = "sciences_exp";
     let activeSpecialty: TechniqueMathSpecialty | undefined = undefined;
     let estimate = 12.0;
 
     async function initDiagnostic() {
-      const effectiveUserId = user?.id || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id : undefined);
+      const effectiveUserId =
+        user?.id ||
+        (typeof window !== "undefined"
+          ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id
+          : undefined);
+
       if (effectiveUserId) {
+        // 1. Fast synchronous check to eliminate cold-start flash
+        const syncStatus = ProgressService.getSyncDiagnosticStatus(effectiveUserId);
+        if (syncStatus.completed) {
+          const target = syncStatus.lastLessonId ? `/mission/${syncStatus.lastLessonId}` : "/dashboard";
+          router.replace(target);
+          return;
+        }
+
+        // 2. Authoritative check with Supabase user_progress
+        try {
+          const diagStatus = await ProgressService.checkDiagnosticStatus(effectiveUserId);
+          if (diagStatus.completed) {
+            const target = diagStatus.lastLessonId ? `/mission/${diagStatus.lastLessonId}` : "/dashboard";
+            router.replace(target);
+            return;
+          }
+        } catch (e) {
+          console.warn("Diagnostic route guard check failed:", e);
+        }
+
         try {
           const profile = await StudentService.getProfile(effectiveUserId);
           if (profile) {
@@ -113,7 +139,7 @@ export default function DiagnosticPage() {
     }
 
     initDiagnostic();
-  }, [user]);
+  }, [user, router]);
 
   // Timer for active question
   useEffect(() => {
@@ -159,6 +185,27 @@ export default function DiagnosticPage() {
   const handleNext = () => {
     if (!session || !currentQuestion || !selectedOptionId || !confidenceRating) return;
 
+    const effectiveUserId =
+      user?.id ||
+      (typeof window !== "undefined"
+        ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id
+        : undefined);
+
+    // Save individual question response immediately to user_progress
+    if (effectiveUserId && currentQuestion) {
+      const chosenOpt = currentQuestion.options.find((o) => o.id === selectedOptionId);
+      const isCorrect = chosenOpt?.isCorrect ?? false;
+      ProgressService.recordLessonActivity({
+        userId: effectiveUserId,
+        streamId,
+        subjectId: currentQuestion.subjectId,
+        skillId: currentQuestion.topicId || currentQuestion.id,
+        lessonId: `diag_${currentQuestion.id}`,
+        status: isCorrect ? "mastered" : "in_progress",
+        timeSpentDeltaSeconds: timeSpent,
+      }).catch(console.error);
+    }
+
     const updatedSession = recordQuestionResponse(
       session,
       currentQuestion,
@@ -201,6 +248,28 @@ export default function DiagnosticPage() {
         selfEstimateScore
       );
       saveDiagnosticResults(analysis);
+
+      // Persist full diagnostic completion and skills to Supabase & localStorage
+      if (effectiveUserId) {
+        const skillResults = questions.map((q) => {
+          const resp = completedSession.responses[q.id];
+          const isCorrect = resp?.isCorrect ?? false;
+          return {
+            skillId: q.topicId || q.id,
+            subjectId: q.subjectId,
+            score: isCorrect ? 5.0 : 2.0,
+            isMastered: isCorrect,
+          };
+        });
+
+        ProgressService.saveDiagnosticCompletion({
+          userId: effectiveUserId,
+          streamId,
+          overallScore: analysis.observedDiagnosticScore,
+          skillResults,
+        }).catch(console.error);
+      }
+
       trackEvent("diagnostic_completed", {
         score: analysis.observedDiagnosticScore,
         dimensions: Object.keys(analysis.dimensionScores).length,
