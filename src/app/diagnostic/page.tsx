@@ -30,7 +30,8 @@ import {
   DiagnosticSession,
   DiagnosticDimension,
 } from "@/types/diagnostic";
-import { StreamId, TechniqueMathSpecialty } from "@/types/education";
+import { StreamId, TechniqueMathSpecialty, SubjectId } from "@/types/education";
+import { ALL_SUBJECTS, getStreamSubjects } from "@/lib/constants/streams";
 import {
   getDiagnosticQuestionsForStream,
   createDiagnosticSession,
@@ -81,26 +82,6 @@ export default function DiagnosticPage() {
           : undefined);
 
       if (effectiveUserId) {
-        // 1. Fast synchronous check to eliminate cold-start flash
-        const syncStatus = ProgressService.getSyncDiagnosticStatus(effectiveUserId);
-        if (syncStatus.completed) {
-          const target = syncStatus.lastLessonId ? `/mission/${syncStatus.lastLessonId}` : "/dashboard";
-          router.replace(target);
-          return;
-        }
-
-        // 2. Authoritative check with Supabase user_progress
-        try {
-          const diagStatus = await ProgressService.checkDiagnosticStatus(effectiveUserId);
-          if (diagStatus.completed) {
-            const target = diagStatus.lastLessonId ? `/mission/${diagStatus.lastLessonId}` : "/dashboard";
-            router.replace(target);
-            return;
-          }
-        } catch (e) {
-          console.warn("Diagnostic route guard check failed:", e);
-        }
-
         try {
           const profile = await StudentService.getProfile(effectiveUserId);
           if (profile) {
@@ -365,116 +346,136 @@ export default function DiagnosticPage() {
       <div className="py-6 sm:py-10">
         <Container size="sm" className="w-full">
           {!session || session.status === "completed" ? (
-            /* Intro / Pre-diagnostic screen */
+            /* Intro / Subject Diagnostic Selector Hub */
             <div className="space-y-6">
               <div className="text-center space-y-3">
                 <Badge variant="primary" size="md">
-                  {t.diagnostic.phaseBadge}
+                  {locale === "ar" ? "الوضع الموجه بالمواد" : "Diagnostic par matière"}
                 </Badge>
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-                  {t.diagnostic.title}
+                  {locale === "ar" ? "اختر المادة لتحديد مستواك وبناء مسارك" : "Choisissez une matière pour votre diagnostic"}
                 </h1>
                 <p className="text-sm sm:text-base text-slate-400 max-w-lg mx-auto">
-                  {t.diagnostic.subtitle}
+                  {locale === "ar"
+                    ? "يمكنك تقييم كل مادة دراسية بشكل مستقل دون التقيّد بمسار خطي إجباري، أو الانتقال للمكتبة الحرة وتصفح كامل المنهاج."
+                    : "Évaluez chaque discipline individuellement ou explorez la bibliothèque de cours en accès libre."}
                 </p>
               </div>
 
-              {/* Honest baseline warning banner */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-[#281c11] border border-amber-500/40 text-amber-200 flex gap-3.5 items-start shadow-md">
-                <ShieldAlert className="h-6 w-6 text-amber-400 shrink-0 mt-0.5" />
-                <div className="text-xs sm:text-sm space-y-1">
-                  <div className="font-bold text-white">{t.diagnostic.honestBaselineNotice}</div>
-                  <div className="text-amber-200/90 leading-relaxed">{t.diagnostic.honestBaselineSub}</div>
+              {/* Subject Diagnostic Cards Grid */}
+              <div className="space-y-3">
+                <div className="flex items-center justify-between px-1 text-xs font-bold text-slate-300">
+                  <span>{locale === "ar" ? "مواد شعبتك الرسمية" : "Matières de votre filière"}</span>
+                  <span className="text-slate-400 font-mono text-[11px]">
+                    {getStreamSubjects(streamId, specialty).length} {locale === "ar" ? "مواد" : "matières"}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {getStreamSubjects(streamId, specialty).map((rule) => {
+                    const subj = ALL_SUBJECTS[rule.subjectId];
+                    const name = subj ? (locale === "ar" ? subj.name_ar : subj.name_fr) : rule.subjectId;
+                    const status = ProgressService.getSubjectDiagnosticStatus(user?.id, rule.subjectId);
+
+                    return (
+                      <div
+                        key={rule.subjectId}
+                        className="p-4 rounded-2xl bg-[#111827] border border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between gap-4 shadow-sm"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-white text-sm sm:text-base">{name}</span>
+                              {rule.isCoreSubject && (
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                                  {locale === "ar" ? "أساسية" : "Majeure"}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs text-slate-400 block font-mono">
+                              {locale === "ar" ? `المعامل ${rule.coefficient}` : `Coefficient ${rule.coefficient}`}
+                            </span>
+                          </div>
+
+                          {status.completed ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>{status.score ? `${status.score}/20` : (locale === "ar" ? "مكتمل" : "Évalué")}</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
+                              <span>{locale === "ar" ? "جاهز للتقييم" : "Non évalué"}</span>
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 pt-1 border-t border-slate-800/80">
+                          <Link href={`/diagnostic/${rule.subjectId}`} className="flex-1">
+                            <Button
+                              size="sm"
+                              variant={status.completed ? "outline" : "primary"}
+                              className="w-full text-xs font-bold rounded-xl py-2"
+                            >
+                              <Play className="w-3 h-3 me-1 fill-current" />
+                              <span>
+                                {status.completed
+                                  ? (locale === "ar" ? "إعادة التقييم" : "Réévaluer")
+                                  : (locale === "ar" ? "بدء تشخيص المادة" : "Démarrer")}
+                              </span>
+                            </Button>
+                          </Link>
+
+                          <Link href={`/curriculum?subject=${rule.subjectId}`}>
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              className="text-xs font-bold rounded-xl py-2 px-3"
+                              title={locale === "ar" ? "المكتبة الحرة للمادة" : "Bibliothèque de cours"}
+                            >
+                              <BookOpen className="w-3.5 h-3.5" />
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
-              {/* Pilot Pack Info Card */}
-              <Card className="p-5 sm:p-6 bg-[#111827] border-slate-800 space-y-4 shadow-xl">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                  <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                    {locale === "ar" ? "حزمة الاختبار التجريبية" : "Pack Diagnostic Pilote"}
+              {/* Secondary Actions Card: Comprehensive diagnostic & Free roam library */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-[#111827] border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-start shadow-sm">
+                <div className="space-y-0.5">
+                  <span className="font-bold text-white text-xs sm:text-sm block">
+                    {locale === "ar" ? "هل تفضل التقييم الشامل لكل المواد معاً؟" : "Diagnostic global complet ?"}
                   </span>
-                  <Badge variant="default" size="sm">
-                    {questions.length} {locale === "ar" ? "سؤالاً نوعياً" : "questions ciblées"}
-                  </Badge>
+                  <span className="text-slate-400 text-xs">
+                    {locale === "ar"
+                      ? `${questions.length} أسئلة استراتيجية لتوليد الخريطة الموحدة لشعبتك.`
+                      : `${questions.length} questions pour générer votre feuille de route globale.`}
+                  </span>
                 </div>
 
-                {streamId === "math" ? (
-                  <div className="grid grid-cols-2 gap-2 text-center text-xs">
-                    <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
-                      <div className="font-bold text-white">5 {locale === "ar" ? "رياضيات" : "Maths"}</div>
-                      <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "دوال، متتاليات، نهايات" : "Fonctions, suites, limites"}</div>
-                    </div>
-                    <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
-                      <div className="font-bold text-white">5 {locale === "ar" ? "فيزياء" : "Physique"}</div>
-                      <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "كهرباء، نووي، ميكانيك" : "RC, nucléaire, Newton"}</div>
-                    </div>
-                  </div>
-                ) : streamId === "gestion_eco" ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
-                    <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
-                      <div className="font-bold text-white">4 {locale === "ar" ? "محاسبة ومالية" : "Comptabilité"}</div>
-                      <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "اهتلاكات، تسويات" : "Amortissements"}</div>
-                    </div>
-                    <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
-                      <div className="font-bold text-white">4 {locale === "ar" ? "اقتصاد ومناجمنت" : "Économie"}</div>
-                      <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "تضخم، نقود، بنوك" : "Inflation, monnaie"}</div>
-                    </div>
-                    <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
-                      <div className="font-bold text-white">3 {locale === "ar" ? "قانون" : "Droit"}</div>
-                      <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "عقد العمل، شركات" : "Contrat de travail"}</div>
-                    </div>
-                    <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
-                      <div className="font-bold text-white">4 {locale === "ar" ? "رياضيات" : "Maths"}</div>
-                      <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "دوال، متتاليات عددية" : "Fonctions, suites"}</div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                    <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
-                      <div className="font-bold text-white">5 {locale === "ar" ? "رياضيات" : "Maths"}</div>
-                      <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "دوال، متتاليات، قيم متوسطة" : "Fonctions, TVI, suites"}</div>
-                    </div>
-                    <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
-                      <div className="font-bold text-white">5 {locale === "ar" ? "فيزياء" : "Physique"}</div>
-                      <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "كهرباء، نووي، ميكانيك" : "RC, nucléaire, Newton"}</div>
-                    </div>
-                    <div className="p-3 rounded-xl bg-[#162032] border border-slate-800">
-                      <div className="font-bold text-white">5 {locale === "ar" ? "علوم طبيعية" : "SVT"}</div>
-                      <div className="text-slate-400 text-[11px] mt-0.5">{locale === "ar" ? "بروتين، مناعة، اتصال عصبي" : "Protéines, immunologie"}</div>
-                    </div>
-                  </div>
-                )}
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleStartSession}
+                    className="flex-1 sm:flex-initial text-xs font-bold rounded-xl px-4 py-2"
+                  >
+                    <span>{locale === "ar" ? "تقييم شامل (كل المواد)" : "Évaluation globale"}</span>
+                  </Button>
 
-                <div className="pt-2 text-xs text-slate-400 space-y-2 border-t border-slate-800">
-                  <div className="font-semibold text-slate-300">{t.diagnostic.dimensionsHeading}</div>
-                  <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-300">
-                    <div className="flex items-center gap-1.5">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                      <span>{t.diagnostic.dimensions.knowledge}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                      <span>{t.diagnostic.dimensions.understanding}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                      <span>{t.diagnostic.dimensions.application}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                      <span>{t.diagnostic.dimensions.methodology}</span>
-                    </div>
-                  </div>
+                  <Link href="/curriculum" className="flex-1 sm:flex-initial">
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      className="w-full text-xs font-bold rounded-xl px-4 py-2"
+                    >
+                      <BookOpen className="w-3.5 h-3.5 me-1" />
+                      <span>{locale === "ar" ? "المكتبة الشاملة" : "Bibliothèque"}</span>
+                    </Button>
+                  </Link>
                 </div>
-              </Card>
-
-              {/* Start Button */}
-              <div className="pt-2">
-                <Button size="lg" fullWidth onClick={handleStartSession}>
-                  <Play className="h-4 w-4" />
-                  <span>{t.diagnostic.startCta}</span>
-                </Button>
               </div>
             </div>
           ) : (

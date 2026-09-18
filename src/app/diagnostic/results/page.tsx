@@ -25,6 +25,7 @@ import {
   BarChart3,
   Clock,
   ExternalLink,
+  BookOpen,
 } from "lucide-react";
 import {
   DiagnosticAnalysisResult,
@@ -505,18 +506,27 @@ export default function DiagnosticResultsPage() {
           {/* Action links */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-slate-800">
             <Link href="/diagnostic" className="w-full sm:w-auto">
-              <Button variant="outline" size="md" fullWidth>
-                <RotateCcw className="h-4 w-4" />
-                <span>{t.diagnostic.results.retakeCta}</span>
+              <Button variant="outline" size="md" className="w-full sm:w-auto font-bold rounded-xl">
+                <RotateCcw className="h-4 w-4 me-1" />
+                <span>{locale === "ar" ? "تشخيص مادة أخرى" : "Autre matière"}</span>
               </Button>
             </Link>
 
-            <Link href="/roadmap" className="w-full sm:w-auto">
-              <Button size="md" fullWidth>
-                <span>{t.diagnostic.returnCta}</span>
-                <NextArrow className="h-4 w-4" />
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Link href="/curriculum" className="flex-1 sm:flex-initial">
+                <Button variant="secondary" size="md" className="w-full font-bold rounded-xl">
+                  <BookOpen className="h-4 w-4 me-1" />
+                  <span>{locale === "ar" ? "المكتبة الشاملة" : "Bibliothèque"}</span>
+                </Button>
+              </Link>
+
+              <Link href="/roadmap" className="flex-1 sm:flex-initial">
+                <Button size="md" className="w-full font-bold rounded-xl">
+                  <span>{t.diagnostic.returnCta}</span>
+                  <NextArrow className="h-4 w-4 ms-1" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </Container>
       </div>

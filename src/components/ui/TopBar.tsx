@@ -26,6 +26,7 @@ import {
   BarChart3,
   AlertTriangle,
   Stethoscope,
+  BookOpen,
   Sparkles,
   LogIn,
   Clock,
@@ -67,6 +68,8 @@ export function TopBar() {
 
   const navLinks = [
     { href: "/dashboard", label: isAr ? "لوحة التحكم" : "Tableau de bord", icon: Compass },
+    { href: "/curriculum", label: isAr ? "المكتبة الشاملة" : "Bibliothèque", icon: BookOpen },
+    { href: "/diagnostic", label: isAr ? "تشخيص المواد" : "Diagnostics", icon: Stethoscope },
     { href: "/roadmap", label: isAr ? "الخريطة" : "Feuille de route", icon: Map },
     { href: "/error-lab", label: isAr ? "مختبر الأخطاء" : "Lab d'erreurs", icon: AlertTriangle },
     { href: "/progress", label: isAr ? "تقدمي" : "Progrès", icon: BarChart3 },
@@ -164,31 +167,31 @@ export function TopBar() {
         {isLandingPage ? (
           <nav className="hidden lg:flex items-center gap-6 mx-auto">
             <Link
-              href="/"
-              className="text-xs font-bold text-theme-text hover:text-[var(--color-primary)] transition-colors"
-            >
-              {isAr ? "الرئيسية" : "Accueil"}
-            </Link>
-            <Link
               href="#how-it-works"
               className="text-xs font-bold text-theme-secondary hover:text-[var(--color-primary)] transition-colors"
             >
-              {isAr ? "كيف تعمل؟" : "Comment ça marche ?"}
+              {isAr ? "كيفاش يخدم؟" : "Comment ça marche ?"}
             </Link>
             <Link
-              href="#shater-bac"
-              className="text-xs font-bold text-theme-secondary hover:text-[var(--color-primary)] transition-colors flex items-center gap-1.5"
+              href="#content-library"
+              className="text-xs font-bold text-theme-secondary hover:text-[var(--color-primary)] transition-colors"
             >
-              <span>SHATER BAC</span>
-              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[var(--color-primary-soft)] text-[var(--color-primary)] font-bold">
-                {isAr ? "المنتج الأول" : "Pionnier"}
-              </span>
+              {isAr ? "المحتوى" : "Contenu"}
             </Link>
             <Link
               href="#why-shater"
               className="text-xs font-bold text-theme-secondary hover:text-[var(--color-primary)] transition-colors"
             >
-              {isAr ? "لماذا الشاطر؟" : "Pourquoi SHATER ?"}
+              {isAr ? "علاش SHATER؟" : "Pourquoi SHATER ?"}
+            </Link>
+            <Link
+              href="#university-calculator"
+              className="text-xs font-bold text-theme-secondary hover:text-[var(--color-primary)] transition-colors flex items-center gap-1.5"
+            >
+              <span>{isAr ? "حاسبة التخصصات" : "Filières"}</span>
+              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[var(--color-primary-soft)] text-[var(--color-primary)] font-bold">
+                {isAr ? "جديد" : "Nouveau"}
+              </span>
             </Link>
             <Link
               href="#pricing"
@@ -200,7 +203,7 @@ export function TopBar() {
               href="#faq"
               className="text-xs font-bold text-theme-secondary hover:text-[var(--color-primary)] transition-colors"
             >
-              {isAr ? "الأسئلة الشائعة" : "FAQ"}
+              {isAr ? "الأسئلة" : "FAQ"}
             </Link>
           </nav>
         ) : (
@@ -389,21 +392,28 @@ export function TopBar() {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block p-2 text-xs font-bold text-theme-text hover:bg-card rounded-lg transition-colors"
               >
-                {isAr ? "← كيف تعمل الشاطر؟" : "Comment ça marche ?"}
+                {isAr ? "← كيفاش يخدم؟" : "Comment ça marche ?"}
               </Link>
               <Link
-                href="#shater-bac"
+                href="#content-library"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="block p-2 text-xs font-bold text-[var(--color-primary)] hover:bg-card rounded-lg transition-colors"
+                className="block p-2 text-xs font-bold text-theme-text hover:bg-card rounded-lg transition-colors"
               >
-                {isAr ? "← اكتشف SHATER BAC" : "Découvrir SHATER BAC"}
+                {isAr ? "← المحتوى الشامل" : "Contenu"}
               </Link>
               <Link
                 href="#why-shater"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block p-2 text-xs font-bold text-theme-text hover:bg-card rounded-lg transition-colors"
               >
-                {isAr ? "← لماذا الشاطر؟" : "Pourquoi SHATER ?"}
+                {isAr ? "← علاش SHATER؟" : "Pourquoi SHATER ?"}
+              </Link>
+              <Link
+                href="#university-calculator"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block p-2 text-xs font-bold text-[var(--color-primary)] hover:bg-card rounded-lg transition-colors"
+              >
+                {isAr ? "← حاسبة التخصصات الجامعية" : "Simulateur d'Orientation"}
               </Link>
               <Link
                 href="#pricing"

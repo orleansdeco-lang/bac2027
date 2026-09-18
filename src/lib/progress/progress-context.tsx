@@ -21,6 +21,7 @@ export interface ProgressContextType {
   saveDiagnostic: (params: {
     streamId: string;
     overallScore: number;
+    subjectId?: string;
     skillResults?: Array<{
       skillId: string;
       subjectId: string;
@@ -36,6 +37,14 @@ export interface ProgressContextType {
     status?: SkillProgressStatus;
     timeSpentDeltaSeconds?: number;
   }) => Promise<void>;
+  markSkillMastered: (
+    skillId: string,
+    streamId?: string,
+    subjectId?: string,
+    isMastered?: boolean
+  ) => Promise<boolean>;
+  recordStudyTime: (seconds: number) => Promise<number>;
+  getSubjectStatus: (subjectId: string) => { completed: boolean; score: number | null };
   refreshProgress: () => Promise<void>;
 }
 
@@ -149,6 +158,45 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
     [effectiveUserId, refreshProgress]
   );
 
+  const markSkillMastered = useCallback(
+    async (
+      skillId: string,
+      streamId?: string,
+      subjectId?: string,
+      isMastered?: boolean
+    ) => {
+      const result = await ProgressService.markSkillMastered({
+        userId: effectiveUserId,
+        skillId,
+        streamId,
+        subjectId,
+        isMastered,
+      });
+      await refreshProgress();
+      return result;
+    },
+    [effectiveUserId, refreshProgress]
+  );
+
+  const recordStudyTime = useCallback(
+    async (seconds: number) => {
+      const result = await ProgressService.recordStudyTime({
+        userId: effectiveUserId,
+        seconds,
+      });
+      await refreshProgress();
+      return result;
+    },
+    [effectiveUserId, refreshProgress]
+  );
+
+  const getSubjectStatus = useCallback(
+    (subjectId: string) => {
+      return ProgressService.getSubjectDiagnosticStatus(effectiveUserId, subjectId);
+    },
+    [effectiveUserId]
+  );
+
   const value = useMemo(
     () => ({
       isDiagnosticCompleted,
@@ -161,6 +209,9 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       saveDiagnostic,
       trackLessonActivity,
+      markSkillMastered,
+      recordStudyTime,
+      getSubjectStatus,
       refreshProgress,
     }),
     [
@@ -174,6 +225,9 @@ export function ProgressProvider({ children }: { children: React.ReactNode }) {
       isLoading,
       saveDiagnostic,
       trackLessonActivity,
+      markSkillMastered,
+      recordStudyTime,
+      getSubjectStatus,
       refreshProgress,
     ]
   );
@@ -197,6 +251,9 @@ export function useUserProgress(): ProgressContextType {
       isLoading: false,
       saveDiagnostic: async () => {},
       trackLessonActivity: async () => {},
+      markSkillMastered: async () => false,
+      recordStudyTime: async () => 0,
+      getSubjectStatus: () => ({ completed: false, score: null }),
       refreshProgress: async () => {},
     };
   }

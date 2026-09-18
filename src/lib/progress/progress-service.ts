@@ -68,7 +68,7 @@ export const ProgressService = {
   /**
    * Fast synchronous check from memory and localStorage to eliminate cold-start flashes / route flickers.
    */
-  getSyncDiagnosticStatus(userId?: string): {
+  getSyncDiagnosticStatus(userId?: string, subjectId?: string): {
     completed: boolean;
     score: number | null;
     lastLessonId: string | null;
@@ -89,6 +89,26 @@ export const ProgressService = {
     // 1. Check memory cache
     const mem = progressMemoryCache.get(effectiveId);
     if (mem) {
+      if (subjectId) {
+        const subjectSkills = Object.values(mem.skills).filter((s) => s.subjectId === subjectId);
+        const isSubjectCompleted = subjectSkills.some((s) => s.diagnosticCompleted);
+        let subjectMaxScore: number | null = null;
+        subjectSkills.forEach((s) => {
+          if (s.diagnosticScore !== null) {
+            if (subjectMaxScore === null || s.diagnosticScore > subjectMaxScore) {
+              subjectMaxScore = s.diagnosticScore;
+            }
+          }
+        });
+        return {
+          completed: isSubjectCompleted,
+          score: subjectMaxScore,
+          lastLessonId: mem.lastLessonId,
+          totalTimeSeconds: mem.totalTimeSeconds,
+          masteredCount: mem.masteredSkillsCount,
+        };
+      }
+
       return {
         completed: mem.diagnosticCompleted,
         score: mem.diagnosticScore,
@@ -98,13 +118,36 @@ export const ProgressService = {
       };
     }
 
-    // 2. Check localStorage metadata
+    // 2. Check localStorage metadata & skills
     if (typeof window !== "undefined") {
       try {
         const { metaKey, progressKey } = getStorageKeys(effectiveId);
         const metaRaw = localStorage.getItem(metaKey);
+        const progressRaw = localStorage.getItem(progressKey);
+        const skills: Record<string, UserProgressRecord> = progressRaw ? JSON.parse(progressRaw) : {};
+        const meta = metaRaw ? JSON.parse(metaRaw) : {};
+
+        if (subjectId) {
+          const subjectSkills = Object.values(skills).filter((s) => s.subjectId === subjectId);
+          const isSubjectCompleted = subjectSkills.some((s) => s.diagnosticCompleted);
+          let subjectMaxScore: number | null = null;
+          subjectSkills.forEach((s) => {
+            if (s.diagnosticScore !== null) {
+              if (subjectMaxScore === null || s.diagnosticScore > subjectMaxScore) {
+                subjectMaxScore = s.diagnosticScore;
+              }
+            }
+          });
+          return {
+            completed: isSubjectCompleted,
+            score: subjectMaxScore,
+            lastLessonId: meta?.lastLessonId ?? null,
+            totalTimeSeconds: meta?.totalTimeSeconds ?? 0,
+            masteredCount: meta?.masteredSkillsCount ?? 0,
+          };
+        }
+
         if (metaRaw) {
-          const meta = JSON.parse(metaRaw);
           return {
             completed: Boolean(meta.diagnosticCompleted),
             score: meta.diagnosticScore ?? null,
@@ -138,6 +181,15 @@ export const ProgressService = {
       totalTimeSeconds: 0,
       masteredCount: 0,
     };
+  },
+
+  /**
+   * Fast synchronous check if a specific subject diagnostic has been completed.
+   */
+  getSubjectDiagnosticStatus(userId?: string, subjectId?: string): { completed: boolean; score: number | null } {
+    if (!subjectId) return { completed: false, score: null };
+    const status = this.getSyncDiagnosticStatus(userId, subjectId);
+    return { completed: status.completed, score: status.score };
   },
 
   /**
@@ -385,6 +437,7 @@ export const ProgressService = {
     userId: string;
     streamId: string;
     overallScore: number;
+    subjectId?: string;
     skillResults?: Array<{
       skillId: string;
       subjectId: string;
@@ -392,7 +445,7 @@ export const ProgressService = {
       isMastered?: boolean;
     }>;
   }): Promise<void> {
-    const { userId, streamId, overallScore, skillResults = [] } = params;
+    const { userId, streamId, overallScore, subjectId, skillResults = [] } = params;
     const now = new Date().toISOString();
 
     // 1. Prepare records for each skill tested in diagnostic
@@ -416,7 +469,7 @@ export const ProgressService = {
         const record: UserProgressRecord = {
           userId,
           streamId,
-          subjectId: item.subjectId,
+          subjectId: item.subjectId || subjectId || "general",
           skillId: item.skillId,
           status: resolvedStatus,
           diagnosticCompleted: true,
@@ -430,7 +483,7 @@ export const ProgressService = {
         dbPayloads.push({
           user_id: userId,
           stream_id: streamId,
-          subject_id: item.subjectId,
+          subject_id: item.subjectId || subjectId || "general",
           skill_id: item.skillId,
           status: resolvedStatus,
           diagnostic_completed: true,
@@ -443,11 +496,12 @@ export const ProgressService = {
       }
     } else {
       // Create a default foundation entry to anchor diagnostic completion
-      const defaultSkillId = `diagnostic_stream_${streamId}`;
+      const defaultSkillId = subjectId ? `diagnostic_subject_${subjectId}` : `diagnostic_stream_${streamId}`;
+      const defaultSubj = subjectId || "general";
       const defaultRecord: UserProgressRecord = {
         userId,
         streamId,
-        subjectId: "general",
+        subjectId: defaultSubj,
         skillId: defaultSkillId,
         status: "in_progress",
         diagnosticCompleted: true,
@@ -460,7 +514,7 @@ export const ProgressService = {
       dbPayloads.push({
         user_id: userId,
         stream_id: streamId,
-        subject_id: "general",
+        subject_id: defaultSubj,
         skill_id: defaultSkillId,
         status: "in_progress",
         diagnostic_completed: true,
@@ -675,4 +729,157 @@ export const ProgressService = {
       );
     } catch {}
   },
+
+  /**
+   * Directly marks a skill as mastered or in-progress, updating local state & Supabase.
+   */
+  async markSkillMastered(params: {
+    userId?: string;
+    skillId: string;
+    streamId?: string;
+    subjectId?: string;
+    isMastered?: boolean;
+  }): Promise<boolean> {
+    const effectiveId = resolveEffectiveUserId(params.userId);
+    if (!effectiveId) return false;
+
+    const { skillId, streamId = "general", subjectId = "general" } = params;
+    const now = new Date().toISOString();
+    const currentProgress = await this.getUserProgress(effectiveId);
+    const existing = currentProgress.skills[skillId];
+
+    // If isMastered explicitly defined use it, else toggle
+    const willBeMastered =
+      params.isMastered !== undefined
+        ? params.isMastered
+        : existing?.status !== "mastered";
+
+    const newStatus: SkillProgressStatus = willBeMastered ? "mastered" : "in_progress";
+
+    const updatedRecord: UserProgressRecord = {
+      userId: effectiveId,
+      streamId: existing?.streamId || streamId,
+      subjectId: existing?.subjectId || subjectId,
+      skillId,
+      status: newStatus,
+      diagnosticCompleted: existing?.diagnosticCompleted ?? true,
+      diagnosticScore: existing?.diagnosticScore ?? null,
+      lastLessonId: existing?.lastLessonId ?? null,
+      totalTimeSeconds: existing?.totalTimeSeconds ?? 0,
+      lastActiveAt: now,
+    };
+
+    const updatedSkills = {
+      ...currentProgress.skills,
+      [skillId]: updatedRecord,
+    };
+
+    const totalMastered = Object.values(updatedSkills).filter((s) => s.status === "mastered").length;
+    const totalInProg = Object.values(updatedSkills).filter((s) => s.status === "in_progress").length;
+
+    const updatedSummary: UserProgressSummary = {
+      ...currentProgress,
+      masteredSkillsCount: totalMastered,
+      inProgressSkillsCount: totalInProg,
+      skills: updatedSkills,
+    };
+
+    // 1. Sync write to Memory Cache & LocalStorage
+    progressMemoryCache.set(effectiveId, updatedSummary);
+    if (typeof window !== "undefined") {
+      const { metaKey, progressKey } = getStorageKeys(effectiveId);
+      localStorage.setItem(progressKey, JSON.stringify(updatedSkills));
+      localStorage.setItem(
+        metaKey,
+        JSON.stringify({
+          diagnosticCompleted: updatedSummary.diagnosticCompleted,
+          diagnosticScore: updatedSummary.diagnosticScore,
+          lastLessonId: updatedSummary.lastLessonId,
+          totalTimeSeconds: updatedSummary.totalTimeSeconds,
+          masteredSkillsCount: totalMastered,
+        })
+      );
+    }
+
+    // 2. Broadcast event
+    broadcastProgressUpdate(updatedSummary);
+
+    // 3. Sync to Supabase
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const payload = {
+          user_id: effectiveId,
+          stream_id: updatedRecord.streamId,
+          subject_id: updatedRecord.subjectId,
+          skill_id: skillId,
+          status: newStatus,
+          diagnostic_completed: updatedRecord.diagnosticCompleted,
+          diagnostic_score: updatedRecord.diagnosticScore,
+          last_lesson_id: updatedRecord.lastLessonId,
+          total_time_seconds: updatedRecord.totalTimeSeconds,
+          last_active_at: now,
+          updated_at: now,
+        };
+
+        await supabase.from("user_progress").upsert(payload, { onConflict: "user_id,skill_id" });
+      } catch (err) {
+        console.error("Failed persisting markSkillMastered to Supabase:", err);
+      }
+    }
+
+    return willBeMastered;
+  },
+
+  /**
+   * Accumulates active study time spent reading or working in the library/lessons.
+   */
+  async recordStudyTime(params: {
+    userId?: string;
+    seconds: number;
+  }): Promise<number> {
+    const effectiveId = resolveEffectiveUserId(params.userId);
+    if (!effectiveId || params.seconds <= 0) return 0;
+
+    const currentProgress = await this.getUserProgress(effectiveId);
+    const newTotal = currentProgress.totalTimeSeconds + Math.round(params.seconds);
+    const now = new Date().toISOString();
+
+    const updatedSummary: UserProgressSummary = {
+      ...currentProgress,
+      totalTimeSeconds: newTotal,
+    };
+
+    progressMemoryCache.set(effectiveId, updatedSummary);
+    if (typeof window !== "undefined") {
+      const { metaKey } = getStorageKeys(effectiveId);
+      const metaRaw = localStorage.getItem(metaKey);
+      const meta = metaRaw ? JSON.parse(metaRaw) : {};
+      localStorage.setItem(
+        metaKey,
+        JSON.stringify({
+          ...meta,
+          totalTimeSeconds: newTotal,
+        })
+      );
+    }
+
+    broadcastProgressUpdate(updatedSummary);
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase
+          .from("student_profiles")
+          .update({
+            total_study_time_seconds: newTotal,
+            updated_at: now,
+          })
+          .eq("id", effectiveId);
+      } catch (err) {
+        console.warn("Failed syncing study time to Supabase:", err);
+      }
+    }
+
+    return newTotal;
+  },
 };
+

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/ui/AppShell";
 import { Container } from "@/components/ui/Container";
@@ -18,12 +18,15 @@ import {
   snvTerm1Lessons,
   snvTerm1Checkpoints,
 } from "@/domain/content/snv-daily-lessons";
-import { PHILOSOPHY_TERM1_LESSONS, PhilosophyEssayLesson } from "@/domain/content/philosophy";
-import { ARABIC_LESSONS_CATALOG, ArabicLesson } from "@/domain/content/arabic";
+import { PHILOSOPHY_TERM1_LESSONS } from "@/domain/content/philosophy";
+import { ARABIC_LESSONS_CATALOG } from "@/domain/content/arabic";
 import { GESTION_ECO_SKILLS } from "@/data/skills/gestion-economie";
 import { LETTRES_PHILO_SKILLS } from "@/data/skills/lettres-philo";
-import { useLearningAccessGate } from "@/lib/hooks";
-import { normalizeStreamIdWithDefault, getStreamMetadata } from "@/lib/curriculum/filter";
+import { getSkillsForSubject } from "@/data/skills";
+import { ALL_SUBJECTS, ALGERIAN_BAC_STREAMS, getStreamSubjects } from "@/lib/constants/streams";
+import { StreamId, SubjectId } from "@/types/education";
+import { useLearningAccessGate, useUserProgress } from "@/lib/hooks";
+import { normalizeStreamIdWithDefault } from "@/lib/curriculum/filter";
 import {
   BookOpen,
   Target,
@@ -37,16 +40,14 @@ import {
   Search,
   ChevronDown,
   ChevronUp,
-  Award,
+  Play,
   ArrowLeft,
   ArrowRight,
   ShieldCheck,
-  HelpCircle,
-  Quote,
-  Flame,
+  Scale,
   FileText,
   Compass,
-  Scale,
+  Filter,
 } from "lucide-react";
 
 // Diagrams mapping for key curriculum days (Sciences Expérimentales)
@@ -110,7 +111,6 @@ const CURRICULUM_DIAGRAMS: Record<number, { caption_ar: string; diagramUrl: stri
   },
 };
 
-// Helper: Parse YouTube URL and timestamp into videoId and startSeconds
 function parseYoutubeData(url?: string, timestamp?: string): { videoId: string; startSeconds: number } | null {
   if (!url) return null;
   const isSearch = url.includes("results?search_query=") || url.includes("search_query=");
@@ -120,930 +120,543 @@ function parseYoutubeData(url?: string, timestamp?: string): { videoId: string; 
   return { videoId, startSeconds };
 }
 
-export default function CurriculumPage() {
+export default function FreeRoamCurriculumPage() {
   const gate = useLearningAccessGate();
-  const streamId = normalizeStreamIdWithDefault(
+  const enrolledStream = normalizeStreamIdWithDefault(
     gate.profile?.streamId || (gate.profile as any)?.stream,
     "sciences_exp"
   );
-  const streamMeta = getStreamMetadata(streamId);
 
-  const [activeUnit, setActiveUnit] = useState<string>("all");
+  const {
+    skills: userSkills,
+    masteredCount,
+    totalStudyTimeSeconds,
+    markSkillMastered,
+    recordStudyTime,
+  } = useUserProgress();
+
+  const [selectedStream, setSelectedStream] = useState<StreamId>(enrolledStream);
+  const [selectedSubject, setSelectedSubject] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [expandedDay, setExpandedDay] = useState<number | null>(1); // Default Day 1 open for Sciences
-  const [expandedPhiloId, setExpandedPhiloId] = useState<string | null>("phil_lp_issue01_sensation_perception");
-  const [expandedSkillId, setExpandedSkillId] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<"lessons" | "checkpoints">("lessons");
-  const [revealedRecall, setRevealedRecall] = useState<Record<number, boolean>>({});
+  const [expandedItemId, setExpandedItemId] = useState<string | number | null>(1);
+  const [activeTab, setActiveTab] = useState<"lessons" | "checkpoints">("lessons");
 
-  // ---------------------------------------------------------------------------
-  // LETTRES ET PHILOSOPHIE VIEW
-  // ---------------------------------------------------------------------------
-  if (streamId === "lettres_philo") {
-    const philoLessons = PHILOSOPHY_TERM1_LESSONS;
-    const arabicLessons = ARABIC_LESSONS_CATALOG;
-    const methodSkills = Object.values(LETTRES_PHILO_SKILLS).filter(
-      (s) => s.subjectId === "philosophy" && s.topicId === "phi_topic_methodology"
-    );
+  // Keep selectedStream in sync if user profile loads
+  useEffect(() => {
+    if (gate.profile?.streamId) {
+      setSelectedStream(normalizeStreamIdWithDefault(gate.profile.streamId, "sciences_exp"));
+    }
+  }, [gate.profile?.streamId]);
 
-    const filteredPhilo = philoLessons.filter((l) => {
-      if (activeUnit !== "all" && activeUnit !== "philosophy" && l.id !== activeUnit) return false;
-      if (searchQuery.trim()) {
-        const q = searchQuery.trim().toLowerCase();
-        return (
-          l.issueTitle_ar.toLowerCase().includes(q) ||
-          l.unitTitle_ar.toLowerCase().includes(q) ||
-          l.thesis.title_ar.toLowerCase().includes(q)
-        );
-      }
-      return true;
-    });
+  // Track active study time on the curriculum library (accumulates every 10 seconds)
+  useEffect(() => {
+    const timer = setInterval(() => {
+      recordStudyTime(10).catch(() => {});
+    }, 10000);
+    return () => clearInterval(timer);
+  }, [recordStudyTime]);
 
-    return (
-      <AppShell activeNav="curriculum">
-        <Container size="lg" className="py-6 sm:py-10 space-y-8 text-right" dir="rtl">
-          {/* Hero Banner */}
-          <section className="rounded-3xl border border-rose-500/30 bg-gradient-to-br from-rose-950/40 via-slate-900 to-slate-900/90 p-6 sm:p-8 text-white relative overflow-hidden shadow-clay">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-              <div className="space-y-3 max-w-2xl">
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-300 border border-rose-500/20">
-                    شعبة آداب وفلسفة · السنة الثالثة ثانوي
-                  </span>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                    المعامل 6 (المادة الحاسمة للبكالوريا)
-                  </span>
-                </div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
-                  منهاج الفلسفة واللغة العربية (الفصل الأول كاملاً)
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                  دراسة إشكاليات إدراك العالم الخارجي الخمس، معمارية المقال الجدلي والاستقصاء بالوضع، حجج الفلاسفة وأقوالهم، أمثلة من الواقع المعاش، وسلالم التنقيط الوزارية المعتمدة.
-                </p>
-              </div>
+  const streamRules = useMemo(() => {
+    return getStreamSubjects(selectedStream);
+  }, [selectedStream]);
 
-              <div className="flex flex-wrap items-center gap-3">
-                <Link href="/exam">
-                  <Button variant="primary" size="md" className="bg-rose-700 hover:bg-rose-600 text-white font-bold text-xs sm:text-sm shadow-md flex items-center gap-2">
-                    <Scale className="h-4 w-4" />
-                    <span>محاكي امتحان الفلسفة الرسمي</span>
-                  </Button>
-                </Link>
-              </div>
-            </div>
-
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-slate-800">
-              <div className="p-3 rounded-2xl bg-slate-800/40 border border-slate-800 space-y-0.5">
-                <span className="text-[11px] text-slate-400">الإشكاليات الكبرى</span>
-                <p className="text-2xl font-black text-rose-400 font-mono">05</p>
-                <span className="text-[10px] text-slate-500">إشكاليات العالم الخارجي</span>
-              </div>
-              <div className="p-3 rounded-2xl bg-slate-800/40 border border-slate-800 space-y-0.5">
-                <span className="text-[11px] text-slate-400">أقوال الفلاسفة</span>
-                <p className="text-2xl font-black text-amber-400 font-mono">60+</p>
-                <span className="text-[10px] text-slate-500">مع إرشادات التوظيف الذكي</span>
-              </div>
-              <div className="p-3 rounded-2xl bg-slate-800/40 border border-slate-800 space-y-0.5">
-                <span className="text-[11px] text-slate-400">مناهج المقال</span>
-                <p className="text-2xl font-black text-blue-400 font-mono">04</p>
-                <span className="text-[10px] text-slate-500">جدل، استقصاء، مقارنة، نص</span>
-              </div>
-              <div className="p-3 rounded-2xl bg-slate-800/40 border border-slate-800 space-y-0.5">
-                <span className="text-[11px] text-slate-400">الأدب العربي والبناء</span>
-                <p className="text-2xl font-black text-emerald-400 font-mono">05</p>
-                <span className="text-[10px] text-slate-500">إعراب إذا وإذ وقواعد المنفى</span>
-              </div>
-            </div>
-          </section>
-
-          {/* Unit Filter Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 text-xs">
-            <button
-              onClick={() => setActiveUnit("all")}
-              className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap font-medium transition-all ${
-                activeUnit === "all"
-                  ? "bg-rose-700 text-white font-bold shadow-sm"
-                  : "bg-card border border-theme text-theme-secondary hover:text-theme-text hover:bg-card-hover"
-              }`}
-            >
-              جميع الإشكاليات والوحدات
-            </button>
-            {philoLessons.map((l, idx) => (
-              <button
-                key={l.id}
-                onClick={() => setActiveUnit(l.id)}
-                className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap font-medium transition-all ${
-                  activeUnit === l.id
-                    ? "bg-rose-700 text-white font-bold shadow-sm"
-                    : "bg-card border border-theme text-theme-secondary hover:text-theme-text hover:bg-card-hover"
-                }`}
-              >
-                {`إشكالية 0${idx + 1}: ${l.issueTitle_ar.replace("المشكلة الأولى: ", "").replace("المشكلة الثانية: ", "").replace("المشكلة الثالثة: ", "").replace("المشكلة الرابعة: ", "").replace("المشكلة الخامسة: ", "")}`}
-              </button>
-            ))}
-            <button
-              onClick={() => setActiveUnit("arabic")}
-              className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap font-medium transition-all ${
-                activeUnit === "arabic"
-                  ? "bg-emerald-700 text-white font-bold shadow-sm"
-                  : "bg-card border border-theme text-theme-secondary hover:text-theme-text hover:bg-card-hover"
-              }`}
-            >
-              📖 الأدب العربي: أحكام إذا وشعر المنفى
-            </button>
-            <button
-              onClick={() => setActiveUnit("methods")}
-              className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap font-medium transition-all ${
-                activeUnit === "methods"
-                  ? "bg-blue-700 text-white font-bold shadow-sm"
-                  : "bg-card border border-theme text-theme-secondary hover:text-theme-text hover:bg-card-hover"
-              }`}
-            >
-              📐 معسكر المناهج الفلسفية (4 طرق)
-            </button>
-          </div>
-
-          {/* Search bar */}
-          <div className="relative w-full sm:w-80">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="ابحث عن إشكالية، فيلسوف، أو مفهوم..."
-              className="w-full bg-card border border-theme rounded-xl px-3 py-2 text-xs text-theme-text placeholder:text-theme-muted pr-8 focus:outline-none focus:border-rose-500"
-            />
-            <Search className="h-4 w-4 text-theme-muted absolute right-2.5 top-2.5" />
-          </div>
-
-          {/* Philosophy Lessons List */}
-          {activeUnit !== "arabic" && activeUnit !== "methods" && (
-            <div className="space-y-4">
-              {filteredPhilo.map((lesson) => {
-                const isExpanded = expandedPhiloId === lesson.id;
-
-                return (
-                  <Card
-                    key={lesson.id}
-                    className={`border transition-all duration-200 overflow-hidden ${
-                      isExpanded
-                        ? "border-rose-500/60 bg-card shadow-md ring-1 ring-rose-500/20"
-                        : "border-theme bg-card hover:border-rose-500/40"
-                    }`}
-                  >
-                    {/* Header Row */}
-                    <div
-                      onClick={() => setExpandedPhiloId(isExpanded ? null : lesson.id)}
-                      className="p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer select-none"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-950/60 border border-rose-300 dark:border-rose-800 text-rose-800 dark:text-rose-300 font-mono font-black text-sm flex items-center justify-center shrink-0 shadow-sm">
-                          <Scale className="w-5 h-5" />
-                        </span>
-                        <div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[11px] text-theme-muted font-bold">
-                              {lesson.unitTitle_ar}
-                            </span>
-                            <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/10 text-rose-600 dark:text-rose-300 border border-rose-500/20">
-                              {lesson.methodType === "dialectic" ? "طريقة جدلية" : "استقصاء بالوضع"}
-                            </span>
-                            {lesson.videoSources.length > 0 && (
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 dark:bg-red-950/40 border border-red-200 px-2 py-0.5 rounded-lg">
-                                📹 {lesson.videoSources.length} فيديو موجه
-                              </span>
-                            )}
-                          </div>
-                          <h3 className="text-sm sm:text-base font-black text-theme-text mt-0.5">
-                            {lesson.issueTitle_ar}
-                          </h3>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-xs text-theme-muted font-medium hidden sm:inline">
-                          {isExpanded ? "طي التفاصيل" : "استكشف المقال والموقفين"}
-                        </span>
-                        {isExpanded ? (
-                          <ChevronUp className="h-5 w-5 text-rose-600" />
-                        ) : (
-                          <ChevronDown className="h-5 w-5 text-slate-400" />
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Expanded Lesson Content */}
-                    {isExpanded && (
-                      <div className="p-4 sm:p-6 border-t border-theme bg-surface-soft/60 space-y-6 animate-fade-in">
-                        {/* 1. طرح المشكلة (المقدمة) */}
-                        <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs sm:text-sm font-black text-amber-500 flex items-center gap-2">
-                              <Sparkles className="w-4 h-4" />
-                              <span>1. طرح المشكلة (المقدمة النموذجية — 04 نقاط)</span>
-                            </span>
-                            <Badge variant="outline" size="sm" className="text-amber-500 border-amber-500/30 font-bold">
-                              سلم البكالوريا: 04/20
-                            </Badge>
-                          </div>
-                          <div className="space-y-2 text-xs sm:text-sm text-theme-text leading-relaxed">
-                            <p><strong>التمهيد الوظيفي: </strong>{lesson.introduction.context_ar}</p>
-                            <p><strong>المفارقة والعناد الفلسفي: </strong>{lesson.introduction.philosophicalParadox_ar}</p>
-                            <p className="p-3 rounded-xl bg-amber-500/15 border border-amber-500/30 font-bold text-amber-400">
-                              <strong>صياغة الإشكال: </strong>{lesson.introduction.problemQuestion_ar}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* 2. القضية الأولى (الأطروحة) */}
-                        <div className="p-4 sm:p-5 rounded-2xl bg-card border border-theme space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs sm:text-sm font-black text-theme-text flex items-center gap-2">
-                              <Scale className="w-4 h-4 text-blue-500" />
-                              <span>2. القضية الأولى (الأطروحة وممثلوها وحججها)</span>
-                            </span>
-                            <Badge variant="outline" size="sm" className="text-blue-500 border-blue-500/30 font-bold">
-                              سلم البكالوريا: 04/20
-                            </Badge>
-                          </div>
-                          <p className="text-xs font-bold text-theme-secondary">
-                            {lesson.thesis.title_ar}
-                          </p>
-                          <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-300">
-                            <strong>أبرز الفلاسفة والممثلين: </strong>{lesson.thesis.representatives.join(" • ")}
-                          </div>
-                          <div className="space-y-2 pt-2">
-                            <span className="text-xs font-bold text-theme-text block">البراهين والحجج الفلسفية:</span>
-                            {lesson.thesis.arguments_ar.map((arg, argIdx) => (
-                              <div key={argIdx} className="p-3 rounded-xl bg-surface-soft border border-theme text-xs space-y-1">
-                                <strong className="text-blue-400 block">• {arg.premise_ar}</strong>
-                                <p className="text-theme-muted leading-relaxed">{arg.explanation_ar}</p>
-                              </div>
-                            ))}
-                          </div>
-                          {/* Critique */}
-                          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs space-y-1">
-                            <strong className="text-rose-400 block">النقد والمناقشة:</strong>
-                            <p className="text-theme-text">{lesson.thesis.critique.positiveAspect_ar}</p>
-                            <p className="text-theme-muted">{lesson.thesis.critique.negativeAspect_ar}</p>
-                          </div>
-                        </div>
-
-                        {/* 3. نقيض القضية (نقيض الأطروحة) */}
-                        <div className="p-4 sm:p-5 rounded-2xl bg-card border border-theme space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs sm:text-sm font-black text-theme-text flex items-center gap-2">
-                              <Scale className="w-4 h-4 text-purple-500" />
-                              <span>3. نقيض القضية (الموقف المعارض وحججه ونقده)</span>
-                            </span>
-                            <Badge variant="outline" size="sm" className="text-purple-500 border-purple-500/30 font-bold">
-                              سلم البكالوريا: 04/20
-                            </Badge>
-                          </div>
-                          <p className="text-xs font-bold text-theme-secondary">
-                            {lesson.antithesis.title_ar}
-                          </p>
-                          <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-xs text-purple-300">
-                            <strong>أبرز الفلاسفة والممثلين: </strong>{lesson.antithesis.representatives.join(" • ")}
-                          </div>
-                          <div className="space-y-2 pt-2">
-                            <span className="text-xs font-bold text-theme-text block">البراهين والحجج الفلسفية:</span>
-                            {lesson.antithesis.arguments_ar.map((arg, argIdx) => (
-                              <div key={argIdx} className="p-3 rounded-xl bg-surface-soft border border-theme text-xs space-y-1">
-                                <strong className="text-purple-400 block">• {arg.premise_ar}</strong>
-                                <p className="text-theme-muted leading-relaxed">{arg.explanation_ar}</p>
-                              </div>
-                            ))}
-                          </div>
-                          {/* Critique */}
-                          <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs space-y-1">
-                            <strong className="text-rose-400 block">النقد والمناقشة:</strong>
-                            <p className="text-theme-text">{lesson.antithesis.critique.positiveAspect_ar}</p>
-                            <p className="text-theme-muted">{lesson.antithesis.critique.negativeAspect_ar}</p>
-                          </div>
-                        </div>
-
-                        {/* 4. التركيب وتبرير الرأي الشخصي */}
-                        <div className="p-4 sm:p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs sm:text-sm font-black text-emerald-400 flex items-center gap-2">
-                              <Brain className="w-4 h-4" />
-                              <span>4. التركيب وتبرير الرأي الشخصي (محطة التجاوز والتوفيق)</span>
-                            </span>
-                            <Badge variant="outline" size="sm" className="text-emerald-400 border-emerald-500/30 font-bold">
-                              سلم البكالوريا: 04/20
-                            </Badge>
-                          </div>
-                          <p className="text-xs font-bold text-theme-text">
-                            {lesson.synthesis.title_ar}
-                          </p>
-                          <p className="text-xs text-theme-muted leading-relaxed">
-                            {lesson.synthesis.synthesizedThesis_ar}
-                          </p>
-                          <div className="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-xs space-y-1">
-                            <strong className="text-emerald-300 block">الرأي الشخصي المبرر (شرط العلامة الكاملة):</strong>
-                            <p className="text-theme-text">{lesson.synthesis.personalOpinion.opinion_ar}</p>
-                            <p className="text-theme-muted font-bold">{lesson.synthesis.personalOpinion.justification_ar}</p>
-                          </div>
-                        </div>
-
-                        {/* 5. حل المشكلة (الخاتمة) */}
-                        <div className="p-4 sm:p-5 rounded-2xl bg-blue-500/10 border border-blue-500/30 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xs sm:text-sm font-black text-blue-400 flex items-center gap-2">
-                              <CheckCircle2 className="w-4 h-4" />
-                              <span>5. حل المشكلة (الخاتمة النموذجية — 04 نقاط)</span>
-                            </span>
-                            <Badge variant="outline" size="sm" className="text-blue-400 border-blue-500/30 font-bold">
-                              سلم البكالوريا: 04/20
-                            </Badge>
-                          </div>
-                          <p className="text-xs sm:text-sm text-theme-text leading-relaxed">
-                            {lesson.conclusion.resolution_ar}
-                          </p>
-                        </div>
-
-                        {/* 6. أقوال الفلاسفة وأمثلة الواقع */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          {/* Quotes */}
-                          <div className="p-4 rounded-2xl bg-card border border-theme space-y-3">
-                            <span className="text-xs font-black text-amber-400 flex items-center gap-2">
-                              <Quote className="w-4 h-4" />
-                              <span>أقوال الفلاسفة المعتمدة وإرشادات التوظيف:</span>
-                            </span>
-                            <div className="space-y-2">
-                              {lesson.thesis.quotes.concat(lesson.antithesis.quotes).slice(0, 3).map((q, qIdx) => (
-                                <div key={qIdx} className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20 text-xs space-y-1">
-                                  <p className="font-bold text-amber-300">"{q.quote_ar}"</p>
-                                  <span className="text-[11px] text-theme-muted block">— {q.philosopher}</span>
-                                  <span className="text-[10px] text-theme-secondary block">💡 كيف توظفها: {q.usageGuidance_ar}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Fallacies */}
-                          <div className="p-4 rounded-2xl bg-card border border-theme space-y-3">
-                            <span className="text-xs font-black text-rose-400 flex items-center gap-2">
-                              <AlertTriangle className="w-4 h-4" />
-                              <span>فخاخ الأخطاء الشائعة في سلم التصحيح:</span>
-                            </span>
-                            <div className="space-y-2">
-                              {lesson.commonFallacies.slice(0, 2).map((fal, fIdx) => (
-                                <div key={fIdx} className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/20 text-xs space-y-1">
-                                  <div className="flex items-center justify-between">
-                                    <strong className="text-rose-400">{fal.trapTitle_ar}</strong>
-                                    <Badge variant="outline" size="sm" className="text-rose-400 border-rose-500/30 text-[10px]">
-                                      تضيع: {fal.bacPenaltyPoints} نقاط
-                                    </Badge>
-                                  </div>
-                                  <p className="text-theme-muted">{fal.description_ar}</p>
-                                  <p className="text-emerald-400 font-bold">✓ التصحيح النموذجي: {fal.correctRemedy_ar}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Videos */}
-                        {lesson.videoSources.length > 0 && (
-                          <div className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
-                            <span className="text-xs font-black text-slate-200 flex items-center gap-2">
-                              <Video className="w-4 h-4 text-red-500" />
-                              <span>فيديوهات موجهة بالدقيقة والثانية للأساتذة المعتمدين:</span>
-                            </span>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              {lesson.videoSources.map((v, vIdx) => (
-                                <div key={vIdx} className="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex items-center justify-between gap-2">
-                                  <div className="space-y-0.5 min-w-0">
-                                    <p className="text-xs font-bold text-white truncate">{v.title_ar}</p>
-                                    <span className="text-[11px] text-slate-400 block">الأستاذ: {v.teacherName_ar} · {v.durationMinutes} دقيقة</span>
-                                  </div>
-                                  <a
-                                    href={v.videoUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-bold text-xs shrink-0 transition-colors"
-                                  >
-                                    مشاهدة
-                                  </a>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Arabic Lessons Tab */}
-          {activeUnit === "arabic" && (
-            <div className="space-y-4">
-              {arabicLessons.map((ar) => (
-                <Card key={ar.id} className="p-5 border-theme bg-card space-y-6">
-                  <div className="space-y-1">
-                    <span className="text-xs font-bold text-emerald-400 block">اللغة العربية وآدابها · المعامل 6</span>
-                    <h2 className="text-lg font-black text-theme-text">{ar.unitTitle_ar}</h2>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
-                      <span className="text-xs font-bold text-emerald-400 block">البناء الفكري وقضايا شعر المنفى:</span>
-                      <p className="text-xs text-theme-text leading-relaxed">{ar.intellectualConstruction.centralTheme_ar}</p>
-                      <div className="pt-2 border-t border-emerald-500/20 text-xs space-y-1">
-                        <strong className="text-emerald-300 block">تقنية التلخيص المنهجي (قاعدة الربع 1/4):</strong>
-                        <p className="text-theme-muted">{ar.intellectualConstruction.textSummaryGuide_ar.method_ar}</p>
-                        <p className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-theme-text italic">
-                          نموذج: {ar.intellectualConstruction.textSummaryGuide_ar.sampleModelSummary_ar}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="p-4 rounded-2xl bg-blue-500/10 border border-blue-500/30 space-y-2">
-                      <span className="text-xs font-bold text-blue-400 block">البناء اللغوي والقواعد النحوية (الإعراب):</span>
-                      {ar.linguisticConstruction.grammarRules.slice(0, 1).map((rule) => (
-                        <div key={rule.id} className="space-y-1.5 pt-2">
-                          <p className="text-xs text-theme-text leading-relaxed">{rule.generalRule_ar}</p>
-                          {rule.parsingCases.slice(0, 2).map((pc, pcIdx) => (
-                            <div key={pcIdx} className="p-2.5 rounded-xl bg-surface-soft border border-theme text-xs">
-                              <strong className="text-blue-400 block">• {pc.caseTitle_ar}</strong>
-                              <p className="text-theme-muted">{pc.semanticMeaning_ar}</p>
-                              <span className="text-[11px] text-emerald-400 block font-mono">{pc.exactParsingTemplate_ar}</span>
-                            </div>
-                          ))}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {/* Philosophy Methodologies Tab */}
-          {activeUnit === "methods" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {methodSkills.map((sk) => (
-                <Card key={sk.id} className="p-5 border-theme bg-card space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-black text-blue-400 flex items-center gap-2">
-                      <Scale className="w-4 h-4" />
-                      <span>{sk.title_ar}</span>
-                    </span>
-                    <Badge variant="outline" size="sm" className="font-mono text-xs">
-                      منهجية معتمدة
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-theme-secondary leading-relaxed">{sk.description_ar}</p>
-                  <div className="space-y-2 pt-2 border-t border-theme">
-                    <span className="text-xs font-bold text-theme-text block">الخطوات الإلزامية في سلم التنقيط:</span>
-                    {sk.repairSteps_ar.map((step, idx) => (
-                      <div key={idx} className="p-2.5 rounded-xl bg-surface-soft border border-theme text-xs flex items-start gap-2">
-                        <span className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 font-mono font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">
-                          {idx + 1}
-                        </span>
-                        <p className="text-theme-text leading-relaxed">{step}</p>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
-        </Container>
-      </AppShell>
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // GESTION ET ÉCONOMIE VIEW
-  // ---------------------------------------------------------------------------
-  if (streamId === "gestion_eco") {
-    const skillsList = Object.values(GESTION_ECO_SKILLS);
-    const accountingSkills = skillsList.filter((s) => s.subjectId === "accounting_finance");
-    const economicsSkills = skillsList.filter((s) => s.subjectId === "economics_management");
-    const lawSkills = skillsList.filter((s) => s.subjectId === "law");
-
-    return (
-      <AppShell activeNav="curriculum">
-        <Container size="lg" className="py-6 sm:py-10 space-y-8 text-right" dir="rtl">
-          {/* Hero Banner */}
-          <section className="rounded-3xl border border-amber-500/30 bg-gradient-to-br from-amber-950/40 via-slate-900 to-slate-900/90 p-6 sm:p-8 text-white relative overflow-hidden shadow-clay">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-              <div className="space-y-3 max-w-2xl">
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
-                    شعبة تسيير واقتصاد · السنة الثالثة ثانوي
-                  </span>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    المعاملات الأساسية (محاسبة 6 · اقتصاد 5)
-                  </span>
-                </div>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
-                  منهاج التسيير المحاسبي والمالي والاقتصاد (الفصل الأول)
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                  أعمال نهاية السنة، الاهتلاكات، تسوية المخزونات، قيود اليومية، نظريات النقود والتضخم، وعقود الشركات التجارية.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-3">
-                <Link href="/exam">
-                  <Button variant="primary" size="md" className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs sm:text-sm shadow-md flex items-center gap-2">
-                    <Award className="h-4 w-4" />
-                    <span>محاكي امتحان التسيير الرسمي</span>
-                  </Button>
-                </Link>
-              </div>
-            </div>
-
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-6 mt-6 border-t border-slate-800">
-              <div className="p-3 rounded-2xl bg-slate-800/40 border border-slate-800 space-y-0.5">
-                <span className="text-[11px] text-slate-400">التسيير المالي والمحاسبي</span>
-                <p className="text-2xl font-black text-amber-400 font-mono">{accountingSkills.length}</p>
-                <span className="text-[10px] text-slate-500">مهارة إجرائية وقيد محاسبي</span>
-              </div>
-              <div className="p-3 rounded-2xl bg-slate-800/40 border border-slate-800 space-y-0.5">
-                <span className="text-[11px] text-slate-400">الاقتصاد والمناجمنت</span>
-                <p className="text-2xl font-black text-emerald-400 font-mono">{economicsSkills.length}</p>
-                <span className="text-[10px] text-slate-500">مفهوم تحليلي ونظري</span>
-              </div>
-              <div className="p-3 rounded-2xl bg-slate-800/40 border border-slate-800 space-y-0.5">
-                <span className="text-[11px] text-slate-400">القانون والشركات</span>
-                <p className="text-2xl font-black text-blue-400 font-mono">{lawSkills.length}</p>
-                <span className="text-[10px] text-slate-500">قواعد قانونية وتطبيقية</span>
-              </div>
-            </div>
-          </section>
-
-          {/* Skills Accordion List */}
-          <div className="space-y-4">
-            <h2 className="text-base font-black text-theme-text flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-amber-500" />
-              <span>فهرس كفاءات ودروس شعبة التسيير والاقتصاد:</span>
-            </h2>
-
-            {skillsList.map((sk) => (
-              <Card key={sk.id} className="p-5 border-theme bg-card space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Badge variant="outline" size="sm" className="font-mono text-[10px] mb-1">
-                      {sk.subjectId === "accounting_finance" ? "تسيير مالي ومحاسبي (معامل 6)" : sk.subjectId === "economics_management" ? "اقتصاد ومناجمنت (معامل 5)" : "قانون (معامل 2)"}
-                    </Badge>
-                    <h3 className="text-sm sm:text-base font-bold text-theme-text">{sk.title_ar}</h3>
-                  </div>
-                  <span className="text-xs text-theme-muted font-mono">{sk.id}</span>
-                </div>
-                <p className="text-xs text-theme-secondary leading-relaxed">{sk.description_ar}</p>
-                <div className="p-3.5 rounded-xl bg-surface-soft border border-theme text-xs space-y-2">
-                  <strong className="text-amber-400 block">خطوات المعالجة والتطبيق:</strong>
-                  {sk.repairSteps_ar.map((step, sIdx) => (
-                    <p key={sIdx} className="text-theme-muted flex items-start gap-2">
-                      <span className="text-amber-500 font-bold">•</span>
-                      <span>{step}</span>
-                    </p>
-                  ))}
-                </div>
-              </Card>
-            ))}
-          </div>
-        </Container>
-      </AppShell>
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // SCIENCES EXPÉRIMENTALES VIEW (55 DAILY LESSONS + CHECKPOINTS)
-  // ---------------------------------------------------------------------------
-  const units = [
-    { id: "all", label_ar: "جميع الوحدات (55 يوماً)", count: 55 },
-    { id: "u01", label_ar: "الوحدة 01: تركيب البروتين", range: [1, 10], count: 10 },
-    { id: "u02", label_ar: "الوحدة 02: بنية ووظيفة البروتين", range: [11, 25], count: 15 },
-    { id: "u03", label_ar: "الوحدة 03: النشاط الإنزيمي", range: [26, 35], count: 10 },
-    { id: "u04", label_ar: "الوحدة 04: الدفاع عن الذات (المناعة)", range: [36, 50], count: 15 },
-    { id: "methodology", label_ar: "معسكر المنهجية والإدماج", range: [51, 55], count: 5 },
+  const allAvailableStreams: Array<{ id: StreamId; label_ar: string; label_fr: string }> = [
+    { id: "sciences_exp", label_ar: "علوم تجريبية", label_fr: "Sciences Expérimentales" },
+    { id: "math", label_ar: "رياضيات", label_fr: "Mathématiques" },
+    { id: "technique_math", label_ar: "تقني رياضي", label_fr: "Technique Mathématiques" },
+    { id: "gestion_eco", label_ar: "تسيير واقتصاد", label_fr: "Gestion & Économie" },
+    { id: "lettres_philo", label_ar: "آداب وفلسفة", label_fr: "Lettres & Philosophie" },
+    { id: "langues_etrangeres", label_ar: "لغات أجنبية", label_fr: "Langues Étrangères" },
   ];
 
-  const filteredLessons = snvTerm1Lessons.filter((lesson) => {
-    if (activeUnit === "u01" && (lesson.dayNumber < 1 || lesson.dayNumber > 10)) return false;
-    if (activeUnit === "u02" && (lesson.dayNumber < 11 || lesson.dayNumber > 25)) return false;
-    if (activeUnit === "u03" && (lesson.dayNumber < 26 || lesson.dayNumber > 35)) return false;
-    if (activeUnit === "u04" && (lesson.dayNumber < 36 || lesson.dayNumber > 50)) return false;
-    if (activeUnit === "methodology" && (lesson.dayNumber < 51 || lesson.dayNumber > 55)) return false;
+  // Resolve active curriculum items based on stream and subject filter
+  const curriculumItems = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
 
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      return (
-        lesson.title_ar.toLowerCase().includes(q) ||
-        lesson.unitTitle_ar.toLowerCase().includes(q) ||
-        lesson.targetCapability_ar.toLowerCase().includes(q) ||
-        lesson.dayNumber.toString() === q
-      );
+    // 1. Sciences Expérimentales & Math/Physics streams
+    if (selectedStream === "sciences_exp" || selectedStream === "math" || selectedStream === "technique_math") {
+      let items: any[] = [];
+
+      // SNV daily lessons (for sciences_exp)
+      if (selectedStream === "sciences_exp" && (selectedSubject === "all" || selectedSubject === "natural_sciences")) {
+        items.push(
+          ...snvTerm1Lessons.map((l) => ({
+            id: `snv_day_${l.dayNumber}`,
+            skillId: `snv_day_${l.dayNumber}`,
+            subjectId: "natural_sciences",
+            title_ar: `اليوم ${l.dayNumber}: ${l.title_ar}`,
+            title_fr: `Jour ${l.dayNumber}: ${l.title_ar}`,
+            unit_ar: l.unitTitle_ar,
+            summary_ar: l.coreConcept_ar || l.simpleExplanation_ar,
+            summary_fr: l.targetCapability_ar,
+            videoUrl: l.externalResource?.videoUrl,
+            videoTimestamp: l.externalResource?.targetTimestamp,
+            dayNumber: l.dayNumber,
+            keyQuestions: l.commonMistakes?.map((m) => m.trap_ar) || [],
+            type: "daily_lesson",
+          }))
+        );
+      }
+
+      // Subject skills for Math & Physics
+      const subjectsToLoad = selectedSubject === "all"
+        ? streamRules.map((r) => r.subjectId)
+        : [selectedSubject];
+
+      for (const subj of subjectsToLoad) {
+        if (subj === "natural_sciences" && selectedStream === "sciences_exp") continue; // already loaded as daily lessons
+        const skills = getSkillsForSubject(subj, selectedStream);
+        items.push(
+          ...skills.map((s) => ({
+            id: s.id,
+            skillId: s.id,
+            subjectId: s.subjectId,
+            title_ar: s.title_ar,
+            title_fr: s.title_fr,
+            unit_ar: ALL_SUBJECTS[s.subjectId as SubjectId]?.name_ar || s.subjectId,
+            summary_ar: s.description_ar,
+            summary_fr: s.description_fr,
+            repairStrategy_ar: s.repairStrategy_ar,
+            repairSteps_ar: s.repairSteps_ar,
+            type: "skill",
+          }))
+        );
+      }
+
+      if (query) {
+        return items.filter(
+          (it) =>
+            it.title_ar?.toLowerCase().includes(query) ||
+            it.title_fr?.toLowerCase().includes(query) ||
+            it.summary_ar?.toLowerCase().includes(query) ||
+            it.unit_ar?.toLowerCase().includes(query)
+        );
+      }
+      return items;
     }
-    return true;
-  });
+
+    // 2. Gestion & Économie
+    if (selectedStream === "gestion_eco") {
+      const skills = Object.values(GESTION_ECO_SKILLS);
+      let filtered = skills;
+      if (selectedSubject !== "all") {
+        filtered = filtered.filter((s) => s.subjectId === selectedSubject);
+      }
+      if (query) {
+        filtered = filtered.filter(
+          (s) =>
+            s.title_ar?.toLowerCase().includes(query) ||
+            s.title_fr?.toLowerCase().includes(query) ||
+            s.description_ar?.toLowerCase().includes(query)
+        );
+      }
+      return filtered.map((s) => ({
+        id: s.id,
+        skillId: s.id,
+        subjectId: s.subjectId,
+        title_ar: s.title_ar,
+        title_fr: s.title_fr,
+        unit_ar: ALL_SUBJECTS[s.subjectId as SubjectId]?.name_ar || s.subjectId,
+        summary_ar: s.description_ar,
+        summary_fr: s.description_fr,
+        repairStrategy_ar: s.repairStrategy_ar,
+        repairSteps_ar: s.repairSteps_ar,
+        type: "skill",
+      }));
+    }
+
+    // 3. Lettres & Philosophie
+    if (selectedStream === "lettres_philo" || selectedStream === "langues_etrangeres") {
+      let items: any[] = [];
+
+      // Philosophy Essay Lessons
+      if (selectedSubject === "all" || selectedSubject === "philosophy") {
+        items.push(
+          ...PHILOSOPHY_TERM1_LESSONS.map((p) => ({
+            id: p.id,
+            skillId: p.id,
+            subjectId: "philosophy",
+            title_ar: p.issueTitle_ar,
+            title_fr: p.issueTitle_ar,
+            unit_ar: p.unitTitle_ar,
+            summary_ar: p.introduction.philosophicalParadox_ar || p.thesis.title_ar,
+            summary_fr: p.thesis.title_ar,
+            arguments: p.thesis.arguments_ar?.map((arg) => arg.premise_ar) || [],
+            quotes: p.thesis.quotes || [],
+            type: "philosophy_essay",
+          }))
+        );
+      }
+
+      // Arabic Language Lessons
+      if (selectedSubject === "all" || selectedSubject === "arabic") {
+        items.push(
+          ...ARABIC_LESSONS_CATALOG.map((a) => ({
+            id: a.id,
+            skillId: a.id,
+            subjectId: "arabic",
+            title_ar: a.unitTitle_ar,
+            title_fr: a.unitTitle_ar,
+            unit_ar: a.unitTitle_ar,
+            summary_ar: a.intellectualConstruction.centralTheme_ar,
+            summary_fr: a.intellectualConstruction.centralTheme_ar,
+            rules: a.linguisticConstruction.grammarRules || [],
+            type: "arabic_lesson",
+          }))
+        );
+      }
+
+      // Additional Lettres & Philo skills
+      const lpSkills = Object.values(LETTRES_PHILO_SKILLS);
+      for (const s of lpSkills) {
+        if (selectedSubject !== "all" && s.subjectId !== selectedSubject) continue;
+        items.push({
+          id: s.id,
+          skillId: s.id,
+          subjectId: s.subjectId,
+          title_ar: s.title_ar,
+          title_fr: s.title_fr,
+          unit_ar: ALL_SUBJECTS[s.subjectId as SubjectId]?.name_ar || s.subjectId,
+          summary_ar: s.description_ar,
+          summary_fr: s.description_fr,
+          repairStrategy_ar: s.repairStrategy_ar,
+          repairSteps_ar: s.repairSteps_ar,
+          type: "skill",
+        });
+      }
+
+      if (query) {
+        return items.filter(
+          (it) =>
+            it.title_ar?.toLowerCase().includes(query) ||
+            it.title_fr?.toLowerCase().includes(query) ||
+            it.summary_ar?.toLowerCase().includes(query)
+        );
+      }
+      return items;
+    }
+
+    return [];
+  }, [selectedStream, selectedSubject, searchQuery, streamRules]);
+
+  const streamInfo = ALGERIAN_BAC_STREAMS[selectedStream];
 
   return (
     <AppShell activeNav="curriculum">
       <Container size="lg" className="py-6 sm:py-10 space-y-8 text-right" dir="rtl">
-        {/* HERO BANNER: SCIENCES EXPÉRIMENTALES */}
-        <section className="rounded-3xl border border-emerald-500/20 bg-gradient-to-br from-emerald-950/40 via-slate-900 to-slate-900/90 p-6 sm:p-8 text-white relative overflow-hidden shadow-clay">
+        {/* ================================================================= */}
+        {/* HERO SECTION WITH REAL STUDY-TIME TRACKER                          */}
+        {/* ================================================================= */}
+        <section className="rounded-3xl border border-theme bg-gradient-to-br from-surface via-surface/90 to-surface/60 p-6 sm:p-8 relative overflow-hidden shadow-clay">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
             <div className="space-y-3 max-w-2xl">
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  شعبة علوم تجريبية · السنة الثالثة ثانوي
-                </span>
-                <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                  الفصل الأول كاملاً
-                </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="primary" size="sm" className="font-bold text-xs px-3 py-1">
+                  المكتبة الشاملة • الوضع الحر
+                </Badge>
+                {selectedStream === enrolledStream && (
+                  <Badge variant="outline" size="sm" className="text-xs bg-emerald-500/10 text-emerald-500 border-emerald-500/30">
+                    شعبتك الرسمية المسجلة
+                  </Badge>
+                )}
               </div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white">
-                منهاج علوم الطبيعة والحياة (55 يوماً تفاعلياً)
+
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-theme-text">
+                منهاج {streamInfo?.name_ar || "البكالوريا"} كاملاً
               </h1>
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                كل يوم مخصص لمهارة ومفهوم وزاري محدد، مدعم بالشرح المفصل، الفيديوهات الموجهة بالدقيقة والثانية، الأخطاء الشائعة، ونقاط التفتيش الأسبوعية.
+
+              <p className="text-xs sm:text-sm text-theme-secondary leading-relaxed">
+                تصفح كل الوحدات والدروس، شاهد الشروحات، راجع الملخصات، وعلّم الدروس التي أتقنتها بضغطة زر دون أي تقييد بمسار إجباري.
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <Link href="/exam">
-                <Button variant="primary" size="md" className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm shadow-md flex items-center gap-2">
-                  <Award className="h-4 w-4" />
-                  <span>محاكي امتحان D-Day الشامل</span>
-                </Button>
-              </Link>
+            {/* Live Study Time & Mastery Counter */}
+            <div className="flex items-center gap-3">
+              <div className="p-4 rounded-2xl bg-card border border-theme shadow-sm text-center min-w-[130px]">
+                <div className="flex items-center justify-center gap-1.5 text-xs text-theme-muted mb-1 font-bold">
+                  <Clock className="w-3.5 h-3.5 text-blue-400 animate-pulse" />
+                  <span>وقت الدراسة</span>
+                </div>
+                <span className="text-xl sm:text-2xl font-black text-theme-text font-mono">
+                  {Math.round(totalStudyTimeSeconds / 60)} د
+                </span>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-card border border-theme shadow-sm text-center min-w-[130px]">
+                <div className="flex items-center justify-center gap-1.5 text-xs text-theme-muted mb-1 font-bold">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>الدروس المتقنة</span>
+                </div>
+                <span className="text-xl sm:text-2xl font-black text-emerald-500 font-mono">
+                  {masteredCount}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Quick Stats Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-slate-800">
-            <div className="p-3 rounded-2xl bg-slate-800/40 border border-slate-800 space-y-0.5">
-              <span className="text-[11px] text-slate-400">الدروس اليومية</span>
-              <p className="text-2xl font-black text-emerald-400 font-mono">55</p>
-              <span className="text-[10px] text-slate-500">درساً تفصيلياً</span>
-            </div>
-            <div className="p-3 rounded-2xl bg-slate-800/40 border border-slate-800 space-y-0.5">
-              <span className="text-[11px] text-slate-400">نقاط التفتيش</span>
-              <p className="text-2xl font-black text-amber-400 font-mono">11</p>
-              <span className="text-[10px] text-slate-500">محطة تقويم أسبوعية</span>
-            </div>
-            <div className="p-3 rounded-2xl bg-slate-800/40 border border-slate-800 space-y-0.5">
-              <span className="text-[11px] text-slate-400">الوحدات التعليمية</span>
-              <p className="text-2xl font-black text-blue-400 font-mono">4 + 1</p>
-              <span className="text-[10px] text-slate-500">وحدات + معسكر منهجية</span>
-            </div>
-            <div className="p-3 rounded-2xl bg-slate-800/40 border border-slate-800 space-y-0.5">
-              <span className="text-[11px] text-slate-400">محاكي البكالوريا</span>
-              <p className="text-2xl font-black text-purple-400 font-mono">D-Day</p>
-              <span className="text-[10px] text-slate-500">موضوعان كاملان</span>
+          {/* Quick Stream Selector Pills */}
+          <div className="pt-6 mt-6 border-t border-theme/60 space-y-2">
+            <span className="text-xs font-bold text-theme-muted block">
+              تصفح شعبة أخرى:
+            </span>
+            <div className="flex items-center gap-2 overflow-x-auto pb-1">
+              {allAvailableStreams.map((st) => (
+                <button
+                  key={st.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedStream(st.id);
+                    setSelectedSubject("all");
+                    setSearchQuery("");
+                  }}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                    selectedStream === st.id
+                      ? "bg-[var(--color-primary)] text-white shadow-md scale-102"
+                      : "bg-card border border-theme text-theme-secondary hover:text-theme-text hover:border-theme-hover"
+                  }`}
+                >
+                  <span>{st.label_ar}</span>
+                  {st.id === enrolledStream && (
+                    <span className="ms-1.5 text-[9px] px-1.5 py-0.5 rounded-full bg-white/20">
+                      أنت هنا
+                    </span>
+                  )}
+                </button>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* View Selector: Lessons vs Checkpoints */}
-        <div className="flex items-center justify-between border-b border-theme pb-3 gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setActiveSection("lessons")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-                activeSection === "lessons"
-                  ? "bg-[var(--color-primary)] text-white shadow-clay"
-                  : "text-theme-secondary hover:text-theme-text hover:bg-card-hover"
-              }`}
-            >
-              <BookOpen className="h-4 w-4" />
-              <span>الدروس اليومية (1 - 55)</span>
-            </button>
-            <button
-              onClick={() => setActiveSection("checkpoints")}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
-                activeSection === "checkpoints"
-                  ? "bg-[var(--color-primary)] text-white shadow-clay"
-                  : "text-theme-secondary hover:text-theme-text hover:bg-card-hover"
-              }`}
-            >
-              <ShieldCheck className="h-4 w-4" />
-              <span>نقاط التفتيش الأسبوعية (1 - 11)</span>
-            </button>
-          </div>
+        {/* ================================================================= */}
+        {/* SUBJECT TABS & SEARCH BAR                                          */}
+        {/* ================================================================= */}
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            {/* Subject Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto w-full pb-2 text-xs">
+              <button
+                type="button"
+                onClick={() => setSelectedSubject("all")}
+                className={`px-4 py-2 rounded-xl whitespace-nowrap font-bold transition-all ${
+                  selectedSubject === "all"
+                    ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm"
+                    : "bg-card border border-theme text-theme-secondary hover:text-theme-text"
+                }`}
+              >
+                كل المواد ({curriculumItems.length})
+              </button>
 
-          {/* Search bar */}
-          {activeSection === "lessons" && (
-            <div className="relative w-full sm:w-64">
+              {streamRules.map((r) => {
+                const subj = ALL_SUBJECTS[r.subjectId];
+                const name = subj?.name_ar || r.subjectId;
+                const isSelected = selectedSubject === r.subjectId;
+
+                return (
+                  <button
+                    key={r.subjectId}
+                    type="button"
+                    onClick={() => setSelectedSubject(r.subjectId)}
+                    className={`px-4 py-2 rounded-xl whitespace-nowrap font-bold transition-all flex items-center gap-1.5 ${
+                      isSelected
+                        ? "bg-[var(--color-primary)] text-white shadow-sm"
+                        : "bg-card border border-theme text-theme-secondary hover:text-theme-text"
+                    }`}
+                  >
+                    <span>{name}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface/80 border border-theme">
+                      معامل {r.coefficient}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Search Input */}
+            <div className="relative w-full sm:w-72 shrink-0">
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="ابحث برقم اليوم أو الكلمة..."
-                className="w-full bg-card border border-theme rounded-xl px-3 py-1.5 text-xs text-theme-text placeholder:text-theme-muted pr-8 focus:outline-none focus:border-[var(--color-primary)]"
+                placeholder="ابحث في الدروس والملخصات..."
+                className="w-full bg-card border border-theme rounded-xl px-3 py-2 text-xs text-theme-text placeholder:text-theme-muted pr-8 focus:outline-none focus:border-[var(--color-primary)]"
               />
-              <Search className="h-3.5 w-3.5 text-theme-muted absolute right-2.5 top-2.5" />
+              <Search className="h-4 w-4 text-theme-muted absolute right-2.5 top-2.5" />
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Section 1: Daily Lessons */}
-        {activeSection === "lessons" && (
-          <div className="space-y-6">
-            {/* Unit Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2 text-xs">
-              {units.map((u) => (
-                <button
-                  key={u.id}
-                  onClick={() => setActiveUnit(u.id)}
-                  className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap font-medium transition-all ${
-                    activeUnit === u.id
-                      ? "bg-emerald-600 text-white font-bold shadow-sm"
-                      : "bg-card border border-theme text-theme-secondary hover:text-theme-text hover:bg-card-hover"
+        {/* ================================================================= */}
+        {/* CURRICULUM ITEMS LIST WITH MANUAL MASTERY TOGGLES                  */}
+        {/* ================================================================= */}
+        <div className="space-y-4">
+          {curriculumItems.length === 0 ? (
+            <Card className="p-8 text-center space-y-3 bg-card border-theme">
+              <BookOpen className="w-10 h-10 text-theme-muted mx-auto" />
+              <p className="text-sm font-bold text-theme-text">لا توجد دروس مطابقة لبحثك</p>
+              <p className="text-xs text-theme-muted">جرب اختيار مادة أخرى أو مسح نص البحث</p>
+            </Card>
+          ) : (
+            curriculumItems.map((item: any) => {
+              const isExpanded = expandedItemId === item.id;
+              const isMastered = userSkills[item.skillId]?.status === "mastered";
+              const subjMeta = ALL_SUBJECTS[item.subjectId as SubjectId];
+              const diagramData = item.dayNumber ? CURRICULUM_DIAGRAMS[item.dayNumber] : null;
+              const youtubeData = parseYoutubeData(item.videoUrl, item.videoTimestamp);
+
+              return (
+                <Card
+                  key={item.id}
+                  className={`border transition-all duration-200 overflow-hidden ${
+                    isExpanded
+                      ? "border-[var(--color-primary)]/60 bg-card shadow-md ring-1 ring-[var(--color-primary)]/20"
+                      : "border-theme bg-card hover:border-theme-hover"
                   }`}
                 >
-                  {u.label_ar} ({u.count})
-                </button>
-              ))}
-            </div>
-
-            {/* Lessons Accordion */}
-            <div className="space-y-4">
-              {filteredLessons.map((lesson) => {
-                const isExpanded = expandedDay === lesson.dayNumber;
-                const videoData = parseYoutubeData(
-                  lesson.externalResource?.videoUrl,
-                  lesson.externalResource?.targetTimestamp
-                );
-                const diagramData = CURRICULUM_DIAGRAMS[lesson.dayNumber];
-                const isRecallOpen = revealedRecall[lesson.dayNumber];
-
-                return (
-                  <Card
-                    key={lesson.id}
-                    className={`border transition-all duration-200 overflow-hidden ${
-                      isExpanded
-                        ? "border-emerald-500/60 bg-card shadow-md ring-1 ring-emerald-500/20"
-                        : "border-theme bg-card hover:border-emerald-500/40"
-                    }`}
-                  >
+                  {/* Header Row */}
+                  <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div
-                      onClick={() => setExpandedDay(isExpanded ? null : lesson.dayNumber)}
-                      className="p-4 sm:p-5 flex items-center justify-between gap-4 cursor-pointer select-none"
+                      onClick={() => setExpandedItemId(isExpanded ? null : item.id)}
+                      className="flex items-start gap-3.5 flex-1 cursor-pointer select-none"
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="w-10 h-10 rounded-2xl bg-emerald-100 border border-emerald-300 text-emerald-800 font-mono font-black text-sm flex items-center justify-center shrink-0 shadow-sm">
-                          {lesson.dayNumber.toString().padStart(2, "0")}
-                        </span>
-                        <div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-[11px] text-theme-muted font-bold">
-                              {lesson.unitTitle_ar}
-                            </span>
-                            {videoData && (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-lg">
-                                📹 فيديو موجه
-                              </span>
-                            )}
-                            {diagramData && (
-                              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-lg">
-                                📊 رسم تخطيطي
-                              </span>
-                            )}
-                          </div>
-                          <h3 className="text-sm sm:text-base font-bold text-slate-900 mt-0.5">
-                            {lesson.title_ar}
-                          </h3>
-                        </div>
+                      <div className="w-10 h-10 rounded-2xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center shrink-0 mt-0.5 shadow-sm font-bold text-sm">
+                        {item.dayNumber ? `ي${item.dayNumber}` : <BookOpen className="w-5 h-5" />}
                       </div>
 
-                      <div className="flex items-center gap-3 shrink-0">
-                        <span className="text-xs text-slate-600 font-medium hidden sm:inline">
-                          {isExpanded ? "طي التفاصيل" : "عرض الدرس"}
-                        </span>
-                        {isExpanded ? (
-                          <ChevronUp className="h-5 w-5 text-emerald-700" />
-                        ) : (
-                          <ChevronDown className="h-5 w-5 text-slate-400" />
-                        )}
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-bold text-sm sm:text-base text-theme-text hover:text-[var(--color-primary)] transition-colors">
+                            {item.title_ar}
+                          </span>
+                          {subjMeta && (
+                            <Badge variant="outline" size="sm" className="text-[10px] font-bold">
+                              {subjMeta.name_ar}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-theme-secondary line-clamp-1">
+                          {item.summary_ar}
+                        </p>
                       </div>
                     </div>
 
-                    {isExpanded && (
-                      <div className="p-4 sm:p-6 border-t border-theme bg-surface-soft/60 space-y-6 animate-fade-in">
-                        {/* Target Capability */}
-                        <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/90 border-2 border-emerald-200/90 space-y-2 shadow-sm">
-                          <span className="text-xs sm:text-sm font-bold text-emerald-950 flex items-center gap-1.5">
-                            <Target className="h-4 w-4 text-emerald-700" />
-                            الكفاءة المستهدفة اليوم:
+                    {/* Action Controls: Mastery Toggle + Practice Link */}
+                    <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                      {/* Manual Mastery Toggle Button */}
+                      <button
+                        type="button"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          await markSkillMastered(item.skillId, selectedStream, item.subjectId);
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-sm ${
+                          isMastered
+                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30"
+                            : "bg-surface border border-theme text-theme-secondary hover:text-theme-text hover:border-[var(--color-border-hover)]"
+                        }`}
+                        title="تحديد أو إلغاء إتقان الدرس يدوياً"
+                      >
+                        <CheckCircle2 className={`w-3.5 h-3.5 ${isMastered ? "text-emerald-400" : "text-theme-muted"}`} />
+                        <span>{isMastered ? "تم الإتقان ✓" : "تحديد كمتقن"}</span>
+                      </button>
+
+                      {/* Direct Practice Link */}
+                      <Link
+                        href={`/mission/${item.skillId}`}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] transition-all shadow-sm"
+                      >
+                        <Play className="w-3 h-3 fill-current" />
+                        <span>تمرين</span>
+                      </Link>
+
+                      {/* Toggle Expand Arrow */}
+                      <button
+                        type="button"
+                        onClick={() => setExpandedItemId(isExpanded ? null : item.id)}
+                        className="p-1.5 rounded-lg border border-theme text-theme-muted hover:text-theme-text"
+                      >
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Expanded Content Drawer */}
+                  {isExpanded && (
+                    <div className="px-5 pb-5 pt-2 border-t border-theme/60 space-y-4 animate-fade-in text-xs sm:text-sm">
+                      {/* Summary & Description */}
+                      <div className="p-4 rounded-2xl bg-surface/50 border border-theme space-y-2">
+                        <span className="font-bold text-theme-text block text-xs text-[var(--color-primary)]">
+                          ملخص الدرس والمفاهيم الأساسية:
+                        </span>
+                        <p className="text-theme-secondary leading-relaxed">
+                          {item.summary_ar}
+                        </p>
+                      </div>
+
+                      {/* Repair Steps / Methodological Framework */}
+                      {item.repairSteps_ar && item.repairSteps_ar.length > 0 && (
+                        <div className="p-4 rounded-2xl bg-surface/50 border border-theme space-y-2">
+                          <span className="font-bold text-theme-text block text-xs text-amber-500">
+                            الخطوات المنهجية المعتمدة للحل:
                           </span>
-                          <p className="text-xs sm:text-sm text-slate-900 leading-relaxed font-semibold">
-                            {lesson.targetCapability_ar}
-                          </p>
+                          <ol className="list-decimal list-inside space-y-1 text-theme-secondary">
+                            {item.repairSteps_ar.map((step: string, sIdx: number) => (
+                              <li key={sIdx} className="leading-relaxed">
+                                {step}
+                              </li>
+                            ))}
+                          </ol>
                         </div>
+                      )}
 
-                        {/* Video */}
-                        {videoData && lesson.externalResource && (
-                          <div className="space-y-3">
-                            <span className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
-                              <Video className="h-4 w-4 text-red-600" />
-                              <span>فيديو تعليمي موجه بالدقيقة والثانية:</span>
-                            </span>
-                            <div className="rounded-2xl overflow-hidden border-2 border-slate-200 bg-slate-900 shadow-sm">
-                              <EmbeddedVideoPlayer
-                                videoId={videoData.videoId}
-                                videoUrl={lesson.externalResource.videoUrl}
-                                startSeconds={videoData.startSeconds}
-                                title_ar={lesson.externalResource.title}
-                                channelName={lesson.externalResource.channelName}
-                              />
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Scientific Explanation */}
+                      {/* Video explanation if available */}
+                      {youtubeData && (
                         <div className="space-y-2">
-                          <span className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
-                            <Sparkles className="h-4 w-4 text-amber-600" />
-                            الشرح العلمي الدقيق:
+                          <span className="font-bold text-theme-text block text-xs flex items-center gap-1.5">
+                            <Video className="w-3.5 h-3.5 text-rose-500" />
+                            <span>الشرح المرئي المصاحب:</span>
                           </span>
-                          <div className="p-4 sm:p-5 rounded-2xl bg-white border-2 border-slate-200 shadow-sm">
-                            <MathRenderer
-                              content={lesson.simpleExplanation_ar}
-                              className="text-xs sm:text-sm text-slate-800 leading-relaxed space-y-3"
-                            />
+                          <EmbeddedVideoPlayer
+                            videoId={youtubeData.videoId}
+                            startSeconds={youtubeData.startSeconds}
+                            title_ar={item.title_ar}
+                          />
+                        </div>
+                      )}
+
+                      {/* Diagram Viewer if available */}
+                      {diagramData && (
+                        <div className="space-y-2">
+                          <DiagramViewer
+                            caption_ar={diagramData.caption_ar}
+                            diagramUrl={diagramData.diagramUrl}
+                            labels={diagramData.labels}
+                          />
+                        </div>
+                      )}
+
+                      {/* Philosophy Arguments & Quotes if applicable */}
+                      {item.arguments && (
+                        <div className="p-4 rounded-2xl bg-surface/50 border border-theme space-y-3">
+                          <span className="font-bold text-theme-text block text-xs text-rose-400">
+                            أبرز الحجج الفلسفية والأقوال:
+                          </span>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {item.arguments.slice(0, 4).map((arg: any, aIdx: number) => (
+                              <div key={aIdx} className="p-2.5 rounded-xl bg-card border border-theme space-y-1">
+                                <span className="font-bold text-xs text-theme-text block">{arg.title_ar}</span>
+                                <p className="text-[11px] text-theme-muted">{arg.content_ar}</p>
+                              </div>
+                            ))}
                           </div>
                         </div>
-
-                        {/* Diagram */}
-                        {diagramData && (
-                          <div className="space-y-2">
-                            <DiagramViewer
-                              caption_ar={diagramData.caption_ar}
-                              diagramUrl={diagramData.diagramUrl}
-                              labels={diagramData.labels}
-                            />
-                          </div>
-                        )}
-
-                        {/* Common Trap */}
-                        <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/90 border-2 border-amber-200 space-y-2 shadow-sm">
-                          <span className="text-xs sm:text-sm font-bold text-amber-950 flex items-center gap-1.5">
-                            <AlertTriangle className="h-4 w-4 text-amber-700" />
-                            فخ منهجي شائع يحذر منه المفتشون:
-                          </span>
-                          <p className="text-xs sm:text-sm text-slate-900 leading-relaxed font-semibold">
-                            {lesson.commonMistakes[0]?.trap_ar}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Section 2: Weekly Checkpoints */}
-        {activeSection === "checkpoints" && (
-          <div className="space-y-6">
-            <div className="space-y-4">
-              {snvTerm1Checkpoints.map((cp) => (
-                <Card key={cp.id} className="p-5 sm:p-6 border-theme bg-card space-y-5">
-                  <div className="flex items-center justify-between border-b border-theme pb-3">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                          نقطة تفتيش أسبوعية
-                        </span>
-                      </div>
-                      <h3 className="text-base font-bold text-theme-text mt-1">
-                        {cp.title_ar}
-                      </h3>
+                      )}
                     </div>
-                  </div>
-
-                  <div className="p-4 sm:p-5 rounded-2xl bg-white border-2 border-slate-200 space-y-3 shadow-sm">
-                    <p className="text-xs sm:text-sm font-bold text-slate-900 leading-relaxed">
-                      {cp.taskStep.instruction_ar}
-                    </p>
-                    <div className="mt-3 pt-3 border-t border-slate-200 space-y-2">
-                      <span className="text-xs sm:text-sm font-bold text-emerald-900 block">الحل المنهجي المفصل:</span>
-                      <div className="bg-slate-50 p-4 rounded-xl border-2 border-slate-200">
-                        <MathRenderer
-                          content={cp.taskStep.fullSolution_ar}
-                          className="text-xs sm:text-sm text-slate-800 leading-relaxed"
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  )}
                 </Card>
-              ))}
-            </div>
-          </div>
-        )}
+              );
+            })
+          )}
+        </div>
       </Container>
     </AppShell>
   );

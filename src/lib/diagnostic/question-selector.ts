@@ -1,11 +1,23 @@
-import { StreamId } from "../../types/education";
+import { StreamId, SubjectId } from "../../types/education";
 import { DiagnosticQuestion } from "../../types/diagnostic";
 import {
   SCIENCES_EXP_DIAGNOSTIC_QUESTIONS,
   MATHEMATICS_DIAGNOSTIC_QUESTIONS,
   PHYSICS_DIAGNOSTIC_QUESTIONS,
+  NATURAL_SCIENCES_DIAGNOSTIC_QUESTIONS,
 } from "../../data/diagnostic/bac/sciences-exp";
-import { GESTION_ECO_DIAGNOSTIC_QUESTIONS } from "../../data/diagnostic/bac/gestion-eco";
+import {
+  GESTION_ECO_DIAGNOSTIC_QUESTIONS,
+  ACCOUNTING_DIAGNOSTIC_QUESTIONS,
+  ECONOMICS_DIAGNOSTIC_QUESTIONS,
+  LAW_DIAGNOSTIC_QUESTIONS,
+  MATHEMATICS_DIAGNOSTIC_QUESTIONS as GESTION_ECO_MATHEMATICS_DIAGNOSTIC_QUESTIONS,
+} from "../../data/diagnostic/bac/gestion-eco";
+import {
+  LETTRES_PHILO_DIAGNOSTIC_QUESTIONS,
+  PHILOSOPHY_DIAGNOSTIC_QUESTIONS,
+  ARABIC_DIAGNOSTIC_QUESTIONS,
+} from "../../data/diagnostic/bac/lettres-philo";
 
 /**
  * Isolated Math stream diagnostic pack: 5 Math + 5 Physics (10 questions total)
@@ -17,11 +29,55 @@ export const MATH_STREAM_DIAGNOSTIC_QUESTIONS: DiagnosticQuestion[] = [
 ];
 
 /**
+ * Returns the diagnostic question pack for a specific subject within a stream.
+ */
+export function getDiagnosticQuestionsForSubject(
+  subjectId: SubjectId | string,
+  streamId?: StreamId
+): DiagnosticQuestion[] {
+  switch (subjectId) {
+    case "math":
+    case "mathematics":
+      if (streamId === "gestion_eco") {
+        return [...GESTION_ECO_MATHEMATICS_DIAGNOSTIC_QUESTIONS];
+      }
+      return [...MATHEMATICS_DIAGNOSTIC_QUESTIONS];
+
+    case "physics":
+      return [...PHYSICS_DIAGNOSTIC_QUESTIONS];
+
+    case "natural_sciences":
+    case "science":
+      return [...NATURAL_SCIENCES_DIAGNOSTIC_QUESTIONS];
+
+    case "accounting_finance":
+    case "accounting":
+      return [...ACCOUNTING_DIAGNOSTIC_QUESTIONS];
+
+    case "economics_management":
+    case "economics":
+      return [...ECONOMICS_DIAGNOSTIC_QUESTIONS];
+
+    case "law":
+      return [...LAW_DIAGNOSTIC_QUESTIONS];
+
+    case "philosophy":
+      return [...PHILOSOPHY_DIAGNOSTIC_QUESTIONS];
+
+    case "arabic":
+      return [...ARABIC_DIAGNOSTIC_QUESTIONS];
+
+    default:
+      return [];
+  }
+}
+
+/**
  * Returns the diagnostic question pack for a specified stream.
  * For Sciences Expérimentales, returns the full 15-question pilot pack (5 Math, 5 Physics, 5 Sciences).
  * For Gestion & Économie, returns the full 15-question pilot pack (4 Accounting, 4 Economics, 3 Law, 4 Math).
  * For Math, returns the 10-question isolated pack (5 Math, 5 Physics) with zero biology.
- * For other streams, returns an empty pack until their packs are authored.
+ * For Lettres & Philo, returns the 5-question pack (3 Philo, 2 Arabic).
  */
 export function getDiagnosticQuestionsForStream(streamId: StreamId): DiagnosticQuestion[] {
   switch (streamId) {
@@ -37,6 +93,8 @@ export function getDiagnosticQuestionsForStream(streamId: StreamId): DiagnosticQ
 
     case "lettres_philo":
     case "langues_etrangeres":
+      return [...LETTRES_PHILO_DIAGNOSTIC_QUESTIONS];
+
     default:
       return [];
   }

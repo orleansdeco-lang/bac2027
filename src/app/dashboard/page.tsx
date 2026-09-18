@@ -446,6 +446,135 @@ export default function DashboardPage() {
         </section>
 
         {/* ================================================================= */}
+        {/* LEARNING MODES & HUB SWITCHER (الوضع الموجه • المكتبة الشاملة • تشخيص المواد) */}
+        {/* ================================================================= */}
+        <section className="space-y-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-1">
+            <div>
+              <h2 className="text-base sm:text-lg font-black text-theme-text flex items-center gap-2">
+                <Layers className="w-5 h-5 text-[var(--color-primary)]" />
+                <span>{isAr ? "أنماط التعلم وخيارات الدراسة" : "Modes d'apprentissage & Bibliothèque"}</span>
+              </h2>
+              <p className="text-xs text-theme-secondary">
+                {isAr
+                  ? "اختر أسلوبك في التحضير: مسار تكيفي ذكي، مكتبة شاملة حرة لجميع المواد، أو تقييم تشخيصي مخصص."
+                  : "Choisissez votre mode : parcours guidé adaptatif, bibliothèque libre ou diagnostic par matière."}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-mono text-theme-muted bg-surface/60 px-3 py-1 rounded-full border border-theme">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>{isAr ? `${masteredCount} مهارة مكتسبة` : `${masteredCount} acquis`}</span>
+              {totalStudyTimeSeconds > 0 && (
+                <>
+                  <span>•</span>
+                  <span>{Math.round(totalStudyTimeSeconds / 60)} {isAr ? "دقيقة مذاكرة" : "min"}</span>
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Mode 1: Smart Guided Road */}
+            <div className="relative overflow-hidden rounded-3xl p-5 border border-emerald-500/25 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent flex flex-col justify-between shadow-sm hover:shadow-clay transition-all group">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold shadow-xs">
+                    <Compass className="w-5 h-5" />
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                    {isAr ? "الوضع الذكي" : "Mode Intelligent"}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-theme-text group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                    {isAr ? "مساري الموجه التكيفي" : "Mon Parcours Guidé"}
+                  </h3>
+                  <p className="text-xs text-theme-secondary mt-1 leading-relaxed">
+                    {isAr
+                      ? "خوارزمية ذكية تعالج ثغراتك خطوة بخطوة وترتب أولوياتك وفق معاملات شعبتك."
+                      : "Parcours optimisé selon vos lacunes réelles et les coefficients de votre filière."}
+                  </p>
+                </div>
+              </div>
+              <div className="pt-4">
+                <Link href={todaysMission?.mission ? `/mission/${todaysMission.mission.id}` : "/roadmap"}>
+                  <Button size="sm" variant="primary" className="w-full rounded-xl font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm flex items-center justify-center gap-2">
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>{todaysMission?.mission ? (isAr ? "متابعة المهمة اليومية" : "Reprendre la mission") : (isAr ? "استكشاف الخريطة" : "Voir la feuille")}</span>
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Mode 2: Free Roam Curriculum Library */}
+            <div className="relative overflow-hidden rounded-3xl p-5 border border-indigo-500/25 bg-gradient-to-br from-indigo-500/10 via-indigo-500/5 to-transparent flex flex-col justify-between shadow-sm hover:shadow-clay transition-all group">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold shadow-xs">
+                    <BookOpen className="w-5 h-5" />
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border border-indigo-500/20">
+                    {isAr ? "تصفح حر بدون قيود" : "Accès Libre 100%"}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-theme-text group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    {isAr ? "المكتبة الشاملة (كل المواد)" : "Bibliothèque Complète"}
+                  </h3>
+                  <p className="text-xs text-theme-secondary mt-1 leading-relaxed">
+                    {isAr
+                      ? "تصفح حر لكافة الشعب والمواد، ملخصات مركزة، شروحات فيديو، مع إمكانية تثبيت الإتقان يدوياً."
+                      : "Accédez à tous les cours, synthèses, vidéos et marquez manuellement votre maîtrise."}
+                  </p>
+                </div>
+              </div>
+              <div className="pt-4">
+                <Link href="/curriculum">
+                  <Button size="sm" variant="outline" className="w-full rounded-xl font-bold border-indigo-500/30 hover:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 shadow-sm flex items-center justify-center gap-2">
+                    <BookOpen className="w-3.5 h-3.5" />
+                    <span>{isAr ? "دخول المكتبة الشاملة" : "Ouvrir la bibliothèque"}</span>
+                    <NextArrow className="w-3.5 h-3.5" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Mode 3: Per-Subject Independent Diagnostics */}
+            <div className="relative overflow-hidden rounded-3xl p-5 border border-amber-500/25 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent flex flex-col justify-between shadow-sm hover:shadow-clay transition-all group">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold shadow-xs">
+                    <Brain className="w-5 h-5" />
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                    {isAr ? "تشخيص مستقل" : "Par Matière"}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-theme-text group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                    {isAr ? "تشخيص المواد المستقل" : "Diagnostics Spécifiques"}
+                  </h3>
+                  <p className="text-xs text-theme-secondary mt-1 leading-relaxed">
+                    {isAr
+                      ? "قيّم مستواك في الرياضيات، العلوم، الفيزياء، الفلسفة أو المحاسبة بشكل مستقل دون قفل خطي."
+                      : "Évaluez chaque matière indépendamment sans verrouillage linéaire."}
+                  </p>
+                </div>
+              </div>
+              <div className="pt-4">
+                <Link href="/diagnostic">
+                  <Button size="sm" variant="outline" className="w-full rounded-xl font-bold border-amber-500/30 hover:bg-amber-500/10 text-amber-700 dark:text-amber-300 shadow-sm flex items-center justify-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{isAr ? "اختيار مادة وتشخيصها" : "Choisir une matière"}</span>
+                    <NextArrow className="w-3.5 h-3.5" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ================================================================= */}
         {/* DYNAMIC STREAM-AWARE CURRICULUM BANNER                            */}
         {/* ================================================================= */}
         {(() => {
