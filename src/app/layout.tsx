@@ -30,6 +30,7 @@ export const metadata: Metadata = {
     icon: "/favicon.svg",
     apple: "/app-icon.svg",
   },
+  manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {
@@ -37,8 +38,11 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: "cover",
-  themeColor: "#5F8F86",
+  themeColor: "#0B0F19",
 };
+
+import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
+import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
 
 export default function RootLayout({
   children,
@@ -53,7 +57,9 @@ export default function RootLayout({
             <AuthProvider>
               <ProgressProvider>
                 <VisitorTracker />
+                <ServiceWorkerRegister />
                 {children}
+                <PWAInstallPrompt />
               </ProgressProvider>
             </AuthProvider>
           </I18nProvider>

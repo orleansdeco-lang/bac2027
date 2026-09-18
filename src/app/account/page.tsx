@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "@/lib/i18n/context";
@@ -17,6 +17,10 @@ import { StudentService } from "@/lib/services";
 import { getStudentAccess, formatTrialCountdown, formatTrialExpiryDate } from "@/lib/access";
 import { getStoredPaymentRecords, PilotPaymentRecord } from "@/lib/payment";
 import { formatEnergyState } from "@/lib/i18n/statusMapper";
+import { useUserProgress } from "@/lib/hooks/useUserProgress";
+import { ALL_SUBJECTS, getStreamSubjects } from "@/lib/constants/streams";
+import { StreamId, SubjectId } from "@/types/education";
+import { normalizeStreamIdWithDefault, getStreamMetadata } from "@/lib/curriculum/filter";
 import {
   User,
   ShieldCheck,
@@ -26,11 +30,20 @@ import {
   Compass,
   ArrowRight,
   ArrowLeft,
-  Cloud,
   Sparkles,
   Download,
   Check,
   AlertCircle,
+  Award,
+  Play,
+  Bell,
+  BellRing,
+  BookOpen,
+  Smartphone,
+  CheckCircle2,
+  Brain,
+  Layers,
+  ChevronRight,
 } from "lucide-react";
 import { exportAnonymizedPilotData } from "@/lib/analytics";
 
@@ -44,12 +57,42 @@ export default function AccountPage() {
   const [exportSuccess, setExportSuccess] = useState(false);
   const [paymentRecord, setPaymentRecord] = useState<PilotPaymentRecord | null>(null);
 
+  // Live progress metrics from ProgressService & Supabase
+  const {
+    skills,
+    masteredCount,
+    inProgressCount,
+    totalStudyTimeSeconds,
+    lastLessonId,
+    getSubjectStatus,
+  } = useUserProgress();
+
+  // Push notification state
+  const [notificationPermission, setNotificationPermission] = useState<
+    "default" | "granted" | "denied" | "unsupported"
+  >("unsupported");
+  const [testNotificationSent, setTestNotificationSent] = useState(false);
+  const [isStandaloneApp, setIsStandaloneApp] = useState(false);
+
   // If visitor is not authenticated, redirect to login & register page
   useEffect(() => {
     if (!authLoading && !user) {
       router.replace("/auth");
     }
   }, [user, authLoading, router]);
+
+  // Check notification permission and PWA status
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if ("Notification" in window) {
+        setNotificationPermission(Notification.permission);
+      }
+      const isStandalone =
+        window.matchMedia("(display-mode: standalone)").matches ||
+        (window.navigator as any).standalone === true;
+      setIsStandaloneApp(Boolean(isStandalone));
+    }
+  }, []);
 
   const access = getStudentAccess(profile);
   const isPaidActive = Boolean(
@@ -115,6 +158,107 @@ export default function AccountPage() {
     }
   };
 
+  // Notification toggle handler
+  const handleToggleNotifications = async () => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    try {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      if (permission === "granted") {
+        localStorage.setItem("bac_daily_notifications", "enabled");
+      } else {
+        localStorage.setItem("bac_daily_notifications", "disabled");
+      }
+    } catch (e) {
+      console.error("Error requesting notification permission:", e);
+    }
+  };
+
+  // Test Notification sender
+  const handleSendTestNotification = () => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (Notification.permission === "granted") {
+      try {
+        if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.ready.then((reg) => {
+            reg.showNotification(isAr ? "BAC Mastery — تذكير دراسي" : "Rappel BAC Mastery", {
+              body: isAr
+                ? "🚀 إشعار تجريبي ناجح! ستصلك تذكيرات مراجعة مهمتك اليومية بانتظام."
+                : "Notification de test réussie ! Vos rappels de révision sont actifs.",
+              icon: "/app-icon.svg",
+              badge: "/favicon.svg",
+              dir: isAr ? "rtl" : "ltr",
+            });
+          });
+        } else {
+          new Notification(isAr ? "BAC Mastery — تذكير دراسي" : "Rappel BAC Mastery", {
+            body: isAr
+              ? "🚀 إشعار تجريبي ناجح! ستصلك تذكيرات مراجعة مهمتك اليومية بانتظام."
+              : "Notification de test réussie ! Vos rappels de révision sont actifs.",
+            icon: "/app-icon.svg",
+          });
+        }
+        setTestNotificationSent(true);
+        setTimeout(() => setTestNotificationSent(false), 3000);
+      } catch (e) {
+        console.error("Error sending test notification:", e);
+      }
+    }
+  };
+
+  // Format study time into hours and minutes
+  const formatStudyTime = (totalSeconds: number) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    if (hours > 0) {
+      return isAr ? `${hours} سا و ${minutes} د` : `${hours} h ${minutes} min`;
+    }
+    if (minutes > 0) {
+      return isAr ? `${minutes} دقيقة` : `${minutes} min`;
+    }
+    return isAr ? "أقل من دقيقة" : "< 1 min";
+  };
+
+  // Stream Resolution
+  const streamId: StreamId = normalizeStreamIdWithDefault(
+    profile?.streamId || (regDraft as any)?.streamId,
+    "sciences_exp"
+  );
+  const streamMeta = getStreamMetadata(streamId);
+  const streamSubjects = useMemo(() => getStreamSubjects(streamId), [streamId]);
+
+  // Last Lesson Display Information
+  const lastLessonInfo = useMemo(() => {
+    if (!lastLessonId) return null;
+    if (lastLessonId.startsWith("snv_day_")) {
+      const day = lastLessonId.replace("snv_day_", "");
+      return {
+        title: isAr ? `علوم الطبيعة والحياة • اليوم ${day}` : `Sciences Naturelles • Jour ${day}`,
+        subjectId: "natural_sciences",
+        url: `/curriculum?lesson=${lastLessonId}&subject=natural_sciences`,
+      };
+    }
+    if (lastLessonId.includes("math")) {
+      return {
+        title: isAr ? "مادة الرياضيات • الدوال والتحليل" : "Mathématiques • Fonctions",
+        subjectId: "math",
+        url: "/curriculum?subject=math",
+      };
+    }
+    if (lastLessonId.includes("physics")) {
+      return {
+        title: isAr ? "العلوم الفيزيائية • المتابعة الزمنية" : "Sciences Physiques • Suivi temporel",
+        subjectId: "physics",
+        url: "/curriculum?subject=physics",
+      };
+    }
+    return {
+      title: isAr ? `متابعة الدرس: ${lastLessonId}` : `Reprendre : ${lastLessonId}`,
+      subjectId: "general",
+      url: `/curriculum?lesson=${lastLessonId}`,
+    };
+  }, [lastLessonId, isAr]);
+
   if (authLoading || !user) {
     return (
       <AppShell>
@@ -130,7 +274,7 @@ export default function AccountPage() {
     );
   }
 
-  // Study Character Mapping (Selected at registration)
+  // Study Character Mapping
   const characterMap: Record<string, { nameAr: string; nameFr: string; img: string }> = {
     boy: { nameAr: "الفتى الطموح", nameFr: "L'Ambitieux", img: "/illustrations/characters/boy.jpg" },
     girl: { nameAr: "الفتاة المتفوقة", nameFr: "L'Étoile", img: "/illustrations/characters/girl.jpg" },
@@ -142,28 +286,226 @@ export default function AccountPage() {
   return (
     <AppShell activeNav="account">
       <Container size="sm" className="py-6 sm:py-10 space-y-6">
-        {/* Account Header with Automatic Sync Indicator */}
+        {/* Account Header */}
         <div className="flex items-center justify-between border-b border-theme pb-4">
           <div>
             <h1 className="text-2xl font-bold text-theme-text tracking-tight font-sans">
-              {isAr ? "حساب التلميذ وإعدادات الخطة" : "Compte & Préférences"}
+              {isAr ? "حساب التلميذ وإحصائيات التعلم" : "Compte & Statistiques Réelles"}
             </h1>
             <p className="text-xs text-theme-secondary mt-1">
               {isAr
-                ? "متابعة تقدمك الدراسي، اشتراكك، وإعدادات حسابك."
-                : "Suivi de votre progression, abonnement et profil."}
+                ? "متابعة تقدمك الحقيقي، وقت المذاكرة، حالة المواد، وإعدادات الحساب."
+                : "Suivi réel de votre temps d'étude, compétences validées et profil."}
             </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <Badge variant="outline" size="sm" className="flex items-center gap-1.5 px-3 py-1 border-emerald-500/30 text-emerald-600 dark:text-emerald-400">
+            <Badge variant="outline" size="sm" className="flex items-center gap-1.5 px-3 py-1 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold">
               <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
               <span>{isAr ? "حساب موثق" : "Compte vérifié"}</span>
             </Badge>
           </div>
         </div>
 
-        {/* 1. Subscription & Trial Card */}
+        {/* ================================================================= */}
+        {/* 1. REAL-TIME TACTILE KPI METRICS ROW                              */}
+        {/* ================================================================= */}
+        <div className="grid grid-cols-3 gap-3">
+          {/* Metric 1: Live Total Study Time */}
+          <div className="p-4 rounded-3xl bg-[#E8F2EB] dark:bg-emerald-950/20 border border-[#6E9B7B]/30 shadow-clay flex flex-col justify-between space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-[#2E5439] dark:text-emerald-300">
+                {isAr ? "وقت المذاكرة" : "Temps actif"}
+              </span>
+              <div className="w-7 h-7 rounded-xl bg-[#6E9B7B]/20 text-[#3B6647] dark:text-emerald-400 flex items-center justify-center">
+                <Clock className="w-4 h-4" />
+              </div>
+            </div>
+            <div>
+              <span className="text-lg sm:text-xl font-black text-[#2E5439] dark:text-emerald-200 font-mono block">
+                {formatStudyTime(totalStudyTimeSeconds)}
+              </span>
+              <span className="text-[10px] text-[#3B6647]/80 dark:text-emerald-400/70 block mt-0.5">
+                {isAr ? "تتبع نشط تراكمي" : "Temps effectif"}
+              </span>
+            </div>
+          </div>
+
+          {/* Metric 2: Live Mastered Skills */}
+          <div className="p-4 rounded-3xl bg-[#F9EFE2] dark:bg-amber-950/20 border border-[#D7A66A]/35 shadow-clay flex flex-col justify-between space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-[#8F5E1F] dark:text-amber-300">
+                {isAr ? "مهارات متقنة" : "Compétences"}
+              </span>
+              <div className="w-7 h-7 rounded-xl bg-[#D7A66A]/20 text-[#8F5E1F] dark:text-amber-400 flex items-center justify-center">
+                <Award className="w-4 h-4" />
+              </div>
+            </div>
+            <div>
+              <div className="flex items-baseline gap-1 font-mono">
+                <span className="text-lg sm:text-xl font-black text-[#8F5E1F] dark:text-amber-200">
+                  {masteredCount}
+                </span>
+                <span className="text-[10px] text-[#8F5E1F]/70 dark:text-amber-400/70">
+                  /{streamMeta.totalSkills}
+                </span>
+              </div>
+              <span className="text-[10px] text-[#8F5E1F]/80 dark:text-amber-400/70 block mt-0.5">
+                {inProgressCount > 0 ? (isAr ? `${inProgressCount} قيد البناء` : `${inProgressCount} en cours`) : (isAr ? "تثبيت برهاني" : "Validées")}
+              </span>
+            </div>
+          </div>
+
+          {/* Metric 3: Target Score */}
+          <div className="p-4 rounded-3xl bg-[#F6EEF5] dark:bg-purple-950/20 border border-[#C59FC2]/35 shadow-clay flex flex-col justify-between space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-[#6D3467] dark:text-purple-300">
+                {isAr ? "الهدف في الباك" : "Objectif"}
+              </span>
+              <div className="w-7 h-7 rounded-xl bg-[#C59FC2]/20 text-[#6D3467] dark:text-purple-400 flex items-center justify-center">
+                <Target className="w-4 h-4" />
+              </div>
+            </div>
+            <div>
+              <span className="text-lg sm:text-xl font-black text-[#6D3467] dark:text-purple-200 font-mono block">
+                {profile?.targetScore ? `${profile.targetScore.toFixed(1)}` : "16.0"}
+                <span className="text-xs">/20</span>
+              </span>
+              <span className="text-[10px] text-[#6D3467]/80 dark:text-purple-400/70 block mt-0.5">
+                {isAr ? "معدل النجاح" : "Mention visée"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* ================================================================= */}
+        {/* 2. RESUME LAST LESSON CARD (متابعة التعلم)                         */}
+        {/* ================================================================= */}
+        <Card className="p-5 border border-theme shadow-clay bg-gradient-to-br from-card via-card-muted/40 to-card space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-[var(--color-primary)] flex items-center gap-2">
+              <Play className="w-3.5 h-3.5 fill-current" />
+              <span>{isAr ? "متابعة من حيث توقفت" : "Reprendre la dernière leçon"}</span>
+            </span>
+            <Badge variant="outline" size="sm" className="text-[10px] font-mono">
+              {lastLessonInfo ? (isAr ? "درس قيد المذاكرة" : "En cours") : (isAr ? "جاهز للبدء" : "Prêt")}
+            </Badge>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-1">
+            <div className="space-y-1">
+              <h3 className="text-sm sm:text-base font-bold text-theme-text">
+                {lastLessonInfo
+                  ? lastLessonInfo.title
+                  : isAr
+                  ? "ابدأ الدرس الأول في مادتك الأساسية"
+                  : "Démarrez votre premier cours au programme"}
+              </h3>
+              <p className="text-xs text-theme-muted">
+                {lastLessonInfo
+                  ? (isAr
+                      ? "اضغط للمتابعة الفورية من الشروحات وملخصات المفاهيم المقررة."
+                      : "Cliquez pour reprendre immédiatement les fiches et exercices.")
+                  : (isAr
+                      ? "المكتبة الشاملة مفتوحة لكافة المواد دون أي قيود."
+                      : "La bibliothèque complète est disponible en accès libre.")}
+              </p>
+            </div>
+
+            <Link href={lastLessonInfo ? lastLessonInfo.url : "/curriculum"} className="w-full sm:w-auto shrink-0">
+              <Button size="sm" variant="primary" className="w-full font-bold rounded-xl py-3 px-5 shadow-sm flex items-center justify-center gap-2">
+                <BookOpen className="w-4 h-4" />
+                <span>{lastLessonInfo ? (isAr ? "متابعة الدرس الآن" : "Reprendre") : (isAr ? "فتح المكتبة" : "Explorer")}</span>
+                <NextArrow className="w-3.5 h-3.5" />
+              </Button>
+            </Link>
+          </div>
+        </Card>
+
+        {/* ================================================================= */}
+        {/* 3. STREAM-AWARE SUBJECT MASTERY & DIAGNOSTICS BREAKDOWN           */}
+        {/* ================================================================= */}
+        <Card className="p-5 space-y-4 shadow-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-bold text-theme-text flex items-center gap-2">
+                <Layers className="h-4 w-4 text-[var(--color-primary)]" />
+                <span>{isAr ? "حالة المواد والتشخيص المستقل" : "Matières & Diagnostics"}</span>
+              </h2>
+              <span className="text-[11px] text-theme-muted">
+                {isAr ? `الشعبة: ${streamMeta.name_ar}` : `Filière : ${streamMeta.name_fr}`}
+              </span>
+            </div>
+
+            <Link href="/diagnostic">
+              <Button size="sm" variant="outline" className="text-xs font-bold rounded-xl py-1 px-3">
+                <span>{isAr ? "مركز التشخيص" : "Diagnostics"}</span>
+                <NextArrow className="w-3 h-3 ms-1" />
+              </Button>
+            </Link>
+          </div>
+
+          <div className="space-y-2.5">
+            {streamSubjects.map((rule) => {
+              const subj = ALL_SUBJECTS[rule.subjectId];
+              const name = subj ? (isAr ? subj.name_ar : subj.name_fr) : rule.subjectId;
+              const diagStatus = getSubjectStatus(rule.subjectId);
+
+              // Count mastered skills in this subject
+              const subjectMasteredCount = Object.values(skills).filter(
+                (s) => s.subjectId === rule.subjectId && s.status === "mastered"
+              ).length;
+
+              return (
+                <div
+                  key={rule.subjectId}
+                  className="p-3.5 rounded-2xl bg-card-muted/70 border border-theme flex items-center justify-between gap-3 text-xs"
+                >
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-theme-text text-xs sm:text-sm">{name}</span>
+                      {rule.isCoreSubject && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                          {isAr ? "أساسية" : "Majeure"}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px] text-theme-muted font-mono">
+                      <span>{isAr ? `المعامل ${rule.coefficient}` : `Coef ${rule.coefficient}`}</span>
+                      <span>•</span>
+                      <span>{subjectMasteredCount} {isAr ? "مهارة متقنة" : "acquis"}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {diagStatus.completed ? (
+                      <Badge variant="success" size="sm" className="font-bold text-[11px] flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" />
+                        <span>{diagStatus.score !== null ? `${diagStatus.score}/20` : (isAr ? "مكتمل" : "Évalué")}</span>
+                      </Badge>
+                    ) : (
+                      <Link href={`/diagnostic/${rule.subjectId}`}>
+                        <Badge variant="outline" size="sm" className="text-[11px] text-theme-muted hover:text-[var(--color-primary)] hover:border-[var(--color-primary)] cursor-pointer">
+                          <span>{isAr ? "ابدأ التقييم" : "Évaluer"}</span>
+                        </Badge>
+                      </Link>
+                    )}
+
+                    <Link href={`/curriculum?subject=${rule.subjectId}`}>
+                      <Button size="sm" variant="ghost" className="p-1.5 rounded-lg text-theme-muted hover:text-theme-text" title={isAr ? "تصفح دروس المادة" : "Voir les cours"}>
+                        <BookOpen className="w-3.5 h-3.5" />
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+
+        {/* ================================================================= */}
+        {/* 4. SUBSCRIPTION & TRIAL CARD                                      */}
+        {/* ================================================================= */}
         <Card className="p-5 space-y-4 shadow-card" data-testid="account-subscription-card">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-bold text-theme-text">
@@ -243,14 +585,14 @@ export default function AccountPage() {
                 <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-500" />
                 <span>
                   {isAr
-                    ? "حسابك مفعل باشتراك كامل (Pass BAC 2026) حتى يوم الامتحان الرسمي."
+                    ? "حسابك مفعل باشتراك كامل (Pass BAC 2027) حتى يوم الامتحان الرسمي."
                     : "Accès intégral activé jusqu'au jour de l'épreuve du BAC."}
                 </span>
               </div>
             )}
           </div>
 
-          {/* Pending Payment Record Display (Hidden when account is already PAID) */}
+          {/* Pending Payment Record Display */}
           {!isPaidActive && paymentRecord && paymentRecord.state !== "PAYMENT_CONFIRMED" && (
             <div data-testid="account-payment-record" className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-xs space-y-1.5">
               <div className="flex items-center justify-between">
@@ -281,7 +623,92 @@ export default function AccountPage() {
           )}
         </Card>
 
-        {/* 2. Academic Profile & Selected Study Character */}
+        {/* ================================================================= */}
+        {/* 5. PWA & WEB PUSH NOTIFICATION SETTINGS                           */}
+        {/* ================================================================= */}
+        <Card className="p-5 space-y-4 shadow-card">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold text-theme-text flex items-center gap-2">
+              <Bell className="h-4 w-4 text-[var(--color-primary)]" />
+              <span>{isAr ? "إشعارات التذكير وتطبيق الهاتف" : "Notifications & PWA"}</span>
+            </h2>
+
+            {isStandaloneApp ? (
+              <Badge variant="success" size="sm" className="flex items-center gap-1 text-[11px]">
+                <Smartphone className="w-3 h-3" />
+                <span>{isAr ? "تطبيق مثبت" : "Installé"}</span>
+              </Badge>
+            ) : (
+              <Badge variant="outline" size="sm" className="text-[11px] text-theme-muted">
+                <span>{isAr ? "نسخة المتصفح" : "Web"}</span>
+              </Badge>
+            )}
+          </div>
+
+          <div className="p-4 rounded-2xl bg-card-muted border border-theme space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <span className="font-bold text-theme-text text-xs block">
+                  {isAr ? "إشعارات التذكير بالمهام اليومية" : "Rappels quotidiens d'étude"}
+                </span>
+                <p className="text-[11px] text-theme-muted leading-relaxed">
+                  {isAr
+                    ? "تنبيه خفيف يُرسل في موعد دراستك المفضل لتذكيرك بإنجاز مهمتك اليومية وسد ثغراتك."
+                    : "Recevez une notification discrète pour maintenir votre régularité BAC."}
+                </p>
+              </div>
+
+              <span
+                className={`text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                  notificationPermission === "granted"
+                    ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                    : notificationPermission === "denied"
+                    ? "bg-rose-500/20 text-rose-500"
+                    : "bg-stone-200 dark:bg-stone-700 text-theme-muted"
+                }`}
+              >
+                {notificationPermission === "granted"
+                  ? isAr ? "مفعّلة ✓" : "Activées"
+                  : notificationPermission === "denied"
+                  ? isAr ? "محظورة" : "Bloquées"
+                  : isAr ? "غير مفعلة" : "Désactivées"}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-theme/60">
+              <Button
+                size="sm"
+                variant={notificationPermission === "granted" ? "outline" : "primary"}
+                onClick={handleToggleNotifications}
+                disabled={notificationPermission === "unsupported"}
+                className="text-xs font-bold rounded-xl py-2 px-4"
+              >
+                <BellRing className="w-3.5 h-3.5 me-1.5" />
+                <span>
+                  {notificationPermission === "granted"
+                    ? (isAr ? "تحديث الصلاحية" : "Actualiser")
+                    : (isAr ? "تفعيل إشعارات التذكير اليومي" : "Activer les rappels")}
+                </span>
+              </Button>
+
+              {notificationPermission === "granted" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleSendTestNotification}
+                  className="text-xs rounded-xl py-2 px-3 border-theme text-theme-secondary hover:text-theme-text"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500 me-1" />
+                  <span>{testNotificationSent ? (isAr ? "تم الإرسال ✓" : "Envoyé") : (isAr ? "إرسال إشعار تجريبي" : "Tester")}</span>
+                </Button>
+              )}
+            </div>
+          </div>
+        </Card>
+
+        {/* ================================================================= */}
+        {/* 6. ACADEMIC PROFILE & CHARACTER DETAILS                           */}
+        {/* ================================================================= */}
         <Card className="p-5 space-y-4 shadow-card">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-bold text-theme-text flex items-center gap-2">
@@ -302,9 +729,9 @@ export default function AccountPage() {
 
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div className="p-3 rounded-2xl bg-card-muted border border-theme space-y-1">
-              <span className="text-theme-muted block">{isAr ? "الشعبة" : "Filière"}</span>
+              <span className="text-theme-muted block">{isAr ? "الشعبة الرسمية" : "Filière"}</span>
               <span className="font-bold text-theme-text">
-                {isAr ? "علوم تجريبية" : "Sciences Expérimentales"}
+                {isAr ? streamMeta.name_ar : streamMeta.name_fr}
               </span>
             </div>
 
@@ -364,20 +791,9 @@ export default function AccountPage() {
           </div>
         </Card>
 
-        {/* 3. System & Integrity Card */}
-        <Card className="p-5 space-y-2 text-xs shadow-card">
-          <div className="flex items-center gap-2 text-theme-text font-bold">
-            <ShieldCheck className="h-4 w-4 text-emerald-500" />
-            <span>{isAr ? "أمان البيانات والخصوصية" : "Sécurité & Confidentialité"}</span>
-          </div>
-          <p className="text-theme-muted leading-relaxed">
-            {isAr
-              ? "بياناتك الأكاديمية وتقدمك في المواد محفوظ بأمان تام وخاص بك وحدك."
-              : "Vos données d'apprentissage sont protégées en toute confidentialité."}
-          </p>
-        </Card>
-
-        {/* 4. Pilot Telemetry & Safe Export */}
+        {/* ================================================================= */}
+        {/* 7. PILOT TELEMETRY & SAFE DATA EXPORT                             */}
+        {/* ================================================================= */}
         <Card className="p-5 space-y-3 text-xs border border-theme shadow-card">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-theme-text font-bold">
@@ -385,7 +801,7 @@ export default function AccountPage() {
               <span>{isAr ? "بيانات التجربة الميدانية (Pilot Export)" : "Export des données du pilote"}</span>
             </div>
             <Badge variant="outline" className="text-[10px] font-mono">
-              v1.0.0
+              v1.1.0
             </Badge>
           </div>
           <p className="text-theme-muted leading-relaxed">
@@ -416,7 +832,9 @@ export default function AccountPage() {
           </div>
         </Card>
 
-        {/* 5. Account & Session Card (Positioned at the very bottom) */}
+        {/* ================================================================= */}
+        {/* 8. ACCOUNT & SESSION (LOGOUT)                                     */}
+        {/* ================================================================= */}
         <Card className="p-5 space-y-4 border border-theme shadow-card">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
