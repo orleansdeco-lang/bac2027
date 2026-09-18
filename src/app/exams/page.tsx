@@ -507,24 +507,22 @@ function ExamsContent() {
                     </div>
 
                     <div className="flex items-center justify-between px-1 text-[11px]">
-                      <a
-                        href={exam.subjectPdfUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-theme-secondary hover:text-[var(--color-primary)] hover:underline inline-flex items-center gap-1"
+                      <button
+                        type="button"
+                        onClick={() => handleOpenModal(exam, "subject")}
+                        className="text-theme-secondary hover:text-[var(--color-primary)] hover:underline inline-flex items-center gap-1 cursor-pointer"
                       >
                         <Download className="w-3 h-3" />
-                        <span>تحميل مباشر PDF</span>
-                      </a>
-                      <a
-                        href={exam.solutionPdfUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-theme-secondary hover:text-emerald-500 hover:underline inline-flex items-center gap-1"
+                        <span>معاينة وطباعة الوثيقة</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenModal(exam, "solution")}
+                        className="text-theme-secondary hover:text-emerald-500 hover:underline inline-flex items-center gap-1 cursor-pointer"
                       >
                         <ExternalLink className="w-3 h-3" />
-                        <span>سلم التنقيط</span>
-                      </a>
+                        <span>سلم التنقيط الوزاري</span>
+                      </button>
                     </div>
                   </div>
                 </div>
