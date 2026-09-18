@@ -29,6 +29,7 @@ import {
   MessageCircle,
   ExternalLink,
   FileText,
+  GraduationCap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -124,7 +125,13 @@ export function Sidebar({ className }: SidebarProps) {
       href: "/exams",
       label: isAr ? "بنك البكالوريات (2016-2026)" : "Annales BAC (2016-2026)",
       icon: FileText,
-      matches: (p: string) => p.startsWith("/exams") || p.startsWith("/annales"),
+      matches: (p: string) => (p.startsWith("/exams") && !p.startsWith("/exams/terms")) || p.startsWith("/annales"),
+    },
+    {
+      href: "/exams/terms",
+      label: isAr ? "فروض واختبارات الفصول" : "Devoirs & Examens",
+      icon: GraduationCap,
+      matches: (p: string) => p.startsWith("/exams/terms"),
     },
     {
       href: "/diagnostic",

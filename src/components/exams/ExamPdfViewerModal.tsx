@@ -81,8 +81,10 @@ export function ExamPdfViewerModal({
 
   const handleCopyLink = async () => {
     try {
-      const shareUrl = `${window.location.origin}/exams?examId=${encodeURIComponent(exam.id)}&tab=${activeTab}`;
-      await navigator.clipboard.writeText(shareUrl);
+      const url = new URL(window.location.href);
+      url.searchParams.set("examId", exam.id);
+      url.searchParams.set("tab", activeTab);
+      await navigator.clipboard.writeText(url.toString());
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch (err) {

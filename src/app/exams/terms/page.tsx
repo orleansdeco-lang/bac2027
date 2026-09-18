@@ -6,10 +6,11 @@ import Link from "next/link";
 import { AppShell } from "@/components/ui/AppShell";
 import { Container } from "@/components/ui/Container";
 import {
-  BAC_EXAMS_DATABASE,
+  TERM_EXAMS_DATABASE,
   BacExamItem,
-  filterBacExams,
-  getAvailableExamYears,
+  filterTermExams,
+  AcademicTerm,
+  ExamKind,
 } from "@/data/exams";
 import { ExamPdfViewerModal } from "@/components/exams/ExamPdfViewerModal";
 import { ALL_SUBJECTS, ALGERIAN_BAC_STREAMS } from "@/lib/constants/streams";
@@ -29,11 +30,12 @@ import {
   BookOpen,
   Award,
   ExternalLink,
-  Check,
   RotateCcw,
   Clock,
-  ArrowUpDown,
+  School,
+  MapPin,
   GraduationCap,
+  ArrowRight,
   ChevronLeft,
 } from "lucide-react";
 
@@ -47,16 +49,30 @@ const STREAMS_LIST: { id: StreamId | "all"; name_ar: string; code: string }[] = 
   { id: "langues_etrangeres", name_ar: "لغات أجنبية", code: "LE" },
 ];
 
-function ExamsContent() {
+const TERMS_CONFIG: {
+  id: AcademicTerm | "all" | "bac_blanc";
+  label: string;
+  badge: string;
+  icon: string;
+  desc: string;
+}[] = [
+  { id: "all", label: "جميع الفصول", badge: "شامل", icon: "📚", desc: "تصفح بنك الفروض والاختبارات لكافة الفصول" },
+  { id: 1, label: "الفصل الأول", badge: "ثلاثي 1", icon: "🍂", desc: "فروض واختبارات الوحدات التأسيسية الأولى" },
+  { id: 2, label: "الفصل الثاني", badge: "ثلاثي 2", icon: "⚡", desc: "فروض واختبارات الوحدات المركزية المتقدمة" },
+  { id: 3, label: "الفصل الثالث", badge: "ثلاثي 3", icon: "🎯", desc: "اختبارات نهاية المنهاج والتحضير للبكالوريا" },
+  { id: "bac_blanc", label: "بكالوريا تجريبية", badge: "Bac Blanc", icon: "🏆", desc: "امتحانات شاملة مطابقة لمواصفات البكالوريا الرسمية" },
+];
+
+function TermExamsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useAuth();
 
   // Filters State
+  const [selectedTerm, setSelectedTerm] = useState<AcademicTerm | "all" | "bac_blanc">("all");
+  const [selectedKind, setSelectedKind] = useState<ExamKind | "all">("all");
   const [selectedStream, setSelectedStream] = useState<string>("all");
   const [selectedSubject, setSelectedSubject] = useState<string>("all");
-  const [selectedYear, setSelectedYear] = useState<number>(0);
-  const [selectedSession, setSelectedSession] = useState<"all" | "regular" | "exceptional">("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Modal State
@@ -75,12 +91,12 @@ function ExamsContent() {
     }
   }, [user]);
 
-  // Read URL query parameters on initial mount (Deep Link Support)
+  // Deep Link Support
   useEffect(() => {
     const urlStream = searchParams.get("stream");
     const urlSubject = searchParams.get("subject");
-    const urlYear = searchParams.get("year");
-    const urlSession = searchParams.get("session");
+    const urlTerm = searchParams.get("term");
+    const urlKind = searchParams.get("kind") as ExamKind | null;
     const urlExamId = searchParams.get("examId");
     const urlTab = searchParams.get("tab") as "subject" | "solution" | null;
 
@@ -90,15 +106,16 @@ function ExamsContent() {
     if (urlSubject) {
       setSelectedSubject(urlSubject);
     }
-    if (urlYear && !isNaN(Number(urlYear))) {
-      setSelectedYear(Number(urlYear));
+    if (urlTerm) {
+      if (urlTerm === "bac_blanc") setSelectedTerm("bac_blanc");
+      else if (["1", "2", "3"].includes(urlTerm)) setSelectedTerm(Number(urlTerm) as AcademicTerm);
     }
-    if (urlSession === "regular" || urlSession === "exceptional") {
-      setSelectedSession(urlSession);
+    if (urlKind && ["term_exam", "term_quiz", "bac_blanc"].includes(urlKind)) {
+      setSelectedKind(urlKind);
     }
 
     if (urlExamId) {
-      const foundExam = BAC_EXAMS_DATABASE.find((e) => e.id === urlExamId);
+      const foundExam = TERM_EXAMS_DATABASE.find((e) => e.id === urlExamId);
       if (foundExam) {
         setActiveModalExam(foundExam);
         if (urlTab === "solution" || urlTab === "subject") {
@@ -111,7 +128,7 @@ function ExamsContent() {
   // Filter available subjects based on selected stream
   const availableSubjects = useMemo(() => {
     if (selectedStream === "all") {
-      const distinct = Array.from(new Set(BAC_EXAMS_DATABASE.map((e) => e.subjectId)));
+      const distinct = Array.from(new Set(TERM_EXAMS_DATABASE.map((e) => e.subjectId)));
       return distinct.map((id) => ({
         id,
         name: ALL_SUBJECTS[id]?.name_ar || id,
@@ -127,16 +144,23 @@ function ExamsContent() {
 
   // Filtered Exams Result
   const filteredExams = useMemo(() => {
-    return filterBacExams({
+    let effectiveTerm: AcademicTerm | "all" = "all";
+    let effectiveKind: ExamKind | "all" = selectedKind;
+
+    if (selectedTerm === "bac_blanc") {
+      effectiveKind = "bac_blanc";
+    } else if (selectedTerm !== "all") {
+      effectiveTerm = selectedTerm;
+    }
+
+    return filterTermExams({
+      term: effectiveTerm,
+      kind: effectiveKind,
       streamId: selectedStream,
       subjectId: selectedSubject,
-      year: selectedYear,
-      session: selectedSession,
       searchQuery,
     });
-  }, [selectedStream, selectedSubject, selectedYear, selectedSession, searchQuery]);
-
-  const allYears = useMemo(() => getAvailableExamYears(), []);
+  }, [selectedTerm, selectedKind, selectedStream, selectedSubject, searchQuery]);
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
@@ -145,9 +169,9 @@ function ExamsContent() {
 
   const handleShareExam = async (exam: BacExamItem, tab: "subject" | "solution" = "subject") => {
     try {
-      const url = `${window.location.origin}/exams?stream=${exam.streamId}&subject=${exam.subjectId}&year=${exam.year}&examId=${encodeURIComponent(exam.id)}&tab=${tab}`;
+      const url = `${window.location.origin}/exams/terms?stream=${exam.streamId}&subject=${exam.subjectId}&term=${exam.term || 1}&examId=${encodeURIComponent(exam.id)}&tab=${tab}`;
       await navigator.clipboard.writeText(url);
-      triggerToast("✅ تم نسخ رابط الموضوع والتصحيح بنجاح!");
+      triggerToast("✅ تم نسخ رابط الفرض/الاختبار بنجاح!");
     } catch (err) {
       console.error(err);
       triggerToast("تعذر نسخ الرابط تلقائياً");
@@ -160,16 +184,16 @@ function ExamsContent() {
   };
 
   const handleResetFilters = () => {
+    setSelectedTerm("all");
+    setSelectedKind("all");
     setSelectedStream("all");
     setSelectedSubject("all");
-    setSelectedYear(0);
-    setSelectedSession("all");
     setSearchQuery("");
   };
 
   return (
     <AppShell activeNav="exams">
-      {/* Deep Link Copied Toast Notification */}
+      {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 start-1/2 -translate-x-1/2 z-50 bg-stone-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-stone-700 flex items-center gap-2.5 text-xs sm:text-sm font-bold animate-in slide-in-from-bottom-5 duration-200">
           <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -184,7 +208,6 @@ function ExamsContent() {
           initialTab={modalTab}
           onClose={() => {
             setActiveModalExam(null);
-            // Clean modal query params from URL without reload
             const url = new URL(window.location.href);
             url.searchParams.delete("examId");
             url.searchParams.delete("tab");
@@ -199,24 +222,23 @@ function ExamsContent() {
         {/* ================================================================= */}
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2 text-xs font-bold">
-            <span className="px-3.5 py-2 rounded-2xl bg-[var(--color-primary)] text-white shadow-md shadow-[var(--color-primary)]/20">
-              مواضيع البكالوريا الرسمية (2016-2026)
-            </span>
-            <span className="text-theme-muted">/</span>
             <Link
-              href="/exams/terms"
-              className="px-3.5 py-2 rounded-2xl border border-theme bg-card hover:bg-card-hover text-theme-secondary hover:text-theme-text transition-all inline-flex items-center gap-1.5"
+              href="/exams"
+              className="px-3 py-1.5 rounded-xl border border-theme bg-card hover:bg-card-hover text-theme-secondary hover:text-theme-text transition-all inline-flex items-center gap-1.5"
             >
-              <GraduationCap className="w-3.5 h-3.5 text-emerald-500" />
-              <span>فروض واختبارات الفصول (1، 2، 3) وبكالوريا تجريبية</span>
+              <span>مواضيع البكالوريا الرسمية (2016-2026)</span>
             </Link>
+            <span className="text-theme-muted">/</span>
+            <span className="px-3 py-1.5 rounded-xl bg-[var(--color-primary)] text-white shadow-xs">
+              بنك الفروض والاختبارات الفصلية
+            </span>
           </div>
 
           <Link
-            href="/exams/terms"
-            className="px-3.5 py-2 rounded-2xl bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold inline-flex items-center gap-1.5 transition-all"
+            href="/exams"
+            className="text-xs text-[var(--color-primary)] hover:underline font-bold inline-flex items-center gap-1"
           >
-            <span>تصفح فروض واختبارات الفصول</span>
+            <span>الذهاب لأرشيف البكالوريا الرسمية</span>
             <ChevronLeft className="w-3.5 h-3.5" />
           </Link>
         </div>
@@ -224,43 +246,100 @@ function ExamsContent() {
         {/* ================================================================= */}
         {/* 1. HERO HEADER                                                    */}
         {/* ================================================================= */}
-        <header className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-indigo-950 via-slate-900 to-stone-900 border border-indigo-900/40 p-6 sm:p-10 shadow-clay text-white">
+        <header className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-950 border border-indigo-900/40 p-6 sm:p-10 shadow-clay text-white">
           <div className="relative z-10 max-w-3xl space-y-3.5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-bold font-sans">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>الأرشيف الرسمي المعتمد (2016 - 2026)</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold font-sans">
+              <School className="w-3.5 h-3.5 text-emerald-400" />
+              <span>فروض واختبارات فصيلة نموذجية من كبرى ثانويات الوطن</span>
             </div>
 
             <h1 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">
-              بنك مواضيع وحلول البكالوريا الرسمية
+              بنك الفروض والاختبارات حسب الفصول
             </h1>
 
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-2xl font-sans">
-              تصفح وحمل واطبع مواضيع شهادة البكالوريا الجزائرية مع التصحيحات النموذجية وسلم التنقيط المفصل لجميع الشعب، من دورة 2016 إلى دورة 2026 الرسمية.
+              بنك شامل ومبوب لفروض واختبارات الفصل الأول، الفصل الثاني، الفصل الثالث، ومواضيع البكالوريا التجريبية (Bac Blanc) من كبرى الثانويات الجزائرية (ثانوية الرياضيات بالقبة، المقراني، العقيد لطفي، بن باديس، مالك بن نبي...) مع نماذج الإجابة وسلم التنقيط الرسمي.
             </p>
 
             {/* Quick Metrics Bar */}
             <div className="flex items-center gap-4 sm:gap-6 pt-2 flex-wrap text-xs text-slate-300">
               <div className="flex items-center gap-1.5 font-bold">
                 <Calendar className="w-4 h-4 text-amber-400" />
-                <span>11 سنة كاملة (2016-2026)</span>
+                <span>3 فصول دراسية كاملة</span>
               </div>
               <div className="flex items-center gap-1.5 font-bold">
-                <Layers className="w-4 h-4 text-cyan-400" />
-                <span>6 شعب وطنية</span>
+                <GraduationCap className="w-4 h-4 text-cyan-400" />
+                <span>بكالوريا تجريبية شاملة</span>
               </div>
               <div className="flex items-center gap-1.5 font-bold">
-                <Award className="w-4 h-4 text-emerald-400" />
-                <span>تصحيح رسمي + سلالم التنقيط</span>
+                <MapPin className="w-4 h-4 text-emerald-400" />
+                <span>ثانويات النخبة عبر مختلف الولايات</span>
               </div>
             </div>
           </div>
 
-          <div className="absolute top-0 end-0 -mt-8 -me-8 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute top-0 end-0 -mt-8 -me-8 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
         </header>
 
         {/* ================================================================= */}
-        {/* 2. FILTER & SEARCH CONTROLS                                       */}
+        {/* 2. TERM SELECTOR TABS                                             */}
+        {/* ================================================================= */}
+        <section className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          {TERMS_CONFIG.map((term) => {
+            const isSelected = selectedTerm === term.id;
+            return (
+              <button
+                key={term.id}
+                type="button"
+                onClick={() => {
+                  setSelectedTerm(term.id);
+                  if (term.id === "bac_blanc") {
+                    setSelectedKind("bac_blanc");
+                  } else {
+                    setSelectedKind("all");
+                  }
+                }}
+                className={`p-4 rounded-3xl border text-start flex flex-col justify-between transition-all duration-200 cursor-pointer ${
+                  isSelected
+                    ? "bg-gradient-to-br from-[var(--color-primary)] to-indigo-700 text-white border-transparent shadow-lg shadow-[var(--color-primary)]/20 scale-[1.02]"
+                    : "bg-surface border-theme hover:border-[var(--color-primary)]/40 hover:bg-card shadow-clay"
+                }`}
+              >
+                <div className="flex items-center justify-between w-full mb-2">
+                  <span className="text-xl">{term.icon}</span>
+                  <span
+                    className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                      isSelected
+                        ? "bg-white/20 text-white"
+                        : "bg-card text-theme-secondary border border-theme"
+                    }`}
+                  >
+                    {term.badge}
+                  </span>
+                </div>
+                <div>
+                  <h3
+                    className={`text-xs sm:text-sm font-bold ${
+                      isSelected ? "text-white" : "text-theme-text"
+                    }`}
+                  >
+                    {term.label}
+                  </h3>
+                  <p
+                    className={`text-[10px] line-clamp-1 mt-0.5 ${
+                      isSelected ? "text-white/80" : "text-theme-secondary"
+                    }`}
+                  >
+                    {term.desc}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </section>
+
+        {/* ================================================================= */}
+        {/* 3. FILTER & SEARCH CONTROLS                                       */}
         {/* ================================================================= */}
         <section className="p-4 sm:p-6 rounded-3xl bg-surface border border-theme shadow-clay space-y-5">
           {/* Stream Selector Tabs */}
@@ -329,76 +408,40 @@ function ExamsContent() {
             </div>
           </div>
 
-          {/* Year Chips + Session Selector + Search Bar */}
+          {/* Exam Type + Search Bar */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-3 pt-2 border-t border-theme/60">
-            {/* Year Chips */}
-            <div className="md:col-span-6 space-y-1.5">
+            {/* Kind Selector */}
+            <div className="md:col-span-5 space-y-1.5">
               <label className="block text-xs font-bold text-theme-secondary">
-                3. السنة:
-              </label>
-              <div className="flex items-center gap-1 sm:gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-                <button
-                  type="button"
-                  onClick={() => setSelectedYear(0)}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer font-mono ${
-                    selectedYear === 0
-                      ? "bg-[var(--color-primary)] text-white"
-                      : "bg-card text-theme-secondary border border-theme hover:text-theme-text"
-                  }`}
-                >
-                  الكل
-                </button>
-                {allYears.map((yr) => {
-                  const isSelected = selectedYear === yr;
-                  return (
-                    <button
-                      key={yr}
-                      type="button"
-                      onClick={() => setSelectedYear(yr)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer font-mono ${
-                        isSelected
-                          ? "bg-[var(--color-primary)] text-white shadow-xs"
-                          : "bg-card text-theme-secondary border border-theme hover:text-theme-text"
-                      }`}
-                    >
-                      {yr}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Session Type */}
-            <div className="md:col-span-3 space-y-1.5">
-              <label className="block text-xs font-bold text-theme-secondary">
-                الدورة:
+                3. نوع الموضوع:
               </label>
               <div className="flex items-center gap-1">
                 {[
                   { id: "all", label: "الكل" },
-                  { id: "regular", label: "عادية" },
-                  { id: "exceptional", label: "استثنائية" },
-                ].map((s) => (
+                  { id: "term_quiz", label: "فروض محروسة" },
+                  { id: "term_exam", label: "اختبارات فصلية" },
+                  { id: "bac_blanc", label: "بكالوريا تجريبية" },
+                ].map((k) => (
                   <button
-                    key={s.id}
+                    key={k.id}
                     type="button"
-                    onClick={() => setSelectedSession(s.id as any)}
-                    className={`flex-1 py-1 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer text-center ${
-                      selectedSession === s.id
+                    onClick={() => setSelectedKind(k.id as any)}
+                    className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
+                      selectedKind === k.id
                         ? "bg-stone-800 dark:bg-stone-200 text-white dark:text-stone-900"
                         : "bg-card text-theme-secondary border border-theme"
                     }`}
                   >
-                    {s.label}
+                    {k.label}
                   </button>
                 ))}
               </div>
             </div>
 
             {/* Search Input */}
-            <div className="md:col-span-3 space-y-1.5">
+            <div className="md:col-span-7 space-y-1.5">
               <label className="block text-xs font-bold text-theme-secondary">
-                بحث بالكلمات المفتاحية:
+                بحث بالثانوية، الولاية، أو عنوان الدرس:
               </label>
               <div className="relative">
                 <Search className="w-3.5 h-3.5 text-theme-muted absolute top-2.5 end-3 pointer-events-none" />
@@ -406,7 +449,7 @@ function ExamsContent() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="ابحث عن مادة، تمرين، موضوع..."
+                  placeholder="مثال: ثانوية القبة، المناعة، الدوال الأسية، وهران..."
                   className="w-full py-1.5 pe-8 ps-3 text-xs rounded-xl bg-card border border-theme text-theme-text placeholder:text-theme-muted focus:outline-hidden focus:ring-1 focus:ring-[var(--color-primary)] transition-all"
                 />
               </div>
@@ -416,10 +459,10 @@ function ExamsContent() {
           {/* Active Filter Summary + Reset Button */}
           <div className="flex items-center justify-between text-xs text-theme-secondary pt-2 border-t border-theme/40">
             <span>
-              النتائج المعروضة: <strong className="text-theme-text font-mono">{filteredExams.length}</strong> موضوع بكالوريا
+              النتائج المعروضة: <strong className="text-theme-text font-mono">{filteredExams.length}</strong> موضوع وفحص
             </span>
 
-            {(selectedStream !== "all" || selectedSubject !== "all" || selectedYear !== 0 || selectedSession !== "all" || searchQuery) && (
+            {(selectedStream !== "all" || selectedSubject !== "all" || selectedTerm !== "all" || selectedKind !== "all" || searchQuery) && (
               <button
                 type="button"
                 onClick={handleResetFilters}
@@ -433,7 +476,7 @@ function ExamsContent() {
         </section>
 
         {/* ================================================================= */}
-        {/* 3. EXAMS GRID                                                     */}
+        {/* 4. EXAMS GRID                                                     */}
         {/* ================================================================= */}
         {filteredExams.length === 0 ? (
           <div className="p-12 text-center rounded-3xl bg-surface border border-theme shadow-clay space-y-3">
@@ -442,14 +485,14 @@ function ExamsContent() {
             </div>
             <h3 className="text-sm font-bold text-theme-text">لم يتم العثور على مواضيع مطابقة</h3>
             <p className="text-xs text-theme-secondary max-w-sm mx-auto">
-              جرب تغيير معايير البحث أو اختيار سنة أو شعبة أخرى للاطلاع على الأرشيف.
+              جرب تغيير معايير البحث أو اختيار فصل أو شعبة أخرى للاطلاع على البنك.
             </p>
             <button
               type="button"
               onClick={handleResetFilters}
-              className="mt-2 px-4 py-2 rounded-xl bg-[var(--color-primary)] text-white text-xs font-bold"
+              className="mt-2 px-4 py-2 rounded-xl bg-[var(--color-primary)] text-white text-xs font-bold cursor-pointer"
             >
-              عرض جميع المواضيع
+              عرض جميع الفروض والاختبارات
             </button>
           </div>
         ) : (
@@ -458,21 +501,40 @@ function ExamsContent() {
               const stream = ALGERIAN_BAC_STREAMS[exam.streamId];
               const subject = ALL_SUBJECTS[exam.subjectId];
 
+              const termBadge =
+                exam.kind === "bac_blanc"
+                  ? "بكالوريا تجريبية"
+                  : exam.term === 1
+                  ? "الفصل 1"
+                  : exam.term === 2
+                  ? "الفصل 2"
+                  : "الفصل 3";
+
+              const kindBadge =
+                exam.kind === "term_quiz"
+                  ? "فرض محروس"
+                  : exam.kind === "term_exam"
+                  ? "اختبار فصلي"
+                  : "Bac Blanc";
+
               return (
                 <div
                   key={exam.id}
                   className="p-5 rounded-3xl bg-surface border border-theme shadow-clay flex flex-col justify-between hover:border-[var(--color-primary)]/40 hover:shadow-lg transition-all duration-200 group"
                 >
                   <div className="space-y-3">
-                    {/* Header: Year + Session Badge */}
+                    {/* Header: Term + Kind Badge */}
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-0.5 rounded-full bg-[var(--color-primary-muted)] text-[var(--color-primary)] border border-[var(--color-primary)]/20 text-xs font-black font-mono">
-                          بكالوريا {exam.year}
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="px-2.5 py-0.5 rounded-full bg-[var(--color-primary-muted)] text-[var(--color-primary)] border border-[var(--color-primary)]/20 text-[11px] font-black font-sans">
+                          {termBadge}
                         </span>
-                        {exam.session === "exceptional" && (
-                          <span className="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-[10px] font-bold">
-                            دورة استثنائية
+                        <span className="px-2 py-0.5 rounded-full bg-slate-500/10 text-theme-secondary border border-theme text-[10px] font-bold">
+                          {kindBadge}
+                        </span>
+                        {exam.academicYear && (
+                          <span className="text-[10px] text-theme-muted font-mono">
+                            {exam.academicYear}
                           </span>
                         )}
                       </div>
@@ -488,6 +550,17 @@ function ExamsContent() {
                       </button>
                     </div>
 
+                    {/* School Name & Wilaya */}
+                    {exam.schoolName && (
+                      <div className="flex items-center gap-1 text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                        <School className="w-3.5 h-3.5 shrink-0" />
+                        <span className="line-clamp-1">{exam.schoolName}</span>
+                        {exam.wilaya && (
+                          <span className="text-theme-muted font-normal">({exam.wilaya})</span>
+                        )}
+                      </div>
+                    )}
+
                     {/* Subject & Stream Title */}
                     <div>
                       <h3 className="text-sm font-bold text-theme-text font-sans group-hover:text-[var(--color-primary)] transition-colors line-clamp-2">
@@ -500,16 +573,13 @@ function ExamsContent() {
                       </div>
                     </div>
 
-                    {/* Specs Pills: Duration & Coefficient */}
+                    {/* Specs: Duration & Coefficient */}
                     <div className="flex items-center gap-2 pt-1 flex-wrap text-[10px] text-theme-muted font-sans">
                       <span className="px-2 py-0.5 rounded-md bg-card border border-theme">
+                        المدة: <strong className="text-theme-text">{Math.floor((exam.durationMinutes || 120) / 60)} سا</strong>
+                      </span>
+                      <span className="px-2 py-0.5 rounded-md bg-card border border-theme">
                         المعامل: <strong className="text-theme-text">{exam.coefficient}</strong>
-                      </span>
-                      <span className="px-2 py-0.5 rounded-md bg-card border border-theme">
-                        المدة: <strong className="text-theme-text">{Math.floor((exam.durationMinutes || 210) / 60)} سا</strong>
-                      </span>
-                      <span className="px-2 py-0.5 rounded-md bg-card border border-theme">
-                        موضوعان اختياريان
                       </span>
                     </div>
                   </div>
@@ -532,7 +602,7 @@ function ExamsContent() {
                         className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm active:scale-98 transition-all cursor-pointer"
                       >
                         <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>التصحيح الوزاري</span>
+                        <span>التصحيح النموذجي</span>
                       </button>
                     </div>
 
@@ -551,7 +621,7 @@ function ExamsContent() {
                         className="text-theme-secondary hover:text-emerald-500 hover:underline inline-flex items-center gap-1 cursor-pointer"
                       >
                         <ExternalLink className="w-3 h-3" />
-                        <span>سلم التنقيط الوزاري</span>
+                        <span>سلم التنقيط</span>
                       </button>
                     </div>
                   </div>
@@ -565,7 +635,7 @@ function ExamsContent() {
   );
 }
 
-export default function ExamsPage() {
+export default function TermExamsPage() {
   return (
     <Suspense
       fallback={
@@ -576,14 +646,14 @@ export default function ExamsPage() {
                 <FileText className="w-6 h-6 animate-spin" />
               </div>
               <p className="text-xs text-theme-muted font-sans">
-                جاري تحميل بنك امتحانات البكالوريا الرسمية...
+                جاري تحميل بنك الفروض والاختبارات الفصلية...
               </p>
             </div>
           </div>
         </AppShell>
       }
     >
-      <ExamsContent />
+      <TermExamsContent />
     </Suspense>
   );
 }

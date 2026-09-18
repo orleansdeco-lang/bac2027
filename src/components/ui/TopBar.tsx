@@ -33,6 +33,7 @@ import {
   Search,
   Bell,
   FileText,
+  GraduationCap,
 } from "lucide-react";
 
 export function TopBar() {
@@ -71,6 +72,7 @@ export function TopBar() {
     { href: "/dashboard", label: isAr ? "لوحة التحكم" : "Tableau de bord", icon: Compass },
     { href: "/curriculum", label: isAr ? "المكتبة الشاملة" : "Bibliothèque", icon: BookOpen },
     { href: "/exams", label: isAr ? "بنك البكالوريات" : "Annales BAC", icon: FileText },
+    { href: "/exams/terms", label: isAr ? "فروض واختبارات الفصول" : "Devoirs & Examens", icon: GraduationCap },
     { href: "/diagnostic", label: isAr ? "تشخيص المواد" : "Diagnostics", icon: Stethoscope },
     { href: "/roadmap", label: isAr ? "الخريطة" : "Feuille de route", icon: Map },
     { href: "/error-lab", label: isAr ? "مختبر الأخطاء" : "Lab d'erreurs", icon: AlertTriangle },
