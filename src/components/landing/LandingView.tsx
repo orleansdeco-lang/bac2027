@@ -637,8 +637,11 @@ export function LandingView() {
             </div>
 
             <div className="flex items-center gap-4 text-xs font-medium flex-wrap">
+              <Link href="/bac-2027" className="hover:text-[var(--color-primary)] font-bold">دليل BAC 2027</Link>
+              <Link href="/calculator" className="hover:text-[var(--color-primary)] font-bold">حاسبة المعدل والتوجيه</Link>
               <Link href="/curriculum" className="hover:text-[var(--color-primary)]">المكتبة الحرة</Link>
               <Link href="/exams" className="hover:text-[var(--color-primary)]">بنك البكالوريات</Link>
+              <Link href="/faq" className="hover:text-[var(--color-primary)]">الأسئلة الشائعة</Link>
               <Link href="/diagnostic" className="hover:text-[var(--color-primary)]">التشخيص</Link>
               <Link href="/auth" className="hover:text-[var(--color-primary)]">تسجيل الدخول</Link>
               <a
