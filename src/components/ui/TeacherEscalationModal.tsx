@@ -176,7 +176,7 @@ BAC MASTERY — بطاقة التوجيه البيداغوجي (STUDENT LEARNING
 - الإجراء الموصى به: ${brief.recommendedTeacherAction_ar}
 - الهدف من الحصة: ${brief.suggestedSessionObjective_ar}
 
-ملاحظة للأستاذ: بعد توضيح هذا التعثر للطالب، يُرجى توجيهه للعودة إلى BAC Mastery لاجتياز اختبار التوأم (Retest) لإثبات التمكن نهائياً.
+ملاحظة للأستاذ: بعد توضيح هذا التعثر للطالب، يُرجى توجيهه للعودة إلى الشاطر (SHATER) لاجتياز اختبار التوأم (Retest) لإثبات التمكن نهائياً.
 =====================================================`;
 
     navigator.clipboard.writeText(briefText);
@@ -207,8 +207,8 @@ BAC MASTERY — بطاقة التوجيه البيداغوجي (STUDENT LEARNING
             </h2>
             <p className="text-xs text-slate-400 leading-relaxed">
               {isAr
-                ? "عندما يتكرر التعثر في اختبار التوأم، يقوم BAC Mastery بتجهيز تشخيص دقيق يمكنك تقديمه لأستاذك في الثانوية أو أستاذ الدعم ليفهم فوراً أين يكمن الخلل."
-                : "BAC Mastery prépare une fiche diagnostic que votre enseignant peut exploiter immédiatement."}
+                ? "عندما يتكرر التعثر في اختبار التوأم، يقوم الشاطر بتجهيز تشخيص دقيق يمكنك تقديمه لأستاذك في الثانوية أو أستاذ الدعم ليفهم فوراً أين يكمن الخلل."
+                : "SHATER prépare une fiche diagnostic que votre enseignant peut exploiter immédiatement."}
             </p>
           </div>
 

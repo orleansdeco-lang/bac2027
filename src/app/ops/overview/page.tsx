@@ -1032,7 +1032,7 @@ export default function OpsOverviewPage() {
                 const cleanPhone = (order.studentPhone || "").replace(/[^0-9]/g, "");
                 const waNumber = cleanPhone.startsWith("0") ? `213${cleanPhone.slice(1)}` : cleanPhone;
                 const waMessage = encodeURIComponent(
-                  `مرحباً ${order.studentName || "عزيزي الطالب"}، معك إدارة منصة BAC Mastery بخصوص طلب اشتراكك (${order.amount.toLocaleString()} دج)...`
+                  `مرحباً ${order.studentName || "عزيزي الطالب"}، معك إدارة منظومة الشاطر (SHATER BAC) بخصوص طلب اشتراكك (${order.amount.toLocaleString()} دج)...`
                 );
                 const waUrl = waNumber ? `https://wa.me/${waNumber}?text=${waMessage}` : null;
 

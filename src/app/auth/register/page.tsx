@@ -1084,7 +1084,7 @@ export default function StudentRegistrationPage() {
 
       {/* Footer */}
       <footer className="py-4 border-t border-theme-border/40 text-center text-xs text-theme-muted">
-        BAC Mastery &copy; {new Date().getFullYear()} — {isAr ? "منصة التحضير الذكي للبكالوريا الجزائرية" : "Plateforme de préparation intelligente au Baccalauréat"}
+        الشاطر | SHATER &copy; {new Date().getFullYear()} — {isAr ? "منظومة ذكية للتعلم والتدريب وبناء الكفاءة" : "Système intelligent d'apprentissage et de préparation au Baccalauréat"}
       </footer>
     </div>
   );

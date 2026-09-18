@@ -19,8 +19,8 @@ export interface ThemeInfo {
 export const THEMES: Record<string, ThemeInfo> = {
   "bac-mastery": {
     id: "bac-mastery",
-    label_ar: "الهوية الموحدة (BAC Mastery)",
-    label_fr: "Identité Unifiée (BAC Mastery)",
+    label_ar: "الهوية الموحدة (الشاطر | SHATER)",
+    label_fr: "Identité Unifiée (SHATER)",
     icon: "🌿",
     tagline_ar: "تصميم دافئ، هادئ ومريح للعين مع شخصيات 3D موحدة",
     tagline_fr: "Design calme, chaleureux et moderne",

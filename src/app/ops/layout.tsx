@@ -109,7 +109,7 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
           <div className="space-y-1.5">
             <h1 className="text-lg font-bold text-white">403 — Unauthorized Operator Access</h1>
             <p className="text-xs text-slate-400 leading-relaxed">
-              هذه المنطقة مخصصة حصرياً لمشغلي وإدارة منصة BAC Mastery. إذا كنت تملك حساب إدارة، يرجى تسجيل الدخول من صفحة الدخول المخصصة للمشغلين.
+              هذه المنطقة مخصصة حصرياً لمشغلي وإدارة منظومة الشاطر | SHATER. إذا كنت تملك حساب إدارة، يرجى تسجيل الدخول من صفحة الدخول المخصصة للمشغلين.
             </p>
           </div>
 

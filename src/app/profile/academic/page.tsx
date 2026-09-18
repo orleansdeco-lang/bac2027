@@ -692,7 +692,7 @@ export default function AcademicProfilePage() {
 
       {/* Footer */}
       <footer className="py-4 border-t border-theme-border/40 text-center text-xs text-theme-muted">
-        BAC Mastery &copy; {new Date().getFullYear()} — {isAr ? "الملف الأكاديمي للتحضير الذكي" : "Profil Académique"}
+        الشاطر | SHATER &copy; {new Date().getFullYear()} — {isAr ? "الملف الأكاديمي لبناء الكفاءة والجاهزية" : "Profil Académique"}
       </footer>
     </div>
   );

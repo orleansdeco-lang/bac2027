@@ -115,13 +115,15 @@ export function TopBar() {
   const countdownText = trialRemainingHours !== null ? formatTrialCountdown(trialRemainingHours, isAr) : "";
   const expiryDateText = trialExpiresAt ? formatTrialExpiryDate(trialExpiresAt, isAr) : "";
 
+  const isLandingPage = pathname === "/" || pathname === "/landing";
+
   return (
     <header className="sticky top-0 z-40 border-b border-theme bg-surface/95 backdrop-blur-md transition-colors duration-200">
       <Container size="lg" className="flex h-16 items-center justify-between px-3 sm:px-6">
         {/* Left: Logo + Stream Badge + Trial Indicator */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <Logo size="md" showTagline={false} />
-          {streamLabel && (
+          {streamLabel && !isLandingPage && (
             <Badge
               variant="outline"
               size="sm"
@@ -131,7 +133,7 @@ export function TopBar() {
             </Badge>
           )}
 
-          {/* 72h Trial Countdown Indicator (Days & Hours only, Expiry date only) */}
+          {/* 72h Trial Countdown Indicator */}
           {isTrialActive && (
             <div
               title={
@@ -158,38 +160,98 @@ export function TopBar() {
           )}
         </div>
 
-        {/* Center Desktop: Reference Search Pill */}
-        <div className="hidden lg:flex items-center flex-1 max-w-xs xl:max-w-md mx-3 xl:mx-6 min-w-0">
-          <div className="relative w-full">
-            <Search className={`w-4 h-4 text-theme-muted absolute top-2.5 ${isAr ? "right-3.5" : "left-3.5"}`} />
-            <input
-              type="text"
-              readOnly
-              placeholder={isAr ? "ابحث في مهارات المنهاج، الدروس..." : "Rechercher une compétence, formule..."}
-              onClick={() => {
-                window.location.href = "/roadmap";
-              }}
-              className={`w-full py-1.5 rounded-full bg-card/80 border border-theme text-xs text-theme-text placeholder:text-theme-muted shadow-sm hover:border-[var(--color-border-hover)] cursor-pointer transition-all ${
-                isAr ? "pr-9 pl-4" : "pl-9 pr-4"
-              }`}
-            />
+        {/* Center Desktop: Landing Navigation Links or Search Pill */}
+        {isLandingPage ? (
+          <nav className="hidden lg:flex items-center gap-6 mx-auto">
+            <Link
+              href="/"
+              className="text-xs font-bold text-theme-text hover:text-[var(--color-primary)] transition-colors"
+            >
+              {isAr ? "الرئيسية" : "Accueil"}
+            </Link>
+            <Link
+              href="#how-it-works"
+              className="text-xs font-bold text-theme-secondary hover:text-[var(--color-primary)] transition-colors"
+            >
+              {isAr ? "كيف تعمل؟" : "Comment ça marche ?"}
+            </Link>
+            <Link
+              href="#shater-bac"
+              className="text-xs font-bold text-theme-secondary hover:text-[var(--color-primary)] transition-colors flex items-center gap-1.5"
+            >
+              <span>SHATER BAC</span>
+              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[var(--color-primary-soft)] text-[var(--color-primary)] font-bold">
+                {isAr ? "المنتج الأول" : "Pionnier"}
+              </span>
+            </Link>
+            <Link
+              href="#why-shater"
+              className="text-xs font-bold text-theme-secondary hover:text-[var(--color-primary)] transition-colors"
+            >
+              {isAr ? "لماذا الشاطر؟" : "Pourquoi SHATER ?"}
+            </Link>
+            <Link
+              href="#pricing"
+              className="text-xs font-bold text-theme-secondary hover:text-[var(--color-primary)] transition-colors"
+            >
+              {isAr ? "الأسعار" : "Tarifs"}
+            </Link>
+            <Link
+              href="#faq"
+              className="text-xs font-bold text-theme-secondary hover:text-[var(--color-primary)] transition-colors"
+            >
+              {isAr ? "الأسئلة الشائعة" : "FAQ"}
+            </Link>
+          </nav>
+        ) : (
+          <div className="hidden lg:flex items-center flex-1 max-w-xs xl:max-w-md mx-3 xl:mx-6 min-w-0">
+            <div className="relative w-full">
+              <Search className={`w-4 h-4 text-theme-muted absolute top-2.5 ${isAr ? "right-3.5" : "left-3.5"}`} />
+              <input
+                type="text"
+                readOnly
+                placeholder={isAr ? "ابحث في مهارات المنهاج، الدروس..." : "Rechercher une compétence, formule..."}
+                onClick={() => {
+                  window.location.href = "/roadmap";
+                }}
+                className={`w-full py-1.5 rounded-full bg-card/80 border border-theme text-xs text-theme-text placeholder:text-theme-muted shadow-sm hover:border-[var(--color-border-hover)] cursor-pointer transition-all ${
+                  isAr ? "pr-9 pl-4" : "pl-9 pr-4"
+                }`}
+              />
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Right Action: Desktop & Mobile Controls */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Desktop Register CTA Button */}
-          {!hasAccount && (
+          {/* Desktop CTA Buttons */}
+          {!user ? (
+            <div className="hidden sm:flex items-center gap-2">
+              <Link
+                href="/auth"
+                className="px-3 py-1.5 text-xs font-bold text-theme-secondary hover:text-theme-text rounded-xl transition-colors"
+              >
+                <span>{isAr ? "تسجيل الدخول" : "Connexion"}</span>
+              </Link>
+              <Link
+                href="/auth/register"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold rounded-xl shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>{isAr ? "ابدأ الآن" : "Démarrer"}</span>
+              </Link>
+            </div>
+          ) : (
             <Link
-              href="/auth/register"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white text-xs font-bold rounded-xl shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+              href="/dashboard"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold rounded-xl shadow-sm transition-all"
             >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>{isAr ? "تسجيل جديد" : "S'inscrire"}</span>
+              <Compass className="w-3.5 h-3.5" />
+              <span>{isAr ? "لوحة التحكم" : "Tableau de bord"}</span>
             </Link>
           )}
 
-          {/* Mobile Quick Action Buttons: Register & Account */}
+          {/* Mobile Quick Action Buttons */}
           <div className="flex md:hidden items-center gap-1.5">
             {!hasAccount ? (
               <Link
@@ -197,7 +259,7 @@ export function TopBar() {
                 className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold bg-[var(--color-primary)] text-white rounded-lg shadow-sm transition-all"
               >
                 <UserPlus className="w-3.5 h-3.5" />
-                <span>{isAr ? "تسجيل" : "S'inscrire"}</span>
+                <span>{isAr ? "ابدأ" : "Démarrer"}</span>
               </Link>
             ) : null}
 
@@ -214,17 +276,19 @@ export function TopBar() {
             </Link>
           </div>
 
-          {/* Notification Indicator (Reference pill) */}
-          <Link
-            href="/progress"
-            aria-label={isAr ? "التنبيهات والتقدم" : "Notifications et progrès"}
-            className="hidden sm:inline-flex relative p-2 rounded-full border border-theme bg-card hover:bg-card-hover text-theme-secondary hover:text-theme-text transition-all shadow-sm"
-          >
-            <Bell className="w-3.5 h-3.5" />
-            <span className="absolute -top-0.5 -end-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[var(--color-accent)] text-white text-[8px] font-bold">
-              3
-            </span>
-          </Link>
+          {/* Notification Indicator */}
+          {user && (
+            <Link
+              href="/progress"
+              aria-label={isAr ? "التنبيهات والتقدم" : "Notifications et progrès"}
+              className="hidden sm:inline-flex relative p-2 rounded-full border border-theme bg-card hover:bg-card-hover text-theme-secondary hover:text-theme-text transition-all shadow-sm"
+            >
+              <Bell className="w-3.5 h-3.5" />
+              <span className="absolute -top-0.5 -end-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[var(--color-accent)] text-white text-[8px] font-bold">
+                3
+              </span>
+            </Link>
+          )}
 
           <div className="hidden sm:block">
             <LanguageSwitcher />
@@ -288,12 +352,12 @@ export function TopBar() {
               <div className="space-y-2.5 text-center">
                 <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-theme-text">
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{isAr ? "مرحباً بك في BAC Mastery" : "Bienvenue sur BAC Mastery"}</span>
+                  <span>{isAr ? "مرحباً بك في الشاطر" : "Bienvenue sur SHATER"}</span>
                 </div>
                 <p className="text-[11px] text-theme-secondary">
                   {isAr
-                    ? "سجّل حسابك في دقيقة واحدة لحفظ تقدمك الدراسي وخريطتك."
-                    : "Créez votre compte en 1 minute pour sauvegarder votre progression."}
+                    ? "منظومة ذكية للتعلم والتدريب وبناء الكفاءة لشهادة البكالوريا."
+                    : "Système intelligent d'apprentissage et de préparation au Baccalauréat."}
                 </p>
                 <div className="grid grid-cols-2 gap-2 pt-1">
                   <Link
@@ -302,7 +366,7 @@ export function TopBar() {
                     className="flex items-center justify-center gap-1.5 py-2 px-3 bg-[var(--color-primary)] text-white text-xs font-bold rounded-xl shadow-sm"
                   >
                     <UserPlus className="w-3.5 h-3.5" />
-                    <span>{isAr ? "تسجيل جديد" : "S'inscrire"}</span>
+                    <span>{isAr ? "ابدأ الآن" : "Démarrer"}</span>
                   </Link>
                   <Link
                     href="/auth"
@@ -310,12 +374,53 @@ export function TopBar() {
                     className="flex items-center justify-center gap-1.5 py-2 px-3 bg-card-muted border border-theme text-theme-text text-xs font-semibold rounded-xl hover:bg-card-hover"
                   >
                     <LogIn className="w-3.5 h-3.5" />
-                    <span>{isAr ? "دخول" : "Connexion"}</span>
+                    <span>{isAr ? "تسجيل الدخول" : "Connexion"}</span>
                   </Link>
                 </div>
               </div>
             )}
           </div>
+
+          {/* Landing quick navigation links in mobile drawer */}
+          {isLandingPage && (
+            <div className="space-y-1 py-1 border-b border-theme/60">
+              <Link
+                href="#how-it-works"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block p-2 text-xs font-bold text-theme-text hover:bg-card rounded-lg transition-colors"
+              >
+                {isAr ? "← كيف تعمل الشاطر؟" : "Comment ça marche ?"}
+              </Link>
+              <Link
+                href="#shater-bac"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block p-2 text-xs font-bold text-[var(--color-primary)] hover:bg-card rounded-lg transition-colors"
+              >
+                {isAr ? "← اكتشف SHATER BAC" : "Découvrir SHATER BAC"}
+              </Link>
+              <Link
+                href="#why-shater"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block p-2 text-xs font-bold text-theme-text hover:bg-card rounded-lg transition-colors"
+              >
+                {isAr ? "← لماذا الشاطر؟" : "Pourquoi SHATER ?"}
+              </Link>
+              <Link
+                href="#pricing"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block p-2 text-xs font-bold text-theme-text hover:bg-card rounded-lg transition-colors"
+              >
+                {isAr ? "← الأسعار والتجربة المجانية" : "Tarifs & Essai 72h"}
+              </Link>
+              <Link
+                href="#faq"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block p-2 text-xs font-bold text-theme-text hover:bg-card rounded-lg transition-colors"
+              >
+                {isAr ? "← الأسئلة الشائعة" : "Questions Fréquentes"}
+              </Link>
+            </div>
+          )}
 
           {/* Primary Navigation Links Grid */}
           <div className="grid grid-cols-2 gap-2">

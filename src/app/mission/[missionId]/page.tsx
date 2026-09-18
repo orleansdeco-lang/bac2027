@@ -344,7 +344,7 @@ export default function MissionPage() {
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link href="/subscribe" className="w-full sm:w-auto">
                 <Button data-testid="expired-gate-subscribe-btn" size="lg" variant="primary" fullWidth className="font-bold text-sm shadow-clay">
-                  <span>{isAr ? "كمّل BAC Mastery" : "Continuer avec BAC Mastery"}</span>
+                  <span>{isAr ? "كمّل مع الشاطر" : "Continuer avec SHATER"}</span>
                 </Button>
               </Link>
               <Link href="/dashboard" className="w-full sm:w-auto">

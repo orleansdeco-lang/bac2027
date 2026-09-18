@@ -78,10 +78,10 @@ export default function SubscribePage() {
     ? (isAr ? "الاشتراك الشهري (30 يوماً)" : "Pass Mensuel (30 jours)")
     : (isAr ? "اشتراك السنة الدراسية (موسم كامل)" : "Pass Année Scolaire (Saison Complète)");
 
-  const activationMessage = `مرحباً، قمت بالدفع لتفعيل حساب BAC Mastery.\nنوع الاشتراك: ${selectedPlanName}\nالبريد الإلكتروني: ${user?.email || "غير مسجل"}\nمعرف الحساب: ${user?.id || "غير متوفر"}\nمرفق صورة الوصل.`;
+  const activationMessage = `مرحباً، قمت بالدفع لتفعيل حساب الشاطر (SHATER BAC).\nنوع الاشتراك: ${selectedPlanName}\nالبريد الإلكتروني: ${user?.email || "غير مسجل"}\nمعرف الحساب: ${user?.id || "غير متوفر"}\nمرفق صورة الوصل.`;
   const activationWhatsAppUrl = `https://wa.me/${ACTIVATION_WHATSAPP_NUMBER}?text=${encodeURIComponent(activationMessage)}`;
 
-  const supportMessage = "مرحباً، أحتاج إلى مساعدة ودعم فني في منصة BAC Mastery.";
+  const supportMessage = "مرحباً، أحتاج إلى مساعدة ودعم فني في منظومة الشاطر.";
   const supportWhatsAppUrl = `https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(supportMessage)}`;
 
   const copyToClipboard = (text: string, field: string) => {
@@ -306,7 +306,7 @@ export default function SubscribePage() {
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <h2 className="text-xl font-black text-theme-text">
-              {isAr ? "أنت مشترك رسمي في BAC Mastery Pro!" : "Vous êtes abonné à BAC Mastery Pro !"}
+              {isAr ? "أنت مشترك رسمي في SHATER BAC Pro!" : "Vous êtes abonné à SHATER BAC Pro !"}
             </h2>
             <p className="text-xs sm:text-sm text-theme-secondary max-w-md mx-auto">
               {isAr
@@ -358,8 +358,8 @@ export default function SubscribePage() {
 
           <p className="text-sm sm:text-base text-theme-secondary max-w-lg mx-auto leading-relaxed">
             {isAr
-              ? "72 ساعة كانت باش تشوف واش يقدر BAC Mastery يدير معاك. الخريطة تاعك والتقدم تاعك ما راحوش."
-              : "72 heures pour découvrir l'efficacité de la méthode. Votre roadmap et votre progression restent intégralement sauvegardées."}
+              ? "72 ساعة كانت باش تشوف واش تقدر منظومة الشاطر تدير معاك. الخريطة تاعك والتقدم تاعك ما راحوش."
+              : "72 heures pour découvrir l'efficacité de la méthode SHATER. Votre feuille de route et votre progression restent intégralement sauvegardées."}
           </p>
         </div>
 

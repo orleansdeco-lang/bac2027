@@ -119,8 +119,8 @@ export default function ProgressPage() {
             </h1>
             <p className="text-xs sm:text-sm text-theme-secondary max-w-2xl leading-relaxed">
               {isAr
-                ? "في BAC Mastery لا توجد تقديرات عشوائية أو نسب مئوية وهمية. كل رقم هنا مبني على حل تمارين وأسئلة توأم مثبتة."
-                : "Toutes les métriques reposent sur des preuves d'évaluation authentiques."}
+                ? "في منظومة الشاطر لا توجد تقديرات عشوائية أو نسب مئوية وهمية. كل رقم هنا مبني على حل تمارين وأسئلة توأم مثبتة."
+                : "Toutes les métriques SHATER reposent sur des preuves d'évaluation authentiques."}
             </p>
           </div>
 

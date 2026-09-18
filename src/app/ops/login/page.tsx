@@ -210,7 +210,7 @@ function OpsLoginForm() {
           </div>
           <div>
             <div className="text-[11px] font-bold tracking-widest text-slate-400 uppercase">
-              BAC MASTERY
+              SHATER OPS
             </div>
             <div className="text-xs font-semibold text-slate-200">
               Operations Cockpit
@@ -352,7 +352,7 @@ function OpsLoginForm() {
 
             <div className="pt-2 border-t border-slate-800/80 text-center">
               <p className="text-[11px] text-slate-500 leading-relaxed font-mono">
-                BAC Mastery Authorization Engine • Phase P0.1 Commercial Hardening
+                SHATER Operations Authorization Engine • Phase P0.1 Commercial Hardening
               </p>
             </div>
           </div>

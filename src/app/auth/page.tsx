@@ -197,7 +197,7 @@ function AuthContent() {
               <div className="relative w-full h-full transform translate-y-1">
                 <Image
                   src={peekingIllustration}
-                  alt="BAC Mastery Students"
+                  alt="طلبة الشاطر | SHATER"
                   fill
                   className="object-cover object-top drop-shadow-sm"
                   priority
@@ -260,8 +260,8 @@ function AuthContent() {
                       ? "Bon retour parmi nous !"
                       : "مرحباً بك مجدداً 👋"
                     : locale === "fr"
-                    ? "Rejoignez BAC Mastery"
-                    : "ابدأ مسارك نحو البكالوريا"}
+                    ? "Rejoignez SHATER"
+                    : "ابدأ مسارك مع الشاطر"}
                 </h1>
                 <p className="text-xs text-theme-secondary font-medium">
                   {locale === "fr"
@@ -437,7 +437,7 @@ function AuthContent() {
               {/* Onboarding Register Link */}
               <div className="pt-3 border-t border-theme text-center space-y-1.5">
                 <p className="text-xs text-theme-secondary">
-                  {locale === "fr" ? "Nouveau sur BAC Mastery ?" : "تلميذ جديد في BAC Mastery؟"}
+                  {locale === "fr" ? "Nouveau sur SHATER ?" : "تلميذ جديد في الشاطر؟"}
                 </p>
                 <Link
                   href="/auth/register"
@@ -472,10 +472,10 @@ function AuthContent() {
       <footer className="border-t border-theme/60 pt-4 text-center text-xs text-theme-muted relative z-20">
         <div className="flex items-center justify-center gap-1.5 mb-1">
           <ShieldCheck className="w-3.5 h-3.5 text-[var(--color-success)]" />
-          <span>BAC 2027 • Conforme au Ministère de l&apos;Éducation Nationale</span>
+          <span>SHATER BAC • Conforme au Ministère de l&apos;Éducation Nationale</span>
         </div>
         <p>
-          BAC Mastery © {new Date().getFullYear()} —{" "}
+          الشاطر | SHATER © {new Date().getFullYear()} —{" "}
           {locale === "fr"
             ? "Pas ce que vous lisez. Comment y arriver."
             : "ماشي واش تقرا. كيفاش توصل."}

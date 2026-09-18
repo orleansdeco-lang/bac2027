@@ -86,9 +86,9 @@ export default function DiagnosticResultsPage() {
 
   if (!hasLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0B1020]">
-        <div className="animate-pulse text-sm text-blue-400 font-mono tracking-wider">
-          BAC MASTERY...
+      <div className="min-h-screen flex items-center justify-center bg-canvas">
+        <div className="animate-pulse text-sm text-[var(--color-primary)] font-mono tracking-wider">
+          SHATER...
         </div>
       </div>
     );

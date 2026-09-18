@@ -107,6 +107,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: [
+          "Cairo",
           "var(--font-ibm-arabic)",
           "var(--font-jakarta)",
           "-apple-system",

@@ -7,12 +7,16 @@ import { ThemeProvider } from "@/lib/theme/context";
 import { VisitorTracker } from "@/components/analytics/VisitorTracker";
 
 export const metadata: Metadata = {
-  title: "BAC Mastery — ماشي واش تقرا. كيفاش توصل.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://shater.dz"),
+  title: "الشاطر | SHATER — منظومة ذكية للتعلم والتدريب وبناء الكفاءة",
   description:
-    "النظام الدراسي المتكامل لطلبة البكالوريا في الجزائر: من مستواك الحالي إلى معدل أحلامك عبر مسار مخصص مع الحفاظ على طاقتك وراحتك.",
+    "الشاطر: منظومة ذكية تساعدك على معرفة مستواك الحقيقي، سد ثغراتك، وبناء كفاءتك خطوة بخطوة. تبدأ مع SHATER BAC لطلبة البكالوريا في الجزائر.",
   keywords: [
-    "BAC Algérie",
+    "الشاطر",
+    "SHATER",
+    "SHATER BAC",
     "بكالوريا الجزائر",
+    "BAC Algérie",
     "منهجية البكالوريا",
     "علوم تجريبية",
     "رياضيات",
@@ -21,6 +25,10 @@ export const metadata: Metadata = {
     "آداب وفلسفة",
     "لغات أجنبية",
   ],
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/app-icon.svg",
+  },
 };
 
 export const viewport: Viewport = {
@@ -28,7 +36,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   viewportFit: "cover",
-  themeColor: "#080D1A",
+  themeColor: "#5F8F86",
 };
 
 export default function RootLayout({

@@ -60,16 +60,16 @@ export function AppShell({
 
       {showFooter && (
         <footer className="hidden md:block py-6 border-t border-theme text-center text-xs text-theme-muted transition-colors duration-200">
-          <div className="max-w-xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3">
-            <span>BAC Mastery © {new Date().getFullYear()} — ماشي واش تقرا. كيفاش توصل.</span>
+          <div className="max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-center gap-3">
+            <span>الشاطر | SHATER © {new Date().getFullYear()} — منظومة ذكية للتعلم والتدريب وبناء الكفاءة</span>
             <span className="hidden sm:inline text-theme-border opacity-50">•</span>
             <a
-              href={`https://wa.me/213550853234?text=${encodeURIComponent("مرحباً، أحتاج إلى مساعدة ودعم فني في منصة BAC Mastery.")}`}
+              href={`https://wa.me/213550853234?text=${encodeURIComponent("مرحباً، أحتاج إلى مساعدة ودعم فني في منظومة الشاطر.")}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-emerald-500 hover:text-emerald-400 font-medium inline-flex items-center gap-1.5 transition-colors"
+              className="text-[var(--color-primary)] hover:underline font-medium inline-flex items-center gap-1.5 transition-colors"
             >
-              <span>خدمة العملاء والدعم الفني WhatsApp (+213 550 85 32 34)</span>
+              <span>خدمة المساعدة والدعم WhatsApp (+213 550 85 32 34)</span>
             </a>
           </div>
         </footer>

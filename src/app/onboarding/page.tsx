@@ -165,8 +165,8 @@ export default function OnboardingPage() {
 
   if (!isClientLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0B1020]">
-        <div className="animate-pulse text-sm text-slate-500 font-medium">BAC Mastery...</div>
+      <div className="min-h-screen flex items-center justify-center bg-canvas">
+        <div className="animate-pulse text-sm text-[var(--color-primary)] font-medium">SHATER...</div>
       </div>
     );
   }

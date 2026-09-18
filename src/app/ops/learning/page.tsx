@@ -131,7 +131,7 @@ export default function OpsLearningPage() {
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Measures actual utilization of the BAC Mastery learning engine: onboarding, diagnostic, mission execution, error repair, twin retests, and verified mastery.
+            Measures actual utilization of the SHATER BAC learning engine: onboarding, diagnostic, mission execution, error repair, twin retests, and verified mastery.
           </p>
         </div>
       </div>
