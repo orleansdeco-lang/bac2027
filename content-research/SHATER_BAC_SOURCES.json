@@ -1,0 +1,172 @@
+[
+  {
+    "source_id": "onec_official",
+    "name": "Office National des Examens et Concours (ONEC)",
+    "name_ar": "الديوان الوطني للامتحانات والمسابقات",
+    "url": "https://bac.onec.dz",
+    "source_type": "official",
+    "access_type": "open_web",
+    "streams_covered": [
+      "all_official_streams"
+    ],
+    "subjects_covered": [
+      "all_official_subjects"
+    ],
+    "years_covered": "2008 - 2026",
+    "approximate_unique_content": "800+ Official National Papers",
+    "solution_availability": "high",
+    "rights_status": "official_public_reference",
+    "quality_status": "verified",
+    "notes": "Official Algerian government exam board. Examination papers are public administrative acts under Art. 9 Ordonnance 03-05."
+  },
+  {
+    "source_id": "dzexams",
+    "name": "DzExams - Examens et Devoirs d'Algérie",
+    "name_ar": "موقع امتحانات الجزائر (DzExams)",
+    "url": "https://www.dzexams.com",
+    "source_type": "education_platform",
+    "access_type": "open_web",
+    "streams_covered": [
+      "sciences_exp",
+      "math",
+      "technique_math",
+      "gestion_eco",
+      "lettres_philo",
+      "langues_etrangeres"
+    ],
+    "subjects_covered": [
+      "all_20_subjects"
+    ],
+    "years_covered": "2008 - 2026",
+    "approximate_unique_content": "2,500+ items across BAC, devoirs, compositions",
+    "solution_availability": "high",
+    "rights_status": "official_public_reference",
+    "quality_status": "verified",
+    "notes": "Primary structured archive for Algerian secondary education with direct PDF links and distinct session codes."
+  },
+  {
+    "source_id": "eddirasa",
+    "name": "Site d'Éducation Algérien (Eddirasa)",
+    "name_ar": "موقع الدراسة الجزائري",
+    "url": "https://eddirasa.com",
+    "source_type": "education_platform",
+    "access_type": "open_web",
+    "streams_covered": [
+      "sciences_exp",
+      "math",
+      "technique_math",
+      "gestion_eco",
+      "lettres_philo",
+      "langues_etrangeres",
+      "arts"
+    ],
+    "subjects_covered": [
+      "all_secondary_subjects"
+    ],
+    "years_covered": "2008 - 2026",
+    "approximate_unique_content": "1,800+ items including pedagogical series and teacher-authored revisions",
+    "solution_availability": "medium",
+    "rights_status": "external_link_only",
+    "quality_status": "verified",
+    "notes": "Curated collection of Baccalaureate subjects, high school exams, and lesson summaries."
+  },
+  {
+    "source_id": "ency_education",
+    "name": "Encyclopédie de l'Éducation en Algérie (Encyclo-Education)",
+    "name_ar": "موقع موسوعة التعليم بالجزائر",
+    "url": "https://www.ency-education.com",
+    "source_type": "archive",
+    "access_type": "open_web",
+    "streams_covered": [
+      "sciences_exp",
+      "math",
+      "technique_math",
+      "gestion_eco",
+      "lettres_philo",
+      "langues_etrangeres"
+    ],
+    "subjects_covered": [
+      "all_secondary_subjects"
+    ],
+    "years_covered": "2008 - 2026",
+    "approximate_unique_content": "1,500+ items",
+    "solution_availability": "high",
+    "rights_status": "external_link_only",
+    "quality_status": "verified",
+    "notes": "Historic archive of official Baccalaureate topics and solutions for Algerian students."
+  },
+  {
+    "source_id": "onefd_gov",
+    "name": "Office National d'Enseignement et Formation à Distance (ONEFD)",
+    "name_ar": "الديوان الوطني للتعليم والتكوين عن بعد",
+    "url": "http://www.onefd.edu.dz",
+    "source_type": "official",
+    "access_type": "open_web",
+    "streams_covered": [
+      "sciences_exp",
+      "math",
+      "gestion_eco",
+      "lettres_philo",
+      "langues_etrangeres"
+    ],
+    "subjects_covered": [
+      "core_bac_subjects"
+    ],
+    "years_covered": "2015 - 2026",
+    "approximate_unique_content": "450+ preparatory modules and mock tests",
+    "solution_availability": "high",
+    "rights_status": "official_public_reference",
+    "quality_status": "verified",
+    "notes": "Official remote education institution with mock tests and evaluation duties."
+  },
+  {
+    "source_id": "lycee_math_kouba",
+    "name": "Lycée National de Mathématiques de Kouba (Alger)",
+    "name_ar": "ثانوية الرياضيات بالقبة - الجزائر",
+    "url": "https://www.facebook.com/lyceemathkouba",
+    "source_type": "school",
+    "access_type": "community",
+    "streams_covered": [
+      "math"
+    ],
+    "subjects_covered": [
+      "math",
+      "physics",
+      "natural_sciences"
+    ],
+    "years_covered": "2012 - 2026",
+    "approximate_unique_content": "120+ high-standard term exams and mock Bac tests",
+    "solution_availability": "high",
+    "rights_status": "external_link_only",
+    "quality_status": "verified",
+    "notes": "Algeria's premier national elite high school for mathematics and scientific disciplines."
+  },
+  {
+    "source_id": "lycee_colonel_lotfi",
+    "name": "Lycée Colonel Lotfi (Oran)",
+    "name_ar": "ثانوية العقيد لطفي - وهران",
+    "url": "https://lyceelotfi-oran.dz",
+    "source_type": "school",
+    "access_type": "community",
+    "streams_covered": [
+      "sciences_exp",
+      "math",
+      "gestion_eco",
+      "lettres_philo",
+      "langues_etrangeres"
+    ],
+    "subjects_covered": [
+      "physics",
+      "math",
+      "natural_sciences",
+      "arabic",
+      "french"
+    ],
+    "years_covered": "2016 - 2026",
+    "approximate_unique_content": "90+ term quizzes and exams",
+    "solution_availability": "medium",
+    "rights_status": "external_link_only",
+    "quality_status": "verified",
+    "notes": "Renowned historical secondary school in Western Algeria with rigorous examination archives."
+  }
+]

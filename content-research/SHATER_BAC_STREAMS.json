@@ -1,0 +1,402 @@
+[
+  {
+    "id": "sciences_exp",
+    "official_name": "علوم تجريبية",
+    "official_name_fr": "Sciences Expérimentales",
+    "aliases": [
+      "ع ت",
+      "SE",
+      "Sciences Exp",
+      "Sciences",
+      "علوم الطبيعة والحياة"
+    ],
+    "active_period": "2008 - حالياً",
+    "historical_predecessor": "sciences_nature_vie",
+    "code": "SE",
+    "is_current": true,
+    "branches": [],
+    "subjects": [
+      "natural_sciences",
+      "physics",
+      "math",
+      "arabic",
+      "philosophy",
+      "history_geography",
+      "islamic_studies",
+      "french",
+      "english",
+      "tamazight"
+    ]
+  },
+  {
+    "id": "math",
+    "official_name": "رياضيات",
+    "official_name_fr": "Mathématiques",
+    "aliases": [
+      "ر",
+      "M",
+      "Maths",
+      "رياضي",
+      "علوم دقيقة"
+    ],
+    "active_period": "2008 - حالياً",
+    "historical_predecessor": "sciences_exactes",
+    "code": "M",
+    "is_current": true,
+    "branches": [],
+    "subjects": [
+      "math",
+      "physics",
+      "natural_sciences",
+      "arabic",
+      "philosophy",
+      "history_geography",
+      "islamic_studies",
+      "french",
+      "english",
+      "tamazight"
+    ]
+  },
+  {
+    "id": "technique_math",
+    "official_name": "تقني رياضي",
+    "official_name_fr": "Technique Mathématiques",
+    "aliases": [
+      "ت ر",
+      "TM",
+      "Math-Technique",
+      "تكنولوجيا",
+      "Technique Math"
+    ],
+    "active_period": "2008 - حالياً",
+    "historical_predecessor": "technologie",
+    "code": "TM",
+    "is_current": true,
+    "branches": [
+      {
+        "id": "mechanical_eng",
+        "name_ar": "هندسة ميكانيكية",
+        "name_fr": "Génie Mécanique"
+      },
+      {
+        "id": "civil_eng",
+        "name_ar": "هندسة مدنية",
+        "name_fr": "Génie Civil"
+      },
+      {
+        "id": "electrical_eng",
+        "name_ar": "هندسة كهربائية",
+        "name_fr": "Génie Electrique"
+      },
+      {
+        "id": "process_eng",
+        "name_ar": "هندسة الطرائق",
+        "name_fr": "Génie des Procédés"
+      }
+    ],
+    "subjects": [
+      "mechanical_eng",
+      "civil_eng",
+      "electrical_eng",
+      "process_eng",
+      "math",
+      "physics",
+      "arabic",
+      "philosophy",
+      "history_geography",
+      "islamic_studies",
+      "french",
+      "english",
+      "tamazight"
+    ]
+  },
+  {
+    "id": "gestion_eco",
+    "official_name": "تسيير واقتصاد",
+    "official_name_fr": "Gestion et Économie",
+    "aliases": [
+      "ت ق",
+      "GE",
+      "Gestion",
+      "Économie",
+      "علوم اقتصادية وتسيير"
+    ],
+    "active_period": "2008 - حالياً",
+    "historical_predecessor": "sciences_eco_gestion",
+    "code": "GE",
+    "is_current": true,
+    "branches": [],
+    "subjects": [
+      "accounting_finance",
+      "economics_management",
+      "law",
+      "math",
+      "history_geography",
+      "arabic",
+      "philosophy",
+      "islamic_studies",
+      "french",
+      "english",
+      "tamazight"
+    ]
+  },
+  {
+    "id": "lettres_philo",
+    "official_name": "آداب وفلسفة",
+    "official_name_fr": "Lettres et Philosophie",
+    "aliases": [
+      "أ ف",
+      "LP",
+      "Philo",
+      "آداب",
+      "آداب وعلوم إنسانية"
+    ],
+    "active_period": "2008 - حالياً",
+    "historical_predecessor": "lettres_sciences_humaines",
+    "code": "LP",
+    "is_current": true,
+    "branches": [],
+    "subjects": [
+      "philosophy",
+      "arabic",
+      "history_geography",
+      "islamic_studies",
+      "math",
+      "french",
+      "english",
+      "tamazight"
+    ]
+  },
+  {
+    "id": "langues_etrangeres",
+    "official_name": "لغات أجنبية",
+    "official_name_fr": "Langues Étrangères",
+    "aliases": [
+      "ل أ",
+      "LE",
+      "Langues",
+      "آداب ولغات حية"
+    ],
+    "active_period": "2008 - حالياً",
+    "historical_predecessor": "lettres_langues_vivantes",
+    "code": "LE",
+    "is_current": true,
+    "branches": [
+      {
+        "id": "allemand",
+        "name_ar": "ألمانية",
+        "name_fr": "Allemand"
+      },
+      {
+        "id": "espagnol",
+        "name_ar": "إسبانية",
+        "name_fr": "Espagnol"
+      },
+      {
+        "id": "italien",
+        "name_ar": "إيطالية",
+        "name_fr": "Italien"
+      }
+    ],
+    "subjects": [
+      "third_language_de",
+      "third_language_es",
+      "third_language_it",
+      "french",
+      "english",
+      "arabic",
+      "philosophy",
+      "history_geography",
+      "islamic_studies",
+      "math",
+      "tamazight"
+    ]
+  },
+  {
+    "id": "arts",
+    "official_name": "فنون",
+    "official_name_fr": "Arts",
+    "aliases": [
+      "فن",
+      "Arts",
+      "شعبة الفنون"
+    ],
+    "active_period": "2022 - حالياً (أول بكالوريا جوان 2024)",
+    "historical_predecessor": null,
+    "code": "ART",
+    "is_current": true,
+    "branches": [
+      {
+        "id": "cinema_audiovisuel",
+        "name_ar": "سينما وسمعي بصري",
+        "name_fr": "Cinéma & Audiovisuel"
+      },
+      {
+        "id": "arts_plastiques",
+        "name_ar": "فنون تشكيلية",
+        "name_fr": "Arts Plastiques"
+      },
+      {
+        "id": "musique",
+        "name_ar": "موسيقى",
+        "name_fr": "Musique"
+      },
+      {
+        "id": "theatre",
+        "name_ar": "مسرح",
+        "name_fr": "Théâtre"
+      }
+    ],
+    "subjects": [
+      "art_specialty",
+      "art_history",
+      "physics",
+      "math",
+      "arabic",
+      "philosophy",
+      "history_geography",
+      "islamic_studies",
+      "french",
+      "english"
+    ]
+  },
+  {
+    "id": "sciences_nature_vie",
+    "official_name": "علوم الطبيعة والحياة (النظام القديم)",
+    "official_name_fr": "Sciences de la Nature et de la Vie (Ancien système)",
+    "aliases": [
+      "SNV",
+      "علوم طبيعية قديم"
+    ],
+    "active_period": "1990 - 2007",
+    "historical_predecessor": null,
+    "code": "HIST_SNV",
+    "is_current": false,
+    "branches": [],
+    "subjects": [
+      "natural_sciences",
+      "physics",
+      "math",
+      "arabic",
+      "philosophy",
+      "history_geography",
+      "french",
+      "english"
+    ]
+  },
+  {
+    "id": "sciences_exactes",
+    "official_name": "علوم دقيقة (النظام القديم)",
+    "official_name_fr": "Sciences Exactes (Ancien système)",
+    "aliases": [
+      "SE_OLD",
+      "علوم دقيقة"
+    ],
+    "active_period": "1990 - 2007",
+    "historical_predecessor": null,
+    "code": "HIST_SE",
+    "is_current": false,
+    "branches": [],
+    "subjects": [
+      "math",
+      "physics",
+      "natural_sciences",
+      "arabic",
+      "philosophy",
+      "french",
+      "english"
+    ]
+  },
+  {
+    "id": "technologie",
+    "official_name": "تكنولوجيا (النظام القديم)",
+    "official_name_fr": "Technologie (Ancien système)",
+    "aliases": [
+      "تكنولوجيا قديم",
+      "Tech"
+    ],
+    "active_period": "1990 - 2007",
+    "historical_predecessor": null,
+    "code": "HIST_TECH",
+    "is_current": false,
+    "branches": [],
+    "subjects": [
+      "technology",
+      "math",
+      "physics",
+      "arabic",
+      "french",
+      "english"
+    ]
+  },
+  {
+    "id": "sciences_eco_gestion",
+    "official_name": "علوم اقتصادية وتسيير (النظام القديم)",
+    "official_name_fr": "Sciences Économiques et Gestion (Ancien système)",
+    "aliases": [
+      "اقتصاد قديم",
+      "Eco"
+    ],
+    "active_period": "1990 - 2007",
+    "historical_predecessor": null,
+    "code": "HIST_ECO",
+    "is_current": false,
+    "branches": [],
+    "subjects": [
+      "economics",
+      "accounting",
+      "law",
+      "math",
+      "history_geography",
+      "arabic",
+      "french",
+      "english"
+    ]
+  },
+  {
+    "id": "lettres_sciences_humaines",
+    "official_name": "آداب وعلوم إنسانية (النظام القديم)",
+    "official_name_fr": "Lettres et Sciences Humaines (Ancien système)",
+    "aliases": [
+      "آداب قديم",
+      "LSH"
+    ],
+    "active_period": "1990 - 2007",
+    "historical_predecessor": null,
+    "code": "HIST_LSH",
+    "is_current": false,
+    "branches": [],
+    "subjects": [
+      "philosophy",
+      "arabic",
+      "history_geography",
+      "islamic_studies",
+      "french",
+      "english",
+      "math"
+    ]
+  },
+  {
+    "id": "lettres_langues_vivantes",
+    "official_name": "آداب ولغات حية (النظام القديم)",
+    "official_name_fr": "Lettres et Langues Vivantes (Ancien système)",
+    "aliases": [
+      "لغات حية قديم",
+      "LLV"
+    ],
+    "active_period": "1990 - 2007",
+    "historical_predecessor": null,
+    "code": "HIST_LLV",
+    "is_current": false,
+    "branches": [],
+    "subjects": [
+      "arabic",
+      "french",
+      "english",
+      "third_language_de",
+      "third_language_es",
+      "philosophy",
+      "history_geography"
+    ]
+  }
+]

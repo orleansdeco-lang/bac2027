@@ -1,0 +1,249 @@
+{
+  "auditMetadata": {
+    "platform": "SHATER | الشاطر",
+    "evaluationDate": "2026-09-19",
+    "totalFeaturesAudited": 24
+  },
+  "features": [
+    {
+      "id": "FEAT-001",
+      "name": "Auth & Registration Pipeline",
+      "name_ar": "نظام المصادقة والتسجيل بخطواته الخمس",
+      "category": "Authentication",
+      "status": "implemented",
+      "uiRoute": "/auth/register",
+      "backendConnection": "supabase.auth + student_profiles",
+      "notes": "5-step wizard capturing identity, phone, wilaya, high school, and stream. Well implemented."
+    },
+    {
+      "id": "FEAT-002",
+      "name": "Legacy Onboarding Wizard",
+      "name_ar": "معالج التهيئة القديم المهجور",
+      "category": "Authentication",
+      "status": "broken",
+      "uiRoute": "/onboarding",
+      "backendConnection": "localStorage only",
+      "notes": "846 lines of orphaned code, duplicates /auth/register, completely disconnected from active navigation."
+    },
+    {
+      "id": "FEAT-003",
+      "name": "72-Hour Free Trial Engine",
+      "name_ar": "محرك التجربة المجانية 72 ساعة",
+      "category": "Access Control",
+      "status": "implemented",
+      "uiRoute": "/dashboard",
+      "backendConnection": "/api/server-time + student_profiles",
+      "notes": "Tamper-proof server clock countdown. Restricts access to paywall when expired."
+    },
+    {
+      "id": "FEAT-004",
+      "name": "Stream Lock Enforcement",
+      "name_ar": "قفل الشعبة الدراسية للوقاية من التشتت",
+      "category": "Pedagogy",
+      "status": "implemented",
+      "uiRoute": "/profile/academic",
+      "backendConnection": "student_profiles",
+      "notes": "Prevents switching streams once chosen, preserving pedagogical focus."
+    },
+    {
+      "id": "FEAT-005",
+      "name": "Algerian High Schools Directory",
+      "name_ar": "دليل الثانويات الجزائرية (758 ثانوية)",
+      "category": "Localization",
+      "status": "implemented",
+      "uiRoute": "/api/schools/search",
+      "backendConnection": "supabase.high_schools (758 verified rows)",
+      "notes": "Functional autocomplete across 58 wilayas using official datasets."
+    },
+    {
+      "id": "FEAT-006",
+      "name": "Unlisted School Submission",
+      "name_ar": "اقتراح ثانوية غير مدرجة",
+      "category": "Localization",
+      "status": "partially_implemented",
+      "uiRoute": "/api/schools/submit",
+      "backendConnection": "in-memory / localStorage (DB table missing)",
+      "notes": "Frontend form works, but remote table high_school_submissions does not exist; data drops into local storage."
+    },
+    {
+      "id": "FEAT-007",
+      "name": "Diagnostic Assessment Engine",
+      "name_ar": "محرك التشخيص الأولي لكشف الثغرات",
+      "category": "Pedagogy",
+      "status": "partially_implemented",
+      "uiRoute": "/diagnostic",
+      "backendConnection": "src/data/diagnostic/*",
+      "notes": "Works отлично for Sciences Exp (15 questions) and Gestion (15 questions). Broken/Empty for Lettres & Philo (3 questions only)."
+    },
+    {
+      "id": "FEAT-008",
+      "name": "Core Pedagogical Mission Loop (Sciences Exp)",
+      "name_ar": "حلقة المهمة التعليمية (علوم تجريبية)",
+      "category": "Pedagogy",
+      "status": "implemented",
+      "uiRoute": "/mission/[missionId]",
+      "backendConnection": "src/domain/content/index.ts",
+      "notes": "All 31 canonical skills have 14/14 assets ready (Lesson, Worked Example, Practice, Retest, Error Card, Repair Guide). Excellent."
+    },
+    {
+      "id": "FEAT-009",
+      "name": "Core Pedagogical Mission Loop (Gestion & Éco)",
+      "name_ar": "حلقة المهمة التعليمية (تسيير واقتصاد)",
+      "category": "Pedagogy",
+      "status": "mock",
+      "uiRoute": "/mission/[missionId]",
+      "backendConnection": "src/domain/content/mappings.ts",
+      "notes": "32 skills have synthetic mock MCQ options ('الإجابة الصحيحة', 'إجابة خاطئة شائعة', 'خيار بديل'). Not production ready."
+    },
+    {
+      "id": "FEAT-010",
+      "name": "Core Pedagogical Mission Loop (Lettres & Langues)",
+      "name_ar": "حلقة المهمة التعليمية (آداب ولغات)",
+      "category": "Pedagogy",
+      "status": "broken",
+      "uiRoute": "/mission/[missionId]",
+      "backendConnection": "src/domain/content/index.ts",
+      "notes": "Skills defined but 0 learning bundles exist. Attempting to start a mission renders 'Mission introuvable'."
+    },
+    {
+      "id": "FEAT-011",
+      "name": "Cognitive Error Lab & Misconception Repair",
+      "name_ar": "مختبر تصحيح الأخطاء والمفاهيم الخاطئة",
+      "category": "Pedagogy",
+      "status": "implemented",
+      "uiRoute": "/error-lab",
+      "backendConnection": "localStorage + domain repair guides",
+      "notes": "Maps wrong answers to specific cognitive misconceptions with contrastive examples and isomorphic re-test twins."
+    },
+    {
+      "id": "FEAT-012",
+      "name": "Official BAC Exams Simulator & Annales",
+      "name_ar": "محاكي مواضيع البكالوريا الرسمية وحوليات ONEC",
+      "category": "Testing",
+      "status": "implemented",
+      "uiRoute": "/annales, /exam",
+      "backendConnection": "src/data/exams/index.ts",
+      "notes": "144 official exams from 2016-2026 across 6 streams and 17 subjects with countdown timer."
+    },
+    {
+      "id": "FEAT-013",
+      "name": "BAC Score Calculator (Decree 54)",
+      "name_ar": "حاسبة معدل البكالوريا حسب القرار الوزاري 54",
+      "category": "Tools",
+      "status": "implemented",
+      "uiRoute": "/calculator",
+      "backendConnection": "pure client logic",
+      "notes": "Accurate stream-specific coefficient calculator matching Algerian Ministry of Education regulations."
+    },
+    {
+      "id": "FEAT-014",
+      "name": "Psychological Preparation & Mindset",
+      "name_ar": "وحدة الإعداد النفسي وإدارة القلق",
+      "category": "Support",
+      "status": "implemented",
+      "uiRoute": "/mind",
+      "backendConnection": "src/domain/content/motivation.ts",
+      "notes": "Guided techniques for exam anxiety, confidence rebuilding, and verified motivational principles."
+    },
+    {
+      "id": "FEAT-015",
+      "name": "Student Experiences Bank",
+      "name_ar": "بنك تجارب الناجحين في البكالوريا",
+      "category": "Social",
+      "status": "partially_implemented",
+      "uiRoute": "/experiences",
+      "backendConnection": "localStorage + in-memory fallback",
+      "notes": "Frontend UI has cards, filters, and comment dialogs, but remote Supabase table bac_experiences is missing."
+    },
+    {
+      "id": "FEAT-016",
+      "name": "Experience Social Sharing as Image Card",
+      "name_ar": "مشاركة التجربة كصورة في شبكات التواصل",
+      "category": "Social",
+      "status": "missing",
+      "uiRoute": "/experiences",
+      "backendConnection": "none",
+      "notes": "User requested dynamic branded image card generation for WhatsApp/Instagram sharing. Not implemented."
+    },
+    {
+      "id": "FEAT-017",
+      "name": "BaridiMob Manual Payment Checkout",
+      "name_ar": "الدفع اليدوي عبر بريدي موب وتأكيد الوصل",
+      "category": "Commercial",
+      "status": "partially_implemented",
+      "uiRoute": "/subscribe",
+      "backendConnection": "/api/ops/payments/receipt/upload",
+      "notes": "Accepts receipt uploads (JPG/PNG/PDF). Contains race condition bug generating duplicate orders in ops."
+    },
+    {
+      "id": "FEAT-018",
+      "name": "Subscription Tier Enforcement & Paywall",
+      "name_ar": "جدار الدفع وتطبيق خطط الاشتراك",
+      "category": "Commercial",
+      "status": "implemented",
+      "uiRoute": "/dashboard, /mission",
+      "backendConnection": "src/lib/access-control.ts",
+      "notes": "Blocks expired trial users from accessing missions and error lab, routing them to /subscribe."
+    },
+    {
+      "id": "FEAT-019",
+      "name": "Operator Cockpit & KPIs",
+      "name_ar": "لوحة تحكم العمليات والمؤشرات الحيوية",
+      "category": "Operations",
+      "status": "implemented",
+      "uiRoute": "/ops/overview",
+      "backendConnection": "/api/ops/overview",
+      "notes": "Real-time metrics: active students, pending payments, trial conversion, revenue, and pending issues."
+    },
+    {
+      "id": "FEAT-019B",
+      "name": "Operator Receipt Verification & Approval",
+      "name_ar": "مراجعة وتأكيد وصولات الدفع",
+      "category": "Operations",
+      "status": "implemented",
+      "uiRoute": "/ops/finance, /ops/overview",
+      "backendConnection": "/api/ops/payments/approve, /reject",
+      "notes": "Interactive receipt modal with zoom and one-click subscription activation or rejection with reason."
+    },
+    {
+      "id": "FEAT-020",
+      "name": "Student Directory & Trial Extender",
+      "name_ar": "سجل الطلاب وتمديد التجربة المجانية",
+      "category": "Operations",
+      "status": "implemented",
+      "uiRoute": "/ops/students/[id]",
+      "backendConnection": "/api/ops/students/[id]/extend",
+      "notes": "Operators can search students and grant 24h/48h/72h extensions directly."
+    },
+    {
+      "id": "FEAT-021",
+      "name": "Operations Audit Trail",
+      "name_ar": "سجل العمليات الإدارية المشفر",
+      "category": "Operations",
+      "status": "implemented",
+      "uiRoute": "/ops/audit",
+      "backendConnection": "supabase.operations_audit_logs",
+      "notes": "Logs operator approvals, trial extensions, and status changes with caller metadata."
+    },
+    {
+      "id": "FEAT-022",
+      "name": "Edge Route Guarding",
+      "name_ar": "حماية التوجيه على مستوى Edge Middleware",
+      "category": "Security",
+      "status": "partially_implemented",
+      "uiRoute": "middleware.ts",
+      "backendConnection": "NextRequest matcher",
+      "notes": "Only matches /ops/:path*. All student routes (/dashboard, /mission, /exam) bypass Edge and rely on client hooks."
+    },
+    {
+      "id": "FEAT-023",
+      "name": "Telemetry & Visitor Tracking",
+      "name_ar": "تتبع الزوار والتحليلات الداخلية",
+      "category": "Analytics",
+      "status": "implemented",
+      "uiRoute": "/api/telemetry/events",
+      "backendConnection": "supabase.telemetry_events",
+      "notes": "Records mission starts, completions, payment clicks, and funnel drop-offs without third-party cookies."
+    }
+  ]
+}

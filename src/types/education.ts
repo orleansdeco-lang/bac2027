@@ -15,13 +15,23 @@ export type StreamId =
   | "lettres_philo"
   | "langues_etrangeres";
 
+export type HistoricalStreamId =
+  | "sciences_nature_vie"
+  | "sciences_exactes"
+  | "technologie"
+  | "sciences_eco_gestion"
+  | "lettres_sciences_humaines"
+  | "lettres_langues_vivantes";
+
+export type ExtendedStreamId = StreamId | "arts" | HistoricalStreamId;
+
 export type TechniqueMathSpecialty =
   | "civil_eng"
   | "mechanical_eng"
   | "electrical_eng"
   | "process_eng";
 
-export type SubjectId =
+export type StandardSubjectId =
   | "math"
   | "physics"
   | "natural_sciences"
@@ -40,27 +50,42 @@ export type SubjectId =
   | "process_eng"
   | "third_language";
 
-export interface Subject {
-  id: SubjectId;
+export type ExtendedSubjectId =
+  | StandardSubjectId
+  | "german"
+  | "spanish"
+  | "italian"
+  | "tamazight"
+  | "art_specialty"
+  | "art_history";
+
+export type SubjectId = StandardSubjectId;
+
+export interface Subject<S = SubjectId> {
+  id: S;
   code: string;
   name_ar: string;
   name_fr: string;
   isScientific: boolean;
 }
 
-export interface StreamSubjectRule {
-  subjectId: SubjectId;
+export type ExtendedSubject = Subject<ExtendedSubjectId>;
+
+export interface StreamSubjectRule<S = SubjectId> {
+  subjectId: S;
   coefficient: number;
   isCoreSubject: boolean;
 }
 
-export interface Stream {
-  id: StreamId;
+export interface Stream<T = StreamId, S = SubjectId> {
+  id: T;
   examType: ExamType;
   code: string;
   name_ar: string;
   name_fr: string;
   description_ar: string;
   description_fr: string;
-  subjects: StreamSubjectRule[];
+  subjects: StreamSubjectRule<S>[];
 }
+
+export type ExtendedStream = Stream<ExtendedStreamId, ExtendedSubjectId>;

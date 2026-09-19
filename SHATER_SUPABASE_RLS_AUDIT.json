@@ -1,0 +1,138 @@
+{
+  "audit_timestamp": "2026-09-19T08:55:00.000Z",
+  "project_ref": "erbvmpnxufgeinqnshzu",
+  "global_rls_compliance": "100%",
+  "anon_restrictions_enforced": true,
+  "tables_audit": [
+    {
+      "table": "user_progress",
+      "rls_enabled": true,
+      "rls_forced": false,
+      "policies": [
+        { "name": "user_progress_select_own", "cmd": "SELECT", "roles": ["authenticated"], "rule": "auth.uid() = user_id OR is_operator(auth.uid())" },
+        { "name": "user_progress_insert_own", "cmd": "INSERT", "roles": ["authenticated"], "rule": "auth.uid() = user_id OR is_operator(auth.uid())" },
+        { "name": "user_progress_update_own", "cmd": "UPDATE", "roles": ["authenticated"], "rule": "auth.uid() = user_id OR is_operator(auth.uid())" },
+        { "name": "user_progress_delete_own", "cmd": "DELETE", "roles": ["authenticated"], "rule": "auth.uid() = user_id OR is_operator(auth.uid())" },
+        { "name": "user_progress_service_role_all", "cmd": "ALL", "roles": ["service_role"], "rule": "true" }
+      ],
+      "anon_access": "REVOKED"
+    },
+    {
+      "table": "high_schools",
+      "rls_enabled": true,
+      "rls_forced": false,
+      "policies": [
+        { "name": "high_schools_public_select", "cmd": "SELECT", "roles": ["anon", "authenticated"], "rule": "true" },
+        { "name": "high_schools_authenticated_insert", "cmd": "INSERT", "roles": ["authenticated"], "rule": "is_verified = false AND verification_status = 'user_submitted'" }
+      ],
+      "anon_access": "READ_ONLY_PUBLIC_DIRECTORY"
+    },
+    {
+      "table": "high_school_submissions",
+      "rls_enabled": true,
+      "rls_forced": false,
+      "policies": [
+        { "name": "Authenticated students can submit high school for review", "cmd": "INSERT", "roles": ["authenticated"], "rule": "(auth.uid() = submitted_by OR submitted_by IS NULL) AND status = 'pending'" },
+        { "name": "Students can view their own submissions", "cmd": "SELECT", "roles": ["authenticated"], "rule": "auth.uid() = submitted_by" },
+        { "name": "Operators can view all submissions", "cmd": "SELECT", "roles": ["authenticated"], "rule": "is_operator(auth.uid())" },
+        { "name": "Operators can update all submissions", "cmd": "UPDATE", "roles": ["authenticated"], "rule": "is_operator(auth.uid())" },
+        { "name": "Service role can manage all submissions", "cmd": "ALL", "roles": ["service_role"], "rule": "true" }
+      ],
+      "anon_access": "REVOKED"
+    },
+    {
+      "table": "bac_experiences",
+      "rls_enabled": true,
+      "rls_forced": false,
+      "policies": [
+        { "name": "Public experiences are viewable by everyone", "cmd": "SELECT", "roles": ["public"], "rule": "status = 'approved' OR auth.uid() = author_id OR is_operator(auth.uid())" },
+        { "name": "Authenticated users can submit experience", "cmd": "INSERT", "roles": ["authenticated"], "rule": "auth.uid() = author_id OR author_id IS NULL OR is_operator(auth.uid())" },
+        { "name": "Authors or operators can update experience", "cmd": "UPDATE", "roles": ["authenticated"], "rule": "auth.uid() = author_id OR is_operator(auth.uid())" },
+        { "name": "Authors or operators can delete experience", "cmd": "DELETE", "roles": ["authenticated"], "rule": "auth.uid() = author_id OR is_operator(auth.uid())" }
+      ],
+      "anon_access": "READ_ONLY_APPROVED_EXPERIENCES"
+    },
+    {
+      "table": "experience_upvotes",
+      "rls_enabled": true,
+      "rls_forced": false,
+      "policies": [
+        { "name": "Upvotes are viewable by everyone", "cmd": "SELECT", "roles": ["public"], "rule": "true" },
+        { "name": "Users can manage their own upvotes", "cmd": "INSERT", "roles": ["authenticated"], "rule": "auth.uid() = user_id" },
+        { "name": "Users can remove their own upvotes", "cmd": "DELETE", "roles": ["authenticated"], "rule": "auth.uid() = user_id" }
+      ],
+      "anon_access": "READ_ONLY"
+    },
+    {
+      "table": "experience_comments",
+      "rls_enabled": true,
+      "rls_forced": false,
+      "policies": [
+        { "name": "Comments are viewable by everyone", "cmd": "SELECT", "roles": ["public"], "rule": "true" },
+        { "name": "Users can insert comments", "cmd": "INSERT", "roles": ["authenticated"], "rule": "true" },
+        { "name": "Authors or operators can update comments", "cmd": "UPDATE", "roles": ["authenticated"], "rule": "auth.uid() = author_id OR is_operator(auth.uid())" },
+        { "name": "Authors or operators can delete comments", "cmd": "DELETE", "roles": ["authenticated"], "rule": "auth.uid() = author_id OR is_operator(auth.uid())" }
+      ],
+      "anon_access": "READ_ONLY"
+    },
+    {
+      "table": "student_profiles",
+      "rls_enabled": true,
+      "rls_forced": false,
+      "policies": [
+        { "name": "student_profiles_select_own_or_operator", "cmd": "SELECT", "roles": ["authenticated"], "rule": "auth.uid() = id OR auth.uid() = user_id OR is_operator(auth.uid())" },
+        { "name": "student_profiles_insert_own_or_operator", "cmd": "INSERT", "roles": ["authenticated"], "rule": "auth.uid() = id OR auth.uid() = user_id OR is_operator(auth.uid())" },
+        { "name": "student_profiles_update_own_or_operator", "cmd": "UPDATE", "roles": ["authenticated"], "rule": "auth.uid() = id OR auth.uid() = user_id OR is_operator(auth.uid())" },
+        { "name": "student_profiles_delete_own_or_operator", "cmd": "DELETE", "roles": ["authenticated"], "rule": "auth.uid() = id OR auth.uid() = user_id OR is_operator(auth.uid())" }
+      ],
+      "anon_access": "REVOKED"
+    },
+    {
+      "table": "payment_orders",
+      "rls_enabled": true,
+      "rls_forced": false,
+      "policies": [
+        { "name": "payment_orders_select", "cmd": "SELECT", "roles": ["public"], "rule": "auth.uid() = user_id OR is_operator(auth.uid())" },
+        { "name": "payment_orders_student_insert", "cmd": "INSERT", "roles": ["public"], "rule": "auth.uid() = user_id AND status IN ('DRAFT', 'PENDING')" },
+        { "name": "payment_orders_operator_update", "cmd": "UPDATE", "roles": ["public"], "rule": "is_operator(auth.uid())" }
+      ],
+      "anon_access": "REVOKED_FOR_PRIVATE"
+    },
+    {
+      "table": "missions",
+      "rls_enabled": true,
+      "rls_forced": false,
+      "policies": [
+        { "name": "missions_select_own_or_operator", "cmd": "SELECT", "roles": ["authenticated"], "rule": "auth.uid() = user_id OR is_operator(auth.uid())" },
+        { "name": "missions_insert_own_or_operator", "cmd": "INSERT", "roles": ["authenticated"], "rule": "auth.uid() = user_id OR is_operator(auth.uid())" },
+        { "name": "missions_update_own_or_operator", "cmd": "UPDATE", "roles": ["authenticated"], "rule": "auth.uid() = user_id OR is_operator(auth.uid())" },
+        { "name": "missions_delete_own_or_operator", "cmd": "DELETE", "roles": ["authenticated"], "rule": "auth.uid() = user_id OR is_operator(auth.uid())" }
+      ],
+      "anon_access": "REVOKED"
+    },
+    {
+      "table": "practice_attempts",
+      "rls_enabled": true,
+      "rls_forced": false,
+      "policies": [
+        { "name": "practice_attempts_select_own_or_operator", "cmd": "SELECT", "roles": ["authenticated"], "rule": "auth.uid() = user_id OR is_operator(auth.uid())" },
+        { "name": "practice_attempts_insert_own_or_operator", "cmd": "INSERT", "roles": ["authenticated"], "rule": "auth.uid() = user_id OR is_operator(auth.uid())" },
+        { "name": "practice_attempts_update_own_or_operator", "cmd": "UPDATE", "roles": ["authenticated"], "rule": "auth.uid() = user_id OR is_operator(auth.uid())" },
+        { "name": "practice_attempts_delete_own_or_operator", "cmd": "DELETE", "roles": ["authenticated"], "rule": "auth.uid() = user_id OR is_operator(auth.uid())" }
+      ],
+      "anon_access": "REVOKED"
+    },
+    {
+      "table": "errors",
+      "rls_enabled": true,
+      "rls_forced": false,
+      "policies": [
+        { "name": "errors_select_own_or_operator", "cmd": "SELECT", "roles": ["authenticated"], "rule": "auth.uid() = user_id OR is_operator(auth.uid())" },
+        { "name": "errors_insert_own_or_operator", "cmd": "INSERT", "roles": ["authenticated"], "rule": "auth.uid() = user_id OR is_operator(auth.uid())" },
+        { "name": "errors_update_own_or_operator", "cmd": "UPDATE", "roles": ["authenticated"], "rule": "auth.uid() = user_id OR is_operator(auth.uid())" },
+        { "name": "errors_delete_own_or_operator", "cmd": "DELETE", "roles": ["authenticated"], "rule": "auth.uid() = user_id OR is_operator(auth.uid())" }
+      ],
+      "anon_access": "REVOKED"
+    }
+  ]
+}

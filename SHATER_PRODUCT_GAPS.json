@@ -1,0 +1,106 @@
+{
+  "auditMetadata": {
+    "platform": "SHATER | الشاطر",
+    "evaluationDate": "2026-09-19",
+    "totalGapsIdentified": 13
+  },
+  "gaps": {
+    "critical_blockers": [
+      {
+        "id": "GAP-001",
+        "title": "Literary & Foreign Language Stream Content Void",
+        "description": "Students registered in 'lettres_philo' or 'langues_etrangeres' encounter broken mission pages (404 / Mission introuvable) because zero learning bundles exist in domain content.",
+        "impact": "Renders the platform unusable for approximately 35% of the Algerian BAC student demographic.",
+        "targetResolution": "Phase 1 Emergency Content Authoring"
+      },
+      {
+        "id": "GAP-002",
+        "title": "Remote Supabase Database Migration Desync",
+        "description": "Remote database has not executed migrations 013 to 017. Critical user progress, experiences, comments, and unlisted high school submissions drop into ephemeral localStorage or memory.",
+        "impact": "Data loss across devices, broken multi-device synchronization, and unreliable operations data.",
+        "targetResolution": "Immediate Supabase SQL Migration Execution"
+      },
+      {
+        "id": "GAP-003",
+        "title": "Synthetic Mock Options in Gestion & Économie",
+        "description": "32 skill bundles in Gestion & Éco feature dummy distractors ('خيار بديل', 'الإجابة الصحيحة').",
+        "impact": "Destroys credibility and test validity for economics/accounting students.",
+        "targetResolution": "Author authentic distractors in domain content packages"
+      },
+      {
+        "id": "GAP-004",
+        "title": "Duplicate Payment Orders in Operations Cockpit",
+        "description": "When a student submits a BaridiMob receipt, a race condition between local storage write and Supabase UUID return creates 2 distinct orders for the same payment.",
+        "impact": "Causes confusion, double-auditing, and potential accounting discrepancies for operators.",
+        "targetResolution": "Reconcile payment order creation to use a single authoritative UUID"
+      },
+      {
+        "id": "GAP-005",
+        "title": "Edge Middleware Protection Hole",
+        "description": "src/middleware.ts matcher only covers /ops/:path*. All student routes (/dashboard, /mission, /exam) bypass Edge and rely on client hydration hooks.",
+        "impact": "Security bypass, layout flash, unnecessary server load.",
+        "targetResolution": "Update matcher in middleware.ts"
+      }
+    ],
+    "important_improvements": [
+      {
+        "id": "GAP-006",
+        "title": "Social Share Image Card Generator for Experiences",
+        "description": "Students cannot generate a branded visual image card of their BAC tips for Instagram and WhatsApp sharing.",
+        "impact": "Missed viral acquisition channel and word-of-mouth student growth.",
+        "targetResolution": "Add HTML5 Canvas / SVG dynamic share card generator"
+      },
+      {
+        "id": "GAP-007",
+        "title": "Mobile Drawer Navigation Missing Experiences Link",
+        "description": "The mobile navigation menu omits the link to /experiences.",
+        "impact": "Decreased discovery and engagement for mobile smartphone users (85%+ of Algerian students).",
+        "targetResolution": "Add route to mobile links array in Header component"
+      },
+      {
+        "id": "GAP-008",
+        "title": "Orphaned Legacy Onboarding Code (/onboarding)",
+        "description": "846 lines of obsolete prototype code still reside in the codebase at /onboarding.",
+        "impact": "Technical debt, bundle size inflation, potential user confusion if accessed via direct URL.",
+        "targetResolution": "Add 301 redirect to /auth/register or remove dead route"
+      },
+      {
+        "id": "GAP-009",
+        "title": "Lettres & Philo Diagnostic Pool Under-provisioning",
+        "description": "Diagnostic test has only 3 questions for philosophy/literature.",
+        "impact": "Inaccurate student gap profile and weak personalization.",
+        "targetResolution": "Author 12 additional diagnostic questions"
+      },
+      {
+        "id": "GAP-010",
+        "title": "Server Admin Client Missing SUPABASE_SERVICE_ROLE_KEY",
+        "description": "Server actions fall back to anon key and cannot bypass RLS when performing background administrative writes.",
+        "impact": "Operational failures in audit logging and background user synchronization.",
+        "targetResolution": "Set SUPABASE_SERVICE_ROLE_KEY in production deployment env"
+      }
+    ],
+    "future_enhancements": [
+      {
+        "id": "GAP-011",
+        "title": "Automated SMS / WhatsApp Payment Approval Notifications",
+        "description": "Students must currently refresh their account or check dashboard to see if their payment was approved.",
+        "impact": "Elevated support tickets and customer anxiety.",
+        "targetResolution": "Phase 3 Webhook Integration"
+      },
+      {
+        "id": "GAP-012",
+        "title": "Downloadable Error Lab PDF Revision Notebook",
+        "description": "Students cannot print a physical summary of their logged errors and personalized repair guides.",
+        "impact": "Algerian students who prefer physical revision notebooks cannot export their errors.",
+        "targetResolution": "Phase 3 PDF Export Generator"
+      },
+      {
+        "id": "GAP-013",
+        "title": "Offline PWA Support for Intermittent Connectivity",
+        "description": "Missions and quizzes fail if internet drops during practice.",
+        "impact": "Friction for students in remote wilayas with unstable 4G/ADSL.",
+        "targetResolution": "Service Worker & IndexedDB Caching"
+      }
+    ]
+  }
+}

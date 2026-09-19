@@ -1,0 +1,205 @@
+{
+  "auditMetadata": {
+    "platform": "SHATER | الشاطر",
+    "evaluationDate": "2026-09-19",
+    "totalBugsLogged": 12,
+    "severityBreakdown": {
+      "P0_FATAL": 2,
+      "P1_HIGH": 3,
+      "P2_MEDIUM": 4,
+      "P3_LOW": 3
+    }
+  },
+  "bugs": [
+    {
+      "id": "BUG-001",
+      "severity": "P0",
+      "category": "Pedagogy / Broken Flow",
+      "title": "Lettres & Philo and Langues Étrangères streams have 0 working learning bundles (Mission introuvable)",
+      "page": "/mission/[missionId]",
+      "stepsToReproduce": [
+        "1. Register a student with stream 'lettres_philo' or 'langues_etrangeres'.",
+        "2. Complete or skip diagnostic to access dashboard.",
+        "3. Click on any recommended mission or navigate directly to a mission URL (e.g. /mission/philo_3as_awraq_01).",
+        "4. Observe error page."
+      ],
+      "expectedBehavior": "Should load pedagogical mission bundle with lesson, worked example, practice test, and error repair guide.",
+      "actualBehavior": "Displays error screen 'المهمة غير موجودة' (Mission introuvable) because getSkillLearningBundle returns null for all 23 skills.",
+      "likelyCause": "src/domain/content/mappings.ts only defined bundles for sciences_exp (31 skills) and partial gestion_eco. Lettres and langues have no bundle packages.",
+      "recommendedFix": "Author core learning bundle packages for literary streams in src/domain/content/ or provide graceful fallback explaining upcoming availability."
+    },
+    {
+      "id": "BUG-002",
+      "severity": "P0",
+      "category": "Database / Desync",
+      "title": "Remote Supabase production database missing tables from migrations 013 to 017",
+      "page": "Global / Database",
+      "stepsToReproduce": [
+        "1. Query remote Supabase project (https://erbvmpnxufgeinqnshzu.supabase.co).",
+        "2. Select from 'bac_experiences', 'user_progress', 'experience_comments', 'experience_upvotes', or 'high_school_submissions'.",
+        "3. PostgREST returns schema cache error 42P01."
+      ],
+      "expectedBehavior": "All migration tables exist in Supabase with RLS policies enabled.",
+      "actualBehavior": "ERROR: Could not find the table in the schema cache. System silently falls back to ephemeral localStorage and in-memory arrays.",
+      "likelyCause": "Migrations 013_bac_mastery_user_progress_persistence.sql through 017_add_wilaya_and_comment_moderation.sql were never applied to the remote Supabase database.",
+      "recommendedFix": "Run database migrations 013 through 017 on remote Supabase using Supabase CLI or SQL Editor."
+    },
+    {
+      "id": "BUG-003",
+      "severity": "P1",
+      "category": "Pedagogy / Mock Content",
+      "title": "Gestion & Économie skill bundles contain synthetic mock MCQ options in production",
+      "page": "/mission/[missionId]",
+      "stepsToReproduce": [
+        "1. Open any Gestion & Économie mission practice question.",
+        "2. Inspect the MCQ options rendered on screen.",
+        "3. Inspect the retest question."
+      ],
+      "expectedBehavior": "Options contain realistic pedagogical distractors representing specific calculation or conceptual errors.",
+      "actualBehavior": "Options literally say 'خيار بديل opt_b', 'خيار بديل opt_c', and retests literally say 'الإجابة الصحيحة' and 'إجابة خاطئة شائعة'.",
+      "likelyCause": "src/domain/content/mappings.ts lines 1333-1340 and 1370-1375 generate fallback strings when packages lack explicit MCQ option text.",
+      "recommendedFix": "Author explicit mathematical distractors with authentic values and errors in gestion-economie packages."
+    },
+    {
+      "id": "BUG-004",
+      "severity": "P1",
+      "category": "Security / Routing",
+      "title": "Edge Middleware only guards '/ops/:path*', leaving all student routes unguarded at Edge",
+      "page": "middleware.ts",
+      "stepsToReproduce": [
+        "1. Open src/middleware.ts.",
+        "2. Inspect config.matcher which is set to ['/ops/:path*'].",
+        "3. Unauthenticated HTTP requests to /dashboard, /mission, /exam, /account bypass Edge middleware completely."
+      ],
+      "expectedBehavior": "Edge middleware intercepts protected student routes and immediately redirects unauthenticated requests to /auth/login before rendering.",
+      "actualBehavior": "Edge allows request through; client loads full bundle, initializes React state, and only redirects after client-side hydration causes layout shift.",
+      "likelyCause": "middleware.ts matcher was narrowly constrained to avoid breaking static assets but excluded student routes.",
+      "recommendedFix": "Expand config.matcher to include protected student paths: ['/ops/:path*', '/dashboard/:path*', '/mission/:path*', '/exam/:path*', '/error-lab/:path*', '/account/:path*']."
+    },
+    {
+      "id": "BUG-005",
+      "severity": "P1",
+      "category": "Commercial / Payments",
+      "title": "Receipt upload generates duplicate payment orders in operations cockpit",
+      "page": "/subscribe -> /ops/finance",
+      "stepsToReproduce": [
+        "1. Student navigates to /subscribe and selects Season Pass.",
+        "2. Uploads BaridiMob payment receipt.",
+        "3. Operator opens /ops/finance or /ops/overview.",
+        "4. Two distinct orders appear for the same transaction."
+      ],
+      "expectedBehavior": "Exactly one payment order is created with receipt attached.",
+      "actualBehavior": "Two orders appear: one with client-generated ID 'ord_17...' from local durable cache, and one with Supabase UUID from database insert.",
+      "likelyCause": "In src/lib/operations/payments.ts, createPaymentOrder writes to memory and durable storage with ID 'ord_17...', then inserts to Supabase which returns a UUID. The durable storage is not reconciled, so loadDurableOrders returns the old ID while dbOrders returns the UUID. Both have receipts so deduping does not suppress either.",
+      "recommendedFix": "Use the Supabase generated UUID or pre-generate a single authoritative UUID on the server before writing to durable storage. Avoid multi-format IDs."
+    },
+    {
+      "id": "BUG-006",
+      "severity": "P2",
+      "category": "Architecture / Dead Code",
+      "title": "Orphaned 846-line legacy onboarding wizard (/onboarding) unreferenced in app",
+      "page": "/onboarding",
+      "stepsToReproduce": [
+        "1. Navigate to https://.../onboarding directly in browser.",
+        "2. Inspect UI and state management.",
+        "3. Check codebase references to /onboarding."
+      ],
+      "expectedBehavior": "A single coherent onboarding pipeline exists.",
+      "actualBehavior": "An outdated, unlinked 846-line component exists that duplicates functionality now handled by /auth/register and /profile/academic.",
+      "likelyCause": "Early prototype was abandoned when 5-step registration was implemented, but file was never deleted or redirected.",
+      "recommendedFix": "Replace /onboarding with a permanent 301 redirect to /auth/register or remove the dead code."
+    },
+    {
+      "id": "BUG-007",
+      "severity": "P2",
+      "category": "Pedagogy / Content",
+      "title": "Lettres & Philo diagnostic pool contains only 3 questions",
+      "page": "/diagnostic/lettres-philo",
+      "stepsToReproduce": [
+        "1. Launch Lettres & Philo diagnostic test.",
+        "2. Observe question counter and test length."
+      ],
+      "expectedBehavior": "Diagnostic pool contains at least 15 comprehensive questions covering key syllabus axes.",
+      "actualBehavior": "Test ends after only 3 questions, providing statistically insignificant gap detection.",
+      "likelyCause": "src/data/diagnostic/bac/lettres-philo/index.ts has only 3 questions authored.",
+      "recommendedFix": "Expand Lettres & Philo diagnostic pool to at least 15 curated questions."
+    },
+    {
+      "id": "BUG-008",
+      "severity": "P2",
+      "category": "Social / UX",
+      "title": "Experience social sharing as dynamic image card is missing",
+      "page": "/experiences",
+      "stepsToReproduce": [
+        "1. Open an experience card in /experiences.",
+        "2. Look for option to share as an image card to WhatsApp/Instagram."
+      ],
+      "expectedBehavior": "Button generates a branded 1080x1350 image card containing student advice, grade, and BAC 2027 watermark.",
+      "actualBehavior": "Only copies plain text link or invokes native navigator.share.",
+      "likelyCause": "Canvas / SVG image generator feature was requested by user but never implemented in the frontend.",
+      "recommendedFix": "Implement an HTML5 Canvas or SVG export modal creating a branded social share card."
+    },
+    {
+      "id": "BUG-009",
+      "severity": "P2",
+      "category": "UX / Mobile Navigation",
+      "title": "Experiences bank link missing from mobile drawer navigation",
+      "page": "Global Header / Mobile Nav",
+      "stepsToReproduce": [
+        "1. Open site on viewport width < 768px.",
+        "2. Tap hamburger menu icon.",
+        "3. Inspect navigation links list."
+      ],
+      "expectedBehavior": "'تجارب البكالوريا' (Experiences) should appear in primary navigation.",
+      "actualBehavior": "Link is missing from mobile menu, forcing users to discover it by manual URL or footer.",
+      "likelyCause": "Header component mobile links array was not updated when /experiences was released.",
+      "recommendedFix": "Add /experiences to mobile navigation menu in src/components/layout/Header.tsx."
+    },
+    {
+      "id": "BUG-010",
+      "severity": "P3",
+      "category": "Security / Environment",
+      "title": "Missing SUPABASE_SERVICE_ROLE_KEY causes backend admin calls to fall back to anon key",
+      "page": "Global Server Client",
+      "stepsToReproduce": [
+        "1. Inspect .env and process.env for SUPABASE_SERVICE_ROLE_KEY.",
+        "2. Inspect src/lib/supabase/server.ts."
+      ],
+      "expectedBehavior": "Privileged operator actions (audit log insertion, role checks) execute using service role credentials with administrative bypass.",
+      "actualBehavior": "Server client falls back to anon key and is constrained by public RLS policies.",
+      "likelyCause": "Service role key was not added to production environment variables.",
+      "recommendedFix": "Add SUPABASE_SERVICE_ROLE_KEY to production deployment environment variables."
+    },
+    {
+      "id": "BUG-011",
+      "severity": "P3",
+      "category": "SEO / Architecture",
+      "title": "Duplicate landing page route at /landing causes SEO duplication with /",
+      "page": "/landing",
+      "stepsToReproduce": [
+        "1. Visit / and /landing.",
+        "2. Observe identical or near-identical landing content."
+      ],
+      "expectedBehavior": "Single authoritative root URL at /.",
+      "actualBehavior": "Two distinct URLs serve landing content without canonical link tags.",
+      "likelyCause": "Variant created during landing page A/B testing and never cleaned up.",
+      "recommendedFix": "Add 301 permanent redirect from /landing to /."
+    },
+    {
+      "id": "BUG-012",
+      "severity": "P3",
+      "category": "UX / Social",
+      "title": "Comment author wilaya is not immutable once posted",
+      "page": "/experiences",
+      "stepsToReproduce": [
+        "1. Post a comment from a student profile in Wilaya 16 (Alger).",
+        "2. Student changes profile wilaya to 31 (Oran).",
+        "3. Prior comment wilaya changes retroactively or desyncs."
+      ],
+      "expectedBehavior": "Comment stores snapshot of wilaya at time of comment creation.",
+      "actualBehavior": "Relies on join or profile lookup rather than immutable snapshot column.",
+      "likelyCause": "Migration 017 added wilaya_name column but fallback storage uses live user profile.",
+      "recommendedFix": "Always snapshot wilaya_name and wilaya_code directly in comment record on creation."
+    }
+  ]
+}

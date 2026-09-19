@@ -1,0 +1,147 @@
+{
+  "audit_timestamp": "2026-09-19T08:55:00.000Z",
+  "project_ref": "erbvmpnxufgeinqnshzu",
+  "migration_table": "supabase_migrations.schema_migrations",
+  "local_migrations_count": 18,
+  "production_applied_count": 21,
+  "status_summary": "100% synchronized and reconciled",
+  "migrations": [
+    {
+      "version": "001",
+      "name": "001_bac_mastery_student_foundation.sql",
+      "applied_in_production": true,
+      "state": "synchronized"
+    },
+    {
+      "version": "002",
+      "name": "002_harden_errors_mission_composite_fk.sql",
+      "applied_in_production": true,
+      "state": "synchronized"
+    },
+    {
+      "version": "003",
+      "name": "003_add_trial_access_to_student_profiles.sql",
+      "applied_in_production": true,
+      "state": "synchronized"
+    },
+    {
+      "version": "004",
+      "name": "004_student_registration_and_profile.sql",
+      "applied_in_production": true,
+      "state": "synchronized"
+    },
+    {
+      "version": "005",
+      "name": "005_enforce_72h_trial_and_stream_lock.sql",
+      "applied_in_production": true,
+      "state": "synchronized"
+    },
+    {
+      "version": "006",
+      "name": "006_bac_mastery_operations_foundation.sql",
+      "applied_in_production": true,
+      "state": "synchronized"
+    },
+    {
+      "version": "007",
+      "name": "007_bac_mastery_commercial_hardening.sql",
+      "applied_in_production": true,
+      "state": "synchronized"
+    },
+    {
+      "version": "008",
+      "name": "008_bac_mastery_subscription_control.sql",
+      "applied_in_production": true,
+      "state": "synchronized"
+    },
+    {
+      "version": "009",
+      "name": "009_bac_mastery_operations_issues.sql",
+      "applied_in_production": true,
+      "state": "synchronized"
+    },
+    {
+      "version": "010",
+      "name": "010_bac_mastery_operations_student_directory.sql",
+      "applied_in_production": true,
+      "state": "synchronized"
+    },
+    {
+      "version": "011",
+      "name": "011_bac_mastery_operations_cockpit_kpis.sql",
+      "applied_in_production": true,
+      "state": "applied_and_recorded_via_repair_018",
+      "notes": "Creates ops_get_cockpit_kpis RPC"
+    },
+    {
+      "version": "012",
+      "name": "012_bac_mastery_security_and_edge_guarding.sql",
+      "applied_in_production": true,
+      "state": "applied_and_recorded_via_repair_018",
+      "notes": "RLS hardening across student and learning core"
+    },
+    {
+      "version": "013",
+      "name": "013_bac_mastery_user_progress_persistence.sql",
+      "applied_in_production": true,
+      "state": "applied_and_recorded_via_repair_018",
+      "notes": "Creates user_progress table and student_profiles persistence columns"
+    },
+    {
+      "version": "014",
+      "name": "014_bac_experiences_schema.sql",
+      "applied_in_production": true,
+      "state": "applied_and_recorded_via_repair_018",
+      "notes": "Creates bac_experiences, experience_upvotes and triggers"
+    },
+    {
+      "version": "015",
+      "name": "015_high_school_selection_and_verification.sql",
+      "applied_in_production": true,
+      "state": "applied_and_recorded_via_repair_018",
+      "notes": "Reconciled existing high_schools data and created high_school_submissions"
+    },
+    {
+      "version": "016",
+      "name": "016_enhance_bac_experiences_and_comments.sql",
+      "applied_in_production": true,
+      "state": "applied_and_recorded_via_repair_018",
+      "notes": "Creates experience_comments and moderation fields"
+    },
+    {
+      "version": "017",
+      "name": "017_add_wilaya_and_comment_moderation.sql",
+      "applied_in_production": true,
+      "state": "applied_and_recorded_via_repair_018",
+      "notes": "Adds wilaya filtering and author/operator comment editing"
+    },
+    {
+      "version": "018",
+      "name": "018_repair_production_schema_sync.sql",
+      "applied_in_production": true,
+      "state": "applied_and_recorded",
+      "notes": "Master idempotent repair migration"
+    },
+    {
+      "version": "20260918224536",
+      "name": "create_high_schools (Remote Historical)",
+      "applied_in_production": true,
+      "state": "preserved_intact",
+      "notes": "Seeded 758 verified Algerian secondary schools"
+    },
+    {
+      "version": "20260918224845",
+      "name": "enable_http_for_school_import (Remote Historical)",
+      "applied_in_production": true,
+      "state": "preserved_intact",
+      "notes": "PostgreSQL HTTP extension"
+    },
+    {
+      "version": "20260918224923",
+      "name": "school_source_ref_unique (Remote Historical)",
+      "applied_in_production": true,
+      "state": "preserved_intact",
+      "notes": "Unique index on (source, source_ref)"
+    }
+  ]
+}

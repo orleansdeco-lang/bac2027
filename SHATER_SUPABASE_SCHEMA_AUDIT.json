@@ -1,0 +1,238 @@
+{
+  "audit_timestamp": "2026-09-19T08:55:00.000Z",
+  "project_ref": "erbvmpnxufgeinqnshzu",
+  "postgres_version": "PostgreSQL 17.6 on x86_64-pc-linux-gnu",
+  "host": "aws-1-eu-west-1.pooler.supabase.com:5432",
+  "total_public_tables": 25,
+  "tables": [
+    {
+      "name": "high_schools",
+      "status": "synchronized_and_preserved",
+      "row_count": 758,
+      "rls_enabled": true,
+      "key_columns": [
+        "id", "name", "name_fr", "normalized_name", "name_normalized",
+        "wilaya_code", "wilaya_name_ar", "commune_name_ar", "is_verified",
+        "verification_status", "source", "source_ref", "created_at"
+      ],
+      "changes_applied": [
+        "Added name_normalized column for complete client ORM/TypeScript compatibility",
+        "Backfilled name_normalized from normalized_name",
+        "Attached before insert/update trigger trg_sync_high_school_norm",
+        "Expanded verification_status check constraint to support verified, pending, rejected, needs_review, user_submitted"
+      ]
+    },
+    {
+      "name": "high_school_submissions",
+      "status": "newly_created",
+      "row_count": 0,
+      "rls_enabled": true,
+      "key_columns": [
+        "id", "submitted_by", "proposed_name", "proposed_name_normalized",
+        "wilaya_code", "wilaya_name_ar", "commune_name_ar", "status",
+        "admin_note", "reviewed_by", "reviewed_at", "created_at"
+      ],
+      "changes_applied": [
+        "Created table for unlisted high school student submissions",
+        "Created status, wilaya/commune, and normalized name indexes",
+        "Configured RLS: authenticated insert with status pending, student view own, operators full view and update"
+      ]
+    },
+    {
+      "name": "user_progress",
+      "status": "newly_created",
+      "row_count": 0,
+      "rls_enabled": true,
+      "key_columns": [
+        "user_id", "skill_id", "stream_id", "subject_id", "status",
+        "diagnostic_completed", "diagnostic_score", "last_lesson_id",
+        "total_time_seconds", "last_active_at", "created_at", "updated_at"
+      ],
+      "primary_key": ["user_id", "skill_id"],
+      "changes_applied": [
+        "Created composite PK table for atomic student learning and diagnostic loop prevention",
+        "Created performance indices for (user_id, stream_id), status, and last_active_at",
+        "Configured strict RLS: owner-only access and service_role administrative management"
+      ]
+    },
+    {
+      "name": "bac_experiences",
+      "status": "newly_created_and_seeded",
+      "row_count": 6,
+      "rls_enabled": true,
+      "key_columns": [
+        "id", "author_id", "author_name", "author_role", "stream_id",
+        "final_grade", "initial_grade", "target_major", "biggest_trap",
+        "winning_routine", "best_resources", "upvotes_count", "is_verified",
+        "status", "candidate_type", "passed_bac", "retaking_bac",
+        "university_major", "reviewer_notes", "reviewed_at", "reviewed_by",
+        "wilaya", "created_at"
+      ],
+      "changes_applied": [
+        "Created table incorporating multi-track student submissions, moderation status, and wilaya metadata",
+        "Seeded 6 authentic curated Algerian BAC experiences",
+        "Configured RLS: public view of approved, authors view/edit own, operators view/moderate all"
+      ]
+    },
+    {
+      "name": "experience_upvotes",
+      "status": "newly_created",
+      "row_count": 0,
+      "rls_enabled": true,
+      "key_columns": ["user_id", "experience_id", "created_at"],
+      "primary_key": ["user_id", "experience_id"],
+      "changes_applied": [
+        "Created unique upvote mapping table",
+        "Added sync trigger trg_sync_experience_upvotes to increment/decrement bac_experiences.upvotes_count atomically",
+        "Configured RLS: public read, authenticated insert/delete own"
+      ]
+    },
+    {
+      "name": "experience_comments",
+      "status": "newly_created",
+      "row_count": 0,
+      "rls_enabled": true,
+      "key_columns": ["id", "experience_id", "author_id", "author_name", "content", "wilaya", "created_at", "updated_at"],
+      "changes_applied": [
+        "Created comments table with wilaya capture and cascade deletion on experience",
+        "Configured RLS: public read, authenticated insert, author or operator update and delete"
+      ]
+    },
+    {
+      "name": "student_profiles",
+      "status": "synchronized_and_preserved",
+      "row_count": 2,
+      "rls_enabled": true,
+      "key_columns": [
+        "id", "user_id", "education_level", "exam_type", "stream_id",
+        "specialty_id", "target_score", "baseline_score", "weekly_study_hours",
+        "future_objective", "biggest_obstacle", "energy_state", "language",
+        "onboarding_completed", "raw_draft", "created_at", "updated_at",
+        "trial_started_at", "trial_expires_at", "access_status", "plan",
+        "first_name", "last_name", "student_phone", "parent_phone",
+        "student_status", "wilaya_code", "wilaya_name", "commune_code",
+        "commune_name", "school_name", "annual_average_year_1",
+        "annual_average_year_2", "has_target_specialty", "target_specialty",
+        "study_methods", "current_self_assessment", "registration_completed_at",
+        "academic_profile_completed_at", "subscription_started_at",
+        "subscription_expires_at", "last_lesson_id", "total_study_time_seconds",
+        "diagnostic_completed", "diagnostic_score"
+      ],
+      "changes_applied": [
+        "Added last_lesson_id TEXT",
+        "Added total_study_time_seconds INTEGER DEFAULT 0",
+        "Added diagnostic_completed BOOLEAN DEFAULT false",
+        "Added diagnostic_score NUMERIC(5,2)",
+        "Reinforced RLS policies to allow operator access while keeping owner isolation"
+      ]
+    },
+    {
+      "name": "payment_orders",
+      "status": "preserved",
+      "row_count": 5,
+      "rls_enabled": true
+    },
+    {
+      "name": "telemetry_events",
+      "status": "preserved",
+      "row_count": 465,
+      "rls_enabled": true
+    },
+    {
+      "name": "diagnostic_sessions",
+      "status": "preserved",
+      "row_count": 2,
+      "rls_enabled": true
+    },
+    {
+      "name": "diagnostic_answers",
+      "status": "preserved",
+      "row_count": 1,
+      "rls_enabled": true
+    },
+    {
+      "name": "diagnostic_results",
+      "status": "preserved",
+      "row_count": 1,
+      "rls_enabled": true
+    },
+    {
+      "name": "missions",
+      "status": "preserved",
+      "row_count": 3,
+      "rls_enabled": true
+    },
+    {
+      "name": "practice_attempts",
+      "status": "preserved",
+      "row_count": 1,
+      "rls_enabled": true
+    },
+    {
+      "name": "errors",
+      "status": "preserved",
+      "row_count": 1,
+      "rls_enabled": true
+    },
+    {
+      "name": "error_repairs",
+      "status": "preserved",
+      "row_count": 1,
+      "rls_enabled": true
+    },
+    {
+      "name": "retests",
+      "status": "preserved",
+      "row_count": 1,
+      "rls_enabled": true
+    },
+    {
+      "name": "skill_mastery",
+      "status": "preserved",
+      "row_count": 2,
+      "rls_enabled": true
+    },
+    {
+      "name": "student_error_lab",
+      "status": "preserved",
+      "row_count": 0,
+      "rls_enabled": true
+    },
+    {
+      "name": "operations_audit_logs",
+      "status": "preserved",
+      "row_count": 1,
+      "rls_enabled": true
+    },
+    {
+      "name": "operations_issues",
+      "status": "preserved",
+      "row_count": 0,
+      "rls_enabled": true
+    },
+    {
+      "name": "ops_admins",
+      "status": "preserved",
+      "row_count": 1,
+      "rls_enabled": true
+    },
+    {
+      "name": "profiles",
+      "status": "preserved",
+      "row_count": 1,
+      "rls_enabled": true
+    },
+    {
+      "name": "subscription_plans",
+      "status": "preserved",
+      "row_count": 2,
+      "rls_enabled": true
+    },
+    {
+      "name": "user_roles",
+      "status": "preserved",
+      "row_count": 2,
+      "rls_enabled": true
+    }
+  ]
+}

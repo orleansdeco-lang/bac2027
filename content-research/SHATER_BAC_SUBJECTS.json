@@ -1,0 +1,832 @@
+[
+  {
+    "id": "natural_sciences",
+    "name_ar": "علوم الطبيعة والحياة",
+    "name_fr": "Sciences de la Nature et de la Vie",
+    "code": "SNV",
+    "category": "scientific",
+    "stream_mappings": [
+      {
+        "stream_id": "sciences_exp",
+        "coefficient": 6,
+        "is_core": true,
+        "weekly_hours": 6
+      },
+      {
+        "stream_id": "math",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      }
+    ],
+    "topics_syllabus": [
+      "تركيب البروتين (الاستنساخ والترجمة)",
+      "العلاقة بين بنية ووظيفة البروتين",
+      "النشاط الإنزيمي للبروتينات",
+      "دور البروتينات في الدفاع عن الذات (المناعة الخلطية والخلوية)",
+      "دور البروتينات في الاتصال العصبي",
+      "آليات تحويل الطاقة الضوئية إلى كامنة (التركيب الضوئي)",
+      "آليات تحويل الطاقة الكامنة إلى ATP (التنفس والتخمر)",
+      "تكتونية الصفائح والظواهر الجيولوجية"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "physics",
+    "name_ar": "العلوم الفيزيائية",
+    "name_fr": "Sciences Physiques",
+    "code": "PHY",
+    "category": "scientific",
+    "stream_mappings": [
+      {
+        "stream_id": "sciences_exp",
+        "coefficient": 5,
+        "is_core": true,
+        "weekly_hours": 5
+      },
+      {
+        "stream_id": "math",
+        "coefficient": 6,
+        "is_core": true,
+        "weekly_hours": 6
+      },
+      {
+        "stream_id": "technique_math",
+        "coefficient": 6,
+        "is_core": true,
+        "weekly_hours": 6
+      },
+      {
+        "stream_id": "arts",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      }
+    ],
+    "topics_syllabus": [
+      "المتابعة الزمنية لتحول كيميائي في وسط مائي",
+      "التحولات النووية (النشاط الإشعاعي والانشطار والاندماج)",
+      "دراسة ظواهر كهربائية (ثنائي القطب RC وثنائي القطب RL و RLC)",
+      "تطور جملة ميكانيكية (قوانين نيوتن وحركة الكواكب والقذائف والسقوط)",
+      "تطور جملة كيميائية نحو حالة التوازن (الأحماض والأسس و pH)",
+      "مراقبة تطور جملة كيميائية (الأسترة وإماهة الإستر)",
+      "الظواهر الاهتزازية والضوئية"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "math",
+    "name_ar": "الرياضيات",
+    "name_fr": "Mathématiques",
+    "code": "MATH",
+    "category": "scientific",
+    "stream_mappings": [
+      {
+        "stream_id": "math",
+        "coefficient": 7,
+        "is_core": true,
+        "weekly_hours": 7
+      },
+      {
+        "stream_id": "technique_math",
+        "coefficient": 6,
+        "is_core": true,
+        "weekly_hours": 6
+      },
+      {
+        "stream_id": "sciences_exp",
+        "coefficient": 5,
+        "is_core": true,
+        "weekly_hours": 5
+      },
+      {
+        "stream_id": "gestion_eco",
+        "coefficient": 5,
+        "is_core": true,
+        "weekly_hours": 4
+      },
+      {
+        "stream_id": "lettres_philo",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "langues_etrangeres",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "arts",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      }
+    ],
+    "topics_syllabus": [
+      "المتتاليات العددية والبرهان بالتراجع",
+      "الدوال العددية (الاشتقاقية، الاستمرارية، النهايات، مبرهنة القيم المتوسطة)",
+      "الدوال الأسية واللوغاريتمية",
+      "التزايد المقارن والمعادلات التفاضلية",
+      "الحساب التكاملي وحساب المساحات",
+      "الاحتمالات والمتغيرات العشوائية",
+      "الأعداد المركبة والتحويلات النقطية",
+      "الحساب والموافقات في Z ونظرية بيزو وغوص",
+      "الهندسة في الفضاء وجداء السلمي"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "arabic",
+    "name_ar": "اللغة العربية وآدابها",
+    "name_fr": "Langue et Littérature Arabes",
+    "code": "ARA",
+    "category": "literary_humanities",
+    "stream_mappings": [
+      {
+        "stream_id": "lettres_philo",
+        "coefficient": 6,
+        "is_core": true,
+        "weekly_hours": 6
+      },
+      {
+        "stream_id": "langues_etrangeres",
+        "coefficient": 5,
+        "is_core": true,
+        "weekly_hours": 5
+      },
+      {
+        "stream_id": "sciences_exp",
+        "coefficient": 3,
+        "is_core": false,
+        "weekly_hours": 3
+      },
+      {
+        "stream_id": "math",
+        "coefficient": 3,
+        "is_core": false,
+        "weekly_hours": 3
+      },
+      {
+        "stream_id": "technique_math",
+        "coefficient": 3,
+        "is_core": false,
+        "weekly_hours": 3
+      },
+      {
+        "stream_id": "gestion_eco",
+        "coefficient": 3,
+        "is_core": false,
+        "weekly_hours": 3
+      },
+      {
+        "stream_id": "arts",
+        "coefficient": 3,
+        "is_core": false,
+        "weekly_hours": 3
+      }
+    ],
+    "topics_syllabus": [
+      "عصر الانحطاط: شعر المديح والزهد والنثر العلمي المتأدب",
+      "عصر النهضة: شعر المنفى ومدرسة الإحياء والبعث",
+      "شعر المهجر والرابطة القلمية والنزعة الإنسانية",
+      "الشعر الحديث: شعر الثورة التحريرية الجزائرية ومفدي زكريا",
+      "شعر القضية الفلسطينية والالتزام",
+      "شعر التفعيلة والرمز والأسطورة",
+      "المقال النقدي والأدبي في الأدب الجزائري والعربي",
+      "قواعد اللغة: الإعراب التقديري، إعراب إذا وإذ وإذن، لو ولولا، الجمل الإعرابية"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "philosophy",
+    "name_ar": "الفلسفة",
+    "name_fr": "Philosophie",
+    "code": "PHIL",
+    "category": "literary_humanities",
+    "stream_mappings": [
+      {
+        "stream_id": "lettres_philo",
+        "coefficient": 6,
+        "is_core": true,
+        "weekly_hours": 8
+      },
+      {
+        "stream_id": "langues_etrangeres",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 3
+      },
+      {
+        "stream_id": "sciences_exp",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "math",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "technique_math",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "gestion_eco",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "arts",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      }
+    ],
+    "topics_syllabus": [
+      "السؤال بين المشكلة والإشكالية",
+      "الشعور واللاشعور",
+      "الإدراك الحسي والإحساس",
+      "الذاكرة والخيال",
+      "اللغة والفكر",
+      "العادة والإرادة",
+      "فلسفة الرياضيات واليقين الرياضي",
+      "فلسفة العلوم الطبيعية والبيولوجيا",
+      "فلسفة العلوم الإنسانية",
+      "الحرية والمسؤولية والجزاء",
+      "العدالة الاجتماعية بين المساواة والتفاوت، الحق والواجب",
+      "الديمقراطية والحكم الراشد وأنظمة الحكم"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "history_geography",
+    "name_ar": "التاريخ والجغرافيا",
+    "name_fr": "Histoire et Géographie",
+    "code": "HG",
+    "category": "literary_humanities",
+    "stream_mappings": [
+      {
+        "stream_id": "lettres_philo",
+        "coefficient": 4,
+        "is_core": true,
+        "weekly_hours": 4
+      },
+      {
+        "stream_id": "gestion_eco",
+        "coefficient": 4,
+        "is_core": true,
+        "weekly_hours": 4
+      },
+      {
+        "stream_id": "sciences_exp",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "math",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "technique_math",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "langues_etrangeres",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "arts",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      }
+    ],
+    "topics_syllabus": [
+      "تاريخ: تطور العالم المعاصر وبروز الصراع بين الشرق والغرب (الحرب الباردة)",
+      "تاريخ: الأزمات الدولية ومساعي التعايش السلمي وانفراج العلاقات",
+      "تاريخ: انهيار المعسكر الشيوعي وظهور النظام الدولي الجديد",
+      "تاريخ: العمل المسلح ورد فعل الاستعمار 1954-1962",
+      "تاريخ: استعادة السيادة وبناء الدولة الجزائرية والمفاوضات",
+      "تاريخ: العالم الثالث وحركات التحرر ومنظمة عدم الانحياز",
+      "جغرافيا: واقع الاقتصاد العالمي والمبادلات والتنقلات وحركة رؤوس الأموال",
+      "جغرافيا: القوى الاقتصادية الكبرى (الولايات المتحدة، الاتحاد الأوروبي، شرق آسيا)",
+      "جغرافيا: اقتصاد الجزائر ومكانته في حوض البحر الأبيض المتوسط"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "islamic_studies",
+    "name_ar": "العلوم الإسلامية",
+    "name_fr": "Sciences Islamiques",
+    "code": "ISL",
+    "category": "literary_humanities",
+    "stream_mappings": [
+      {
+        "stream_id": "sciences_exp",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "math",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "technique_math",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "gestion_eco",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "lettres_philo",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "langues_etrangeres",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "arts",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      }
+    ],
+    "topics_syllabus": [
+      "العقيدة الإسلامية وأثرها في حياة الفرد والمجتمع",
+      "وسائل القرآن الكريم في تثبيت العقيدة الإسلامية",
+      "الإسلام والرسالات السماوية",
+      "مقاصد الشريعة الإسلامية (الضروريات، الحاجيات، التحسينيات)",
+      "الصحة النفسية والجسمية في القرآن الكريم",
+      "منهج الإسلام في محاربة الانحراف والجريمة",
+      "المساواة أمام أحكام الشريعة الإسلامية",
+      "الوقف وآثاره الاقتصادية والاجتماعية",
+      "أحكام المعاملات المالية (الربا، بيع التقسيط، الصرف)",
+      "أحكام الأسرة في الإسلام والنسب والتبني والميراث"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "french",
+    "name_ar": "اللغة الفرنسية",
+    "name_fr": "Français",
+    "code": "FR",
+    "category": "languages",
+    "stream_mappings": [
+      {
+        "stream_id": "langues_etrangeres",
+        "coefficient": 5,
+        "is_core": true,
+        "weekly_hours": 5
+      },
+      {
+        "stream_id": "lettres_philo",
+        "coefficient": 3,
+        "is_core": false,
+        "weekly_hours": 3
+      },
+      {
+        "stream_id": "sciences_exp",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 3
+      },
+      {
+        "stream_id": "math",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 3
+      },
+      {
+        "stream_id": "technique_math",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 3
+      },
+      {
+        "stream_id": "gestion_eco",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 3
+      },
+      {
+        "stream_id": "arts",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 3
+      }
+    ],
+    "topics_syllabus": [
+      "Le texte d'histoire et le témoignage historique",
+      "Le débat d'idées et le texte argumentatif",
+      "L'appel et le texte incitatif",
+      "Compte rendu objectif et compte rendu critique",
+      "Visée communicative et discours rapporté"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "english",
+    "name_ar": "اللغة الإنجليزية",
+    "name_fr": "Anglais",
+    "code": "EN",
+    "category": "languages",
+    "stream_mappings": [
+      {
+        "stream_id": "langues_etrangeres",
+        "coefficient": 5,
+        "is_core": true,
+        "weekly_hours": 5
+      },
+      {
+        "stream_id": "lettres_philo",
+        "coefficient": 3,
+        "is_core": false,
+        "weekly_hours": 3
+      },
+      {
+        "stream_id": "sciences_exp",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 3
+      },
+      {
+        "stream_id": "math",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 3
+      },
+      {
+        "stream_id": "technique_math",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 3
+      },
+      {
+        "stream_id": "gestion_eco",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 3
+      },
+      {
+        "stream_id": "arts",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 3
+      }
+    ],
+    "topics_syllabus": [
+      "Ancient Civilizations",
+      "Ethics in Business",
+      "Education in the World",
+      "Advertising, Consumers and Safety",
+      "Astronomy and the Solar System",
+      "Feelings and Emotions"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "accounting_finance",
+    "name_ar": "التسيير المحاسبي والمالي",
+    "name_fr": "Gestion Comptable et Financière",
+    "code": "COMPTA",
+    "category": "economic_legal",
+    "stream_mappings": [
+      {
+        "stream_id": "gestion_eco",
+        "coefficient": 6,
+        "is_core": true,
+        "weekly_hours": 6
+      }
+    ],
+    "topics_syllabus": [
+      "أعمال نهاية السنة وتسوية التثبيتات والاهتلاكات وخسائر القيمة",
+      "تسوية المخزونات وحسابات الزبائن والمؤونات",
+      "إعداد جدول حسابات النتائج وتحليل الاستغلال التفاضلي وعتبة المردودية",
+      "إعداد وتحليل الميزانية الوظيفية وجدول تدفقات الخزينة",
+      "اختيار المشاريع الاستثمارية وطرق تمويل الاستثمارات والقروض"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "economics_management",
+    "name_ar": "الاقتصاد والمناجمنت",
+    "name_fr": "Économie et Management",
+    "code": "ECO",
+    "category": "economic_legal",
+    "stream_mappings": [
+      {
+        "stream_id": "gestion_eco",
+        "coefficient": 5,
+        "is_core": true,
+        "weekly_hours": 5
+      }
+    ],
+    "topics_syllabus": [
+      "النقود والأنظمة المصرفية والبنك المركزي",
+      "التضخم أسبابه وآثاره وطرق معالجته",
+      "السوق والأسعار والبطالة وأشكالها",
+      "التجارة الخارجية وميزان المدفوعات ومنظمة التجارة العالمية",
+      "المناجمنت: التخطيط والتنظيم والرقابة والقيادة"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "law",
+    "name_ar": "القانون",
+    "name_fr": "Droit",
+    "code": "DROIT",
+    "category": "economic_legal",
+    "stream_mappings": [
+      {
+        "stream_id": "gestion_eco",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      }
+    ],
+    "topics_syllabus": [
+      "عقد العمل الفردي وعلاقات العمل وحقوق وواجبات العامل",
+      "نزاعات العمل الفردية والجماعية وطرق تسويتها",
+      "عقد البيع وشروطه والتزامات الطرفين",
+      "الشركات التجارية (التضامن، المساهمة، SARL)"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "mechanical_eng",
+    "name_ar": "الهندسة الميكانيكية",
+    "name_fr": "Génie Mécanique",
+    "code": "GM",
+    "category": "technical",
+    "stream_mappings": [
+      {
+        "stream_id": "technique_math",
+        "coefficient": 7,
+        "is_core": true,
+        "weekly_hours": 7
+      }
+    ],
+    "topics_syllabus": [
+      "دراسة الأنظمة الآلية والتحليل الوظيفي",
+      "الوصلات الميكانيكية ونقل الحركة والمسننات",
+      "مقاومة المواد (المد، الانضغاط، القص، الانحناء)",
+      "دراسة التجميع الميكانيكي والمدحرجات",
+      "مخططات الصنع وعقود المرحلة وتشغيل القطع الآلية"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "civil_eng",
+    "name_ar": "الهندسة المدنية",
+    "name_fr": "Génie Civil",
+    "code": "GC",
+    "category": "technical",
+    "stream_mappings": [
+      {
+        "stream_id": "technique_math",
+        "coefficient": 7,
+        "is_core": true,
+        "weekly_hours": 7
+      }
+    ],
+    "topics_syllabus": [
+      "المنشآت العلوية والسفلية والجسور والطرق",
+      "ميكانيك الأجسام الصلبة والتحريضات البسيطة",
+      "دراسة الروافد المستمرة وحساب العزوم وقوى القص",
+      "الخرسانة المسلحة وحساب المقاطع المستطيلة والحديد",
+      "طبوغرافيا: قياس المسافات والتسوية والمقاطع"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "electrical_eng",
+    "name_ar": "الهندسة الكهربائية",
+    "name_fr": "Génie Électrique",
+    "code": "GELE",
+    "category": "technical",
+    "stream_mappings": [
+      {
+        "stream_id": "technique_math",
+        "coefficient": 7,
+        "is_core": true,
+        "weekly_hours": 7
+      }
+    ],
+    "topics_syllabus": [
+      "المنطق التعاقبي والقلابات والعدادات وسجلات الإزاحة",
+      "المتعاقب غرافسيت (GRAFCET) وبرمجة الأنظمة الآلية",
+      "المحركات الكهربائية (اللا تزامني، محرك خطوة خطوة)",
+      "تحويل الإشارات والطاقة: المقومات، المقطعات، والمضخمات"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "process_eng",
+    "name_ar": "هندسة الطرائق",
+    "name_fr": "Génie des Procédés",
+    "code": "GP",
+    "category": "technical",
+    "stream_mappings": [
+      {
+        "stream_id": "technique_math",
+        "coefficient": 7,
+        "is_core": true,
+        "weekly_hours": 7
+      }
+    ],
+    "topics_syllabus": [
+      "الكيمياء العضوية الحركية والبوليميرات والصناعات البتروكيميائية",
+      "الديناميكا الحرارية والكيمياء الحرارية وقانون هس",
+      "العمليات الموحدة: التقطير، الاستخلاص، التبلور، المبادلات الحرارية",
+      "التحليل الكيميائي الحجمي والآلي ومعالجة المياه"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "third_language_de",
+    "name_ar": "اللغة الألمانية",
+    "name_fr": "Allemand (LV3)",
+    "code": "ALL",
+    "category": "languages",
+    "stream_mappings": [
+      {
+        "stream_id": "langues_etrangeres",
+        "coefficient": 5,
+        "is_core": true,
+        "weekly_hours": 4
+      }
+    ],
+    "topics_syllabus": [
+      "Umwelt und Natur, Reisen und Tourismus, Schule und Arbeitswelt",
+      "Jugendliche und moderne Medien",
+      "Grammatik: Passiv, Konjunktiv II, Relativsätze, Nebensätze, Modalverben",
+      "Textverständnis und schriftlicher Ausdruck"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "third_language_es",
+    "name_ar": "اللغة الإسبانية",
+    "name_fr": "Espagnol (LV3)",
+    "code": "ESP",
+    "category": "languages",
+    "stream_mappings": [
+      {
+        "stream_id": "langues_etrangeres",
+        "coefficient": 5,
+        "is_core": true,
+        "weekly_hours": 4
+      }
+    ],
+    "topics_syllabus": [
+      "La juventud y la sociedad, el medio ambiente, culturas hispánicas",
+      "El mundo laboral y los avances tecnológicos",
+      "Gramática: Subjuntivo, estilo indirecto, tiempos del pasado",
+      "Comprensión y producción escrita"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "third_language_it",
+    "name_ar": "اللغة الإيطالية",
+    "name_fr": "Italien (LV3)",
+    "code": "ITA",
+    "category": "languages",
+    "stream_mappings": [
+      {
+        "stream_id": "langues_etrangeres",
+        "coefficient": 5,
+        "is_core": true,
+        "weekly_hours": 4
+      }
+    ],
+    "topics_syllabus": [
+      "Giovani e società, viaggi e patrimonio italiano, l'ambiente",
+      "Grammatica: Congiuntivo, discorso indiretto, pronomi combinati",
+      "Comprensione del testo e produzione scritta"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "tamazight",
+    "name_ar": "اللغة الأمازيغية",
+    "name_fr": "Langue Amazighe",
+    "code": "AMAZ",
+    "category": "languages",
+    "stream_mappings": [
+      {
+        "stream_id": "sciences_exp",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "math",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "technique_math",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "gestion_eco",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "lettres_philo",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      },
+      {
+        "stream_id": "langues_etrangeres",
+        "coefficient": 2,
+        "is_core": false,
+        "weekly_hours": 2
+      }
+    ],
+    "topics_syllabus": [
+      "Tira d tsekla tamaziɣt",
+      "Tajerrumt d umawal",
+      "Asuqqel d tmedyazt",
+      "Tira n yiḍrisen"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "art_specialty",
+    "name_ar": "مادة التخصص الفني (فنون)",
+    "name_fr": "Spécialité Artistique (Arts)",
+    "code": "ART_SPEC",
+    "category": "arts",
+    "stream_mappings": [
+      {
+        "stream_id": "arts",
+        "coefficient": 6,
+        "is_core": true,
+        "weekly_hours": 6
+      }
+    ],
+    "topics_syllabus": [
+      "فنون تشكيلية: الرسم، النحت، التصميم الغرافيكي",
+      "موسيقى: الصولفيج، المقامات، التحليل والتوزيع",
+      "مسرح: السينوغرافيا والإخراج والتمثيل",
+      "سينما وسمعي بصري: لغة الصورة، السيناريو والمونتاج"
+    ],
+    "has_bac_exam": true
+  },
+  {
+    "id": "art_history",
+    "name_ar": "تاريخ الفن والجماليات",
+    "name_fr": "Histoire de l'Art et Esthétique",
+    "code": "ART_HIST",
+    "category": "arts",
+    "stream_mappings": [
+      {
+        "stream_id": "arts",
+        "coefficient": 3,
+        "is_core": true,
+        "weekly_hours": 3
+      }
+    ],
+    "topics_syllabus": [
+      "الفنون القديمة والكلاسيكية المتوسطية والإسلامية",
+      "مدارس الفن الحديث والمعاصر وتاريخ التراث الفني الجزائري",
+      "فلسفة الجمال ونظريات النقد الفني"
+    ],
+    "has_bac_exam": true
+  }
+]

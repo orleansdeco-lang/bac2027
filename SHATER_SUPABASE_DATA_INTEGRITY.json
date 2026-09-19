@@ -1,0 +1,175 @@
+{
+  "audit_timestamp": "2026-09-19T08:55:00.000Z",
+  "project_ref": "erbvmpnxufgeinqnshzu",
+  "data_loss_detected": false,
+  "golden_rule_compliance": {
+    "zero_drop_table": true,
+    "zero_truncate": true,
+    "zero_db_reset": true,
+    "user_data_intact": true,
+    "high_schools_preserved": true
+  },
+  "table_row_counts": [
+    {
+      "table": "high_schools",
+      "count_before": 758,
+      "count_after": 758,
+      "delta": 0,
+      "status": "PRESERVED_100_PERCENT"
+    },
+    {
+      "table": "student_profiles",
+      "count_before": 2,
+      "count_after": 2,
+      "delta": 0,
+      "status": "PRESERVED_100_PERCENT"
+    },
+    {
+      "table": "payment_orders",
+      "count_before": 5,
+      "count_after": 5,
+      "delta": 0,
+      "status": "PRESERVED_100_PERCENT"
+    },
+    {
+      "table": "telemetry_events",
+      "count_before": 465,
+      "count_after": 465,
+      "delta": 0,
+      "status": "PRESERVED_100_PERCENT"
+    },
+    {
+      "table": "diagnostic_sessions",
+      "count_before": 2,
+      "count_after": 2,
+      "delta": 0,
+      "status": "PRESERVED_100_PERCENT"
+    },
+    {
+      "table": "diagnostic_answers",
+      "count_before": 1,
+      "count_after": 1,
+      "delta": 0,
+      "status": "PRESERVED_100_PERCENT"
+    },
+    {
+      "table": "diagnostic_results",
+      "count_before": 1,
+      "count_after": 1,
+      "delta": 0,
+      "status": "PRESERVED_100_PERCENT"
+    },
+    {
+      "table": "missions",
+      "count_before": 3,
+      "count_after": 3,
+      "delta": 0,
+      "status": "PRESERVED_100_PERCENT"
+    },
+    {
+      "table": "practice_attempts",
+      "count_before": 1,
+      "count_after": 1,
+      "delta": 0,
+      "status": "PRESERVED_100_PERCENT"
+    },
+    {
+      "table": "errors",
+      "count_before": 1,
+      "count_after": 1,
+      "delta": 0,
+      "status": "PRESERVED_100_PERCENT"
+    },
+    {
+      "table": "error_repairs",
+      "count_before": 1,
+      "count_after": 1,
+      "delta": 0,
+      "status": "PRESERVED_100_PERCENT"
+    },
+    {
+      "table": "retests",
+      "count_before": 1,
+      "count_after": 1,
+      "delta": 0,
+      "status": "PRESERVED_100_PERCENT"
+    },
+    {
+      "table": "skill_mastery",
+      "count_before": 2,
+      "count_after": 2,
+      "delta": 0,
+      "status": "PRESERVED_100_PERCENT"
+    },
+    {
+      "table": "operations_audit_logs",
+      "count_before": 1,
+      "count_after": 1,
+      "delta": 0,
+      "status": "PRESERVED_100_PERCENT"
+    },
+    {
+      "table": "ops_admins",
+      "count_before": 1,
+      "count_after": 1,
+      "delta": 0,
+      "status": "PRESERVED_100_PERCENT"
+    },
+    {
+      "table": "profiles",
+      "count_before": 1,
+      "count_after": 1,
+      "delta": 0,
+      "status": "PRESERVED_100_PERCENT"
+    },
+    {
+      "table": "subscription_plans",
+      "count_before": 2,
+      "count_after": 2,
+      "delta": 0,
+      "status": "PRESERVED_100_PERCENT"
+    },
+    {
+      "table": "user_roles",
+      "count_before": 2,
+      "count_after": 2,
+      "delta": 0,
+      "status": "PRESERVED_100_PERCENT"
+    },
+    {
+      "table": "bac_experiences",
+      "count_before": 0,
+      "count_after": 6,
+      "delta": 6,
+      "status": "NEW_TABLE_CURATED_SEED_INITIALIZED"
+    },
+    {
+      "table": "high_school_submissions",
+      "count_before": 0,
+      "count_after": 0,
+      "delta": 0,
+      "status": "NEW_TABLE_READY"
+    },
+    {
+      "table": "user_progress",
+      "count_before": 0,
+      "count_after": 0,
+      "delta": 0,
+      "status": "NEW_TABLE_READY"
+    },
+    {
+      "table": "experience_upvotes",
+      "count_before": 0,
+      "count_after": 0,
+      "delta": 0,
+      "status": "NEW_TABLE_READY"
+    },
+    {
+      "table": "experience_comments",
+      "count_before": 0,
+      "count_after": 0,
+      "delta": 0,
+      "status": "NEW_TABLE_READY"
+    }
+  ]
+}

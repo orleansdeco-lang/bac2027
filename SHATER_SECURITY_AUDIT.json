@@ -1,0 +1,85 @@
+{
+  "auditMetadata": {
+    "platform": "SHATER | الشاطر",
+    "evaluationDate": "2026-09-19",
+    "securityPosture": "MODERATE_WITH_CRITICAL_EDGE_GAP",
+    "overallRiskScore": "MEDIUM-HIGH"
+  },
+  "middlewareAudit": {
+    "filePath": "src/middleware.ts",
+    "configuredMatcher": ["/ops/:path*"],
+    "guardedRoutes": [
+      "/ops",
+      "/ops/overview",
+      "/ops/finance",
+      "/ops/students",
+      "/ops/content",
+      "/ops/schools",
+      "/ops/audit",
+      "/ops/issues",
+      "/ops/learning",
+      "/ops/pedagogy",
+      "/ops/subscriptions",
+      "/ops/system"
+    ],
+    "unguardedProtectedRoutes": [
+      "/dashboard",
+      "/mission/:path*",
+      "/exam",
+      "/error-lab",
+      "/account",
+      "/profile",
+      "/profile/academic",
+      "/progress",
+      "/roadmap"
+    ],
+    "vulnerabilityAssessment": "CRITICAL: Student routes bypass Edge middleware completely. Any unauthenticated crawler or visitor can download full application JS bundles, trigger hydration, and only gets redirected via client-side useEffect/hook. This leaks UI structure, slows perceived performance, and wastes client bandwidth."
+  },
+  "authenticationAudit": {
+    "studentAuth": {
+      "provider": "Supabase Auth (GoTrue)",
+      "mechanisms": ["email_password"],
+      "sessionPersistence": "localStorage + cookie (sb-access-token)",
+      "tokenRefresh": "Automatic via Supabase JS SDK",
+      "status": "SECURE"
+    },
+    "operatorAuth": {
+      "provider": "Custom Cryptographic Session & PIN",
+      "mechanism": "HMAC-SHA256 signed session cookie (ops_auth_token)",
+      "loginRoute": "/ops/login",
+      "verifyRoute": "/api/ops/auth/verify",
+      "sessionDuration": "12 hours sliding window",
+      "status": "SECURE"
+    }
+  },
+  "authorizationAndRbacAudit": {
+    "rolesDefined": [
+      "owner",
+      "pedagogy_admin",
+      "finance_operator",
+      "support_agent"
+    ],
+    "roleEnforcement": {
+      "apiLevel": "Strict enforcement via extractAuthenticatedCaller() and isServerOperator()",
+      "clientLevel": "Conditional sidebar and action buttons in /ops",
+      "status": "SECURE"
+    }
+  },
+  "secretsAndKeyExposure": {
+    "anonKeyExposedInClient": true,
+    "anonKeyRisk": "LOW (Intended for public client use with RLS)",
+    "serviceRoleKeyExposedInClient": false,
+    "serviceRoleKeyConfiguredInServer": false,
+    "serviceRoleRisk": "HIGH (Server operations lack administrative bypass, falling back to anon key and failing when RLS prevents table access)",
+    "hardcodedSecretsFound": false
+  },
+  "dataStorageAndUploadSecurity": {
+    "paymentReceipts": {
+      "allowedMimeTypes": ["image/jpeg", "image/png", "image/webp", "application/pdf"],
+      "maxFileSizeBytes": 5242880,
+      "storageLocation": "Supabase Storage bucket 'payment_receipts' + local fallback",
+      "servingMechanism": "Signed URL proxy via /api/ops/payments/receipt/view with operator validation",
+      "status": "SECURE"
+    }
+  }
+}

@@ -1,0 +1,223 @@
+{
+  "auditMetadata": {
+    "platform": "SHATER | الشاطر",
+    "evaluationDate": "2026-09-19",
+    "databaseUrl": "https://erbvmpnxufgeinqnshzu.supabase.co",
+    "databaseEngine": "PostgreSQL 15 (Supabase Hosted)",
+    "overallHealth": "DEGRADED_DESYNC",
+    "migrationSyncScore": "70.5% (12/17 migrations applied)"
+  },
+  "credentialsAudit": {
+    "anonKeyConfigured": true,
+    "anonKeyExpiry": 2104705331,
+    "serviceRoleKeyConfigured": false,
+    "securityWarning": "Backend administrative functions currently execute using anon key subject to client RLS restrictions, instead of privileged service role execution."
+  },
+  "tablesAudit": [
+    {
+      "table": "student_profiles",
+      "existsInRemoteDb": true,
+      "remoteRowCount": 0,
+      "rlsEnabled": true,
+      "migrationFile": "001_bac_mastery_student_foundation.sql",
+      "status": "HEALTHY",
+      "notes": "Student academic identity, wilaya, stream, and 72h trial timestamps."
+    },
+    {
+      "table": "diagnostic_sessions",
+      "existsInRemoteDb": true,
+      "remoteRowCount": 0,
+      "rlsEnabled": true,
+      "migrationFile": "001_bac_mastery_student_foundation.sql",
+      "status": "HEALTHY",
+      "notes": "Initial diagnostic attempt sessions."
+    },
+    {
+      "table": "diagnostic_answers",
+      "existsInRemoteDb": true,
+      "remoteRowCount": 0,
+      "rlsEnabled": true,
+      "migrationFile": "001_bac_mastery_student_foundation.sql",
+      "status": "HEALTHY",
+      "notes": "Granular answers and selected distractor IDs."
+    },
+    {
+      "table": "diagnostic_results",
+      "existsInRemoteDb": true,
+      "remoteRowCount": 0,
+      "rlsEnabled": true,
+      "migrationFile": "001_bac_mastery_student_foundation.sql",
+      "status": "HEALTHY",
+      "notes": "Diagnostic skill mastery summaries."
+    },
+    {
+      "table": "missions",
+      "existsInRemoteDb": true,
+      "remoteRowCount": 0,
+      "rlsEnabled": true,
+      "migrationFile": "001_bac_mastery_student_foundation.sql",
+      "status": "HEALTHY",
+      "notes": "Student mission launch and completion states."
+    },
+    {
+      "table": "practice_attempts",
+      "existsInRemoteDb": true,
+      "remoteRowCount": 0,
+      "rlsEnabled": true,
+      "migrationFile": "001_bac_mastery_student_foundation.sql",
+      "status": "HEALTHY",
+      "notes": "Individual question response attempts."
+    },
+    {
+      "table": "errors",
+      "existsInRemoteDb": true,
+      "remoteRowCount": 0,
+      "rlsEnabled": true,
+      "migrationFile": "001_bac_mastery_student_foundation.sql",
+      "status": "HEALTHY",
+      "notes": "Logged misconceptions and error taxonomy items."
+    },
+    {
+      "table": "error_repairs",
+      "existsInRemoteDb": true,
+      "remoteRowCount": 0,
+      "rlsEnabled": true,
+      "migrationFile": "001_bac_mastery_student_foundation.sql",
+      "status": "HEALTHY",
+      "notes": "Cognitive repair exercise records."
+    },
+    {
+      "table": "retests",
+      "existsInRemoteDb": true,
+      "remoteRowCount": 0,
+      "rlsEnabled": true,
+      "migrationFile": "001_bac_mastery_student_foundation.sql",
+      "status": "HEALTHY",
+      "notes": "Retest attempts to confirm mastery post-repair."
+    },
+    {
+      "table": "skill_mastery",
+      "existsInRemoteDb": true,
+      "remoteRowCount": 0,
+      "rlsEnabled": true,
+      "migrationFile": "001_bac_mastery_student_foundation.sql",
+      "status": "HEALTHY",
+      "notes": "Mastery level score per skill."
+    },
+    {
+      "table": "user_roles",
+      "existsInRemoteDb": true,
+      "remoteRowCount": 0,
+      "rlsEnabled": true,
+      "migrationFile": "006_bac_mastery_operations_foundation.sql",
+      "status": "HEALTHY",
+      "notes": "Operator RBAC role assignments."
+    },
+    {
+      "table": "telemetry_events",
+      "existsInRemoteDb": true,
+      "remoteRowCount": 0,
+      "rlsEnabled": true,
+      "migrationFile": "006_bac_mastery_operations_foundation.sql",
+      "status": "HEALTHY",
+      "notes": "Event telemetry stream."
+    },
+    {
+      "table": "payment_orders",
+      "existsInRemoteDb": true,
+      "remoteRowCount": 0,
+      "rlsEnabled": true,
+      "migrationFile": "007_bac_mastery_commercial_hardening.sql",
+      "status": "HEALTHY",
+      "notes": "BaridiMob checkout orders and receipt tracking."
+    },
+    {
+      "table": "operations_audit_logs",
+      "existsInRemoteDb": true,
+      "remoteRowCount": 0,
+      "rlsEnabled": true,
+      "migrationFile": "006_bac_mastery_operations_foundation.sql",
+      "status": "HEALTHY",
+      "notes": "Operator action audit trail."
+    },
+    {
+      "table": "subscription_plans",
+      "existsInRemoteDb": true,
+      "remoteRowCount": 0,
+      "rlsEnabled": true,
+      "migrationFile": "008_bac_mastery_subscription_control.sql",
+      "status": "HEALTHY",
+      "notes": "Plan definitions, prices in DZD, and active status."
+    },
+    {
+      "table": "operations_issues",
+      "existsInRemoteDb": true,
+      "remoteRowCount": 0,
+      "rlsEnabled": true,
+      "migrationFile": "009_bac_mastery_operations_issues.sql",
+      "status": "HEALTHY",
+      "notes": "Internal issue and ticket management."
+    },
+    {
+      "table": "high_schools",
+      "existsInRemoteDb": true,
+      "remoteRowCount": 758,
+      "rlsEnabled": false,
+      "migrationFile": "015_high_school_selection_and_verification.sql",
+      "status": "POPULATED",
+      "notes": "758 verified Algerian high schools mapped to wilayas and communes."
+    },
+    {
+      "table": "user_progress",
+      "existsInRemoteDb": false,
+      "remoteRowCount": null,
+      "rlsEnabled": null,
+      "migrationFile": "013_bac_mastery_user_progress_persistence.sql",
+      "status": "MISSING_FROM_REMOTE",
+      "notes": "CRITICAL: Student progression synchronization table missing. Application currently falls back to localStorage."
+    },
+    {
+      "table": "bac_experiences",
+      "existsInRemoteDb": false,
+      "remoteRowCount": null,
+      "rlsEnabled": null,
+      "migrationFile": "014_bac_experiences_schema.sql",
+      "status": "MISSING_FROM_REMOTE",
+      "notes": "CRITICAL: Peer BAC experience stories table missing. Experience bank runs on mock/localStorage data."
+    },
+    {
+      "table": "experience_upvotes",
+      "existsInRemoteDb": false,
+      "remoteRowCount": null,
+      "rlsEnabled": null,
+      "migrationFile": "016_enhance_bac_experiences_and_comments.sql",
+      "status": "MISSING_FROM_REMOTE",
+      "notes": "CRITICAL: Upvote ledger table missing from remote database."
+    },
+    {
+      "table": "experience_comments",
+      "existsInRemoteDb": false,
+      "remoteRowCount": null,
+      "rlsEnabled": null,
+      "migrationFile": "016_enhance_bac_experiences_and_comments.sql",
+      "status": "MISSING_FROM_REMOTE",
+      "notes": "CRITICAL: Peer comments table missing from remote database."
+    },
+    {
+      "table": "high_school_submissions",
+      "existsInRemoteDb": false,
+      "remoteRowCount": null,
+      "rlsEnabled": null,
+      "migrationFile": "015_high_school_selection_and_verification.sql",
+      "status": "MISSING_FROM_REMOTE",
+      "notes": "CRITICAL: User submitted high schools queue table missing from remote database."
+    }
+  ],
+  "unappliedMigrations": [
+    "supabase/migrations/013_bac_mastery_user_progress_persistence.sql",
+    "supabase/migrations/014_bac_experiences_schema.sql",
+    "supabase/migrations/015_high_school_selection_and_verification.sql (submissions table & triggers)",
+    "supabase/migrations/016_enhance_bac_experiences_and_comments.sql",
+    "supabase/migrations/017_add_wilaya_and_comment_moderation.sql"
+  ]
+}

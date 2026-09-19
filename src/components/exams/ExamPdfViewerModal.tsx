@@ -21,6 +21,7 @@ import {
   BookOpen,
   Layers,
   Sparkles,
+  ExternalLink,
 } from "lucide-react";
 
 interface ExamPdfViewerModalProps {
@@ -46,6 +47,7 @@ export function ExamPdfViewerModal({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [continuousScroll, setContinuousScroll] = useState<boolean>(false);
+  const [viewMode, setViewMode] = useState<"interactive" | "original_pdf">("interactive");
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -318,62 +320,143 @@ export function ExamPdfViewerModal({
             </button>
           </div>
 
-          <div className="flex items-center gap-2 text-xs">
-            <button
-              type="button"
-              onClick={() => setContinuousScroll(!continuousScroll)}
-              className={`px-3 py-1 rounded-lg border text-[11px] font-semibold transition-all cursor-pointer ${
-                continuousScroll
-                  ? "bg-stone-700 border-stone-500 text-white"
-                  : "border-stone-700 text-stone-400 hover:text-white"
-              }`}
-            >
-              {continuousScroll ? "عرض صفحة بصفحة" : "تصفح كل الصفحات معاً"}
-            </button>
+          <div className="flex items-center gap-2 text-xs flex-wrap">
+            <div className="flex items-center gap-1 bg-stone-900/90 p-1 rounded-xl border border-stone-700">
+              <button
+                type="button"
+                onClick={() => setViewMode("interactive")}
+                className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                  viewMode === "interactive"
+                    ? "bg-stone-100 text-stone-900 shadow-xs"
+                    : "text-stone-400 hover:text-white"
+                }`}
+              >
+                نسق A4 التفاعلي
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("original_pdf")}
+                className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  viewMode === "original_pdf"
+                    ? "bg-indigo-600 text-white shadow-xs"
+                    : "text-stone-400 hover:text-white"
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>وثيقة PDF الأصلية</span>
+              </button>
+            </div>
+
+            {viewMode === "interactive" && (
+              <button
+                type="button"
+                onClick={() => setContinuousScroll(!continuousScroll)}
+                className={`px-3 py-1.5 rounded-lg border text-[11px] font-semibold transition-all cursor-pointer ${
+                  continuousScroll
+                    ? "bg-stone-700 border-stone-500 text-white"
+                    : "border-stone-700 text-stone-400 hover:text-white"
+                }`}
+              >
+                {continuousScroll ? "عرض صفحة بصفحة" : "تصفح كل الصفحات معاً"}
+              </button>
+            )}
           </div>
         </div>
 
         {/* ================================================================= */}
-        {/* 3. DOCUMENT CANVAS (Charcoal Grey Reader + White A4 Exam Sheet)    */}
+        {/* 3. DOCUMENT CANVAS (Interactive A4 Sheet OR Original PDF Viewer)  */}
         {/* ================================================================= */}
-        <div className="flex-1 overflow-y-auto bg-[#383b40] p-3 sm:p-6 md:p-8 flex justify-center items-start">
-          <div
-            ref={sheetRef}
-            style={{
-              transform: `scale(${zoomLevel})`,
-              transformOrigin: "center top",
-              transition: "transform 0.15s ease",
-            }}
-            className="w-full max-w-4xl space-y-8"
-          >
-            {/* If Continuous Scroll is OFF, render single current page */}
-            {!continuousScroll ? (
-              <ExamA4Sheet
-                exam={exam}
-                details={details}
-                activeTab={activeTab}
-                pageNumber={currentPage}
-                totalPages={totalPages}
-                selectedTopic={currentTopic}
-                onJumpToPage={(p) => setCurrentPage(p)}
+        {viewMode === "original_pdf" ? (
+          <div className="flex-1 flex flex-col bg-[#181a1d] overflow-hidden">
+            <div className="bg-[#22252a] border-b border-stone-700/80 px-4 py-2.5 flex items-center justify-between gap-3 text-xs flex-wrap">
+              <div className="flex items-center gap-2">
+                <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30 text-[11px]">
+                  مستند أصلي معتمد
+                </span>
+                <span className="text-stone-300 font-sans text-xs">
+                  المصدر: {(exam as any).source_name || "الأرشيف الرسمي لشهادة البكالوريا"}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <a
+                  href={
+                    activeTab === "solution"
+                      ? exam.solutionPdfUrl || (exam as any).solution_url
+                      : exam.subjectPdfUrl || (exam as any).file_url
+                  }
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs inline-flex items-center gap-1.5 transition-all shadow-xs"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>فتح في نافذة جديدة</span>
+                </a>
+                <a
+                  href={
+                    activeTab === "solution"
+                      ? exam.solutionPdfUrl || (exam as any).solution_url
+                      : exam.subjectPdfUrl || (exam as any).file_url
+                  }
+                  download
+                  className="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 font-semibold text-xs inline-flex items-center gap-1.5 transition-all"
+                >
+                  <Download className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>تحميل الوثيقة</span>
+                </a>
+              </div>
+            </div>
+            <div className="flex-1 w-full h-full relative bg-[#131416]">
+              <iframe
+                src={
+                  activeTab === "solution"
+                    ? exam.solutionPdfUrl || (exam as any).solution_url
+                    : exam.subjectPdfUrl || (exam as any).file_url
+                }
+                className="w-full h-full border-0"
+                title={exam.title_ar}
               />
-            ) : (
-              /* If Continuous Scroll is ON, render all pages sequentially */
-              Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto bg-[#383b40] p-3 sm:p-6 md:p-8 flex justify-center items-start">
+            <div
+              ref={sheetRef}
+              style={{
+                transform: `scale(${zoomLevel})`,
+                transformOrigin: "center top",
+                transition: "transform 0.15s ease",
+              }}
+              className="w-full max-w-4xl space-y-8"
+            >
+              {/* If Continuous Scroll is OFF, render single current page */}
+              {!continuousScroll ? (
                 <ExamA4Sheet
-                  key={pg}
                   exam={exam}
                   details={details}
                   activeTab={activeTab}
-                  pageNumber={pg}
+                  pageNumber={currentPage}
                   totalPages={totalPages}
-                  selectedTopic={pg <= 2 ? details.topic1 : details.topic2}
+                  selectedTopic={currentTopic}
                   onJumpToPage={(p) => setCurrentPage(p)}
                 />
-              ))
-            )}
+              ) : (
+                /* If Continuous Scroll is ON, render all pages sequentially */
+                Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
+                  <ExamA4Sheet
+                    key={pg}
+                    exam={exam}
+                    details={details}
+                    activeTab={activeTab}
+                    pageNumber={pg}
+                    totalPages={totalPages}
+                    selectedTopic={pg <= 2 ? details.topic1 : details.topic2}
+                    onJumpToPage={(p) => setCurrentPage(p)}
+                  />
+                ))
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* ================================================================= */}
         {/* 4. BOTTOM DOCKED TOOLBAR (Matching DzExams style in Image 2)       */}

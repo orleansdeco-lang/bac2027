@@ -1,4 +1,4 @@
-import { Stream, StreamId, StreamSubjectRule, Subject, SubjectId, TechniqueMathSpecialty } from "../../types/education";
+import { Stream, ExtendedStream, StreamId, ExtendedStreamId, StreamSubjectRule, Subject, ExtendedSubject, SubjectId, ExtendedSubjectId, TechniqueMathSpecialty } from "../../types/education";
 
 /**
  * Algerian BAC Streams and Subject Coefficients (Provisional — Pending Official Ministry Verification)
@@ -162,6 +162,52 @@ export const ALL_SUBJECTS: Record<SubjectId, Subject> = {
   },
 };
 
+export const EXTENDED_ALL_SUBJECTS: Record<ExtendedSubjectId, ExtendedSubject> = {
+  ...ALL_SUBJECTS,
+  german: {
+    id: "german",
+    code: "ALL",
+    name_ar: "اللغة الألمانية",
+    name_fr: "Allemand",
+    isScientific: false,
+  },
+  spanish: {
+    id: "spanish",
+    code: "ESP",
+    name_ar: "اللغة الإسبانية",
+    name_fr: "Espagnol",
+    isScientific: false,
+  },
+  italian: {
+    id: "italian",
+    code: "ITA",
+    name_ar: "اللغة الإيطالية",
+    name_fr: "Italien",
+    isScientific: false,
+  },
+  tamazight: {
+    id: "tamazight",
+    code: "AMAZ",
+    name_ar: "اللغة الأمازيغية",
+    name_fr: "Tamazight",
+    isScientific: false,
+  },
+  art_specialty: {
+    id: "art_specialty",
+    code: "ARTSPEC",
+    name_ar: "مادة التخصص الفني",
+    name_fr: "Pratique Artistique Spécialisée",
+    isScientific: false,
+  },
+  art_history: {
+    id: "art_history",
+    code: "ARTHIST",
+    name_ar: "تاريخ الفن والجماليات",
+    name_fr: "Histoire de l'Art",
+    isScientific: false,
+  },
+};
+
 export const ALGERIAN_BAC_STREAMS: Record<StreamId, Stream> = {
   sciences_exp: {
     id: "sciences_exp",
@@ -282,6 +328,139 @@ export const ALGERIAN_BAC_STREAMS: Record<StreamId, Stream> = {
   },
 };
 
+export const EXTENDED_ALGERIAN_BAC_STREAMS: Record<ExtendedStreamId, ExtendedStream> = {
+  ...ALGERIAN_BAC_STREAMS,
+  arts: {
+    id: "arts",
+    examType: "BAC",
+    code: "ART",
+    name_ar: "فنون",
+    name_fr: "Arts",
+    description_ar: "شعبة الفنون الوطنية بالخيارات الأربعة: سينما، تشكيل، مسرح، وموسيقى.",
+    description_fr: "Filière Arts avec 4 options : cinéma/audiovisuel, arts plastiques, théâtre et musique.",
+    subjects: [
+      { subjectId: "art_specialty", coefficient: 6, isCoreSubject: true },
+      { subjectId: "art_history", coefficient: 4, isCoreSubject: true },
+      { subjectId: "arabic", coefficient: 4, isCoreSubject: true },
+      { subjectId: "philosophy", coefficient: 3, isCoreSubject: false },
+      { subjectId: "french", coefficient: 3, isCoreSubject: false },
+      { subjectId: "english", coefficient: 3, isCoreSubject: false },
+      { subjectId: "history_geography", coefficient: 2, isCoreSubject: false },
+      { subjectId: "islamic_studies", coefficient: 2, isCoreSubject: false },
+      { subjectId: "math", coefficient: 2, isCoreSubject: false },
+    ],
+  },
+  sciences_nature_vie: {
+    id: "sciences_nature_vie",
+    examType: "BAC",
+    code: "SNV_HIST",
+    name_ar: "علوم الطبيعة والحياة (قديم)",
+    name_fr: "Sciences de la Nature et de la Vie",
+    description_ar: "الشعبة العلمية الطبيعية في نظام البكالوريا قبل إصلاح 2008.",
+    description_fr: "Filière scientifique historique pré-réforme 2008.",
+    subjects: [
+      { subjectId: "natural_sciences", coefficient: 6, isCoreSubject: true },
+      { subjectId: "physics", coefficient: 5, isCoreSubject: true },
+      { subjectId: "math", coefficient: 5, isCoreSubject: true },
+      { subjectId: "arabic", coefficient: 3, isCoreSubject: false },
+      { subjectId: "philosophy", coefficient: 2, isCoreSubject: false },
+      { subjectId: "french", coefficient: 2, isCoreSubject: false },
+      { subjectId: "english", coefficient: 2, isCoreSubject: false },
+      { subjectId: "history_geography", coefficient: 2, isCoreSubject: false },
+    ],
+  },
+  sciences_exactes: {
+    id: "sciences_exactes",
+    examType: "BAC",
+    code: "SE_HIST",
+    name_ar: "علوم دقيقة (قديم)",
+    name_fr: "Sciences Exactes",
+    description_ar: "شعبة العلوم الدقيقة في نظام البكالوريا قبل إصلاح 2008.",
+    description_fr: "Filière sciences exactes historique pré-réforme 2008.",
+    subjects: [
+      { subjectId: "math", coefficient: 7, isCoreSubject: true },
+      { subjectId: "physics", coefficient: 6, isCoreSubject: true },
+      { subjectId: "natural_sciences", coefficient: 2, isCoreSubject: false },
+      { subjectId: "arabic", coefficient: 3, isCoreSubject: false },
+      { subjectId: "philosophy", coefficient: 2, isCoreSubject: false },
+      { subjectId: "french", coefficient: 2, isCoreSubject: false },
+      { subjectId: "english", coefficient: 2, isCoreSubject: false },
+    ],
+  },
+  technologie: {
+    id: "technologie",
+    examType: "BAC",
+    code: "TECH_HIST",
+    name_ar: "تكنولوجيا (قديم)",
+    name_fr: "Technologie",
+    description_ar: "شعبة التكنولوجيا في نظام البكالوريا قبل إصلاح 2008.",
+    description_fr: "Filière technologie historique pré-réforme 2008.",
+    subjects: [
+      { subjectId: "mechanical_eng", coefficient: 7, isCoreSubject: true },
+      { subjectId: "math", coefficient: 6, isCoreSubject: true },
+      { subjectId: "physics", coefficient: 5, isCoreSubject: true },
+      { subjectId: "arabic", coefficient: 3, isCoreSubject: false },
+      { subjectId: "philosophy", coefficient: 2, isCoreSubject: false },
+      { subjectId: "french", coefficient: 2, isCoreSubject: false },
+    ],
+  },
+  sciences_eco_gestion: {
+    id: "sciences_eco_gestion",
+    examType: "BAC",
+    code: "ECO_HIST",
+    name_ar: "علوم اقتصادية وتسيير (قديم)",
+    name_fr: "Sciences Économiques & Gestion",
+    description_ar: "شعبة العلوم الاقتصادية في نظام البكالوريا قبل إصلاح 2008.",
+    description_fr: "Filière sciences économiques historique pré-réforme 2008.",
+    subjects: [
+      { subjectId: "accounting_finance", coefficient: 6, isCoreSubject: true },
+      { subjectId: "economics_management", coefficient: 5, isCoreSubject: true },
+      { subjectId: "math", coefficient: 5, isCoreSubject: true },
+      { subjectId: "history_geography", coefficient: 3, isCoreSubject: false },
+      { subjectId: "arabic", coefficient: 3, isCoreSubject: false },
+      { subjectId: "law", coefficient: 2, isCoreSubject: false },
+      { subjectId: "philosophy", coefficient: 2, isCoreSubject: false },
+      { subjectId: "french", coefficient: 2, isCoreSubject: false },
+    ],
+  },
+  lettres_sciences_humaines: {
+    id: "lettres_sciences_humaines",
+    examType: "BAC",
+    code: "LSH_HIST",
+    name_ar: "آداب وعلوم إنسانية (قديم)",
+    name_fr: "Lettres et Sciences Humaines",
+    description_ar: "شعبة الآداب والعلوم الإنسانية في نظام البكالوريا قبل إصلاح 2008.",
+    description_fr: "Filière lettres et sciences humaines historique pré-réforme 2008.",
+    subjects: [
+      { subjectId: "arabic", coefficient: 6, isCoreSubject: true },
+      { subjectId: "philosophy", coefficient: 5, isCoreSubject: true },
+      { subjectId: "history_geography", coefficient: 4, isCoreSubject: true },
+      { subjectId: "french", coefficient: 3, isCoreSubject: false },
+      { subjectId: "english", coefficient: 3, isCoreSubject: false },
+      { subjectId: "islamic_studies", coefficient: 2, isCoreSubject: false },
+      { subjectId: "math", coefficient: 2, isCoreSubject: false },
+    ],
+  },
+  lettres_langues_vivantes: {
+    id: "lettres_langues_vivantes",
+    examType: "BAC",
+    code: "LLV_HIST",
+    name_ar: "آداب ولغات حية (قديم)",
+    name_fr: "Lettres et Langues Vivantes",
+    description_ar: "شعبة الآداب واللغات الحية في نظام البكالوريا قبل إصلاح 2008.",
+    description_fr: "Filière lettres et langues vivantes historique pré-réforme 2008.",
+    subjects: [
+      { subjectId: "french", coefficient: 5, isCoreSubject: true },
+      { subjectId: "english", coefficient: 5, isCoreSubject: true },
+      { subjectId: "third_language", coefficient: 4, isCoreSubject: true },
+      { subjectId: "arabic", coefficient: 5, isCoreSubject: true },
+      { subjectId: "history_geography", coefficient: 2, isCoreSubject: false },
+      { subjectId: "philosophy", coefficient: 2, isCoreSubject: false },
+      { subjectId: "math", coefficient: 2, isCoreSubject: false },
+    ],
+  },
+};
+
 /**
  * Returns the resolved subject rules for a given stream and optional specialty.
  * Handles Technique Math branch resolution to ensure coefficient 7 is correctly attributed.
@@ -289,12 +468,20 @@ export const ALGERIAN_BAC_STREAMS: Record<StreamId, Stream> = {
 export function getStreamSubjects(
   streamId: StreamId,
   specialty?: TechniqueMathSpecialty
-): StreamSubjectRule[] {
-  const stream = ALGERIAN_BAC_STREAMS[streamId];
+): StreamSubjectRule[];
+export function getStreamSubjects(
+  streamId: ExtendedStreamId,
+  specialty?: TechniqueMathSpecialty
+): StreamSubjectRule<ExtendedSubjectId>[];
+export function getStreamSubjects(
+  streamId: ExtendedStreamId | StreamId,
+  specialty?: TechniqueMathSpecialty
+): StreamSubjectRule<any>[] {
+  const stream = (EXTENDED_ALGERIAN_BAC_STREAMS as any)[streamId] || (ALGERIAN_BAC_STREAMS as any)[streamId];
   if (!stream) return [];
 
   if (streamId === "technique_math") {
-    const baseSubjects = stream.subjects.filter(
+    const baseSubjects = (stream.subjects as StreamSubjectRule<any>[]).filter(
       (rule) =>
         rule.subjectId !== "mechanical_eng" &&
         rule.subjectId !== "civil_eng" &&
