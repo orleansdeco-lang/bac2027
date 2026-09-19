@@ -268,6 +268,21 @@ export function TopBar() {
 
           {/* Mobile Quick Action Buttons */}
           <div className="flex md:hidden items-center gap-1.5">
+            {/* Direct Mobile Experiences Button */}
+            <Link
+              href="/experiences"
+              aria-label={isAr ? "بنك التجارب" : "Témoignages"}
+              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold transition-all border ${
+                pathname?.startsWith("/experiences")
+                  ? "bg-amber-500 text-slate-950 border-amber-400 shadow-sm"
+                  : "text-amber-500 hover:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30"
+              }`}
+              title={isAr ? "بنك التجارب والعِبر" : "Témoignages & Conseils"}
+            >
+              <MessageSquareQuote className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span className="text-[11px] whitespace-nowrap">{isAr ? "التجارب" : "Avis"}</span>
+            </Link>
+
             {!hasAccount ? (
               <Link
                 href="/auth/register"

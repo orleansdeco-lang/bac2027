@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "@/lib/i18n/context";
-import { Compass, Map, Wrench, BarChart3, Target } from "lucide-react";
+import { Compass, Map, Wrench, BarChart3, Target, MessageSquareQuote } from "lucide-react";
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -18,6 +18,13 @@ export function BottomNav() {
       matches: (p: string) => p === "/" || p === "/dashboard",
     },
     {
+      href: "/experiences",
+      label: locale === "ar" ? "التجارب" : "Témoignages",
+      icon: MessageSquareQuote,
+      matches: (p: string) => p.startsWith("/experiences"),
+      highlight: true,
+    },
+    {
       href: "/roadmap",
       label: locale === "ar" ? "الخريطة" : "La Route",
       icon: Map,
@@ -28,12 +35,6 @@ export function BottomNav() {
       label: locale === "ar" ? "الأخطاء" : "Erreurs",
       icon: Wrench,
       matches: (p: string) => p.startsWith("/error-lab") || p.startsWith("/errors"),
-    },
-    {
-      href: "/progress",
-      label: locale === "ar" ? "تقدمي" : "Progrès",
-      icon: BarChart3,
-      matches: (p: string) => p.startsWith("/progress"),
     },
     {
       href: "/exam",
@@ -53,20 +54,30 @@ export function BottomNav() {
           const isActive = item.matches(pathname);
           const Icon = item.icon;
 
+          const isHighlight = Boolean((item as any).highlight);
+
           return (
             <Link
               key={item.href}
               href={item.href}
               className={`flex flex-col items-center justify-center min-h-[48px] py-1 rounded-xl transition-all cursor-pointer ${
                 isActive
-                  ? "text-[var(--color-primary)] font-bold"
+                  ? isHighlight
+                    ? "text-amber-500 font-bold"
+                    : "text-[var(--color-primary)] font-bold"
+                  : isHighlight
+                  ? "text-amber-500/80 hover:text-amber-500"
                   : "text-theme-muted hover:text-theme-text active:text-[var(--color-primary)]"
               }`}
             >
               <div className="relative">
                 <Icon className={`h-5 w-5 transition-transform duration-200 ${isActive ? "scale-110" : ""}`} />
                 {isActive && (
-                  <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-[var(--color-primary)] rounded-full shadow-sm" />
+                  <span
+                    className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full shadow-sm ${
+                      isHighlight ? "bg-amber-500 shadow-amber-500/50" : "bg-[var(--color-primary)]"
+                    }`}
+                  />
                 )}
               </div>
               <span className="text-[10px] mt-1 tracking-tight leading-none font-sans">

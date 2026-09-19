@@ -69,6 +69,23 @@ export function LandingView() {
         </div>
       )}
 
+      {/* Mobile Experiences Spotlight Announcement Banner */}
+      <div className="md:hidden bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-amber-500/15 border-b border-amber-500/30 px-3.5 py-2.5 flex items-center justify-between gap-2 relative z-20">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="flex h-2 w-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+          <span className="text-xs font-bold text-amber-600 dark:text-amber-400 truncate">
+            {isAr ? "جديد: بنك تجارب وعِبر البكالوريا 🎓" : "Nouveau : Témoignages BAC 2027 🎓"}
+          </span>
+        </div>
+        <Link
+          href="/experiences"
+          className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500 text-slate-950 text-xs font-black shadow-xs shrink-0 active:scale-95 transition-transform"
+        >
+          <span>{isAr ? "دخول" : "Voir"}</span>
+          <Arrow className="w-3 h-3" />
+        </Link>
+      </div>
+
       {/* =================================================================== */}
       {/* SECTION 1 — HERO: STRONG, SIMPLE, DIRECT                           */}
       {/* =================================================================== */}
