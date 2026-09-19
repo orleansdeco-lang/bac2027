@@ -1,14 +1,15 @@
 import { supabase, isSupabaseConfigured } from "../supabase/client";
-import { BacExperience, CreateExperienceInput, ExperienceFilterState } from "@/types/experience";
+import { BacExperience, CreateExperienceInput, ExperienceFilterState, ExperienceComment } from "@/types/experience";
 import { CURATED_BAC_EXPERIENCES } from "@/data/experiences";
 
 const LOCAL_STORAGE_KEY_EXPERIENCES = "bac_local_experiences";
 const LOCAL_STORAGE_KEY_UPVOTES = "bac_upvoted_experiences";
 const LOCAL_STORAGE_KEY_FAVORITES = "bac_favorite_experiences";
+const LOCAL_STORAGE_KEY_COMMENTS_PREFIX = "bac_experience_comments_";
 
 export const ExperienceService = {
   /**
-   * Fetch all experiences combining Supabase (if available), LocalStorage submissions, and Curated seed data.
+   * Fetch experiences: Approved only for public view.
    */
   async getExperiences(
     filters?: Partial<ExperienceFilterState>,
@@ -16,11 +17,32 @@ export const ExperienceService = {
   ): Promise<BacExperience[]> {
     let remoteExperiences: BacExperience[] = [];
 
-    if (isSupabaseConfigured && supabase) {
+    // Try API first
+    if (typeof window !== "undefined") {
+      try {
+        const params = new URLSearchParams();
+        if (filters?.streamId) params.set("streamId", filters.streamId);
+        if (filters?.category) params.set("category", filters.category);
+        if (filters?.searchQuery) params.set("searchQuery", filters.searchQuery);
+
+        const res = await fetch(`/api/experiences?${params.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.experiences) {
+            remoteExperiences = data.experiences;
+          }
+        }
+      } catch (err) {
+        console.warn("API experiences fetch fallback to direct Supabase/seed:", err);
+      }
+    }
+
+    if (remoteExperiences.length === 0 && isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase
           .from("bac_experiences")
-          .select("*")
+          .select("*, experience_comments(count)")
+          .eq("status", "approved")
           .order("upvotes_count", { ascending: false });
 
         if (!error && data && data.length > 0) {
@@ -29,24 +51,30 @@ export const ExperienceService = {
             author_id: d.author_id,
             author_name: d.author_name,
             author_role: d.author_role,
+            candidate_type: d.candidate_type || "former_candidate",
             stream_id: d.stream_id,
             final_grade: d.final_grade ? Number(d.final_grade) : null,
             initial_grade: d.initial_grade ? Number(d.initial_grade) : null,
             target_major: d.target_major,
+            passed_bac: d.passed_bac ?? true,
+            retaking_bac: d.retaking_bac ?? false,
+            university_major: d.university_major,
             biggest_trap: d.biggest_trap,
             winning_routine: d.winning_routine,
             best_resources: d.best_resources,
             upvotes_count: Number(d.upvotes_count || 0),
+            comments_count: d.experience_comments?.[0]?.count ? Number(d.experience_comments[0].count) : 0,
             is_verified: Boolean(d.is_verified),
+            status: d.status || "approved",
             created_at: d.created_at || new Date().toISOString(),
           }));
         }
       } catch (err) {
-        console.warn("ExperienceService: fallback to local seed data due to Supabase query error", err);
+        console.warn("ExperienceService direct Supabase error:", err);
       }
     }
 
-    // Retrieve locally saved user contributions
+    // Retrieve locally saved user contributions (show only approved or user's own submissions)
     let localSubmissions: BacExperience[] = [];
     if (typeof window !== "undefined") {
       try {
@@ -62,16 +90,23 @@ export const ExperienceService = {
     // Merge and eliminate duplicates by id
     const map = new Map<string, BacExperience>();
 
-    // Priority 1: Curated seed data
-    CURATED_BAC_EXPERIENCES.forEach((item) => map.set(item.id, item));
+    // 1. Curated seed data
+    CURATED_BAC_EXPERIENCES.forEach((item) => {
+      map.set(item.id, {
+        ...item,
+        status: "approved",
+        candidate_type: item.candidate_type || "former_candidate",
+        passed_bac: item.passed_bac ?? true,
+      });
+    });
 
-    // Priority 2: Remote Supabase experiences
+    // 2. Remote Supabase experiences
     remoteExperiences.forEach((item) => map.set(item.id, item));
 
-    // Priority 3: User's locally created submissions
+    // 3. User's locally created submissions
     localSubmissions.forEach((item) => map.set(item.id, item));
 
-    let list = Array.from(map.values());
+    let list = Array.from(map.values()).filter((e) => (e.status || "approved") === "approved");
 
     // Apply upvotes stored locally
     if (typeof window !== "undefined") {
@@ -79,7 +114,6 @@ export const ExperienceService = {
         const upvotedIds = this.getUpvotedIds();
         list = list.map((item) => {
           if (upvotedIds.includes(item.id)) {
-            // Ensure local upvote reflected if not already accounted for
             return {
               ...item,
               upvotes_count: Math.max(item.upvotes_count, 1),
@@ -112,6 +146,8 @@ export const ExperienceService = {
             item.author_role === "repeater_success" ||
             (item.initial_grade !== null && item.initial_grade !== undefined)
         );
+      } else if (category === "current_students") {
+        list = list.filter((item) => item.candidate_type === "current_student");
       } else if (category === "top_upvoted") {
         list.sort((a, b) => b.upvotes_count - a.upvotes_count);
       }
@@ -123,6 +159,7 @@ export const ExperienceService = {
           (item) =>
             item.author_name.toLowerCase().includes(q) ||
             (item.target_major && item.target_major.toLowerCase().includes(q)) ||
+            (item.university_major && item.university_major.toLowerCase().includes(q)) ||
             item.biggest_trap.toLowerCase().includes(q) ||
             item.winning_routine.toLowerCase().includes(q) ||
             (item.best_resources && item.best_resources.toLowerCase().includes(q))
@@ -139,26 +176,35 @@ export const ExperienceService = {
   },
 
   /**
-   * Create a new experience and persist to Supabase + LocalStorage.
+   * Create a new experience with status 'pending' awaiting moderation.
    */
   async createExperience(
     input: CreateExperienceInput,
     userId?: string | null
   ): Promise<BacExperience> {
+    // Sanitize: only first name / display name without surname
+    const cleanFirstName = input.author_name.trim().split(/\s+/)[0] || "طالب";
+
     const newExperience: BacExperience = {
       id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `exp-${Date.now()}`,
       author_id: userId || null,
-      author_name: input.author_name.trim(),
-      author_role: input.author_role,
+      author_name: cleanFirstName,
+      author_role: input.author_role || (input.candidate_type === "current_student" ? "student" : "top_achiever"),
+      candidate_type: input.candidate_type,
       stream_id: input.stream_id,
       final_grade: input.final_grade ? Number(input.final_grade) : null,
       initial_grade: input.initial_grade ? Number(input.initial_grade) : null,
       target_major: input.target_major ? input.target_major.trim() : null,
+      passed_bac: input.passed_bac ?? true,
+      retaking_bac: input.retaking_bac ?? false,
+      university_major: input.university_major ? input.university_major.trim() : null,
       biggest_trap: input.biggest_trap.trim(),
       winning_routine: input.winning_routine.trim(),
       best_resources: input.best_resources ? input.best_resources.trim() : null,
-      upvotes_count: 1, // Author automatically upvotes their own contribution
+      upvotes_count: 1,
+      comments_count: 0,
       is_verified: false,
+      status: "pending", // awaiting operator moderation
       created_at: new Date().toISOString(),
     };
 
@@ -181,34 +227,111 @@ export const ExperienceService = {
       }
     }
 
-    // Save to Supabase if reachable
-    if (isSupabaseConfigured && supabase) {
+    // Submit via API
+    if (typeof window !== "undefined") {
       try {
-        const { error } = await supabase.from("bac_experiences").insert({
-          id: newExperience.id,
-          author_id: newExperience.author_id,
-          author_name: newExperience.author_name,
-          author_role: newExperience.author_role,
-          stream_id: newExperience.stream_id,
-          final_grade: newExperience.final_grade,
-          initial_grade: newExperience.initial_grade,
-          target_major: newExperience.target_major,
-          biggest_trap: newExperience.biggest_trap,
-          winning_routine: newExperience.winning_routine,
-          best_resources: newExperience.best_resources,
-          upvotes_count: 1,
-          is_verified: false,
+        const res = await fetch("/api/experiences", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...input, author_name: cleanFirstName, userId }),
         });
-
-        if (error) {
-          console.warn("Supabase insert error (stored in LocalStorage fallback):", error);
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.experience?.id) {
+            newExperience.id = data.experience.id;
+          }
         }
       } catch (err) {
-        console.warn("Supabase offline/error during insert:", err);
+        console.warn("API create experience skipped, saved to local fallback:", err);
       }
     }
 
     return newExperience;
+  },
+
+  /**
+   * Fetch comments for an experience.
+   */
+  async getComments(experienceId: string): Promise<ExperienceComment[]> {
+    let list: ExperienceComment[] = [];
+
+    if (typeof window !== "undefined") {
+      try {
+        const res = await fetch(`/api/experiences/${encodeURIComponent(experienceId)}/comments`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.comments) {
+            list = data.comments;
+          }
+        }
+      } catch (err) {
+        console.warn("Fetch comments error:", err);
+      }
+
+      // Check local storage fallback
+      try {
+        const stored = localStorage.getItem(`${LOCAL_STORAGE_KEY_COMMENTS_PREFIX}${experienceId}`);
+        if (stored) {
+          const localList: ExperienceComment[] = JSON.parse(stored);
+          const map = new Map<string, ExperienceComment>();
+          list.forEach((c) => map.set(c.id, c));
+          localList.forEach((c) => map.set(c.id, c));
+          list = Array.from(map.values());
+        }
+      } catch {}
+    }
+
+    return list.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+  },
+
+  /**
+   * Add a comment to an experience.
+   */
+  async addComment(
+    experienceId: string,
+    content: string,
+    authorName: string,
+    userId?: string | null
+  ): Promise<ExperienceComment> {
+    const cleanFirstName = authorName.trim().split(/\s+/)[0] || "طالب";
+    const newComment: ExperienceComment = {
+      id: `comm_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      experience_id: experienceId,
+      author_id: userId || null,
+      author_name: cleanFirstName,
+      content: content.trim(),
+      created_at: new Date().toISOString(),
+    };
+
+    if (typeof window !== "undefined") {
+      // Save locally
+      try {
+        const key = `${LOCAL_STORAGE_KEY_COMMENTS_PREFIX}${experienceId}`;
+        const stored = localStorage.getItem(key);
+        const list: ExperienceComment[] = stored ? JSON.parse(stored) : [];
+        list.push(newComment);
+        localStorage.setItem(key, JSON.stringify(list));
+      } catch {}
+
+      // POST to API
+      try {
+        const res = await fetch(`/api/experiences/${encodeURIComponent(experienceId)}/comments`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: content.trim(), authorName: cleanFirstName, userId }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.comment?.id) {
+            newComment.id = data.comment.id;
+          }
+        }
+      } catch (err) {
+        console.warn("API add comment fallback:", err);
+      }
+    }
+
+    return newComment;
   },
 
   /**
@@ -255,7 +378,6 @@ export const ExperienceService = {
               .eq("experience_id", experienceId);
           }
         } else {
-          // Fallback direct update for anonymous users if RPC/trigger not invoked
           await supabase
             .from("bac_experiences")
             .update({ upvotes_count: newCount })

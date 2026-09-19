@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   School,
   MapPin,
-  Search,
+  Building,
   Check,
   Plus,
   AlertCircle,
@@ -12,7 +12,7 @@ import {
   Loader2,
   ShieldCheck,
   ChevronDown,
-  Building,
+  Clock,
 } from "lucide-react";
 import { HighSchool } from "@/types/school";
 import {
@@ -28,64 +28,38 @@ export interface HighSchoolSelection {
   wilayaCode: string;
   wilayaNameAr: string;
   communeNameAr: string;
+  communeCode?: string;
   isCustom?: boolean;
 }
 
 interface HighSchoolSelectorProps {
   initialWilayaCode?: string;
   initialCommuneNameAr?: string;
+  initialCommuneCode?: string;
   initialSchoolName?: string;
   initialSchoolId?: string;
   onChange: (selection: HighSchoolSelection | null) => void;
-  /** When true, only shows Step 3 (School search & add) assuming Wilaya & Commune are controlled externally */
-  compactSchoolOnly?: boolean;
-  controlledWilayaCode?: string;
-  controlledCommuneNameAr?: string;
+  /** Callback for parent components tracking wilaya/commune changes directly */
+  onLocationChange?: (wilaya: { code: string; name_ar: string }, commune: { code: string; name_ar: string } | null) => void;
   className?: string;
 }
 
 export const HighSchoolSelector: React.FC<HighSchoolSelectorProps> = ({
   initialWilayaCode = "",
   initialCommuneNameAr = "",
+  initialCommuneCode = "",
   initialSchoolName = "",
   initialSchoolId = "",
   onChange,
-  compactSchoolOnly = false,
-  controlledWilayaCode,
-  controlledCommuneNameAr,
+  onLocationChange,
   className = "",
 }) => {
-  // Wilaya and Commune selection state
-  const [wilayaCode, setWilayaCode] = useState<string>(
-    controlledWilayaCode ?? initialWilayaCode
-  );
-  const [communeNameAr, setCommuneNameAr] = useState<string>(
-    controlledCommuneNameAr ?? initialCommuneNameAr
-  );
+  // State: Wilaya and Commune
+  const [wilayaCode, setWilayaCode] = useState<string>(initialWilayaCode);
+  const [communeNameAr, setCommuneNameAr] = useState<string>(initialCommuneNameAr);
+  const [communeCode, setCommuneCode] = useState<string>(initialCommuneCode);
 
-  // Sync with controlled props if provided
-  useEffect(() => {
-    if (controlledWilayaCode !== undefined && controlledWilayaCode !== wilayaCode) {
-      setWilayaCode(controlledWilayaCode);
-      // Changing wilaya clears school selection
-      setSelectedSchool(null);
-      setSearchQuery("");
-      setShowSubmissionForm(false);
-      setSubmissionFeedback(null);
-    }
-  }, [controlledWilayaCode]);
-
-  useEffect(() => {
-    if (controlledCommuneNameAr !== undefined && controlledCommuneNameAr !== communeNameAr) {
-      setCommuneNameAr(controlledCommuneNameAr);
-      setSelectedSchool(null);
-      setSearchQuery("");
-      setShowSubmissionForm(false);
-      setSubmissionFeedback(null);
-    }
-  }, [controlledCommuneNameAr]);
-
-  // Available Communes
+  // Available communes for chosen wilaya (up to all communes in that wilaya)
   const availableCommunes: Commune[] = wilayaCode
     ? getCommunesByWilayaCode(wilayaCode)
     : [];
@@ -94,135 +68,169 @@ export const HighSchoolSelector: React.FC<HighSchoolSelectorProps> = ({
     (w) => w.code === wilayaCode
   );
 
-  // School Search & Options
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  // State: High School list for chosen commune
   const [schools, setSchools] = useState<HighSchool[]>([]);
   const [isLoadingSchools, setIsLoadingSchools] = useState<boolean>(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
 
-  // Selected High School State
-  const [selectedSchool, setSelectedSchool] = useState<HighSchoolSelection | null>(
-    initialSchoolName
-      ? {
-          schoolId: initialSchoolId || undefined,
-          schoolName: initialSchoolName,
-          wilayaCode: initialWilayaCode,
-          wilayaNameAr: selectedWilaya?.name_ar || "",
-          communeNameAr: initialCommuneNameAr,
-          isCustom: !initialSchoolId,
-        }
-      : null
+  // Selected High School (by ID or custom submission)
+  const [selectedSchoolId, setSelectedSchoolId] = useState<string>(initialSchoolId || "");
+  const [customSchoolName, setCustomSchoolName] = useState<string>(
+    initialSchoolName && !initialSchoolId ? initialSchoolName : ""
+  );
+  const [isCustomSelected, setIsCustomSelected] = useState<boolean>(
+    Boolean(initialSchoolName && !initialSchoolId)
   );
 
-  // Unlisted School ("ما لقيتش ثانويتي؟ أضفها") Form State
-  const [showSubmissionForm, setShowSubmissionForm] = useState<boolean>(false);
-  const [proposedSchoolName, setProposedSchoolName] = useState<string>("");
+  // Unlisted School ("ما لقيتش ثانويتي؟ أضفها") Submission Form State
+  const [showSubmissionForm, setShowSubmissionForm] = useState<boolean>(
+    Boolean(initialSchoolName && !initialSchoolId)
+  );
+  const [proposedSchoolName, setProposedSchoolName] = useState<string>(
+    initialSchoolName && !initialSchoolId ? initialSchoolName : ""
+  );
   const [isSubmittingSchool, setIsSubmittingSchool] = useState<boolean>(false);
   const [submissionFeedback, setSubmissionFeedback] = useState<{
     type: "success" | "warning" | "info" | "error";
     message: string;
-    existingSchool?: HighSchool;
   } | null>(null);
 
-  const searchDebounceRef = useRef<NodeJS.Timeout | null>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  // Fetch schools when wilaya, commune, or search query changes (debounced 250ms)
+  // Fetch schools when wilaya or commune changes
   useEffect(() => {
     if (!wilayaCode || !communeNameAr) {
       setSchools([]);
       return;
     }
 
-    if (searchDebounceRef.current) {
-      clearTimeout(searchDebounceRef.current);
-    }
+    let isMounted = true;
+    setIsLoadingSchools(true);
 
-    searchDebounceRef.current = setTimeout(async () => {
-      setIsLoadingSchools(true);
+    const fetchSchools = async () => {
       try {
         const queryParams = new URLSearchParams({
           wilaya_code: wilayaCode,
           commune_name_ar: communeNameAr,
-          limit: "25",
+          limit: "50",
         });
-        if (searchQuery.trim()) {
-          queryParams.set("q", searchQuery.trim());
-        }
 
         const res = await fetch(`/api/schools/search?${queryParams.toString()}`);
         const data = await res.json();
 
-        if (data.success && Array.isArray(data.schools)) {
-          setSchools(data.schools);
-        } else {
-          setSchools([]);
+        if (isMounted) {
+          if (data.success && Array.isArray(data.schools)) {
+            setSchools(data.schools);
+          } else {
+            setSchools([]);
+          }
         }
       } catch (err) {
-        console.error("Failed to query schools:", err);
-        setSchools([]);
+        console.error("Failed to query schools for commune:", err);
+        if (isMounted) setSchools([]);
       } finally {
-        setIsLoadingSchools(false);
-      }
-    }, 250);
-
-    return () => {
-      if (searchDebounceRef.current) {
-        clearTimeout(searchDebounceRef.current);
+        if (isMounted) setIsLoadingSchools(false);
       }
     };
-  }, [wilayaCode, communeNameAr, searchQuery]);
 
-  // Handle Wilaya change
+    fetchSchools();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [wilayaCode, communeNameAr]);
+
+  // Handle Wilaya change (Resets Commune & High School)
   const handleWilayaSelect = (code: string) => {
     setWilayaCode(code);
     setCommuneNameAr("");
-    setSelectedSchool(null);
-    setSearchQuery("");
+    setCommuneCode("");
+    setSelectedSchoolId("");
+    setCustomSchoolName("");
+    setIsCustomSelected(false);
     setShowSubmissionForm(false);
     setSubmissionFeedback(null);
+
+    const w = ALGERIAN_WILAYAS.find((item) => item.code === code);
+    if (onLocationChange && w) {
+      onLocationChange(w, null);
+    }
     onChange(null);
   };
 
-  // Handle Commune change
-  const handleCommuneSelect = (cNameAr: string) => {
-    setCommuneNameAr(cNameAr);
-    setSelectedSchool(null);
-    setSearchQuery("");
+  // Handle Commune change (Resets High School)
+  const handleCommuneSelect = (selectedCommuneName: string) => {
+    setCommuneNameAr(selectedCommuneName);
+    setSelectedSchoolId("");
+    setCustomSchoolName("");
+    setIsCustomSelected(false);
     setShowSubmissionForm(false);
     setSubmissionFeedback(null);
+
+    const foundCommune = availableCommunes.find((c) => c.name_ar === selectedCommuneName);
+    const code = foundCommune ? foundCommune.code : "";
+    setCommuneCode(code);
+
+    if (onLocationChange && selectedWilaya) {
+      onLocationChange(
+        selectedWilaya,
+        foundCommune ? { code: foundCommune.code, name_ar: foundCommune.name_ar } : null
+      );
+    }
     onChange(null);
   };
 
-  // Handle selecting an official school from list
-  const handleSelectOfficialSchool = (school: HighSchool) => {
-    const selection: HighSchoolSelection = {
-      schoolId: school.id,
-      schoolName: school.name,
-      wilayaCode: school.wilaya_code,
-      wilayaNameAr: school.wilaya_name_ar,
-      communeNameAr: school.commune_name_ar,
-      isCustom: false,
-    };
-    setSelectedSchool(selection);
-    setIsDropdownOpen(false);
-    setShowSubmissionForm(false);
+  // Handle High School dropdown selection
+  const handleSchoolDropdownChange = (value: string) => {
     setSubmissionFeedback(null);
-    onChange(selection);
+
+    if (value === "__unlisted__") {
+      // User picked "Add unlisted school" from dropdown
+      setIsCustomSelected(true);
+      setSelectedSchoolId("");
+      setShowSubmissionForm(true);
+      if (customSchoolName) {
+        onChange({
+          schoolName: customSchoolName,
+          wilayaCode,
+          wilayaNameAr: selectedWilaya?.name_ar || "",
+          communeNameAr,
+          communeCode,
+          isCustom: true,
+        });
+      } else {
+        onChange(null);
+      }
+      return;
+    }
+
+    if (!value) {
+      // Empty selection
+      setSelectedSchoolId("");
+      setIsCustomSelected(false);
+      setShowSubmissionForm(false);
+      onChange(null);
+      return;
+    }
+
+    // Official school selected
+    const school = schools.find((s) => s.id === value);
+    if (school) {
+      setSelectedSchoolId(school.id);
+      setIsCustomSelected(false);
+      setShowSubmissionForm(false);
+      setCustomSchoolName("");
+
+      onChange({
+        schoolId: school.id,
+        schoolName: school.name,
+        wilayaCode: school.wilaya_code,
+        wilayaNameAr: school.wilaya_name_ar,
+        communeNameAr: school.commune_name_ar,
+        communeCode,
+        isCustom: false,
+      });
+    }
   };
 
-  // Handle submitting an unlisted school
+  // Handle submitting unlisted school proposal
   const handleSubmitUnlistedSchool = async (e: React.FormEvent) => {
     e.preventDefault();
     const raw = proposedSchoolName.trim();
@@ -260,22 +268,23 @@ export const HighSchoolSelector: React.FC<HighSchoolSelectorProps> = ({
       const data = await res.json();
 
       if (res.ok && data.success) {
-        // Success feedback
         setSubmissionFeedback({
           type: "success",
           message: data.message || "تم إرسال طلب إضافة الثانوية بنجاح. سيتم التحقق منها قبل اعتمادها.",
         });
 
-        // Set as active selection (custom/pending)
-        const customSelection: HighSchoolSelection = {
+        setCustomSchoolName(raw);
+        setIsCustomSelected(true);
+        setSelectedSchoolId("");
+
+        onChange({
           schoolName: raw,
           wilayaCode,
           wilayaNameAr: selectedWilaya?.name_ar || "",
           communeNameAr,
+          communeCode,
           isCustom: true,
-        };
-        setSelectedSchool(customSelection);
-        onChange(customSelection);
+        });
       } else {
         const errMsg = data.error || "تعذر إرسال طلب إضافة الثانوية.";
 
@@ -289,16 +298,18 @@ export const HighSchoolSelector: React.FC<HighSchoolSelectorProps> = ({
             type: "info",
             message: "هذه الثانوية قيد المراجعة حالياً.",
           });
-          // Also set selection so the student isn't blocked
-          const pendingSelection: HighSchoolSelection = {
+          setCustomSchoolName(raw);
+          setIsCustomSelected(true);
+          setSelectedSchoolId("");
+
+          onChange({
             schoolName: raw,
             wilayaCode,
             wilayaNameAr: selectedWilaya?.name_ar || "",
             communeNameAr,
+            communeCode,
             isCustom: true,
-          };
-          setSelectedSchool(pendingSelection);
-          onChange(pendingSelection);
+          });
         } else {
           setSubmissionFeedback({
             type: "error",
@@ -316,322 +327,254 @@ export const HighSchoolSelector: React.FC<HighSchoolSelectorProps> = ({
     }
   };
 
+  const selectedSchoolObj = schools.find((s) => s.id === selectedSchoolId);
+
   return (
     <div className={`space-y-4 text-right rtl:text-right ${className}`} dir="rtl">
       {/* ------------------------------------------------------------- */}
-      {/* STEPS 1 & 2: WILAYA & COMMUNE DROPDOWNS (If not compact mode) */}
+      {/* 1. WILAYA DROPDOWN (01 to 69)                                 */}
       {/* ------------------------------------------------------------- */}
-      {!compactSchoolOnly && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {/* Step 1: Wilaya */}
-          <div>
-            <label className="block text-xs font-bold text-theme-muted mb-1.5 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-electric" />
-              <span>الخطوة 1 — الولاية *</span>
-            </label>
-            <div className="relative">
-              <select
-                value={wilayaCode}
-                onChange={(e) => handleWilayaSelect(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-canvas border border-theme-border focus:border-electric focus:ring-1 focus:ring-electric outline-none transition text-sm font-medium text-theme-base appearance-none pr-9"
-              >
-                <option value="">— اختر الولاية (01 إلى 58) —</option>
-                {ALGERIAN_WILAYAS.map((w) => (
-                  <option key={w.code} value={w.code}>
-                    {w.code} — {w.name_ar} ({w.name_fr})
-                  </option>
-                ))}
-              </select>
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-theme-muted">
-                <ChevronDown className="w-4 h-4" />
-              </div>
-            </div>
-          </div>
-
-          {/* Step 2: Commune */}
-          <div>
-            <label className="block text-xs font-bold text-theme-muted mb-1.5 flex items-center gap-1.5">
-              <Building className="w-3.5 h-3.5 text-cyan-400" />
-              <span>الخطوة 2 — البلدية *</span>
-            </label>
-            <div className="relative">
-              <select
-                value={communeNameAr}
-                onChange={(e) => handleCommuneSelect(e.target.value)}
-                disabled={!wilayaCode || availableCommunes.length === 0}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-canvas border border-theme-border focus:border-electric focus:ring-1 focus:ring-electric outline-none transition text-sm font-medium text-theme-base appearance-none pr-9 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <option value="">
-                  {!wilayaCode
-                    ? "— اختر الولاية أولاً —"
-                    : "— اختر بلدية الثانوية —"}
-                </option>
-                {availableCommunes.map((c) => (
-                  <option key={c.code} value={c.name_ar}>
-                    {c.name_ar} ({c.name_fr})
-                  </option>
-                ))}
-              </select>
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-theme-muted">
-                <ChevronDown className="w-4 h-4" />
-              </div>
-            </div>
+      <div>
+        <label className="block text-xs font-bold text-theme-muted mb-1.5 flex items-center justify-between">
+          <span className="flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 text-electric" />
+            <span>1. الولاية *</span>
+          </span>
+          <span className="text-[10px] text-theme-muted font-normal">
+            (69 ولاية جزائرية)
+          </span>
+        </label>
+        <div className="relative">
+          <select
+            value={wilayaCode}
+            onChange={(e) => handleWilayaSelect(e.target.value)}
+            className="w-full px-4 py-3 rounded-xl bg-canvas border border-theme-border focus:border-electric focus:ring-1 focus:ring-electric outline-none transition text-sm font-medium text-theme-base appearance-none pr-10"
+          >
+            <option value="">— اختر الولاية —</option>
+            {ALGERIAN_WILAYAS.map((w) => (
+              <option key={w.code} value={w.code}>
+                {w.code} — {w.name_ar} ({w.name_fr})
+              </option>
+            ))}
+          </select>
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-theme-muted">
+            <ChevronDown className="w-4 h-4" />
           </div>
         </div>
-      )}
+      </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* STEP 3: HIGH SCHOOL SELECTION & SEARCH                        */}
+      {/* 2. COMMUNE DROPDOWN (Dependent on chosen Wilaya)              */}
       {/* ------------------------------------------------------------- */}
-      <div className="pt-1">
+      <div>
+        <label className="block text-xs font-bold text-theme-muted mb-1.5 flex items-center justify-between">
+          <span className="flex items-center gap-1.5">
+            <Building className="w-3.5 h-3.5 text-cyan-400" />
+            <span>2. البلدية *</span>
+          </span>
+          {availableCommunes.length > 0 && (
+            <span className="text-[10px] text-cyan-400 font-normal">
+              ({availableCommunes.length} بلدية متوفرة)
+            </span>
+          )}
+        </label>
+        <div className="relative">
+          <select
+            value={communeNameAr}
+            onChange={(e) => handleCommuneSelect(e.target.value)}
+            disabled={!wilayaCode || availableCommunes.length === 0}
+            className="w-full px-4 py-3 rounded-xl bg-canvas border border-theme-border focus:border-electric focus:ring-1 focus:ring-electric outline-none transition text-sm font-medium text-theme-base appearance-none pr-10 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <option value="">
+              {!wilayaCode
+                ? "— اختر الولاية أولاً لتظهر بلدياتها —"
+                : "— اختر بلدية الإقامة أو الدراسة —"}
+            </option>
+            {availableCommunes.map((c) => (
+              <option key={c.code} value={c.name_ar}>
+                {c.name_ar} {c.name_fr ? `(${c.name_fr})` : ""}
+              </option>
+            ))}
+          </select>
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-theme-muted">
+            <ChevronDown className="w-4 h-4" />
+          </div>
+        </div>
+      </div>
+
+      {/* ------------------------------------------------------------- */}
+      {/* 3. HIGH SCHOOL DROPDOWN (قائمة منسدلة للثانويات)               */}
+      {/* ------------------------------------------------------------- */}
+      <div>
         <label className="block text-xs font-bold text-theme-muted mb-1.5 flex items-center justify-between">
           <span className="flex items-center gap-1.5">
             <School className="w-3.5 h-3.5 text-emerald-400" />
-            <span>الخطوة 3 — الثانوية الرسمية المعتمدة *</span>
+            <span>3. الثانوية (قائمة منسدلة) *</span>
           </span>
-          {selectedSchool && (
-            <span className="text-[11px] text-emerald-400 font-normal flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3" /> تم تحديد الثانوية
+          {selectedSchoolObj && (
+            <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5" /> معتمدة رسمياً
+            </span>
+          )}
+          {isCustomSelected && customSchoolName && (
+            <span className="text-[11px] text-amber-400 font-semibold flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5" /> قيد التحقق
             </span>
           )}
         </label>
 
-        {/* Selected School Preview Card (if already chosen) */}
-        {selectedSchool ? (
-          <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between gap-3 animate-fadeIn">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-                <School className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h4 className="text-sm font-bold text-theme-base">
-                    {selectedSchool.schoolName}
-                  </h4>
-                  {selectedSchool.isCustom ? (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                      قيد التحقق
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
-                      <ShieldCheck className="w-3 h-3" /> معتمدة
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-theme-muted mt-0.5">
-                  {selectedSchool.communeNameAr} — ولاية {selectedSchool.wilayaNameAr}
-                </p>
-              </div>
-            </div>
+        <div className="relative">
+          <select
+            value={
+              isCustomSelected
+                ? "__unlisted__"
+                : selectedSchoolId || ""
+            }
+            onChange={(e) => handleSchoolDropdownChange(e.target.value)}
+            disabled={!wilayaCode || !communeNameAr || isLoadingSchools}
+            className="w-full px-4 py-3 rounded-xl bg-canvas border border-theme-border focus:border-electric focus:ring-1 focus:ring-electric outline-none transition text-sm font-medium text-theme-base appearance-none pr-10 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {/* Default Placeholder */}
+            <option value="">
+              {!wilayaCode || !communeNameAr
+                ? "— اختر الولاية والبلدية أولاً لتظهر الثانويات —"
+                : isLoadingSchools
+                ? "جاري تحميل ثانويات البلدية..."
+                : schools.length === 0
+                ? "— لا توجد ثانويات معتمدة مسجلة في هذه البلدية —"
+                : "— اختر ثانويتك من القائمة المنسدلة —"}
+            </option>
 
+            {/* Verified Schools in Chosen Commune */}
+            {schools.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name} {s.name_fr ? `— ${s.name_fr}` : ""} (معتمدة)
+              </option>
+            ))}
+
+            {/* Custom/Unlisted school proposal option */}
+            {wilayaCode && communeNameAr && (
+              <option value="__unlisted__">
+                {customSchoolName
+                  ? `➕ ${customSchoolName} (ثانوية مقترحة - قيد المراجعة)`
+                  : "➕ ما لقيتش ثانويتي؟ أضفها (اقتراح ثانوية جديدة)..."}
+              </option>
+            )}
+          </select>
+
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-theme-muted">
+            {isLoadingSchools ? (
+              <Loader2 className="w-4 h-4 animate-spin text-electric" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </div>
+        </div>
+
+        {/* Quick Toggle for Unlisted School if not already open */}
+        {wilayaCode && communeNameAr && !showSubmissionForm && (
+          <div className="mt-1.5 flex items-center justify-between">
             <button
               type="button"
               onClick={() => {
-                setSelectedSchool(null);
-                setSearchQuery("");
-                onChange(null);
-                setIsDropdownOpen(true);
+                setShowSubmissionForm(true);
+                setIsCustomSelected(true);
               }}
-              className="text-xs font-semibold text-theme-muted hover:text-white px-3 py-1.5 rounded-lg border border-theme-border hover:bg-canvas transition"
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-theme-muted hover:text-electric transition"
             >
-              تغيير
+              <Plus className="w-3 h-3" />
+              <span>ما لقيتش ثانويتك في القائمة المنسدلة؟ اضغط هنا لإضافتها</span>
             </button>
-          </div>
-        ) : (
-          /* Search Input & Dropdown */
-          <div className="relative" ref={dropdownRef}>
-            <div className="relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setIsDropdownOpen(true);
-                }}
-                onFocus={() => setIsDropdownOpen(true)}
-                disabled={!wilayaCode || !communeNameAr}
-                placeholder={
-                  !wilayaCode || !communeNameAr
-                    ? "اختر الولاية والبلدية أولاً لتظهر ثانوياتك..."
-                    : "ابحث عن ثانويتك بالعربية أو الفرنسية..."
-                }
-                className="w-full px-4 py-3 pl-10 rounded-xl bg-canvas border border-theme-border focus:border-electric focus:ring-1 focus:ring-electric outline-none transition text-sm font-medium text-theme-base placeholder:text-theme-muted/60 disabled:opacity-50 disabled:cursor-not-allowed"
-              />
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-theme-muted pointer-events-none">
-                {isLoadingSchools ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-electric" />
-                ) : (
-                  <Search className="w-4 h-4" />
-                )}
-              </div>
-            </div>
-
-            {/* Dropdown Options */}
-            {isDropdownOpen && wilayaCode && communeNameAr && (
-              <div className="absolute z-30 left-0 right-0 mt-1 max-h-60 overflow-y-auto rounded-xl bg-surface border border-theme-border shadow-2xl divide-y divide-theme-border/50 animate-fadeIn">
-                {isLoadingSchools ? (
-                  <div className="p-4 text-center text-xs text-theme-muted flex items-center justify-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-electric" />
-                    <span>جاري البحث في الدليل المدرسي...</span>
-                  </div>
-                ) : schools.length > 0 ? (
-                  schools.map((s) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      onClick={() => handleSelectOfficialSchool(s)}
-                      className="w-full p-3 text-right rtl:text-right hover:bg-canvas/80 flex items-center justify-between gap-2 transition group"
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-lg bg-canvas text-theme-muted group-hover:text-electric flex items-center justify-center shrink-0">
-                          <School className="w-3.5 h-3.5" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-bold text-theme-base group-hover:text-electric transition-colors">
-                            {s.name}
-                          </div>
-                          {s.name_fr && (
-                            <div className="text-[11px] text-theme-muted font-sans">
-                              {s.name_fr}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <span className="shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                        <ShieldCheck className="w-3 h-3" /> معتمدة
-                      </span>
-                    </button>
-                  ))
-                ) : (
-                  <div className="p-4 text-center">
-                    <p className="text-xs text-theme-muted mb-2">
-                      {searchQuery
-                        ? `لم نجد ثانوية مطابقة لـ "${searchQuery}" في بلدية ${communeNameAr}.`
-                        : `لا توجد ثانويات معتمدة مسجلة حالياً في بلدية ${communeNameAr}.`}
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsDropdownOpen(false);
-                        setShowSubmissionForm(true);
-                        setProposedSchoolName(searchQuery);
-                      }}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-electric hover:underline"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>أضف ثانويتك للمراجعة والاعتماد</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         )}
       </div>
 
       {/* ------------------------------------------------------------- */}
-      {/* STEP 4: "ما لقيتش ثانويتي؟ أضفها" (UNLISTED PROPOSAL FORM)   */}
+      {/* 4. UNLISTED PROPOSAL FORM (Opens when requested)              */}
       {/* ------------------------------------------------------------- */}
-      {wilayaCode && communeNameAr && !selectedSchool && (
-        <div className="pt-1">
-          {!showSubmissionForm ? (
+      {showSubmissionForm && wilayaCode && communeNameAr && (
+        <div className="p-4 rounded-xl bg-canvas/80 border border-theme-border/90 shadow-inner space-y-3 animate-fadeIn">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-bold text-theme-base flex items-center gap-1.5">
+              <Plus className="w-3.5 h-3.5 text-electric" />
+              <span>إضافة ثانوية جديدة في بلدية {communeNameAr}</span>
+            </h4>
             <button
               type="button"
               onClick={() => {
-                setShowSubmissionForm(true);
-                setProposedSchoolName(searchQuery);
-                setSubmissionFeedback(null);
+                setShowSubmissionForm(false);
+                if (!customSchoolName) {
+                  setIsCustomSelected(false);
+                }
               }}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-theme-muted hover:text-electric transition"
+              className="text-[11px] text-theme-muted hover:text-white"
             >
-              <Plus className="w-3.5 h-3.5" />
-              <span>ما لقيتش ثانويتي؟ أضفها</span>
+              إغلاق
             </button>
-          ) : (
-            <div className="p-4 rounded-xl bg-canvas/70 border border-theme-border/80 shadow-inner space-y-3 animate-fadeIn">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold text-theme-base flex items-center gap-1.5">
-                  <Plus className="w-3.5 h-3.5 text-electric" />
-                  <span>إضافة ثانوية جديدة للمراجعة</span>
-                </h4>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowSubmissionForm(false);
-                    setSubmissionFeedback(null);
-                  }}
-                  className="text-[11px] text-theme-muted hover:text-white"
-                >
-                  إلغاء
-                </button>
-              </div>
+          </div>
 
-              <p className="text-[11px] text-theme-muted leading-relaxed">
-                اكتب الاسم الرسمي للثانوية في بلدية{" "}
-                <span className="font-bold text-theme-base">{communeNameAr}</span>. سيتم التحقق منها
-                بواسطة فريق العمليات قبل اعتمادها رسمياً.
-              </p>
+          <p className="text-[11px] text-theme-muted leading-relaxed">
+            اكتب الاسم الرسمي للثانوية بدقة. سيتم حفظها في ملفك وإرسالها لفريق العمليات لاعتمادها رسمياً.
+          </p>
 
-              <form onSubmit={handleSubmitUnlistedSchool} className="space-y-3">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={proposedSchoolName}
-                    onChange={(e) => {
-                      setProposedSchoolName(e.target.value);
-                      if (submissionFeedback) setSubmissionFeedback(null);
-                    }}
-                    placeholder="مثال: ثانوية العقيد لطفي أو Lycée Colonel Lotfi"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme-border focus:border-electric focus:ring-1 focus:ring-electric outline-none transition text-sm text-theme-base"
-                  />
-                </div>
-
-                {/* Feedback Alerts */}
-                {submissionFeedback && (
-                  <div
-                    className={`p-3 rounded-xl border text-xs leading-relaxed flex items-start gap-2.5 animate-fadeIn ${
-                      submissionFeedback.type === "success"
-                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                        : submissionFeedback.type === "warning"
-                        ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
-                        : submissionFeedback.type === "info"
-                        ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"
-                        : "bg-red-500/10 border-red-500/30 text-red-300"
-                    }`}
-                  >
-                    {submissionFeedback.type === "success" ? (
-                      <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-400" />
-                    ) : (
-                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
-                    )}
-                    <div className="flex-1">
-                      <p className="font-semibold">{submissionFeedback.message}</p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex items-center justify-end gap-2">
-                  <button
-                    type="submit"
-                    disabled={isSubmittingSchool || proposedSchoolName.trim().length < 3}
-                    className="px-4 py-2 rounded-xl bg-electric hover:bg-electric/90 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-electric/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSubmittingSchool ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>جاري التحقق والإرسال...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>إرسال للمراجعة</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </form>
+          <form onSubmit={handleSubmitUnlistedSchool} className="space-y-3">
+            <div>
+              <input
+                type="text"
+                value={proposedSchoolName}
+                onChange={(e) => {
+                  setProposedSchoolName(e.target.value);
+                  if (submissionFeedback) setSubmissionFeedback(null);
+                }}
+                placeholder="مثال: ثانوية العقيد لطفي أو Lycée Colonel Lotfi"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme-border focus:border-electric focus:ring-1 focus:ring-electric outline-none transition text-sm text-theme-base"
+              />
             </div>
-          )}
+
+            {/* Feedback Alerts */}
+            {submissionFeedback && (
+              <div
+                className={`p-3 rounded-xl border text-xs leading-relaxed flex items-start gap-2.5 animate-fadeIn ${
+                  submissionFeedback.type === "success"
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                    : submissionFeedback.type === "warning"
+                    ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                    : submissionFeedback.type === "info"
+                    ? "bg-cyan-500/10 border-cyan-500/30 text-cyan-300"
+                    : "bg-red-500/10 border-red-500/30 text-red-300"
+                }`}
+              >
+                {submissionFeedback.type === "success" ? (
+                  <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5 text-emerald-400" />
+                ) : (
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-400" />
+                )}
+                <div className="flex-1">
+                  <p className="font-semibold">{submissionFeedback.message}</p>
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="submit"
+                disabled={isSubmittingSchool || proposedSchoolName.trim().length < 3}
+                className="px-4 py-2 rounded-xl bg-electric hover:bg-electric/90 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-electric/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmittingSchool ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>جاري التحقق والإرسال...</span>
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>إرسال للمراجعة واعتمادها في ملفي</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

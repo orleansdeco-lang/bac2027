@@ -6,6 +6,12 @@
 import { normalizeSchoolName, areSchoolNamesEquivalent } from "../src/domain/administrative/school-normalization";
 import { SchoolService } from "../src/lib/services/school-service";
 import { CURATED_OFFICIAL_HIGH_SCHOOLS } from "../src/data/schools";
+import {
+  getAlgerianWilayas,
+  ALGERIAN_COMMUNES,
+  getCommunesByWilayaCode,
+  getWilayaByCode,
+} from "../src/domain/administrative/algeria-administrative";
 
 async function runTests() {
   console.log("================================================================================");
@@ -24,6 +30,23 @@ async function runTests() {
       failed++;
     }
   }
+
+  // -------------------------------------------------------------------------
+  // TEST 0: Administrative Dataset Update (69 Wilayas & 1,541 Communes)
+  // -------------------------------------------------------------------------
+  console.log("--- 0. Testing Updated Administrative Dataset (Wilayas & Communes) ---");
+  const allWilayas = getAlgerianWilayas();
+  assert(allWilayas.length === 69, `Loaded all 69 Algerian Wilayas (actual: ${allWilayas.length})`);
+  assert(ALGERIAN_COMMUNES.length === 1541, `Loaded all 1,541 Algerian Communes (actual: ${ALGERIAN_COMMUNES.length})`);
+
+  const w68 = getWilayaByCode("68");
+  assert(Boolean(w68 && w68.name_ar === "بوسعادة"), "New Wilaya 68 (بوسعادة) successfully recognized");
+
+  const w68Communes = getCommunesByWilayaCode("68");
+  assert(w68Communes.length > 0, `Wilaya 68 has ${w68Communes.length} communes registered`);
+
+  const chlefCommunes = getCommunesByWilayaCode("02");
+  assert(chlefCommunes.length === 35, `Wilaya 02 (Chlef) has all 35 communes registered (actual: ${chlefCommunes.length})`);
 
   // -------------------------------------------------------------------------
   // TEST 1: Normalization Consistency (Arabic & French)

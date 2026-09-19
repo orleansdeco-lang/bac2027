@@ -53,6 +53,8 @@ import {
   Sparkles,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  Building,
 } from "lucide-react";
 
 const STREAM_ICONS: Record<StreamId, any> = {
@@ -282,25 +284,23 @@ export default function StudentRegistrationPage() {
     return true;
   };
 
-  // Step 4: Validation (Location)
+  // Step 4: Validation (Location & High School on same step)
   const validateStep4 = (): boolean => {
     setErrorMsg(null);
     if (!wilayaCode) {
       setErrorMsg(isAr ? "يرجى اختيار ولايتك." : "Veuillez sélectionner votre wilaya.");
       return false;
     }
-    if (!communeCode) {
+    if (!communeName && !communeCode) {
       setErrorMsg(isAr ? "يرجى اختيار بلديتك." : "Veuillez sélectionner votre commune.");
       return false;
     }
-    return true;
-  };
-
-  // Step 5: Validation (School - only for schooled)
-  const validateStep5 = (): boolean => {
-    setErrorMsg(null);
     if (studentStatus === "schooled" && !schoolName.trim()) {
-      setErrorMsg(isAr ? "يرجى كتابة اسم ثانويتك." : "Veuillez saisir le nom de votre lycée.");
+      setErrorMsg(
+        isAr
+          ? "يرجى اختيار ثانويتك من القائمة المنسدلة (أو اقتراح ثانوية جديدة)."
+          : "Veuillez sélectionner votre lycée dans la liste déroulante."
+      );
       return false;
     }
     return true;
@@ -332,20 +332,7 @@ export default function StudentRegistrationPage() {
     if (currentStep === 4) {
       if (!validateStep4()) return;
       persistCurrentDraft();
-      // If free candidate, skip step 5 (school) straight to confirmation!
-      if (studentStatus === "free") {
-        setSchoolName("");
-        setCurrentStep(6);
-      } else {
-        setCurrentStep(5);
-      }
-      return;
-    }
-
-    if (currentStep === 5) {
-      if (!validateStep5()) return;
-      persistCurrentDraft();
-      setCurrentStep(6);
+      setCurrentStep(5);
       return;
     }
   };
@@ -353,13 +340,8 @@ export default function StudentRegistrationPage() {
   // Previous Step Action
   const handleBack = () => {
     setErrorMsg(null);
-    if (currentStep === 6) {
-      // If free candidate, going back from confirmation returns to step 4 (location)
-      if (studentStatus === "free") {
-        setCurrentStep(4);
-      } else {
-        setCurrentStep(5);
-      }
+    if (currentStep === 5) {
+      setCurrentStep(4);
       return;
     }
     if (currentStep > 1) {
@@ -423,9 +405,9 @@ export default function StudentRegistrationPage() {
     }
   };
 
-  // Progress computation (5 steps for free candidates, 6 steps for schooled)
-  const totalSteps = studentStatus === "free" ? 5 : 6;
-  const displayStepNumber = studentStatus === "free" && currentStep === 6 ? 5 : currentStep;
+  // Progress computation (unified 5 steps for all students)
+  const totalSteps = 5;
+  const displayStepNumber = currentStep;
 
   const isRTL = direction === "rtl" || isAr;
   const NextIcon = isRTL ? ArrowLeft : ArrowRight;
@@ -846,138 +828,133 @@ export default function StudentRegistrationPage() {
           )}
 
           {/* =============================================================== */}
-          {/* STEP 4: LOCATION (WILAYA & COMMUNE)                             */}
+          {/* STEP 4: LOCATION & HIGH SCHOOL (SAME STEP WITH DROPDOWN)         */}
           {/* =============================================================== */}
           {currentStep === 4 && (
             <Card className="p-6 md:p-8 bg-surface border-theme-border shadow-xl rounded-2xl animate-fadeIn">
               <div className="text-center mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-success/10 text-success flex items-center justify-center mx-auto mb-3">
-                  <MapPin className="w-6 h-6" />
-                </div>
-                <h1 className="text-2xl md:text-3xl font-bold font-heading text-theme-base mb-2">
-                  {isAr ? "وين تقرا؟" : "Où étudiez-vous ?"}
-                </h1>
-                <p className="text-theme-muted text-sm">
-                  {isAr
-                    ? "حدد ولايتك وبلديتك."
-                    : "Indiquez votre wilaya et votre commune."}
-                </p>
-              </div>
-
-              <div className="space-y-4 my-6">
-                <div>
-                  <label className="block text-xs font-semibold text-theme-muted mb-1.5">
-                    {isAr ? "الولاية *" : "Wilaya *"}
-                  </label>
-                  <select
-                    value={wilayaCode}
-                    onChange={(e) => handleWilayaChange(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl bg-canvas border border-theme-border focus:border-electric focus:ring-1 focus:ring-electric outline-none transition text-sm font-medium text-theme-base"
-                  >
-                    <option value="">{isAr ? "— اختر الولاية —" : "— Sélectionner la wilaya —"}</option>
-                    {wilayas.map((w) => (
-                      <option key={w.code} value={w.code}>
-                        {w.code} - {isAr ? w.name_ar : w.name_fr}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-theme-muted mb-1.5">
-                    {isAr ? "البلدية *" : "Commune *"}
-                  </label>
-                  <select
-                    value={communeCode}
-                    onChange={(e) => handleCommuneChange(e.target.value)}
-                    disabled={!wilayaCode || availableCommunes.length === 0}
-                    className="w-full px-4 py-3 rounded-xl bg-canvas border border-theme-border focus:border-electric focus:ring-1 focus:ring-electric outline-none transition text-sm font-medium text-theme-base disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <option value="">
-                      {!wilayaCode
-                        ? isAr ? "— اختر الولاية أولاً —" : "— Choisissez la wilaya d'abord —"
-                        : isAr ? "— اختر البلدية —" : "— Sélectionner la commune —"}
-                    </option>
-                    {availableCommunes.map((c) => (
-                      <option key={c.code} value={c.code}>
-                        {isAr ? c.name_ar : c.name_fr}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 mt-8">
-                <Button
-                  onClick={handleBack}
-                  variant="outline"
-                  size="lg"
-                  className="px-5 border-theme-border"
-                >
-                  <BackIcon className="w-4 h-4 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
-                  <span>{isAr ? "رجوع" : "Retour"}</span>
-                </Button>
-                <Button
-                  onClick={handleNext}
-                  variant="primary"
-                  size="lg"
-                  className="flex-1 justify-center text-base font-bold shadow-lg shadow-electric/20"
-                >
-                  <span>{isAr ? "نكمل" : "Continuer"}</span>
-                  <NextIcon className="w-4 h-4 ml-2 rtl:mr-2 rtl:ml-0" />
-                </Button>
-              </div>
-            </Card>
-          )}
-
-          {/* =============================================================== */}
-          {/* STEP 5: SCHOOL NAME (SCHOOLED ONLY)                             */}
-          {/* =============================================================== */}
-          {currentStep === 5 && studentStatus === "schooled" && (
-            <Card className="p-6 md:p-8 bg-surface border-theme-border shadow-xl rounded-2xl animate-fadeIn">
-              <div className="text-center mb-6">
-                <div className="w-12 h-12 rounded-2xl bg-electric/10 text-electric flex items-center justify-center mx-auto mb-3">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto mb-3">
                   <School className="w-6 h-6" />
                 </div>
                 <h1 className="text-2xl md:text-3xl font-bold font-heading text-theme-base mb-2">
-                  {isAr ? "وين تقرا؟" : "Quel est votre lycée ?"}
+                  {isAr ? "وين تقرا ومؤسستك؟" : "Où étudiez-vous ?"}
                 </h1>
                 <p className="text-theme-muted text-sm">
                   {isAr
-                    ? "اكتب اسم ثانويتك الرسمية."
-                    : "Saisissez le nom officiel de votre lycée."}
+                    ? studentStatus === "schooled"
+                      ? "اختر الولاية، البلدية، وثانويتك الرسمية من القوائم المنسدلة."
+                      : "حدد ولايتك وبلديتك."
+                    : "Sélectionnez votre wilaya, commune et lycée."}
                 </p>
               </div>
 
               <div className="my-6">
-                {/* Wilaya & Commune Context Banner */}
-                <div className="mb-4 p-3 rounded-xl bg-canvas border border-theme-border/70 flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2 text-theme-muted">
-                    <MapPin className="w-4 h-4 text-electric shrink-0" />
-                    <span>
-                      <strong className="text-theme-base">{wilayaName}</strong> — {communeName}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setCurrentStep(4)}
-                    className="text-xs font-semibold text-electric hover:underline"
-                  >
-                    {isAr ? "تغيير البلدية" : "Changer"}
-                  </button>
-                </div>
+                {studentStatus === "schooled" ? (
+                  <HighSchoolSelector
+                    initialWilayaCode={wilayaCode}
+                    initialCommuneNameAr={communeName}
+                    initialCommuneCode={communeCode}
+                    initialSchoolName={schoolName}
+                    initialSchoolId={schoolId}
+                    onLocationChange={(w, c) => {
+                      setWilayaCode(w.code);
+                      setWilayaName(w.name_ar);
+                      if (c) {
+                        setCommuneCode(c.code);
+                        setCommuneName(c.name_ar);
+                      } else {
+                        setCommuneCode("");
+                        setCommuneName("");
+                        setSchoolName("");
+                        setSchoolId("");
+                      }
+                    }}
+                    onChange={(sel) => {
+                      if (sel) {
+                        setWilayaCode(sel.wilayaCode);
+                        setWilayaName(sel.wilayaNameAr);
+                        setCommuneName(sel.communeNameAr);
+                        if (sel.communeCode) setCommuneCode(sel.communeCode);
+                        setSchoolName(sel.schoolName);
+                        setSchoolId(sel.schoolId || "");
+                      } else {
+                        setSchoolName("");
+                        setSchoolId("");
+                      }
+                    }}
+                  />
+                ) : (
+                  /* Free Candidate (Wilaya & Commune only) */
+                  <div className="space-y-4 my-6">
+                    <div>
+                      <label className="block text-xs font-bold text-theme-muted mb-1.5 flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-electric" />
+                          <span>1. الولاية *</span>
+                        </span>
+                        <span className="text-[10px] text-theme-muted font-normal">(69 ولاية جزائرية)</span>
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={wilayaCode}
+                          onChange={(e) => handleWilayaChange(e.target.value)}
+                          className="w-full px-4 py-3 rounded-xl bg-canvas border border-theme-border focus:border-electric focus:ring-1 focus:ring-electric outline-none transition text-sm font-medium text-theme-base appearance-none pr-10"
+                        >
+                          <option value="">{isAr ? "— اختر الولاية —" : "— Sélectionner la wilaya —"}</option>
+                          {wilayas.map((w) => (
+                            <option key={w.code} value={w.code}>
+                              {w.code} — {w.name_ar} ({w.name_fr})
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-theme-muted">
+                          <ChevronDown className="w-4 h-4" />
+                        </div>
+                      </div>
+                    </div>
 
-                <HighSchoolSelector
-                  controlledWilayaCode={wilayaCode}
-                  controlledCommuneNameAr={communeName}
-                  initialSchoolName={schoolName}
-                  initialSchoolId={schoolId}
-                  compactSchoolOnly={true}
-                  onChange={(sel) => {
-                    setSchoolName(sel?.schoolName || "");
-                    setSchoolId(sel?.schoolId || "");
-                  }}
-                />
+                    <div>
+                      <label className="block text-xs font-bold text-theme-muted mb-1.5 flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <Building className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>2. البلدية *</span>
+                        </span>
+                        {availableCommunes.length > 0 && (
+                          <span className="text-[10px] text-cyan-400 font-normal">
+                            ({availableCommunes.length} بلدية متوفرة)
+                          </span>
+                        )}
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={communeCode}
+                          onChange={(e) => handleCommuneChange(e.target.value)}
+                          disabled={!wilayaCode || availableCommunes.length === 0}
+                          className="w-full px-4 py-3 rounded-xl bg-canvas border border-theme-border focus:border-electric focus:ring-1 focus:ring-electric outline-none transition text-sm font-medium text-theme-base appearance-none pr-10 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <option value="">
+                            {!wilayaCode
+                              ? isAr ? "— اختر الولاية أولاً لتظهر بلدياتها —" : "— Choisissez la wilaya d'abord —"
+                              : isAr ? "— اختر البلدية —" : "— Sélectionner la commune —"}
+                          </option>
+                          {availableCommunes.map((c) => (
+                            <option key={c.code} value={c.code}>
+                              {c.name_ar} {c.name_fr ? `(${c.name_fr})` : ""}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-theme-muted">
+                          <ChevronDown className="w-4 h-4" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-xs text-cyan-300 flex items-center gap-2">
+                      <GraduationCap className="w-4 h-4 shrink-0" />
+                      <span>بصفتك مترشحاً حراً، لست ملزماً باختيار ثانوية يومية.</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-3 mt-8">
@@ -1004,9 +981,9 @@ export default function StudentRegistrationPage() {
           )}
 
           {/* =============================================================== */}
-          {/* STEP 6: CONFIRMATION SUMMARY                                   */}
+          {/* STEP 5: CONFIRMATION SUMMARY                                   */}
           {/* =============================================================== */}
-          {currentStep === 6 && (
+          {currentStep === 5 && (
             <Card className="p-6 md:p-8 bg-surface border-theme-border shadow-xl rounded-2xl animate-fadeIn">
               <div className="text-center mb-6">
                 <div className="w-12 h-12 rounded-2xl bg-success/15 text-success flex items-center justify-center mx-auto mb-3">

@@ -19,6 +19,7 @@ import {
   ExternalLink,
   Sparkles,
   School,
+  MessageSquareQuote,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 
@@ -49,6 +50,7 @@ const navGroups: NavGroup[] = [
       { href: "/ops/finance", label: "Finance & Orders", icon: CreditCard },
       { href: "/ops/issues", label: "Anomalies Queue", icon: AlertCircle },
       { href: "/ops/schools", label: "High Schools Queue", icon: School },
+      { href: "/ops/experiences", label: "Experiences Moderation", icon: MessageSquareQuote },
     ],
   },
   {

@@ -1,31 +1,55 @@
 export type ExperienceRole = "top_achiever" | "repeater_success" | "student";
 
-export type ExperienceCategory = "all" | "top_achievers" | "repeater_success" | "top_upvoted";
+export type ExperienceCategory = "all" | "top_achievers" | "repeater_success" | "current_students" | "top_upvoted";
+
+export type ExperienceStatus = "pending" | "approved" | "rejected";
+
+export type CandidateType = "current_student" | "former_candidate";
+
+export interface ExperienceComment {
+  id: string;
+  experience_id: string;
+  author_id?: string | null;
+  author_name: string;
+  content: string;
+  created_at: string;
+}
 
 export interface BacExperience {
   id: string;
   author_id?: string | null;
   author_name: string;
   author_role: ExperienceRole;
+  candidate_type?: CandidateType;
   stream_id: string;
   final_grade?: number | null;
   initial_grade?: number | null;
   target_major?: string | null;
+  passed_bac?: boolean | null;
+  retaking_bac?: boolean | null;
+  university_major?: string | null;
   biggest_trap: string;
   winning_routine: string;
   best_resources?: string | null;
   upvotes_count: number;
+  comments_count?: number;
+  comments?: ExperienceComment[];
   is_verified: boolean;
+  status?: ExperienceStatus;
   created_at: string;
 }
 
 export interface CreateExperienceInput {
   author_name: string;
-  author_role: ExperienceRole;
+  author_role?: ExperienceRole;
+  candidate_type?: CandidateType;
   stream_id: string;
   final_grade?: number | null;
   initial_grade?: number | null;
   target_major?: string | null;
+  passed_bac?: boolean | null;
+  retaking_bac?: boolean | null;
+  university_major?: string | null;
   biggest_trap: string;
   winning_routine: string;
   best_resources?: string | null;
