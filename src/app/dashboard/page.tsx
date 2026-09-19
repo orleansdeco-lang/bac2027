@@ -37,6 +37,7 @@ import {
   Layers,
   ChevronDown,
   FileText,
+  MessageSquareQuote,
 } from "lucide-react";
 
 import { ALL_SUBJECTS } from "@/lib/constants/streams";
@@ -413,6 +414,17 @@ export default function DashboardPage() {
                     className="rounded-full px-6 min-h-[48px] font-semibold border-theme bg-card text-theme-text hover:bg-card-hover transition-colors"
                   >
                     <span>{isAr ? "خريطة الشعبة" : "Toute la route"}</span>
+                  </Button>
+                </Link>
+
+                <Link href="/experiences">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="rounded-full px-6 min-h-[48px] font-bold border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-colors flex items-center gap-2"
+                  >
+                    <MessageSquareQuote className="w-4 h-4 text-amber-500" />
+                    <span>{isAr ? "بنك التجارب والعِبر 🎓" : "Témoignages BAC"}</span>
                   </Button>
                 </Link>
               </div>

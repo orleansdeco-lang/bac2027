@@ -9,7 +9,7 @@ const LOCAL_STORAGE_KEY_COMMENTS_PREFIX = "bac_experience_comments_";
 
 export const ExperienceService = {
   /**
-   * Fetch experiences: Approved only for public view.
+   * Fetch experiences: Approved only for public view, supports Wilaya and stream filtering.
    */
   async getExperiences(
     filters?: Partial<ExperienceFilterState>,
@@ -24,6 +24,7 @@ export const ExperienceService = {
         if (filters?.streamId) params.set("streamId", filters.streamId);
         if (filters?.category) params.set("category", filters.category);
         if (filters?.searchQuery) params.set("searchQuery", filters.searchQuery);
+        if (filters?.wilaya) params.set("wilaya", filters.wilaya);
 
         const res = await fetch(`/api/experiences?${params.toString()}`);
         if (res.ok) {
@@ -53,6 +54,7 @@ export const ExperienceService = {
             author_role: d.author_role,
             candidate_type: d.candidate_type || "former_candidate",
             stream_id: d.stream_id,
+            wilaya: d.wilaya || null,
             final_grade: d.final_grade ? Number(d.final_grade) : null,
             initial_grade: d.initial_grade ? Number(d.initial_grade) : null,
             target_major: d.target_major,
@@ -74,7 +76,7 @@ export const ExperienceService = {
       }
     }
 
-    // Retrieve locally saved user contributions (show only approved or user's own submissions)
+    // Retrieve locally saved user contributions
     let localSubmissions: BacExperience[] = [];
     if (typeof window !== "undefined") {
       try {
@@ -90,10 +92,13 @@ export const ExperienceService = {
     // Merge and eliminate duplicates by id
     const map = new Map<string, BacExperience>();
 
-    // 1. Curated seed data
+    // 1. Curated seed data with Wilaya auto-extraction
     CURATED_BAC_EXPERIENCES.forEach((item) => {
+      const match = item.author_name.match(/ولاية\s+([^)]+)/);
+      const wilayaFromAuthor = match ? match[1].trim() : null;
       map.set(item.id, {
         ...item,
+        wilaya: item.wilaya || wilayaFromAuthor,
         status: "approved",
         candidate_type: item.candidate_type || "former_candidate",
         passed_bac: item.passed_bac ?? true,
@@ -124,79 +129,98 @@ export const ExperienceService = {
       } catch {}
     }
 
-    // Apply Filters
-    if (filters) {
-      const { streamId, category, searchQuery, onlyTargetMatch } = filters;
+    // Filter by Stream
+    if (filters?.streamId && filters.streamId !== "all") {
+      list = list.filter((e) => e.stream_id === filters.streamId);
+    }
 
-      // Stream filter
-      if (onlyTargetMatch && userStreamId) {
-        list = list.filter((item) => item.stream_id === userStreamId);
-      } else if (streamId && streamId !== "all") {
-        list = list.filter((item) => item.stream_id === streamId);
-      }
-
-      // Category filter
-      if (category === "top_achievers") {
+    // Filter by Category
+    if (filters?.category) {
+      if (filters.category === "top_achievers") {
         list = list.filter(
-          (item) => (item.final_grade && item.final_grade >= 16) || item.author_role === "top_achiever"
+          (e) => (e.final_grade && e.final_grade >= 16.0) || e.author_role === "top_achiever"
         );
-      } else if (category === "repeater_success") {
+      } else if (filters.category === "repeater_success") {
         list = list.filter(
-          (item) =>
-            item.author_role === "repeater_success" ||
-            (item.initial_grade !== null && item.initial_grade !== undefined)
+          (e) =>
+            e.author_role === "repeater_success" ||
+            (e.initial_grade !== null && e.initial_grade !== undefined) ||
+            e.retaking_bac === true
         );
-      } else if (category === "current_students") {
-        list = list.filter((item) => item.candidate_type === "current_student");
-      } else if (category === "top_upvoted") {
+      } else if (filters.category === "current_students") {
+        list = list.filter(
+          (e) => e.candidate_type === "current_student" || e.author_role === "student"
+        );
+      } else if (filters.category === "top_upvoted") {
         list.sort((a, b) => b.upvotes_count - a.upvotes_count);
-      }
-
-      // Search query
-      if (searchQuery && searchQuery.trim() !== "") {
-        const q = searchQuery.trim().toLowerCase();
-        list = list.filter(
-          (item) =>
-            item.author_name.toLowerCase().includes(q) ||
-            (item.target_major && item.target_major.toLowerCase().includes(q)) ||
-            (item.university_major && item.university_major.toLowerCase().includes(q)) ||
-            item.biggest_trap.toLowerCase().includes(q) ||
-            item.winning_routine.toLowerCase().includes(q) ||
-            (item.best_resources && item.best_resources.toLowerCase().includes(q))
-        );
       }
     }
 
-    // Default sort: highest upvotes first, then recent
+    // Filter by Wilaya
+    if (filters?.wilaya && filters.wilaya !== "all") {
+      const qWilaya = filters.wilaya.trim().toLowerCase();
+      list = list.filter((e) => {
+        const w = (e.wilaya || "").toLowerCase();
+        const authorHasWilaya = e.author_name.toLowerCase().includes(qWilaya);
+        return w.includes(qWilaya) || authorHasWilaya;
+      });
+    }
+
+    // Filter by Search Query
+    if (filters?.searchQuery && filters.searchQuery.trim()) {
+      const q = filters.searchQuery.trim().toLowerCase();
+      list = list.filter(
+        (e) =>
+          e.author_name.toLowerCase().includes(q) ||
+          e.biggest_trap.toLowerCase().includes(q) ||
+          e.winning_routine.toLowerCase().includes(q) ||
+          (e.target_major && e.target_major.toLowerCase().includes(q)) ||
+          (e.university_major && e.university_major.toLowerCase().includes(q)) ||
+          (e.best_resources && e.best_resources.toLowerCase().includes(q)) ||
+          (e.wilaya && e.wilaya.toLowerCase().includes(q))
+      );
+    }
+
+    // Filter by user target match
+    if (filters?.onlyTargetMatch && userStreamId) {
+      list = list.filter((e) => e.stream_id === userStreamId);
+    }
+
+    // Default sort: highest upvotes, then newest
     if (filters?.category !== "top_upvoted") {
-      list.sort((a, b) => b.upvotes_count - a.upvotes_count || (b.created_at > a.created_at ? 1 : -1));
+      list.sort((a, b) => {
+        if (b.upvotes_count !== a.upvotes_count) {
+          return b.upvotes_count - a.upvotes_count;
+        }
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
     }
 
     return list;
   },
 
   /**
-   * Create a new experience with status 'pending' awaiting moderation.
+   * Submit a new BAC experience contribution.
    */
   async createExperience(
     input: CreateExperienceInput,
     userId?: string | null
   ): Promise<BacExperience> {
-    // Sanitize: only first name / display name without surname
     const cleanFirstName = input.author_name.trim().split(/\s+/)[0] || "طالب";
 
     const newExperience: BacExperience = {
-      id: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `exp-${Date.now()}`,
+      id: `exp_sub_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       author_id: userId || null,
       author_name: cleanFirstName,
-      author_role: input.author_role || (input.candidate_type === "current_student" ? "student" : "top_achiever"),
-      candidate_type: input.candidate_type,
+      author_role: input.author_role || "student",
+      candidate_type: input.candidate_type || "former_candidate",
       stream_id: input.stream_id,
-      final_grade: input.final_grade ? Number(input.final_grade) : null,
-      initial_grade: input.initial_grade ? Number(input.initial_grade) : null,
+      wilaya: input.wilaya?.trim() || null,
+      final_grade: input.final_grade !== undefined ? input.final_grade : null,
+      initial_grade: input.initial_grade !== undefined ? input.initial_grade : null,
       target_major: input.target_major ? input.target_major.trim() : null,
-      passed_bac: input.passed_bac ?? true,
-      retaking_bac: input.retaking_bac ?? false,
+      passed_bac: input.passed_bac !== undefined ? input.passed_bac : true,
+      retaking_bac: input.retaking_bac !== undefined ? input.retaking_bac : false,
       university_major: input.university_major ? input.university_major.trim() : null,
       biggest_trap: input.biggest_trap.trim(),
       winning_routine: input.winning_routine.trim(),
@@ -204,7 +228,7 @@ export const ExperienceService = {
       upvotes_count: 1,
       comments_count: 0,
       is_verified: false,
-      status: "pending", // awaiting operator moderation
+      status: "pending",
       created_at: new Date().toISOString(),
     };
 
@@ -216,7 +240,6 @@ export const ExperienceService = {
         list.unshift(newExperience);
         localStorage.setItem(LOCAL_STORAGE_KEY_EXPERIENCES, JSON.stringify(list));
 
-        // Auto-upvote locally for author
         const upvotes = this.getUpvotedIds();
         if (!upvotes.includes(newExperience.id)) {
           upvotes.push(newExperience.id);
@@ -242,7 +265,7 @@ export const ExperienceService = {
           }
         }
       } catch (err) {
-        console.warn("API create experience skipped, saved to local fallback:", err);
+        console.warn("API create experience fallback:", err);
       }
     }
 
@@ -285,20 +308,24 @@ export const ExperienceService = {
   },
 
   /**
-   * Add a comment to an experience.
+   * Add a comment to an experience with automatic Wilaya.
    */
   async addComment(
     experienceId: string,
     content: string,
     authorName: string,
-    userId?: string | null
+    userId?: string | null,
+    wilaya?: string | null
   ): Promise<ExperienceComment> {
     const cleanFirstName = authorName.trim().split(/\s+/)[0] || "طالب";
+    const cleanWilaya = wilaya?.trim() || null;
+
     const newComment: ExperienceComment = {
       id: `comm_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       experience_id: experienceId,
       author_id: userId || null,
       author_name: cleanFirstName,
+      wilaya: cleanWilaya,
       content: content.trim(),
       created_at: new Date().toISOString(),
     };
@@ -318,7 +345,12 @@ export const ExperienceService = {
         const res = await fetch(`/api/experiences/${encodeURIComponent(experienceId)}/comments`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: content.trim(), authorName: cleanFirstName, userId }),
+          body: JSON.stringify({
+            content: content.trim(),
+            authorName: cleanFirstName,
+            userId,
+            wilaya: cleanWilaya,
+          }),
         });
         if (res.ok) {
           const data = await res.json();
@@ -332,6 +364,83 @@ export const ExperienceService = {
     }
 
     return newComment;
+  },
+
+  /**
+   * Update comment content (by author or platform owner).
+   */
+  async updateComment(
+    experienceId: string,
+    commentId: string,
+    content: string,
+    userId?: string | null,
+    userEmail?: string | null
+  ): Promise<boolean> {
+    const trimmed = content.trim();
+    if (!trimmed) return false;
+
+    if (typeof window !== "undefined") {
+      // Update locally
+      try {
+        const key = `${LOCAL_STORAGE_KEY_COMMENTS_PREFIX}${experienceId}`;
+        const stored = localStorage.getItem(key);
+        if (stored) {
+          const list: ExperienceComment[] = JSON.parse(stored);
+          const updated = list.map((c) =>
+            c.id === commentId ? { ...c, content: trimmed, updated_at: new Date().toISOString() } : c
+          );
+          localStorage.setItem(key, JSON.stringify(updated));
+        }
+      } catch {}
+
+      // Call API
+      try {
+        const res = await fetch(`/api/experiences/${encodeURIComponent(experienceId)}/comments`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ commentId, content: trimmed, userId, userEmail }),
+        });
+        return res.ok;
+      } catch (err) {
+        console.warn("API edit comment error:", err);
+      }
+    }
+    return true;
+  },
+
+  /**
+   * Delete comment (by author or platform owner).
+   */
+  async deleteComment(
+    experienceId: string,
+    commentId: string,
+    userId?: string | null,
+    userEmail?: string | null
+  ): Promise<boolean> {
+    if (typeof window !== "undefined") {
+      // Remove locally
+      try {
+        const key = `${LOCAL_STORAGE_KEY_COMMENTS_PREFIX}${experienceId}`;
+        const stored = localStorage.getItem(key);
+        if (stored) {
+          const list: ExperienceComment[] = JSON.parse(stored);
+          const filtered = list.filter((c) => c.id !== commentId);
+          localStorage.setItem(key, JSON.stringify(filtered));
+        }
+      } catch {}
+
+      // Call API
+      try {
+        const res = await fetch(
+          `/api/experiences/${encodeURIComponent(experienceId)}/comments?commentId=${encodeURIComponent(commentId)}&userId=${encodeURIComponent(userId || "")}&userEmail=${encodeURIComponent(userEmail || "")}`,
+          { method: "DELETE" }
+        );
+        return res.ok;
+      } catch (err) {
+        console.warn("API delete comment error:", err);
+      }
+    }
+    return true;
   },
 
   /**
@@ -392,7 +501,7 @@ export const ExperienceService = {
   },
 
   getUpvotedIds(): string[] {
-    if (typeof window === "undefined") return [];
+    if (typeof window !== "undefined") return [];
     try {
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY_UPVOTES);
       return stored ? JSON.parse(stored) : [];

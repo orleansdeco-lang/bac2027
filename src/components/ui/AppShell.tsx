@@ -35,6 +35,8 @@ export function AppShell({
       pathname.startsWith("/progress") ||
       pathname.startsWith("/error-lab") ||
       pathname.startsWith("/exam") ||
+      pathname.startsWith("/exams") ||
+      pathname.startsWith("/experiences") ||
       pathname.startsWith("/account"));
 
   const shouldShowSidebar = showSidebar !== undefined ? showSidebar : isAppPage;

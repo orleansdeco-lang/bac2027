@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { CreateExperienceInput, BacExperience, CandidateType } from "@/types/experience";
 import { ExperienceService } from "@/lib/services/experience-service";
+import { ALGERIAN_WILAYAS } from "@/domain/administrative/algeria-administrative";
 import {
   X,
   Sparkles,
@@ -19,6 +20,7 @@ import {
   Target,
   Award,
   RefreshCw,
+  MapPin,
 } from "lucide-react";
 
 interface ShareExperienceModalProps {
@@ -26,6 +28,7 @@ interface ShareExperienceModalProps {
   onClose: () => void;
   userId?: string | null;
   userFirstName?: string;
+  userWilaya?: string;
   defaultStreamId?: string;
   onCreated: (newExp: BacExperience) => void;
   onToast: (msg: string) => void;
@@ -45,6 +48,7 @@ export function ShareExperienceModal({
   onClose,
   userId,
   userFirstName,
+  userWilaya,
   defaultStreamId = "sciences",
   onCreated,
   onToast,
@@ -52,6 +56,7 @@ export function ShareExperienceModal({
   // Author name: strictly first name only
   const [authorFirstName, setAuthorFirstName] = useState(userFirstName?.trim().split(/\s+/)[0] || "");
   const [streamId, setStreamId] = useState(defaultStreamId);
+  const [wilaya, setWilaya] = useState(userWilaya || "");
 
   // Candidate Track:
   // 1: current_student (طالب مقبل على الباك 2027)
@@ -80,12 +85,14 @@ export function ShareExperienceModal({
     if (userFirstName && !authorFirstName) {
       setAuthorFirstName(userFirstName.trim().split(/\s+/)[0]);
     }
-  }, [userFirstName]);
+    if (userWilaya && !wilaya) {
+      setWilaya(userWilaya);
+    }
+  }, [userFirstName, userWilaya]);
 
   if (!isOpen) return null;
 
   const handleNameChange = (val: string) => {
-    // Keep first name only, remove multiple words if pasted
     const clean = val.trim().split(/\s+/)[0] || "";
     setAuthorFirstName(clean);
   };
@@ -139,10 +146,11 @@ export function ShareExperienceModal({
       const input: CreateExperienceInput = {
         author_name: cleanFirstName,
         candidate_type: candidateType,
-        author_role: candidateType === "current_student" 
-          ? "student" 
+        author_role: candidateType === "current_student"
+          ? "student"
           : (passedBac && (numFinal || 0) >= 16 ? "top_achiever" : (retakingBac ? "repeater_success" : "student")),
         stream_id: streamId,
+        wilaya: wilaya || null,
         passed_bac: candidateType === "former_candidate" ? passedBac : null,
         retaking_bac: candidateType === "former_candidate" ? retakingBac : null,
         final_grade: numFinal,
@@ -167,75 +175,72 @@ export function ShareExperienceModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-[#1E3A34]/50 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
-      <div className="relative w-full max-w-2xl rounded-2xl border border-[#E4DED2] bg-[#FAF8F5] shadow-2xl p-5 sm:p-7 my-8 text-right text-[#26302F]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+      <div className="relative w-full max-w-2xl rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl p-5 sm:p-7 my-8 text-right text-slate-100">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute left-4 top-4 rounded-xl p-2 text-[#768280] hover:bg-white hover:text-[#1E3A34] transition-colors cursor-pointer"
+          className="absolute left-4 top-4 rounded-xl p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
           title="إغلاق"
         >
           <X className="h-5 w-5" />
         </button>
 
         {/* Modal Header */}
-        <div className="flex items-center gap-3 border-b border-[#E4DED2] pb-4 mb-5">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#1E3A34] text-white shadow-md">
-            <Sparkles className="h-6 w-6 text-[#D7A66A]" />
+        <div className="flex items-center gap-3 border-b border-slate-800 pb-4 mb-5">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-lg shadow-emerald-600/30">
+            <Sparkles className="h-6 w-6" />
           </div>
           <div>
-            <h2 className="text-xl font-extrabold text-[#1E3A34]">
+            <h2 className="text-xl font-extrabold text-white">
               شارك تجربتك الحقيقية في البكالوريا 🌟
             </h2>
-            <p className="text-xs sm:text-sm text-[#5F8F86] mt-0.5 font-medium">
+            <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
               نصيحتك الميدانية الصادقة قد تُنقذ طالباً من عثرة وتصنع له الفارق
             </p>
           </div>
         </div>
 
         {/* Supervision notice */}
-        <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-sky-200 bg-sky-50/70 p-3 text-xs text-sky-900 leading-relaxed">
-          <ShieldCheck className="h-4 w-4 text-sky-600 shrink-0 mt-0.5" />
+        <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-sky-500/30 bg-sky-500/10 p-3 text-xs text-sky-300 leading-relaxed">
+          <ShieldCheck className="h-4 w-4 text-sky-400 shrink-0 mt-0.5" />
           <span>
             <strong>ملاحظة للمصداقية:</strong> تخضع كل تجربة لمراجعة وتدقيق لغوي من فريق العمليات قبل ظهورها للعموم لضمان أعلى جودة وخلوها من الأخطاء الإملائية.
           </span>
         </div>
 
         {errorMsg && (
-          <div className="mb-4 flex items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 p-3 text-xs text-rose-900">
-            <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600" />
+          <div className="mb-4 flex items-center gap-2 rounded-xl border border-rose-500/40 bg-rose-500/10 p-3 text-xs text-rose-300">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-rose-400" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4 text-xs sm:text-sm">
-          {/* Row 1: First Name Only & Stream */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Row 1: First Name Only, Stream, Wilaya */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label className="block font-bold text-[#26302F] mb-1">
-                الاسم الأول فقط <span className="text-rose-600">*</span>
+              <label className="block font-semibold text-slate-300 mb-1">
+                الاسم الأول فقط <span className="text-rose-400">*</span>
               </label>
               <input
                 type="text"
                 value={authorFirstName}
                 onChange={(e) => handleNameChange(e.target.value)}
-                placeholder="مثال: ياسمين أو بلال"
+                placeholder="مثال: ياسمين أو أكرم"
                 required
-                className="w-full rounded-xl border border-[#E4DED2] bg-white px-3.5 py-2 text-[#26302F] placeholder-[#A0AAA8] focus:border-[#1E3A34] focus:outline-none"
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3.5 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
               />
-              <p className="text-[11px] text-[#768280] mt-1">
-                🔒 للحفاظ التام على خصوصيتك، يُحفظ الاسم الأول فقط دون اللقب العائلي.
-              </p>
             </div>
 
             <div>
-              <label className="block font-bold text-[#26302F] mb-1">
-                الشعبة <span className="text-rose-600">*</span>
+              <label className="block font-semibold text-slate-300 mb-1">
+                الشعبة <span className="text-rose-400">*</span>
               </label>
               <select
                 value={streamId}
                 onChange={(e) => setStreamId(e.target.value)}
-                className="w-full rounded-xl border border-[#E4DED2] bg-white px-3.5 py-2 text-[#26302F] focus:border-[#1E3A34] focus:outline-none"
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3.5 py-2 text-white focus:border-emerald-500 focus:outline-none"
               >
                 {STREAMS.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -244,12 +249,30 @@ export function ShareExperienceModal({
                 ))}
               </select>
             </div>
+
+            <div>
+              <label className="block font-semibold text-slate-300 mb-1">
+                الولاية
+              </label>
+              <select
+                value={wilaya}
+                onChange={(e) => setWilaya(e.target.value)}
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none"
+              >
+                <option value="">-- اختر ولايتك --</option>
+                {ALGERIAN_WILAYAS.map((w) => (
+                  <option key={w.code} value={w.name_ar}>
+                    {w.code} - {w.name_ar}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Track Selection (Two distinct tracks) */}
           <div className="pt-2">
-            <label className="block font-extrabold text-[#1E3A34] text-sm mb-2">
-              صفتك ووضعيتك في البكالوريا: <span className="text-rose-600">*</span>
+            <label className="block font-bold text-slate-200 text-sm mb-2">
+              صفتك ووضعيتك في البكالوريا: <span className="text-rose-400">*</span>
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Option 1: Current Student */}
@@ -258,15 +281,15 @@ export function ShareExperienceModal({
                 onClick={() => setCandidateType("current_student")}
                 className={`p-3.5 rounded-xl border text-right transition-all cursor-pointer flex flex-col justify-between ${
                   candidateType === "current_student"
-                    ? "border-[#1E3A34] bg-[#1E3A34] text-white shadow-sm"
-                    : "border-[#E4DED2] bg-white text-[#26302F] hover:bg-[#F3EDE0]"
+                    ? "border-emerald-500 bg-emerald-500/10 text-white shadow-sm"
+                    : "border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700"
                 }`}
               >
                 <div className="flex items-center gap-2 font-bold mb-1">
-                  <Target className={`h-4 w-4 ${candidateType === "current_student" ? "text-[#D7A66A]" : "text-[#5F8F86]"}`} />
-                  <span>طالب مقبل على الباك (2027) 🎯</span>
+                  <Target className={`h-4 w-4 ${candidateType === "current_student" ? "text-emerald-400" : "text-slate-500"}`} />
+                  <span className={candidateType === "current_student" ? "text-white" : "text-slate-300"}>طالب مقبل على الباك (2027) 🎯</span>
                 </div>
-                <p className={`text-xs ${candidateType === "current_student" ? "text-emerald-100" : "text-[#768280]"}`}>
+                <p className="text-xs text-slate-400">
                   أعيش التحضير حالياً وأشارك طريقتي أو الفخاخ التي تجاوزتها
                 </p>
               </button>
@@ -277,15 +300,15 @@ export function ShareExperienceModal({
                 onClick={() => setCandidateType("former_candidate")}
                 className={`p-3.5 rounded-xl border text-right transition-all cursor-pointer flex flex-col justify-between ${
                   candidateType === "former_candidate"
-                    ? "border-[#1E3A34] bg-[#1E3A34] text-white shadow-sm"
-                    : "border-[#E4DED2] bg-white text-[#26302F] hover:bg-[#F3EDE0]"
+                    ? "border-emerald-500 bg-emerald-500/10 text-white shadow-sm"
+                    : "border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700"
                 }`}
               >
                 <div className="flex items-center gap-2 font-bold mb-1">
-                  <GraduationCap className={`h-4 w-4 ${candidateType === "former_candidate" ? "text-[#D7A66A]" : "text-[#5F8F86]"}`} />
-                  <span>اجتزت البكالوريا سابقاً 🎓</span>
+                  <GraduationCap className={`h-4 w-4 ${candidateType === "former_candidate" ? "text-emerald-400" : "text-slate-500"}`} />
+                  <span className={candidateType === "former_candidate" ? "text-white" : "text-slate-300"}>اجتزت البكالوريا سابقاً 🎓</span>
                 </div>
-                <p className={`text-xs ${candidateType === "former_candidate" ? "text-emerald-100" : "text-[#768280]"}`}>
+                <p className="text-xs text-slate-400">
                   خضت الامتحان الحقيقي وأنقل خلاصة التجربة والعِبر
                 </p>
               </button>
@@ -294,9 +317,9 @@ export function ShareExperienceModal({
 
           {/* Conditional Sub-questions based on Candidate Type */}
           {candidateType === "current_student" && (
-            <div className="rounded-xl border border-sky-200 bg-sky-50/40 p-3.5 space-y-3">
+            <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3.5 space-y-3">
               <div>
-                <label className="block font-semibold text-[#1E3A34] mb-1">
+                <label className="block font-semibold text-slate-300 mb-1">
                   الوجهة أو التخصص الجامعي الذي تطمح إليه (اختياري)
                 </label>
                 <input
@@ -304,46 +327,46 @@ export function ShareExperienceModal({
                   value={targetMajor}
                   onChange={(e) => setTargetMajor(e.target.value)}
                   placeholder="مثال: المدرسة العليا للإعلام الآلي ESI، الطب البشري، الذكاء الاصطناعي..."
-                  className="w-full rounded-xl border border-[#E4DED2] bg-white px-3.5 py-2 text-[#26302F] placeholder-[#A0AAA8] focus:border-[#1E3A34] focus:outline-none"
+                  className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3.5 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
                 />
               </div>
             </div>
           )}
 
           {candidateType === "former_candidate" && (
-            <div className="rounded-xl border border-[#E4DED2] bg-white p-4 space-y-3.5">
+            <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4 space-y-3.5">
               {/* Question: Did you pass? */}
               <div>
-                <label className="block font-bold text-[#1E3A34] mb-2">
-                  هل وُفّقت في نيل شهادة البكالوريا؟ <span className="text-rose-600">*</span>
+                <label className="block font-bold text-slate-200 mb-2">
+                  هل وُفّقت في نيل شهادة البكالوريا؟ <span className="text-rose-400">*</span>
                 </label>
                 <div className="flex items-center gap-3">
                   <label className={`flex items-center gap-2 px-4 py-2 rounded-xl border cursor-pointer font-semibold ${
                     passedBac
-                      ? "border-emerald-600 bg-emerald-50 text-emerald-900"
-                      : "border-[#E4DED2] bg-[#FAF8F5] text-[#768280]"
+                      ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                      : "border-slate-800 bg-slate-900 text-slate-400"
                   }`}>
                     <input
                       type="radio"
                       name="passed_bac"
                       checked={passedBac === true}
                       onChange={() => setPassedBac(true)}
-                      className="accent-emerald-700"
+                      className="accent-emerald-500"
                     />
                     <span>نعم، نجحت بفضل الله 🎓</span>
                   </label>
 
                   <label className={`flex items-center gap-2 px-4 py-2 rounded-xl border cursor-pointer font-semibold ${
                     !passedBac
-                      ? "border-amber-600 bg-amber-50 text-amber-900"
-                      : "border-[#E4DED2] bg-[#FAF8F5] text-[#768280]"
+                      ? "border-amber-500/40 bg-amber-500/10 text-amber-300"
+                      : "border-slate-800 bg-slate-900 text-slate-400"
                   }`}>
                     <input
                       type="radio"
                       name="passed_bac"
                       checked={passedBac === false}
                       onChange={() => setPassedBac(false)}
-                      className="accent-amber-700"
+                      className="accent-amber-500"
                     />
                     <span>لم أوفّق لكن تعلمت دروساً ثمينة 💪</span>
                   </label>
@@ -354,8 +377,8 @@ export function ShareExperienceModal({
               {passedBac ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                   <div>
-                    <label className="block font-bold text-[#26302F] mb-1">
-                      معدل البكالوريا النهائي المحصل عليه <span className="text-rose-600">*</span>
+                    <label className="block font-semibold text-slate-300 mb-1">
+                      معدل البكالوريا النهائي المحصل عليه <span className="text-rose-400">*</span>
                     </label>
                     <input
                       type="number"
@@ -366,13 +389,13 @@ export function ShareExperienceModal({
                       onChange={(e) => setFinalGrade(e.target.value)}
                       placeholder="مثال: 16.85"
                       required
-                      className="w-full rounded-xl border border-[#E4DED2] bg-[#FAF8F5] px-3.5 py-2 text-[#26302F] font-bold focus:border-[#1E3A34] focus:outline-none"
+                      className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3.5 py-2 text-white font-bold focus:border-emerald-500 focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-bold text-[#26302F] mb-1">
-                      التخصص الجامعي الذي اخترته <span className="text-rose-600">*</span>
+                    <label className="block font-semibold text-slate-300 mb-1">
+                      التخصص الجامعي الذي اخترته <span className="text-rose-400">*</span>
                     </label>
                     <input
                       type="text"
@@ -380,18 +403,18 @@ export function ShareExperienceModal({
                       onChange={(e) => setUniversityMajor(e.target.value)}
                       placeholder="مثال: صيدلة، هندسة معمارية، رياضيات وإعلام آلي..."
                       required
-                      className="w-full rounded-xl border border-[#E4DED2] bg-[#FAF8F5] px-3.5 py-2 text-[#26302F] focus:border-[#1E3A34] focus:outline-none"
+                      className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3.5 py-2 text-white focus:border-emerald-500 focus:outline-none"
                     />
                   </div>
 
                   {/* Retaking BAC as free candidate? */}
                   <div className="sm:col-span-2 pt-1">
-                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-[#26302F] bg-[#FAF8F5] p-2.5 rounded-xl border border-[#E4DED2]">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-300 bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
                       <input
                         type="checkbox"
                         checked={retakingBac}
                         onChange={(e) => setRetakingBac(e.target.checked)}
-                        className="h-4 w-4 accent-[#1E3A34] rounded"
+                        className="h-4 w-4 accent-emerald-500 rounded"
                       />
                       <span>هل تعيد البكالوريا هذا العام كمترشح حر لتحسين المعدل ونيل تخصص أعلى؟ 🔄</span>
                     </label>
@@ -401,7 +424,7 @@ export function ShareExperienceModal({
                 /* If Didn't Pass */
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                   <div>
-                    <label className="block font-bold text-[#26302F] mb-1">
+                    <label className="block font-semibold text-slate-300 mb-1">
                       معدلك السابق (اختياري)
                     </label>
                     <input
@@ -412,17 +435,17 @@ export function ShareExperienceModal({
                       value={initialGrade}
                       onChange={(e) => setInitialGrade(e.target.value)}
                       placeholder="مثال: 9.20"
-                      className="w-full rounded-xl border border-[#E4DED2] bg-[#FAF8F5] px-3.5 py-2 text-[#26302F] focus:border-[#1E3A34] focus:outline-none"
+                      className="w-full rounded-xl border border-slate-700 bg-slate-900 px-3.5 py-2 text-white focus:border-emerald-500 focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-[#26302F] bg-[#FAF8F5] p-3 rounded-xl border border-[#E4DED2] h-full">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-300 bg-slate-900/80 p-3 rounded-xl border border-slate-800 h-full">
                       <input
                         type="checkbox"
                         checked={retakingBac}
                         onChange={(e) => setRetakingBac(e.target.checked)}
-                        className="h-4 w-4 accent-[#1E3A34] rounded"
+                        className="h-4 w-4 accent-emerald-500 rounded"
                       />
                       <span>أنا أستعد لإعادة البكالوريا بعزيمة جديدة هذا العام 🚀</span>
                     </label>
@@ -432,12 +455,12 @@ export function ShareExperienceModal({
             </div>
           )}
 
-          {/* Prompt 1: Biggest Trap (أكبر فخ) */}
-          <div className="rounded-xl border border-rose-200 bg-rose-50/50 p-3.5">
-            <label className="flex items-center gap-1.5 font-bold text-rose-900 mb-1.5">
-              <AlertTriangle className="h-4 w-4 text-rose-600" />
+          {/* Prompt 1: Biggest Trap */}
+          <div>
+            <label className="flex items-center gap-1.5 font-bold text-rose-300 mb-1.5">
+              <AlertTriangle className="h-4 w-4 text-rose-400" />
               <span>ما هو أكبر فخ أو خطأ كاد يسقطك أو ضيع وقتك؟</span>
-              <span className="text-rose-600">*</span>
+              <span className="text-rose-400">*</span>
             </label>
             <textarea
               value={biggestTrap}
@@ -445,16 +468,16 @@ export function ShareExperienceModal({
               rows={3}
               required
               placeholder="احذر من التعميمات الجاهزة. وضّح مثلاً: إهمال مادة معينة، السهر الزائد، الاعتماد على الحفظ بدل الفهم، إهمال سلم التنقيط، التشتت بين المراجع..."
-              className="w-full rounded-xl border border-rose-200 bg-white p-3 text-[#26302F] placeholder-[#A0AAA8] focus:border-rose-400 focus:outline-none leading-relaxed"
+              className="w-full rounded-xl border border-rose-500/30 bg-rose-950/10 p-3 text-white placeholder-slate-500 focus:border-rose-400 focus:outline-none leading-relaxed"
             />
           </div>
 
-          {/* Prompt 2: Winning Routine (السر أو الروتين الحاسم) */}
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3.5">
-            <label className="flex items-center gap-1.5 font-bold text-emerald-900 mb-1.5">
-              <Lightbulb className="h-4 w-4 text-emerald-600" />
+          {/* Prompt 2: Winning Routine */}
+          <div>
+            <label className="flex items-center gap-1.5 font-bold text-emerald-300 mb-1.5">
+              <Lightbulb className="h-4 w-4 text-emerald-400" />
               <span>ما هي العادة أو الطريقة الوحيدة التي صنعت لك الفارق؟</span>
-              <span className="text-emerald-700">*</span>
+              <span className="text-rose-400">*</span>
             </label>
             <textarea
               value={winningRoutine}
@@ -462,14 +485,14 @@ export function ShareExperienceModal({
               rows={3}
               required
               placeholder="مثال: روتين مراجعة الفجر، الاسترجاع المنظم بالبطاقات، حل البكالوريات السابقة بالمؤقت الزمني، دراسة منهجية الإجابة للوزارة..."
-              className="w-full rounded-xl border border-emerald-200 bg-white p-3 text-[#26302F] placeholder-[#A0AAA8] focus:border-emerald-400 focus:outline-none leading-relaxed"
+              className="w-full rounded-xl border border-emerald-500/30 bg-emerald-950/10 p-3 text-white placeholder-slate-500 focus:border-emerald-400 focus:outline-none leading-relaxed"
             />
           </div>
 
-          {/* Prompt 3: Best Resources (المراجع والأساتذة) */}
+          {/* Prompt 3: Best Resources */}
           <div>
-            <label className="flex items-center gap-1.5 font-semibold text-[#26302F] mb-1.5">
-              <BookOpen className="h-4 w-4 text-[#5F8F86]" />
+            <label className="flex items-center gap-1.5 font-semibold text-slate-300 mb-1.5">
+              <BookOpen className="h-4 w-4 text-indigo-400" />
               <span>المراجع، القنوات أو الأساتذة الأكثر فائدة (اختياري)</span>
             </label>
             <input
@@ -477,25 +500,25 @@ export function ShareExperienceModal({
               value={bestResources}
               onChange={(e) => setBestResources(e.target.value)}
               placeholder="مثال: الأستاذ نور الدين في الرياضيات، الأستاذ بوالريش في العلوم، مواضيع البكالوريا الرسمية..."
-              className="w-full rounded-xl border border-[#E4DED2] bg-white px-3.5 py-2 text-[#26302F] placeholder-[#A0AAA8] focus:border-[#1E3A34] focus:outline-none"
+              className="w-full rounded-xl border border-slate-700 bg-slate-950 px-3.5 py-2 text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
             />
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-between gap-3 pt-4 border-t border-[#E4DED2]">
+          <div className="flex items-center justify-between gap-3 pt-4 border-t border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-xl px-4 py-2 text-[#768280] hover:bg-[#F3EDE0] transition-colors cursor-pointer"
+              className="rounded-xl px-4 py-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
             >
               إلغاء
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex items-center gap-2 rounded-xl bg-[#1E3A34] px-6 py-2.5 font-bold text-white shadow-md hover:bg-[#2c4e46] disabled:opacity-50 transition-all cursor-pointer"
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-2.5 font-bold text-slate-950 shadow-lg shadow-emerald-500/25 hover:from-emerald-400 hover:to-teal-400 disabled:opacity-50 transition-all cursor-pointer"
             >
-              <Send className="h-4 w-4 text-[#D7A66A]" />
+              <Send className="h-4 w-4" />
               <span>{isSubmitting ? "جاري الحفظ..." : "إرسال للمراجعة والنشر"}</span>
             </button>
           </div>

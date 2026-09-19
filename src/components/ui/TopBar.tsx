@@ -196,6 +196,13 @@ export function TopBar() {
             >
               <span>{isAr ? "المكتبة الحرة" : "Bibliothèque"}</span>
             </Link>
+            <Link
+              href="/experiences"
+              className="text-xs font-bold text-amber-500 hover:text-amber-400 transition-colors flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 shadow-xs"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{isAr ? "بنك التجارب" : "Témoignages"}</span>
+            </Link>
           </nav>
         ) : (
           <div className="hidden md:flex items-center flex-1 max-w-sm lg:max-w-md xl:max-w-lg 3xl:max-w-xl mx-3 lg:mx-6 min-w-0">
@@ -218,6 +225,20 @@ export function TopBar() {
 
         {/* Right Action: Desktop & Mobile Controls */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Desktop Experiences Link Button - Always visible on desktop */}
+          <Link
+            href="/experiences"
+            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all border ${
+              pathname?.startsWith("/experiences")
+                ? "bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20"
+                : "text-amber-500 hover:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30"
+            }`}
+            title={isAr ? "بنك تجارب وعِبر البكالوريا" : "Témoignages & Conseils BAC"}
+          >
+            <MessageSquareQuote className="w-3.5 h-3.5" />
+            <span>{isAr ? "بنك التجارب" : "Témoignages"}</span>
+          </Link>
+
           {/* Desktop CTA Buttons */}
           {!user ? (
             <div className="hidden sm:flex items-center gap-2">
@@ -454,6 +475,15 @@ export function TopBar() {
             >
               <FileText className="w-4 h-4 text-indigo-400" />
               <span>{isAr ? "بنك البكالوريات" : "Annales BAC"}</span>
+            </Link>
+
+            <Link
+              href="/experiences"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center gap-2.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs font-bold text-amber-500 hover:border-amber-500/50 transition-colors"
+            >
+              <MessageSquareQuote className="w-4 h-4 text-amber-500" />
+              <span>{isAr ? "بنك التجارب والعِبر" : "Témoignages"}</span>
             </Link>
 
             <Link

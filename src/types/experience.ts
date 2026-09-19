@@ -11,8 +11,10 @@ export interface ExperienceComment {
   experience_id: string;
   author_id?: string | null;
   author_name: string;
+  wilaya?: string | null;
   content: string;
   created_at: string;
+  updated_at?: string | null;
 }
 
 export interface BacExperience {
@@ -22,6 +24,7 @@ export interface BacExperience {
   author_role: ExperienceRole;
   candidate_type?: CandidateType;
   stream_id: string;
+  wilaya?: string | null;
   final_grade?: number | null;
   initial_grade?: number | null;
   target_major?: string | null;
@@ -44,6 +47,7 @@ export interface CreateExperienceInput {
   author_role?: ExperienceRole;
   candidate_type?: CandidateType;
   stream_id: string;
+  wilaya?: string | null;
   final_grade?: number | null;
   initial_grade?: number | null;
   target_major?: string | null;
@@ -60,4 +64,5 @@ export interface ExperienceFilterState {
   category: ExperienceCategory;
   searchQuery: string;
   onlyTargetMatch: boolean;
+  wilaya?: string;
 }

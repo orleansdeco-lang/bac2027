@@ -24,12 +24,21 @@ import {
   ChevronUp,
   RefreshCw,
   Image as ImageIcon,
+  MapPin,
+  Edit2,
+  Trash2,
+  Check,
+  X,
+  ShieldCheck,
 } from "lucide-react";
 
 interface ExperienceCardProps {
   experience: BacExperience;
   userId?: string | null;
+  userEmail?: string | null;
   userFirstName?: string;
+  userWilaya?: string;
+  isOperator?: boolean;
   onToast: (msg: string) => void;
 }
 
@@ -39,39 +48,39 @@ const STREAM_CONFIG: Record<
 > = {
   sciences: {
     label: "علوم تجريبية",
-    bg: "bg-emerald-50 text-emerald-800 border-emerald-200",
-    text: "text-emerald-800",
-    border: "border-emerald-200",
+    bg: "bg-emerald-500/10",
+    text: "text-emerald-400",
+    border: "border-emerald-500/30",
   },
   math: {
     label: "رياضيات",
-    bg: "bg-blue-50 text-blue-800 border-blue-200",
-    text: "text-blue-800",
-    border: "border-blue-200",
+    bg: "bg-blue-500/10",
+    text: "text-blue-400",
+    border: "border-blue-500/30",
   },
   technique_math: {
     label: "تقني رياضي",
-    bg: "bg-amber-50 text-amber-800 border-amber-200",
-    text: "text-amber-800",
-    border: "border-amber-200",
+    bg: "bg-amber-500/10",
+    text: "text-amber-400",
+    border: "border-amber-500/30",
   },
   gestion_economie: {
     label: "تسيير واقتصاد",
-    bg: "bg-purple-50 text-purple-800 border-purple-200",
-    text: "text-purple-800",
-    border: "border-purple-200",
+    bg: "bg-purple-500/10",
+    text: "text-purple-400",
+    border: "border-purple-500/30",
   },
   lettres_philo: {
     label: "آداب وفلسفة",
-    bg: "bg-rose-50 text-rose-800 border-rose-200",
-    text: "text-rose-800",
-    border: "border-rose-200",
+    bg: "bg-rose-500/10",
+    text: "text-rose-400",
+    border: "border-rose-500/30",
   },
   langues_etrangeres: {
     label: "لغات أجنبية",
-    bg: "bg-cyan-50 text-cyan-800 border-cyan-200",
-    text: "text-cyan-800",
-    border: "border-cyan-200",
+    bg: "bg-cyan-500/10",
+    text: "text-cyan-400",
+    border: "border-cyan-500/30",
   },
 };
 
@@ -93,7 +102,10 @@ function formatArabicDate(dateStr?: string): string {
 export function ExperienceCard({
   experience,
   userId,
+  userEmail,
   userFirstName,
+  userWilaya,
+  isOperator = false,
   onToast,
 }: ExperienceCardProps) {
   const [upvoted, setUpvoted] = useState(false);
@@ -111,14 +123,23 @@ export function ExperienceCard({
   );
   const [loadingComments, setLoadingComments] = useState(false);
   const [newCommentText, setNewCommentText] = useState("");
-  const [commentAuthorName, setCommentAuthorName] = useState(
-    userFirstName || ""
-  );
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
+  // Inline comment editing
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editCommentContent, setEditCommentContent] = useState("");
+  const [isSavingEditComment, setIsSavingEditComment] = useState(false);
 
   // Share & Image card state
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [showImageCardModal, setShowImageCardModal] = useState(false);
+
+  const isPlatformOwner =
+    userEmail === "azinox27@gmail.com" ||
+    isOperator ||
+    (typeof window !== "undefined" &&
+      (Boolean(localStorage.getItem("ops_owner_bypass")) ||
+        Boolean(localStorage.getItem("ops_auth_token"))));
 
   useEffect(() => {
     setUpvoted(ExperienceService.hasUserUpvoted(experience.id));
@@ -149,12 +170,15 @@ export function ExperienceCard({
     if (!newCommentText.trim()) return;
 
     setIsSubmittingComment(true);
+    const authorName = userFirstName || "طالب شاطر";
+
     try {
       const added = await ExperienceService.addComment(
         experience.id,
         newCommentText,
-        commentAuthorName || userFirstName || "طالب",
-        userId
+        authorName,
+        userId,
+        userWilaya || null
       );
       setComments((prev) => [...prev, added]);
       setCommentsCount((prev) => prev + 1);
@@ -164,6 +188,65 @@ export function ExperienceCard({
       onToast("تعذر إضافة التعليق حالياً، يرجى المحاولة لاحقاً");
     } finally {
       setIsSubmittingComment(false);
+    }
+  };
+
+  const handleStartEditComment = (comment: ExperienceComment) => {
+    setEditingCommentId(comment.id);
+    setEditCommentContent(comment.content);
+  };
+
+  const handleSaveEditComment = async (commentId: string) => {
+    if (!editCommentContent.trim()) return;
+    setIsSavingEditComment(true);
+
+    try {
+      const success = await ExperienceService.updateComment(
+        experience.id,
+        commentId,
+        editCommentContent,
+        userId,
+        userEmail
+      );
+      if (success) {
+        setComments((prev) =>
+          prev.map((c) =>
+            c.id === commentId
+              ? { ...c, content: editCommentContent.trim(), updated_at: new Date().toISOString() }
+              : c
+          )
+        );
+        setEditingCommentId(null);
+        onToast("✏️ تم تحديث التعليق بنجاح");
+      } else {
+        onToast("فشل تحديث التعليق");
+      }
+    } catch {
+      onToast("حدث خطأ أثناء تعديل التعليق");
+    } finally {
+      setIsSavingEditComment(false);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    if (!confirm("هل أنت متأكد من حذف هذا التعليق؟")) return;
+
+    try {
+      const success = await ExperienceService.deleteComment(
+        experience.id,
+        commentId,
+        userId,
+        userEmail
+      );
+      if (success) {
+        setComments((prev) => prev.filter((c) => c.id !== commentId));
+        setCommentsCount((prev) => Math.max(0, prev - 1));
+        onToast("🗑️ تم حذف التعليق بنجاح");
+      } else {
+        onToast("فشل حذف التعليق");
+      }
+    } catch {
+      onToast("حدث خطأ أثناء حذف التعليق");
     }
   };
 
@@ -277,9 +360,9 @@ export function ExperienceCard({
 
   const streamInfo = STREAM_CONFIG[experience.stream_id] || {
     label: experience.stream_id,
-    bg: "bg-slate-100 text-slate-800 border-slate-200",
-    text: "text-slate-700",
-    border: "border-slate-200",
+    bg: "bg-slate-500/10",
+    text: "text-slate-400",
+    border: "border-slate-500/30",
   };
 
   const formattedDate = formatArabicDate(experience.created_at);
@@ -288,35 +371,43 @@ export function ExperienceCard({
     <>
       <div
         id={experience.id}
-        className="group relative rounded-2xl border border-[#E4DED2] bg-white p-5 md:p-6 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col justify-between"
+        className="group relative rounded-2xl border border-slate-800/80 bg-slate-900/90 p-5 md:p-6 shadow-xl backdrop-blur-sm transition-all duration-300 hover:border-slate-700 hover:shadow-2xl hover:shadow-emerald-950/20 flex flex-col justify-between"
       >
         {/* Top Header Row */}
         <div>
-          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[#EFEAE1] pb-4">
+          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-800/60 pb-4">
             <div className="flex items-start gap-3">
               {/* Avatar Initial */}
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#FAF8F5] border border-[#E4DED2] text-lg font-extrabold text-[#1E3A34] shadow-2xs">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-lg font-bold text-white shadow-inner">
                 {experience.author_name.charAt(0)}
               </div>
 
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-extrabold text-[#26302F] text-base md:text-lg">
+                  <h3 className="font-bold text-slate-100 text-base md:text-lg">
                     {experience.author_name}
                   </h3>
                   {experience.is_verified && (
                     <span
-                      className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800 border border-emerald-200"
-                      title="تجربة تم التحقق من صحتها ومراجعتها"
+                      className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-semibold text-blue-400 border border-blue-500/20"
+                      title="تجربة تم التحقق من صحتها وسلم علامتها"
                     >
-                      <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                      <CheckCircle2 className="h-3 w-3 text-blue-400" />
                       موثقة
                     </span>
                   )}
 
+                  {/* Wilaya badge if present */}
+                  {experience.wilaya && (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-slate-800/80 px-2 py-0.5 text-[11px] font-medium text-slate-300 border border-slate-700/60">
+                      <MapPin className="h-3 w-3 text-[#D7A66A]" />
+                      <span>{experience.wilaya}</span>
+                    </span>
+                  )}
+
                   {/* Date badge */}
-                  <span className="inline-flex items-center gap-1 text-[11px] text-[#768280] bg-[#FAF8F5] px-2 py-0.5 rounded-md border border-[#EFEAE1]">
-                    <Calendar className="h-3 w-3 text-[#A0AAA8]" />
+                  <span className="inline-flex items-center gap-1 text-[11px] text-slate-400 bg-slate-800/60 px-2 py-0.5 rounded-md border border-slate-700/60">
+                    <Calendar className="h-3 w-3 text-slate-400" />
                     {formattedDate}
                   </span>
                 </div>
@@ -325,7 +416,7 @@ export function ExperienceCard({
                 <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
                   {/* Stream */}
                   <span
-                    className={`inline-flex items-center rounded-lg px-2.5 py-0.5 font-medium border ${streamInfo.bg}`}
+                    className={`inline-flex items-center rounded-lg px-2.5 py-0.5 font-medium border ${streamInfo.bg} ${streamInfo.text} ${streamInfo.border}`}
                   >
                     <GraduationCap className="h-3 w-3 ml-1" />
                     {streamInfo.label}
@@ -333,37 +424,37 @@ export function ExperienceCard({
 
                   {/* Candidate Track Badge */}
                   {experience.candidate_type === "current_student" ? (
-                    <span className="inline-flex items-center rounded-lg bg-sky-50 px-2.5 py-0.5 font-semibold text-sky-800 border border-sky-200">
+                    <span className="inline-flex items-center rounded-lg bg-sky-500/10 px-2.5 py-0.5 font-semibold text-sky-400 border border-sky-500/20">
                       🎯 مقبل على الباك 2027
                     </span>
                   ) : (
                     <>
                       {experience.passed_bac !== false && (
-                        <span className="inline-flex items-center rounded-lg bg-emerald-50 px-2.5 py-0.5 font-semibold text-emerald-800 border border-emerald-200">
+                        <span className="inline-flex items-center rounded-lg bg-emerald-500/10 px-2.5 py-0.5 font-semibold text-emerald-400 border border-emerald-500/20">
                           🎓 اجتاز الباك بنجاح
                         </span>
                       )}
                       {experience.passed_bac === false && (
-                        <span className="inline-flex items-center rounded-lg bg-amber-50 px-2.5 py-0.5 font-semibold text-amber-800 border border-amber-200">
+                        <span className="inline-flex items-center rounded-lg bg-amber-500/10 px-2.5 py-0.5 font-semibold text-amber-400 border border-amber-500/20">
                           💪 تجربة وتدارك للأخطاء
                         </span>
                       )}
                       {experience.retaking_bac && (
-                        <span className="inline-flex items-center rounded-lg bg-purple-50 px-2.5 py-0.5 font-semibold text-purple-800 border border-purple-200">
+                        <span className="inline-flex items-center rounded-lg bg-purple-500/10 px-2.5 py-0.5 font-semibold text-purple-400 border border-purple-500/20">
                           🔄 مترشح حر للتفوق
                         </span>
                       )}
                     </>
                   )}
 
-                  {/* Legacy author_role fallback tags if present */}
+                  {/* Legacy author_role fallback tags */}
                   {experience.author_role === "top_achiever" && !experience.candidate_type && (
-                    <span className="inline-flex items-center rounded-lg bg-emerald-50 px-2.5 py-0.5 font-semibold text-emerald-800 border border-emerald-200">
+                    <span className="inline-flex items-center rounded-lg bg-emerald-500/10 px-2.5 py-0.5 font-semibold text-emerald-400 border border-emerald-500/20">
                       🏆 متفوق 16+
                     </span>
                   )}
                   {experience.author_role === "repeater_success" && !experience.candidate_type && (
-                    <span className="inline-flex items-center rounded-lg bg-amber-50 px-2.5 py-0.5 font-semibold text-amber-800 border border-amber-200">
+                    <span className="inline-flex items-center rounded-lg bg-amber-500/10 px-2.5 py-0.5 font-semibold text-amber-400 border border-amber-500/20">
                       🚀 قصة نجاح معيد
                     </span>
                   )}
@@ -374,17 +465,17 @@ export function ExperienceCard({
             {/* GPA & University / Target Major */}
             <div className="flex flex-col items-end gap-1.5 shrink-0">
               {experience.final_grade && (
-                <div className="flex items-center gap-1.5 rounded-xl bg-[#FAF8F5] px-3 py-1 border border-[#E4DED2] text-[#1E3A34] font-bold text-sm md:text-base shadow-2xs">
-                  <span className="text-xs text-[#768280]">المعدل:</span>
-                  <span className="font-black text-[#1E3A34] text-base md:text-lg">
+                <div className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 px-3 py-1 border border-emerald-500/30 text-emerald-300 font-bold text-sm md:text-base shadow-sm">
+                  <span className="text-xs text-slate-400">المعدل:</span>
+                  <span className="font-extrabold text-white text-base md:text-lg">
                     {experience.final_grade.toFixed(2)}
                   </span>
-                  <span className="text-xs text-[#768280]">/20</span>
+                  <span className="text-xs text-emerald-400">/20</span>
                 </div>
               )}
 
               {experience.initial_grade && experience.final_grade && (
-                <div className="flex items-center gap-1 text-[11px] font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
+                <div className="flex items-center gap-1 text-[11px] font-semibold text-amber-300/90 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
                   <TrendingUp className="h-3 w-3" />
                   <span>
                     من {experience.initial_grade.toFixed(2)} إلى {experience.final_grade.toFixed(2)}
@@ -396,47 +487,47 @@ export function ExperienceCard({
 
           {/* University Major or Target Destination */}
           {(experience.university_major || experience.target_major) && (
-            <div className="mt-3 flex items-center gap-2 rounded-xl bg-[#FAF8F5] px-3 py-1.5 text-xs text-[#4A5553] border border-[#EFEAE1]">
-              <Target className="h-3.5 w-3.5 text-[#5F8F86] shrink-0" />
-              <span className="text-[#768280]">
+            <div className="mt-3 flex items-center gap-2 rounded-xl bg-slate-800/40 px-3 py-1.5 text-xs text-slate-300 border border-slate-800">
+              <Target className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+              <span className="text-slate-400">
                 {experience.university_major ? "التخصص الجامعي الحالي:" : "الوجهة المستهدفة:"}
               </span>
-              <span className="font-bold text-[#1E3A34]">
+              <span className="font-bold text-emerald-300">
                 {experience.university_major || experience.target_major}
               </span>
             </div>
           )}
 
-          {/* Danger Box: Biggest Trap (أكبر فخ) - Soft Eye-comfort coral */}
-          <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50/60 p-4 shadow-2xs">
-            <div className="flex items-center gap-2 text-rose-900 font-extrabold text-sm mb-1.5">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600" />
+          {/* Danger Box: Biggest Trap (أكبر فخ) - Sleek Dark High-Contrast */}
+          <div className="mt-4 rounded-xl border border-rose-500/30 bg-gradient-to-br from-rose-950/20 to-slate-900 p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-rose-400 font-bold text-sm mb-2">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-rose-400" />
               <span>⚠️ أكبر فخ نحذركم منه:</span>
             </div>
-            <p className="text-sm leading-relaxed text-[#26302F] pr-1 select-text">
+            <p className="text-sm leading-relaxed text-slate-200 pr-1 select-text">
               {experience.biggest_trap}
             </p>
           </div>
 
-          {/* Success Box: Winning Routine (الروتين الحاسم) - Soft Eye-comfort emerald */}
-          <div className="mt-3 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4 shadow-2xs">
-            <div className="flex items-center gap-2 text-emerald-900 font-extrabold text-sm mb-1.5">
-              <Lightbulb className="h-4 w-4 shrink-0 text-emerald-600" />
+          {/* Success Box: Winning Routine (الروتين الحاسم) - Sleek Dark High-Contrast */}
+          <div className="mt-3.5 rounded-xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/20 to-slate-900 p-4 shadow-sm">
+            <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm mb-2">
+              <Lightbulb className="h-4 w-4 shrink-0 text-emerald-400" />
               <span>💡 السر أو الروتين الذي صنع الفارق:</span>
             </div>
-            <p className="text-sm leading-relaxed text-[#26302F] pr-1 select-text">
+            <p className="text-sm leading-relaxed text-slate-200 pr-1 select-text">
               {experience.winning_routine}
             </p>
           </div>
 
           {/* Best Resources (المراجع والأساتذة) */}
           {experience.best_resources && (
-            <div className="mt-3 rounded-xl border border-[#E4DED2] bg-[#FAF8F5] p-3.5">
-              <div className="flex items-center gap-2 text-[#3D5A54] font-bold text-xs mb-1">
-                <BookOpen className="h-3.5 w-3.5 shrink-0 text-[#5F8F86]" />
+            <div className="mt-3 rounded-xl border border-slate-800 bg-slate-950/40 p-3.5">
+              <div className="flex items-center gap-2 text-indigo-300 font-semibold text-xs mb-1.5">
+                <BookOpen className="h-3.5 w-3.5 shrink-0 text-indigo-400" />
                 <span>📚 أفضل المراجع وقنوات المراجعة:</span>
               </div>
-              <p className="text-xs leading-relaxed text-[#4A5553] pr-1">
+              <p className="text-xs leading-relaxed text-slate-300 pr-1">
                 {experience.best_resources}
               </p>
             </div>
@@ -444,7 +535,7 @@ export function ExperienceCard({
         </div>
 
         {/* Footer Actions: Upvote, Comments Count, Save, Share */}
-        <div className="mt-5 border-t border-[#EFEAE1] pt-3.5">
+        <div className="mt-5 border-t border-slate-800/80 pt-3.5">
           <div className="flex items-center justify-between text-xs flex-wrap gap-2">
             {/* Left side: Upvote + Comments button */}
             <div className="flex items-center gap-2">
@@ -453,16 +544,16 @@ export function ExperienceCard({
                 disabled={isLiking}
                 className={`flex items-center gap-2 rounded-xl px-3 py-1.5 font-bold transition-all cursor-pointer ${
                   upvoted
-                    ? "bg-[#1E3A34] text-white shadow-xs scale-102"
-                    : "bg-[#FAF8F5] text-[#26302F] border border-[#E4DED2] hover:bg-[#F3EDE0]"
+                    ? "bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30 scale-102"
+                    : "bg-slate-800/90 text-slate-300 hover:bg-slate-700 hover:text-white"
                 }`}
                 title="تصويت إيجابي لهذه النصيحة"
               >
-                <ThumbsUp className={`h-4 w-4 ${upvoted ? "fill-white text-white" : "text-[#5F8F86]"}`} />
+                <ThumbsUp className={`h-4 w-4 ${upvoted ? "fill-slate-950" : ""}`} />
                 <span>مفيدة جداً</span>
                 <span
-                  className={`rounded-full px-1.5 py-0.2 text-[11px] font-black ${
-                    upvoted ? "bg-emerald-700 text-white" : "bg-white text-[#5F8F86] border border-[#E4DED2]"
+                  className={`rounded-full px-1.5 py-0.2 text-[11px] font-extrabold ${
+                    upvoted ? "bg-slate-900 text-emerald-300" : "bg-slate-900/60 text-slate-400"
                   }`}
                 >
                   {upvotesCount}
@@ -474,14 +565,14 @@ export function ExperienceCard({
                 onClick={handleToggleComments}
                 className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 font-semibold transition-colors cursor-pointer ${
                   showComments
-                    ? "bg-slate-200 text-[#1E3A34]"
-                    : "bg-[#FAF8F5] text-[#4A5553] border border-[#E4DED2] hover:bg-[#F3EDE0]"
+                    ? "bg-slate-800 text-white"
+                    : "bg-slate-800/60 text-slate-300 hover:bg-slate-800 hover:text-white"
                 }`}
                 title="عرض وإضافة تعليقات"
               >
-                <MessageCircle className="h-4 w-4 text-[#5F8F86]" />
+                <MessageCircle className="h-4 w-4 text-emerald-400" />
                 <span>التعليقات</span>
-                <span className="rounded-full bg-white px-1.5 py-0.2 text-[11px] font-bold text-[#1E3A34] border border-[#E4DED2]">
+                <span className="rounded-full bg-slate-900/80 px-1.5 py-0.2 text-[11px] font-bold text-slate-300 border border-slate-700">
                   {commentsCount}
                 </span>
                 {showComments ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
@@ -494,14 +585,14 @@ export function ExperienceCard({
                 onClick={handleToggleFavorite}
                 className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-medium transition-colors cursor-pointer ${
                   isFavorite
-                    ? "bg-amber-100 text-amber-900 border border-amber-300"
-                    : "text-[#768280] hover:bg-[#FAF8F5] hover:text-[#26302F]"
+                    ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                    : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
                 }`}
                 title="حفظ في المفضلة"
               >
                 {isFavorite ? (
                   <>
-                    <BookmarkCheck className="h-4 w-4 text-amber-600" />
+                    <BookmarkCheck className="h-4 w-4 text-amber-400" />
                     <span className="hidden sm:inline">محفوظة</span>
                   </>
                 ) : (
@@ -515,7 +606,7 @@ export function ExperienceCard({
               {/* Share Trigger Button */}
               <button
                 onClick={handleNativeShare}
-                className="flex items-center gap-1 rounded-xl p-2 text-[#768280] hover:bg-[#FAF8F5] hover:text-[#1E3A34] transition-colors cursor-pointer border border-transparent hover:border-[#E4DED2]"
+                className="flex items-center gap-1 rounded-xl p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
                 title="مشاركة التجربة"
               >
                 <Share2 className="h-4 w-4" />
@@ -525,23 +616,23 @@ export function ExperienceCard({
               {/* Image Card Quick Trigger */}
               <button
                 onClick={() => setShowImageCardModal(true)}
-                className="flex items-center gap-1 rounded-xl p-2 text-[#5F8F86] hover:bg-emerald-50 hover:text-emerald-900 transition-colors cursor-pointer border border-[#E4DED2] bg-[#FAF8F5]"
+                className="flex items-center gap-1 rounded-xl p-2 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300 transition-colors cursor-pointer border border-amber-500/20 bg-slate-800/60"
                 title="مشاركة التجربة كصورة للإنستغرام وتليغرام"
               >
                 <ImageIcon className="h-4 w-4" />
-                <span className="text-xs font-semibold hidden md:inline">صورة</span>
+                <span className="text-xs font-semibold hidden md:inline">صورة 🎨</span>
               </button>
             </div>
           </div>
 
           {/* Share Dropdown / Popover Modal if expanded */}
           {showShareMenu && (
-            <div className="mt-3 p-3 rounded-xl border border-[#E4DED2] bg-[#FAF8F5] animate-in fade-in duration-150">
+            <div className="mt-3 p-3 rounded-xl border border-slate-800 bg-slate-950 animate-in fade-in duration-150">
               <div className="flex items-center justify-between mb-2">
-                <span className="font-bold text-xs text-[#26302F]">اختر وسيلة المشاركة:</span>
+                <span className="font-bold text-xs text-slate-200">اختر وسيلة المشاركة:</span>
                 <button
                   onClick={() => setShowShareMenu(false)}
-                  className="text-xs text-[#768280] hover:text-[#26302F]"
+                  className="text-xs text-slate-400 hover:text-white"
                 >
                   إغلاق ✕
                 </button>
@@ -575,7 +666,7 @@ export function ExperienceCard({
                 {/* X */}
                 <button
                   onClick={handleShareX}
-                  className="flex items-center justify-center gap-1.5 rounded-lg bg-slate-900 text-white py-2 px-2.5 font-bold hover:bg-slate-800 transition-colors cursor-pointer"
+                  className="flex items-center justify-center gap-1.5 rounded-lg bg-slate-800 text-white py-2 px-2.5 font-bold hover:bg-slate-700 transition-colors cursor-pointer"
                 >
                   <span>منصة X</span>
                 </button>
@@ -583,7 +674,7 @@ export function ExperienceCard({
                 {/* Copy Link */}
                 <button
                   onClick={handleCopyLink}
-                  className="flex items-center justify-center gap-1.5 rounded-lg bg-white border border-[#E4DED2] text-[#26302F] py-2 px-2.5 font-bold hover:bg-slate-100 transition-colors cursor-pointer"
+                  className="flex items-center justify-center gap-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 py-2 px-2.5 font-bold hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   <Copy className="h-3.5 w-3.5" />
                   <span>نسخ الرابط</span>
@@ -595,7 +686,7 @@ export function ExperienceCard({
                     setShowShareMenu(false);
                     setShowImageCardModal(true);
                   }}
-                  className="flex items-center justify-center gap-1.5 rounded-lg bg-[#D7A66A] text-white py-2 px-2.5 font-bold hover:bg-[#c29358] transition-colors cursor-pointer"
+                  className="flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-amber-500 text-white py-2 px-2.5 font-bold hover:brightness-110 transition-colors cursor-pointer"
                 >
                   <ImageIcon className="h-3.5 w-3.5" />
                   <span>كصورة 🎨</span>
@@ -606,59 +697,143 @@ export function ExperienceCard({
 
           {/* Comments Accordion Section */}
           {showComments && (
-            <div className="mt-4 pt-4 border-t border-[#EFEAE1] space-y-3 animate-in fade-in duration-200">
-              <h4 className="font-extrabold text-xs text-[#26302F] flex items-center gap-1.5">
-                <MessageCircle className="h-3.5 w-3.5 text-[#5F8F86]" />
+            <div className="mt-4 pt-4 border-t border-slate-800/80 space-y-3 animate-in fade-in duration-200">
+              <h4 className="font-bold text-xs text-slate-200 flex items-center gap-1.5">
+                <MessageCircle className="h-3.5 w-3.5 text-emerald-400" />
                 <span>تعليقات واستفسارات الطلبة ({commentsCount})</span>
               </h4>
 
               {/* Comments List */}
               {loadingComments ? (
-                <div className="py-4 text-center text-xs text-[#768280] flex items-center justify-center gap-2">
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin text-[#5F8F86]" />
+                <div className="py-4 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin text-emerald-400" />
                   <span>جاري تحميل التعليقات...</span>
                 </div>
               ) : comments.length === 0 ? (
-                <p className="text-xs text-[#768280] py-2">
+                <p className="text-xs text-slate-500 py-2">
                   لا توجد تعليقات بعد. كن أول من يترك انطباعاً أو استفساراً لصاحب التجربة! ✍️
                 </p>
               ) : (
-                <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
-                  {comments.map((comment) => (
-                    <div
-                      key={comment.id}
-                      className="rounded-xl bg-[#FAF8F5] border border-[#EFEAE1] p-3 text-xs"
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-bold text-[#1E3A34]">
-                          {comment.author_name}
-                        </span>
-                        <span className="text-[10px] text-[#768280]">
-                          {formatArabicDate(comment.created_at)}
-                        </span>
+                <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                  {comments.map((comment) => {
+                    const isAuthor = Boolean(userId && comment.author_id && comment.author_id === userId);
+                    const canManage = isAuthor || isPlatformOwner;
+                    const isEditingThis = editingCommentId === comment.id;
+
+                    return (
+                      <div
+                        key={comment.id}
+                        className="rounded-xl bg-slate-950/70 border border-slate-800/90 p-3 text-xs space-y-1.5 transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-bold text-slate-200">
+                              {comment.author_name}
+                            </span>
+
+                            {/* Commenter Wilaya */}
+                            {comment.wilaya && (
+                              <span className="inline-flex items-center gap-0.5 text-[10px] text-slate-400 bg-slate-900 px-1.5 py-0.2 rounded border border-slate-800">
+                                <MapPin className="h-2.5 w-2.5 text-[#D7A66A]" />
+                                <span>{comment.wilaya}</span>
+                              </span>
+                            )}
+
+                            {isAuthor && (
+                              <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.2 rounded border border-emerald-500/20 font-semibold">
+                                أنت
+                              </span>
+                            )}
+
+                            {isPlatformOwner && !isAuthor && (
+                              <span className="text-[10px] bg-purple-500/10 text-purple-400 px-1.5 py-0.2 rounded border border-purple-500/20 font-semibold inline-flex items-center gap-0.5">
+                                <ShieldCheck className="h-2.5 w-2.5" />
+                                إشراف
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] text-slate-500">
+                              {formatArabicDate(comment.created_at)}
+                              {comment.updated_at && " (معدل)"}
+                            </span>
+
+                            {/* Edit & Delete Buttons for Author or Owner */}
+                            {canManage && !isEditingThis && (
+                              <div className="flex items-center gap-1 mr-1">
+                                <button
+                                  onClick={() => handleStartEditComment(comment)}
+                                  className="text-slate-400 hover:text-indigo-400 p-1 transition-colors cursor-pointer"
+                                  title="تعديل التعليق"
+                                >
+                                  <Edit2 className="h-3 w-3" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteComment(comment.id)}
+                                  className="text-slate-400 hover:text-rose-400 p-1 transition-colors cursor-pointer"
+                                  title="حذف التعليق"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Comment text or Edit Box */}
+                        {isEditingThis ? (
+                          <div className="mt-2 space-y-2">
+                            <textarea
+                              rows={2}
+                              value={editCommentContent}
+                              onChange={(e) => setEditCommentContent(e.target.value)}
+                              className="w-full rounded-lg border border-indigo-500/40 bg-slate-900 p-2 text-xs text-white focus:outline-none"
+                            />
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => setEditingCommentId(null)}
+                                className="px-2 py-1 rounded bg-slate-800 text-slate-300 hover:text-white text-[11px]"
+                              >
+                                إلغاء
+                              </button>
+                              <button
+                                type="button"
+                                disabled={isSavingEditComment || !editCommentContent.trim()}
+                                onClick={() => handleSaveEditComment(comment.id)}
+                                className="px-2.5 py-1 rounded bg-emerald-600 font-bold text-white hover:bg-emerald-500 text-[11px] flex items-center gap-1"
+                              >
+                                <Check className="h-3 w-3" />
+                                <span>{isSavingEditComment ? "..." : "حفظ التعديل"}</span>
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-slate-300 leading-relaxed whitespace-pre-line">
+                            {comment.content}
+                          </p>
+                        )}
                       </div>
-                      <p className="text-[#26302F] leading-relaxed whitespace-pre-line">
-                        {comment.content}
-                      </p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 
-              {/* Add Comment Form */}
-              <form onSubmit={handleAddComment} className="mt-3 space-y-2">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={commentAuthorName}
-                    onChange={(e) => setCommentAuthorName(e.target.value)}
-                    placeholder="اسمك الأول (للحفاظ على الخصوصية)"
-                    className="w-1/3 rounded-lg border border-[#E4DED2] bg-white px-2.5 py-1.5 text-xs text-[#26302F] placeholder-[#A0AAA8] focus:border-[#5F8F86] focus:outline-none"
-                    required
-                  />
-                  <span className="text-[10px] text-[#768280]">
-                    * لن يتم نشر اللقب العائلي
+              {/* Add Comment Form: Locked user identity without surname notice */}
+              <form onSubmit={handleAddComment} className="mt-3 space-y-2 pt-2 border-t border-slate-800/60">
+                {/* Author Display Badge (Strictly first name, non-editable, + Wilaya) */}
+                <div className="flex items-center gap-2 text-xs text-slate-400 flex-wrap">
+                  <span>التعليق باسم:</span>
+                  <span className="font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                    {userFirstName || "طالب"}
                   </span>
+                  {userWilaya && (
+                    <span className="inline-flex items-center gap-1 font-semibold text-slate-300 bg-slate-800 px-2 py-0.5 rounded-md border border-slate-700">
+                      <MapPin className="h-3 w-3 text-[#D7A66A]" />
+                      <span>{userWilaya}</span>
+                    </span>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -668,12 +843,12 @@ export function ExperienceCard({
                     onChange={(e) => setNewCommentText(e.target.value)}
                     placeholder="اكتب تعليقك أو سؤالك هنا..."
                     required
-                    className="flex-1 rounded-lg border border-[#E4DED2] bg-white px-3 py-1.5 text-xs text-[#26302F] placeholder-[#A0AAA8] focus:border-[#5F8F86] focus:outline-none"
+                    className="flex-1 rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
                   />
                   <button
                     type="submit"
                     disabled={isSubmittingComment || !newCommentText.trim()}
-                    className="flex items-center gap-1 rounded-lg bg-[#1E3A34] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#2c4e46] disabled:opacity-50 transition-all cursor-pointer"
+                    className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 text-xs font-bold text-slate-950 hover:from-emerald-400 hover:to-teal-400 disabled:opacity-50 transition-all cursor-pointer"
                   >
                     <Send className="h-3 w-3" />
                     <span>{isSubmittingComment ? "..." : "إرسال"}</span>

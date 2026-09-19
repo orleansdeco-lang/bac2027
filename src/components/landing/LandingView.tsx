@@ -23,6 +23,7 @@ import {
   BookOpen,
   Crosshair,
   MessageCircle,
+  MessageSquareQuote,
   Laptop,
 } from "lucide-react";
 
@@ -80,10 +81,19 @@ export function LandingView() {
             {/* Left Content */}
             <div className="lg:col-span-7 text-center lg:text-start space-y-6">
               
-              {/* Eyebrow */}
-              <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-primary)]/30 bg-[var(--color-primary-soft)] px-3.5 py-1.5 text-xs font-bold text-[var(--color-primary)]">
-                <ShaterIcon size={16} />
-                <span>BAC 2027 🇩🇿 — الشاطر للبكالوريا</span>
+              {/* Eyebrow + Experiences Badge */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5">
+                <div className="inline-flex items-center gap-2 rounded-full border border-[var(--color-primary)]/30 bg-[var(--color-primary-soft)] px-3.5 py-1.5 text-xs font-bold text-[var(--color-primary)]">
+                  <ShaterIcon size={16} />
+                  <span>BAC 2027 🇩🇿 — الشاطر للبكالوريا</span>
+                </div>
+                <Link
+                  href="/experiences"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 px-3.5 py-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 transition-all shadow-xs hover:scale-105"
+                >
+                  <MessageSquareQuote className="w-3.5 h-3.5 text-amber-500" />
+                  <span>{isAr ? "جديد: بنك التجارب والعِبر 🎓" : "Nouveau : Témoignages BAC 🎓"}</span>
+                </Link>
               </div>
 
               {/* Main Headline */}
@@ -113,7 +123,7 @@ export function LandingView() {
               </p>
 
               {/* Action Buttons */}
-              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4">
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 flex-wrap">
                 <Link href="/auth/register" className="w-full sm:w-auto">
                   <Button
                     variant="primary"
@@ -123,6 +133,17 @@ export function LandingView() {
                     <Sparkles className="h-5 w-5" />
                     <span>{isAr ? "ابدأ مجانًا" : "Commencer gratuitement"}</span>
                     <Arrow className="h-4 w-4" />
+                  </Button>
+                </Link>
+
+                <Link href="/experiences" className="w-full sm:w-auto">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full sm:w-auto px-6 py-6 rounded-2xl font-bold text-sm bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/40 text-amber-600 dark:text-amber-400 flex items-center justify-center gap-2"
+                  >
+                    <MessageSquareQuote className="h-4 w-4 text-amber-500" />
+                    <span>{isAr ? "بنك التجارب والعِبر" : "Témoignages BAC"}</span>
                   </Button>
                 </Link>
 
