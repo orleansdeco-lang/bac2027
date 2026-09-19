@@ -173,6 +173,22 @@ export async function POST(req: Request) {
       );
     }
 
+    // 7. Prevent Duplicate Creation (Idempotency)
+    const existingOrders = await getPaymentOrders({ userId: effectiveUserId, status: "PENDING", limit: 5 }, token);
+    const recentDuplicate = existingOrders.find(
+      (o) =>
+        o.plan === effectivePlanId &&
+        (Date.now() - new Date(o.submittedAt || o.createdAt).getTime()) < 30 * 60 * 1000
+    );
+    if (recentDuplicate) {
+      if (body.receiptPath && !recentDuplicate.receiptPath) {
+        const { updateOrderReceiptPath } = await import("@/lib/operations/payments");
+        await updateOrderReceiptPath(recentDuplicate.id, body.receiptPath, token);
+        recentDuplicate.receiptPath = body.receiptPath;
+      }
+      return NextResponse.json({ success: true, order: recentDuplicate, reused: true }, { status: 200 });
+    }
+
     // Create authoritative order
     const order = await createPaymentOrder({
       userId: effectiveUserId,

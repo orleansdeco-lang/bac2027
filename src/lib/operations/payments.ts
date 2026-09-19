@@ -174,10 +174,47 @@ export async function createPaymentOrder(
   const finalPlanId = rawPlanKey;
   const finalPrice = subscriptionPlan ? subscriptionPlan.price_dzd : (authoritativePlan?.priceDZD ?? 0);
   const finalCurrency = "DZD";
+  const now = new Date().toISOString();
+
+  // Idempotency: Check if user already has an active PENDING order for this plan created recently
+  const existingPending = memoryPaymentOrders.find(
+    (o) =>
+      o.userId === input.userId &&
+      o.plan === finalPlanId &&
+      o.status === "PENDING" &&
+      Date.now() - new Date(o.submittedAt || o.createdAt).getTime() < 15 * 60 * 1000
+  );
+
+  if (existingPending) {
+    if (input.receiptPath) {
+      existingPending.receiptPath = input.receiptPath;
+      if (input.notes) existingPending.notes = input.notes;
+      if (input.studentPhone) existingPending.studentPhone = input.studentPhone;
+      if (input.studentName) existingPending.studentName = input.studentName;
+      if (input.wilayaName) existingPending.wilayaName = input.wilayaName;
+      existingPending.updatedAt = now;
+      saveDurableOrders(memoryPaymentOrders);
+
+      // Also update in DB if client available
+      const client = token ? createAuthenticatedSupabaseClient(token) : supabase;
+      if (isSupabaseConfigured && client) {
+        try {
+          await client
+            .from("payment_orders")
+            .update({
+              receipt_path: input.receiptPath,
+              notes: existingPending.notes,
+              updated_at: now,
+            })
+            .eq("id", existingPending.id);
+        } catch {}
+      }
+    }
+    return existingPending;
+  }
 
   // Server-authoritative derivation: ignore any manipulated amount or currency from client
   const orderId = `ord_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-  const now = new Date().toISOString();
 
   const newOrder: PaymentOrder = {
     id: orderId,
@@ -346,7 +383,34 @@ export async function getPaymentOrders(
     }
   }
 
-  let result = allMerged;
+  // Deduplicate orders: if an order with receiptPath exists for same student & plan within 2 hours,
+  // suppress the empty ghost order without receipt
+  const deduped: PaymentOrder[] = [];
+  const sorted = [...allMerged].sort((a, b) => {
+    if (Boolean(a.receiptPath) !== Boolean(b.receiptPath)) {
+      return a.receiptPath ? -1 : 1;
+    }
+    return new Date(b.submittedAt || b.createdAt).getTime() - new Date(a.submittedAt || a.createdAt).getTime();
+  });
+
+  for (const o of sorted) {
+    if (o.status === "PENDING" && !o.receiptPath) {
+      const hasReceiptCompanion = sorted.some(
+        (other) =>
+          other.id !== o.id &&
+          other.userId === o.userId &&
+          other.plan === o.plan &&
+          Boolean(other.receiptPath) &&
+          Math.abs(new Date(other.submittedAt || other.createdAt).getTime() - new Date(o.submittedAt || o.createdAt).getTime()) < 2 * 3600 * 1000
+      );
+      if (hasReceiptCompanion) {
+        continue;
+      }
+    }
+    deduped.push(o);
+  }
+
+  let result = deduped;
   if (filters?.status) {
     result = result.filter((o) => o.status === filters.status);
   }
@@ -356,16 +420,85 @@ export async function getPaymentOrders(
   return result.slice(0, limit);
 }
 
-export async function getPaymentOrderById(orderId: string): Promise<PaymentOrder | null> {
-  const all = await getPaymentOrders({ limit: 500 });
-  const direct = all.find((o) => o.id === orderId);
-  if (direct) return direct;
+export async function getPaymentOrderById(orderId: string, token?: string | null): Promise<PaymentOrder | null> {
+  const clean = (orderId || "").trim();
+  const cleanLower = clean.toLowerCase();
 
-  const clean = orderId.trim().toLowerCase();
+  // 1. Direct memory / durable check
+  const durable = loadDurableOrders();
+  const candidates = [...memoryPaymentOrders, ...durable];
+  const foundDirect = candidates.find(
+    (o) =>
+      o.id === clean ||
+      o.id.toLowerCase() === cleanLower ||
+      (o.notes && o.notes.toLowerCase().includes(cleanLower))
+  );
+  if (foundDirect) return foundDirect;
+
+  // 2. Direct Supabase query with token
+  const client = token ? createAuthenticatedSupabaseClient(token) : supabase;
+  if (isSupabaseConfigured && client) {
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(clean);
+      if (isUuid) {
+        const { data } = await client.from("payment_orders").select("*").eq("id", clean).maybeSingle();
+        if (data) {
+          return {
+            id: data.id,
+            userId: data.user_id,
+            plan: data.plan,
+            amount: Number(data.amount),
+            currency: data.currency || "DZD",
+            paymentMethod: data.payment_method,
+            status: data.status,
+            receiptPath: data.receipt_path,
+            notes: data.notes,
+            submittedAt: data.submitted_at,
+            reviewedAt: data.reviewed_at,
+            reviewedBy: data.reviewed_by,
+            rejectionReason: data.rejection_reason,
+            createdAt: data.created_at,
+            updatedAt: data.updated_at,
+          };
+        }
+      }
+
+      const { data: noteMatches } = await client
+        .from("payment_orders")
+        .select("*")
+        .ilike("notes", `%${clean}%`)
+        .limit(1);
+
+      if (noteMatches && noteMatches.length > 0) {
+        const data = noteMatches[0];
+        return {
+          id: data.id,
+          userId: data.user_id,
+          plan: data.plan,
+          amount: Number(data.amount),
+          currency: data.currency || "DZD",
+          paymentMethod: data.payment_method,
+          status: data.status,
+          receiptPath: data.receipt_path,
+          notes: data.notes,
+          submittedAt: data.submitted_at,
+          reviewedAt: data.reviewed_at,
+          reviewedBy: data.reviewed_by,
+          rejectionReason: data.rejection_reason,
+          createdAt: data.created_at,
+          updatedAt: data.updated_at,
+        };
+      }
+    } catch {}
+  }
+
+  // 3. Fallback to list search
+  const all = await getPaymentOrders({ limit: 500 }, token);
   const byMatch = all.find(
     (o) =>
-      o.id.toLowerCase() === clean ||
-      (o.notes && o.notes.toLowerCase().includes(clean))
+      o.id === clean ||
+      o.id.toLowerCase() === cleanLower ||
+      (o.notes && o.notes.toLowerCase().includes(cleanLower))
   );
   if (byMatch) return byMatch;
 
@@ -741,7 +874,11 @@ export async function rejectPaymentOrder(
   return { success: true, order };
 }
 
-export async function updateOrderReceiptPath(orderId: string, receiptPath: string): Promise<boolean> {
+export async function updateOrderReceiptPath(
+  orderId: string,
+  receiptPath: string,
+  token?: string | null
+): Promise<boolean> {
   const cleanId = orderId.trim().toLowerCase();
   let order = memoryPaymentOrders.find(
     (o) => o.id === orderId || o.id.toLowerCase() === cleanId || (o.notes && o.notes.toLowerCase().includes(cleanId))
@@ -764,10 +901,11 @@ export async function updateOrderReceiptPath(orderId: string, receiptPath: strin
     saveDurableOrders(memoryPaymentOrders);
   }
 
-  if (isSupabaseConfigured && supabase) {
+  const client = token ? createAuthenticatedSupabaseClient(token) : supabase;
+  if (isSupabaseConfigured && client) {
     try {
       const targetId = order?.id || orderId;
-      await supabase
+      await client
         .from("payment_orders")
         .update({ receipt_path: receiptPath, updated_at: new Date().toISOString() })
         .eq("id", targetId);

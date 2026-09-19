@@ -352,6 +352,7 @@ export const StudentRepository = {
       studentPhone: normalizedStudentPhone,
       parentPhone: normalizedParentPhone,
       schoolName: finalSchoolName,
+      schoolId: data.studentStatus === "free" ? null : (data.schoolId || null),
       registrationCompletedAt: data.registrationCompletedAt || new Date().toISOString(),
     };
 
@@ -433,6 +434,7 @@ export const StudentRepository = {
           commune_code: sanitizedData.communeCode,
           commune_name: sanitizedData.communeName,
           school_name: sanitizedData.schoolName,
+          school_id: sanitizedData.schoolId || null,
           registration_completed_at: sanitizedData.registrationCompletedAt,
           raw_draft: enrichedDraft,
           updated_at: new Date().toISOString(),

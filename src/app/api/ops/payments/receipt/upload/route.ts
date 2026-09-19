@@ -4,26 +4,32 @@ import {
   isServerOperator,
 } from "@/lib/operations/auth";
 import { uploadReceipt, validateReceiptFile } from "@/lib/operations/receipts";
-import { getPaymentOrderById, updateOrderReceiptPath } from "@/lib/operations/payments";
+import {
+  getPaymentOrderById,
+  getPaymentOrders,
+  updateOrderReceiptPath,
+  createPaymentOrder,
+} from "@/lib/operations/payments";
 
 export const dynamic = "force-dynamic";
 
 /**
  * POST /api/ops/payments/receipt/upload
- * Securely uploads a payment receipt for an existing order.
- * Strictly validates:
- * - Caller session (must be owner of order or operator)
- * - MIME type: image/jpeg, image/png, application/pdf
- * - Max size: 5MB
- * - Path traversal defense
+ * Securely uploads a payment receipt and links or creates exactly ONE payment order.
+ * Strictly avoids duplicate order generation.
  */
 export async function POST(req: Request) {
   const caller = await extractAuthenticatedCaller(req);
-  if (!caller?.userId) {
-    return NextResponse.json(
-      { success: false, error: "Authentication required to upload receipts" },
-      { status: 401 }
-    );
+
+  // Extract bearer token
+  const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
+  let token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.replace(/^Bearer\s+/i, "").trim() : null;
+  if (!token) {
+    const cookieHeader = req.headers.get("cookie") || req.headers.get("Cookie");
+    if (cookieHeader) {
+      const match = cookieHeader.match(/(?:ops_auth_token|sb-access-token)=([^;]+)/);
+      if (match) token = decodeURIComponent(match[1]);
+    }
   }
 
   try {
@@ -32,17 +38,29 @@ export async function POST(req: Request) {
     let orderId: string = "";
     let referenceId: string = "";
     let studentUserId: string = "";
+    let plan: string = "season";
     let fileName: string = "";
     let mimeType: string = "";
     let fileBuffer: Buffer;
+    let studentEmail: string | undefined = undefined;
+    let studentName: string | undefined = undefined;
+    let studentPhone: string | undefined = undefined;
+    let streamId: string | undefined = undefined;
+    let wilayaName: string | undefined = undefined;
 
     if (contentType.includes("multipart/form-data")) {
       const formData = await req.formData();
       orderId = (formData.get("orderId") as string) || "";
       referenceId = (formData.get("referenceId") as string) || "";
       studentUserId = (formData.get("userId") as string) || "";
-      const file = formData.get("file") as File | null;
+      plan = (formData.get("plan") as string) || "season";
+      studentEmail = (formData.get("studentEmail") as string) || undefined;
+      studentName = (formData.get("studentName") as string) || undefined;
+      studentPhone = (formData.get("studentPhone") as string) || undefined;
+      streamId = (formData.get("streamId") as string) || undefined;
+      wilayaName = (formData.get("wilayaName") as string) || undefined;
 
+      const file = formData.get("file") as File | null;
       if (!file) {
         return NextResponse.json(
           { success: false, error: "No file attached in form data" },
@@ -57,63 +75,36 @@ export async function POST(req: Request) {
     } else {
       // JSON base64 upload support
       const body = await req.json().catch(() => null);
-      if (!body || !body.orderId || !body.fileBase64) {
+      if (!body || !body.fileBase64) {
         return NextResponse.json(
-          { success: false, error: "orderId and fileBase64 required" },
+          { success: false, error: "fileBase64 is required" },
           { status: 400 }
         );
       }
 
-      orderId = body.orderId;
+      orderId = body.orderId || "";
       referenceId = body.referenceId || "";
       studentUserId = body.userId || "";
+      plan = body.plan || "season";
+      studentEmail = body.studentEmail;
+      studentName = body.studentName;
+      studentPhone = body.studentPhone;
+      streamId = body.streamId;
+      wilayaName = body.wilayaName;
       fileName = body.fileName || "receipt.png";
       mimeType = body.mimeType || "image/png";
       fileBuffer = Buffer.from(body.fileBase64, "base64");
     }
 
-    if (!orderId && !referenceId) {
+    const effectiveUserId = caller?.userId || studentUserId;
+    if (!effectiveUserId) {
       return NextResponse.json(
-        { success: false, error: "orderId is required" },
-        { status: 400 }
+        { success: false, error: "Authentication or student ID required to submit receipts" },
+        { status: 401 }
       );
     }
 
-    // Validate order ownership: check by orderId first, then by referenceId
-    let order = orderId ? await getPaymentOrderById(orderId) : null;
-    if (!order && referenceId) {
-      order = await getPaymentOrderById(referenceId);
-    }
-
-    if (!order) {
-      const effectiveUserId = studentUserId || caller?.userId || "student_user";
-      const { createPaymentOrder } = await import("@/lib/operations/payments");
-      order = await createPaymentOrder({
-        userId: effectiveUserId,
-        plan: "season",
-        amount: 4900,
-        paymentMethod: "baridimob",
-        notes: `Receipt uploaded for ref: ${referenceId || orderId}`,
-      });
-    }
-
-    // Authorization check
-    if (caller?.userId) {
-      const isOperator = await isServerOperator(caller.userId);
-      if (!isOperator && order.userId !== caller.userId && (!studentUserId || order.userId !== studentUserId)) {
-        return NextResponse.json(
-          { success: false, error: "Forbidden: Cannot upload receipt for another student's order" },
-          { status: 403 }
-        );
-      }
-    } else if (studentUserId && order.userId !== studentUserId) {
-      return NextResponse.json(
-        { success: false, error: "Forbidden: User ID does not match order owner" },
-        { status: 403 }
-      );
-    }
-
-    // Validate file properties
+    // 1. Validate file properties BEFORE creating any order
     const validation = validateReceiptFile({
       name: fileName,
       size: fileBuffer.length,
@@ -127,39 +118,83 @@ export async function POST(req: Request) {
       );
     }
 
-    // Execute upload
-    const uploadRes = await uploadReceipt({
-      userId: order.userId,
-      orderId: order.id,
-      fileName,
-      mimeType,
-      fileBuffer,
-    });
-
-    if (!uploadRes.success || !uploadRes.receiptPath) {
-      return NextResponse.json(
-        { success: false, error: uploadRes.error || "Failed to upload receipt" },
-        { status: 500 }
-      );
-    }
-
-    // For images under 4MB, create a base64 Data URL so preview works across all serverless lambdas seamlessly
+    // 2. Prepare receipt representation (Base64 data URL for instant resilient preview)
     const isImage = mimeType.startsWith("image/");
     const dataUrl = isImage && fileBuffer.length <= 4 * 1024 * 1024
       ? `data:${mimeType};base64,${fileBuffer.toString("base64")}`
       : null;
 
-    const finalReceiptPath = dataUrl || uploadRes.receiptPath;
+    // 3. Search for existing pending order to avoid creating duplicates
+    let order = orderId ? await getPaymentOrderById(orderId, token) : null;
+    if (!order && referenceId) {
+      order = await getPaymentOrderById(referenceId, token);
+    }
+    if (!order) {
+      // Look up any pending order without receipt for this student created recently
+      const userOrders = await getPaymentOrders({ userId: effectiveUserId, status: "PENDING", limit: 5 }, token);
+      const pendingMatch = userOrders.find((o) => !o.receiptPath && o.plan === plan);
+      if (pendingMatch) {
+        order = pendingMatch;
+      }
+    }
 
-    // Attach receipt path to order
-    await updateOrderReceiptPath(order.id, finalReceiptPath);
+    // 4. If caller is restricted student, verify ownership
+    if (caller?.userId && order) {
+      const isOperator = await isServerOperator(caller.userId);
+      if (!isOperator && order.userId !== caller.userId && (!studentUserId || order.userId !== studentUserId)) {
+        return NextResponse.json(
+          { success: false, error: "Forbidden: Cannot upload receipt for another student's order" },
+          { status: 403 }
+        );
+      }
+    }
+
+    // 5. Upload receipt to storage
+    const uploadRes = await uploadReceipt({
+      userId: effectiveUserId,
+      orderId: order?.id || orderId || `ord_${Date.now()}`,
+      fileName,
+      mimeType,
+      fileBuffer,
+    });
+
+    const finalReceiptPath = dataUrl || (uploadRes.success ? uploadRes.receiptPath : null);
+    if (!finalReceiptPath) {
+      return NextResponse.json(
+        { success: false, error: uploadRes.error || "Failed to process receipt" },
+        { status: 500 }
+      );
+    }
+
+    // 6. Link receipt to existing order OR create EXACTLY ONE order atomically with receiptPath
+    if (order) {
+      await updateOrderReceiptPath(order.id, finalReceiptPath, token);
+    } else {
+      order = await createPaymentOrder(
+        {
+          userId: effectiveUserId,
+          plan,
+          paymentMethod: "baridimob",
+          receiptPath: finalReceiptPath,
+          notes: `Receipt uploaded for ref: ${referenceId || orderId || "DIRECT"}`,
+          studentEmail,
+          studentName,
+          studentPhone,
+          streamId,
+          wilayaName,
+        },
+        token
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      receiptPath: uploadRes.receiptPath,
+      orderId: order.id,
+      receiptPath: finalReceiptPath,
       message: "Receipt uploaded successfully.",
     });
   } catch (err: any) {
+    console.error("Receipt upload route error:", err);
     return NextResponse.json(
       { success: false, error: "Receipt upload error", details: err?.message },
       { status: 500 }

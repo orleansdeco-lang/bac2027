@@ -135,33 +135,6 @@ export function markPaymentPendingVerification(requestId: string): PilotPaymentR
       updatedAt: new Date().toISOString(),
     };
     savePaymentRecord(updatedRecord);
-
-    // Sync to authoritative server endpoint
-    (async () => {
-      try {
-        const token = await getAuthToken();
-        const headers: Record<string, string> = { "Content-Type": "application/json" };
-        if (token) {
-          headers["Authorization"] = `Bearer ${token}`;
-        }
-        await fetch("/api/ops/payments", {
-          method: "POST",
-          headers,
-          credentials: "include",
-          body: JSON.stringify({
-            userId: target.userId,
-            plan: target.planId,
-            amount: target.amountDZD,
-            paymentMethod: "baridimob",
-            notes: `Verification requested for ref: ${requestId}`,
-            studentEmail: target.studentEmail,
-          }),
-        });
-      } catch (err) {
-        console.warn("Failed to sync markPaymentPendingVerification:", err);
-      }
-    })();
-
     return updatedRecord;
   } catch {
     return null;

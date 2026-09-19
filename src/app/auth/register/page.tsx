@@ -14,6 +14,7 @@ import {
   StudentStatus,
   StudentRegistrationData,
 } from "@/types/registration";
+import { HighSchoolSelector } from "@/components/schools/HighSchoolSelector";
 import { StreamId, TechniqueMathSpecialty } from "@/types/education";
 import { STREAM_REGISTRY, SPECIALTY_REGISTRY } from "@/domain/curriculum/streams";
 import {
@@ -141,6 +142,7 @@ export default function StudentRegistrationPage() {
   const [communeName, setCommuneName] = useState<string>("");
 
   const [schoolName, setSchoolName] = useState<string>("");
+  const [schoolId, setSchoolId] = useState<string>("");
 
   // Cached Wilayas & Dynamic Communes
   const wilayas: Wilaya[] = getAlgerianWilayas();
@@ -184,6 +186,8 @@ export default function StudentRegistrationPage() {
       }
       const sn = draft?.schoolName || p?.schoolName || (p as any)?.school_name;
       if (sn) setSchoolName(sn);
+      const sid = draft?.schoolId || (p as any)?.school_id || (p as any)?.schoolId;
+      if (sid) setSchoolId(sid);
     });
   }, [user]);
 
@@ -192,6 +196,8 @@ export default function StudentRegistrationPage() {
     setWilayaCode(code);
     setCommuneCode("");
     setCommuneName("");
+    setSchoolName("");
+    setSchoolId("");
     const selected = wilayas.find((w) => w.code === code);
     if (selected) {
       setWilayaName(isAr ? selected.name_ar : selected.name_fr);
@@ -205,6 +211,8 @@ export default function StudentRegistrationPage() {
 
   const handleCommuneChange = (code: string) => {
     setCommuneCode(code);
+    setSchoolName("");
+    setSchoolId("");
     const selected = availableCommunes.find((c) => c.code === code);
     if (selected) {
       setCommuneName(isAr ? selected.name_ar : selected.name_fr);
@@ -236,6 +244,7 @@ export default function StudentRegistrationPage() {
       communeCode: overrides.communeCode !== undefined ? overrides.communeCode : communeCode,
       communeName: overrides.communeName !== undefined ? overrides.communeName : communeName,
       schoolName: studentStatus === "free" ? null : (overrides.schoolName !== undefined ? overrides.schoolName : schoolName),
+      schoolId: studentStatus === "free" ? null : (overrides.schoolId !== undefined ? overrides.schoolId : schoolId),
     };
     saveRegistrationDraft(draftPayload, effectiveUserId);
   };
@@ -377,6 +386,7 @@ export default function StudentRegistrationPage() {
         communeCode,
         communeName,
         schoolName: studentStatus === "free" ? null : schoolName.trim(),
+        schoolId: studentStatus === "free" ? null : (schoolId ? schoolId : undefined),
         registrationCompletedAt: new Date().toISOString(),
       };
 
@@ -939,20 +949,35 @@ export default function StudentRegistrationPage() {
                 </p>
               </div>
 
-              <div className="space-y-4 my-6">
-                <div>
-                  <label className="block text-xs font-semibold text-theme-muted mb-1.5">
-                    {isAr ? "اسم الثانوية *" : "Nom du lycée *"}
-                  </label>
-                  <input
-                    type="text"
-                    value={schoolName}
-                    onChange={(e) => setSchoolName(e.target.value)}
-                    placeholder={isAr ? "مثال: ثانوية العقيد لطفي" : "Ex: Lycée Colonel Lotfi"}
-                    className="w-full px-4 py-3 rounded-xl bg-canvas border border-theme-border focus:border-electric focus:ring-1 focus:ring-electric outline-none transition text-sm font-medium"
-                    autoFocus
-                  />
+              <div className="my-6">
+                {/* Wilaya & Commune Context Banner */}
+                <div className="mb-4 p-3 rounded-xl bg-canvas border border-theme-border/70 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2 text-theme-muted">
+                    <MapPin className="w-4 h-4 text-electric shrink-0" />
+                    <span>
+                      <strong className="text-theme-base">{wilayaName}</strong> — {communeName}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCurrentStep(4)}
+                    className="text-xs font-semibold text-electric hover:underline"
+                  >
+                    {isAr ? "تغيير البلدية" : "Changer"}
+                  </button>
                 </div>
+
+                <HighSchoolSelector
+                  controlledWilayaCode={wilayaCode}
+                  controlledCommuneNameAr={communeName}
+                  initialSchoolName={schoolName}
+                  initialSchoolId={schoolId}
+                  compactSchoolOnly={true}
+                  onChange={(sel) => {
+                    setSchoolName(sel?.schoolName || "");
+                    setSchoolId(sel?.schoolId || "");
+                  }}
+                />
               </div>
 
               <div className="flex items-center gap-3 mt-8">
