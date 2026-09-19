@@ -1,8 +1,60 @@
 import { BacMasterItem, MasterInventoryFilterParams, MasterInventoryStats } from "@/lib/content/bac-inventory";
+import { CustomExamService } from "./custom-exam-service";
+import { CustomExam } from "@/types/custom-exam";
 
 const CACHE_KEY = "shater_bac_inventory_v1";
 const STATS_KEY = "shater_bac_inventory_stats_v1";
 const SYNC_TIMESTAMP_KEY = "shater_bac_last_sync_v1";
+
+function mapCustomExamToMasterItem(ce: CustomExam): BacMasterItem {
+  let mappedKind: any = "term_exam";
+  if (ce.exam_type === "official_bac") mappedKind = "official_bac";
+  else if (ce.exam_type === "mock_exam") mappedKind = "bac_blanc";
+  else if (ce.exam_type.startsWith("term_")) mappedKind = "term_exam";
+
+  return {
+    id: ce.id,
+    year: ce.year || 2024,
+    session: "regular",
+    kind: mappedKind,
+    term: (ce.term as any) || undefined,
+    schoolName: ce.school_name || undefined,
+    wilaya: ce.wilaya || undefined,
+    streamId: (ce.stream_id || "sciences_exp") as any,
+    subjectId: (ce.subject_id || "math") as any,
+    title_ar: ce.title,
+    topicsCount: 1,
+    subjectPdfUrl: ce.file_url,
+    solutionPdfUrl: ce.solution_url || "",
+    keywords: ce.topic_name ? [ce.topic_name] : [],
+    durationMinutes: 180,
+    coefficient: 5,
+    country: "DZ",
+    education_level: "secondary",
+    grade: "3AS",
+    stream_name: ce.stream_id,
+    subject_name: ce.subject_id,
+    content_type: ce.exam_type === "mock_exam" ? "bac_blanc" : ce.exam_type === "official_bac" ? "bac_official" : "term_exam",
+    source_name: ce.school_name || "إدارة الشاطر",
+    source_url: ce.file_url,
+    file_url: ce.file_url,
+    file_type: "pdf",
+    language: "ar",
+    has_solution: Boolean(ce.has_solution || ce.solution_url),
+    solution_url: ce.solution_url || "",
+    estimated_pages: 3,
+    estimated_questions: 4,
+    topic: ce.topic_name || "",
+    topics: ce.topic_name ? [ce.topic_name] : [],
+    skills: [],
+    difficulty: ce.difficulty || "standard",
+    source_type: "custom_ops",
+    rights_status: "official_public_reference",
+    quality_status: "verified",
+    alternate_sources: [],
+    discovered_at: ce.created_at || new Date().toISOString(),
+  };
+}
 
 let memoryCache: BacMasterItem[] | null = null;
 let memoryStats: MasterInventoryStats | null = null;
@@ -48,12 +100,26 @@ export const BacContentService = {
       const data = await res.json();
 
       if (data.success && Array.isArray(data.data)) {
-        memoryCache = data.data;
+        let items: BacMasterItem[] = data.data;
+
+        // Fetch custom exams added via Ops
+        try {
+          const customExams = await CustomExamService.getCustomExams({ includeDrafts: false });
+          if (customExams && customExams.length > 0) {
+            const mapped = customExams.map(mapCustomExamToMasterItem);
+            // Prepend custom exams so they appear at the top
+            items = [...mapped, ...items];
+          }
+        } catch (e) {
+          console.warn("Could not merge custom exams:", e);
+        }
+
+        memoryCache = items;
         memoryStats = data.stats;
 
         if (typeof window !== "undefined") {
           try {
-            localStorage.setItem(CACHE_KEY, JSON.stringify(data.data));
+            localStorage.setItem(CACHE_KEY, JSON.stringify(items));
             if (data.stats) localStorage.setItem(STATS_KEY, JSON.stringify(data.stats));
             localStorage.setItem(SYNC_TIMESTAMP_KEY, new Date().toISOString());
           } catch (e) {

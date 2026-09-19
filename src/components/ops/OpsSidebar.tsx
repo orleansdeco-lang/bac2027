@@ -20,6 +20,7 @@ import {
   Sparkles,
   School,
   MessageSquareQuote,
+  FileCheck,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 
@@ -48,6 +49,7 @@ const navGroups: NavGroup[] = [
     items: [
       { href: "/ops/subscriptions", label: "Subscriptions", icon: Sliders },
       { href: "/ops/finance", label: "Finance & Orders", icon: CreditCard },
+      { href: "/ops/exams", label: "Exams & Subjects Bank", icon: FileCheck, badge: "NEW" },
       { href: "/ops/issues", label: "Anomalies Queue", icon: AlertCircle },
       { href: "/ops/schools", label: "High Schools Queue", icon: School },
       { href: "/ops/experiences", label: "Experiences Moderation", icon: MessageSquareQuote },

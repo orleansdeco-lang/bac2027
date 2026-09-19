@@ -1,0 +1,325 @@
+{
+  "project": "SHATER",
+  "supabase_project_ref": "erbvmpnxufgeinqnshzu",
+  "verification_type": "post_repair",
+  "modifications_performed": false,
+  "overall_status": "FAIL",
+  "database_version": "PostgreSQL 17.6 on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit",
+  "verification_timestamp": "2026-09-19T09:34:00Z",
+  "migration_status": {
+    "total_remote_records": 21,
+    "total_local_files": 18,
+    "named_remote_migrations": 13,
+    "null_name_remote_migrations": 8,
+    "remote_dashboard_migrations_without_local_files": [
+      "20260918224536_create_high_schools",
+      "20260918224845_enable_http_for_school_import",
+      "20260918224923_school_source_ref_unique"
+    ],
+    "backfilled_migrations_011_to_018": [
+      "011",
+      "012",
+      "013",
+      "014",
+      "015",
+      "016",
+      "017",
+      "018"
+    ],
+    "migration_history_consistency": "PARTIALLY VERIFIED (Local files 011-018 lack standard timestamps and names in schema_migrations; 3 remote dashboard migrations lack local .sql counterparts)"
+  },
+  "schema_status": {
+    "public_tables_count": 25,
+    "public_views_count": 3,
+    "views": [
+      "ops_learning_summary",
+      "ops_payment_summary",
+      "ops_trial_summary"
+    ],
+    "all_tables_rls_enabled": true
+  },
+  "rls_status": {
+    "tables_with_rls_enabled": 25,
+    "tables_without_rls": 0,
+    "total_active_policies": 62,
+    "vulnerabilities": [
+      {
+        "table": "experience_comments",
+        "policy": "Users can insert comments",
+        "command": "INSERT",
+        "issue": "with_check expression is 'true'. Authenticated users can spoof any author_id UUID."
+      },
+      {
+        "table": "bac_experiences",
+        "policy": "Authors or operators can update experience",
+        "command": "UPDATE",
+        "issue": "with_check only verifies (auth.uid() = author_id). Authors can self-approve pending experiences by mutating status to 'approved'."
+      },
+      {
+        "table": "profiles",
+        "policy": "Allow read profiles",
+        "command": "SELECT",
+        "issue": "Policy expression is 'true' for role {public}, exposing all user profile records publicly."
+      }
+    ]
+  },
+  "function_security_status": {
+    "normalize_school_name": {
+      "exists": true,
+      "language": "plpgsql",
+      "volatility": "IMMUTABLE",
+      "security_definer": false,
+      "search_path_safe": true,
+      "grants": ["anon", "authenticated", "service_role", "postgres", "PUBLIC"]
+    },
+    "approve_high_school_submission": {
+      "exists": true,
+      "language": "plpgsql",
+      "volatility": "VOLATILE",
+      "security_definer": true,
+      "search_path_safe": false,
+      "search_path": null,
+      "has_internal_auth_check": false,
+      "executable_by_anon": true,
+      "executable_by_authenticated": true,
+      "grants": ["anon", "authenticated", "service_role", "postgres", "PUBLIC"],
+      "vulnerability": "CRITICAL: SECURITY DEFINER without search_path set, lacking any caller authorization check, granted to anon and authenticated. Arbitrary users can invoke via RPC to approve pending submissions into official verified high schools."
+    },
+    "ops_get_cockpit_kpis": {
+      "exists": true,
+      "language": "plpgsql",
+      "volatility": "STABLE",
+      "security_definer": true,
+      "search_path_safe": true,
+      "search_path": "'public', 'pg_temp'",
+      "grants": ["authenticated", "service_role", "postgres"],
+      "vulnerability": "HIGH: Hardcoded fallback UUID ('7f7f704e-d9f1-4edf-9952-591f41fc0c55') in authorization check permits any caller supplying this argument to bypass is_operator check and inspect proprietary commercial KPIs."
+    }
+  },
+  "high_schools_status": {
+    "total_official_schools": 758,
+    "distinct_names": 689,
+    "distinct_normalized_names": 688,
+    "verified_count": 758,
+    "unverified_count": 0,
+    "missing_wilaya_code": 0,
+    "missing_commune": 0,
+    "distinct_wilayas_represented": 54,
+    "missing_wilaya_codes": [50, 52, 54, 56],
+    "duplicate_records_in_same_commune": 21,
+    "duplicate_groups_count": 10,
+    "authenticated_direct_insert_allowed": true,
+    "authenticated_insert_restriction": "is_verified = false AND verification_status = 'user_submitted'"
+  },
+  "user_progress_status": {
+    "table_exists": true,
+    "composite_primary_key": ["user_id", "skill_id"],
+    "foreign_key_to_auth_users": true,
+    "on_delete": "CASCADE",
+    "rls_enabled": true,
+    "select_policy": "((auth.uid() = user_id) OR is_operator(auth.uid()))",
+    "insert_policy": "WITH CHECK ((auth.uid() = user_id) OR is_operator(auth.uid()))",
+    "update_policy": "USING ((auth.uid() = user_id) OR is_operator(auth.uid())) WITH CHECK ((auth.uid() = user_id) OR is_operator(auth.uid()))",
+    "delete_policy": "USING ((auth.uid() = user_id) OR is_operator(auth.uid()))",
+    "cross_user_write_prevented": true
+  },
+  "experiences_status": {
+    "bac_experiences_count": 6,
+    "experience_comments_count": 0,
+    "experience_upvotes_count": 0,
+    "duplicate_upvote_prevented_by_pk": true,
+    "upvotes_composite_pk": ["user_id", "experience_id"],
+    "comments_foreign_key_cascade": true,
+    "moderation_gap": "Authors can self-approve experiences via UPDATE; comments INSERT does not enforce author_id = auth.uid()."
+  },
+  "data_integrity_status": {
+    "baseline_comparison": {
+      "high_schools": { "previous": 758, "current": 758, "status": "VERIFIED" },
+      "student_profiles": { "previous": 2, "current": 2, "status": "VERIFIED" },
+      "payment_orders": { "previous": 5, "current": 5, "status": "VERIFIED" },
+      "telemetry_events": { "previous": 465, "current": 468, "status": "VERIFIED (active ingestion +3)" },
+      "bac_experiences": { "previous": 6, "current": 6, "status": "VERIFIED" },
+      "experience_comments": { "previous": 0, "current": 0, "status": "VERIFIED" },
+      "experience_upvotes": { "previous": 0, "current": 0, "status": "VERIFIED" },
+      "high_school_submissions": { "previous": 0, "current": 0, "status": "VERIFIED" },
+      "user_progress": { "previous": 0, "current": 0, "status": "VERIFIED" }
+    },
+    "orphaned_records": 0,
+    "data_loss_conclusion": "No data loss detected based on available evidence; active ingestion confirmed."
+  },
+  "grants_status": {
+    "dual_layer_model": "PostgreSQL default grants give ALL privileges to anon and authenticated, delegating protection exclusively to RLS. Defense-in-depth table-level GRANT restrictions are missing."
+  },
+  "storage_status": {
+    "buckets": [
+      {
+        "id": "payment_receipts",
+        "name": "payment_receipts",
+        "public": false,
+        "file_size_limit": 5242880,
+        "allowed_mime_types": ["image/jpeg", "image/png", "application/pdf"]
+      }
+    ],
+    "storage_policies_vulnerability": "storage.objects contains legacy policies allowing PUBLIC to INSERT and DELETE on 'exam_documents' and 'community_uploads'."
+  },
+  "application_contract_status": {
+    "student_profiles_persistence_columns": {
+      "last_lesson_id": "text, nullable, verified in DB and code",
+      "total_study_time_seconds": "integer, default 0, verified in DB and code",
+      "diagnostic_completed": "boolean, default false, verified in DB and code",
+      "diagnostic_score": "numeric, nullable, verified in DB and code"
+    },
+    "school_service_contract": "VALID",
+    "experience_service_contract": "VALID",
+    "progress_service_contract": "VALID"
+  },
+  "persistence_status": {
+    "architecture": "Dual-write / Sync cache",
+    "classification": {
+      "user_progress": "CACHE + SOURCE OF TRUTH (Dual-write with Supabase fallback)",
+      "student_profiles": "SOURCE OF TRUTH in Supabase",
+      "school_submissions": "CACHE + SOURCE OF TRUTH (Dual-write with in-memory/localStorage fallback)",
+      "custom_exams": "CACHE + SOURCE OF TRUTH",
+      "challenges": "CACHE + SOURCE OF TRUTH"
+    }
+  },
+  "build_status": {
+    "tsc_result": "FAIL",
+    "tsc_exit_code": 1,
+    "tsc_error": "src/lib/services/challenge-service.ts(181,11): error TS2322: Type '{ ... }' is not assignable to type 'StudentChallenge'. Types of property 'status' are incompatible. Type 'string' is not assignable to type 'ChallengeStatus'.",
+    "next_build_result": "FAIL",
+    "next_build_exit_code": 1,
+    "next_build_error": "./src/lib/services/challenge-service.ts:181:11 Type error: Type '{ ... }' is not assignable to type 'StudentChallenge'."
+  },
+  "previous_claims": [
+    {
+      "claim": "758 official high schools preserved",
+      "evidence": "SELECT count(*) FROM public.high_schools returned exactly 758 rows with is_verified=true.",
+      "status": "VERIFIED"
+    },
+    {
+      "claim": "25 public tables present",
+      "evidence": "Querying pg_class where relnamespace='public'::regnamespace and relkind='r' returned exactly 25 tables.",
+      "status": "VERIFIED"
+    },
+    {
+      "claim": "100% RLS enabled across all public tables",
+      "evidence": "Querying pg_class.relrowsecurity for all 25 tables in public returned relrowsecurity=true for every table.",
+      "status": "VERIFIED"
+    },
+    {
+      "claim": "student_profiles 4 persistence columns added",
+      "evidence": "information_schema.columns confirms last_lesson_id, total_study_time_seconds, diagnostic_completed, diagnostic_score exist with expected types and defaults.",
+      "status": "VERIFIED"
+    },
+    {
+      "claim": "Migrations 011-018 registered in schema_migrations",
+      "evidence": "supabase_migrations.schema_migrations contains versions 011-018, though with name=null.",
+      "status": "VERIFIED"
+    },
+    {
+      "claim": "Migration history internally consistent",
+      "evidence": "Remote DB has 21 migrations; local repository has 18 files. Remote includes 3 un-versioned dashboard migrations; versions 011-018 have null names.",
+      "status": "PARTIALLY VERIFIED"
+    },
+    {
+      "claim": "Zero Data Loss",
+      "evidence": "Current counts match or exceed previous reports (telemetry +3 events, schools 758, payments 5, profiles 2). However, historical pre-repair snapshots are partially documented.",
+      "status": "PARTIALLY VERIFIED"
+    },
+    {
+      "claim": "TypeScript build successful (tsc --noEmit)",
+      "evidence": "Running npx tsc --noEmit failed with exit code 1 due to TS2322 in src/lib/services/challenge-service.ts:181.",
+      "status": "CONTRADICTED"
+    },
+    {
+      "claim": "Next.js production build successful (npm run build)",
+      "evidence": "Running npm run build failed during typechecking at ./src/lib/services/challenge-service.ts:181:11 with exit code 1.",
+      "status": "CONTRADICTED"
+    }
+  ],
+  "findings": [
+    {
+      "id": "SEC-01",
+      "severity": "CRITICAL",
+      "area": "Database Function Security",
+      "finding": "approve_high_school_submission is SECURITY DEFINER, lacks SET search_path, lacks caller authorization checks, and is granted EXECUTE to anon and authenticated.",
+      "evidence": "pg_proc def shows SECURITY DEFINER without search_path setting and without any IF NOT is_operator check. routine_privileges shows anon, authenticated, and PUBLIC have EXECUTE.",
+      "impact": "Any anonymous or authenticated visitor can invoke this RPC via the Supabase REST API and approve arbitrary pending submissions into official verified high schools.",
+      "recommended_next_action": "REVOKE EXECUTE ON FUNCTION public.approve_high_school_submission(uuid, uuid) FROM PUBLIC, anon, authenticated; GRANT EXECUTE TO service_role; add SET search_path TO 'public', 'pg_temp'; add caller authorization check: IF NOT is_operator(auth.uid()) THEN RAISE EXCEPTION ... END IF."
+    },
+    {
+      "id": "SEC-02",
+      "severity": "HIGH",
+      "area": "Database Function Security",
+      "finding": "ops_get_cockpit_kpis contains hardcoded parameter bypass allowing unauthorized users to access commercial metrics.",
+      "evidence": "Function definition checks: IF (v_caller IS NULL OR NOT public.is_operator(v_caller)) AND (p_operator_id IS DISTINCT FROM '7f7f704e-d9f1-4edf-9952-591f41fc0c55'::uuid). Supplying that UUID bypasses the operator check.",
+      "impact": "Anyone who supplies this hardcoded UUID can retrieve sensitive business intelligence: total revenue, subscriber counts, trial expirations, and payment order statuses.",
+      "recommended_next_action": "Remove the parameter fallback p_operator_id IS DISTINCT FROM '...'. Enforce strictly: IF NOT is_operator(auth.uid()) THEN RAISE EXCEPTION 'Access denied'; END IF."
+    },
+    {
+      "id": "SEC-03",
+      "severity": "HIGH",
+      "area": "RLS Authorization",
+      "finding": "Authors can self-approve experiences in bac_experiences due to permissive UPDATE with_check expression.",
+      "evidence": "pg_policies on bac_experiences shows with_check is ((auth.uid() = author_id) OR is_operator(auth.uid())). It does not restrict status mutations.",
+      "impact": "A student author can submit an unreviewed experience and immediately update its status from 'pending' to 'approved', bypassing moderation.",
+      "recommended_next_action": "Modify UPDATE policy with_check to require: ((auth.uid() = author_id AND status = 'pending') OR is_operator(auth.uid())), or use a trigger to freeze status changes for non-operators."
+    },
+    {
+      "id": "SEC-04",
+      "severity": "HIGH",
+      "area": "RLS Authorization",
+      "finding": "experience_comments INSERT policy allows arbitrary author_id spoofing.",
+      "evidence": "Policy 'Users can insert comments' has with_check = 'true' for {authenticated}.",
+      "impact": "Any authenticated user can submit comments under another user's identity/UUID.",
+      "recommended_next_action": "Update policy with_check to enforce: (auth.uid() = author_id OR author_id IS NULL)."
+    },
+    {
+      "id": "SEC-05",
+      "severity": "HIGH",
+      "area": "Application Build",
+      "finding": "TypeScript check and Next.js production build fail due to type incompatibility in challenge-service.ts.",
+      "evidence": "npx tsc --noEmit and npm run build both exit with code 1 at src/lib/services/challenge-service.ts(181,11): error TS2322: Type 'string' is not assignable to type 'ChallengeStatus'.",
+      "impact": "CI/CD automated deployments and production builds are broken.",
+      "recommended_next_action": "Cast status property in localChallenge object in challenge-service.ts to ChallengeStatus (e.g. status: (payload.status || 'pending') as ChallengeStatus)."
+    },
+    {
+      "id": "SEC-06",
+      "severity": "MEDIUM",
+      "area": "Storage Security",
+      "finding": "storage.objects contains legacy permissive policies granting PUBLIC insert and delete on exam_documents and community_uploads.",
+      "evidence": "SELECT policyname, qual, with_check FROM pg_policies WHERE schemaname='storage' shows 'Allow upload to exam_documents...' and 'Allow delete...' with public role and no user checks.",
+      "impact": "If these buckets are ever recreated or accessed, unauthenticated users could delete or tamper with storage assets.",
+      "recommended_next_action": "DROP policies 'Allow upload to exam_documents and community_uploads' and 'Allow delete on community and exam documents' from storage.objects."
+    },
+    {
+      "id": "DAT-01",
+      "severity": "LOW",
+      "area": "Data Integrity",
+      "finding": "high_schools table contains 21 duplicate rows across 10 groups with identical normalized names in the same commune.",
+      "evidence": "GROUP BY wilaya_code, commune_name_ar, name_normalized HAVING count(*) > 1 returns 10 groups, including 3 identical records for 'lycee ثانوية الشهيد قوراري رحمان' in Oum El Bouaghi.",
+      "impact": "Search results display duplicate school options in school selection dropdowns.",
+      "recommended_next_action": "Deduplicate high_schools keeping the oldest or primary record and apply a unique constraint on (wilaya_code, commune_name_ar, name_normalized)."
+    },
+    {
+      "id": "MIG-01",
+      "severity": "LOW",
+      "area": "Migration Management",
+      "finding": "Discrepancy between remote migration records (21) and local migration files (18); 011-018 registered without names.",
+      "evidence": "supabase_migrations.schema_migrations contains 21 rows. Versions 011-018 have name = NULL. Remote contains 3 dashboard migrations from 2026-09-18 without local .sql files.",
+      "impact": "Supabase CLI drift detection will report local/remote schema mismatch.",
+      "recommended_next_action": "Pull remote migrations using supabase db pull or standardize local migration files to include exact timestamps."
+    }
+  ],
+  "unproven_claims": [
+    "Absolute Zero Data Loss across all historical operations (historical pre-repair snapshots prior to migration 018 are partially documented in logs)."
+  ],
+  "recommended_follow_up": [
+    "Secure approve_high_school_submission function immediately by revoking public execute and setting search_path.",
+    "Fix TypeScript build failure in challenge-service.ts to restore CI/CD deployment pipeline.",
+    "Harden RLS on bac_experiences and experience_comments to prevent author status manipulation and author_id spoofing.",
+    "Clean up duplicate school records in public.high_schools.",
+    "Remove obsolete storage policies for exam_documents and community_uploads."
+  ]
+}
