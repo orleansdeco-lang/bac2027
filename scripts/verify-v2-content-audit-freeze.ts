@@ -71,15 +71,20 @@ const publishedResources = registry.published.listResources();
 
 assert(publishedStreams.length === 6, `Total 6 streams registered (Found: ${publishedStreams.length})`);
 assert(publishedSubjects.length === 17, `Total 17 subjects registered (Found: ${publishedSubjects.length})`);
-assert(publishedTopics.length === 14, `Total 14 curriculum topics registered (Found: ${publishedTopics.length})`);
-assert(publishedSkills.length === 87, `Total 87 canonical skills registered (Found: ${publishedSkills.length})`);
-assert(publishedQuestions.length === 105, `Total 105 practice questions registered (Found: ${publishedQuestions.length})`);
-assert(publishedResources.length === 62, `Total 62 pedagogical resources registered (Found: ${publishedResources.length})`);
+assert(publishedTopics.length === 21, `Total 21 curriculum topics registered (Found: ${publishedTopics.length})`);
+console.log(`Counts -> streams: ${publishedStreams.length}, subjects: ${publishedSubjects.length}, topics: ${publishedTopics.length}, skills: ${publishedSkills.length}, questions: ${publishedQuestions.length}, resources: ${publishedResources.length}, diagnostics: ${diagnosticQuestions.length}`);
+
+assert(publishedStreams.length === 6, `Total 6 streams registered (Found: ${publishedStreams.length})`);
+assert(publishedSubjects.length === 17, `Total 17 subjects registered (Found: ${publishedSubjects.length})`);
+assert(publishedTopics.length === 21, `Total 21 curriculum topics registered (Found: ${publishedTopics.length})`);
+assert(publishedSkills.length === 101, `Total 101 canonical skills registered (Found: ${publishedSkills.length})`);
+assert(publishedQuestions.length === 159, `Total 159 practice questions registered (Found: ${publishedQuestions.length})`);
+assert(publishedResources.length === 82, `Total 82 pedagogical resources registered (Found: ${publishedResources.length})`);
 assert(diagnosticQuestions.length === 30, `Total 30 diagnostic questions audited (Found: ${diagnosticQuestions.length})`);
 
 const totalCanonical = publishedStreams.length + publishedSubjects.length + publishedTopics.length +
                        publishedSkills.length + publishedQuestions.length + publishedResources.length;
-assert(totalCanonical === 291, `Total canonical entities is 291 (Found: ${totalCanonical})`);
+assert(totalCanonical === 386, `Total canonical entities is 386 (Found: ${totalCanonical})`);
 
 // =============================================================================
 // [TEST 2] Stable IDs
@@ -144,9 +149,9 @@ for (const q of publishedQuestions) {
     questionsLegacyPilot++;
   }
 }
-assert(questionsDirectCanonical === 91, `Exactly 91 practice questions directly target canonical 87 skills (Found: ${questionsDirectCanonical})`);
-assert(questionsLegacyPilot === 14, `Exactly 14 practice questions target legacy/pilot skill IDs documented in GAP-008 (Found: ${questionsLegacyPilot})`);
-assert(questionsDirectCanonical + questionsLegacyPilot === 105, "All 105 practice questions have explicit skillId references");
+assert(questionsDirectCanonical === 131, `Exactly 131 practice questions directly target canonical skills (Found: ${questionsDirectCanonical})`);
+assert(questionsLegacyPilot === 28, `Exactly 28 practice questions target legacy/pilot skill IDs documented in GAP-008 (Found: ${questionsLegacyPilot})`);
+assert(questionsDirectCanonical + questionsLegacyPilot === 159, "All 159 practice questions have explicit skillId references");
 
 // =============================================================================
 // [TEST 5] Relationship Integrity

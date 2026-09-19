@@ -8,7 +8,7 @@ import { CurriculumTopic } from "@/types/content";
 
 export const CURRICULUM_TOPICS: CurriculumTopic[] = [
   // ===========================================================================
-  // MATHEMATICS TOPICS (4 Topics)
+  // MATHEMATICS TOPICS (7 Topics)
   // ===========================================================================
   {
     id: "math_topic_functions",
@@ -62,9 +62,48 @@ export const CURRICULUM_TOPICS: CurriculumTopic[] = [
     order: 4,
     isActive: true,
   },
+  {
+    id: "math_topic_complex_numbers",
+    educationLevel: "secondary",
+    examType: "BAC",
+    streamId: "sciences_exp",
+    subjectId: "math",
+    title_ar: "الأعداد المركبة والحساب في C",
+    title_fr: "Nombres complexes et calcul dans C",
+    description_ar: "الشكل الجبري، الطويلة والعمدة، الشكل المثلثي والأسي، معادلات الدرجة الثانية وتطبيقاتها الهندسية.",
+    description_fr: "Forme algébrique, module et argument, formes trigonométrique et exponentielle, équations dans C.",
+    order: 5,
+    isActive: true,
+  },
+  {
+    id: "math_topic_space_geometry",
+    educationLevel: "secondary",
+    examType: "BAC",
+    streamId: "sciences_exp",
+    subjectId: "math",
+    title_ar: "الهندسة في الفضاء",
+    title_fr: "Géométrie dans l'espace",
+    description_ar: "الجداء السلمي، معادلة المستوي، التمثيل الوسيطي لمستقيم، تقاطع المستقيمات والمستويات، والمسافات.",
+    description_fr: "Produit scalaire, équation de plan, représentation paramétrique de droite et intersections.",
+    order: 6,
+    isActive: true,
+  },
+  {
+    id: "math_topic_integration",
+    educationLevel: "secondary",
+    examType: "BAC",
+    streamId: "sciences_exp",
+    subjectId: "math",
+    title_ar: "الحساب التكاملي والدوال الأصلية",
+    title_fr: "Calcul intégral et primitives",
+    description_ar: "الدوال الأصلية، المكاملة بالتجزئة، خواص التكامل، وحساب مساحات الحيز المستوي.",
+    description_fr: "Primitives, intégration par parties, propriétés de l'intégrale et calcul d'aires.",
+    order: 7,
+    isActive: true,
+  },
 
   // ===========================================================================
-  // PHYSICS & CHEMISTRY TOPICS (5 Topics)
+  // PHYSICS & CHEMISTRY TOPICS (6 Topics)
   // ===========================================================================
   {
     id: "physics_topic_kinetics",
@@ -85,10 +124,10 @@ export const CURRICULUM_TOPICS: CurriculumTopic[] = [
     examType: "BAC",
     streamId: "sciences_exp",
     subjectId: "physics",
-    title_ar: "الظواهر الكهربائية (الدارتان RC و RL)",
-    title_fr: "Évolution des systèmes électriques (Circuits RC et RL)",
-    description_ar: "المعادلات التفاضلية للتوتر والتيار، ثابت الزمن، استجابة ثنائي القطب RC و RL والطاقة المخزنة.",
-    description_fr: "Équations différentielles, constante de temps, réponse d'un dipôle RC/RL et énergie emmagasinée.",
+    title_ar: "الظواهر الكهربائية (الدارات RC، RL، واهتزازات RLC)",
+    title_fr: "Évolution des systèmes électriques (Circuits RC, RL et oscillations RLC)",
+    description_ar: "المعادلات التفاضلية للتوتر والتيار، ثابت الزمن، استجابة ثنائي القطب RC و RL، والاهتزازات الكهربائية الحرة RLC.",
+    description_fr: "Équations différentielles, constante de temps, réponse d'un dipôle RC/RL et oscillations libres RLC.",
     order: 2,
     isActive: true,
   },
@@ -111,10 +150,10 @@ export const CURRICULUM_TOPICS: CurriculumTopic[] = [
     examType: "BAC",
     streamId: "sciences_exp",
     subjectId: "physics",
-    title_ar: "الميكانيك وقوانين نيوتن وحركة الكواكب",
-    title_fr: "Mécanique newtonienne et mouvements des corps",
-    description_ar: "تطبيق القانون الثاني لنيوتن، السقوط الشاقولي، حركة القذائف، وحركة الأقمار الاصطناعية وقوانين كبلر.",
-    description_fr: "Deuxième loi de Newton, chute verticale, mouvement des projectiles et satellites/lois de Kepler.",
+    title_ar: "الميكانيك وقوانين نيوتن والاهتزازات الميكانيكية",
+    title_fr: "Mécanique newtonienne, mouvements des corps et oscillations",
+    description_ar: "تطبيق القانون الثاني لنيوتن، السقوط الشاقولي، القذائف، الكواكب والأقمار، والاهتزازات الميكانيكية للنواس المرن.",
+    description_fr: "Deuxième loi de Newton, chute verticale, projectiles, satellites et oscillations mécaniques du pendule élastique.",
     order: 4,
     isActive: true,
   },
@@ -124,16 +163,29 @@ export const CURRICULUM_TOPICS: CurriculumTopic[] = [
     examType: "BAC",
     streamId: "sciences_exp",
     subjectId: "physics",
-    title_ar: "التوازنات الكيميائية وتفاعلات الأحماض والأسس والأسترة",
-    title_fr: "Équilibres chimiques, réactions acide-base et estérification",
-    description_ar: "مفهوم الـ pH، ثابت الحموضة Ka، المعايرة البيحمترية، وتفاعل الأسترة ومردود التحول.",
-    description_fr: "pH des solutions, constante d'acidité Ka, titrage pH-métrique et estérification/hydrolyse.",
+    title_ar: "التوازنات الكيميائية وتفاعلات الأحماض والأسس",
+    title_fr: "Équilibres chimiques et réactions acide-base",
+    description_ar: "مفهوم الـ pH، نسبة التقدم النهائي، ثابت الحموضة Ka، المعايرة البيحمترية ومجالات التغلب.",
+    description_fr: "pH des solutions, taux d'avancement final, constante d'acidité Ka, titrage acido-basique et prédominance.",
     order: 5,
+    isActive: true,
+  },
+  {
+    id: "physics_topic_esterification",
+    educationLevel: "secondary",
+    examType: "BAC",
+    streamId: "sciences_exp",
+    subjectId: "physics",
+    title_ar: "مراقبة تطور جملة كيميائية (الأسترة والإماهة)",
+    title_fr: "Contrôle de l'évolution d'un système chimique (Estérification et hydrolyse)",
+    description_ar: "تفاعلات الأسترة والإماهة، ثابت التوازن K، مردود التفاعل r، ومراقبة السرعة والمردود بواسطة مشتقات الأحماض.",
+    description_fr: "Réactions d'estérification et hydrolyse, constante d'équilibre K, rendement r et contrôle par les dérivés d'acides.",
+    order: 6,
     isActive: true,
   },
 
   // ===========================================================================
-  // NATURAL SCIENCES TOPICS (5 Topics)
+  // NATURAL SCIENCES TOPICS (8 Topics)
   // ===========================================================================
   {
     id: "snv_topic_protein_synthesis",
@@ -200,4 +252,44 @@ export const CURRICULUM_TOPICS: CurriculumTopic[] = [
     order: 5,
     isActive: true,
   },
+  {
+    id: "snv_topic_photosynthesis",
+    educationLevel: "secondary",
+    examType: "BAC",
+    streamId: "sciences_exp",
+    subjectId: "natural_sciences",
+    title_ar: "التركيب الضوئي وتحويل الطاقة الضوئية إلى كيميائية كامنة",
+    title_fr: "Photosynthèse et conversion de l'énergie lumineuse en énergie chimique",
+    description_ar: "المرحلة الكيموضوئية على مستوى غشاء التيلاكوئيد، التحلل الضوئي للماء، الفسفرة الضوئية لـ ADP، وسلسلة انتقال الإلكترونات.",
+    description_fr: "Phase photochimique dans la membrane du thylakoïde, photolyse de l'eau, photophosphorylation de l'ADP et chaîne photosynthétique.",
+    order: 6,
+    isActive: true,
+  },
+  {
+    id: "snv_topic_respiration",
+    educationLevel: "secondary",
+    examType: "BAC",
+    streamId: "sciences_exp",
+    subjectId: "natural_sciences",
+    title_ar: "التنفس الخلوي وحلقة كريبس وتحويل الطاقة إلى ATP",
+    title_fr: "Respiration cellulaire, cycle de Krebs et conversion de l'énergie en ATP",
+    description_ar: "التحلل السكري في الهيولى، أكسدة حمض البيروفيك، حلقة كريبس في المتقدرة، الفسفرة التأكسدية، والمقارنة مع التخمر.",
+    description_fr: "Glycolyse, oxydation du pyruvate, cycle de Krebs dans la matrice mitochondriale et phosphorylation oxydative.",
+    order: 7,
+    isActive: true,
+  },
+  {
+    id: "snv_topic_geology",
+    educationLevel: "secondary",
+    examType: "BAC",
+    streamId: "sciences_exp",
+    subjectId: "natural_sciences",
+    title_ar: "التكتونية العامة والبنية الداخلية للكرة الأرضية (الجيولوجيا)",
+    title_fr: "Tectonique globale et structure interne de la Terre (Géologie)",
+    description_ar: "الانقطاعات الزلزالية (موهو، غوتنبرغ، لهمان)، دراسة الليتوسفير والأستينوسفير، ظواهر الغوص ومستوي بينيوف، والبراكين الانفجارية.",
+    description_fr: "Discontinuités sismiques (Moho, Gutenberg, Lehmann), lithosphère et asthénosphère, subduction et magmatisme des zones de convergence.",
+    order: 8,
+    isActive: true,
+  },
 ];
+

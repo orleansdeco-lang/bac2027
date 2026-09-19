@@ -2,7 +2,7 @@
  * BAC Mastery — Physics-Chemistry Error Repair Guides (Sciences Expérimentales 3AS)
  * Prompt 13: Targeted 5-15 minute remediation guides mapped to Error Lab taxonomy
  * 
- * 11 Skills covered.
+ * 14 Skills covered.
  * Invariant: Content Purity (ZERO user_id).
  */
 
@@ -282,4 +282,80 @@ export const PHYSICS_REPAIR_GUIDES: RepairGuide[] = [
     academicYear: "2024-2025",
     isActive: true,
   },
+
+  // 22. phys_rlc_electrical_oscillations
+  {
+    id: "repair_phys_rlc_damping_period",
+    skillId: "phys_rlc_electrical_oscillations",
+    suspectedErrorType: "misunderstood_concept",
+    title_ar: "إصلاح الخلط بين الدور الذاتي T₀ وشبه الدور T في الدارة المهتزة RLC",
+    whyItHappens_ar: "اعتبار الدور ثابتاً ومستقلاً عن المقاومة في جميع الحالات، أو نسيان أن شبه الدور T يقارب الدور الذاتي T₀ فقط في حالة التخامد الضعيف (R ضعيفة).",
+    diagnosis_ar: "إذا قمت بتطبيق قانون الدور الذاتي T₀ = 2π√(LC) على دارة ذات مقاومة معتبرة دون الإشارة إلى أنه شبه دور T أو خلطت بين الأنظمة الاهتزازية الثلاثة.",
+    repairSteps_ar: [
+      "الخطوة 1: ميز بدقة بين الدارة المثالية LC (دون مقاومة: اهتزازات جيبية دورية غير متخامدة بدور T₀ = 2π√(LC)) والدارة الحقيقية RLC (تخامد تدريجي لسعة التوتر).",
+      "الخطوة 2: في الدارة RLC ذات المقاومة الضعيفة، تسمى المدة الزمنية الفاصلة بين ذروتين موجبتين متتاليتين 'شبه الدور' T، وتكون T ≈ T₀.",
+      "الخطوة 3: صنف الأنظمة الاهتزازية حسب المقاومة: نظام شبه دوري (R صغيرة)، نظام حرج (أسرع عودة للصفر دون تذبذب)، ونظام لا دوري (R كبيرة جداً مع بطء شديد).",
+      "الخطوة 4: في الدارة الحقيقية، تتناقص الطاقة الكلية بفعل ضياعها بمفعول جول في المقاومة (R + r).",
+    ],
+    microPracticePrompt_ar: "دارة RLC سعتها C = 10 µF وذاتيتها L = 0.1 H ومقاومتها الكلية R_tot = 2 Ω. هل يمكن اعتبار شبه الدور T مساوياً للدور الذاتي T₀؟ وما قيمته؟",
+    microPracticeSolution_ar: "بما أن المقاومة ضعيفة جداً (2 Ω)، فإن التخامد ضعيف ويكون شبه الدور مساوياً تقريباً للدور الذاتي: T ≈ T₀ = 2π√(L·C) = 2π√(0.1 × 10⁻⁵) = 2π × 10⁻³ s ≈ 6.28 ms.",
+    estimatedMinutes: 8,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+
+  // 23. phys_mechanical_oscillations_spring
+  {
+    id: "repair_phys_mech_spring_equilibrium",
+    skillId: "phys_mechanical_oscillations_spring",
+    suspectedErrorType: "misunderstood_concept",
+    title_ar: "إصلاح الخلط في تغيرات الطاقة الكامنة والحركية للنواس المرن عند موضع التوازن",
+    whyItHappens_ar: "الاعتقاد الخاطئ بأن السرعة تنعدم عند مركز التوازن أو أن الطاقتين الكامنة والحركية تنعدمان معاً.",
+    diagnosis_ar: "إذا اعتبرت أن الجسم يتوقف عند x = 0 أو أن الطاقة الحركية تنعدم في مركز الحركة الاهتزازية، فأنت تخلط بين موضع التوازن وموضعي الانعطاف (السعة العظمى).",
+    repairSteps_ar: [
+      "الخطوة 1: عند مركز التوازن (x = 0): تكون استطالة النابض منعدمة، وبالتالي الطاقة الكامنة المرونية تنعدم تماماً: E_pe = (1/2)k(0)² = 0.",
+      "الخطوة 2: عند x = 0: تكون سرعة الجسم عظمى (v = ±v_max)، وبالتالي الطاقة الحركية تكون في قيمتها العظمى: E_c(max) = (1/2)m·v_max² = E (الطاقة الميكانيكية الكلية).",
+      "الخطوة 3: عند موضعي التوقف والانعطاف (x = ±X_max): تنعدم السرعة لحظياً (v = 0 وبالتالي E_c = 0) وتكون الطاقة الكامنة المرونية عظمى وتساوي الطاقة الكلية.",
+      "الخطوة 4: في غياب الاحتكاك، يبقى مجموع الطاقتين ثابتاً دوماً: E = E_c(t) + E_pe(t) = ثابت.",
+    ],
+    microPracticePrompt_ar: "نواس مرن طاقته الميكانيكية الكلية E = 0.5 J. ما هي قيمة الطاقة الحركية للجسم عند مروره بمركز التوازن x = 0 في غياب الاحتكاكات؟",
+    microPracticeSolution_ar: "عند x = 0 تنعدم الطاقة الكامنة المرونية (E_pe = 0). وبما أن E = E_c + E_pe محفوظة، فإن E_c = E = 0.5 J (تأخذ قيمتها العظمى).",
+    estimatedMinutes: 8,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+
+  // 24. phys_esterification_hydrolysis_equilibrium
+  {
+    id: "repair_phys_ester_equilibrium_constant",
+    skillId: "phys_esterification_hydrolysis_equilibrium",
+    suspectedErrorType: "calculation_error",
+    title_ar: "إصلاح حساب كسر التوازن وثابت التوازن K لتفاعل الأسترة مع كحول أولي",
+    whyItHappens_ar: "إغفال كمية الحمض والكحول المتبقية عند التوازن وكتابة x_f في المقام بدلاً من (n₀ - x_f)، أو نسيان أن الماء ناتج كيميائي يدخل في البسط.",
+    diagnosis_ar: "إذا حصلت على قيمة K مختلفة تماماً عن 4 لمزيج متساوي المولات من حمض كربوكسيلي وكحول أولي، فتحقق من نواتج ومتبقي جدول التقدم.",
+    repairSteps_ar: [
+      "الخطوة 1: ارسم جدول تقدم تفاعل الأسترة وحدد كميات المادة عند التوازن: n(ester) = x_f، n(eau) = x_f، n(acide) = n₀(acide) - x_f، n(alcool) = n₀(alcool) - x_f.",
+      "الخطوة 2: اكتب عبارة ثابت التوازن: K = [ester]·[eau] / ([acide]·[alcool]). بما أن الحجم الكلي يختزل، عوض بكميات المادة مباشرة: K = (x_f · x_f) / ((n₀(acide) - x_f)·(n₀(alcool) - x_f)).",
+      "الخطوة 3: لمزيج متساوي المولات (n₀ = 1 mol) مع كحول أولي، المردود التجريبي هو 67% (x_f = 0.67 mol)، فيكون: K = (0.67)² / (0.33)² ≈ 4.12 ≈ 4.",
+      "الخطوة 4: تذكر أن ثابت التوازن K يميز التحول ولا يتعلق إلا بدرجة الحرارة (وهو غير متعلق بالتركيب الابتدائي للمزيج).",
+    ],
+    microPracticePrompt_ar: "انطلقنا من 2 mol حمض و 2 mol كحول أولي، وتشكل 1.34 mol من الإستر عند التوازن. احسب ثابت التوازن K.",
+    microPracticeSolution_ar: "المتبقي من الحمض: 2 - 1.34 = 0.66 mol، والمتبقي من الكحول: 0.66 mol. كمية الماء المتشكل: 1.34 mol. ثابت التوازن: K = (1.34 × 1.34) / (0.66 × 0.66) = (1.34 / 0.66)² ≈ (2.03)² ≈ 4.12.",
+    estimatedMinutes: 8,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
 ];
+

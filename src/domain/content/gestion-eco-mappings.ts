@@ -1,4 +1,5 @@
 import { ContentPackage } from "@/domain/content-quality/types";
+import { GESTION_ECO_ALIASES } from "./batch1_gestion_eco_real_content";
 
 /**
  * BAC Mastery — Gestion & Économie Canonical Content Packages
@@ -419,6 +420,477 @@ $$a = \frac{Cov(x, y)}{V(x)}, \quad b = \bar{y} - a \cdot \bar{x}$$
     },
     lifecycleState: "PUBLISHED",
   },
+
+  // ===========================================================================
+  // 5. BATCH 01 AUTHENTIC PACKAGES (Replacing Mock Data)
+  // ===========================================================================
+  acc_impairment_tangible_assets: {
+    packageId: "pkg_acc_impairment_tangible_assets",
+    streamId: "gestion_eco",
+    subjectId: "accounting_finance",
+    topicId: "acc_topic_amortissements",
+    skillId: "acc_impairment_tangible_assets",
+    objective_ar: "خسارة القيمة عن التثبيتات العينية وتعديل جدول الإهتلاك",
+    objective_fr: "Dépréciation des immobilisations corporelles et révision du plan d'amortissement.",
+    prerequisites: ["acc_depreciation_linear_degressive"],
+    lesson: {
+      title_ar: "خسارة القيمة عن التثبيتات العينية وتعديل جدول الإهتلاك",
+      contentMarkdown_ar: `### خسارة القيمة عن التثبيتات العينية
+تُسجل خسارة القيمة عندما تكون القيمة المحاسبية الصافية (VNC) أكبر من القيمة القابلة للتحصيل (سعر البيع الصافي أو القيمة النفعية أيهما أكبر). يترتب على إثبات الخسارة تعديل جدول الاهتلاك للسنوات المتبقية بقسمة الـ VNC الجديدة على عدد السنوات المتبقية.
+
+### القواعد الحسابية الأساسية:
+- اختبار الخسارة: خسارة القيمة = VNC - القيمة القابلة للتحصيل (PVN). إذا كان الفرق موجباً تُثبت الخسارة.
+- التسجيل المحاسبي في 31/12: من حـ/ 681 (مخصصات الاهتلاكات والمؤونات وخسائر القيمة) إلى حـ/ 291 (خسائر القيمة عن التثبيتات العينية).
+- تعديل قسط الاهتلاك اللاحق: قسط الاهتلاك الجديد = (VNC بعد الخسارة) / (المدة المتبقية ن).`,
+      keyTakeaway_ar: "اختبار الخسارة: خسارة القيمة = VNC - القيمة القابلة للتحصيل، والتعديل اللاحق يقسم VNC الجديدة على السنوات المتبقية.",
+    },
+    workedExample: {
+      problem_ar: "حازت مؤسسة على معدات صناعية بقيمة 800,000 دج بتاريخ 02/01/2022 تُهتلك خطياً على مدار 5 سنوات. في 31/12/2023 قدرت قيمتها القابلة للتحصيل بـ 420,000 دج. ما هي خسارة القيمة الواجب تسجيلها في 31/12/2023؟",
+      stepByStepSolution_ar: [
+        "قسط الاهتلاك السنوي: A = 800,000 / 5 = 160,000 دج.",
+        "مجموع الاهتلاكات لسنتين (2022 و 2023): ΣA = 160,000 × 2 = 320,000 دج.",
+        "القيمة الصافية VNC = 800,000 - 320,000 = 480,000 دج.",
+        "خسارة القيمة = VNC - القيمة القابلة للتحصيل = 480,000 - 420,000 = 60,000 دج تُقيد لحساب 2915.",
+      ],
+      pedagogicalComment_ar: "مقارنة VNC بالقيمة القابلة للتحصيل تحدد وجود الخسارة من عدمها بدقة.",
+    },
+    activeRecall: {
+      prompt_ar: "ما هو الحساب الدائن عند تسجيل خسارة القيمة عن التثبيتات العينية في 31/12؟",
+      expectedAnswer_ar: "حـ/ 291 (خسائر القيمة عن التثبيتات العينية).",
+      concealedInitially: true,
+    },
+    practice: [
+      {
+        id: "pq_acc_impair_01",
+        prompt_ar: "حازت مؤسسة على معدات صناعية بقيمة 800,000 دج بتاريخ 02/01/2022 تُهتلك خطياً على مدار 5 سنوات. في 31/12/2023 قدرت قيمتها القابلة للتحصيل بـ 420,000 دج. ما هي خسارة القيمة الواجب تسجيلها في 31/12/2023؟",
+        optionsCount: 4,
+        correctAnswerId: "opt_a",
+        explanation_ar: "1) قسط الاهتلاك السنوي: A = 800,000 / 5 = 160,000 دج.\n2) مجموع الاهتلاكات لسنتين (2022 و 2023): ΣA = 160,000 × 2 = 320,000 دج.\n3) القيمة الصافية VNC = 800,000 - 320,000 = 480,000 دج.\n4) خسارة القيمة = VNC - القيمة القابلة للتحصيل = 480,000 - 420,000 = 60,000 دج تُقيد لحساب 2915.",
+        distractorErrorMappings: {
+          opt_b: "calculation_error",
+          opt_c: "misunderstood_concept",
+          opt_d: "methodology_error",
+        },
+      },
+    ],
+    retest: {
+      id: "rq_acc_impair_twin",
+      parentPracticeQuestionId: "pq_acc_impair_01",
+      prompt_ar: "[إعادة اختبار] بناءً على المعطيات السابقة (VNC بعد الخسارة = 420,000 دج في نهاية 2023 والمدة الإجمالية 5 سنوات)، كم يبلغ قسط الاهتلاك لسنة 2024 بعد تعديل الجدول؟",
+      isIsomorphicTwin: true,
+      altersSurfaceContext: true,
+      testsIdenticalConcept: true,
+      correctAnswerId: "iso_a",
+      explanation_ar: "السنوات المتبقية بعد انقضاء سنتين هي: 5 - 2 = 3 سنوات. قسط الاهتلاك المعدل لسنة 2024 = 420,000 / 3 = 140,000 دج.",
+    },
+    repairGuide: {
+      targetErrorType: "methodology_error",
+      title_ar: "دليل تصحيح خطأ تعديل جدول الاهتلاك بعد خسارة القيمة",
+      mentalModelExplanation_ar: "مواصلة حساب قسط الاهتلاك على أساس القيمة الأصلية MA بعد تاريخ إثبات خسارة القيمة؛ القاعدة تفرض أن تصبح VNC بعد الخسارة هي الأساس الجديد للاهتلاك.",
+      actionableSteps_ar: [
+        "احسب VNC بتاريخ إثبات الخسارة.",
+        "اطرح القيمة القابلة للتحصيل لتحديد خسارة القيمة.",
+        "اجعل VNC الجديدة هي الأساس للأقساط المتبقية.",
+        "اقسم VNC الجديدة على عدد السنوات المتبقية فقط.",
+      ],
+      contrastiveWorkedExample: "الأساس الجديد = 420,000 دج مقسومة على 3 سنوات = 140,000 دج وليس 800,000 / 5.",
+    },
+    visualNecessity: "VISUAL_USEFUL",
+    visualAssetIds: ["visual_acc_tableau_amortissement"],
+    externalResourceIds: ["res_scf_journal_rules"],
+    examTransfer: {
+      status: "AVAILABLE",
+      bacTypologyNotes_ar: "سؤال أساسي في أعمال نهاية السنة في بكالوريا التسيير والاقتصاد.",
+      commonPitfalls_ar: ["نسيان تعديل قسط الاهتلاك بعد الخسارة", "حساب الخسارة على أساس القيمة الإجمالية"],
+      officialBacPastRefIds: ["BAC_GE_2023_Sujet1_Ex1"],
+    },
+    motivationSupport: {
+      status: "NORMALIZED",
+      microNormalizeText_ar: "خسائر القيمة وتعديل جدول الاهتلاك سؤال مضمون عند اتباع الخطوات المنهجية.",
+      nextBestActionHint_ar: "انتقل إلى تسوية الزبائن المشكوك فيهم.",
+    },
+    provenance: {
+      sourceId: "src-decree-07-142",
+      sourceTitle: "الجريدة الرسمية - النظام المحاسبي المالي SCF",
+      classification: "OFFICIAL_HISTORICAL",
+      rightsStatus: "official_reference",
+      lastAuditedAt: "2026-09-12",
+    },
+    lifecycleState: "PUBLISHED",
+  },
+
+  acc_doubtful_clients_adjustment: {
+    packageId: "pkg_acc_doubtful_clients_adjustment",
+    streamId: "gestion_eco",
+    subjectId: "accounting_finance",
+    topicId: "acc_topic_amortissements",
+    skillId: "acc_doubtful_clients_adjustment",
+    objective_ar: "الزبائن المشكوك فيهم وتعديل خسائر القيمة وحالات الإفلاس",
+    objective_fr: "Créances clients douteux, ajustement des dépréciations et constatation des pertes sur créances irrécouvrables.",
+    prerequisites: ["acc_depreciation_linear_degressive"],
+    lesson: {
+      title_ar: "الزبائن المشكوك فيهم وتعديل خسائر القيمة وحالات الإفلاس",
+      contentMarkdown_ar: `### تسوية حسابات الزبائن
+تخضع ديون الزبائن للمتابعة في نهاية السنة المالية: تحويل الزبون العادي إلى مشكوك فيه (حـ/ 416)، تكوين أو تعديل خسارة القيمة (حـ/ 491)، وحالة الإفلاس النهائي مع ترصيد الرسم على القيمة المضافة المحصل (حـ/ 4457).
+
+### القواعد الأساسية:
+- التحويل من زبون عادي إلى مشكوك فيه: القيمة الإجمالية المتضمنة للرسم TTC تُقيد من حـ/ 416 إلى حـ/ 411.
+- حساب خسارة القيمة: الخسارة تُحسب دائماً على المبلغ خارج الرسم: HT = TTC / 1.19.
+- تعديل الخسارة: إذا كانت الخسارة الحالية > السابقة: تسجيل زيادة من حـ/ 685 إلى حـ/ 491. وإذا كانت الحالية < السابقة: تسجيل استرجاع من حـ/ 491 إلى حـ/ 785.
+- الإفلاس الحقيقي: الخسارة الحقيقية تظهر في حـ/ 654 (خسائر عن حسابات دائنة غير قابلة للتحصيل) بمبلغ HT الصافي غير المغطى بالمؤونة.`,
+      keyTakeaway_ar: "حساب خسارة القيمة للزبائن المشكوك فيهم يُحسب دائماً على المبلغ خارج الرسم HT وليس المتضمن للرسم TTC.",
+    },
+    workedExample: {
+      problem_ar: "الزبون 'سمير' مدين بمبلغ 119,000 دج (TTC معدل الرسم 19%). قدرت المؤسسة في 31/12/2023 احتمال عدم استرجاع 40% من دينه. ما هو مبلغ خسارة القيمة الواجب تكوينها؟",
+      stepByStepSolution_ar: [
+        "حساب الدين خارج الرسم: HT = 119,000 / 1.19 = 100,000 دج.",
+        "خسارة القيمة التقديرية = 100,000 × 0.40 = 40,000 دج.",
+        "القيد: من حـ/ 685 إلى حـ/ 491 بمبلغ 40,000 دج.",
+      ],
+      pedagogicalComment_ar: "التحويل الصارم إلى المبلغ خارج الرسم HT يمنع الوقوع في الخطأ الشائع بحساب النسبة على TTC.",
+    },
+    activeRecall: {
+      prompt_ar: "على أي مبلغ تُحسب خسارة القيمة لزبون مشكوك فيه؟",
+      expectedAnswer_ar: "على المبلغ خارج الرسم (HT = TTC / 1.19).",
+      concealedInitially: true,
+    },
+    practice: [
+      {
+        id: "pq_acc_doubtful_01",
+        prompt_ar: "الزبون 'سمير' مدين بمبلغ 119,000 دج (TTC معدل الرسم 19%). قدرت المؤسسة في 31/12/2023 احتمال عدم استرجاع 40% من دينه. ما هو مبلغ خسارة القيمة الواجب تكوينها؟",
+        optionsCount: 4,
+        correctAnswerId: "opt_a",
+        explanation_ar: "1) حساب الدين خارج الرسم: HT = 119,000 / 1.19 = 100,000 دج.\n2) خسارة القيمة التقديرية = 100,000 × 0.40 = 40,000 دج.\n3) القيد: من حـ/ 685 إلى حـ/ 491 بمبلغ 40,000 دج.",
+        distractorErrorMappings: {
+          opt_b: "calculation_error",
+          opt_c: "misunderstood_concept",
+          opt_d: "methodology_error",
+        },
+      },
+    ],
+    retest: {
+      id: "rq_acc_doubtful_twin",
+      parentPracticeQuestionId: "pq_acc_doubtful_01",
+      prompt_ar: "[إعادة اختبار] في 31/12/2024 أعلن الزبون سمير إفلاسه نهائياً بعد أن سدد للمؤسسة مبلغ 59,500 دج TTC خلال العام، وكانت خسارته السابقة 40,000 دج. ما هو رصيد الخسارة غير القابلة للتحصيل حـ/ 654؟",
+      isIsomorphicTwin: true,
+      altersSurfaceContext: true,
+      testsIdenticalConcept: true,
+      correctAnswerId: "iso_a",
+      explanation_ar: "الرصيد الباقي TTC = 119,000 - 59,500 = 59,500 دج. الرصيد خارج الرسم HT = 59,500 / 1.19 = 50,000 دج. بما أن الخسارة السابقة المشكلة كانت 40,000 دج فقط، فإن الخسارة الحقيقية غير المغطاة = 50,000 - 40,000 = 10,000 دج تُسجل في المدين لحساب 654.",
+    },
+    repairGuide: {
+      targetErrorType: "methodology_error",
+      title_ar: "دليل ضبط حسابات الزبائن المشكوك فيهم والإفلاس",
+      mentalModelExplanation_ar: "حساب خسارة القيمة أو نسبة الاحتمال على المبلغ المتضمن للرسم TTC بدلاً من خارج الرسم HT خطأ محاسبي يجب تفاديه.",
+      actionableSteps_ar: [
+        "حول المبلغ دوماً إلى خارج الرسم: HT = TTC / 1.19.",
+        "احسب خسارة القيمة التقديرية الحالية بضرب HT في النسبة.",
+        "قارن الخسارة الحالية بالخسارة السابقة لتسجيل الزيادة أو الاسترجاع.",
+        "في حالة الإفلاس رصد حساب 4457 وحساب 491 وسجل الفارق في حـ/ 654.",
+      ],
+      contrastiveWorkedExample: "119,000 TTC = 100,000 HT. الخسارة 40% = 40,000 دج وليس 47,600 دج.",
+    },
+    visualNecessity: "VISUAL_USEFUL",
+    visualAssetIds: ["visual_acc_tableau_amortissement"],
+    externalResourceIds: ["res_scf_journal_rules"],
+    examTransfer: {
+      status: "AVAILABLE",
+      bacTypologyNotes_ar: "وضعية الزبائن المشكوك فيهم من الثوابت الامتحانية السنوية في البكالوريا.",
+      commonPitfalls_ar: ["الضرب المباشر في TTC", "نسيان ترصيد TVA عند الإفلاس"],
+      officialBacPastRefIds: ["BAC_GE_2022_Sujet1_Ex2"],
+    },
+    motivationSupport: {
+      status: "NORMALIZED",
+      microNormalizeText_ar: "قاعدة HT هي المفتاح السحري لكل مسائل الزبائن المشكوك فيهم.",
+      nextBestActionHint_ar: "انتقل إلى ميزان المدفوعات والتجارة الخارجية.",
+    },
+    provenance: {
+      sourceId: "src-decree-07-142",
+      sourceTitle: "النظام المحاسبي المالي - تسوية حسابات الغير",
+      classification: "OFFICIAL_HISTORICAL",
+      rightsStatus: "official_reference",
+      lastAuditedAt: "2026-09-12",
+    },
+    lifecycleState: "PUBLISHED",
+  },
+
+  eco_foreign_trade_balance_payments: {
+    packageId: "pkg_eco_foreign_trade_balance_payments",
+    streamId: "gestion_eco",
+    subjectId: "economics_management",
+    topicId: "eco_topic_monnaie_inflation",
+    skillId: "eco_foreign_trade_balance_payments",
+    objective_ar: "ميزان المدفوعات: الهيكل، التوازن الاقتصادي، وسياسات المعالجة",
+    objective_fr: "Commerce extérieur, structure de la balance des paiements et politiques d'ajustement.",
+    prerequisites: ["eco_money_inflation_causes_control"],
+    lesson: {
+      title_ar: "ميزان المدفوعات: الهيكل، التوازن الاقتصادي، وسياسات المعالجة",
+      contentMarkdown_ar: `### ميزان المدفوعات
+ميزان المدفوعات هو سجل محاسبي تسجل فيه كافة المعاملات الاقتصادية والمالية التي تتم بين المقيمين في دولة ما وغير المقيمين (العالم الخارجي) خلال فترة زمنية عادة ما تكون سنة. ينقسم إلى ثلاثة حسابات رئيسية: حساب العمليات الجارية، حساب رأس المال، وحساب المعاملات المالية.
+
+### العناصر الجوهرية:
+- حساب العمليات الجارية: يشمل الميزان التجاري (الصادرات والواردات السلعية)، ميزان الخدمات، ميزان الدخل الأولي، والدخل الثانوي (التحويلات الجارية).
+- الميزان التجاري: الصادرات السلعية FOB - الواردات السلعية CAF. فائض إذا كانت الصادرات أكبر، وعجز إذا كانت الواردات أكبر.
+- التوازن المحاسبي والاقتصادي: ميزان المدفوعات متوازن محاسبياً دائماً بالضرورة بالاعتماد على القيد المزدوج، لكنه قد يعاني من عجز أو فائض اقتصادي في الحساب الجاري.
+- سياسات تصحيح العجز: تخفيض قيمة العملة الوطنية لترقية الصادرات، تشجيع الاستثمار الأجنبي المباشر، الرسوم الجمركية وترشيد الواردات.`,
+      keyTakeaway_ar: "الميزان التجاري = الصادرات FOB - الواردات CAF. التوازن المحاسبي دائم بينما التوازن الاقتصادي يرتبط برصيد الحساب الجاري.",
+    },
+    workedExample: {
+      problem_ar: "إذا بلغت صادرات الجزائر السلعية (FOB) 45 مليار دولار وبلغت وارداتها السلعية (CAF) 38 مليار دولار خلال سنة، فإن الميزان التجاري يسجل:",
+      stepByStepSolution_ar: [
+        "تحديد قانون الميزان التجاري: الرصيد = الصادرات السلعية FOB - الواردات السلعية CAF.",
+        "التعويض العددي: 45 - 38 = +7 مليارات دولار.",
+        "النتيجة: إشارة موجبة تدل على تحقيق فائض تجاري لصالح الاقتصاد الوطني.",
+      ],
+      pedagogicalComment_ar: "الصادرات تُقوّم دائماً فوب (FOB) والواردات سيف (CAF).",
+    },
+    activeRecall: {
+      prompt_ar: "ما هي الحسابات الثلاثة الرئيسية لميزان المدفوعات؟",
+      expectedAnswer_ar: "1) حساب العمليات الجارية، 2) حساب رأس المال، 3) حساب المعاملات المالية.",
+      concealedInitially: true,
+    },
+    practice: [
+      {
+        id: "pq_eco_trade_01",
+        prompt_ar: "إذا بلغت صادرات الجزائر السلعية (FOB) 45 مليار دولار وبلغت وارداتها السلعية (CAF) 38 مليار دولار خلال سنة، فإن الميزان التجاري يسجل:",
+        optionsCount: 4,
+        correctAnswerId: "opt_a",
+        explanation_ar: "رصيد الميزان التجاري = الصادرات السلعية - الواردات السلعية = 45 - 38 = +7 مليارات دولار (إشارة موجبة تدل على تحقيق فائض تجاري لصالح الاقتصاد الوطني).",
+        distractorErrorMappings: {
+          opt_b: "calculation_error",
+          opt_c: "misunderstood_concept",
+          opt_d: "methodology_error",
+        },
+      },
+    ],
+    retest: {
+      id: "rq_eco_trade_twin",
+      parentPracticeQuestionId: "pq_eco_trade_01",
+      prompt_ar: "[إعادة اختبار] أيٌّ من العناصر التالية يُسجل حصرياً ضمن 'حساب رأس المال' في ميزان المدفوعات الجزائري؟",
+      isIsomorphicTwin: true,
+      altersSurfaceContext: true,
+      testsIdenticalConcept: true,
+      correctAnswerId: "iso_a",
+      explanation_ar: "حساب رأس المال يقتصر على تحويلات الأصول غير المالية غير المنتجة كشراء أو بيع الأصول غير الملموسة (براءات الاختراع، العلامات التجارية) والمساعدات الرأسمالية الاستثمارية الموجهة للبنى التحتية وإلغاء الديون.",
+    },
+    repairGuide: {
+      targetErrorType: "misunderstood_concept",
+      title_ar: "دليل التمييز بين حسابات ميزان المدفوعات والتوازن المحاسبي والاقتصادي",
+      mentalModelExplanation_ar: "الخلط بين التوازن المحاسبي الإجباري (القائم على بند السهو والخطأ وحساب الاحتياطيات) والعجز الاقتصادي الواقعي في العمليات التجارية الجارية.",
+      actionableSteps_ar: [
+        "فرق بين الصادرات والواردات السلعية (الميزان التجاري) وميزان الخدمات والتحويلات.",
+        "ميزان المدفوعات متوازن محاسبياً دائماً بحكم القيد المزدوج.",
+        "الحكم على وجود عجز أو فائض اقتصادي يكون من خلال رصيد الحساب الجاري.",
+      ],
+    },
+    visualNecessity: "VISUAL_USEFUL",
+    visualAssetIds: ["visual_eco_inflation_diagram"],
+    externalResourceIds: ["res_bank_of_algeria_policy"],
+    examTransfer: {
+      status: "AVAILABLE",
+      bacTypologyNotes_ar: "محور مبرمج في أسئلة التحليل الاقتصادي وحساب الأرصدة التجارية.",
+      commonPitfalls_ar: ["الخلط بين حساب رأس المال والحساب المالي"],
+      officialBacPastRefIds: ["BAC_GE_2023_Eco_Sujet1"],
+    },
+    motivationSupport: {
+      status: "NORMALIZED",
+      microNormalizeText_ar: "فهم بنية ميزان المدفوعات يمنحك إجابة واثقة ومنظمة في أسئلة الاقتصاد.",
+      nextBestActionHint_ar: "انتقل إلى شركات المساهمة في القانون التجاري.",
+    },
+    provenance: {
+      sourceId: "src-decree-07-142",
+      sourceTitle: "المنهاج الرسمي لمادة الاقتصاد والمناجمنت - التجارة الخارجية",
+      classification: "OFFICIAL_HISTORICAL",
+      rightsStatus: "official_reference",
+      lastAuditedAt: "2026-09-12",
+    },
+    lifecycleState: "PUBLISHED",
+  },
+
+  law_commercial_companies_spa: {
+    packageId: "pkg_law_commercial_companies_spa",
+    streamId: "gestion_eco",
+    subjectId: "law",
+    topicId: "law_topic_contrat_travail",
+    skillId: "law_commercial_companies_spa",
+    objective_ar: "شركة المساهمة (SPA): التأسيس، رأس المال، والمسؤولية القانونية",
+    objective_fr: "Société par Actions (SPA) : constitution, capital social et responsabilité des actionnaires.",
+    prerequisites: ["law_labor_contract_trial_termination"],
+    lesson: {
+      title_ar: "شركة المساهمة (SPA): التأسيس، رأس المال، والمسؤولية القانونية",
+      contentMarkdown_ar: `### شركة المساهمة في القانون التجاري الجزائري
+شركة المساهمة هي النموذج الأبرز لشركات الأموال في القانون التجاري الجزائري. ينقسم رأسمالها إلى أسهم قابلة للتداول، وتتحدد مسؤولية الشريك فيها بقدر ما يملكه من أسهم فقط، ولا يكتسب الشريك فيها صفة التاجر.
+
+### الخصائص القانونية:
+- عدد الشركاء: لا يقل عن 7 مساهمين على الأقل.
+- الحد الأدنى لرأس المال: 5 ملايين دينار جزائري (5,000,000 دج) في حالة اللجوء العلني للادخار، ومليون دينار جزائري (1,000,000 دج) في حالة عدم اللجوء العلني للادخار.
+- طبيعة الأسهم: حصص نقدية أو عينية، ولا يجوز تقديم حصص بالعمل. الأسهم قابلة للتداول بالطرق التجارية.
+- الإدارة: يديرها إما مجلس إدارة يترأسه رئيس مجلس الإدارة (PDG)، أو مجلس مديرين تحت رقابة مجلس المراقبة.`,
+      keyTakeaway_ar: "شركة المساهمة شركة أموال: الحد الأدنى 7 مساهمين، رأس المال 1 أو 5 ملايين دج، ومسؤولية المساهم محدودة بقيمة أسهمه دون اكتساب صفة التاجر.",
+    },
+    workedExample: {
+      problem_ar: "يرغب مجموعة من المستثمرين في تأسيس شركة مساهمة (SPA) دون اللجوء العلني للادخار في الجزائر. ما هو الحد الأدنى القانوني لعدد الشركاء ورأس المال التأسيسي وفق القانون التجاري؟",
+      stepByStepSolution_ar: [
+        "الاستناد إلى المادة 592 من القانون التجاري الجزائري: عدد المساهمين لا يقل عن 7.",
+        "الاستناد إلى المادة 594: رأس المال الأدنى بدون لجوء علني للادخار هو 1,000,000 دج (ومع اللجوء للادخار 5,000,000 دج).",
+        "النتيجة: 7 مساهمين ورأس مال قدره 1,000,000 دج على الأقل.",
+      ],
+      pedagogicalComment_ar: "التمييز بين حالتي اللجوء للادخار وعدم اللجوء إليه حاسم في تحديد رأس المال الأدنى.",
+    },
+    activeRecall: {
+      prompt_ar: "ما هو الحد الأدنى لعدد المساهمين في شركة المساهمة وفق القانون التجاري الجزائري؟",
+      expectedAnswer_ar: "7 مساهمين على الأقل.",
+      concealedInitially: true,
+    },
+    practice: [
+      {
+        id: "pq_law_spa_01",
+        prompt_ar: "يرغب مجموعة من المستثمرين في تأسيس شركة مساهمة (SPA) دون اللجوء العلني للادخار في الجزائر. ما هو الحد الأدنى القانوني لعدد الشركاء ورأس المال التأسيسي وفق القانون التجاري؟",
+        optionsCount: 4,
+        correctAnswerId: "opt_a",
+        explanation_ar: "نصت المادة 592 من القانون التجاري الجزائري على ألا يقل عدد المساهمين عن 7، والمادة 594 حددت رأس المال الأدنى بـ 1,000,000 دج إذا كانت الشركة لا تدعو الجمهور للاكتتاب، و5,000,000 دج في حالة اللجوء للادخار.",
+        distractorErrorMappings: {
+          opt_b: "misunderstood_concept",
+          opt_c: "forgot_information",
+          opt_d: "methodology_error",
+        },
+      },
+    ],
+    retest: {
+      id: "rq_law_spa_twin",
+      parentPracticeQuestionId: "pq_law_spa_01",
+      prompt_ar: "[إعادة اختبار] توفي أحد المساهمين في شركة مساهمة وكان يملك 10% من أسهمها. ما هو الأثر القانوني لوفاته على استمرار الشركة ومسؤولية ورثته؟",
+      isIsomorphicTwin: true,
+      altersSurfaceContext: true,
+      testsIdenticalConcept: true,
+      correctAnswerId: "iso_a",
+      explanation_ar: "شركات الأموال تقوم على الاعتبار المالي وليس الشخصي؛ وفاة أحد المساهمين أو إفلاسه لا يؤثر إطلاقاً على قيام الشركة، وتنتقل ملكية الأسهم كورقة مالية إلى الورثة الشرعيين.",
+    },
+    repairGuide: {
+      targetErrorType: "misunderstood_concept",
+      title_ar: "دليل التمييز بين شركات الأموال وشركات الأشخاص",
+      mentalModelExplanation_ar: "الاعتقاد بأن الشريك في شركة المساهمة يكتسب صفة التاجر أو يُسأل عن ديون الشركة في أمواله الخاصة؛ هذه من خصائص شركة التضامن فقط.",
+      actionableSteps_ar: [
+        "تذكر أن شركة المساهمة شركة أموال تقوم على رأس المال لا على الاعتبار الشخصي.",
+        "المسؤولية محدودة دائماً بقدر الحصص (قيمة الأسهم).",
+        "وفاة الشريك أو إفلاسه لا يحل الشركة وتنتقل الأسهم للورثة.",
+      ],
+    },
+    visualNecessity: "VISUAL_NOT_NEEDED",
+    visualAssetIds: [],
+    externalResourceIds: ["res_algerian_labor_law_90_11"],
+    examTransfer: {
+      status: "AVAILABLE",
+      bacTypologyNotes_ar: "سؤال متكرر في الجزء النظري والتطبيقي لموضوع القانون في البكالوريا.",
+      commonPitfalls_ar: ["الخلط بين رأس المال في حالة الاكتتاب العام والخاص"],
+      officialBacPastRefIds: ["BAC_GE_2021_Droit_Sujet1"],
+    },
+    motivationSupport: {
+      status: "NORMALIZED",
+      microNormalizeText_ar: "أحكام الشركات التجارية في القانون واضحة ومحددة بمواد تشريعية ثابتة.",
+      nextBestActionHint_ar: "انتقل إلى استهلاك القروض في الرياضيات المالية.",
+    },
+    provenance: {
+      sourceId: "src-decree-07-142",
+      sourceTitle: "القانون التجاري الجزائري - الشركات التجارية",
+      classification: "OFFICIAL_HISTORICAL",
+      rightsStatus: "official_reference",
+      lastAuditedAt: "2026-09-12",
+    },
+    lifecycleState: "PUBLISHED",
+  },
+
+  math_fin_loan_amortization_annuity: {
+    packageId: "pkg_math_fin_loan_amortization_annuity",
+    streamId: "gestion_eco",
+    subjectId: "math",
+    topicId: "math_topic_statistiques_regression",
+    skillId: "math_fin_loan_amortization_annuity",
+    objective_ar: "استهلاك القروض العادية ذات الدفعات السنوية الثابتة",
+    objective_fr: "Amortissement des emprunts indivis à annuités constantes.",
+    prerequisites: ["math_two_variable_statistics_regression"],
+    lesson: {
+      title_ar: "استهلاك القروض العادية ذات الدفعات السنوية الثابتة",
+      contentMarkdown_ar: `### استهلاك القروض العادية على أقساط ثابتة
+استهلاك القروض المصرفية بواسطة دفعات متساوية وثابتة سنوية ($a$) يشتمل كل قسط منها على جزأين: الفائدة المستحقة ($I_p$) واستهلاك أصل القرض ($A_p$). تتزايد الاستهلاكات بمتتالية هندسية أساسها $(1 + i)$ بينما تتناقص الفوائد مع تناقص أصل الدين المتبقي.
+
+### العلاقات الرياضية الأساسية:
+- علاقة القسط بالاستهلاك والفائدة: $a = A_p + I_p = A_p + V_{p-1} \\cdot i$.
+- العلاقة بين الاستهلاكات المتعاقبة: $A_{p+1} = A_p \\cdot (1 + i)$، وبوجه عام: $A_p = A_1 \\cdot (1 + i)^{p-1}$.
+- قيمة أصل القرض بدلالة الاستهلاك الأول: $V_0 = A_1 \\cdot \\frac{(1 + i)^n - 1}{i}$.
+- قيمة الدفعة الثابتة السنوية: $a = V_0 \\cdot \\frac{i}{1 - (1 + i)^{-n}}$.`,
+      keyTakeaway_ar: "الدفعة السنوية a ثابتة، بينما الاستهلاكات Ap تتزايد بمتتالية هندسية أساسها (1+i) والفوائد تتناقص.",
+    },
+    workedExample: {
+      problem_ar: "اقترضت مؤسسة قرضاً عادياً يُسدد بواسطة 4 دفعات سنوية ثابتة بمعدل فائدة سنوي مركّب 10% ($i = 0.10$). إذا كان الاستهلاك الأول $A_1 = 50,000$ دج، فما هي قيمة الاستهلاك الثاني $A_2$ وقيمة الاستهلاك الرابع $A_4$؟",
+      stepByStepSolution_ar: [
+        "حساب الاستهلاك الثاني: A₂ = A₁ · (1 + i) = 50,000 × 1.10 = 55,000 دج.",
+        "حساب الاستهلاك الرابع: A₄ = A₁ · (1 + i)³ = 50,000 × (1.10)³ = 50,000 × 1.331 = 66,550 دج.",
+      ],
+      pedagogicalComment_ar: "الاستهلاك يتزايد بمتتالية هندسية أساسها (1+i).",
+    },
+    activeRecall: {
+      prompt_ar: "ما هي المتتالية التي تتبعها الاستهلاكات السنوية (A_p) في القرض العادي؟",
+      expectedAnswer_ar: "متتالية هندسية أساسها (1 + i).",
+      concealedInitially: true,
+    },
+    practice: [
+      {
+        id: "pq_math_loan_01",
+        prompt_ar: "اقترضت مؤسسة قرضاً عادياً يُسدد بواسطة 4 دفعات سنوية ثابتة بمعدل فائدة سنوي مركّب 10% ($i = 0.10$). إذا كان الاستهلاك الأول $A_1 = 50,000$ دج، فما هي قيمة الاستهلاك الثاني $A_2$ وقيمة الاستهلاك الرابع $A_4$؟",
+        optionsCount: 4,
+        correctAnswerId: "opt_a",
+        explanation_ar: "1) حساب A₂: A₂ = A₁ · (1 + i) = 50,000 × 1.10 = 55,000 دج.\n2) حساب A₄: A₄ = A₁ · (1 + i)³ = 50,000 × (1.10)³ = 50,000 × 1.331 = 66,550 دج.",
+        distractorErrorMappings: {
+          opt_b: "misunderstood_concept",
+          opt_c: "calculation_error",
+          opt_d: "methodology_error",
+        },
+      },
+    ],
+    retest: {
+      id: "rq_math_loan_twin",
+      parentPracticeQuestionId: "pq_math_loan_01",
+      prompt_ar: "[إعادة اختبار] قرض عادي يُسدد على دفعات سنوية ثابتة بمعدل فائدة $i = 8\\%$. إذا علمت أن الفرق بين الاستهلاك الثالث والاستهلاك الثاني هو: $A_3 - A_2 = 4,000$ دج، فما هي قيمة الاستهلاك الثاني $A_2$؟",
+      isIsomorphicTwin: true,
+      altersSurfaceContext: true,
+      testsIdenticalConcept: true,
+      correctAnswerId: "iso_a",
+      explanation_ar: "نعلم أن: A₃ = A₂ · (1 + i) = A₂ + A₂ · i. وبالتالي: A₃ - A₂ = A₂ · i. إذن: A₂ = (A₃ - A₂) / i = 4,000 / 0.08 = 50,000 دج.",
+    },
+    repairGuide: {
+      targetErrorType: "calculation_error",
+      title_ar: "دليل حل مسائل استهلاك القروض ذات الدفعات الثابتة",
+      mentalModelExplanation_ar: "الخلط بين رمز الدفعة السنوية a ورمز الاستهلاك السنوي Ap؛ الدفعة a ثابتة بينما الاستهلاك Ap يتزايد سنوياً بمتتالية هندسية أساسها (1 + i).",
+      actionableSteps_ar: [
+        "فرق بين الدفعة السنوية a (ثابتة) والاستهلاك السنوي Ap (متزايد).",
+        "استعمل العلاقة Ap = A1 * (1 + i)^(p-1).",
+        "تذكر أن الفرق بين استهلاكين متتاليين: A(p+1) - Ap = Ap * i.",
+      ],
+    },
+    visualNecessity: "VISUAL_REQUIRED",
+    visualAssetIds: ["visual_math_nuage_points"],
+    externalResourceIds: ["res_stats_moindres_carres"],
+    examTransfer: {
+      status: "AVAILABLE",
+      bacTypologyNotes_ar: "مسألة القروض الاستثمارية تتكرر بانتظام في الجزء الثاني من موضوع الرياضيات لبكالوريا التسيير.",
+      commonPitfalls_ar: ["الخلط بين n و n-1 في الأس", "الخلط بين a و A"],
+      officialBacPastRefIds: ["BAC_GE_2022_Math_Sujet2"],
+    },
+    motivationSupport: {
+      status: "NORMALIZED",
+      microNormalizeText_ar: "قوانين الرياضيات المالية دقيقة، وبمجرد كتابة القانون الصحيح تصبح الحسابات مباشرة.",
+      nextBestActionHint_ar: "أكملت الحزم الخمس بنجاح!",
+    },
+    provenance: {
+      sourceId: "src-decree-07-142",
+      sourceTitle: "المنهاج الرسمي لمادة الرياضيات - شعبة تسيير واقتصاد",
+      classification: "OFFICIAL_HISTORICAL",
+      rightsStatus: "official_reference",
+      lastAuditedAt: "2026-09-12",
+    },
+    lifecycleState: "PUBLISHED",
+  },
 };
 
 import { GESTION_ECO_SKILLS } from "@/data/skills/gestion-economie";
@@ -426,6 +898,11 @@ import { GESTION_ECO_SKILLS } from "@/data/skills/gestion-economie";
 export function getGestionEcoContentPackage(skillId: string): ContentPackage | null {
   if (GESTION_ECO_PACKAGES[skillId]) {
     return GESTION_ECO_PACKAGES[skillId];
+  }
+
+  const aliasedId = GESTION_ECO_ALIASES[skillId];
+  if (aliasedId && GESTION_ECO_PACKAGES[aliasedId]) {
+    return GESTION_ECO_PACKAGES[aliasedId];
   }
 
   const skill = GESTION_ECO_SKILLS[skillId];

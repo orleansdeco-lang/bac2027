@@ -6,6 +6,7 @@ import { AuthProvider } from "@/lib/auth/context";
 import { ThemeProvider } from "@/lib/theme/context";
 import { ProgressProvider } from "@/lib/progress/progress-context";
 import { VisitorTracker } from "@/components/analytics/VisitorTracker";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 
 import { OrganizationJsonLd, WebSiteJsonLd } from "@/components/seo/JsonLd";
 
@@ -109,6 +110,7 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl" className="h-full bg-canvas text-theme-text" data-theme="focus">
       <body className="min-h-screen antialiased bg-canvas text-theme-text selection:bg-[var(--color-primary)] selection:text-[var(--color-primary-text)]">
+        <GoogleAnalytics />
         <OrganizationJsonLd siteUrl={siteUrl} />
         <WebSiteJsonLd siteUrl={siteUrl} />
         <ThemeProvider>

@@ -2,7 +2,7 @@
  * BAC Mastery — Natural & Life Sciences (SNV) Error Repair Guides (Sciences Expérimentales 3AS)
  * Prompt 13: Targeted 5-15 minute remediation guides mapped to Error Lab taxonomy
  * 
- * 10 Skills covered.
+ * 13 Skills covered.
  * Invariant: Content Purity (ZERO user_id).
  */
 
@@ -257,4 +257,80 @@ export const SNV_REPAIR_GUIDES: RepairGuide[] = [
     academicYear: "2024-2025",
     isActive: true,
   },
+
+  // 32. snv_photosynthesis_light_reactions
+  {
+    id: "repair_snv_photosynthesis_o2_source_atp",
+    skillId: "snv_photosynthesis_light_reactions",
+    suspectedErrorType: "misunderstood_concept",
+    title_ar: "إصلاح الخلط في مصدر الأكسجين المنطلق وشروط الفسفرة الضوئية لـ ATP",
+    whyItHappens_ar: "الاعتقاد السائد بأن O₂ ناتج عن إرجاع CO₂، أو نسيان أن تركيب ATP يتطلب تدرجاً بروتونياً حقيقياً (ΔpH) وتوفر مادتي التفاعل ADP و Pi.",
+    diagnosis_ar: "إذا كتبت في نص علمي أو تمرين أن غاز O₂ مصدره ثاني أكسيد الكربون، أو اعتبرت أن توفر الضوء وحده كافٍ لتركيب ATP دون تدرج H+.",
+    repairSteps_ar: [
+      "الخطوة 1: تذكر تجربة روبن وكامين (H₂¹⁸O): الأكسجين المشع ¹⁸O₂ ينطلق فقط عند وسم الماء، بينما وسم C¹⁸O₂ يظهر الإشعاع في الغلوكوز؛ إذن مصدر O₂ هو الماء H₂O حصراً.",
+      "الخطوة 2: اكتب معادلة الأكسدة الضوئية للماء: 2H₂O → O₂ + 4H⁺ + 4e⁻.",
+      "الخطوة 3: في الفسفرة الضوئية، تذكر أن تراكم H⁺ داخل التجويف يخلق فرقاً في التركيز (pH التجويف حمضي ≈ 4 إلى 5، بينما pH الحشوة قاعدي ≈ 8).",
+      "الخطوة 4: تدفق H⁺ عبر الكرية المذنبة نحو الحشوة هو القوة المحركة لإنزيم ATP سنتاز لدمج ADP + Pi إلى ATP؛ إلغاء هذا التدرج يلغي تصنيع ATP كلياً.",
+    ],
+    microPracticePrompt_ar: "في تجربة وضعت تيلاكوئيدات معزولة في الظلام في وسط ذي pH = 4 ثم نقلت بسرعة إلى وسط ذي pH = 8 يحتوي على ADP و Pi. هل يتشكل ATP في الظلام؟ ولماذا؟",
+    microPracticeSolution_ar: "نعم، يتشكل ATP في الظلام (تجربة ياغندورف) لأن الانتقال من pH 4 إلى pH 8 خلق تدرجاً بروتونياً اصطناعياً عبر الغشاء، فخرجت H⁺ عبر الكريات المذنبة محفزة تركيب ATP.",
+    estimatedMinutes: 8,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+
+  // 33. snv_cellular_respiration_krebs_cycle
+  {
+    id: "repair_snv_respiration_pyruvate_vs_glucose",
+    skillId: "snv_cellular_respiration_krebs_cycle",
+    suspectedErrorType: "misunderstood_concept",
+    title_ar: "إصلاح خطأ الركيزة الأيضية للمتقدرة (حمض البيروفيك مقابل الغلوكوز) ودور الأكسجين",
+    whyItHappens_ar: "الاعتقاد بأن المتقدرة تهدم الغلوكوز مباشرة كالمعادلة الإجمالية، أو الظن بأن O₂ يتحد مع الكربون لتكوين CO₂.",
+    diagnosis_ar: "إذا توقعت استهلاك الأكسجين أو إنتاج ATP عند إضافة الغلوكوز لمتقدرات معزولة، أو نسبت انطلاق CO₂ إلى السلسلة التنفسية الغشائية.",
+    repairSteps_ar: [
+      "الخطوة 1: تذكر قاعدة المقرات الخلوية: الغلوكوز جزيء كبير لا ينفذ عبر غشاء المتقدرة، والإنزيمات المشطرة له تتواجد حصراً في الهيولى الأساسية.",
+      "الخطوة 2: المتقدرة المعزولة تستهلك فقط حمض البيروفيك (Pyruvate) أو الأحماض الدهنية.",
+      "الخطوة 3: مصير الكربون: جزيئات CO₂ تطرح في الماتريس عبر تفاعلات نزع الكربوكسيل المرافقة لأكسدة حمض البيروفيك وحلقة كريبس.",
+      "الخطوة 4: مصير الأكسجين: O₂ المستهلك يعمل كمستقبل نهائي للإلكترونات والبروتونات في نهاية الغشاء الداخلي: 1/2 O₂ + 2H⁺ + 2e⁻ → H₂O.",
+    ],
+    microPracticePrompt_ar: "متقدرات معزولة في وسط هوائي أضيف لها غلوكوز فلم تستهلك O₂. اقترح إضافة تجريبية تجعلها تستهلك O₂ فوراً.",
+    microPracticeSolution_ar: "إضافة حمض البيروفيك (أو إضافة خلاصة هيولية تحوي إنزيمات التحلل السكري) لأن غشاء المتقدرة نفوذ للبيروفيك فقط.",
+    estimatedMinutes: 8,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+
+  // 34. snv_geology_earth_structure_subduction
+  {
+    id: "repair_snv_geology_peridotite_hydration",
+    skillId: "snv_geology_earth_structure_subduction",
+    suspectedErrorType: "misunderstood_concept",
+    title_ar: "إصلاح خطأ آلية انصهار البيريدوتيت وتولد الماغما في مناطق الغوص التكتوني",
+    whyItHappens_ar: "الاعتقاد بأن الصهارة البركانية ناتجة عن ذوبان الصفيحة الغاطسة بسبب ارتفاع درجة الحرارة وحدها.",
+    diagnosis_ar: "إذا ذكرت أن صخور اللوح الغاطس تذوب بالحرارة العالية وتصعد كبراكين، فأنت تقع في أشهر فخاخ الجيولوجيا بالبكالوريا.",
+    repairSteps_ar: [
+      "الخطوة 1: الصخر المنصهر هو صخر البرنس العلوي القاري (البيريدوتيت) الذي يعلو اللوح الغاطس، وليس الصفيحة الغاطسة نفسها.",
+      "الخطوة 2: في الحالة الجافة، منحنى الحرارة الأرضية لا يقطع خط انصهار البيريدوتيت (Solidus sec)، فلا يحدث أي انصهار بالحرارة وحدها.",
+      "الخطوة 3: الدور الحاسم للماء: تحول صخور اللوح الغاطس (سحنة الإيكلوجيت) يطرد الماء، فيصعد هذا الماء إلى بيريدوتيت الوشاح القاري فوق مستوي بينيوف.",
+      "الخطوة 4: إماهة البيريدوتيت تزيح منحنى التصلب (Solidus hydraté) نحو درجات حرارة منخفضة، فيقطعه منحنى الحرارة الأرضية عند عمق 100-150 كم مسبباً انصهاراً جزئياً وماغما أنديزيتية لزجة.",
+    ],
+    microPracticePrompt_ar: "ما هو الدور الفيزيوكيميائي للماء الصاعد من اللوح المحيطي الغاطس في تولد البراكين الانفجارية؟",
+    microPracticeSolution_ar: "إماهة بيريدوتيت الوشاح القاري وخفض درجة حرارة بداية انصهاره (إزاحة خط التصلب Solidus نحو اليسار) ليحدث انصهار جزئي.",
+    estimatedMinutes: 8,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
 ];
+

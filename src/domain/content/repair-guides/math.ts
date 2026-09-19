@@ -2,7 +2,7 @@
  * BAC Mastery — Mathematics Error Repair Guides (Sciences Expérimentales 3AS)
  * Prompt 13: Targeted 5-15 minute remediation guides mapped to Error Lab taxonomy
  * 
- * 10 Skills covered.
+ * 14 Skills covered.
  * Invariant: Content Purity (ZERO user_id).
  */
 
@@ -243,6 +243,109 @@ export const MATH_REPAIR_GUIDES: RepairGuide[] = [
     microPracticePrompt_ar: "إذا كان P(A ∩ B) = 0.12 و P(B) = 0.40، احسب الاحتمال الشرطي P_B(A).",
     microPracticeSolution_ar: "الشرط هو B ويكتب في المقام: P_B(A) = P(A ∩ B) / P(B) = 0.12 / 0.40 = 0.30.",
     estimatedMinutes: 8,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+
+  // 11. math_complex_numbers_polar_form
+  {
+    id: "repair_math_complex_quadrant_sign",
+    skillId: "math_complex_numbers_polar_form",
+    suspectedErrorType: "misunderstood_concept",
+    title_ar: "إصلاح خطأ تحديد ربع الدائرة المثلثية وعمدة العدد المركب",
+    whyItHappens_ar: "الاعتماد على الزاوية المرجعية α دون مراعاة إشارات x و y، مما يؤدي لوضع العدد في الربع الأول دوماً بدلاً من الربع الصحيح.",
+    diagnosis_ar: "إذا كان z = -√3 + i وكتبت θ = π/6 متجاهلاً إشارة السالب أمام الجزء الحقيقي، فهذا خطأ في تحديد ربع الدائرة المثلثية.",
+    repairSteps_ar: [
+      "الخطوة 1: اكتب إشارتي x و y بوضوح: cos(θ) من إشارة x و sin(θ) من إشارة y.",
+      "الخطوة 2: عيّن الربع المناسب على الدائرة المثلثية:",
+      "  - الربع 1 (x > 0, y > 0): θ = α",
+      "  - الربع 2 (x < 0, y > 0): θ = π - α",
+      "  - الربع 3 (x < 0, y < 0): θ = -π + α (أو π + α)",
+      "  - الربع 4 (x > 0, y < 0): θ = -α",
+      "الخطوة 3: أوجد الزاوية المرجعية الحادة α الموجبة من |cos| أو |sin|، ثم طبق قاعدة الربع.",
+    ],
+    microPracticePrompt_ar: "عيّن عمدة العدد المركب z = 1 - i√3 بتحديد إشارات الربع.",
+    microPracticeSolution_ar: "x = 1 > 0 و y = -√3 < 0 (الربع الرابع). الزاوية المرجعية α = π/3 لأن cos(π/3) = 1/2. إذن العمدة في الربع الرابع هي θ = -α = -π/3 [2π].",
+    estimatedMinutes: 8,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+
+  // 12. math_complex_polar_exponential
+  {
+    id: "repair_math_complex_exp_power",
+    skillId: "math_complex_polar_exponential",
+    suspectedErrorType: "calculation_error",
+    title_ar: "إصلاح خطأ تطبيق دستور دو موافر وتبسيط زاوية القوى الكبيرة للعدد المركب",
+    whyItHappens_ar: "يحدث الخطأ بسبب نسيان رفع الطويلة r إلى الأس n (كتابة r بدل rⁿ) أو الخطأ في اختزال وتبسيط الزاوية الكبيرة بترديد 2π (الخلط بين المضاعف الفردي والزوجي لـ π).",
+    diagnosis_ar: "إذا رفعت z إلى قوة 2026 وأبقيت الطويلة 2 دون رفعها إلى 2026، أو اختزلت 4052π/3 إلى زاوية خاطئة دون تفكيكها إلى مضاعفات 2π، فأنت تعاني من خطأ حسابي في تطبيق دو موافر.",
+    repairSteps_ar: [
+      "الخطوة 1: عند حساب zⁿ = (r · e^(iθ))ⁿ، ارفع الطويلة أولاً كحد مستقل: rⁿ.",
+      "الخطوة 2: اضرب العمدة في الأس: n · θ واحصل على الزاوية الكلية.",
+      "الخطوة 3: لقسمة الزاوية nθ على 2π، أجرِ القسمة الإقليدية لبسط الزاوية على مضاعف المقام: قسّم 4052 على 3 لتجد 1350π + 2π/3 = 675(2π) + 2π/3.",
+      "الخطوة 4: بما أن 675(2π) مضاعف زوجي، يتم حذفه وتبقى الزاوية الرئيسية 2π/3.",
+    ],
+    microPracticePrompt_ar: "إذا كان z = 2 e^(i π/3)، احسب الشكل الأسي للعدد z⁶.",
+    microPracticeSolution_ar: "الطويلة هي 2⁶ = 64، والزاوية هي 6 × (π/3) = 2π ≡ 0 [2π]. إذن: z⁶ = 64 e^(i 0) = 64.",
+    estimatedMinutes: 10,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+
+  // 13. math_space_geometry_plane_line
+  {
+    id: "repair_math_space_plane_intersection",
+    skillId: "math_space_geometry_plane_line",
+    suspectedErrorType: "methodology_error",
+    title_ar: "إصلاح منهجية إيجاد نقطة تقاطع مستقيم ومستوٍ في الفضاء",
+    whyItHappens_ar: "يحدث الخلل عند محاولة حل جملة معادلات مباشرة دون استغلال التمثيل الوسيطي، أو الخلط بين الشعاع الناظمي للمستوي وشعاع توجيه المستقيم، أو التعويض الخاطئ للوسيط t.",
+    diagnosis_ar: "إذا لم تستطع إيجاد نقطة التقاطع، أو حاولت مساواة المعادلات الديكارتية دون تعويض العبارات الوسيطية (x(t), y(t), z(t)) في معادلة المستوي لحساب t أولاً، فهذا خطأ منهجي.",
+    repairSteps_ar: [
+      "الخطوة 1: اكتب التمثيل الوسيطي للمستقيم (D) بوضوح: x = x₀ + αt, y = y₀ + βt, z = z₀ + γt.",
+      "الخطوة 2: عوّض هذه العبارات الثلاث بدلالة t مباشرة في معادلة المستوي (P): ax(t) + by(t) + cz(t) + d = 0.",
+      "الخطوة 3: انشر وبسّط المعادلة ذات المجهول الوحيد t واستخرج قيمته.",
+      "الخطوة 4: عوّض قيمة t المحسوبة في التمثيل الوسيطي للمستقيم لاستنتاج إحداثيات نقطة التقاطع وتحقق بتعويضها في معادلة المستوي.",
+    ],
+    microPracticePrompt_ar: "إذا كان المستوي (P): x + y + z - 6 = 0 والمستقيم (D): x = t, y = t, z = t. ما هي نقطة التقاطع؟",
+    microPracticeSolution_ar: "نعوض في المستوي: t + t + t - 6 = 0 => 3t = 6 => t = 2. نعوض في المستقيم: x=2, y=2, z=2. إذن نقطة التقاطع هي (2, 2, 2).",
+    estimatedMinutes: 10,
+    sourceId: "src-bac-mastery-pedagogy",
+    sourceType: "original_bac_mastery",
+    rightsStatus: "original",
+    verificationStatus: "verified",
+    academicYear: "2024-2025",
+    isActive: true,
+  },
+
+  // 14. math_integration_by_parts_area
+  {
+    id: "repair_math_integration_by_parts_choice",
+    skillId: "math_integration_by_parts_area",
+    suspectedErrorType: "methodology_error",
+    title_ar: "إصلاح منهجية اختيار الدوال في المكاملة بالتجزئة وحساب المساحات",
+    whyItHappens_ar: "الخلط في أولوية اختيار الدالة المشتقة v'(x) والدالة الأصلية u(x)، أو نسيان التحقق من إشارة الفرق f(x) - g(x) عند حساب المساحة مما يؤدي إلى نتائج سالبة غير مقبولة هندسياً.",
+    diagnosis_ar: "إذا وضعت u(x) = x و v'(x) = ln(x) مما عقّد التكامل وجعلك تبحث عن أصلية ln(x)، أو وجدت مساحة سالبة دون إشارة القيمة المطلقة، فلديك خلل منهجي في التكامل بالتجزئة.",
+    repairSteps_ar: [
+      "الخطوة 1: طبق قاعدة الأولويات ALPES لاختيار u(x) التي تُشتق: اللوغاريثم (L) يسبق كثيرات الحدود (P) التي تسبق الأسية (E). في تكامل x·ln(x)، الأولوية للوغاريثم: u(x) = ln(x).",
+      "الخطوة 2: ضع v'(x) للدالة المتبقية واحسب دالتها الأصلية v(x): v'(x) = x => v(x) = x²/2.",
+      "الخطوة 3: طبق الصيغة بدقة: [u·v] - ∫ u'·v مع الانتباه لإشارة الناقص أمام التكامل الثاني.",
+      "الخطوة 4: في حساب المساحات، حدد دائماً وضعية المنحنيين: إذا كان (C_f) فوق (C_g) فإن المساحة A = ∫ (f - g) dx، وإذا كان تحته فنعكس الإشارة لضمان موجبية المساحة.",
+    ],
+    microPracticePrompt_ar: "في التكامل I = ∫ x · e^x dx، ما هو الاختيار المنهجي السليم للدالتين u(x) و v'(x)؟",
+    microPracticeSolution_ar: "حسب أولوية ALPES: كثير الحدود يسبق الأسي، نختار u(x) = x (لتبسيطه بالاشتقاق u'=1) و v'(x) = e^x (لأن أصليته بسيطة v=e^x). فيكون I = [x e^x] - ∫ e^x dx.",
+    estimatedMinutes: 10,
     sourceId: "src-bac-mastery-pedagogy",
     sourceType: "original_bac_mastery",
     rightsStatus: "original",

@@ -1,7 +1,7 @@
 /**
  * BAC Mastery - Curriculum Skills Catalog
  * Stream: Sciences Expérimentales (3AS)
- * Total: 31 Skills across 3 Core Subjects (10 Math, 11 Physics, 10 SNV)
+ * Total: 41 Skills across 3 Core Subjects (14 Math, 14 Physics, 13 SNV)
  */
 
 import { CanonicalSkill } from "@/domain/contracts/canonical-skill.contract";
@@ -9,7 +9,7 @@ import { CurriculumSkill } from "@/types/content";
 
 export const CANONICAL_SCIENCES_EXP_SKILLS: Record<string, CanonicalSkill & CurriculumSkill> = {
   // ===========================================================================
-  // MATHEMATICS SKILLS (10 Skills)
+  // MATHEMATICS SKILLS (14 Skills)
   // ===========================================================================
   math_derivatives_chain_rule: {
     id: "math_derivatives_chain_rule",
@@ -321,8 +321,128 @@ export const CANONICAL_SCIENCES_EXP_SKILLS: Record<string, CanonicalSkill & Curr
     ],
   },
 
+  math_complex_numbers_polar_form: {
+    id: "math_complex_numbers_polar_form",
+    topicId: "math_topic_complex_numbers",
+    subjectId: "math",
+    streamId: "sciences_exp",
+    title_ar: "الشكل المثلثي والشكل الأسي لعدد مركب",
+    title_fr: "Formes trigonométrique et exponentielle d'un nombre complexe",
+    description_ar: "طريقة حساب الطويلة وعمدة عدد مركب وكتابته بالصيغتين المثلثية والأسية مع تطبيقات دستور دو موافر.",
+    description_fr: "Calcul du module et de l'argument d'un nombre complexe, formes trigonométrique et exponentielle.",
+    prerequisites: [],
+    cognitiveDimensions: ["knowledge", "application"],
+    dimensions: ["knowledge", "application"],
+    difficulty: 2,
+    order: 11,
+    isActive: true,
+    repairStrategy_ar: "تحديد إشارتي الجزء الحقيقي والتخيلي لتعيين ربع الدائرة المثلثية بدقة وتفادي خطأ زاوية العمدة.",
+    repairStrategy_fr: "Identifier les signes de Re(z) et Im(z) pour positionner correctement l'argument dans le cercle trigonométrique.",
+    repairSteps_ar: [
+      "احسب طويلة العدد المركب: r = √(x² + y²).",
+      "احسب cos(θ) = x/r و sin(θ) = y/r مع مراعاة إشارة الربع.",
+      "حدد الزاوية المرجعية α ثم استنتج العمدة الرئيسية θ في المجال ]-π, π].",
+      "اكتب العدد بالصيغة الأسية: z = r · e^(iθ).",
+    ],
+    repairSteps_fr: [
+      "Calculer le module r = √(x² + y²).",
+      "Déterminer cos(θ) = x/r et sin(θ) = y/r.",
+      "Identifier l'angle de référence et en déduire l'argument principal θ.",
+      "Écrire la forme exponentielle : z = r · e^(iθ).",
+    ],
+  },
+
+  math_complex_polar_exponential: {
+    id: "math_complex_polar_exponential",
+    topicId: "math_topic_complex_numbers",
+    subjectId: "math",
+    streamId: "sciences_exp",
+    title_ar: "الأعداد المركبة: الشكل الأسي ودستور دو موافر",
+    title_fr: "Nombres complexes : forme exponentielle et formule de Moivre",
+    description_ar: "طريقة كتابة عدد مركب على الشكل الأسي وحساب قوى الأعداد المركبة بتطبيق دستور دو موافر.",
+    description_fr: "Forme exponentielle d'un nombre complexe et calcul des puissances via la formule de Moivre.",
+    prerequisites: ["math_complex_numbers_polar_form"],
+    cognitiveDimensions: ["knowledge", "application"],
+    dimensions: ["knowledge", "application"],
+    difficulty: 2,
+    order: 12,
+    isActive: true,
+    repairStrategy_ar: "تطبيق دستور دو موافر برفع الطويلة إلى الأس n وضرب العمدة في n ثم تبسيط الزاوية بترديد 2π.",
+    repairStrategy_fr: "Appliquer la formule de Moivre : r^n et n*θ puis simplifier l'argument modulo 2π.",
+    repairSteps_ar: [
+      "اكتب العدد المركب z على الشكل الأسي: z = r · e^(iθ).",
+      "طبق دستور دو موافر لحساب z^n: [r · e^(iθ)]^n = r^n · e^(i nθ).",
+      "احسب r^n، ثم بسط الزاوية nθ بالقسمة الإقليدية على 2π لاستخراج الدورات الكاملة وكتابة العمدة في المجال ]-π, π].",
+    ],
+    repairSteps_fr: [
+      "Écrire z sous forme exponentielle z = r·e^(iθ).",
+      "Appliquer la formule de Moivre : z^n = r^n · e^(i nθ).",
+      "Réduire l'angle nθ modulo 2π pour obtenir l'argument principal.",
+    ],
+  },
+
+  math_space_geometry_plane_line: {
+    id: "math_space_geometry_plane_line",
+    topicId: "math_topic_space_geometry",
+    subjectId: "math",
+    streamId: "sciences_exp",
+    title_ar: "الهندسة في الفضاء: معادلة المستوي والتمثيل الوسيطي لمستقيم",
+    title_fr: "Géométrie dans l'espace : équation de plan et représentation paramétrique",
+    description_ar: "تعيين معادلة ديكارتية لمستوٍ معرف بنقطة وشعاع ناظمي، وكتابة التمثيل الوسيطي لمستقيم وحساب نقطة التقاطع بينهما.",
+    description_fr: "Équation cartésienne de plan, représentation paramétrique de droite et intersection.",
+    prerequisites: [],
+    cognitiveDimensions: ["understanding", "application"],
+    dimensions: ["understanding", "application"],
+    difficulty: 2,
+    order: 13,
+    isActive: true,
+    repairStrategy_ar: "التمييز الصارم بين الشعاع الناظمي للمستوي وشعاع التوجيه للمستقيم، وتعويض التمثيل الوسيطي في معادلة المستوي.",
+    repairStrategy_fr: "Distinguer vecteur normal au plan et vecteur directeur de la droite, puis résoudre le système d'intersection.",
+    repairSteps_ar: [
+      "لمعادلة المستوي الناظمي له n(a,b,c): اكتب ax + by + cz + d = 0 وعوض إحداثيات النقطة لإيجاد d.",
+      "للتمثيل الوسيطي للمستقيم المار بـ A والموجه بـ u(α,β,γ): اكتب x = xA + αt, y = yA + βt, z = zA + γt مع t ∈ ℝ.",
+      "لتقاطع المستقيم مع المستوي: عوض عبارات x(t), y(t), z(t) في معادلة المستوي لحساب الوسيط t ثم استنتج إحداثيات نقطة التقاطع.",
+    ],
+    repairSteps_fr: [
+      "Écrire l'équation du plan ax + by + cz + d = 0 et déterminer d avec un point.",
+      "Écrire la représentation paramétrique de la droite avec le vecteur directeur.",
+      "Substituer les coordonnées paramétriques dans l'équation du plan pour trouver le paramètre t.",
+    ],
+  },
+
+  math_integration_by_parts_area: {
+    id: "math_integration_by_parts_area",
+    topicId: "math_topic_integration",
+    subjectId: "math",
+    streamId: "sciences_exp",
+    title_ar: "الحساب التكاملي: المكاملة بالتجزئة وحساب المساحات",
+    title_fr: "Calcul intégral : intégration par parties et calcul d'aires",
+    description_ar: "قاعدة المكاملة بالتجزئة وحساب مساحة الحيز المستوي المحصور بين منحنيين.",
+    description_fr: "Intégration par parties et calcul d'aires de domaines plans entre deux courbes.",
+    prerequisites: [],
+    cognitiveDimensions: ["application", "methodology"],
+    dimensions: ["application", "methodology"],
+    difficulty: 2,
+    order: 14,
+    isActive: true,
+    repairStrategy_ar: "ترتيب اختيار الدالة u(x) حسب أولوية الدوال (ALPES) وتحديد الوضع النسبي للمنحنيين لضمان موجبية المساحة.",
+    repairStrategy_fr: "Choix méthodique de u(x) et vérification de la position relative pour garantir la positivité de l'aire.",
+    repairSteps_ar: [
+      "اختر u(x) و v'(x) بعناية (تفضيل ln ثم كثيرات الحدود ثم الدوال الأسية).",
+      "احسب المشتقة u'(x) والدالة الأصلية v(x).",
+      "طبق القانون: ∫ u·v' = [u·v] - ∫ u'·v.",
+      "لحساب المساحة: تحقق من أن f(x) ≥ g(x) على [a, b] واكتب A = ∫ (f(x) - g(x)) dx.",
+    ],
+    repairSteps_fr: [
+      "Choisir u et v' selon la règle de priorité.",
+      "Calculer u' et v.",
+      "Appliquer la formule d'intégration par parties.",
+      "Calculer l'aire en intégrant la différence f(x) - g(x) ≥ 0.",
+    ],
+  },
+
   // ===========================================================================
-  // PHYSICS & CHEMISTRY SKILLS (11 Skills)
+  // PHYSICS & CHEMISTRY SKILLS (14 Skills)
   // ===========================================================================
   physics_reaction_rate_monitoring: {
     id: "physics_reaction_rate_monitoring",
@@ -665,8 +785,107 @@ export const CANONICAL_SCIENCES_EXP_SKILLS: Record<string, CanonicalSkill & Curr
     ],
   },
 
+  phys_rlc_electrical_oscillations: {
+    id: "phys_rlc_electrical_oscillations",
+    topicId: "physics_topic_circuits",
+    subjectId: "physics",
+    streamId: "sciences_exp",
+    title_ar: "الاهتزازات الكهربائية الحرة: دارة RLC والتفريغ المتخامد وغير المتخامد",
+    title_fr: "Oscillations électriques libres : circuit RLC, amortissement et régime pseudo-périodique",
+    description_ar: "دراسة تفريغ مكثفة في وشيعة ومقاومة، المعادلة التفاضلية للتوتر u_C(t)، التمييز بين الأنظمة الاهتزازية، وحساب الدور الذاتي T_0 = 2π√(LC).",
+    description_fr: "Décharge oscillante dans un circuit RLC, équation différentielle, régimes d'amortissement et période propre T0 = 2pi*sqrt(LC).",
+    prerequisites: [],
+    cognitiveDimensions: ["application", "understanding"],
+    dimensions: ["application", "understanding"],
+    difficulty: 2,
+    order: 12,
+    isActive: true,
+    repairStrategy_ar: "التمييز بين شبه الدور T في الدارة المتخامدة والدور الذاتي T_0 = 2π√(LC) للدارة المثالية، واستخدام i = C·(du_C/dt).",
+    repairStrategy_fr: "Distinguer pseudo-période T et période propre T0 = 2pi*sqrt(LC), et appliquer i = C·du_C/dt.",
+    repairSteps_ar: [
+      "طبق قانون جمع التوترات: u_C + u_L + u_R = 0.",
+      "عوض التوترات: u_L = L(di/dt) + ri و u_R = Ri مع i = C(du_C/dt).",
+      "اكتب المعادلة التفاضلية: d²u_C/dt² + ((R+r)/L)(du_C/dt) + (1/(LC))u_C = 0.",
+      "في الدارة المثالية LC (R+r=0): الحل جيبي ودوره الذاتي T_0 = 2π√(LC).",
+      "حدد النظام الاهتزازي: شبه دوري (مقاومة ضعيفة)، حرج (أسرع عودة للصفر دون اهتزاز)، أو لا دوري (مقاومة كبيرة).",
+    ],
+    repairSteps_fr: [
+      "Appliquer la loi des mailles au circuit RLC.",
+      "Injecter les relations de tension et courant i = C·du_C/dt.",
+      "Établir l'équation différentielle du second ordre.",
+      "Déterminer la période propre T0 = 2pi*sqrt(LC) en régime non amorti.",
+      "Identifier les régimes pseudo-périodique, critique et apériodique selon la résistance.",
+    ],
+  },
+
+  phys_mechanical_oscillations_spring: {
+    id: "phys_mechanical_oscillations_spring",
+    topicId: "physics_topic_mechanics",
+    subjectId: "physics",
+    streamId: "sciences_exp",
+    title_ar: "الاهتزازات الميكانيكية: النواس المرن وتطبيق القانون الثاني لنيوتن",
+    title_fr: "Oscillations mécaniques : pendule élastique horizontal et 2e loi de Newton",
+    description_ar: "تحليل حركة جسم صلب معلق بنابض، المعادلة التفاضلية للحركة، الدور الذاتي T_0 = 2π√(m/k)، وانحفاظ الطاقة الميكانيكية.",
+    description_fr: "Étude du pendule élastique, force de rappel T = -kx, équation différentielle, période propre T0 = 2pi*sqrt(m/k) et énergie mécanique.",
+    prerequisites: [],
+    cognitiveDimensions: ["application", "understanding"],
+    dimensions: ["application", "understanding"],
+    difficulty: 2,
+    order: 13,
+    isActive: true,
+    repairStrategy_ar: "كتابة قوة الإرجاع بإشارة سالبة T_x = -kx، وحساب الدور T_0 = 2π√(m/k)، واستغلال انحفاظ الطاقة E = (1/2)mv² + (1/2)kx².",
+    repairStrategy_fr: "Projeter la force de rappel T = -kx, déduire T0 = 2pi*sqrt(m/k) et appliquer la conservation de l'énergie mécanique.",
+    repairSteps_ar: [
+      "حدد الجملة (جسم صلب) والمرجع السطحي الأرضي العطالي.",
+      "أحصِ القوى: الثقل P، رد الفعل R، وقوة توتر النابض T⃗ = -k·x·i⃗.",
+      "طبق القانون الثاني لنيوتن: ΣF⃗ = m·a⃗ وبالإسقاط: -kx = m·(d²x/dt²).",
+      "رتب المعادلة التفاضلية: d²x/dt² + (k/m)x = 0 واستنتج النبض ω₀ = √(k/m) والدور T₀ = 2π√(m/k).",
+      "عند موضع التوازن x=0: طاقة المرونة E_pe = 0 والطاقة الحركية عظمى E_c = E_total.",
+    ],
+    repairSteps_fr: [
+      "Définir le système et le référentiel galiléen.",
+      "Faire le bilan des forces avec la force de rappel vectorielle.",
+      "Projeter la 2e loi de Newton sur l'axe du mouvement horizontal.",
+      "Établir l'équation différentielle harmonique et exprimer la période propre.",
+      "Analyser les transferts d'énergie cinétique et potentielle élastique.",
+    ],
+  },
+
+  phys_esterification_hydrolysis_equilibrium: {
+    id: "phys_esterification_hydrolysis_equilibrium",
+    topicId: "physics_topic_esterification",
+    subjectId: "physics",
+    streamId: "sciences_exp",
+    title_ar: "الكيمياء العضوية: تفاعلات الأسترة والإماهة، المردود ومراقبة السرعة",
+    title_fr: "Chimie organique : réactions d'estérification et hydrolyse, constante K et contrôle cinétique",
+    description_ar: "كتابة معادلة الأسترة والإماهة، حساب كسر التوازن وثابت التوازن K، مراقبة المردود، واستبدال الحمض بكلور الأسيل لتفاعل تام.",
+    description_fr: "Équilibre d'estérification, calcul de la constante d'équilibre K, contrôle du rendement et utilisation des chlorures d'acyle.",
+    prerequisites: [],
+    cognitiveDimensions: ["application", "understanding"],
+    dimensions: ["application", "understanding"],
+    difficulty: 2,
+    order: 14,
+    isActive: true,
+    repairStrategy_ar: "إدراج كمية الماء في كسر التوازن K للأسترة، والتمييز بين العوامل الحركية وإزاحة التوازن، واستعمال كلور الأسيل لمردود 100%.",
+    repairStrategy_fr: "Maintenir l'eau dans l'expression de K, distinguer facteurs cinétiques et déplacement d'équilibre, et exploiter les dérivés d'acides.",
+    repairSteps_ar: [
+      "اكتب معادلة الأسترة: R-COOH + R'-OH ⇌ R-COO-R' + H₂O.",
+      "أنشئ جدول التقدم واحسب كميات المادة عند التوازن: n(إستر) = n(ماء) = x_f.",
+      "اكتب عبارة ثابت التوازن: K = (n_ester · n_eau) / (n_acide · n_alcool) (تختزل الحجوم).",
+      "لتسريع التفاعل فقط: ارفع درجة الحرارة أو أضف قطرات H₂SO₄ كوسيط (دون تغيير K أو المردود).",
+      "لتحسين المردود وجعله تاماً (100%): استبدل الحمض الكربوكسيلي بكلور الأسيل الموافق (R-COCl).",
+    ],
+    repairSteps_fr: [
+      "Établir l'équation bilan de la réaction d'estérification.",
+      "Dresser le tableau d'avancement molaire à l'équilibre.",
+      "Calculer la constante d'équilibre K en conservant le terme de l'eau.",
+      "Distinguer l'effet cinétique de la température et du catalyseur.",
+      "Exploiter les chlorures d'acyle pour obtenir une estérification totale et rapide.",
+    ],
+  },
+
   // ===========================================================================
-  // NATURAL SCIENCES SKILLS (10 Skills)
+  // NATURAL SCIENCES SKILLS (13 Skills)
   // ===========================================================================
   snv_protein_synthesis: {
     id: "snv_protein_synthesis",
@@ -975,6 +1194,99 @@ export const CANONICAL_SCIENCES_EXP_SKILLS: Record<string, CanonicalSkill & Curr
       "Décomposer l'analyse par intervalles significatifs avec données chiffrées.",
       "Articuler l'interprétation biologique causale.",
       "Formuler une déduction précise répondant au problème biologique posé.",
+    ],
+  },
+
+  snv_photosynthesis_light_reactions: {
+    id: "snv_photosynthesis_light_reactions",
+    topicId: "snv_topic_photosynthesis",
+    subjectId: "natural_sciences",
+    streamId: "sciences_exp",
+    title_ar: "التركيب الضوئي: تفاعلات المرحلة الكيموضوئية على مستوى غشاء التيلاكوئيد",
+    title_fr: "Photosynthèse : phase photochimique dans la membrane du thylakoïde",
+    description_ar: "امتصاص الفوتونات، الأكسدة الضوئية للماء، انتقال الإلكترونات في السلسلة التركيبية، الفسفرة الضوئية لـ ADP وتشكيل NADPH,H+ و ATP.",
+    description_fr: "Absorption photonique, photolyse de l'eau, chaîne de transporteurs d'électrons, gradient de protons et photophosphorylation de l'ADP.",
+    prerequisites: [],
+    cognitiveDimensions: ["knowledge", "understanding", "application"],
+    dimensions: ["knowledge", "understanding", "application"],
+    difficulty: 2,
+    order: 11,
+    isActive: true,
+    repairStrategy_ar: "التمييز بين مصدر O2 (الماء H2O وليس CO2)، وربط الفسفرة الضوئية بالتدرج البروتوني (ΔpH) وتوفر ADP + Pi.",
+    repairStrategy_fr: "Démontrer que le dioxygène provient de l'eau et associer la synthèse d'ATP au gradient de protons transmembranaire.",
+    repairSteps_ar: [
+      "حدد المقر البنيوي للمرحلة الكيموضوئية: غشاء التيلاكوئيد المحتوي على الأنظمة الضوئية ونواقل الإلكترونات والكرية المذنبة.",
+      "اكتب معادلة التحلل الضوئي للماء داخل التجويف: 2H₂O → O₂ + 4H⁺ + 4e⁻ (مصدر O₂ هو أكسدة H₂O حصراً).",
+      "تتبع سريان الإلكترونات وفق تزايد كمون الأكسدة والإرجاع من PSII إلى PSI وصولاً إلى المستقبل الأخير +NADP لإرجاعه إلى NADPH,H+.",
+      "علل الفسفرة الضوئية: تراكم H⁺ داخل التجويف يولد تدرجاً بروتونياً (ΔpH) محفزاً خروجها عبر الكرية المذنبة لربط ADP + Pi إلى ATP.",
+    ],
+    repairSteps_fr: [
+      "Localiser la phase photochimique dans la membrane des thylakoïdes.",
+      "Établir l'équation de la photolyse de l'eau dans le lumen.",
+      "Suivre le transfert des électrons selon les potentiels redox croissants jusqu'au NADP+.",
+      "Expliquer la synthèse d'ATP par la force protomotrice au niveau de l'ATP synthase.",
+    ],
+  },
+
+  snv_cellular_respiration_krebs_cycle: {
+    id: "snv_cellular_respiration_krebs_cycle",
+    topicId: "snv_topic_respiration",
+    subjectId: "natural_sciences",
+    streamId: "sciences_exp",
+    title_ar: "التنفس الخلوي: التحلل السكري، أكسدة حمض البيروفيك وحلقة كريبس في المتقدرة",
+    title_fr: "Respiration cellulaire : glycolyse, cycle de Krebs et phosphorylation oxydative",
+    description_ar: "مراحل الهدم الكلي للغلوكوز: التحلل السكري في الهيولى، أكسدة حمض البيروفيك وحلقة كريبس في الماتريس، الفسفرة التأكسدية بالسلسلة التنفسية، والمقارنة مع التخمر.",
+    description_fr: "Glycolyse cytosolique, décarboxylation oxydative du pyruvate, cycle de Krebs dans la matrice et chaîne respiratoire membranaire.",
+    prerequisites: [],
+    cognitiveDimensions: ["knowledge", "understanding", "application"],
+    dimensions: ["knowledge", "understanding", "application"],
+    difficulty: 2,
+    order: 12,
+    isActive: true,
+    repairStrategy_ar: "فهم أن المتقدرة لا تستهلك إلا حمض البيروفيك (وليس الغلوكوز)، وأن CO2 ينتج من نزع الكربوكسيل بالماتريس بينما O2 هو المستقبل النهائي للإلكترونات.",
+    repairStrategy_fr: "Comprendre l'imperméabilité mitochondriale au glucose, l'origine matricielle du CO2 et le rôle de l'O2 comme accepteur final d'électrons.",
+    repairSteps_ar: [
+      "ميز بين مقرات الهدم: التحلل السكري في الهيولى (دون O₂)، وحلقة كريبس في الماتريس، والفسفرة التأكسدية في الغشاء الداخلي للمتقدرة.",
+      "تذكر الركيزة الأيضية للمتقدرة: المتقدرة تستقبل حمض البيروفيك بنواقل نوعية ولا تستطيع هدم الغلوكوز مباشرة.",
+      "تتبع مصير الكربون: نزع الكربوكسيل التأكسدي في الماتريس يحرر 6 CO₂ لكل جزيء غلوكوز (دورتان لحلقة كريبس).",
+      "تتبع مصير الإلكترونات: تتأكسد النواقل (NADH,H⁺ و FADH₂) وتفرغ إلكتروناتها في السلسلة التنفسية وصولاً إلى O₂ ليتشكل H₂O مع تركيب 36-38 ATP.",
+    ],
+    repairSteps_fr: [
+      "Distinguer la glycolyse hyaloplasmique de la respiration mitochondriale.",
+      "Rappeler l'utilisation exclusive du pyruvate par la mitochondrie isolée.",
+      "Localiser la décarboxylation libératrice de CO2 dans la matrice.",
+      "Identifier l'O2 comme accepteur terminal d'électrons formant H2O et stimulant la phosphorylation oxydative.",
+    ],
+  },
+
+  snv_geology_earth_structure_subduction: {
+    id: "snv_geology_earth_structure_subduction",
+    topicId: "snv_topic_geology",
+    subjectId: "natural_sciences",
+    streamId: "sciences_exp",
+    title_ar: "الجيولوجيا والتكتونية العامة: بنية الأرض ونموذج الغوص التكتوني",
+    title_fr: "Tectonique globale : structure interne du globe et subduction lithosphérique",
+    description_ar: "انقطاعات موهو وغوتنبرغ ولهمان، انتشار الموجات الزلزالية P و S، الليتوسفير والأستينوسفير، وميكانيزم الغوص والنشاط البركاني الانفجاري بمستوي بينيوف.",
+    description_fr: "Discontinuités sismiques, ondes P et S, lithosphère et asthénosphère, plan de Wadati-Benioff et genèse des magmas de subduction.",
+    prerequisites: [],
+    cognitiveDimensions: ["knowledge", "understanding", "application"],
+    dimensions: ["knowledge", "understanding", "application"],
+    difficulty: 2,
+    order: 13,
+    isActive: true,
+    repairStrategy_ar: "ربط انصهار البيريدوتيت بإماهته بالماء المحرر من صخور اللوح الغاطس (خفض درجة حرارة Solidus)، وتفسير ميل بؤر الزلازل على مستوي بينيوف.",
+    repairStrategy_fr: "Expliquer la fusion partielle de la péridotite par l'hydratation abaissant le solidus, et la disposition oblique des séismes selon le plan de Benioff.",
+    repairSteps_ar: [
+      "حدد الانقطاعات الزلزالية: موهو، غوتنبرغ (2900 كم، انقطاع موجات S دليل سيولة النواة الخارجية)، ولهمان (5100 كم).",
+      "ميز بين الليتوسفير الصلب الصخري والأستينوسفير اللدن حرارياً الذي تطفو فوقه الصفائح.",
+      "فسر الغوص: غوص صفيحة محيطية باردة وأكثر كثافة تحت قارية، مع تسجيل بؤر زلزالية يزداد عمقها نحو القارة على طول مستوي بينيوف.",
+      "فسر الصهارة البركانية: تحول صخور اللوح الغاطس يحرر ماءً يصعد للبرنس القاري فيميه البيريدوتيت ويخفض خط تصلبه محدثاً انصهاراً جزئياً وماغما أنديزيتية.",
+    ],
+    repairSteps_fr: [
+      "Identifier les discontinuités (Moho, Gutenberg à 2900 km, Lehmann à 5100 km) et le comportement des ondes S.",
+      "Définir lithosphère rigide et asthénosphère ductile.",
+      "Décrire la subduction et l'approfondissement des foyers sismiques sous la marge active.",
+      "Expliquer la genèse du magma andésitique par hydratation et abaissement du solidus de la péridotite.",
     ],
   },
 };

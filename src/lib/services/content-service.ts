@@ -12,6 +12,10 @@ import {
   PROMPT11_SKILLS,
   PROMPT12_MINI_EXAMS,
   MiniExam,
+  getAllTechniqueMathSkills,
+  getAllBatch5Skills,
+  getBatch5SkillsForStream,
+  getAllBatch9Skills,
 } from "@/domain/content";
 import { Skill } from "@/domain/content/types";
 
@@ -37,28 +41,42 @@ export const ContentService = {
    * Get all canonical skills for a specific stream (eliminates cross-stream leakage)
    */
   getSkillsForStream(streamId: StreamId): Skill[] {
+    const b9List = getAllBatch9Skills();
+
     if (streamId === "sciences_exp") {
-      return PROMPT11_SKILLS;
+      return [...PROMPT11_SKILLS, ...b9List];
     }
     if (streamId === "gestion_eco") {
-      return Object.values(GESTION_ECO_SKILLS) as unknown as Skill[];
+      return [...(Object.values(GESTION_ECO_SKILLS) as unknown as Skill[]), ...b9List];
     }
     if (streamId === "lettres_philo") {
-      return Object.values(LETTRES_PHILO_SKILLS) as unknown as Skill[];
+      const base = Object.values(LETTRES_PHILO_SKILLS) as unknown as Skill[];
+      const b5 = getBatch5SkillsForStream("lettres_philo");
+      return [...base, ...b5, ...b9List];
     }
-    if (streamId === "math" || streamId === "technique_math") {
-      // Return math and physics skills strictly excluding SNV
-      return PROMPT11_SKILLS.filter(
+    if (streamId === "math") {
+      // Return math and physics skills strictly excluding SNV + Batch 9 core
+      const mathPhysics = PROMPT11_SKILLS.filter(
         (s) => s.subjectId === "math" || s.subjectId === "physics"
       );
+      return [...mathPhysics, ...b9List];
+    }
+    if (streamId === "technique_math") {
+      // Return math and physics skills + all technique math engineering skills + Batch 9 core
+      const baseMathPhysics = PROMPT11_SKILLS.filter(
+        (s) => s.subjectId === "math" || s.subjectId === "physics"
+      );
+      return [...baseMathPhysics, ...getAllTechniqueMathSkills(), ...b9List];
     }
     if (streamId === "langues_etrangeres") {
-      return Object.values(LETTRES_PHILO_SKILLS).filter((s) =>
+      const base = Object.values(LETTRES_PHILO_SKILLS).filter((s) =>
         validateContentStreamCompatibility(streamId, { skillId: s.id, subjectId: s.subjectId })
       ) as unknown as Skill[];
+      const b5 = getBatch5SkillsForStream("langues_etrangeres");
+      return [...base, ...b5, ...b9List];
     }
     // Default fallback with strict validation
-    return PROMPT11_SKILLS.filter((s) =>
+    return [...PROMPT11_SKILLS, ...b9List].filter((s) =>
       validateContentStreamCompatibility(streamId, { skillId: s.id, subjectId: s.subjectId })
     );
   },
@@ -69,7 +87,10 @@ export const ContentService = {
   getAllSkills(): Skill[] {
     const gestionList = Object.values(GESTION_ECO_SKILLS) as unknown as Skill[];
     const lettresList = Object.values(LETTRES_PHILO_SKILLS) as unknown as Skill[];
-    return [...PROMPT11_SKILLS, ...gestionList, ...lettresList];
+    const tmList = getAllTechniqueMathSkills();
+    const b5List = getAllBatch5Skills();
+    const b9List = getAllBatch9Skills();
+    return [...PROMPT11_SKILLS, ...gestionList, ...lettresList, ...tmList, ...b5List, ...b9List];
   },
 
 

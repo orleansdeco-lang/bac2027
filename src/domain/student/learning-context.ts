@@ -76,21 +76,56 @@ export function validateContentStreamCompatibility(
     ? contextOrStream.techniqueMathSpecialty
     : undefined;
 
-  // 1. If item has an explicit streamId, it must match
-  if (item.streamId && item.streamId !== streamId) {
+  // 1. If item has an explicit streamId, it must match (unless item is for all streams / common)
+  if (item.streamId && item.streamId !== streamId && item.streamId !== "all_streams" && item.streamId !== "common") {
     return false;
   }
 
   // 2. If item has a subjectId, verify the subject belongs to the stream
   if (item.subjectId) {
     const normalizedSubject = item.subjectId === "mathematics" ? "math" : item.subjectId;
-    if (!isSubjectAllowedForStream(normalizedSubject, streamId, specialty)) {
+    if (streamId === "technique_math" && !specialty) {
+      const isEngineeringSubject =
+        normalizedSubject === "civil_eng" ||
+        normalizedSubject === "mechanical_eng" ||
+        normalizedSubject === "electrical_eng" ||
+        normalizedSubject === "process_eng" ||
+        normalizedSubject === "genie_civil" ||
+        normalizedSubject === "genie_mecanique" ||
+        normalizedSubject === "genie_electrique" ||
+        normalizedSubject === "genie_des_procedes";
+      if (!isEngineeringSubject && !isSubjectAllowedForStream(normalizedSubject, streamId, specialty)) {
+        return false;
+      }
+    } else if (!isSubjectAllowedForStream(normalizedSubject, streamId, specialty)) {
       return false;
     }
   }
 
   // 3. Prevent cross-stream skill prefix leakage
   if (item.skillId) {
+    // Technique Math engineering skills (batch 04) belong EXCLUSIVELY to Technique Mathématiques
+    const isTmSkill = item.skillId.startsWith("tm_");
+    if (isTmSkill && streamId !== "technique_math") {
+      return false;
+    }
+
+    // Within Technique Math, enforce specialty isolation if specialty is set
+    if (isTmSkill && streamId === "technique_math" && specialty) {
+      if ((item.skillId.startsWith("tm_civil_") || item.skillId.startsWith("tm_gc_")) && specialty !== "civil_eng") {
+        return false;
+      }
+      if ((item.skillId.startsWith("tm_meca_") || item.skillId.startsWith("tm_gm_")) && specialty !== "mechanical_eng") {
+        return false;
+      }
+      if ((item.skillId.startsWith("tm_elec_") || item.skillId.startsWith("tm_ge_")) && specialty !== "electrical_eng") {
+        return false;
+      }
+      if ((item.skillId.startsWith("tm_proc_") || item.skillId.startsWith("tm_gp_")) && specialty !== "process_eng") {
+        return false;
+      }
+    }
+
     // Gestion & Économie specific skills (accounting, eco, law, management, and gestion-specific philosophy/french)
     const isGestionSkill =
       item.skillId.startsWith("acc_") ||
@@ -116,6 +151,31 @@ export function validateContentStreamCompatibility(
       item.skillId.startsWith("en_lp_");
 
     if (isLettresPhiloSkill && streamId !== "lettres_philo" && streamId !== "langues_etrangeres") {
+      return false;
+    }
+
+    // Third language (Spanish, German, Italian) skills belong EXCLUSIVELY to Langues Étrangères
+    const isThirdLangSkill =
+      item.skillId.startsWith("esp_") ||
+      item.skillId.startsWith("all_") ||
+      item.skillId.startsWith("ita_");
+    if (isThirdLangSkill && streamId !== "langues_etrangeres") {
+      return false;
+    }
+
+    // Advanced Philosophy skills belong to Lettres & Philosophie
+    const isAdvancedPhiloSkill =
+      item.skillId.startsWith("phil_epistemology_") ||
+      item.skillId.startsWith("phil_ethics_");
+    if (isAdvancedPhiloSkill && streamId !== "lettres_philo") {
+      return false;
+    }
+
+    // Arabic literature & rhetoric skills (Batch 05) belong to Lettres & Philo and Langues Étrangères
+    const isBatch5ArabicSkill =
+      item.skillId.startsWith("ar_poetry_") ||
+      (item.skillId.startsWith("ar_rhetoric_") && item.skillId !== "ar_rhetoric_musnad_musnad_ilayh_syntax");
+    if (isBatch5ArabicSkill && streamId !== "lettres_philo" && streamId !== "langues_etrangeres") {
       return false;
     }
 
