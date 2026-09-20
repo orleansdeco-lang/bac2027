@@ -37,7 +37,6 @@ import {
   StudentOperationalSummary,
 } from "@/lib/operations/types";
 import { opsFetch } from "@/lib/operations/client-api";
-import { AdminNotifications } from "@/components/ops/AdminNotifications";
 import { VisitorAnalyticsSummaryV2, HourlyTrafficBucket, CampaignLinkStat } from "@/lib/operations/visitors";
 
 export default function OpsOverviewPage() {
@@ -70,8 +69,10 @@ export default function OpsOverviewPage() {
   }, [selectedDateFilter]);
 
   // ─── Fetch 100% Real Live Operations Data ──────────────────────────────────
-  async function fetchRealOperationsData() {
-    setLoading(true);
+  async function fetchRealOperationsData(isBackground: boolean = false) {
+    if (!isBackground) {
+      setLoading(true);
+    }
     setActionNotice(null);
 
     // Clear any obsolete localStorage mock caches left from previous sessions
@@ -119,15 +120,17 @@ export default function OpsOverviewPage() {
     } catch (err) {
       console.error("Ops overview real fetch error:", err);
     } finally {
-      setLoading(false);
+      if (!isBackground) {
+        setLoading(false);
+      }
     }
   }
 
   useEffect(() => {
-    fetchRealOperationsData();
-    // Live update every 12 seconds
+    fetchRealOperationsData(false);
+    // Background update every 12 seconds without flickering
     const interval = setInterval(() => {
-      fetchRealOperationsData();
+      fetchRealOperationsData(true);
     }, 12000);
     return () => clearInterval(interval);
   }, [targetDateStr]);
@@ -239,7 +242,7 @@ export default function OpsOverviewPage() {
             <div className="flex items-center gap-2 mt-0.5 text-xs text-slate-400">
               <span className="inline-flex items-center gap-1.5 font-mono text-emerald-400">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping shrink-0" />
-                <span className="font-bold">{traffic?.liveVisitorsCount ?? 1} زائر متصل الآن</span>
+                <span className="font-bold">{traffic?.liveVisitorsCount ?? 0} زائر متصل الآن</span>
               </span>
               <span>•</span>
               <span className="text-[11px] font-mono">بيانات حقيقية 100% (Zero Mock)</span>
@@ -308,13 +311,10 @@ export default function OpsOverviewPage() {
             <span className="hidden sm:inline">تصدير CSV</span>
           </a>
 
-          {/* Admin Real-Time Notifications Bell */}
-          <AdminNotifications />
-
           {/* Manual Refresh */}
           <button
             type="button"
-            onClick={fetchRealOperationsData}
+            onClick={() => fetchRealOperationsData(false)}
             disabled={loading}
             className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white transition-all disabled:opacity-50"
             title="تحديث البيانات فوراً"

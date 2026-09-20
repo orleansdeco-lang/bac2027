@@ -17,6 +17,9 @@ export async function POST(req: Request) {
 
     const sessionId = body.sessionId || "ses_guest";
     const path = body.path || "/";
+    if (path.startsWith("/ops") || path.startsWith("/api")) {
+      return NextResponse.json({ success: true, ignored: true });
+    }
     const fullUrl = body.fullUrl || undefined;
     const userId = body.userId || null;
     const utmSource = body.utmSource || undefined;

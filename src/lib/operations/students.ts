@@ -22,38 +22,27 @@ function getTmpStudentsPath(): string {
   return path.join(os.tmpdir(), "bac_students.json");
 }
 
+export function isRealStudentId(id?: string): boolean {
+  if (!id) return false;
+  const lower = id.toLowerCase();
+  if (
+    lower.startsWith("test-") ||
+    lower.startsWith("test_") ||
+    lower.startsWith("mock-") ||
+    lower.startsWith("mock_") ||
+    lower.startsWith("student_")
+  ) {
+    return false;
+  }
+  return true;
+}
+
 const memoryServerStudents = new Map<string, StudentOperationalSummary>();
 
 export function loadServerStudentProfiles(): StudentOperationalSummary[] {
   if (typeof window !== "undefined") return Array.from(memoryServerStudents.values());
 
-  // 1. Check globalThis registry
-  const globalList = (globalThis as any).__BAC_STUDENTS_REGISTRY__;
-  if (Array.isArray(globalList) && globalList.length > 0) {
-    for (const item of globalList) {
-      if (item?.id && !memoryServerStudents.has(item.id)) {
-        memoryServerStudents.set(item.id, item);
-      }
-    }
-  }
-
-  // 2. Check /tmp durable storage
-  try {
-    const tmpPath = getTmpStudentsPath();
-    if (fs.existsSync(tmpPath)) {
-      const raw = fs.readFileSync(tmpPath, "utf8");
-      const list = JSON.parse(raw);
-      if (Array.isArray(list)) {
-        for (const item of list) {
-          if (item?.id && !memoryServerStudents.has(item.id)) {
-            memoryServerStudents.set(item.id, item);
-          }
-        }
-      }
-    }
-  } catch {}
-
-  // 3. Check bundled .runtime storage
+  // 1. Check bundled .runtime storage (authoritative)
   try {
     const filePath = getDurableStudentsPath();
     if (fs.existsSync(filePath)) {
@@ -61,13 +50,20 @@ export function loadServerStudentProfiles(): StudentOperationalSummary[] {
       const list = JSON.parse(raw);
       if (Array.isArray(list)) {
         for (const item of list) {
-          if (item?.id && !memoryServerStudents.has(item.id)) {
+          if (item?.id && isRealStudentId(item.id) && !memoryServerStudents.has(item.id)) {
             memoryServerStudents.set(item.id, item);
           }
         }
       }
     }
   } catch {}
+
+  // Filter out any mock/test entries from memory
+  for (const [id] of Array.from(memoryServerStudents.entries())) {
+    if (!isRealStudentId(id)) {
+      memoryServerStudents.delete(id);
+    }
+  }
 
   const all = Array.from(memoryServerStudents.values());
   (globalThis as any).__BAC_STUDENTS_REGISTRY__ = all;

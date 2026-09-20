@@ -249,12 +249,10 @@ export function getLiveVisitorsCount(windowMinutes: number = 5): number {
     const timeMs = new Date(log.timestamp).getTime();
     if (timeMs >= cutoff) {
       activeSessions.add(log.sessionId);
-    } else {
-      break;
     }
   }
 
-  return Math.max(1, activeSessions.size);
+  return activeSessions.size;
 }
 
 export function getShopifyHourlyTraffic(targetDate?: string): HourlyTrafficBucket[] {

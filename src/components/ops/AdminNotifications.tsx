@@ -48,13 +48,34 @@ function playNotificationChime() {
   } catch {}
 }
 
+const ALERTED_STORAGE_KEY = "shater_ops_alerted_notif_ids";
+
+function getAlertedIds(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = localStorage.getItem(ALERTED_STORAGE_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr)) return new Set(arr);
+    }
+  } catch {}
+  return new Set();
+}
+
+function saveAlertedIds(ids: Set<string>): void {
+  if (typeof window === "undefined") return;
+  try {
+    const arr = Array.from(ids).slice(-200); // retain last 200 IDs
+    localStorage.setItem(ALERTED_STORAGE_KEY, JSON.stringify(arr));
+  } catch {}
+}
+
 export function AdminNotifications() {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [browserNotifEnabled, setBrowserNotifEnabled] = useState(false);
-  const lastKnownIdRef = useRef<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -86,10 +107,22 @@ export function AdminNotifications() {
         setNotifications(list);
         setUnreadCount(data.unreadCount || 0);
 
-        if (!initial && list.length > 0) {
-          const newest = list[0];
-          if (lastKnownIdRef.current && newest.id !== lastKnownIdRef.current) {
-            // New alert arrived!
+        const alerted = getAlertedIds();
+
+        if (initial) {
+          // Mark all existing notifications as alerted on startup/refresh
+          list.forEach((item) => alerted.add(item.id));
+          saveAlertedIds(alerted);
+        } else if (list.length > 0) {
+          // Strictly alert for fresh events (< 3 minutes old) not yet alerted
+          const freshNewItems = list.filter((item) => {
+            if (alerted.has(item.id)) return false;
+            const diffMs = Date.now() - new Date(item.timestamp).getTime();
+            return diffMs >= 0 && diffMs < 3 * 60 * 1000;
+          });
+
+          if (freshNewItems.length > 0) {
+            const newest = freshNewItems[0];
             if (soundEnabled) {
               playNotificationChime();
             }
@@ -99,11 +132,10 @@ export function AdminNotifications() {
                 icon: "/icon.svg",
               });
             }
-          }
-        }
 
-        if (list.length > 0) {
-          lastKnownIdRef.current = list[0].id;
+            freshNewItems.forEach((item) => alerted.add(item.id));
+            saveAlertedIds(alerted);
+          }
         }
       }
     } catch {}

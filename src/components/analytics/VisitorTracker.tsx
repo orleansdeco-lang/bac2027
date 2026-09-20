@@ -4,12 +4,28 @@ import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth/context";
 
+function getOrCreateVisitorDeviceId(): string {
+  if (typeof window === "undefined") return "dev_ssr";
+  try {
+    let did = localStorage.getItem("shater_visitor_device_id");
+    if (!did) {
+      did = `dev_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      localStorage.setItem("shater_visitor_device_id", did);
+    }
+    return did;
+  } catch {
+    return `dev_fallback_${Date.now()}`;
+  }
+}
+
 function getOrCreateVisitorSessionId(): string {
   if (typeof window === "undefined") return "ses_ssr";
   try {
     let sid = sessionStorage.getItem("bac_visitor_session_id");
     if (!sid) {
-      sid = `ses_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      // Tie session to device ID if available
+      const deviceId = getOrCreateVisitorDeviceId();
+      sid = `ses_${deviceId.replace("dev_", "")}_${Date.now().toString(36)}`;
       sessionStorage.setItem("bac_visitor_session_id", sid);
     }
     return sid;
@@ -58,6 +74,11 @@ export function VisitorTracker() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
+    // STRICT INVARIANT: Never track operator/admin actions or internal API routes as public visitor traffic!
+    if (!pathname || pathname.startsWith("/ops") || pathname.startsWith("/api")) {
+      return;
+    }
+
     const fullUrl = window.location.href;
     const search = window.location.search;
     const trackingKey = `${pathname}${search}`;
@@ -66,6 +87,7 @@ export function VisitorTracker() {
     if (lastTrackedKey.current === trackingKey) return;
     lastTrackedKey.current = trackingKey;
 
+    const deviceId = getOrCreateVisitorDeviceId();
     const sessionId = getOrCreateVisitorSessionId();
     const userId = user?.id || null;
     const { utmSource, utmCampaign, utmMedium, refCode, rawQuery } = parseUrlParameters();
@@ -77,7 +99,7 @@ export function VisitorTracker() {
         path: pathname || "/",
         fullUrl,
         search,
-        sessionId,
+        sessionId: deviceId, // Use consistent device ID so a visitor is counted once per day
         userId,
         referrer: document.referrer || undefined,
         utmSource,
@@ -89,38 +111,32 @@ export function VisitorTracker() {
     }).catch(() => {});
   }, [pathname, user?.id]);
 
-  // Periodic heartbeat every 90 seconds while tab is active to keep live count 100% accurate
+  // Periodic heartbeat every 90 seconds while tab is active to keep live presence accurate
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     const interval = setInterval(() => {
-      // Only ping if document is visible
+      // Strictly ignore ops pages
+      if (!pathname || pathname.startsWith("/ops") || pathname.startsWith("/api")) return;
       if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
 
-      const sessionId = getOrCreateVisitorSessionId();
+      const deviceId = getOrCreateVisitorDeviceId();
       const userId = user?.id || null;
-      const { utmSource, utmCampaign, utmMedium, refCode, rawQuery } = parseUrlParameters();
 
       fetch("/api/telemetry/visitor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          path: window.location.pathname || "/",
-          fullUrl: window.location.href,
-          sessionId,
+          path: pathname || "/",
+          sessionId: deviceId,
           userId,
           isHeartbeat: true,
-          utmSource,
-          utmCampaign,
-          utmMedium,
-          refCode,
-          queryParams: rawQuery,
         }),
       }).catch(() => {});
-    }, 90 * 1000);
+    }, 90000);
 
     return () => clearInterval(interval);
-  }, [user?.id]);
+  }, [pathname, user?.id]);
 
   return null;
 }
