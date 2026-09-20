@@ -7,6 +7,7 @@ import { OpsSidebar } from "@/components/ops/OpsSidebar";
 import { ShieldAlert, Lock, ArrowLeft, KeyRound } from "lucide-react";
 import Link from "next/link";
 import { opsFetch } from "@/lib/operations/client-api";
+import { AdminNotifications } from "@/components/ops/AdminNotifications";
 
 function checkIsClientOwner(): boolean {
   if (typeof window === "undefined") return false;
@@ -165,6 +166,7 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="flex items-center gap-2">
+          <AdminNotifications />
           <span className="inline-flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-mono font-bold">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
             LIVE
@@ -194,6 +196,30 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto min-w-0 bg-[#080D1A] pb-24 md:pb-12">
+        {/* Desktop Top Control Bar */}
+        <div className="hidden md:flex items-center justify-between px-6 py-3 bg-[#080D1A]/90 border-b border-[#1E293B]/70 backdrop-blur-xl sticky top-0 z-30">
+          <div className="flex items-center gap-2.5">
+            <span className="inline-flex items-center gap-1.5 text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-mono font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+              نظام المراقبة والتحكم اللحظي
+            </span>
+            <span className="text-xs text-slate-400">
+              مركز إدارة منصة الشاطر | SHATER BAC
+            </span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <AdminNotifications />
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#0D1526] border border-[#1E293B] hover:border-slate-600 text-xs text-slate-300 hover:text-white transition-colors"
+            >
+              <span>تطبيق الطالب</span>
+              <ArrowLeft className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+
         {children}
       </main>
 

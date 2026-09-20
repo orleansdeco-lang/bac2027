@@ -90,6 +90,7 @@ export async function POST(req: Request) {
       fullName: body.fullName || `${body.firstName || ""} ${body.lastName || ""}`.trim() || existingServerProfile?.fullName || undefined,
       email: body.email || existingServerProfile?.email,
       studentPhone: body.studentPhone || existingServerProfile?.studentPhone,
+      parentPhone: body.parentPhone || existingServerProfile?.parentPhone,
       streamId: body.streamId || existingServerProfile?.streamId,
       wilayaName: body.wilayaName || existingServerProfile?.wilayaName,
       communeName: body.communeName || existingServerProfile?.communeName,

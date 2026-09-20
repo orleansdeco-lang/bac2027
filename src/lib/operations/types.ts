@@ -14,7 +14,7 @@ export interface UserRoleRecord {
 
 export type PaymentOrderStatus = "DRAFT" | "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
 
-export type PaymentMethod = "baridimob" | "ccp" | "manual_transfer" | "cash" | "voucher" | "other";
+export type PaymentMethod = "baridimob" | "ccp" | "manual_transfer" | "cash" | "voucher" | "other" | "cod";
 
 export type OrderType = "ONLINE" | "COD";
 
@@ -77,7 +77,8 @@ export type AuditAction =
   | "ISSUE_CREATED"
   | "ISSUE_STATUS_CHANGED"
   | "ISSUE_RESOLVED"
-  | "ISSUE_DISMISSED";
+  | "ISSUE_DISMISSED"
+  | "SYSTEM_PURGE_TEST_DATA";
 
 export type AuditTargetType =
   | "payment_order"
@@ -209,6 +210,7 @@ export interface StudentOperationalSummary {
   fullName: string;
   email?: string;
   studentPhone?: string;
+  parentPhone?: string;
   streamId?: string;
   wilayaName?: string;
   communeName?: string;

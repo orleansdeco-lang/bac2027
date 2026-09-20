@@ -101,6 +101,7 @@ export function saveServerStudentProfile(student: Partial<StudentOperationalSumm
     fullName: student.fullName || existing?.fullName || "طالب مسجل",
     email: student.email || existing?.email,
     studentPhone: student.studentPhone || existing?.studentPhone,
+    parentPhone: student.parentPhone || existing?.parentPhone,
     streamId: student.streamId || existing?.streamId || "sciences_exp",
     wilayaName: student.wilayaName || existing?.wilayaName,
     communeName: student.communeName || existing?.communeName,

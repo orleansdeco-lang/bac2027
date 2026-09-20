@@ -76,3 +76,12 @@ export {
 } from "./pack6-lettres-philo-bundle";
 export type { LettresPhiloBundlePayload } from "./pack6-lettres-philo-bundle";
 
+// Master Curriculum Central Registry (Clean Architecture)
+export {
+  MASTER_CURRICULUM_REGISTRY,
+  getAllCurriculumBundleSkills,
+  getCurriculumBundlesForStream,
+  getCurriculumBundlesForSubject,
+} from "@/data/curriculum/registry";
+
+
