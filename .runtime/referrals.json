@@ -10,5 +10,17 @@
     "qualifyingOrderId": "order_qualifying_123",
     "qualifiedAt": "2026-09-20T00:20:46.827Z",
     "rewardedAt": "2026-09-20T00:20:46.827Z"
+  },
+  {
+    "id": "ref_1789865256215_2urt7",
+    "referrerId": "student_referrer_1",
+    "referredId": "student_referred_friend_1789865256096",
+    "referralCode": "YACIN448",
+    "status": "REWARDED",
+    "rewardAmountDzd": 700,
+    "createdAt": "2026-09-20T00:47:36.215Z",
+    "qualifyingOrderId": "order_qualifying_1789865256865",
+    "qualifiedAt": "2026-09-20T00:47:36.972Z",
+    "rewardedAt": "2026-09-20T00:47:36.972Z"
   }
 ]

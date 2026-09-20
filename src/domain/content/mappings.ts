@@ -1262,6 +1262,7 @@ import { getPack2LanguagesBundle } from "./pack2-languages-french-english-bundle
 import { getPack3PhilosophyBundle } from "./pack3-philosophy-scientific-bundle";
 import { getPack4ArabicLitMathBundle } from "./pack4-arabic-and-literature-math-bundle";
 import { getPack5EngineeringSnvBundle } from "./pack5-technique-math-engineering-expanded";
+import { getPack6LettresPhiloBundle } from "./pack6-lettres-philo-bundle";
 
 interface StandardBundleFormat {
   skillId: string;
@@ -3353,6 +3354,23 @@ export function getSkillLearningBundle(skillId: string): SkillLearningBundle | n
       resolvedStream = "technique_math";
     }
     return mapStandardBundleToPlatform(pack5 as any, resolvedSubj, resolvedStream, `MEN-BAC-PACK5-${pack5.subject.toUpperCase()}`);
+  }
+
+  // 18. تحقق من حزم شعبة الآداب وفلسفة واللغات الموسعة (Pack 6)
+  const pack6 = getPack6LettresPhiloBundle(skillId);
+  if (pack6) {
+    let resolvedSubj: SubjectId = "philosophy";
+    let resolvedStream: StreamId = "lettres_philo";
+    if (pack6.subject === "arabic") {
+      resolvedSubj = "arabic";
+    } else if (pack6.subject === "history_geography") {
+      resolvedSubj = "history_geography";
+    } else if (pack6.subject === "islamic_studies") {
+      resolvedSubj = "islamic_studies";
+    } else if (pack6.subject === "math") {
+      resolvedSubj = "math";
+    }
+    return mapStandardBundleToPlatform(pack6 as any, resolvedSubj, resolvedStream, `MEN-BAC-PACK6-${pack6.subject.toUpperCase()}`);
   }
 
   const mathPkg = MATH_BATCH_01_PACKAGES[skillId] || getGestionEcoContentPackage(skillId);

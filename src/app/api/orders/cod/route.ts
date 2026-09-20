@@ -28,9 +28,11 @@ export async function POST(req: Request) {
       notes,
     } = body;
 
-    if (!shippingName || !shippingPhone || !shippingWilaya || !shippingAddress) {
+    const effectiveAddress = (shippingAddress || shippingCommune || shippingWilaya || "توصيل للولاية").trim();
+
+    if (!shippingName || !shippingPhone || !shippingWilaya) {
       return NextResponse.json(
-        { success: false, error: "الاسم، رقم الهاتف، الولاية، والعنوان مطلوبة لإتمام طلب التوصيل" },
+        { success: false, error: "الاسم، رقم الهاتف، والولاية مطلوبة لإتمام طلب التوصيل" },
         { status: 400 }
       );
     }

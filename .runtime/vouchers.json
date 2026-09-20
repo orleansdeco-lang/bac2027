@@ -74,5 +74,49 @@
     "createdAt": "2026-09-20T00:20:45.216Z",
     "redeemedBy": "student_voucher_user",
     "redeemedAt": "2026-09-20T00:20:45.414Z"
+  },
+  {
+    "id": "vch_1789865228841_pehzkj",
+    "voucherCode": "SHATER-VRB6-MCTK",
+    "planId": "season",
+    "salesChannel": "COD",
+    "batchNumber": "BATCH-2026-V1",
+    "status": "ACTIVE",
+    "orderId": "cod_1789865228840_lxp9m",
+    "createdAt": "2026-09-20T00:47:08.841Z"
+  },
+  {
+    "id": "vch_1789865229525_l0oyac",
+    "voucherCode": "SHATER-Q523-QB9L",
+    "planId": "season",
+    "salesChannel": "LIBRARY",
+    "batchNumber": "BATCH-2026-V1",
+    "status": "REDEEMED",
+    "orderId": null,
+    "createdAt": "2026-09-20T00:47:09.525Z",
+    "redeemedBy": "student_voucher_user",
+    "redeemedAt": "2026-09-20T00:47:09.766Z"
+  },
+  {
+    "id": "vch_1789865254581_z715nf",
+    "voucherCode": "SHATER-T88Y-2K3Y",
+    "planId": "season",
+    "salesChannel": "COD",
+    "batchNumber": "BATCH-2026-V1",
+    "status": "ACTIVE",
+    "orderId": "cod_1789865254581_xn5ab",
+    "createdAt": "2026-09-20T00:47:34.581Z"
+  },
+  {
+    "id": "vch_1789865255250_bstzkw",
+    "voucherCode": "SHATER-YWPU-XTUG",
+    "planId": "season",
+    "salesChannel": "LIBRARY",
+    "batchNumber": "BATCH-2026-V1",
+    "status": "REDEEMED",
+    "orderId": null,
+    "createdAt": "2026-09-20T00:47:35.250Z",
+    "redeemedBy": "student_voucher_user",
+    "redeemedAt": "2026-09-20T00:47:35.489Z"
   }
 ]

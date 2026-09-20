@@ -932,8 +932,8 @@ export interface CreateCodOrderInput {
   shippingName: string;
   shippingPhone: string;
   shippingWilaya: string;
-  shippingCommune: string;
-  shippingAddress: string;
+  shippingCommune?: string;
+  shippingAddress?: string;
   notes?: string;
   studentEmail?: string;
 }

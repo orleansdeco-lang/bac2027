@@ -25,7 +25,6 @@ import {
   CheckCircle2,
   Check,
   Copy,
-  Info,
   ExternalLink,
   MessageCircle,
   Headphones,
@@ -35,21 +34,20 @@ import {
   AlertCircle,
   AlertTriangle,
   ShieldCheck,
-  Calendar,
-  Zap,
-  Building2,
   Phone,
   User,
   MapPin,
   CheckCheck,
   HelpCircle,
   Truck,
-  Ticket,
   CreditCard,
+  Users,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 export default function SubscribePage() {
-  const { t, locale } = useTranslation();
+  const { locale } = useTranslation();
   const isAr = locale === "ar";
   const { user } = useAuth();
 
@@ -59,24 +57,17 @@ export default function SubscribePage() {
   const [masteryCount, setMasteryCount] = useState(0);
   const [completedMissionsCount, setCompletedMissionsCount] = useState(0);
 
-  // Payment mode: "ONLINE" (BaridiMob/CCP) or "COD" (SHATER Pass Delivery)
-  const [paymentMode, setPaymentMode] = useState<"ONLINE" | "COD">("ONLINE");
-
   // Selected plan: "season" (featured) or "monthly"
   const [selectedPlanId, setSelectedPlanId] = useState<"season" | "monthly">("season");
 
-  // Contact inputs for smooth verification
-  const [studentName, setStudentName] = useState("");
-  const [studentPhone, setStudentPhone] = useState("");
-  const [studentWilaya, setStudentWilaya] = useState("");
+  // Payment mode: "ONLINE" (BaridiMob/CCP) or "COD" (Cash on Delivery)
+  const [paymentMode, setPaymentMode] = useState<"ONLINE" | "COD">("ONLINE");
 
-  // Cash on Delivery (COD) inputs
+  // Cash on Delivery (COD) auto-filled inputs
   const [shippingName, setShippingName] = useState("");
   const [shippingPhone, setShippingPhone] = useState("");
   const [shippingWilaya, setShippingWilaya] = useState("");
   const [shippingCommune, setShippingCommune] = useState("");
-  const [shippingAddress, setShippingAddress] = useState("");
-  const [shippingNotes, setShippingNotes] = useState("");
   const [isSubmittingCod, setIsSubmittingCod] = useState(false);
   const [codError, setCodError] = useState<string | null>(null);
   const [codResult, setCodResult] = useState<{
@@ -85,7 +76,7 @@ export default function SubscribePage() {
     message: string;
   } | null>(null);
 
-  // Voucher redemption state
+  // Voucher / Friend code redemption state
   const [voucherCodeInput, setVoucherCodeInput] = useState("");
   const [isRedeemingVoucher, setIsRedeemingVoucher] = useState(false);
   const [voucherError, setVoucherError] = useState<string | null>(null);
@@ -98,6 +89,9 @@ export default function SubscribePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
+  // FAQ interactive accordion state
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+
   // Post-submission success state
   const [orderResult, setOrderResult] = useState<{
     orderId: string;
@@ -107,7 +101,7 @@ export default function SubscribePage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Official contact coordinates
+  // Official coordinates
   const ACTIVATION_WHATSAPP_NUMBER = "213550303286";
   const SUPPORT_WHATSAPP_NUMBER = "213550853234";
   const BARIDIMOB_RIP = "00799999004125624964";
@@ -117,7 +111,7 @@ export default function SubscribePage() {
   const selectedPlanPrice = selectedPlanId === "season" ? 4900 : 900;
   const selectedPlanName =
     selectedPlanId === "season"
-      ? (isAr ? "موسم البكالوريا الكامل 2027 (BAC Pass)" : "Pass Saison Complète BAC 2027")
+      ? (isAr ? "موسم البكالوريا الكامل 2027" : "Pass Saison Complète BAC 2027")
       : (isAr ? "الاشتراك الشهري (30 يوماً)" : "Pass Mensuel (30 jours)");
 
   const copyToClipboard = (text: string, field: string) => {
@@ -153,20 +147,21 @@ export default function SubscribePage() {
         );
 
         if (prof) {
-          const fullName = `${prof.firstName || ""} ${prof.lastName || ""}`.trim();
+          const fullName = `${prof.firstName || ""} ${prof.lastName || ""}`.trim() || prof.fullName || "";
           if (fullName) {
-            setStudentName(fullName);
             setShippingName(fullName);
           }
           const phone = prof.studentPhone || (prof as any).student_phone || "";
           if (phone) {
-            setStudentPhone(phone);
             setShippingPhone(phone);
           }
-          const wilaya = prof.wilayaName || (prof as any).wilaya_name || "";
+          const wilaya = prof.wilayaName || (prof as any).wilaya_name || (prof as any).wilaya || "";
           if (wilaya) {
-            setStudentWilaya(wilaya);
             setShippingWilaya(wilaya);
+          }
+          const commune = (prof as any).communeName || (prof as any).commune_name || (prof as any).commune || "";
+          if (commune) {
+            setShippingCommune(commune);
           }
         }
       } catch (err) {
@@ -183,21 +178,6 @@ export default function SubscribePage() {
     setReceiptError(null);
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      setReceiptError(isAr ? "حجم الملف يتجاوز الحد الأقصى (5 ميغابايت)" : "Le fichier dépasse 5 Mo");
-      return;
-    }
-
-    const allowed = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
-    if (!allowed.includes(file.type)) {
-      setReceiptError(
-        isAr
-          ? "صيغة غير مدعومة. يرجى اختيار صورة JPG أو PNG أو مستند PDF"
-          : "Format non supporté (JPEG, PNG ou PDF requis)"
-      );
-      return;
-    }
 
     setReceiptFile(file);
 
@@ -221,10 +201,10 @@ export default function SubscribePage() {
     }
   };
 
-  // Single-action atomic receipt submission
+  // Submit Receipt without redundant manual identity inputs (auto-attached from profile)
   const handleSubmitReceipt = async () => {
     if (!receiptFile) {
-      setReceiptError(isAr ? "يرجى اختيار صورة أو ملف وصل الدفع أولاً" : "Veuillez joindre le reçu de paiement");
+      setReceiptError(isAr ? "يرجى اختيار صورة وصل الدفع أولاً" : "Veuillez joindre le reçu de paiement");
       return;
     }
 
@@ -242,6 +222,14 @@ export default function SubscribePage() {
 
       const referenceId = `SHATER-${selectedPlanId.toUpperCase()}-${effectiveUserId.slice(0, 6).toUpperCase()}-${Date.now().toString().slice(-4)}`;
 
+      const effectiveName =
+        `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim() ||
+        profile?.fullName ||
+        shippingName ||
+        "طالب مسجل";
+      const effectivePhone = profile?.studentPhone || (profile as any)?.student_phone || shippingPhone || "";
+      const effectiveWilaya = profile?.wilayaName || (profile as any)?.wilaya_name || shippingWilaya || "";
+
       const formData = new FormData();
       formData.append("referenceId", referenceId);
       formData.append("userId", effectiveUserId);
@@ -251,9 +239,9 @@ export default function SubscribePage() {
         formData.append("fileBase64", receiptDataUrl.split(",")[1] || "");
       }
       formData.append("studentEmail", user?.email || profile?.email || "");
-      if (studentName) formData.append("studentName", studentName);
-      if (studentPhone) formData.append("studentPhone", studentPhone);
-      if (studentWilaya) formData.append("wilayaName", studentWilaya);
+      formData.append("studentName", effectiveName);
+      if (effectivePhone) formData.append("studentPhone", effectivePhone);
+      if (effectiveWilaya) formData.append("wilayaName", effectiveWilaya);
       if (profile?.streamId) formData.append("streamId", profile.streamId);
 
       const token = await getAuthToken();
@@ -293,7 +281,7 @@ export default function SubscribePage() {
       setReceiptError(
         isAr
           ? "تعذر إرسال الوصل. يرجى التأكد من اتصال الإنترنت أو إرسال الوصل مباشرة عبر واتساب."
-          : "Erreur lors de l'envoi du reçu. Veuillez réessayer ou contacter le support WhatsApp."
+          : "Erreur lors de l'envoi du reçu."
       );
     } finally {
       setIsSubmitting(false);
@@ -303,8 +291,8 @@ export default function SubscribePage() {
   // Submit Cash on Delivery (COD) order
   const handleSubmitCod = async () => {
     setCodError(null);
-    if (!shippingName.trim() || !shippingPhone.trim() || !shippingWilaya.trim() || !shippingAddress.trim()) {
-      setCodError(isAr ? "يرجى ملء جميع معلومات التوصيل المطلوبة (الاسم، الهاتف، الولاية، والعنوان)" : "Veuillez renseigner tous les champs obligatoires");
+    if (!shippingName.trim() || !shippingPhone.trim() || !shippingWilaya.trim()) {
+      setCodError(isAr ? "يرجى التأكد من الاسم، رقم الهاتف، والولاية" : "Veuillez renseigner votre nom, téléphone et wilaya");
       return;
     }
 
@@ -322,7 +310,7 @@ export default function SubscribePage() {
         (typeof window !== "undefined"
           ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id
           : undefined) ||
-        `guest_${Date.now()}`;
+        `guest_${cleanPhone}`;
 
       const res = await fetch("/api/orders/cod", {
         method: "POST",
@@ -330,12 +318,10 @@ export default function SubscribePage() {
         body: JSON.stringify({
           userId: effectiveUserId,
           plan: selectedPlanId,
-          shippingName,
+          shippingName: shippingName.trim(),
           shippingPhone: cleanPhone,
-          shippingWilaya,
-          shippingCommune,
-          shippingAddress,
-          notes: shippingNotes,
+          shippingWilaya: shippingWilaya.trim(),
+          shippingCommune: shippingCommune.trim(),
           studentEmail: user?.email || profile?.email,
         }),
       });
@@ -363,13 +349,14 @@ export default function SubscribePage() {
     }
   };
 
-  // Redeem SHATER Pass physical card voucher code
-  const handleRedeemVoucher = async () => {
+  // Redeem code (voucher or referral)
+  const handleRedeemCode = async () => {
     setVoucherError(null);
     setVoucherSuccess(null);
 
-    if (!voucherCodeInput.trim()) {
-      setVoucherError(isAr ? "يرجى إدخال رمز البطاقة" : "Veuillez entrer le code de la carte");
+    const code = voucherCodeInput.trim();
+    if (!code) {
+      setVoucherError(isAr ? "يرجى إدخال الكود" : "Veuillez entrer le code");
       return;
     }
 
@@ -383,32 +370,52 @@ export default function SubscribePage() {
           : undefined);
 
       if (!effectiveUserId) {
-        setVoucherError(isAr ? "يجب تسجيل الدخول لتفعيل البطاقة" : "Veuillez vous connecter d'abord");
+        setVoucherError(isAr ? "يجب تسجيل الدخول أولاً" : "Veuillez vous connecter");
         return;
       }
 
-      const res = await fetch("/api/vouchers/redeem", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: effectiveUserId,
-          voucherCode: voucherCodeInput.trim(),
-        }),
-      });
+      // If it looks like a physical voucher code SHATER-XXXX-XXXX
+      if (code.toUpperCase().startsWith("SHATER-")) {
+        const res = await fetch("/api/vouchers/redeem", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: effectiveUserId,
+            voucherCode: code.toUpperCase(),
+          }),
+        });
 
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data?.error || "رمز البطاقة غير صالح");
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data?.error || "رمز البطاقة غير صالح");
+        }
+
+        setVoucherSuccess(data.message || (isAr ? "تم تفعيل اشتراكك بنجاح! مبروك." : "Abonnement activé avec succès !"));
+        trackEvent("voucher_redeemed", { userId: effectiveUserId, code });
+
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 1500);
+      } else {
+        // Referral signup code
+        const res = await fetch("/api/referral", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            referredUserId: effectiveUserId,
+            referralCode: code.toUpperCase(),
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data?.error || "رمز غير صالح أو تم استخدامه مسبقاً");
+        }
+
+        setVoucherSuccess(isAr ? "تم ربط كود صديقك بنجاح! سيستفيد من المكافأة عند اشتراكك." : "Code parrain enregistré avec succès !");
       }
-
-      setVoucherSuccess(data.message || (isAr ? "تم تفعيل اشتراكك بنجاح! مبروك." : "Abonnement activé avec succès !"));
-      trackEvent("voucher_redeemed", { userId: effectiveUserId, code: voucherCodeInput });
-
-      setTimeout(() => {
-        window.location.href = "/dashboard";
-      }, 2000);
     } catch (err: any) {
-      setVoucherError(err?.message || "فشل تفعيل البطاقة");
+      setVoucherError(err?.message || "فشل التحقق من الكود");
     } finally {
       setIsRedeemingVoucher(false);
     }
@@ -417,29 +424,55 @@ export default function SubscribePage() {
   const access = getStudentAccess(profile);
   const isExpired = access.status === "TRIAL_EXPIRED";
 
-  // WhatsApp activation message link
-  const activationWhatsAppMessage = `مرحباً، قمت بتسديد اشتراك منصة الشاطر (SHATER BAC 2027).\n\n📌 رقم الطلب: ${orderResult?.referenceId || "جديد"}\n🎓 نوع الاشتراك: ${selectedPlanName} (${selectedPlanPrice.toLocaleString()} دج)\n👤 اسم الطالب: ${studentName || user?.email || "طالب مسجل"}\n📱 رقم الهاتف: ${studentPhone || "غير مسجل"}\n📧 البريد: ${user?.email || "غير مسجل"}\n\nمرفق صورة الوصل للتفعيل الفوري.`;
+  // WhatsApp activation message
+  const activationWhatsAppMessage = `مرحباً، قمت بتسديد اشتراك منصة الشاطر.\n\n📌 رقم الطلب: ${orderResult?.referenceId || "جديد"}\n🎓 نوع الاشتراك: ${selectedPlanName} (${selectedPlanPrice.toLocaleString()} دج)\n👤 اسم الطالب: ${shippingName || profile?.fullName || user?.email || "طالب مسجل"}\n📱 رقم الهاتف: ${shippingPhone || profile?.studentPhone || "غير مسجل"}\n\nمرفق صورة الوصل للتفعيل الفوري.`;
   const activationWhatsAppUrl = `https://wa.me/${ACTIVATION_WHATSAPP_NUMBER}?text=${encodeURIComponent(activationWhatsAppMessage)}`;
-
-  // WhatsApp technical support link
   const supportWhatsAppUrl = `https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    "مرحباً، أحتاج مساعدة أو استفسار بخصوص الدفع والاشتراك في منصة الشاطر."
+    "مرحباً، أحتاج مساعدة بخصوص الاشتراك في منصة الشاطر."
   )}`;
+
+  // FAQ list for accordion
+  const faqs = [
+    {
+      q: isAr ? "متى يتم تفعيل حسابي بعد إرسال الوصل؟" : "Quand mon compte sera-t-il activé ?",
+      a: isAr
+        ? "يتم التحقق من الوصل فور وصوله، ويتم التفعيل في مدة تتراوح بين 5 إلى 30 دقيقة كحد أقصى. بمجرد الضغط على زر الواتساب بعد إرسال الوصل، يتلقى المشرف إشعارك مباشرة لتسريع التفعيل."
+        : "L'activation s'effectue généralement dans un délai de 5 à 30 minutes après vérification du reçu.",
+    },
+    {
+      q: isAr ? "هل تضيع بياناتي واختباراتي السابقة؟" : "Mes données précédentes sont-elles conservées ?",
+      a: isAr
+        ? "لا إطلاقاً، جميع نتائجك، مهاراتك المثبتة، تقرير معمل الأخطاء، ونقاط قوتك وضعفك محفوظة 100% في قاعدة البيانات، وتواصل المذاكرة من نفس النقطة التي توقفت عندها."
+        : "Toutes vos données, diagnostics et maîtrises validées sont intégralement conservées.",
+    },
+    {
+      q: isAr ? "هل يمكنني الدفع نقداً بدون تطبيق بريدي موب؟" : "Puis-je payer sans BaridiMob ?",
+      a: isAr
+        ? "نعم بكل سهولة! يمكنك اختيار «الدفع عند التوصيل» وتصلك البطاقة حتى باب منزلك وتدفع نقداً يداً بيد، أو التوجه لأي مكتب بريد جزائري (CCP) وتحويل المبلغ للحساب المذكور أعلاه."
+        : "Oui, vous pouvez choisir le paiement à la livraison en espèces ou effectuer un virement dans un bureau de poste.",
+    },
+    {
+      q: isAr ? "ما الفرق بين اشتراك الموسم والاشتراك الشهري؟" : "Quelle est la différence entre le pass saison et mensuel ?",
+      a: isAr
+        ? "اشتراك الموسم يمنحك وصولاً شاملاً لكل المنصة طوال السنة حتى يوم امتحان البكالوريا في جوان 2027 بسعر 4,900 دج (ما يعادل 490 دج شهرياً فقط)، بينما الاشتراك الشهري يمنحك 30 يوماً بـ 900 دج."
+        : "Le Pass Saison vous accompagne jusqu'au jour de l'examen du BAC pour 4 900 DA, tandis que le Pass Mensuel est à 900 DA pour 30 jours.",
+    },
+  ];
 
   return (
     <AppShell activeNav="home">
-      <div className="min-h-screen py-8 sm:py-12 bg-theme-base">
-        <Container size="md" className="space-y-8 max-w-4xl mx-auto px-4 sm:px-6">
+      <div className="min-h-screen py-6 sm:py-10 bg-theme-base">
+        <Container size="md" className="space-y-6 sm:space-y-8 max-w-3xl mx-auto px-4 sm:px-6">
           {/* Active Subscription Banner if Already Paid */}
           {access.status === "PAID_ACTIVE" && (
-            <div className="p-6 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 text-center space-y-3 shadow-sm">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-600 flex items-center justify-center mx-auto shadow-sm">
-                <CheckCircle2 className="w-6 h-6" />
+            <div className="p-5 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 text-center space-y-2 shadow-sm">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-600 flex items-center justify-center mx-auto shadow-sm">
+                <CheckCircle2 className="w-5 h-5" />
               </div>
-              <h2 className="text-xl font-black text-theme-text">
-                {isAr ? "أنت مشترك رسمي في منصة الشاطر (SHATER BAC)!" : "Vous êtes abonné à SHATER BAC !"}
+              <h2 className="text-lg font-black text-theme-text">
+                {isAr ? "أنت مشترك رسمي في منصة الشاطر!" : "Vous êtes abonné à SHATER BAC !"}
               </h2>
-              <p className="text-xs sm:text-sm text-theme-secondary max-w-md mx-auto">
+              <p className="text-xs text-theme-secondary max-w-md mx-auto">
                 {isAr
                   ? `اشتراكك مفعل بالكامل${
                       access.subscriptionExpiresAt
@@ -450,291 +483,173 @@ export default function SubscribePage() {
               </p>
               <Link
                 href="/dashboard"
-                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs bg-[var(--color-primary)] text-white shadow-md hover:opacity-95 transition-all"
+                className="inline-flex items-center justify-center px-6 py-2 rounded-xl font-bold text-xs bg-[var(--color-primary)] text-white shadow-md hover:opacity-95 transition-all"
               >
-                <span>{isAr ? "الانتقال إلى لوحة المذاكرة" : "Aller au tableau de bord"}</span>
+                <span>{isAr ? "الانتقال إلى لوحة المذاكرة" : "Tableau de bord"}</span>
               </Link>
             </div>
           )}
 
           {/* Rejected Receipt Banner */}
           {(profile as any)?.access_status === "REJECTED" && (
-            <div className="p-5 rounded-3xl bg-rose-500/10 border border-rose-500/30 text-center space-y-2 shadow-sm">
-              <div className="w-10 h-10 rounded-2xl bg-rose-500/20 text-rose-600 flex items-center justify-center mx-auto">
-                <AlertTriangle className="w-5 h-5" />
+            <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-center space-y-1.5 shadow-sm">
+              <div className="w-8 h-8 rounded-xl bg-rose-500/20 text-rose-600 flex items-center justify-center mx-auto">
+                <AlertTriangle className="w-4 h-4" />
               </div>
-              <h3 className="font-bold text-sm text-rose-900 dark:text-rose-100">
+              <h3 className="font-bold text-xs sm:text-sm text-rose-900 dark:text-rose-100">
                 {isAr ? "تم رفض وصل الدفع السابق" : "Reçu précédent non validé"}
               </h3>
               <p className="text-xs text-rose-700 dark:text-rose-300">
                 {isAr
-                  ? `سبب عدم التأكيد: ${
-                      (profile as any)?.rejection_reason ||
-                      "الوصل غير واضح أو لم يتم العثور على المعاملة"
-                    }. يمكنك إعادة رفع صورة واضحة للوصل بالأسفل لتفعيل حسابك.`
-                  : "Veuillez soumettre à nouveau un reçu lisible ci-dessous."}
+                  ? `السبب: ${(profile as any)?.rejection_reason || "الوصل غير واضح"}. يرجى إعادة رفع صورة واضحة للوصل.`
+                  : "Veuillez soumettre à nouveau un reçu lisible."}
               </p>
             </div>
           )}
 
-          {/* Header Section */}
-          <div className="text-center space-y-3">
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--color-primary-soft)] border border-[var(--color-primary)]/25 text-[var(--color-primary)] text-xs font-bold shadow-sm">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>{isAr ? "منظومة الشاطر للبكالوريا 2027 🇩🇿" : "Système SHATER BAC 2027 🇩🇿"}</span>
-            </div>
-
-            <h1 className="text-2xl sm:text-4xl font-extrabold text-theme-text tracking-tight font-sans leading-snug">
+          {/* Clean Title */}
+          <div className="text-center space-y-2">
+            <h1 className="text-2xl sm:text-3xl font-black text-theme-text tracking-tight">
               {isExpired
                 ? isAr
                   ? "انتهت فترة التجربة.. واصل رحلتك نحو التفوق"
                   : "Votre essai gratuit est terminé"
                 : isAr
-                ? "استثمر في مستقبلك الأكاديمي.. خطوة واحدة تفصلك عن التميز"
-                : "Investissez dans votre réussite au BAC 2027"}
+                ? "اختر باقتك وفعّل حسابك في الشاطر"
+                : "Abonnez-vous à SHATER BAC"}
             </h1>
-
-            <p className="text-sm sm:text-base text-theme-secondary max-w-2xl mx-auto leading-relaxed">
+            <p className="text-xs sm:text-sm text-theme-secondary max-w-xl mx-auto">
               {isAr
-                ? "تفعيل حسابك يمنحك وصولاً غير محدود لجميع المواد، معمل الأخطاء الذكي، والاختبارات التوأم. كل تقدمك ونتائجك السابقة محفوظة بالكامل وستستمر من نفس النقطة."
-                : "Accès illimité aux missions adaptatives, à l'Error Lab et aux sujets d'entraînement. Tous vos acquis restent intégralement sauvegardés."}
+                ? "الباقة تفتح لك كامل الموقع والمواد بدون استثناء. كل تقدمك ونتائجك السابقة محفوظة 100%."
+                : "Accès illimité à toutes les matières et à l'Error Lab jusqu'au BAC."}
             </p>
           </div>
 
-          {/* Real Stored Student Progress Summary Card */}
-          <Card data-testid="subscribe-conversion-card" className="p-5 sm:p-6 bg-card border-theme space-y-4 shadow-sm rounded-3xl">
-            <div className="flex items-center justify-between border-b border-theme pb-3">
-              <span className="text-xs font-bold text-theme-text uppercase tracking-wider flex items-center gap-2">
-                <Target className="w-4 h-4 text-[var(--color-primary)]" />
-                <span>{isAr ? "حصيلة عملك الميداني المحفوظة في حسابك" : "Vos progrès actuels sauvegardés"}</span>
-              </span>
-              <Badge variant="outline" size="sm" className="text-[var(--color-success)] border-[var(--color-success)]/30 bg-[var(--color-success-soft)]">
-                {isAr ? "محفوظة وجاهزة للاستئناف ✓" : "Sauvegardé ✓"}
-              </Badge>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
-              <div className="p-3.5 rounded-2xl bg-surface border border-theme">
-                <span className="text-[11px] text-theme-muted block">{isAr ? "معدلك المستهدف" : "Objectif BAC"}</span>
-                <span className="text-lg sm:text-xl font-bold text-theme-text mt-0.5 block font-mono">
-                  {profile?.targetScore ? `${Number(profile.targetScore).toFixed(2)}/20` : "16.00/20"}
-                </span>
+          {/* 1. PLANS SELECTION: Price & Simple Explanation Only */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            {/* Plan 1: Season Pass (Featured) */}
+            <div
+              onClick={() => setSelectedPlanId("season")}
+              className={`relative p-5 rounded-3xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+                selectedPlanId === "season"
+                  ? "border-[var(--color-primary)] bg-card shadow-md ring-2 ring-[var(--color-primary)]/20"
+                  : "border-theme bg-surface/70 hover:border-[var(--color-primary)]/40 hover:bg-card"
+              }`}
+            >
+              <div className="absolute -top-3 right-5 px-3 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-extrabold shadow-sm">
+                <span>الأكثر طلباً ⭐</span>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-surface border border-theme">
-                <span className="text-[11px] text-theme-muted block">{isAr ? "إشارة التشخيص" : "Diagnostic"}</span>
-                <span className="text-lg sm:text-xl font-bold text-[var(--color-accent)] mt-0.5 block font-mono">
-                  {diagnosticResult?.observedSignal
-                    ? `${Math.round(diagnosticResult.observedSignal)}%`
-                    : diagnosticResult?.observedDiagnosticScore
-                    ? `${Math.round(diagnosticResult.observedDiagnosticScore)}%`
-                    : isAr
-                    ? "جاهز"
-                    : "Prêt"}
-                </span>
-              </div>
+              <div className="space-y-3 pt-1">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-base font-extrabold text-theme-text">
+                      {isAr ? "موسم البكالوريا 2027 الكامل" : "Pass Saison BAC 2027"}
+                    </h3>
+                    <span className="text-[11px] text-theme-muted">
+                      {isAr ? "حتى آخر يوم في البكالوريا (جوان 2027)" : "Jusqu'au BAC 2027"}
+                    </span>
+                  </div>
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                      selectedPlanId === "season"
+                        ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
+                        : "border-theme bg-surface"
+                    }`}
+                  >
+                    {selectedPlanId === "season" && <Check className="w-3 h-3 stroke-[3]" />}
+                  </div>
+                </div>
 
-              <div className="p-3.5 rounded-2xl bg-surface border border-theme">
-                <span className="text-[11px] text-theme-muted block">{isAr ? "مهام مكتملة" : "Missions finies"}</span>
-                <span className="text-lg sm:text-xl font-bold text-[var(--color-primary)] mt-0.5 block font-mono">
-                  {completedMissionsCount}
-                </span>
-              </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl sm:text-3xl font-black text-theme-text font-mono">
+                    4,900
+                  </span>
+                  <span className="text-xs font-bold text-theme-secondary">دج / الموسم كاملاً</span>
+                </div>
 
-              <div className="p-3.5 rounded-2xl bg-surface border border-theme">
-                <span className="text-[11px] text-theme-muted block">{isAr ? "مهارات مثبتة" : "Maîtrises validées"}</span>
-                <span className="text-lg sm:text-xl font-bold text-[var(--color-success)] mt-0.5 block font-mono">
-                  {masteryCount}
-                </span>
-              </div>
-            </div>
-
-            {diagnosticResult?.bottleneckSkillId && (
-              <div className="p-3 rounded-xl bg-[var(--color-accent-soft)] border border-[var(--color-accent)]/30 text-xs text-[var(--color-accent)] flex items-center gap-2.5">
-                <Info className="w-4 h-4 text-[var(--color-accent)] shrink-0" />
-                <span>
+                <p className="text-xs text-theme-secondary leading-relaxed pt-1 border-t border-theme/60">
                   {isAr
-                    ? `أكبر ثغرة ستعالجها فور التفعيل: ${diagnosticResult.bottleneckSkillId.replace(/_/g, " ")}`
-                    : `Point clé à travailler : ${diagnosticResult.bottleneckSkillId.replace(/_/g, " ")}`}
-                </span>
+                    ? "فتح كامل وشامل لكل المنصة وجميع المواد ومعمل الأخطاء وبنك المواضيع حتى يوم البكالوريا."
+                    : "Accès complet à toutes les fonctionnalités et matières jusqu'au BAC."}
+                </p>
               </div>
-            )}
-          </Card>
-
-          {/* STEP 1: Plan Selection Cards */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-[var(--color-primary)] text-white text-xs font-bold flex items-center justify-center font-mono">
-                1
-              </span>
-              <h2 className="text-lg font-bold text-theme-text">
-                {isAr ? "اختر باقة الاشتراك المناسبة لك" : "Choisissez votre formule d'abonnement"}
-              </h2>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              {/* Option 1: Season Pass (Featured & High Conversion) */}
-              <div
-                onClick={() => setSelectedPlanId("season")}
-                className={`relative p-6 rounded-3xl border-2 cursor-pointer transition-all duration-200 flex flex-col justify-between ${
-                  selectedPlanId === "season"
-                    ? "border-[var(--color-primary)] bg-card shadow-lg ring-2 ring-[var(--color-primary)]/20 scale-[1.01]"
-                    : "border-theme bg-surface/70 hover:border-[var(--color-primary)]/40 hover:bg-card"
-                }`}
-              >
-                {/* Top Badge */}
-                <div className="absolute -top-3.5 right-6 px-3.5 py-1 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white text-[11px] font-extrabold shadow-sm flex items-center gap-1">
-                  <span>الأكثر طلباً وتوفيراً ⭐</span>
-                </div>
-
-                <div className="space-y-4 pt-1">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-lg font-extrabold text-theme-text">
-                        {isAr ? "موسم البكالوريا 2027 الكامل" : "Pass Saison BAC 2027"}
-                      </h3>
-                      <p className="text-xs text-theme-secondary mt-1">
-                        {isAr ? "اشتراك شامل لمرة واحدة حتى آخر يوم في امتحان البكالوريا (جوان 2027)" : "Accès complet garanti jusqu'aux épreuves du BAC"}
-                      </p>
-                    </div>
-                    <div
-                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 ${
-                        selectedPlanId === "season"
-                          ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
-                          : "border-theme bg-surface"
-                      }`}
-                    >
-                      {selectedPlanId === "season" && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                    </div>
-                  </div>
-
-                  {/* Price */}
-                  <div className="flex items-baseline gap-1.5 pb-2 border-b border-theme">
-                    <span className="text-3xl sm:text-4xl font-black text-theme-text font-mono">
-                      4,900
-                    </span>
-                    <span className="text-sm font-bold text-theme-secondary">دج / الموسم كاملاً</span>
-                    <span className="text-[11px] text-emerald-600 font-semibold ps-2">
-                      (~490 دج/شهر فقط)
+            {/* Plan 2: Monthly Pass */}
+            <div
+              onClick={() => setSelectedPlanId("monthly")}
+              className={`p-5 rounded-3xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+                selectedPlanId === "monthly"
+                  ? "border-[var(--color-primary)] bg-card shadow-md ring-2 ring-[var(--color-primary)]/20"
+                  : "border-theme bg-surface/70 hover:border-[var(--color-primary)]/40 hover:bg-card"
+              }`}
+            >
+              <div className="space-y-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h3 className="text-base font-extrabold text-theme-text">
+                      {isAr ? "الاشتراك الشهري" : "Abonnement Mensuel"}
+                    </h3>
+                    <span className="text-[11px] text-theme-muted">
+                      {isAr ? "صلاحية 30 يوماً قابلة للتجديد" : "30 jours renouvelables"}
                     </span>
                   </div>
-
-                  {/* Features List */}
-                  <ul className="space-y-2.5 text-xs text-theme-secondary">
-                    <li className="flex items-center gap-2.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span>{isAr ? "وصول غير محدود لجميع المواد والشعب حتى جوان 2027" : "Accès illimité à toutes les matières"}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span>{isAr ? "معمل الأخطاء الذكي (Error Lab) لمعالجة أسباب التعثر" : "Error Lab : analyse des causes profondes"}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span>{isAr ? "اختبارات توأم مستقلة لتأكيد الإتقان بدون حفظ أعمى" : "Retests jumeaux pour valider la maîtrise"}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span>{isAr ? "بنك مواضيع البكالوريا الرسمية والمقترحة مع الحلول وسلم التنقيط" : "Sujets de BAC avec corrigés types"}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span>{isAr ? "مرافقة وإرشاد بيداغوجي طوال السنة" : "Suivi et accompagnement pédagogique"}</span>
-                    </li>
-                  </ul>
+                  <div
+                    className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                      selectedPlanId === "monthly"
+                        ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
+                        : "border-theme bg-surface"
+                    }`}
+                  >
+                    {selectedPlanId === "monthly" && <Check className="w-3 h-3 stroke-[3]" />}
+                  </div>
                 </div>
 
-                <div className="mt-5 pt-3 border-t border-theme/60 text-center">
-                  <span className="text-xs font-bold text-[var(--color-primary)]">
-                    {selectedPlanId === "season" ? "✓ الباقة المحددة حالياً" : "انقر لتحديد هذه الباقة"}
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl sm:text-3xl font-black text-theme-text font-mono">
+                    900
                   </span>
-                </div>
-              </div>
-
-              {/* Option 2: Monthly Pass */}
-              <div
-                onClick={() => setSelectedPlanId("monthly")}
-                className={`p-6 rounded-3xl border-2 cursor-pointer transition-all duration-200 flex flex-col justify-between ${
-                  selectedPlanId === "monthly"
-                    ? "border-[var(--color-primary)] bg-card shadow-lg ring-2 ring-[var(--color-primary)]/20 scale-[1.01]"
-                    : "border-theme bg-surface/70 hover:border-[var(--color-primary)]/40 hover:bg-card"
-                }`}
-              >
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-lg font-extrabold text-theme-text">
-                        {isAr ? "الاشتراك الشهري" : "Abonnement Mensuel"}
-                      </h3>
-                      <p className="text-xs text-theme-secondary mt-1">
-                        {isAr ? "صلاحية 30 يوماً كاملة قابلة للتجديد بكل مرونة حسب وتيرتك" : "Accès complet pendant 30 jours renouvelable"}
-                      </p>
-                    </div>
-                    <div
-                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 ${
-                        selectedPlanId === "monthly"
-                          ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
-                          : "border-theme bg-surface"
-                      }`}
-                    >
-                      {selectedPlanId === "monthly" && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                    </div>
-                  </div>
-
-                  {/* Price */}
-                  <div className="flex items-baseline gap-1.5 pb-2 border-b border-theme">
-                    <span className="text-3xl sm:text-4xl font-black text-theme-text font-mono">
-                      900
-                    </span>
-                    <span className="text-sm font-bold text-theme-secondary">دج / شهرياً</span>
-                  </div>
-
-                  {/* Features List */}
-                  <ul className="space-y-2.5 text-xs text-theme-secondary">
-                    <li className="flex items-center gap-2.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span>{isAr ? "وصول كامل وشامل لمدة 30 يوماً قابلة للتجديد" : "Accès complet 30 jours renouvelable"}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span>{isAr ? "معمل الأخطاء الذكي وجميع مهام التعلم اليومية" : "Error Lab et missions quotidiennes"}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span>{isAr ? "متابعة دقيقة لمستوى التقدم ونقاط الضعف" : "Suivi précis des compétences"}</span>
-                    </li>
-                    <li className="flex items-center gap-2.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <span>{isAr ? "حرية التجديد شهرياً بدون أي التزام مسبق" : "Renouvelable librement sans engagement"}</span>
-                    </li>
-                  </ul>
+                  <span className="text-xs font-bold text-theme-secondary">دج / شهرياً</span>
                 </div>
 
-                <div className="mt-5 pt-3 border-t border-theme/60 text-center">
-                  <span className="text-xs font-bold text-[var(--color-primary)]">
-                    {selectedPlanId === "monthly" ? "✓ الباقة المحددة حالياً" : "انقر لتحديد هذه الباقة"}
-                  </span>
-                </div>
+                <p className="text-xs text-theme-secondary leading-relaxed pt-1 border-t border-theme/60">
+                  {isAr
+                    ? "فتح كامل وشامل لجميع المواد وميزات المنصة لمدة 30 يوماً كاملة قابلة للتجديد."
+                    : "Accès complet à toute la plateforme pendant 30 jours."}
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Voucher Direct Quick Redemption Card */}
-          <Card className="p-5 sm:p-6 bg-surface/80 border-2 border-dashed border-[var(--color-primary)]/40 rounded-3xl space-y-3">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center font-bold shrink-0">
-                  <Ticket className="w-5 h-5" />
+          {/* 2. عندك صاحبك شاطر؟ / بطاقة التفعيل المتميزة */}
+          <Card className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-purple-500/10 via-[var(--color-primary-soft)]/20 to-indigo-500/10 border-2 border-purple-500/30 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-purple-500/20 text-purple-600 flex items-center justify-center shrink-0">
+                  <Users className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-sm sm:text-base text-theme-text">
-                    {isAr ? "لديك بطاقة شاطر باص (SHATER Pass) مسبقاً؟" : "Vous avez déjà une carte SHATER Pass ?"}
+                  <h3 className="font-extrabold text-xs sm:text-sm text-theme-text flex items-center gap-2">
+                    <span>{isAr ? "عندك صاحبك شاطر؟ 🤝" : "Parrainage ou carte d'activation"}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-600 font-bold">
+                      {isAr ? "اربح 700 دج" : "+700 DA"}
+                    </span>
                   </h3>
-                  <p className="text-xs text-theme-muted">
-                    {isAr ? "أدخل الرمز المطبوع خلف البطاقة لتفعيل حسابك فوراً" : "Entrez le code au dos de la carte pour activer votre compte"}
+                  <p className="text-[11px] text-theme-muted">
+                    {isAr
+                      ? "أدخل كود تفعيل البطاقة أو كود الإحالة من زميلك لتفعيل حسابك فوراً"
+                      : "Entrez un code de parrainage ou votre code de carte"}
                   </p>
                 </div>
               </div>
+
+              <Link
+                href="/referral"
+                className="text-xs font-bold text-purple-600 hover:text-purple-700 underline self-start sm:self-auto"
+              >
+                {isAr ? "عرض برنامج الإحالة ←" : "Programme parrainage →"}
+              </Link>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
@@ -743,198 +658,328 @@ export default function SubscribePage() {
                 dir="ltr"
                 value={voucherCodeInput}
                 onChange={(e) => setVoucherCodeInput(e.target.value.toUpperCase())}
-                placeholder="SHATER-XXXX-XXXX"
-                className="w-full sm:w-72 px-4 py-2.5 rounded-xl bg-card border border-theme text-sm font-mono font-bold text-theme-text tracking-wider uppercase focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                placeholder={isAr ? "مثال: SHATER-XXXX-XXXX أو كود زميلك" : "Code parrain ou carte"}
+                className="w-full sm:flex-1 px-3.5 py-2.5 rounded-xl bg-card border border-theme text-xs font-mono font-bold text-theme-text uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
               <button
                 type="button"
-                onClick={handleRedeemVoucher}
+                onClick={handleRedeemCode}
                 disabled={isRedeemingVoucher || !voucherCodeInput.trim()}
-                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 shrink-0"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 shrink-0"
               >
                 {isRedeemingVoucher ? (
                   <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                     <span>{isAr ? "جاري التحقق..." : "Vérification..."}</span>
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4" />
-                    <span>{isAr ? "تفعيل البطاقة فوراً" : "Activer la carte"}</span>
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{isAr ? "تفعيل الكود" : "Activer"}</span>
                   </>
                 )}
               </button>
             </div>
 
             {voucherError && (
-              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+              <div className="flex items-center gap-2 p-2 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                 <span>{voucherError}</span>
               </div>
             )}
 
             {voucherSuccess && (
-              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 text-xs font-bold">
-                <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <div className="flex items-center gap-2 p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 text-xs font-bold">
+                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                 <span>{voucherSuccess}</span>
               </div>
             )}
           </Card>
 
-          {/* STEP 2: Choose Official Payment Method */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-[var(--color-primary)] text-white text-xs font-bold flex items-center justify-center font-mono">
-                  2
-                </span>
-                <h2 className="text-lg font-bold text-theme-text">
-                  {isAr ? "اختر طريقة الدفع المناسبة لك" : "Choisissez votre mode de paiement"}
-                </h2>
-              </div>
-              <div className="px-3 py-1 rounded-xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] text-xs font-bold font-mono">
-                {isAr ? `المبلغ المطلوب: ${selectedPlanPrice.toLocaleString()} دج` : `Montant : ${selectedPlanPrice.toLocaleString()} DA`}
-              </div>
-            </div>
+          {/* 3. PAYMENT METHOD TABS: Two Side-by-Side Cards */}
+          <div className="space-y-3">
+            <h2 className="text-sm font-bold text-theme-text">
+              {isAr ? "طريقة الدفع" : "Mode de paiement"}
+            </h2>
 
-            {/* Mode Selector Tabs */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              {/* Tab 1: Online Payment */}
               <button
                 type="button"
                 onClick={() => setPaymentMode("ONLINE")}
-                className={`p-4 rounded-2xl border-2 text-start transition-all cursor-pointer flex items-center gap-3 ${
+                className={`p-3.5 rounded-2xl border-2 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
                   paymentMode === "ONLINE"
-                    ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)]/20 shadow-sm"
+                    ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)]/25 shadow-sm"
                     : "border-theme bg-surface hover:bg-card"
                 }`}
               >
-                <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-600 flex items-center justify-center font-bold shrink-0">
-                  <CreditCard className="w-5 h-5" />
+                <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 flex items-center justify-center shrink-0">
+                  <CreditCard className="w-4 h-4" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-xs sm:text-sm text-theme-text">
-                      {isAr ? "طريقة 1: دفع إلكتروني (بريدي موب / CCP)" : "Option 1 : Paiement en ligne"}
-                    </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 font-bold">
-                      {isAr ? "فوري ⚡" : "Instantané"}
-                    </span>
-                  </div>
-                  <span className="text-[11px] text-theme-muted block mt-0.5">
-                    {isAr ? "تحويل عبر RIP أو الحساب البريدي ثم رفع الوصل" : "Virement BaridiMob / CCP avec reçu"}
-                  </span>
-                </div>
+                <span className="font-black text-xs sm:text-sm text-theme-text">
+                  {isAr ? "دفع إلكتروني (بريدي موب / CCP)" : "Paiement en ligne"}
+                </span>
               </button>
 
+              {/* Tab 2: Cash on Delivery */}
               <button
                 type="button"
                 onClick={() => setPaymentMode("COD")}
-                className={`p-4 rounded-2xl border-2 text-start transition-all cursor-pointer flex items-center gap-3 ${
+                className={`p-3.5 rounded-2xl border-2 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
                   paymentMode === "COD"
-                    ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)]/20 shadow-sm"
+                    ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)]/25 shadow-sm"
                     : "border-theme bg-surface hover:bg-card"
                 }`}
               >
-                <div className="w-10 h-10 rounded-xl bg-purple-500/15 text-purple-600 flex items-center justify-center font-bold shrink-0">
-                  <Truck className="w-5 h-5" />
+                <div className="w-8 h-8 rounded-xl bg-purple-500/15 text-purple-600 flex items-center justify-center shrink-0">
+                  <Truck className="w-4 h-4" />
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-xs sm:text-sm text-theme-text">
-                      {isAr ? "طريقة 2: بطاقة شاطر باص (توصيل للمنزل)" : "Option 2 : SHATER Pass (Livraison)"}
-                    </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-600 font-bold">
-                      {isAr ? "دفع عند الاستلام 📦" : "Paiement à la livraison"}
-                    </span>
-                  </div>
-                  <span className="text-[11px] text-theme-muted block mt-0.5">
-                    {isAr ? "توصيل بطاقة أصلية لباب المنزل والدفع يداً بيد" : "Livraison de carte physique à domicile"}
-                  </span>
-                </div>
+                <span className="font-black text-xs sm:text-sm text-theme-text">
+                  {isAr ? "دفع عند التوصيل (نقداً)" : "Paiement à la livraison"}
+                </span>
               </button>
             </div>
           </div>
 
-          {/* Conditional Method Display: COD or ONLINE */}
-          {paymentMode === "COD" ? (
-            /* Method B: Cash on Delivery (COD) Ordering Form */
+          {/* 4. CONDITIONAL VIEW: ONLINE OR COD */}
+          {paymentMode === "ONLINE" ? (
+            <div className="space-y-4">
+              {/* Online Coordinates Card: Clean RIP & CCP with Copy */}
+              <Card className="p-5 bg-card border-theme rounded-3xl space-y-4 shadow-sm">
+                {/* RIP Box */}
+                <div className="p-3.5 rounded-2xl bg-surface border border-theme flex items-center justify-between gap-3">
+                  <div>
+                    <span className="text-[10px] text-theme-muted font-mono uppercase block">
+                      {isAr ? "رقم الـ RIP (بريدي موب):" : "RIP BaridiMob :"}
+                    </span>
+                    <span className="font-mono font-bold text-theme-text text-sm sm:text-base select-all">
+                      {BARIDIMOB_RIP}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(BARIDIMOB_RIP, "rip")}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--color-primary-soft)] hover:bg-[var(--color-primary)]/20 text-[var(--color-primary)] text-xs font-bold transition-all cursor-pointer"
+                  >
+                    {copiedField === "rip" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-emerald-600">{isAr ? "تم النسخ" : "Copié"}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>{isAr ? "نسخ" : "Copier"}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* CCP Box */}
+                <div className="p-3.5 rounded-2xl bg-surface border border-theme flex items-center justify-between gap-3">
+                  <div>
+                    <span className="text-[10px] text-theme-muted font-mono uppercase block">
+                      {isAr ? "رقم الحساب البريدي (CCP):" : "Compte CCP :"}
+                    </span>
+                    <div className="flex items-center gap-2 font-mono font-bold text-theme-text text-sm sm:text-base">
+                      <span>{CCP_ACCOUNT}</span>
+                      <span className="text-theme-muted">|</span>
+                      <span>{isAr ? `المفتاح: ${CCP_KEY}` : `Clé : ${CCP_KEY}`}</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(`${CCP_ACCOUNT} ${CCP_KEY}`, "ccp")}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--color-primary-soft)] hover:bg-[var(--color-primary)]/20 text-[var(--color-primary)] text-xs font-bold transition-all cursor-pointer"
+                  >
+                    {copiedField === "ccp" ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="text-emerald-600">{isAr ? "تم النسخ" : "Copié"}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>{isAr ? "نسخ" : "Copier"}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Upload Receipt: Simple Dropzone without format or size limits text */}
+                <div className="space-y-3 pt-1">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+
+                  {!receiptFile ? (
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      className="p-6 border-2 border-dashed border-theme hover:border-[var(--color-primary)] bg-surface/50 hover:bg-surface rounded-2xl text-center cursor-pointer transition-all space-y-2"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center mx-auto">
+                        <UploadCloud className="w-5 h-5" />
+                      </div>
+                      <p className="text-xs sm:text-sm font-bold text-theme-text">
+                        {isAr ? "اضغط هنا لاختيار صورة وصل الدفع أو اسحب الصورة هنا" : "Cliquez pour choisir le reçu ou glissez-le ici"}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="p-3.5 rounded-2xl bg-surface border border-theme space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 truncate">
+                          <FileCheck className="w-4 h-4 text-emerald-500 shrink-0" />
+                          <span className="text-xs font-bold text-theme-text truncate">
+                            {receiptFile.name}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRemoveFile}
+                          className="text-xs text-rose-500 hover:text-rose-600 font-semibold px-2 py-1"
+                        >
+                          {isAr ? "تغيير" : "Changer"}
+                        </button>
+                      </div>
+
+                      {receiptDataUrl && (
+                        <div className="pt-1 text-center">
+                          <img
+                            src={receiptDataUrl}
+                            alt="وصل الدفع"
+                            className="max-h-44 mx-auto rounded-xl border border-theme object-contain"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {receiptError && (
+                    <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{receiptError}</span>
+                    </div>
+                  )}
+
+                  {/* Primary Submit Button */}
+                  <button
+                    type="button"
+                    onClick={handleSubmitReceipt}
+                    disabled={isSubmitting || !receiptFile}
+                    className="w-full min-h-[50px] rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white shadow-md active:scale-[0.99] transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
+                        <span>{isAr ? "جاري الإرسال..." : "Envoi en cours..."}</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCheck className="w-4 h-4 shrink-0" />
+                        <span>
+                          {isAr
+                            ? `تأكيد وإرسال وصل الدفع (${selectedPlanPrice.toLocaleString()} دج)`
+                            : `Confirmer et envoyer le reçu (${selectedPlanPrice.toLocaleString()} DA)`}
+                        </span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </Card>
+
+              {/* Success Result View */}
+              {orderResult && (
+                <Card className="p-5 sm:p-6 bg-card border-2 border-emerald-500/40 rounded-3xl space-y-4 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-600 flex items-center justify-center mx-auto">
+                    <CheckCircle2 className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-base sm:text-lg font-black text-theme-text">
+                      {isAr ? "تم استلام وصل الدفع بنجاح!" : "Reçu bien reçu !"}
+                    </h3>
+                    <p className="text-xs text-theme-secondary max-w-sm mx-auto">
+                      {isAr
+                        ? "طلبك مسجل في قاعدة العمليات وجاري التحقق الفوري منه وتفعيل حسابك."
+                        : "Votre demande est en cours de validation."}
+                    </p>
+                  </div>
+
+                  <a
+                    href={activationWhatsAppUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs bg-[#25D366] hover:bg-[#20bd5a] text-white shadow-md"
+                  >
+                    <MessageCircle className="w-4 h-4 fill-current" />
+                    <span>{isAr ? "إشعار المشرف عبر واتساب للتفعيل السريع" : "Notifier sur WhatsApp"}</span>
+                    <ExternalLink className="w-3.5 h-3.5 opacity-80" />
+                  </a>
+                </Card>
+              )}
+            </div>
+          ) : (
+            /* Cash on Delivery (COD) View: Auto-filled, no detailed address or notes */
             <div className="space-y-4">
               {codResult ? (
-                <Card className="p-6 sm:p-8 bg-card border-2 border-emerald-500/40 rounded-3xl space-y-6 shadow-md text-center animate-scale-in">
-                  <div className="w-16 h-16 rounded-3xl bg-emerald-500/20 text-emerald-600 flex items-center justify-center mx-auto shadow-sm">
-                    <CheckCircle2 className="w-9 h-9" />
+                <Card className="p-6 bg-card border-2 border-emerald-500/40 rounded-3xl space-y-4 text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-600 flex items-center justify-center mx-auto">
+                    <CheckCircle2 className="w-6 h-6" />
                   </div>
-
-                  <div className="space-y-2">
-                    <h3 className="text-xl sm:text-2xl font-black text-theme-text">
-                      {isAr ? "تم تسجيل طلب التوصيل بنجاح!" : "Commande enregistrée avec succès !"}
+                  <div className="space-y-1">
+                    <h3 className="text-base sm:text-lg font-black text-theme-text">
+                      {isAr ? "تم تسجيل طلب التوصيل بنجاح!" : "Commande enregistrée !"}
                     </h3>
-                    <p className="text-xs sm:text-sm text-theme-secondary max-w-md mx-auto">
+                    <p className="text-xs text-theme-secondary max-w-sm mx-auto">
                       {isAr
-                        ? "سيتصل بك عون التوصيل في غضون 24-48 ساعة لتأكيد موعد التسليم والدفع نقداً عند استلام البطاقة."
-                        : "Notre livreur vous contactera dans les 24-48h pour confirmer la livraison et le paiement en espèces."}
+                        ? "سيتصل بك عون التوصيل لتأكيد موعد التسليم والدفع نقداً عند استلام البطاقة."
+                        : "Le livreur vous contactera pour confirmer la livraison."}
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-2xl bg-[var(--color-primary-soft)]/50 border border-[var(--color-primary)]/30 max-w-md mx-auto flex items-center justify-between text-xs">
-                    <span className="text-theme-secondary font-medium">
-                      {isAr ? "رقم الطلب المرجعي:" : "Référence de commande :"}
-                    </span>
-                    <span className="font-mono font-extrabold text-[var(--color-primary)] text-sm select-all">
-                      {codResult.orderId}
-                    </span>
-                  </div>
-
-                  <div className="max-w-md mx-auto p-4 rounded-2xl bg-surface border border-theme text-start text-xs text-theme-secondary space-y-1.5">
-                    <p className="font-bold text-theme-text">{isAr ? "📌 ماذا تفعل بعد استلام البطاقة؟" : "Que faire après réception ?"}</p>
-                    <p>{isAr ? "1. افتح الظرف وستجد بطاقة SHATER Pass مع رمز التفعيل." : "1. Ouvrez l'enveloppe contenant votre carte SHATER Pass."}</p>
-                    <p>{isAr ? "2. ارجع لهذه الصفحة وأدخل الرمز في خانة تفعيل البطاقة بالأعلى." : "2. Entrez le code dans la case d'activation en haut de cette page."}</p>
-                    <p>{isAr ? "3. ينفتح حسابك فوراً وتواصل التدريب من نفس النقطة!" : "3. Votre compte s'activera instantanément !"}</p>
-                  </div>
-
-                  <div className="pt-2">
-                    <Link
-                      href="/dashboard"
-                      className="inline-flex items-center justify-center px-8 min-h-[46px] rounded-2xl font-bold text-xs sm:text-sm bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] transition-all"
-                    >
-                      <span>{isAr ? "العودة إلى لوحة التلميذ" : "Retour au tableau de bord"}</span>
-                    </Link>
-                  </div>
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex items-center justify-center px-6 py-2.5 rounded-xl font-bold text-xs bg-[var(--color-primary)] text-white shadow-md"
+                  >
+                    <span>{isAr ? "العودة إلى لوحة المذاكرة" : "Tableau de bord"}</span>
+                  </Link>
                 </Card>
               ) : (
-                <Card className="p-6 sm:p-8 bg-card border-theme rounded-3xl space-y-6 shadow-sm">
-                  <div className="space-y-1 border-b border-theme pb-4">
-                    <h3 className="text-base font-bold text-theme-text flex items-center gap-2">
-                      <Truck className="w-5 h-5 text-purple-600" />
-                      <span>{isAr ? "طلب بطاقة شاطر باص والتوصيل حتى باب المنزل" : "Formulaire de commande avec livraison"}</span>
+                <Card className="p-5 bg-card border-theme rounded-3xl space-y-4 shadow-sm">
+                  <div className="border-b border-theme pb-3">
+                    <h3 className="text-sm font-bold text-theme-text flex items-center gap-2">
+                      <Truck className="w-4 h-4 text-purple-600" />
+                      <span>{isAr ? "طلب التوصيل للمنزل والدفع عند الاستلام" : "Livraison à domicile"}</span>
                     </h3>
-                    <p className="text-xs text-theme-muted">
-                      {isAr
-                        ? "التوصيل متوفر لجميع ولايات الوطن (58 ولاية). تدفع نقداً عند استلام البطاقة يداً بيد."
-                        : "Livraison disponible dans les 58 wilayas. Paiement en espèces à la livraison."}
-                    </p>
+                    <span className="text-[11px] text-theme-muted">
+                      {isAr ? "التوصيل متوفر لكل الـ 58 ولاية. تدفع نقداً عند الاستلام يداً بيد." : "Livraison 58 wilayas"}
+                    </span>
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
+                  <div className="space-y-3">
+                    {/* Auto-filled Name & Phone */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
                         <label className="text-[11px] font-semibold text-theme-secondary block flex items-center gap-1">
-                          <User className="w-3.5 h-3.5 text-[var(--color-primary)]" />
-                          <span>{isAr ? "الاسم واللقب للمستلم *" : "Nom et prénom *"}</span>
+                          <User className="w-3 h-3 text-[var(--color-primary)]" />
+                          <span>{isAr ? "الاسم واللقب" : "Nom et prénom"}</span>
                         </label>
                         <input
                           type="text"
                           value={shippingName}
                           onChange={(e) => setShippingName(e.target.value)}
-                          placeholder={isAr ? "مثال: أمين بلقاسم" : "Nom et prénom"}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
+                          placeholder={isAr ? "الاسم واللقب" : "Nom et prénom"}
+                          className="w-full px-3 py-2 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         />
                       </div>
 
-                      <div className="space-y-1.5">
+                      <div className="space-y-1">
                         <label className="text-[11px] font-semibold text-theme-secondary block flex items-center gap-1">
-                          <Phone className="w-3.5 h-3.5 text-[var(--color-primary)]" />
-                          <span>{isAr ? "رقم الهاتف للتوصيل *" : "Téléphone portable *"}</span>
+                          <Phone className="w-3 h-3 text-[var(--color-primary)]" />
+                          <span>{isAr ? "رقم الهاتف للتوصيل" : "Téléphone"}</span>
                         </label>
                         <input
                           type="tel"
@@ -942,27 +987,28 @@ export default function SubscribePage() {
                           value={shippingPhone}
                           onChange={(e) => setShippingPhone(e.target.value)}
                           placeholder="05 / 06 / 07..."
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all font-mono"
+                          className="w-full px-3 py-2 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono"
                         />
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
+                    {/* Auto-filled Wilaya & Commune */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
                         <label className="text-[11px] font-semibold text-theme-secondary block flex items-center gap-1">
-                          <MapPin className="w-3.5 h-3.5 text-[var(--color-primary)]" />
-                          <span>{isAr ? "الولاية *" : "Wilaya *"}</span>
+                          <MapPin className="w-3 h-3 text-[var(--color-primary)]" />
+                          <span>{isAr ? "الولاية" : "Wilaya"}</span>
                         </label>
                         <input
                           type="text"
                           value={shippingWilaya}
                           onChange={(e) => setShippingWilaya(e.target.value)}
-                          placeholder={isAr ? "مثال: الجزائر، سطيف، وهران، قسنطينة..." : "Wilaya"}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
+                          placeholder={isAr ? "مثال: الجزائر، سطيف، وهران..." : "Wilaya"}
+                          className="w-full px-3 py-2 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         />
                       </div>
 
-                      <div className="space-y-1.5">
+                      <div className="space-y-1">
                         <label className="text-[11px] font-semibold text-theme-secondary block">
                           <span>{isAr ? "البلدية" : "Commune"}</span>
                         </label>
@@ -970,56 +1016,26 @@ export default function SubscribePage() {
                           type="text"
                           value={shippingCommune}
                           onChange={(e) => setShippingCommune(e.target.value)}
-                          placeholder={isAr ? "مثال: حيدرة، باب الزوار، العلمة..." : "Commune"}
-                          className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
+                          placeholder={isAr ? "مثال: باب الزوار، العلمة..." : "Commune"}
+                          className="w-full px-3 py-2 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         />
                       </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-semibold text-theme-secondary block">
-                        <span>{isAr ? "العنوان الدقيق للتوصيل (الحي، رقم المنزل أو النقطة الدالة) *" : "Adresse de livraison exacte *"}</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={shippingAddress}
-                        onChange={(e) => setShippingAddress(e.target.value)}
-                        placeholder={isAr ? "مثال: حي 500 مسكن عمارة C شقة 12، بالقرب من ثانوية..." : "Adresse complète"}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-semibold text-theme-secondary block">
-                        <span>{isAr ? "ملاحظات إضافية لعون التوصيل (اختياري)" : "Remarques pour la livraison"}</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={shippingNotes}
-                        onChange={(e) => setShippingNotes(e.target.value)}
-                        placeholder={isAr ? "مثال: الاتصال قبل القدوم بساعة" : "Notes"}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
-                      />
-                    </div>
-
                     {codError && (
-                      <div className="flex items-center gap-2 p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs">
-                        <AlertCircle className="w-4 h-4 shrink-0" />
+                      <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs">
+                        <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                         <span>{codError}</span>
                       </div>
                     )}
 
-                    <div className="pt-3 border-t border-theme space-y-3">
-                      <div className="p-4 rounded-2xl bg-surface border border-theme flex items-center justify-between">
-                        <div>
-                          <span className="text-xs font-bold text-theme-text block">
-                            {isAr ? "المبلغ الإجمالي عند الاستلام:" : "Total à payer à la livraison :"}
-                          </span>
-                          <span className="text-[11px] text-theme-muted">
-                            {isAr ? "شامل بطاقة الاشتراك الأصلية" : "Carte SHATER Pass incluse"}
-                          </span>
-                        </div>
-                        <span className="text-xl font-black text-theme-text font-mono">
+                    {/* Total & Submit */}
+                    <div className="pt-2 border-t border-theme space-y-3">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-theme-text">
+                          {isAr ? "المبلغ عند الاستلام:" : "Total à la livraison :"}
+                        </span>
+                        <span className="font-black font-mono text-base text-theme-text">
                           {selectedPlanPrice.toLocaleString()} دج
                         </span>
                       </div>
@@ -1028,20 +1044,20 @@ export default function SubscribePage() {
                         type="button"
                         onClick={handleSubmitCod}
                         disabled={isSubmittingCod}
-                        className="w-full min-h-[54px] rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-xl shadow-purple-600/25 active:scale-[0.99] transition-all cursor-pointer disabled:opacity-50"
+                        className="w-full min-h-[50px] rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md active:scale-[0.99] transition-all cursor-pointer disabled:opacity-50"
                       >
                         {isSubmittingCod ? (
                           <>
-                            <RefreshCw className="w-5 h-5 animate-spin shrink-0" />
-                            <span>{isAr ? "جاري تسجيل طلب التوصيل..." : "Enregistrement de la commande..."}</span>
+                            <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
+                            <span>{isAr ? "جاري تسجيل الطلب..." : "Enregistrement..."}</span>
                           </>
                         ) : (
                           <>
-                            <Truck className="w-5 h-5 shrink-0" />
+                            <Truck className="w-4 h-4 shrink-0" />
                             <span>
                               {isAr
-                                ? `تأكيد طلب بطاقة شاطر باص (${selectedPlanPrice.toLocaleString()} دج عند الاستلام)`
-                                : `Confirmer la commande (${selectedPlanPrice.toLocaleString()} DA à la livraison)`}
+                                ? `تأكيد طلب التوصيل (${selectedPlanPrice.toLocaleString()} دج عند الاستلام)`
+                                : `Confirmer (${selectedPlanPrice.toLocaleString()} DA à la livraison)`}
                             </span>
                           </>
                         )}
@@ -1051,398 +1067,66 @@ export default function SubscribePage() {
                 </Card>
               )}
             </div>
-          ) : (
-            <>
-              {/* Method A: Online Payment Coordinates */}
-              <div className="space-y-4">
-
-            <Card className="p-6 bg-card border-theme rounded-3xl space-y-5 shadow-sm">
-              {/* Method A: BaridiMob */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-surface border border-theme space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 flex items-center justify-center font-bold text-sm">
-                      📱
-                    </div>
-                    <div>
-                      <h3 className="font-extrabold text-sm sm:text-base text-theme-text">
-                        {isAr ? "الخيار الأول: تطبيق بريدي موب (BaridiMob)" : "Option 1 : Application BaridiMob"}
-                      </h3>
-                      <span className="text-[11px] text-theme-muted">
-                        {isAr ? "التحويل فوري وسهل في ثوانٍ عبر رقم الـ RIP" : "Virement instantané via le RIP"}
-                      </span>
-                    </div>
-                  </div>
-                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 font-bold">
-                    {isAr ? "فوري ⚡" : "Instantané ⚡"}
-                  </span>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-card border border-theme flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <span className="text-[10px] text-theme-muted font-mono uppercase tracking-wider block">
-                      {isAr ? "رقم الـ RIP للحساب البريدي الجاري:" : "Numéro RIP BaridiMob :"}
-                    </span>
-                    <span className="font-mono font-bold text-theme-text text-sm sm:text-base tracking-wider select-all">
-                      {BARIDIMOB_RIP}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => copyToClipboard(BARIDIMOB_RIP, "rip")}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--color-primary-soft)] hover:bg-[var(--color-primary)]/20 text-[var(--color-primary)] text-xs font-bold transition-all self-start sm:self-center cursor-pointer active:scale-95"
-                  >
-                    {copiedField === "rip" ? (
-                      <>
-                        <Check className="w-4 h-4 text-emerald-600" />
-                        <span className="text-emerald-600">{isAr ? "تم النسخ بنجاح!" : "Copié !"}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4" />
-                        <span>{isAr ? "نسخ رقم الـ RIP" : "Copier le RIP"}</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                <div className="text-xs text-theme-secondary space-y-1 pt-1 leading-relaxed">
-                  <p className="font-semibold text-theme-text">
-                    {isAr ? "خطوات التحويل عبر بريدي موب:" : "Étapes sur BaridiMob :"}
-                  </p>
-                  <p>
-                    {isAr
-                      ? "1. افتح تطبيق بريدي موب > اختر «تحويل» (Virement) > «تحويل نحو حساب آخر»."
-                      : "1. Ouvrez BaridiMob > Virement vers un autre compte."}
-                  </p>
-                  <p>
-                    {isAr
-                      ? `2. الصق رقم الـ RIP المنسوخ أعلاه وحدد المبلغ (${selectedPlanPrice.toLocaleString()} دج).`
-                      : `2. Collez le RIP et saisissez le montant (${selectedPlanPrice.toLocaleString()} DA).`}
-                  </p>
-                  <p>
-                    {isAr
-                      ? "3. أكّد التحويل والتقط لقطة شاشة (Screenshot) واضحة لوصل العملية."
-                      : "3. Confirmez et prenez une capture d'écran du reçu."}
-                  </p>
-                </div>
-              </div>
-
-              {/* Method B: CCP Office Transfer */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-surface border border-theme space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-blue-500/15 text-blue-600 flex items-center justify-center font-bold text-sm">
-                      <Building2 className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <h3 className="font-extrabold text-sm sm:text-base text-theme-text">
-                        {isAr ? "الخيار الثاني: مكاتب بريد الجزائر (Poste Algérie CCP)" : "Option 2 : Bureaux de poste CCP"}
-                      </h3>
-                      <span className="text-[11px] text-theme-muted">
-                        {isAr ? "عبر أي مكتب بريد بحوالة بريدية أو صك CCP" : "Via virement postal ou chèque CCP"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-card border border-theme flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <span className="text-[10px] text-theme-muted font-mono uppercase tracking-wider block">
-                      {isAr ? "الحساب البريدي والمفتاح (CCP & Clé):" : "Compte postal & Clé :"}
-                    </span>
-                    <div className="flex items-center gap-3 font-mono font-bold text-theme-text text-sm sm:text-base">
-                      <span>{CCP_ACCOUNT}</span>
-                      <span className="text-theme-muted">|</span>
-                      <span>{isAr ? `المفتاح (Clé): ${CCP_KEY}` : `Clé : ${CCP_KEY}`}</span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => copyToClipboard(`${CCP_ACCOUNT} ${CCP_KEY}`, "ccp")}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--color-primary-soft)] hover:bg-[var(--color-primary)]/20 text-[var(--color-primary)] text-xs font-bold transition-all self-start sm:self-center cursor-pointer active:scale-95"
-                  >
-                    {copiedField === "ccp" ? (
-                      <>
-                        <Check className="w-4 h-4 text-emerald-600" />
-                        <span className="text-emerald-600">{isAr ? "تم النسخ بنجاح!" : "Copié !"}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4" />
-                        <span>{isAr ? "نسخ رقم الـ CCP" : "Copier CCP"}</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                <div className="text-xs text-theme-secondary space-y-1 pt-1 leading-relaxed">
-                  <p>
-                    {isAr
-                      ? "• اطلب ملء حوالة بريدية عادية (Mandat) أو صك بريدي موجه لمنظومة الشاطر."
-                      : "• Remplissez un mandat ordinaire ou chèque postal."}
-                  </p>
-                  <p>
-                    {isAr
-                      ? "• احتفظ بالوصل الورقي الذي يختمه عون البريد وصوّره بوضوح بالهاتف."
-                      : "• Prenez une photo nette du reçu tamponné par la poste."}
-                  </p>
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* STEP 3: Upload Receipt & Instant Activation */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-[var(--color-primary)] text-white text-xs font-bold flex items-center justify-center font-mono">
-                3
-              </span>
-              <h2 className="text-lg font-bold text-theme-text">
-                {isAr ? "رفع وصل الدفع وتأكيد التفعيل" : "Téléchargement du reçu et confirmation"}
-              </h2>
-            </div>
-
-            {/* Post-submission Success View */}
-            {orderResult ? (
-              <Card className="p-6 sm:p-8 bg-card border-2 border-emerald-500/40 rounded-3xl space-y-6 shadow-md text-center animate-scale-in">
-                <div className="w-16 h-16 rounded-3xl bg-emerald-500/20 text-emerald-600 flex items-center justify-center mx-auto shadow-sm">
-                  <CheckCircle2 className="w-9 h-9" />
-                </div>
-
-                <div className="space-y-2">
-                  <h3 className="text-xl sm:text-2xl font-black text-theme-text">
-                    {isAr ? "تم استلام وصل الدفع بنجاح!" : "Reçu de paiement bien reçu !"}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-theme-secondary max-w-md mx-auto">
-                    {isAr
-                      ? "طلبك الآن مسجل في قاعدة العمليات وقيد التحقق الفوري. لتسريع التفعيل إلى أقل من 10 دقائق، اضغط على زر الواتساب بالأسفل لإشعار المشرف."
-                      : "Votre demande est enregistrée. Cliquez sur le bouton WhatsApp ci-dessous pour accélérer la validation."}
-                  </p>
-                </div>
-
-                {/* Order Reference Box */}
-                <div className="p-4 rounded-2xl bg-[var(--color-primary-soft)]/50 border border-[var(--color-primary)]/30 max-w-md mx-auto flex items-center justify-between text-xs">
-                  <span className="text-theme-secondary font-medium">
-                    {isAr ? "الرمز المرجعي للطلب:" : "Référence de commande :"}
-                  </span>
-                  <span className="font-mono font-extrabold text-[var(--color-primary)] text-sm select-all">
-                    {orderResult.referenceId}
-                  </span>
-                </div>
-
-                {/* Receipt Preview Thumbnail */}
-                {orderResult.receiptPath && orderResult.receiptPath.startsWith("data:image") && (
-                  <div className="max-w-xs mx-auto">
-                    <span className="text-[11px] text-theme-muted block mb-2">{isAr ? "صورة الوصل المرفقة:" : "Reçu joint :"}</span>
-                    <img
-                      src={orderResult.receiptPath}
-                      alt="وصل الدفع"
-                      className="max-h-48 mx-auto rounded-2xl border border-theme object-contain shadow-sm"
-                    />
-                  </div>
-                )}
-
-                {/* Primary Action: Direct WhatsApp Activation */}
-                <div className="space-y-3 max-w-md mx-auto pt-2">
-                  <a
-                    href={activationWhatsAppUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full min-h-[52px] rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2.5 bg-[#25D366] hover:bg-[#20bd5a] text-white shadow-lg shadow-emerald-600/25 active:scale-95 transition-all cursor-pointer"
-                  >
-                    <MessageCircle className="w-5 h-5 fill-current shrink-0" />
-                    <span>{isAr ? "إشعار المشرف عبر واتساب للتفعيل الفوري 🚀" : "Notifier le superviseur via WhatsApp"}</span>
-                    <ExternalLink className="w-4 h-4 opacity-80 shrink-0" />
-                  </a>
-
-                  <Link
-                    href="/dashboard"
-                    className="w-full min-h-[44px] rounded-2xl font-bold text-xs sm:text-sm flex items-center justify-center gap-2 bg-surface hover:bg-surface/80 border border-theme text-theme-text transition-all"
-                  >
-                    <span>{isAr ? "العودة إلى لوحة التلميذ" : "Retour au tableau de bord"}</span>
-                  </Link>
-                </div>
-              </Card>
-            ) : (
-              /* Upload Form */
-              <Card className="p-6 sm:p-8 bg-card border-theme rounded-3xl space-y-6 shadow-sm">
-                {/* File Drop & Browse Area */}
-                <div className="space-y-3">
-                  <span className="text-xs font-extrabold text-theme-text block">
-                    {isAr ? "صورة وصل التحويل (سكرين شوت أو صورة ورقية):" : "Photo du reçu de virement :"}
-                  </span>
-
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    id="receipt-file-input"
-                    accept="image/jpeg,image/png,image/webp,application/pdf"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-
-                  {!receiptFile ? (
-                    <div
-                      onClick={() => fileInputRef.current?.click()}
-                      className="p-8 border-2 border-dashed border-theme hover:border-[var(--color-primary)] bg-surface/50 hover:bg-surface rounded-3xl text-center cursor-pointer transition-all space-y-3 group"
-                    >
-                      <div className="w-14 h-14 rounded-2xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center mx-auto group-hover:scale-105 transition-transform">
-                        <UploadCloud className="w-7 h-7" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-bold text-theme-text">
-                          {isAr ? "اضغط هنا لاختيار صورة الوصل أو اسحب الملف إلى هنا" : "Cliquez pour sélectionner le reçu ou glissez-le ici"}
-                        </p>
-                        <p className="text-[11px] text-theme-muted mt-1">
-                          {isAr ? "الصيغ المقبولة: JPG, PNG, WEBP أو PDF (أقصى حد: 5 ميغابايت)" : "Formats acceptés : JPG, PNG, WEBP ou PDF (max 5 Mo)"}
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="p-4 rounded-2xl bg-surface border border-theme space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2.5 truncate">
-                          <FileCheck className="w-5 h-5 text-emerald-500 shrink-0" />
-                          <div className="truncate text-start">
-                            <span className="text-xs font-bold text-theme-text block truncate">
-                              {receiptFile.name}
-                            </span>
-                            <span className="text-[10px] text-theme-muted font-mono">
-                              {(receiptFile.size / 1024).toFixed(1)} KB
-                            </span>
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={handleRemoveFile}
-                          className="text-xs text-rose-500 hover:text-rose-600 font-semibold px-2 py-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all cursor-pointer"
-                        >
-                          {isAr ? "تغيير الملف" : "Changer"}
-                        </button>
-                      </div>
-
-                      {receiptDataUrl && (
-                        <div className="pt-2 text-center">
-                          <img
-                            src={receiptDataUrl}
-                            alt="معاينة وصل الدفع"
-                            className="max-h-52 mx-auto rounded-2xl border border-theme object-contain shadow-sm"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {receiptError && (
-                    <div className="flex items-center gap-2 p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs">
-                      <AlertCircle className="w-4 h-4 shrink-0" />
-                      <span>{receiptError}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Verification Fields: Pre-filled from student profile */}
-                <div className="pt-2 border-t border-theme space-y-4">
-                  <span className="text-xs font-extrabold text-theme-text block">
-                    {isAr ? "بيانات تأكيد الهوية (تساعد المشرف على مطابقة الوصل فورياً):" : "Informations de confirmation :"}
-                  </span>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-semibold text-theme-secondary block flex items-center gap-1">
-                        <User className="w-3.5 h-3.5 text-[var(--color-primary)]" />
-                        <span>{isAr ? "اسم ولقب الطالب" : "Nom complet"}</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={studentName}
-                        onChange={(e) => setStudentName(e.target.value)}
-                        placeholder={isAr ? "مثال: أيمن بن عيسى" : "Nom et prénom"}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-semibold text-theme-secondary block flex items-center gap-1">
-                        <Phone className="w-3.5 h-3.5 text-[var(--color-primary)]" />
-                        <span>{isAr ? "رقم هاتف الطالب / الولي" : "Téléphone"}</span>
-                      </label>
-                      <input
-                        type="tel"
-                        dir="ltr"
-                        value={studentPhone}
-                        onChange={(e) => setStudentPhone(e.target.value)}
-                        placeholder="05 / 06 / 07..."
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all font-mono"
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-semibold text-theme-secondary block flex items-center gap-1">
-                        <MapPin className="w-3.5 h-3.5 text-[var(--color-primary)]" />
-                        <span>{isAr ? "الولاية" : "Wilaya"}</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={studentWilaya}
-                        onChange={(e) => setStudentWilaya(e.target.value)}
-                        placeholder={isAr ? "مثال: الجزائر العاصمة، وهران، سطيف..." : "Wilaya"}
-                        className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Single Submit Button with Spinner & Protection */}
-                <div className="pt-2 space-y-3">
-                  <button
-                    type="button"
-                    data-testid="submit-receipt-primary-cta"
-                    onClick={handleSubmitReceipt}
-                    disabled={isSubmitting || !receiptFile}
-                    className="w-full min-h-[54px] rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white shadow-xl shadow-[var(--color-primary)]/25 active:scale-[0.99] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <RefreshCw className="w-5 h-5 animate-spin shrink-0" />
-                        <span>{isAr ? "جاري رفع الوصل وتوثيق الطلب..." : "Envoi en cours..."}</span>
-                      </>
-                    ) : (
-                      <>
-                        <CheckCheck className="w-5 h-5 shrink-0" />
-                        <span>
-                          {isAr
-                            ? `تأكيد وإرسال وصل الدفع (${selectedPlanPrice.toLocaleString()} دج)`
-                            : `Confirmer et envoyer le reçu (${selectedPlanPrice.toLocaleString()} DA)`}
-                        </span>
-                      </>
-                    )}
-                  </button>
-
-                  <div className="flex items-center justify-center gap-2 text-[11px] text-theme-muted text-center">
-                    <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0" />
-                    <span>{isAr ? "بياناتك مشفرة ومحمية 100%. يتم التحقق فورياً وتفعيل الحساب." : "Paiement sécurisé et activation rapide."}</span>
-                  </div>
-                </div>
-              </Card>
-            )}
-          </div>
-          </>
           )}
 
+          {/* 5. INTERACTIVE FAQ ACCORDION: Show question, click to show answer */}
+          <div className="space-y-3 pt-2 border-t border-theme">
+            <div className="flex items-center gap-2">
+              <HelpCircle className="w-4 h-4 text-[var(--color-primary)]" />
+              <h3 className="text-sm font-bold text-theme-text">
+                {isAr ? "الأسئلة الشائعة" : "Questions Fréquentes"}
+              </h3>
+            </div>
+
+            <div className="space-y-2">
+              {faqs.map((faq, idx) => {
+                const isOpen = openFaqIndex === idx;
+                return (
+                  <div
+                    key={idx}
+                    className="rounded-2xl bg-card border border-theme overflow-hidden transition-all"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                      className="w-full p-3.5 text-start flex items-center justify-between gap-3 font-bold text-xs sm:text-sm text-theme-text hover:bg-surface/50 transition-colors"
+                    >
+                      <span className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)] inline-flex items-center justify-center text-[10px] font-mono shrink-0">
+                          {idx + 1}
+                        </span>
+                        <span>{faq.q}</span>
+                      </span>
+                      {isOpen ? (
+                        <ChevronUp className="w-4 h-4 text-theme-muted shrink-0" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-theme-muted shrink-0" />
+                      )}
+                    </button>
+
+                    {isOpen && (
+                      <div className="px-4 pb-3.5 pt-1 text-xs text-theme-secondary leading-relaxed border-t border-theme/40">
+                        <p>{faq.a}</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Technical Support Box */}
-          <div className="p-4 sm:p-5 rounded-3xl bg-surface border border-theme flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">
-            <div className="flex items-center gap-3 text-center sm:text-start">
-              <div className="w-10 h-10 rounded-2xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center shrink-0">
-                <Headphones className="w-5 h-5" />
+          <div className="p-4 rounded-2xl bg-surface border border-theme flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-start">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center shrink-0">
+                <Headphones className="w-4 h-4" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-theme-text">
-                  {isAr ? "هل تواجه أي صعوبة أو لديك استفسار؟" : "Besoin d'aide pour le paiement ?"}
+                <h4 className="text-xs font-bold text-theme-text">
+                  {isAr ? "تحتاج مساعدة بخصوص الدفع؟" : "Besoin d'aide ?"}
                 </h4>
-                <p className="text-xs text-theme-muted mt-0.5">
-                  {isAr ? "فريق الدعم البيداغوجي والتقني متاح للإجابة على جميع تساؤلاتك فورياً" : "Notre équipe d'assistance est disponible sur WhatsApp"}
+                <p className="text-[11px] text-theme-muted">
+                  {isAr ? "فريق الدعم متاح للإجابة على تساؤلاتك فورياً" : "Support disponible sur WhatsApp"}
                 </p>
               </div>
             </div>
@@ -1451,87 +1135,12 @@ export default function SubscribePage() {
               href={supportWhatsAppUrl}
               target="_blank"
               rel="noopener noreferrer"
-              data-testid="whatsapp-support-cta"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold transition-all shrink-0 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold transition-all shrink-0"
             >
-              <MessageCircle className="w-4 h-4 fill-current shrink-0" />
-              <span>{isAr ? "تواصل مع الدعم الفني" : "Contacter le support"}</span>
-              <ExternalLink className="w-3.5 h-3.5 opacity-70 shrink-0" />
+              <MessageCircle className="w-3.5 h-3.5 fill-current" />
+              <span>{isAr ? "تواصل مع الدعم" : "Support WhatsApp"}</span>
+              <ExternalLink className="w-3 h-3 opacity-70" />
             </a>
-          </div>
-
-          {/* Secondary CTA navigation */}
-          <div className="flex justify-center">
-            <Link href="/progress">
-              <Button
-                data-testid="subscribe-secondary-cta"
-                size="md"
-                variant="ghost"
-                className="text-xs text-theme-muted hover:text-theme-text rounded-xl"
-              >
-                <span>{isAr ? "← العودة للاطلاع على مكتسباتي السابقة" : "← Consulter mes acquis"}</span>
-              </Button>
-            </Link>
-          </div>
-
-          {/* Commercial Transparency FAQ Section */}
-          <div data-testid="commercial-faq-section" className="space-y-4 pt-4 border-t border-theme">
-            <div className="flex items-center gap-2">
-              <HelpCircle className="w-5 h-5 text-[var(--color-primary)]" />
-              <h3 className="text-base font-bold text-theme-text">
-                {isAr ? "الأسئلة الشائعة والضمانات" : "Questions Fréquentes"}
-              </h3>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <Card className="p-4 bg-card border-theme space-y-1.5 shadow-sm rounded-2xl">
-                <h4 className="text-xs sm:text-sm font-bold text-theme-text flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)] inline-flex items-center justify-center text-[10px] font-mono shrink-0">1</span>
-                  <span>{isAr ? "متى يتم تفعيل حسابي بعد إرسال الوصل؟" : "Quand mon compte sera-t-il activé ?"}</span>
-                </h4>
-                <p className="text-xs text-theme-secondary leading-relaxed ps-7">
-                  {isAr
-                    ? "يتم التحقق من الوصل فور وصوله، ويتم التفعيل في مدة تتراوح بين 5 إلى 30 دقيقة كحد أقصى. بمجرد الضغط على زر الواتساب بعد إرسال الوصل، يتلقى المشرف إشعارك مباشرة."
-                    : "L'activation s'effectue généralement dans un délai de 5 à 30 minutes après vérification du reçu."}
-                </p>
-              </Card>
-
-              <Card className="p-4 bg-card border-theme space-y-1.5 shadow-sm rounded-2xl">
-                <h4 className="text-xs sm:text-sm font-bold text-theme-text flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)] inline-flex items-center justify-center text-[10px] font-mono shrink-0">2</span>
-                  <span>{isAr ? "هل تضيع بياناتي واختباراتي السابقة؟" : "Mes données précédentes sont-elles conservées ?"}</span>
-                </h4>
-                <p className="text-xs text-theme-secondary leading-relaxed ps-7">
-                  {isAr
-                    ? "لا، جميع نتائجك، مهاراتك المثبتة، تقرير معمل الأخطاء، ونقاط قوتك وضعفك محفوظة 100% في قاعدة البيانات، وستواصل التدريب من نفس النقطة التي توقفت عندها."
-                    : "Toutes vos données, diagnostics et maîtrises validées sont intégralement conservées."}
-                </p>
-              </Card>
-
-              <Card className="p-4 bg-card border-theme space-y-1.5 shadow-sm rounded-2xl">
-                <h4 className="text-xs sm:text-sm font-bold text-theme-text flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)] inline-flex items-center justify-center text-[10px] font-mono shrink-0">3</span>
-                  <span>{isAr ? "هل يمكنني الدفع نقداً بدون تطبيق بريدي موب؟" : "Puis-je payer sans BaridiMob ?"}</span>
-                </h4>
-                <p className="text-xs text-theme-secondary leading-relaxed ps-7">
-                  {isAr
-                    ? "نعم بكل تأكيد! يمكنك التوجه إلى أي مكتب بريد جزائري (Poste Algérie) وطلب تحويل المبلغ إلى رقم الحساب CCP والمفتاح المذكورين أعلاه، ثم تصوير الوصل ورفعه هنا."
-                    : "Oui, vous pouvez effectuer un virement ordinaire en espèces dans n'importe quel bureau de poste (Poste Algérie)."}
-                </p>
-              </Card>
-
-              <Card className="p-4 bg-card border-theme space-y-1.5 shadow-sm rounded-2xl">
-                <h4 className="text-xs sm:text-sm font-bold text-theme-text flex items-center gap-2">
-                  <span className="w-5 h-5 rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)] inline-flex items-center justify-center text-[10px] font-mono shrink-0">4</span>
-                  <span>{isAr ? "ما الفرق بين اشتراك الموسم والاشتراك الشهري؟" : "Quelle est la différence entre le pass saison et mensuel ?"}</span>
-                </h4>
-                <p className="text-xs text-theme-secondary leading-relaxed ps-7">
-                  {isAr
-                    ? "اشتراك الموسم يمنحك وصولاً شاملاً طوال السنة حتى يوم امتحان البكالوريا في جوان 2027 بسعر 4,900 دج (ما يعادل 490 دج شهرياً فقط)، بينما الاشتراك الشهري يمنحك 30 يوماً بـ 900 دج."
-                    : "Le Pass Saison vous accompagne jusqu'au jour de l'examen du BAC pour 4 900 DA, tandis que le Pass Mensuel est à 900 DA pour 30 jours."}
-                </p>
-              </Card>
-            </div>
           </div>
         </Container>
       </div>

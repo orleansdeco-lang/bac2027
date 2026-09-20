@@ -21,6 +21,7 @@ import { PACK2_LANGUAGES_BUNDLE } from "../src/domain/content/pack2-languages-fr
 import { PACK3_PHILOSOPHY_BUNDLE } from "../src/domain/content/pack3-philosophy-scientific-bundle";
 import { PACK4_ARABIC_LIT_MATH_BUNDLE } from "../src/domain/content/pack4-arabic-and-literature-math-bundle";
 import { PACK5_ENGINEERING_SNV_BUNDLE } from "../src/domain/content/pack5-technique-math-engineering-expanded";
+import { PACK6_LETTRES_PHILO_BUNDLE } from "../src/domain/content/pack6-lettres-philo-bundle";
 
 interface TargetSkillTest {
   batchName: string;
@@ -154,13 +155,28 @@ const ALL_CURRICULUM_SKILLS: TargetSkillTest[] = [
   { batchName: "Pack 5 Engineering & SNV", skillId: "tm_proc_chemical_thermodynamics", expectedSubject: "process_eng" },
   { batchName: "Pack 5 Engineering & SNV", skillId: "snv_math_protein_synthesis_transcription_translation", expectedSubject: "natural_sciences" },
   { batchName: "Pack 5 Engineering & SNV", skillId: "snv_math_humoral_cellular_immunity", expectedSubject: "natural_sciences" },
+
+  // 18. Pack 6 Lettres & Philo Legacy Unresolved Skills (13 units)
+  { batchName: "Pack 6 Lettres & Philo", skillId: "phi_lp_dialectical_methodology", expectedSubject: "philosophy" },
+  { batchName: "Pack 6 Lettres & Philo", skillId: "phi_lp_investigation_defense", expectedSubject: "philosophy" },
+  { batchName: "Pack 6 Lettres & Philo", skillId: "phi_lp_comparison_methodology", expectedSubject: "philosophy" },
+  { batchName: "Pack 6 Lettres & Philo", skillId: "phi_lp_text_analysis", expectedSubject: "philosophy" },
+  { batchName: "Pack 6 Lettres & Philo", skillId: "ar_lp_exile_revival_poetry", expectedSubject: "arabic" },
+  { batchName: "Pack 6 Lettres & Philo", skillId: "ar_lp_intellectual_summary", expectedSubject: "arabic" },
+  { batchName: "Pack 6 Lettres & Philo", skillId: "ar_lp_rhetoric_imagery", expectedSubject: "arabic" },
+  { batchName: "Pack 6 Lettres & Philo", skillId: "ar_lp_critical_appreciation", expectedSubject: "arabic" },
+  { batchName: "Pack 6 Lettres & Philo", skillId: "hg_lp_cold_war_bipolarity", expectedSubject: "history_geography" },
+  { batchName: "Pack 6 Lettres & Philo", skillId: "is_lp_aqeedah_intellect", expectedSubject: "islamic_studies" },
+  { batchName: "Pack 6 Lettres & Philo", skillId: "is_lp_sources_legislation", expectedSubject: "islamic_studies" },
+  { batchName: "Pack 6 Lettres & Philo", skillId: "math_lp_sequences_arithmetic", expectedSubject: "math" },
+  { batchName: "Pack 6 Lettres & Philo", skillId: "math_lp_congruence_modular", expectedSubject: "math" },
 ];
 
 console.log("==================================================================");
-console.log("  VERIFYING ALL BAC PRODUCTION CONTENT BUNDLES (BATCHES 1 TO 9)");
+console.log("  VERIFYING ALL BAC PRODUCTION CONTENT BUNDLES (BATCHES 1 TO 9 + PACKS 1-6)");
 console.log("==================================================================\n");
 
-// 1. Verify all 12 bundle objects are defined and non-empty
+// 1. Verify all bundle objects are defined and non-empty
 const bundleObjects = [
   { name: "BATCH1_PHILOSOPHY_ARABIC_BUNDLE", obj: BATCH1_PHILOSOPHY_ARABIC_BUNDLE, minKeys: 6 },
   { name: "BATCH1_GESTION_ECO_BUNDLE", obj: BATCH1_GESTION_ECO_BUNDLE, minKeys: 4 },
@@ -179,6 +195,7 @@ const bundleObjects = [
   { name: "PACK3_PHILOSOPHY_BUNDLE", obj: PACK3_PHILOSOPHY_BUNDLE, minKeys: 5 },
   { name: "PACK4_ARABIC_LIT_MATH_BUNDLE", obj: PACK4_ARABIC_LIT_MATH_BUNDLE, minKeys: 11 },
   { name: "PACK5_ENGINEERING_SNV_BUNDLE", obj: PACK5_ENGINEERING_SNV_BUNDLE, minKeys: 12 },
+  { name: "PACK6_LETTRES_PHILO_BUNDLE", obj: PACK6_LETTRES_PHILO_BUNDLE, minKeys: 13 },
 ];
 
 let totalChecks = 0;

@@ -272,7 +272,8 @@ async function runSuite() {
     accessStatus: "PAID",
   } as any);
 
-  const refSignupRes = await recordReferralSignup("student_referred_friend", refCode);
+  const testReferredFriendId = `student_referred_friend_${Date.now()}`;
+  const refSignupRes = await recordReferralSignup(testReferredFriendId, refCode);
   assert(
     refSignupRes.success === true,
     "15. Referral signup recorded for referred student with pending reward"
@@ -287,7 +288,7 @@ async function runSuite() {
   );
 
   // Anti-fraud: Duplicate referral prevention
-  const dupRefRes = await recordReferralSignup("student_referred_friend", refCode);
+  const dupRefRes = await recordReferralSignup(testReferredFriendId, refCode);
   assert(
     dupRefRes.success === false,
     "16b. Anti-fraud: duplicate referral for same referred student is strictly prevented",
@@ -299,7 +300,7 @@ async function runSuite() {
   const creditBefore = summaryBefore.creditBalanceDzd;
 
   // Qualify the referral by confirming a subscription order for the referred friend
-  const qualRes = await qualifyReferralOnSubscription("student_referred_friend", "order_qualifying_123");
+  const qualRes = await qualifyReferralOnSubscription(testReferredFriendId, `order_qualifying_${Date.now()}`);
   assert(
     qualRes.success === true && qualRes.creditAwarded === 700,
     "17a. Referral qualified and awarded exactly 700 DA reward",

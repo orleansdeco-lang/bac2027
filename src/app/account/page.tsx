@@ -44,6 +44,10 @@ import {
   Brain,
   Layers,
   ChevronRight,
+  Copy,
+  Gift,
+  Users,
+  MessageCircle,
 } from "lucide-react";
 import { exportAnonymizedPilotData } from "@/lib/analytics";
 
@@ -56,6 +60,8 @@ export default function AccountPage() {
   const [regDraft, setRegDraft] = useState<StudentRegistrationData | null>(null);
   const [exportSuccess, setExportSuccess] = useState(false);
   const [paymentRecord, setPaymentRecord] = useState<PilotPaymentRecord | null>(null);
+  const [referralSummary, setReferralSummary] = useState<any>(null);
+  const [copiedCodeField, setCopiedCodeField] = useState<string | null>(null);
 
   // Live progress metrics from ProgressService & Supabase
   const {
@@ -145,9 +151,27 @@ export default function AccountPage() {
       if (userRecord) {
         setPaymentRecord(userRecord);
       }
+
+      try {
+        const refRes = await fetch(`/api/referral?userId=${encodeURIComponent(user.id)}`);
+        const refData = await refRes.json();
+        if (refData.success && refData.summary) {
+          setReferralSummary(refData.summary);
+        }
+      } catch (err) {
+        console.error("Failed to load referral summary on account page:", err);
+      }
     }
     fetchAccProfile();
   }, [user]);
+
+  const copyCode = (text: string, field: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedCodeField(field);
+      setTimeout(() => setCopiedCodeField(null), 2500);
+    }
+  };
 
   const handleSignOut = async () => {
     try {
@@ -283,6 +307,19 @@ export default function AccountPage() {
   const currentCharacterKey = (regDraft as any)?.characterId || (profile as any)?.characterId || "scholar";
   const characterInfo = characterMap[currentCharacterKey] || characterMap.scholar;
 
+  const studentCode =
+    (profile as any)?.studentCode ||
+    (profile as any)?.student_code ||
+    `STU-${(user?.id || profile?.id || "BAC27").replace(/[^a-zA-Z0-9]/g, "").slice(0, 8).toUpperCase()}`;
+
+  const referralCode =
+    referralSummary?.referralCode ||
+    (profile as any)?.referral_code ||
+    (profile as any)?.referralCode ||
+    (user?.id ? `SHTR${user.id.replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toUpperCase()}` : "SHATERBAC");
+
+  const creditBalance = referralSummary?.creditBalanceDzd ?? (profile as any)?.credit_balance_dzd ?? 0;
+
   return (
     <AppShell activeNav="account">
       <Container size="sm" className="py-6 sm:py-10 space-y-6">
@@ -306,6 +343,156 @@ export default function AccountPage() {
             </Badge>
           </div>
         </div>
+
+        {/* ================================================================= */}
+        {/* STUDENT OFFICIAL ID & REFERRAL CARD (كود الطالب وبياناته)         */}
+        {/* ================================================================= */}
+        <Card className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-card via-surface/60 to-card border-2 border-[var(--color-primary)]/30 shadow-md space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-theme pb-3.5">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center font-bold text-lg shadow-sm">
+                🎓
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-black text-theme-text">
+                    {profile?.firstName && profile?.lastName
+                      ? `${profile.firstName} ${profile.lastName}`
+                      : regDraft?.firstName && regDraft?.lastName
+                      ? `${regDraft.firstName} ${regDraft.lastName}`
+                      : isAr
+                      ? "طالب شاطر"
+                      : "Élève SHATER"}
+                  </h2>
+                  <Badge variant="outline" size="sm" className="border-[var(--color-primary)]/40 text-[var(--color-primary)] bg-[var(--color-primary-soft)] text-[10px] font-bold">
+                    {isAr ? streamMeta.name_ar : streamMeta.name_fr}
+                  </Badge>
+                </div>
+                <p className="text-xs text-theme-muted mt-0.5">
+                  {user.email}
+                </p>
+              </div>
+            </div>
+
+            <div>
+              {access.status === "PAID_ACTIVE" ? (
+                <Badge variant="success" size="sm" className="px-3 py-1 text-xs font-bold">
+                  {isAr ? "اشتراك موسم 2027 نشط ✓" : "Pass Saison Actif"}
+                </Badge>
+              ) : access.status === "TRIAL_ACTIVE" ? (
+                <Badge variant="warning" size="sm" className="px-3 py-1 text-xs font-bold">
+                  {isAr ? `فترة تجريبية (${formatTrialCountdown(access.remainingHours, true)})` : "Essai actif"}
+                </Badge>
+              ) : (
+                <Badge variant="outline" size="sm" className="px-3 py-1 text-xs font-bold text-rose-500 border-rose-500/30">
+                  {isAr ? "التجربة منتهية" : "Essai expiré"}
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* Codes Grid: Student ID Code + Referral Code */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Student ID Code */}
+            <div className="p-3.5 rounded-2xl bg-surface border border-theme flex items-center justify-between gap-2">
+              <div>
+                <span className="text-[10px] text-theme-muted font-bold block uppercase tracking-wider">
+                  {isAr ? "كود الطالب الرسمي (Student ID):" : "Code Étudiant :"}
+                </span>
+                <span className="font-mono font-black text-sm sm:text-base text-theme-text tracking-wider select-all block mt-0.5">
+                  {studentCode}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => copyCode(studentCode, "student_code")}
+                className="px-3 py-1.5 rounded-xl bg-card border border-theme hover:border-[var(--color-primary)] text-xs font-bold text-theme-text transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                title={isAr ? "نسخ كود الطالب" : "Copier"}
+              >
+                {copiedCodeField === "student_code" ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    <span className="text-emerald-600 text-[11px]">{isAr ? "تم النسخ" : "Copié"}</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5 text-theme-muted" />
+                    <span className="text-[11px]">{isAr ? "نسخ" : "Copier"}</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Referral Code */}
+            <div className="p-3.5 rounded-2xl bg-surface border border-theme flex items-center justify-between gap-2">
+              <div>
+                <span className="text-[10px] text-purple-600 dark:text-purple-400 font-bold block uppercase tracking-wider flex items-center gap-1">
+                  <Gift className="w-3 h-3" />
+                  <span>{isAr ? "كود الإحالة (اربح 700 دج):" : "Code parrainage :"}</span>
+                </span>
+                <span className="font-mono font-black text-sm sm:text-base text-purple-600 dark:text-purple-400 tracking-wider select-all block mt-0.5">
+                  {referralCode}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => copyCode(referralCode, "referral_code")}
+                className="px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
+                title={isAr ? "نسخ كود الإحالة" : "Copier"}
+              >
+                {copiedCodeField === "referral_code" ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    <span className="text-emerald-600 text-[11px]">{isAr ? "تم النسخ" : "Copié"}</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span className="text-[11px]">{isAr ? "نسخ" : "Copier"}</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+
+          {/* Referral Credit & Share Bar */}
+          <div className="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-600 flex items-center justify-center shrink-0">
+                <Users className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="font-bold text-theme-text block">
+                  {isAr ? `رصيد أرباح شاطر: ${creditBalance.toLocaleString()} دج` : `Solde Crédit : ${creditBalance.toLocaleString()} DA`}
+                </span>
+                <span className="text-[11px] text-theme-muted">
+                  {isAr ? "تحصل على 700 دج رصيد على كل صديق يشترك باشتراك مدفوع" : "+700 DA par ami abonné"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              {referralSummary?.whatsappMessage && (
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(referralSummary.whatsappMessage)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs shadow-sm"
+                >
+                  <MessageCircle className="w-3.5 h-3.5 fill-current" />
+                  <span>{isAr ? "مشاركة عبر واتساب" : "Partager"}</span>
+                </a>
+              )}
+
+              <Link
+                href="/referral"
+                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl bg-card hover:bg-surface border border-theme font-bold text-xs text-theme-text"
+              >
+                <span>{isAr ? "لوحة الإحالة ←" : "Parrainage →"}</span>
+              </Link>
+            </div>
+          </div>
+        </Card>
 
         {/* ================================================================= */}
         {/* 1. REAL-TIME TACTILE KPI METRICS ROW                              */}

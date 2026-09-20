@@ -67,3 +67,12 @@ export {
   getAllPack5EngineeringSnvSkills,
 } from "./pack5-technique-math-engineering-expanded";
 export type { EngineeringAndMathSnvBundlePayload } from "./pack5-technique-math-engineering-expanded";
+
+// Pack 6: Lettres & Philosophie / Langues Étrangères Expanded Bundle
+export {
+  PACK6_LETTRES_PHILO_BUNDLE,
+  getPack6LettresPhiloBundle,
+  getAllPack6LettresPhiloSkills,
+} from "./pack6-lettres-philo-bundle";
+export type { LettresPhiloBundlePayload } from "./pack6-lettres-philo-bundle";
+
