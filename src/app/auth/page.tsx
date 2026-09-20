@@ -51,6 +51,12 @@ function AuthContent() {
     if (qMode === "signup" || qMode === "login") {
       setMode(qMode);
     }
+    const qRef = searchParams.get("ref");
+    if (qRef) {
+      try {
+        localStorage.setItem("shater_pending_referral_code", qRef.trim().toUpperCase());
+      } catch {}
+    }
   }, [searchParams]);
 
   // If already logged in, redirect to the appropriate step
@@ -144,11 +150,11 @@ function AuthContent() {
           // Clean slate for new account: eradicate any previous session state
           purgeUserAndLegacyStorage(newUser.id);
           const { trackEvent } = await import("@/lib/analytics");
-          trackEvent("trial_started", { userId: newUser.id, durationHours: 72 });
+          trackEvent("trial_started", { userId: newUser.id, durationHours: 168 });
           setSuccessMsg(
             locale === "fr"
-              ? "Compte créé avec succès ! Votre essai gratuit de 72h débutera dès votre inscription."
-              : "تم إنشاء حسابك بنجاح! ستبدأ تجربتك المجانية لمدة 72 ساعة فور التسجيل."
+              ? "Compte créé avec succès ! Votre essai gratuit de 7 jours débute dès maintenant."
+              : "تم إنشاء حسابك بنجاح! بدأت تجربتك المجانية الكاملة لمدة 7 أيام."
           );
           setTimeout(() => {
             router.push("/auth/register");

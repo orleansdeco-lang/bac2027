@@ -49,7 +49,11 @@ export type PilotAnalyticsEventName =
   | "conversion_cta_clicked"
   | "payment_started"
   | "payment_pending_verification"
-  | "payment_confirmed";
+  | "payment_confirmed"
+  | "cod_order_placed"
+  | "voucher_redeemed"
+  | "referral_viewed"
+  | "referral_shared";
 
 export interface PilotAnalyticsProperties {
   userId?: string | null;

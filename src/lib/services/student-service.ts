@@ -89,7 +89,7 @@ export const StudentService = {
       targetSpecialty: (profile as any).target_specialty || (profile as any).targetSpecialty,
       techniqueMathSpecialty: profile.techniqueMathSpecialty,
       trialStartedAt: access.trialStartedAt || new Date().toISOString(),
-      trialExpiresAt: access.trialExpiresAt || new Date(Date.now() + 72 * 3600 * 1000).toISOString(),
+      trialExpiresAt: access.trialExpiresAt || calculateTrialExpiration().toISOString(),
       isTrialActive: access.status === "TRIAL_ACTIVE" || access.status === "PAID_ACTIVE",
       canUseProduct: access.canUseProduct,
       registrationCompletedAt: (profile as any).registration_completed_at || (profile as any).registrationCompletedAt,

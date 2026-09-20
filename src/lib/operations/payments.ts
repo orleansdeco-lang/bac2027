@@ -9,12 +9,14 @@
  * 4. Dual-mode resilience: remote Supabase execution with memory fallback.
  */
 
-import { PaymentOrder, PaymentOrderStatus, PaymentMethod, AuthoritativePlan } from "./types";
+import { PaymentOrder, PaymentOrderStatus, PaymentMethod, AuthoritativePlan, OrderType, DeliveryStatus } from "./types";
 import { recordAuditLog } from "./audit";
 import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "../supabase/client";
 import { StudentRepository } from "../repositories/student-repository";
 import { getSubscriptionPlanById } from "./subscriptions";
 import { saveServerStudentProfile, loadServerStudentProfiles } from "./students";
+import { qualifyReferralOnSubscription } from "../referral";
+import { createVoucher, redeemVoucher } from "./vouchers";
 import os from "os";
 
 export const AUTHORITATIVE_PLANS: Record<string, AuthoritativePlan> = {
@@ -749,6 +751,13 @@ export async function approvePaymentOrder(
     reviewed_at: now,
   };
 
+  // Automatically qualify referral reward (700 DA) if this student was referred
+  try {
+    await qualifyReferralOnSubscription(order.userId, order.id);
+  } catch (refErr) {
+    console.error("[Referral] Error qualifying referral on payment approval:", refErr);
+  }
+
   // Record audit log with complete before/after state
   await recordAuditLog({
     actorUserId: operatorId,
@@ -915,4 +924,228 @@ export async function updateOrderReceiptPath(
   }
 
   return true;
+}
+
+export interface CreateCodOrderInput {
+  userId: string;
+  plan?: string;
+  shippingName: string;
+  shippingPhone: string;
+  shippingWilaya: string;
+  shippingCommune: string;
+  shippingAddress: string;
+  notes?: string;
+  studentEmail?: string;
+}
+
+/**
+ * Creates a Cash on Delivery (COD) order for the physical SHATER Pass card
+ */
+export async function createCodOrder(
+  input: CreateCodOrderInput,
+  token?: string | null
+): Promise<PaymentOrder> {
+  const rawPlanKey = input.plan || "season";
+  const normalizedKey = rawPlanKey === "bac_season_pass_pilot" ? "season" : rawPlanKey;
+
+  const subscriptionPlan = await getSubscriptionPlanById(normalizedKey);
+  const authoritativePlan = AUTHORITATIVE_PLANS[rawPlanKey] || AUTHORITATIVE_PLANS[normalizedKey];
+
+  if (!subscriptionPlan && !authoritativePlan) {
+    throw new Error(`Unknown or unsupported plan: ${input.plan}`);
+  }
+
+  const finalPlanId = rawPlanKey;
+  const finalPrice = subscriptionPlan ? subscriptionPlan.price_dzd : (authoritativePlan?.priceDZD ?? 4900);
+  const orderId = `cod_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+  const now = new Date().toISOString();
+
+  // Create pre-assigned SHATER Pass voucher for this physical delivery
+  const voucher = await createVoucher({
+    planId: finalPlanId,
+    salesChannel: "COD",
+    orderId: orderId,
+  });
+
+  const newOrder: PaymentOrder = {
+    id: orderId,
+    userId: input.userId,
+    plan: finalPlanId,
+    amount: finalPrice,
+    currency: "DZD",
+    paymentMethod: "cash",
+    orderType: "COD",
+    status: "PENDING",
+    deliveryStatus: "PENDING",
+    shippingName: input.shippingName,
+    shippingPhone: input.shippingPhone,
+    shippingWilaya: input.shippingWilaya,
+    shippingCommune: input.shippingCommune,
+    shippingAddress: input.shippingAddress,
+    voucherCode: voucher.voucherCode,
+    notes: input.notes || "طلب بطاقة شاطر عبر التوصيل مع الدفع عند الاستلام",
+    submittedAt: now,
+    createdAt: now,
+    updatedAt: now,
+    studentEmail: input.studentEmail,
+    studentName: input.shippingName,
+    studentPhone: input.shippingPhone,
+    wilayaName: input.shippingWilaya,
+  };
+
+  memoryPaymentOrders.unshift(newOrder);
+  saveDurableOrders(memoryPaymentOrders);
+
+  // Register student in server directory for immediate ops visibility
+  try {
+    saveServerStudentProfile({
+      id: input.userId,
+      fullName: input.shippingName || "طالب مسجل",
+      email: input.studentEmail,
+      studentPhone: input.shippingPhone,
+      wilayaName: input.shippingWilaya,
+      accessStatus: "TRIAL",
+      plan: finalPlanId,
+      hasPendingPayment: true,
+    });
+  } catch {}
+
+  // Attempt database insertion with authenticated client if token provided
+  const client = token ? createAuthenticatedSupabaseClient(token) : supabase;
+  if (isSupabaseConfigured && client) {
+    try {
+      const { data, error } = await client
+        .from("payment_orders")
+        .insert({
+          user_id: newOrder.userId,
+          plan: newOrder.plan,
+          amount: newOrder.amount,
+          currency: newOrder.currency,
+          payment_method: newOrder.paymentMethod,
+          order_type: "COD",
+          status: "PENDING",
+          delivery_status: "PENDING",
+          shipping_name: newOrder.shippingName,
+          shipping_phone: newOrder.shippingPhone,
+          shipping_wilaya: newOrder.shippingWilaya,
+          shipping_commune: newOrder.shippingCommune,
+          shipping_address: newOrder.shippingAddress,
+          voucher_code: newOrder.voucherCode,
+          notes: newOrder.notes,
+          submitted_at: newOrder.submittedAt,
+        })
+        .select("id")
+        .single();
+
+      if (!error && data?.id) {
+        newOrder.id = data.id;
+        saveDurableOrders(memoryPaymentOrders);
+      }
+    } catch {
+      // Retained in durable fallback
+    }
+  }
+
+  // Record audit log
+  await recordAuditLog({
+    actorUserId: input.userId,
+    actorRole: "STUDENT",
+    action: "COD_ORDER_CREATED",
+    targetType: "payment_order",
+    targetId: newOrder.id,
+    reason: `طلب بطاقة شاطر توصيل إلى ولاية ${input.shippingWilaya}`,
+    afterState: { orderId: newOrder.id, amount: finalPrice, voucherCode: voucher.voucherCode },
+  });
+
+  return newOrder;
+}
+
+/**
+ * Confirms COD delivery by courier/operator, collects cash, and activates subscription
+ */
+export async function confirmCodDelivery(
+  orderId: string,
+  operatorId: string,
+  notes?: string
+): Promise<{ success: boolean; error?: string; order?: PaymentOrder }> {
+  // 1. Try Supabase RPC first
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase.rpc("confirm_cod_order_delivery", {
+        p_order_id: orderId,
+        p_reviewed_by: operatorId,
+        p_notes: notes || "تم تأكيد التسليم واستلام المبلغ",
+      });
+
+      if (!error && data?.success) {
+        // Also qualify referral
+        if (data.user_id) {
+          await qualifyReferralOnSubscription(data.user_id, orderId);
+        }
+        const updated = await getPaymentOrderById(orderId);
+        return { success: true, order: updated || undefined };
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  // 2. Fallback execution
+  const order = await getPaymentOrderById(orderId);
+  if (!order) {
+    return { success: false, error: "Order not found" };
+  }
+
+  if (order.status === "APPROVED" && order.deliveryStatus === "DELIVERED") {
+    return { success: true, order };
+  }
+
+  const now = new Date().toISOString();
+  const subscriptionExpiresDate = new Date(Date.now() + 10 * 30 * 24 * 60 * 60 * 1000).toISOString();
+
+  order.status = "APPROVED";
+  order.deliveryStatus = "DELIVERED";
+  order.reviewedAt = now;
+  order.reviewedBy = operatorId;
+  if (notes) order.notes = notes;
+  order.updatedAt = now;
+
+  saveDurableOrders(memoryPaymentOrders);
+
+  // Upgrade student profile
+  const profiles = loadServerStudentProfiles();
+  const student = profiles.find((p) => p.id === order.userId);
+  saveServerStudentProfile({
+    id: order.userId,
+    fullName: student?.fullName || order.shippingName || order.studentName || "طالب شاطر",
+    email: student?.email || order.studentEmail,
+    studentPhone: student?.studentPhone || order.shippingPhone || order.studentPhone,
+    streamId: student?.streamId || order.streamId,
+    wilayaName: student?.wilayaName || order.shippingWilaya || order.wilayaName,
+    accessStatus: "PAID",
+    plan: order.plan || "season",
+    hasPendingPayment: false,
+    subscriptionStartedAt: now,
+    subscriptionExpiresAt: subscriptionExpiresDate,
+  });
+
+  // Qualify referral
+  try {
+    await qualifyReferralOnSubscription(order.userId, order.id);
+  } catch (err) {
+    console.error("[Referral] Error qualifying referral on COD delivery:", err);
+  }
+
+  // Record audit log
+  await recordAuditLog({
+    actorUserId: operatorId,
+    actorRole: "OPERATOR",
+    action: "COD_DELIVERY_CONFIRMED",
+    targetType: "payment_order",
+    targetId: order.id,
+    reason: notes || "تم استلام الطلب وتأكيد الدفع نقداً عند الاستلام",
+    afterState: { status: "APPROVED", deliveryStatus: "DELIVERED" },
+  });
+
+  return { success: true, order };
 }

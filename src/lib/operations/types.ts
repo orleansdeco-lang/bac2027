@@ -14,7 +14,11 @@ export interface UserRoleRecord {
 
 export type PaymentOrderStatus = "DRAFT" | "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
 
-export type PaymentMethod = "baridimob" | "ccp" | "manual_transfer" | "cash" | "other";
+export type PaymentMethod = "baridimob" | "ccp" | "manual_transfer" | "cash" | "voucher" | "other";
+
+export type OrderType = "ONLINE" | "COD";
+
+export type DeliveryStatus = "NOT_APPLICABLE" | "PENDING" | "DISPATCHED" | "DELIVERED" | "FAILED" | "CANCELLED";
 
 export interface PaymentOrder {
   id: string;
@@ -38,11 +42,25 @@ export interface PaymentOrder {
   studentPhone?: string;
   streamId?: string;
   wilayaName?: string;
+  // SHATER Pass / COD fields
+  orderType?: OrderType;
+  shippingName?: string | null;
+  shippingPhone?: string | null;
+  shippingWilaya?: string | null;
+  shippingCommune?: string | null;
+  shippingAddress?: string | null;
+  deliveryStatus?: DeliveryStatus;
+  trackingNumber?: string | null;
+  voucherCode?: string | null;
 }
 
 export type AuditAction =
   | "PAYMENT_APPROVED"
   | "PAYMENT_REJECTED"
+  | "COD_ORDER_CREATED"
+  | "COD_DELIVERY_CONFIRMED"
+  | "VOUCHER_REDEEMED"
+  | "REFERRAL_CREDIT_AWARDED"
   | "TRIAL_EXTENDED"
   | "SUBSCRIPTION_ACTIVATED"
   | "SUBSCRIPTION_APPROVED"
@@ -210,6 +228,9 @@ export interface StudentOperationalSummary {
   rejectionReason?: string;
   createdAt?: string;
   onboardingCompleted?: boolean;
+  referral_code?: string;
+  referred_by_code?: string;
+  credit_balance_dzd?: number;
 }
 
 export interface SubscriptionPlan {

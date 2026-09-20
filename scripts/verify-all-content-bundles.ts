@@ -16,6 +16,11 @@ import { MATH_FACTORY_REVOLUTION_BUNDLE } from "../src/domain/content/math-facto
 import { BATCH7_GEO_ISLAMIC_ARABIC_BUNDLE } from "../src/domain/content/batch7-geo-islamic-arabic-bundle";
 import { BATCH8_ITALIEN_MECANIQUE_GESTION_BUNDLE } from "../src/domain/content/batch8-italien-mecanique-gestion-bundle";
 import { BATCH9_FINAL_CURRICULUM_BUNDLE } from "../src/domain/content/batch9-final-curriculum-bundle";
+import { PACK1_ISLAMIC_STUDIES_BUNDLE } from "../src/domain/content/pack1-islamic-studies-full-bundle";
+import { PACK2_LANGUAGES_BUNDLE } from "../src/domain/content/pack2-languages-french-english-bundle";
+import { PACK3_PHILOSOPHY_BUNDLE } from "../src/domain/content/pack3-philosophy-scientific-bundle";
+import { PACK4_ARABIC_LIT_MATH_BUNDLE } from "../src/domain/content/pack4-arabic-and-literature-math-bundle";
+import { PACK5_ENGINEERING_SNV_BUNDLE } from "../src/domain/content/pack5-technique-math-engineering-expanded";
 
 interface TargetSkillTest {
   batchName: string;
@@ -114,6 +119,41 @@ const ALL_CURRICULUM_SKILLS: TargetSkillTest[] = [
   { batchName: "Batch 9 Closing Bundle", skillId: "geo_brazil_emerging_power_inequalities", expectedSubject: "history_geography" },
   { batchName: "Batch 9 Closing Bundle", skillId: "ar_grammar_plural_types_qillah_kathrah", expectedSubject: "arabic" },
   { batchName: "Batch 9 Closing Bundle", skillId: "ar_rhetoric_musnad_musnad_ilayh_syntax", expectedSubject: "arabic" },
+
+  // 13. Pack 1 Complete Islamic Studies (12 units)
+  { batchName: "Pack 1 Islamic Studies", skillId: "isl_aqeedah_individual_society", expectedSubject: "islamic_studies" },
+  { batchName: "Pack 1 Islamic Studies", skillId: "isl_maqasid_sharia_priorities", expectedSubject: "islamic_studies" },
+  { batchName: "Pack 1 Islamic Studies", skillId: "isl_sources_legislation_ijma_qiyas", expectedSubject: "islamic_studies" },
+  { batchName: "Pack 1 Islamic Studies", skillId: "isl_riba_modern_financial_transactions", expectedSubject: "islamic_studies" },
+
+  // 14. Pack 2 Languages French & English (10 units)
+  { batchName: "Pack 2 Languages", skillId: "fr_debat_idees_plaidoyer_requisitoire_syntax", expectedSubject: "french" },
+  { batchName: "Pack 2 Languages", skillId: "fr_appel_incitatif_structure_tripartite", expectedSubject: "french" },
+  { batchName: "Pack 2 Languages", skillId: "fr_outils_langue_discours_rapporte_cause", expectedSubject: "french" },
+  { batchName: "Pack 2 Languages", skillId: "eng_safety_first_advertising_junk_food", expectedSubject: "english" },
+  { batchName: "Pack 2 Languages", skillId: "eng_astronomy_solar_system_exploration", expectedSubject: "english" },
+
+  // 15. Pack 3 Scientific Philosophy (5 units)
+  { batchName: "Pack 3 Scientific Philosophy", skillId: "phil_sci_problem_vs_dialectic", expectedSubject: "philosophy" },
+  { batchName: "Pack 3 Scientific Philosophy", skillId: "phil_sci_math_rationalism_empiricism", expectedSubject: "philosophy" },
+  { batchName: "Pack 3 Scientific Philosophy", skillId: "phil_sci_experimental_method_determinism", expectedSubject: "philosophy" },
+
+  // 16. Pack 4 Arabic & Literary Math (11 units)
+  { batchName: "Pack 4 Arabic & Lit Math", skillId: "ar_idha_idhan_hinaidin", expectedSubject: "arabic" },
+  { batchName: "Pack 4 Arabic & Lit Math", skillId: "ar_jumal_lah_la_mahal", expectedSubject: "arabic" },
+  { batchName: "Pack 4 Arabic & Lit Math", skillId: "ar_mahjar_rabita_qalamiyya", expectedSubject: "arabic" },
+  { batchName: "Pack 4 Arabic & Lit Math", skillId: "ar_fan_maqal_jazaeri", expectedSubject: "arabic" },
+  { batchName: "Pack 4 Arabic & Lit Math", skillId: "math_lit_arithmetic_geometric_sequences", expectedSubject: "math" },
+  { batchName: "Pack 4 Arabic & Lit Math", skillId: "math_lit_euclidean_division_congruence", expectedSubject: "math" },
+  { batchName: "Pack 4 Arabic & Lit Math", skillId: "math_lit_polynomial_rational_functions", expectedSubject: "math" },
+
+  // 17. Pack 5 Engineering & Math Stream SNV (12 units)
+  { batchName: "Pack 5 Engineering & SNV", skillId: "tm_civil_truss_analysis", expectedSubject: "civil_eng" },
+  { batchName: "Pack 5 Engineering & SNV", skillId: "tm_meca_torsion_stress", expectedSubject: "mechanical_eng" },
+  { batchName: "Pack 5 Engineering & SNV", skillId: "tm_elec_three_phase_systems", expectedSubject: "electrical_eng" },
+  { batchName: "Pack 5 Engineering & SNV", skillId: "tm_proc_chemical_thermodynamics", expectedSubject: "process_eng" },
+  { batchName: "Pack 5 Engineering & SNV", skillId: "snv_math_protein_synthesis_transcription_translation", expectedSubject: "natural_sciences" },
+  { batchName: "Pack 5 Engineering & SNV", skillId: "snv_math_humoral_cellular_immunity", expectedSubject: "natural_sciences" },
 ];
 
 console.log("==================================================================");
@@ -134,6 +174,11 @@ const bundleObjects = [
   { name: "BATCH7_GEO_ISLAMIC_ARABIC_BUNDLE", obj: BATCH7_GEO_ISLAMIC_ARABIC_BUNDLE, minKeys: 6 },
   { name: "BATCH8_ITALIEN_MECANIQUE_GESTION_BUNDLE", obj: BATCH8_ITALIEN_MECANIQUE_GESTION_BUNDLE, minKeys: 6 },
   { name: "BATCH9_FINAL_CURRICULUM_BUNDLE", obj: BATCH9_FINAL_CURRICULUM_BUNDLE, minKeys: 6 },
+  { name: "PACK1_ISLAMIC_STUDIES_BUNDLE", obj: PACK1_ISLAMIC_STUDIES_BUNDLE, minKeys: 12 },
+  { name: "PACK2_LANGUAGES_BUNDLE", obj: PACK2_LANGUAGES_BUNDLE, minKeys: 10 },
+  { name: "PACK3_PHILOSOPHY_BUNDLE", obj: PACK3_PHILOSOPHY_BUNDLE, minKeys: 5 },
+  { name: "PACK4_ARABIC_LIT_MATH_BUNDLE", obj: PACK4_ARABIC_LIT_MATH_BUNDLE, minKeys: 11 },
+  { name: "PACK5_ENGINEERING_SNV_BUNDLE", obj: PACK5_ENGINEERING_SNV_BUNDLE, minKeys: 12 },
 ];
 
 let totalChecks = 0;

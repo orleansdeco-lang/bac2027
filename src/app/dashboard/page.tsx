@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/Badge";
 import { RoadVisualizer } from "@/components/ui/RoadVisualizer";
 import { DashboardService } from "@/lib/services";
 import { trackEvent } from "@/lib/analytics";
-import { getStudentAccess } from "@/lib/access";
+import { getStudentAccess, formatTrialCountdown } from "@/lib/access";
 import {
   Sparkles,
   Target,
@@ -233,44 +233,64 @@ export default function DashboardPage() {
         ) : access.status === "TRIAL_EXPIRED" ? (
           <div
             data-testid="dashboard-trial-banner"
-            className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/15 via-rose-500/10 to-amber-500/15 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-clay animate-fade-in"
+            className="p-5 sm:p-6 rounded-3xl bg-amber-500/10 dark:bg-amber-950/20 border-2 border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5 shadow-clay animate-fade-in"
           >
-            <div className="flex items-center gap-3.5">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-500 flex items-center justify-center shrink-0 shadow-sm">
-                <Clock className="w-5 h-5" />
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-600 flex items-center justify-center shrink-0 shadow-sm">
+                <Sparkles className="w-6 h-6" />
               </div>
-              <div className="text-xs sm:text-sm">
-                <span className="font-bold text-stone-900 dark:text-stone-100 block">
-                  {isAr ? "انتهت فترة التجربة (72 ساعة) • خريطتك وتقدمك محفوظان" : "Essai de 72h terminé • Progression sauvegardée"}
-                </span>
-                <span className="text-stone-600 dark:text-stone-400 text-xs">
-                  {isAr ? "فعّل اشتراكك لمواصلة التدريب التكيفي والمهمات اليومية لشعبتك." : "Activez votre pass pour continuer vos missions ciblées et votre préparation."}
-                </span>
+              <div className="space-y-1 text-xs sm:text-sm">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[11px] font-bold font-mono">
+                  <span>{isAr ? "انتهت فترة التجربة المجانية (7 أيام)" : "Période d'essai (7 jours) expirée"}</span>
+                </div>
+                <h3 className="font-extrabold text-stone-900 dark:text-stone-100 text-sm sm:text-base">
+                  {isAr
+                    ? "مسارك مازال محفوظ بالكامل. فعّل اشتراكك باش تكمل من وين حبست."
+                    : "Votre parcours est intégralement sauvegardé. Activez votre pass pour reprendre."}
+                </h3>
+                <p className="text-stone-600 dark:text-stone-400 text-xs max-w-xl leading-relaxed">
+                  {isAr
+                    ? "جميع مهاراتك المكتسبة، تشخيصك الأولي، ونتائج معمل الأخطاء محفوظة 100%. فعّل اشتراكك الآن عبر بريدي موب، CCP أو بطاقة شاطر باص للتوصيل."
+                    : "Toutes vos compétences et diagnostics sont conservés intacts. Activez votre pass pour continuer."}
+                </p>
               </div>
             </div>
-            <Link href="/subscribe" className="shrink-0 w-full sm:w-auto">
-              <Button size="sm" variant="primary" className="w-full sm:w-auto rounded-full font-bold shadow-md">
-                <span>{isAr ? "تفعيل الاشتراك" : "Activer mon pass"}</span>
-                <NextArrow className="w-4 h-4" />
-              </Button>
-            </Link>
+            <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto shrink-0">
+              <Link href="/subscribe" className="w-full sm:w-auto">
+                <Button size="sm" variant="primary" className="w-full sm:w-auto rounded-xl font-bold shadow-md">
+                  <span>{isAr ? "تفعيل الاشتراك 🚀" : "Activer mon pass"}</span>
+                  <NextArrow className="w-4 h-4" />
+                </Button>
+              </Link>
+              <Link href="/referral" className="w-full sm:w-auto">
+                <Button size="sm" variant="outline" className="w-full sm:w-auto rounded-xl border-theme text-theme-text font-bold">
+                  <span>{isAr ? "🎁 اربح 700 دج رصيد" : "Parrainage (+700 DA)"}</span>
+                </Button>
+              </Link>
+            </div>
           </div>
         ) : access.status === "TRIAL_ACTIVE" && profile ? (
           <div
             data-testid="dashboard-trial-banner"
-            className="px-4 py-3 rounded-2xl bg-blue-500/10 dark:bg-blue-950/30 border border-blue-500/25 flex items-center justify-between text-xs text-stone-700 dark:text-stone-300 shadow-sm"
+            className="px-4 py-3 rounded-2xl bg-blue-500/10 dark:bg-blue-950/30 border border-blue-500/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 text-xs text-stone-700 dark:text-stone-300 shadow-sm"
           >
             <div className="flex items-center gap-2.5">
-              <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping shrink-0" />
+              <Clock className="w-4 h-4 text-blue-500 shrink-0 animate-pulse" />
               <span>
-                {access.isExpiringSoon
-                  ? isAr ? "باقي أقل من 6 ساعات في تجربتك المجانية (72 ساعة)" : "Moins de 6 heures restantes sur votre essai de 72h"
-                  : isAr ? `تجربتك المجانية (72 ساعة) فعالة • باقي ${access.remainingHours} ساعة` : `Essai gratuit de 72h actif • reste ${access.remainingHours}h`}
+                {isAr
+                  ? `أنت في فترة التجربة المجانية (متبقي: ${formatTrialCountdown(access.remainingHours, true)}) • جميع الميزات مفتوحة بدون قيود`
+                  : `Essai gratuit actif (reste ${formatTrialCountdown(access.remainingHours, false)}) • Accès illimité`}
               </span>
             </div>
-            <Link href="/subscribe" className="text-blue-600 dark:text-blue-400 hover:underline font-semibold text-xs">
-              {isAr ? "تفاصيل الاشتراك" : "Voir les offres"}
-            </Link>
+            <div className="flex items-center gap-3 self-start sm:self-center">
+              <Link href="/referral" className="text-blue-600 dark:text-blue-400 hover:underline font-bold text-xs">
+                {isAr ? "🎁 ادعُ زملاءك واربح 700 دج" : "🎁 Inviter des amis (+700 DA)"}
+              </Link>
+              <span className="text-stone-300 dark:text-stone-600">•</span>
+              <Link href="/subscribe" className="text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200 font-semibold text-xs">
+                {isAr ? "تفعيل مسبق" : "Voir les offres"}
+              </Link>
+            </div>
           </div>
         ) : null}
 

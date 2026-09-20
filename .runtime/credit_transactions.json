@@ -1,0 +1,12 @@
+[
+  {
+    "id": "ctx_1789863646879_xa6dz",
+    "userId": "student_referrer_1",
+    "amountDzd": 700,
+    "type": "REFERRAL_REWARD",
+    "status": "AVAILABLE",
+    "referenceId": "order_qualifying_123",
+    "notes": "مكافأة إحالة الطالب المشترك (طلب رقم: order_qualifying_123)",
+    "createdAt": "2026-09-20T00:20:46.827Z"
+  }
+]

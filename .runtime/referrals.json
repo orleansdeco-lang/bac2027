@@ -1,0 +1,14 @@
+[
+  {
+    "id": "ref_1789863646064_0mjld",
+    "referrerId": "student_referrer_1",
+    "referredId": "student_referred_friend",
+    "referralCode": "YACIN448",
+    "status": "REWARDED",
+    "rewardAmountDzd": 700,
+    "createdAt": "2026-09-20T00:20:46.064Z",
+    "qualifyingOrderId": "order_qualifying_123",
+    "qualifiedAt": "2026-09-20T00:20:46.827Z",
+    "rewardedAt": "2026-09-20T00:20:46.827Z"
+  }
+]

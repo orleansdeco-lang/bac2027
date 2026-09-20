@@ -31,6 +31,7 @@ import {
   FileText,
   GraduationCap,
   MessageSquareQuote,
+  Gift,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -169,6 +170,12 @@ export function Sidebar({ className }: SidebarProps) {
       label: isAr ? "وضع الامتحان" : "Mode Examen",
       icon: Target,
       matches: (p: string) => p.startsWith("/exam"),
+    },
+    {
+      href: "/referral",
+      label: isAr ? "دعوة الأصدقاء (700 دج)" : "Parrainage (700 DA)",
+      icon: Gift,
+      matches: (p: string) => p.startsWith("/referral"),
     },
     {
       href: "/account",

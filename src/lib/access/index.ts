@@ -11,21 +11,21 @@ import { StrategicProfile } from "@/types/onboarding";
 export * from "./types";
 export * from "./server-time";
 
-export const TRIAL_DURATION_HOURS = 72;
+export const TRIAL_DURATION_DAYS = 7;
+export const TRIAL_DURATION_HOURS = 168; // 7 days * 24 hours
 export const TRIAL_DURATION_MS = TRIAL_DURATION_HOURS * 60 * 60 * 1000;
 
 /**
  * Calculates trial expiration date:
- * Strictly 72 hours from account creation date.
- * E.g., if registered at 14:00 on Monday, expires at exactly 14:00 on Thursday.
+ * Strictly 7 days (168 hours) from account creation date.
  */
 export function calculateTrialExpiration(startDate: Date = new Date()): Date {
   return new Date(startDate.getTime() + TRIAL_DURATION_MS);
 }
 
 /**
- * Formats countdown showing strictly days and hours, with zero minutes and zero seconds.
- * E.g., "2 يوم و 14 سا" / "2j 14h", or "14 سا" / "14h"
+ * Formats countdown showing days and hours clearly.
+ * E.g., "4 أيام و 8 ساعات" / "4j 8h"
  */
 export function formatTrialCountdown(remainingHours: number, isAr: boolean = true): string {
   const safeHours = Math.max(0, remainingHours);
@@ -33,9 +33,9 @@ export function formatTrialCountdown(remainingHours: number, isAr: boolean = tru
   const hours = safeHours % 24;
 
   if (isAr) {
-    if (days > 0 && hours > 0) return `${days} يوم و ${hours} سا`;
-    if (days > 0) return `${days} يوم`;
-    return `${hours} سا`;
+    if (days > 0 && hours > 0) return `${days} أيام و ${hours} ساعات`;
+    if (days > 0) return `${days} أيام`;
+    return `${hours} ساعة`;
   } else {
     if (days > 0 && hours > 0) return `${days}j ${hours}h`;
     if (days > 0) return `${days}j`;
@@ -211,14 +211,14 @@ export function getStudentAccess(
   const trialStartedAt = (profile as any).trial_started_at || profileCreated;
   const accountCreatedMs = new Date(profileCreated).getTime();
 
-  // Authoritative trial expiration: STRICTLY account_created_at + 72 hours
-  const authoritative72hMs = accountCreatedMs + TRIAL_DURATION_MS;
-  const authoritativeExpiresAtIso = new Date(authoritative72hMs).toISOString();
+  // Authoritative trial expiration: STRICTLY account_created_at + 7 days (168 hours)
+  const authoritative7dMs = accountCreatedMs + TRIAL_DURATION_MS;
+  const authoritativeExpiresAtIso = new Date(authoritative7dMs).toISOString();
 
-  // Guard against client clock, localStorage manipulation, or legacy 48h values
-  // Always enforce authoritative account_created_at + 72 hours
+  // Guard against client clock or legacy trial values
+  // Always enforce authoritative account_created_at + 7 days
   const trialExpiresAt = authoritativeExpiresAtIso;
-  const remainingMs = authoritative72hMs - nowMs;
+  const remainingMs = authoritative7dMs - nowMs;
   const remainingHours = Math.max(0, Math.floor(remainingMs / (1000 * 60 * 60)));
   const remainingMinutes = Math.max(0, Math.floor(remainingMs / (1000 * 60)));
 
@@ -238,7 +238,7 @@ export function getStudentAccess(
       remainingHoursOnly: 0,
       canUseProduct: false,
       isExpiringSoon: false,
-      reason: "trial_72h_expired",
+      reason: "trial_7d_expired",
     };
   }
 
@@ -259,7 +259,21 @@ export function getStudentAccess(
     remainingDays,
     remainingHoursOnly,
     canUseProduct: true,
-    isExpiringSoon: remainingHours < 6,
-    reason: "trial_72h_active",
+    isExpiringSoon: remainingHours < 24,
+    reason: "trial_7d_active",
   };
 }
+
+/**
+ * Authoritative entitlement verification function (Section 35)
+ * Returns true if trial active OR subscription active.
+ * False if trial expired and no active subscription.
+ */
+export function hasPremiumAccess(
+  profile?: AccessProfileInput | StrategicProfile | null,
+  referenceDate?: Date
+): boolean {
+  const access = getStudentAccess(profile, referenceDate);
+  return access.canUseProduct;
+}
+

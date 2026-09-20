@@ -1,0 +1,78 @@
+[
+  {
+    "id": "vch_1789863498237_827eem",
+    "voucherCode": "SHATER-4SHB-PK5G",
+    "planId": "season",
+    "salesChannel": "COD",
+    "batchNumber": "BATCH-2026-V1",
+    "status": "ACTIVE",
+    "orderId": "cod_1789863498236_qv1y8",
+    "createdAt": "2026-09-20T00:18:18.237Z"
+  },
+  {
+    "id": "vch_1789863542702_oy9r0s",
+    "voucherCode": "SHATER-UNEU-6NP5",
+    "planId": "season",
+    "salesChannel": "COD",
+    "batchNumber": "BATCH-2026-V1",
+    "status": "ACTIVE",
+    "orderId": "cod_1789863542701_ozi5r",
+    "createdAt": "2026-09-20T00:19:02.702Z"
+  },
+  {
+    "id": "vch_1789863543354_6ln55l",
+    "voucherCode": "SHATER-CSK8-KEZG",
+    "planId": "season",
+    "salesChannel": "LIBRARY",
+    "batchNumber": "BATCH-2026-V1",
+    "status": "REDEEMED",
+    "orderId": null,
+    "createdAt": "2026-09-20T00:19:03.354Z",
+    "redeemedBy": "student_voucher_user",
+    "redeemedAt": "2026-09-20T00:19:03.543Z"
+  },
+  {
+    "id": "vch_1789863578187_rxiemf",
+    "voucherCode": "SHATER-W5RT-9ETR",
+    "planId": "season",
+    "salesChannel": "COD",
+    "batchNumber": "BATCH-2026-V1",
+    "status": "ACTIVE",
+    "orderId": "cod_1789863578187_o2v2y",
+    "createdAt": "2026-09-20T00:19:38.187Z"
+  },
+  {
+    "id": "vch_1789863578824_m6okb9",
+    "voucherCode": "SHATER-EKQT-KR2M",
+    "planId": "season",
+    "salesChannel": "LIBRARY",
+    "batchNumber": "BATCH-2026-V1",
+    "status": "REDEEMED",
+    "orderId": null,
+    "createdAt": "2026-09-20T00:19:38.824Z",
+    "redeemedBy": "student_voucher_user",
+    "redeemedAt": "2026-09-20T00:19:39.020Z"
+  },
+  {
+    "id": "vch_1789863644546_jbke12",
+    "voucherCode": "SHATER-RHFM-FUCL",
+    "planId": "season",
+    "salesChannel": "COD",
+    "batchNumber": "BATCH-2026-V1",
+    "status": "ACTIVE",
+    "orderId": "cod_1789863644546_ihysg",
+    "createdAt": "2026-09-20T00:20:44.546Z"
+  },
+  {
+    "id": "vch_1789863645216_392nzo",
+    "voucherCode": "SHATER-7DWE-FGXR",
+    "planId": "season",
+    "salesChannel": "LIBRARY",
+    "batchNumber": "BATCH-2026-V1",
+    "status": "REDEEMED",
+    "orderId": null,
+    "createdAt": "2026-09-20T00:20:45.216Z",
+    "redeemedBy": "student_voucher_user",
+    "redeemedAt": "2026-09-20T00:20:45.414Z"
+  }
+]

@@ -142,7 +142,7 @@ export function TopBar() {
             </Badge>
           )}
 
-          {/* 72h Trial Countdown Indicator */}
+          {/* 7-Day Trial Countdown Indicator */}
           {isTrialActive && (
             <div
               title={
@@ -160,7 +160,7 @@ export function TopBar() {
 
           {isTrialExpired && (
             <div
-              title={isAr ? "انتهت الفترة التجريبية (72 ساعة)" : "Période d'essai 72h expirée"}
+              title={isAr ? "انتهت الفترة التجريبية (7 أيام)" : "Période d'essai (7 jours) expirée"}
               className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[var(--color-warning-soft)] border border-[var(--color-warning)]/30 text-[var(--color-warning)] text-[10px] sm:text-xs font-mono font-bold whitespace-nowrap"
             >
               <AlertTriangle className="w-3 h-3 shrink-0" />

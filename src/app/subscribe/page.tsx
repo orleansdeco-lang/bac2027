@@ -43,6 +43,9 @@ import {
   MapPin,
   CheckCheck,
   HelpCircle,
+  Truck,
+  Ticket,
+  CreditCard,
 } from "lucide-react";
 
 export default function SubscribePage() {
@@ -56,6 +59,9 @@ export default function SubscribePage() {
   const [masteryCount, setMasteryCount] = useState(0);
   const [completedMissionsCount, setCompletedMissionsCount] = useState(0);
 
+  // Payment mode: "ONLINE" (BaridiMob/CCP) or "COD" (SHATER Pass Delivery)
+  const [paymentMode, setPaymentMode] = useState<"ONLINE" | "COD">("ONLINE");
+
   // Selected plan: "season" (featured) or "monthly"
   const [selectedPlanId, setSelectedPlanId] = useState<"season" | "monthly">("season");
 
@@ -63,6 +69,27 @@ export default function SubscribePage() {
   const [studentName, setStudentName] = useState("");
   const [studentPhone, setStudentPhone] = useState("");
   const [studentWilaya, setStudentWilaya] = useState("");
+
+  // Cash on Delivery (COD) inputs
+  const [shippingName, setShippingName] = useState("");
+  const [shippingPhone, setShippingPhone] = useState("");
+  const [shippingWilaya, setShippingWilaya] = useState("");
+  const [shippingCommune, setShippingCommune] = useState("");
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [shippingNotes, setShippingNotes] = useState("");
+  const [isSubmittingCod, setIsSubmittingCod] = useState(false);
+  const [codError, setCodError] = useState<string | null>(null);
+  const [codResult, setCodResult] = useState<{
+    orderId: string;
+    trackingNumber?: string;
+    message: string;
+  } | null>(null);
+
+  // Voucher redemption state
+  const [voucherCodeInput, setVoucherCodeInput] = useState("");
+  const [isRedeemingVoucher, setIsRedeemingVoucher] = useState(false);
+  const [voucherError, setVoucherError] = useState<string | null>(null);
+  const [voucherSuccess, setVoucherSuccess] = useState<string | null>(null);
 
   // Receipt file upload state
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -127,11 +154,20 @@ export default function SubscribePage() {
 
         if (prof) {
           const fullName = `${prof.firstName || ""} ${prof.lastName || ""}`.trim();
-          if (fullName) setStudentName(fullName);
+          if (fullName) {
+            setStudentName(fullName);
+            setShippingName(fullName);
+          }
           const phone = prof.studentPhone || (prof as any).student_phone || "";
-          if (phone) setStudentPhone(phone);
+          if (phone) {
+            setStudentPhone(phone);
+            setShippingPhone(phone);
+          }
           const wilaya = prof.wilayaName || (prof as any).wilaya_name || "";
-          if (wilaya) setStudentWilaya(wilaya);
+          if (wilaya) {
+            setStudentWilaya(wilaya);
+            setShippingWilaya(wilaya);
+          }
         }
       } catch (err) {
         console.error("Subscribe page load error:", err);
@@ -261,6 +297,120 @@ export default function SubscribePage() {
       );
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Submit Cash on Delivery (COD) order
+  const handleSubmitCod = async () => {
+    setCodError(null);
+    if (!shippingName.trim() || !shippingPhone.trim() || !shippingWilaya.trim() || !shippingAddress.trim()) {
+      setCodError(isAr ? "يرجى ملء جميع معلومات التوصيل المطلوبة (الاسم، الهاتف، الولاية، والعنوان)" : "Veuillez renseigner tous les champs obligatoires");
+      return;
+    }
+
+    const cleanPhone = shippingPhone.replace(/\s+/g, "");
+    if (!/^(05|06|07|02)\d{8}$/.test(cleanPhone)) {
+      setCodError(isAr ? "يرجى إدخال رقم هاتف جزائري صالح (05 / 06 / 07)" : "Numéro de téléphone invalide");
+      return;
+    }
+
+    setIsSubmittingCod(true);
+    try {
+      const effectiveUserId =
+        user?.id ||
+        profile?.id ||
+        (typeof window !== "undefined"
+          ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id
+          : undefined) ||
+        `guest_${Date.now()}`;
+
+      const res = await fetch("/api/orders/cod", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: effectiveUserId,
+          plan: selectedPlanId,
+          shippingName,
+          shippingPhone: cleanPhone,
+          shippingWilaya,
+          shippingCommune,
+          shippingAddress,
+          notes: shippingNotes,
+          studentEmail: user?.email || profile?.email,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data?.error || "فشل تسجيل طلب التوصيل");
+      }
+
+      setCodResult({
+        orderId: data.order?.id || "COD-ORDER",
+        trackingNumber: data.order?.trackingNumber,
+        message: data.message,
+      });
+
+      trackEvent("cod_order_placed", {
+        userId: effectiveUserId,
+        plan: selectedPlanId,
+        wilaya: shippingWilaya,
+      });
+    } catch (err: any) {
+      setCodError(err?.message || "حدث خطأ أثناء تسجيل طلب التوصيل");
+    } finally {
+      setIsSubmittingCod(false);
+    }
+  };
+
+  // Redeem SHATER Pass physical card voucher code
+  const handleRedeemVoucher = async () => {
+    setVoucherError(null);
+    setVoucherSuccess(null);
+
+    if (!voucherCodeInput.trim()) {
+      setVoucherError(isAr ? "يرجى إدخال رمز البطاقة" : "Veuillez entrer le code de la carte");
+      return;
+    }
+
+    setIsRedeemingVoucher(true);
+    try {
+      const effectiveUserId =
+        user?.id ||
+        profile?.id ||
+        (typeof window !== "undefined"
+          ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id
+          : undefined);
+
+      if (!effectiveUserId) {
+        setVoucherError(isAr ? "يجب تسجيل الدخول لتفعيل البطاقة" : "Veuillez vous connecter d'abord");
+        return;
+      }
+
+      const res = await fetch("/api/vouchers/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: effectiveUserId,
+          voucherCode: voucherCodeInput.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data?.error || "رمز البطاقة غير صالح");
+      }
+
+      setVoucherSuccess(data.message || (isAr ? "تم تفعيل اشتراكك بنجاح! مبروك." : "Abonnement activé avec succès !"));
+      trackEvent("voucher_redeemed", { userId: effectiveUserId, code: voucherCodeInput });
+
+      setTimeout(() => {
+        window.location.href = "/dashboard";
+      }, 2000);
+    } catch (err: any) {
+      setVoucherError(err?.message || "فشل تفعيل البطاقة");
+    } finally {
+      setIsRedeemingVoucher(false);
     }
   };
 
@@ -569,7 +719,69 @@ export default function SubscribePage() {
             </div>
           </div>
 
-          {/* STEP 2: Official Payment Coordinates */}
+          {/* Voucher Direct Quick Redemption Card */}
+          <Card className="p-5 sm:p-6 bg-surface/80 border-2 border-dashed border-[var(--color-primary)]/40 rounded-3xl space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center font-bold shrink-0">
+                  <Ticket className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-sm sm:text-base text-theme-text">
+                    {isAr ? "لديك بطاقة شاطر باص (SHATER Pass) مسبقاً؟" : "Vous avez déjà une carte SHATER Pass ?"}
+                  </h3>
+                  <p className="text-xs text-theme-muted">
+                    {isAr ? "أدخل الرمز المطبوع خلف البطاقة لتفعيل حسابك فوراً" : "Entrez le code au dos de la carte pour activer votre compte"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-2 pt-1">
+              <input
+                type="text"
+                dir="ltr"
+                value={voucherCodeInput}
+                onChange={(e) => setVoucherCodeInput(e.target.value.toUpperCase())}
+                placeholder="SHATER-XXXX-XXXX"
+                className="w-full sm:w-72 px-4 py-2.5 rounded-xl bg-card border border-theme text-sm font-mono font-bold text-theme-text tracking-wider uppercase focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+              />
+              <button
+                type="button"
+                onClick={handleRedeemVoucher}
+                disabled={isRedeemingVoucher || !voucherCodeInput.trim()}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold transition-all cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 shrink-0"
+              >
+                {isRedeemingVoucher ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>{isAr ? "جاري التحقق..." : "Vérification..."}</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    <span>{isAr ? "تفعيل البطاقة فوراً" : "Activer la carte"}</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {voucherError && (
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{voucherError}</span>
+              </div>
+            )}
+
+            {voucherSuccess && (
+              <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 text-xs font-bold">
+                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                <span>{voucherSuccess}</span>
+              </div>
+            )}
+          </Card>
+
+          {/* STEP 2: Choose Official Payment Method */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -577,13 +789,272 @@ export default function SubscribePage() {
                   2
                 </span>
                 <h2 className="text-lg font-bold text-theme-text">
-                  {isAr ? "طرق الدفع الرسمية (بريدي موب / الحساب البريدي CCP)" : "Coordonnées officielles de paiement"}
+                  {isAr ? "اختر طريقة الدفع المناسبة لك" : "Choisissez votre mode de paiement"}
                 </h2>
               </div>
               <div className="px-3 py-1 rounded-xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] text-xs font-bold font-mono">
                 {isAr ? `المبلغ المطلوب: ${selectedPlanPrice.toLocaleString()} دج` : `Montant : ${selectedPlanPrice.toLocaleString()} DA`}
               </div>
             </div>
+
+            {/* Mode Selector Tabs */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setPaymentMode("ONLINE")}
+                className={`p-4 rounded-2xl border-2 text-start transition-all cursor-pointer flex items-center gap-3 ${
+                  paymentMode === "ONLINE"
+                    ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)]/20 shadow-sm"
+                    : "border-theme bg-surface hover:bg-card"
+                }`}
+              >
+                <div className="w-10 h-10 rounded-xl bg-amber-500/15 text-amber-600 flex items-center justify-center font-bold shrink-0">
+                  <CreditCard className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-extrabold text-xs sm:text-sm text-theme-text">
+                      {isAr ? "طريقة 1: دفع إلكتروني (بريدي موب / CCP)" : "Option 1 : Paiement en ligne"}
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 font-bold">
+                      {isAr ? "فوري ⚡" : "Instantané"}
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-theme-muted block mt-0.5">
+                    {isAr ? "تحويل عبر RIP أو الحساب البريدي ثم رفع الوصل" : "Virement BaridiMob / CCP avec reçu"}
+                  </span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentMode("COD")}
+                className={`p-4 rounded-2xl border-2 text-start transition-all cursor-pointer flex items-center gap-3 ${
+                  paymentMode === "COD"
+                    ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)]/20 shadow-sm"
+                    : "border-theme bg-surface hover:bg-card"
+                }`}
+              >
+                <div className="w-10 h-10 rounded-xl bg-purple-500/15 text-purple-600 flex items-center justify-center font-bold shrink-0">
+                  <Truck className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-extrabold text-xs sm:text-sm text-theme-text">
+                      {isAr ? "طريقة 2: بطاقة شاطر باص (توصيل للمنزل)" : "Option 2 : SHATER Pass (Livraison)"}
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-600 font-bold">
+                      {isAr ? "دفع عند الاستلام 📦" : "Paiement à la livraison"}
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-theme-muted block mt-0.5">
+                    {isAr ? "توصيل بطاقة أصلية لباب المنزل والدفع يداً بيد" : "Livraison de carte physique à domicile"}
+                  </span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Conditional Method Display: COD or ONLINE */}
+          {paymentMode === "COD" ? (
+            /* Method B: Cash on Delivery (COD) Ordering Form */
+            <div className="space-y-4">
+              {codResult ? (
+                <Card className="p-6 sm:p-8 bg-card border-2 border-emerald-500/40 rounded-3xl space-y-6 shadow-md text-center animate-scale-in">
+                  <div className="w-16 h-16 rounded-3xl bg-emerald-500/20 text-emerald-600 flex items-center justify-center mx-auto shadow-sm">
+                    <CheckCircle2 className="w-9 h-9" />
+                  </div>
+
+                  <div className="space-y-2">
+                    <h3 className="text-xl sm:text-2xl font-black text-theme-text">
+                      {isAr ? "تم تسجيل طلب التوصيل بنجاح!" : "Commande enregistrée avec succès !"}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-theme-secondary max-w-md mx-auto">
+                      {isAr
+                        ? "سيتصل بك عون التوصيل في غضون 24-48 ساعة لتأكيد موعد التسليم والدفع نقداً عند استلام البطاقة."
+                        : "Notre livreur vous contactera dans les 24-48h pour confirmer la livraison et le paiement en espèces."}
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-2xl bg-[var(--color-primary-soft)]/50 border border-[var(--color-primary)]/30 max-w-md mx-auto flex items-center justify-between text-xs">
+                    <span className="text-theme-secondary font-medium">
+                      {isAr ? "رقم الطلب المرجعي:" : "Référence de commande :"}
+                    </span>
+                    <span className="font-mono font-extrabold text-[var(--color-primary)] text-sm select-all">
+                      {codResult.orderId}
+                    </span>
+                  </div>
+
+                  <div className="max-w-md mx-auto p-4 rounded-2xl bg-surface border border-theme text-start text-xs text-theme-secondary space-y-1.5">
+                    <p className="font-bold text-theme-text">{isAr ? "📌 ماذا تفعل بعد استلام البطاقة؟" : "Que faire après réception ?"}</p>
+                    <p>{isAr ? "1. افتح الظرف وستجد بطاقة SHATER Pass مع رمز التفعيل." : "1. Ouvrez l'enveloppe contenant votre carte SHATER Pass."}</p>
+                    <p>{isAr ? "2. ارجع لهذه الصفحة وأدخل الرمز في خانة تفعيل البطاقة بالأعلى." : "2. Entrez le code dans la case d'activation en haut de cette page."}</p>
+                    <p>{isAr ? "3. ينفتح حسابك فوراً وتواصل التدريب من نفس النقطة!" : "3. Votre compte s'activera instantanément !"}</p>
+                  </div>
+
+                  <div className="pt-2">
+                    <Link
+                      href="/dashboard"
+                      className="inline-flex items-center justify-center px-8 min-h-[46px] rounded-2xl font-bold text-xs sm:text-sm bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] transition-all"
+                    >
+                      <span>{isAr ? "العودة إلى لوحة التلميذ" : "Retour au tableau de bord"}</span>
+                    </Link>
+                  </div>
+                </Card>
+              ) : (
+                <Card className="p-6 sm:p-8 bg-card border-theme rounded-3xl space-y-6 shadow-sm">
+                  <div className="space-y-1 border-b border-theme pb-4">
+                    <h3 className="text-base font-bold text-theme-text flex items-center gap-2">
+                      <Truck className="w-5 h-5 text-purple-600" />
+                      <span>{isAr ? "طلب بطاقة شاطر باص والتوصيل حتى باب المنزل" : "Formulaire de commande avec livraison"}</span>
+                    </h3>
+                    <p className="text-xs text-theme-muted">
+                      {isAr
+                        ? "التوصيل متوفر لجميع ولايات الوطن (58 ولاية). تدفع نقداً عند استلام البطاقة يداً بيد."
+                        : "Livraison disponible dans les 58 wilayas. Paiement en espèces à la livraison."}
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-semibold text-theme-secondary block flex items-center gap-1">
+                          <User className="w-3.5 h-3.5 text-[var(--color-primary)]" />
+                          <span>{isAr ? "الاسم واللقب للمستلم *" : "Nom et prénom *"}</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={shippingName}
+                          onChange={(e) => setShippingName(e.target.value)}
+                          placeholder={isAr ? "مثال: أمين بلقاسم" : "Nom et prénom"}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-semibold text-theme-secondary block flex items-center gap-1">
+                          <Phone className="w-3.5 h-3.5 text-[var(--color-primary)]" />
+                          <span>{isAr ? "رقم الهاتف للتوصيل *" : "Téléphone portable *"}</span>
+                        </label>
+                        <input
+                          type="tel"
+                          dir="ltr"
+                          value={shippingPhone}
+                          onChange={(e) => setShippingPhone(e.target.value)}
+                          placeholder="05 / 06 / 07..."
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all font-mono"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-semibold text-theme-secondary block flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5 text-[var(--color-primary)]" />
+                          <span>{isAr ? "الولاية *" : "Wilaya *"}</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={shippingWilaya}
+                          onChange={(e) => setShippingWilaya(e.target.value)}
+                          placeholder={isAr ? "مثال: الجزائر، سطيف، وهران، قسنطينة..." : "Wilaya"}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-semibold text-theme-secondary block">
+                          <span>{isAr ? "البلدية" : "Commune"}</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={shippingCommune}
+                          onChange={(e) => setShippingCommune(e.target.value)}
+                          placeholder={isAr ? "مثال: حيدرة، باب الزوار، العلمة..." : "Commune"}
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-semibold text-theme-secondary block">
+                        <span>{isAr ? "العنوان الدقيق للتوصيل (الحي، رقم المنزل أو النقطة الدالة) *" : "Adresse de livraison exacte *"}</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={shippingAddress}
+                        onChange={(e) => setShippingAddress(e.target.value)}
+                        placeholder={isAr ? "مثال: حي 500 مسكن عمارة C شقة 12، بالقرب من ثانوية..." : "Adresse complète"}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-semibold text-theme-secondary block">
+                        <span>{isAr ? "ملاحظات إضافية لعون التوصيل (اختياري)" : "Remarques pour la livraison"}</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={shippingNotes}
+                        onChange={(e) => setShippingNotes(e.target.value)}
+                        placeholder={isAr ? "مثال: الاتصال قبل القدوم بساعة" : "Notes"}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] transition-all"
+                      />
+                    </div>
+
+                    {codError && (
+                      <div className="flex items-center gap-2 p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <span>{codError}</span>
+                      </div>
+                    )}
+
+                    <div className="pt-3 border-t border-theme space-y-3">
+                      <div className="p-4 rounded-2xl bg-surface border border-theme flex items-center justify-between">
+                        <div>
+                          <span className="text-xs font-bold text-theme-text block">
+                            {isAr ? "المبلغ الإجمالي عند الاستلام:" : "Total à payer à la livraison :"}
+                          </span>
+                          <span className="text-[11px] text-theme-muted">
+                            {isAr ? "شامل بطاقة الاشتراك الأصلية" : "Carte SHATER Pass incluse"}
+                          </span>
+                        </div>
+                        <span className="text-xl font-black text-theme-text font-mono">
+                          {selectedPlanPrice.toLocaleString()} دج
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleSubmitCod}
+                        disabled={isSubmittingCod}
+                        className="w-full min-h-[54px] rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-xl shadow-purple-600/25 active:scale-[0.99] transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {isSubmittingCod ? (
+                          <>
+                            <RefreshCw className="w-5 h-5 animate-spin shrink-0" />
+                            <span>{isAr ? "جاري تسجيل طلب التوصيل..." : "Enregistrement de la commande..."}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Truck className="w-5 h-5 shrink-0" />
+                            <span>
+                              {isAr
+                                ? `تأكيد طلب بطاقة شاطر باص (${selectedPlanPrice.toLocaleString()} دج عند الاستلام)`
+                                : `Confirmer la commande (${selectedPlanPrice.toLocaleString()} DA à la livraison)`}
+                            </span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </Card>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Method A: Online Payment Coordinates */}
+              <div className="space-y-4">
 
             <Card className="p-6 bg-card border-theme rounded-3xl space-y-5 shadow-sm">
               {/* Method A: BaridiMob */}
@@ -957,6 +1428,8 @@ export default function SubscribePage() {
               </Card>
             )}
           </div>
+          </>
+          )}
 
           {/* Technical Support Box */}
           <div className="p-4 sm:p-5 rounded-3xl bg-surface border border-theme flex flex-col sm:flex-row items-center justify-between gap-4 shadow-sm">

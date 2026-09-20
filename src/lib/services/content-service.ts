@@ -16,6 +16,11 @@ import {
   getAllBatch5Skills,
   getBatch5SkillsForStream,
   getAllBatch9Skills,
+  getAllPack1IslamicSkills,
+  getAllPack2LanguageSkills,
+  getAllPack3PhilosophySkills,
+  getAllPack4ArabicLitMathSkills,
+  getAllPack5EngineeringSnvSkills,
 } from "@/domain/content";
 import { Skill } from "@/domain/content/types";
 
@@ -42,41 +47,105 @@ export const ContentService = {
    */
   getSkillsForStream(streamId: StreamId): Skill[] {
     const b9List = getAllBatch9Skills();
+    const pack1Islamic = getAllPack1IslamicSkills();
+    const pack2Languages = getAllPack2LanguageSkills();
+    const pack3PhiloSci = getAllPack3PhilosophySkills();
+    const pack4All = getAllPack4ArabicLitMathSkills();
+    const pack4Arabic = pack4All.filter((s) => s.subjectId === "arabic");
+    const pack4LitMath = pack4All.filter((s) => s.subjectId === "math");
+    const pack5All = getAllPack5EngineeringSnvSkills();
+    const pack5Eng = pack5All.filter((s) => s.subjectId !== "natural_sciences");
+    const pack5MathSnv = pack5All.filter((s) => s.subjectId === "natural_sciences");
+
+    // Deduplicate skills by id
+    const dedupe = (skills: Skill[]): Skill[] => {
+      const map = new Map<string, Skill>();
+      for (const s of skills) {
+        if (!map.has(s.id)) map.set(s.id, s);
+      }
+      return Array.from(map.values());
+    };
 
     if (streamId === "sciences_exp") {
-      return [...PROMPT11_SKILLS, ...b9List];
-    }
-    if (streamId === "gestion_eco") {
-      return [...(Object.values(GESTION_ECO_SKILLS) as unknown as Skill[]), ...b9List];
-    }
-    if (streamId === "lettres_philo") {
-      const base = Object.values(LETTRES_PHILO_SKILLS) as unknown as Skill[];
-      const b5 = getBatch5SkillsForStream("lettres_philo");
-      return [...base, ...b5, ...b9List];
+      return dedupe([
+        ...PROMPT11_SKILLS,
+        ...b9List,
+        ...pack1Islamic,
+        ...pack2Languages,
+        ...pack3PhiloSci,
+        ...pack4Arabic,
+      ]);
     }
     if (streamId === "math") {
-      // Return math and physics skills strictly excluding SNV + Batch 9 core
       const mathPhysics = PROMPT11_SKILLS.filter(
         (s) => s.subjectId === "math" || s.subjectId === "physics"
       );
-      return [...mathPhysics, ...b9List];
+      return dedupe([
+        ...mathPhysics,
+        ...pack5MathSnv,
+        ...b9List,
+        ...pack1Islamic,
+        ...pack2Languages,
+        ...pack3PhiloSci,
+        ...pack4Arabic,
+      ]);
     }
     if (streamId === "technique_math") {
-      // Return math and physics skills + all technique math engineering skills + Batch 9 core
       const baseMathPhysics = PROMPT11_SKILLS.filter(
         (s) => s.subjectId === "math" || s.subjectId === "physics"
       );
-      return [...baseMathPhysics, ...getAllTechniqueMathSkills(), ...b9List];
+      return dedupe([
+        ...baseMathPhysics,
+        ...getAllTechniqueMathSkills(),
+        ...pack5Eng,
+        ...b9List,
+        ...pack1Islamic,
+        ...pack2Languages,
+        ...pack3PhiloSci,
+        ...pack4Arabic,
+      ]);
+    }
+    if (streamId === "gestion_eco") {
+      const baseGestion = Object.values(GESTION_ECO_SKILLS) as unknown as Skill[];
+      return dedupe([
+        ...baseGestion,
+        ...b9List,
+        ...pack1Islamic,
+        ...pack2Languages,
+        ...pack3PhiloSci,
+        ...pack4Arabic,
+      ]);
+    }
+    if (streamId === "lettres_philo") {
+      const baseLettres = Object.values(LETTRES_PHILO_SKILLS) as unknown as Skill[];
+      const b5 = getBatch5SkillsForStream("lettres_philo");
+      return dedupe([
+        ...baseLettres,
+        ...b5,
+        ...b9List,
+        ...pack1Islamic,
+        ...pack2Languages,
+        ...pack4Arabic,
+        ...pack4LitMath,
+      ]);
     }
     if (streamId === "langues_etrangeres") {
-      const base = Object.values(LETTRES_PHILO_SKILLS).filter((s) =>
+      const base = (Object.values(LETTRES_PHILO_SKILLS) as unknown as Skill[]).filter((s) =>
         validateContentStreamCompatibility(streamId, { skillId: s.id, subjectId: s.subjectId })
-      ) as unknown as Skill[];
+      );
       const b5 = getBatch5SkillsForStream("langues_etrangeres");
-      return [...base, ...b5, ...b9List];
+      return dedupe([
+        ...base,
+        ...b5,
+        ...b9List,
+        ...pack1Islamic,
+        ...pack2Languages,
+        ...pack4Arabic,
+        ...pack4LitMath,
+      ]);
     }
     // Default fallback with strict validation
-    return [...PROMPT11_SKILLS, ...b9List].filter((s) =>
+    return dedupe([...PROMPT11_SKILLS, ...b9List, ...pack1Islamic, ...pack2Languages, ...pack4Arabic]).filter((s) =>
       validateContentStreamCompatibility(streamId, { skillId: s.id, subjectId: s.subjectId })
     );
   },
@@ -90,7 +159,30 @@ export const ContentService = {
     const tmList = getAllTechniqueMathSkills();
     const b5List = getAllBatch5Skills();
     const b9List = getAllBatch9Skills();
-    return [...PROMPT11_SKILLS, ...gestionList, ...lettresList, ...tmList, ...b5List, ...b9List];
+    const p1List = getAllPack1IslamicSkills();
+    const p2List = getAllPack2LanguageSkills();
+    const p3List = getAllPack3PhilosophySkills();
+    const p4List = getAllPack4ArabicLitMathSkills();
+    const p5List = getAllPack5EngineeringSnvSkills();
+
+    const all = [
+      ...PROMPT11_SKILLS,
+      ...gestionList,
+      ...lettresList,
+      ...tmList,
+      ...b5List,
+      ...b9List,
+      ...p1List,
+      ...p2List,
+      ...p3List,
+      ...p4List,
+      ...p5List,
+    ];
+    const map = new Map<string, Skill>();
+    for (const s of all) {
+      if (!map.has(s.id)) map.set(s.id, s);
+    }
+    return Array.from(map.values());
   },
 
 

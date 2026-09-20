@@ -124,6 +124,9 @@ export function saveServerStudentProfile(student: Partial<StudentOperationalSumm
     rejectionReason: student.rejectionReason !== undefined ? student.rejectionReason : existing?.rejectionReason,
     createdAt: student.createdAt || existing?.createdAt || new Date().toISOString(),
     onboardingCompleted: student.onboardingCompleted !== undefined ? student.onboardingCompleted : existing?.onboardingCompleted ?? true,
+    referral_code: student.referral_code || existing?.referral_code,
+    referred_by_code: student.referred_by_code || existing?.referred_by_code,
+    credit_balance_dzd: student.credit_balance_dzd !== undefined ? student.credit_balance_dzd : existing?.credit_balance_dzd ?? 0,
   };
 
   memoryServerStudents.set(student.id, updated);
