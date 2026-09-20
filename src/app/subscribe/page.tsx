@@ -66,6 +66,7 @@ export default function SubscribePage() {
   // Cash on Delivery (COD) auto-filled inputs
   const [shippingName, setShippingName] = useState("");
   const [shippingPhone, setShippingPhone] = useState("");
+  const [shippingParentPhone, setShippingParentPhone] = useState("");
   const [shippingWilaya, setShippingWilaya] = useState("");
   const [shippingCommune, setShippingCommune] = useState("");
   const [isSubmittingCod, setIsSubmittingCod] = useState(false);
@@ -154,6 +155,10 @@ export default function SubscribePage() {
           const phone = prof.studentPhone || (prof as any).student_phone || "";
           if (phone) {
             setShippingPhone(phone);
+          }
+          const parentPhone = (prof as any).parentPhone || (prof as any).parent_phone || "";
+          if (parentPhone) {
+            setShippingParentPhone(parentPhone);
           }
           const wilaya = prof.wilayaName || (prof as any).wilaya_name || (prof as any).wilaya || "";
           if (wilaya) {
@@ -320,6 +325,7 @@ export default function SubscribePage() {
           plan: selectedPlanId,
           shippingName: shippingName.trim(),
           shippingPhone: cleanPhone,
+          parentPhone: shippingParentPhone.trim() || undefined,
           shippingWilaya: shippingWilaya.trim(),
           shippingCommune: shippingCommune.trim(),
           studentEmail: user?.email || profile?.email,
@@ -633,13 +639,13 @@ export default function SubscribePage() {
                   <h3 className="font-extrabold text-xs sm:text-sm text-theme-text flex items-center gap-2">
                     <span>{isAr ? "عندك صاحبك شاطر؟ 🤝" : "Parrainage ou carte d'activation"}</span>
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-600 font-bold">
-                      {isAr ? "اربح 700 دج" : "+700 DA"}
+                      {isAr ? "اربح تخفيض 10%" : "-10%"}
                     </span>
                   </h3>
                   <p className="text-[11px] text-theme-muted">
                     {isAr
-                      ? "أدخل كود تفعيل البطاقة أو كود الإحالة من زميلك لتفعيل حسابك فوراً"
-                      : "Entrez un code de parrainage ou votre code de carte"}
+                      ? "أدخل كود تفعيل البطاقة أو كود الإحالة من زميلك للاستفادة من تخفيض 10% وتفعيل حسابك فوراً"
+                      : "Entrez un code de parrainage pour bénéficier de 10% de réduction"}
                   </p>
                 </div>
               </div>
@@ -648,7 +654,7 @@ export default function SubscribePage() {
                 href="/referral"
                 className="text-xs font-bold text-purple-600 hover:text-purple-700 underline self-start sm:self-auto"
               >
-                {isAr ? "عرض برنامج الإحالة ←" : "Programme parrainage →"}
+                {isAr ? "برنامج الإحالة (تخفيض 10%) ←" : "Programme parrainage (-10%) →"}
               </Link>
             </div>
 
@@ -717,7 +723,7 @@ export default function SubscribePage() {
                   <CreditCard className="w-4 h-4" />
                 </div>
                 <span className="font-black text-xs sm:text-sm text-theme-text">
-                  {isAr ? "دفع إلكتروني (بريدي موب / CCP)" : "Paiement en ligne"}
+                  {isAr ? "دفع إلكتروني" : "Paiement en ligne"}
                 </span>
               </button>
 
@@ -735,7 +741,7 @@ export default function SubscribePage() {
                   <Truck className="w-4 h-4" />
                 </div>
                 <span className="font-black text-xs sm:text-sm text-theme-text">
-                  {isAr ? "دفع عند التوصيل (نقداً)" : "Paiement à la livraison"}
+                  {isAr ? "دفع عند الاستلام" : "Paiement à la livraison"}
                 </span>
               </button>
             </div>
@@ -750,7 +756,7 @@ export default function SubscribePage() {
                 <div className="p-3.5 rounded-2xl bg-surface border border-theme flex items-center justify-between gap-3">
                   <div>
                     <span className="text-[10px] text-theme-muted font-mono uppercase block">
-                      {isAr ? "رقم الـ RIP (بريدي موب):" : "RIP BaridiMob :"}
+                      {isAr ? "رقم الـ RIP:" : "Numéro RIP :"}
                     </span>
                     <span className="font-mono font-bold text-theme-text text-sm sm:text-base select-all">
                       {BARIDIMOB_RIP}
@@ -779,7 +785,7 @@ export default function SubscribePage() {
                 <div className="p-3.5 rounded-2xl bg-surface border border-theme flex items-center justify-between gap-3">
                   <div>
                     <span className="text-[10px] text-theme-muted font-mono uppercase block">
-                      {isAr ? "رقم الحساب البريدي (CCP):" : "Compte CCP :"}
+                      {isAr ? "رقم الحساب:" : "Numéro de compte :"}
                     </span>
                     <div className="flex items-center gap-2 font-mono font-bold text-theme-text text-sm sm:text-base">
                       <span>{CCP_ACCOUNT}</span>
@@ -860,31 +866,27 @@ export default function SubscribePage() {
 
                   {receiptError && (
                     <div className="flex items-center gap-2 p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs">
-                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                       <span>{receiptError}</span>
                     </div>
                   )}
 
-                  {/* Primary Submit Button */}
+                  {/* Submit Upload Button */}
                   <button
                     type="button"
+                    disabled={!receiptFile || isSubmitting}
                     onClick={handleSubmitReceipt}
-                    disabled={isSubmitting || !receiptFile}
-                    className="w-full min-h-[50px] rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white shadow-md active:scale-[0.99] transition-all cursor-pointer disabled:opacity-50"
+                    className="w-full min-h-[50px] rounded-2xl font-black text-xs sm:text-sm flex items-center justify-center gap-2 bg-[var(--color-primary)] hover:opacity-95 text-white shadow-md active:scale-[0.99] transition-all cursor-pointer disabled:opacity-50"
                   >
                     {isSubmitting ? (
                       <>
-                        <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
-                        <span>{isAr ? "جاري الإرسال..." : "Envoi en cours..."}</span>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>{isAr ? "جاري إرسال الوصل..." : "Envoi du reçu..."}</span>
                       </>
                     ) : (
                       <>
-                        <CheckCheck className="w-4 h-4 shrink-0" />
-                        <span>
-                          {isAr
-                            ? `تأكيد وإرسال وصل الدفع (${selectedPlanPrice.toLocaleString()} دج)`
-                            : `Confirmer et envoyer le reçu (${selectedPlanPrice.toLocaleString()} DA)`}
-                        </span>
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>{isAr ? "تأكيد وإرسال الوصل" : "Confirmer et envoyer le reçu"}</span>
                       </>
                     )}
                   </button>
@@ -922,24 +924,23 @@ export default function SubscribePage() {
               )}
             </div>
           ) : (
-            /* Cash on Delivery (COD) View: Auto-filled, no detailed address or notes */
+            /* Cash On Delivery Option */
             <div className="space-y-4">
               {codResult ? (
-                <Card className="p-6 bg-card border-2 border-emerald-500/40 rounded-3xl space-y-4 text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-600 flex items-center justify-center mx-auto">
-                    <CheckCircle2 className="w-6 h-6" />
+                <Card className="p-6 bg-card border-theme rounded-3xl text-center space-y-4 shadow-sm">
+                  <div className="w-14 h-14 rounded-full bg-emerald-500/15 text-emerald-600 flex items-center justify-center mx-auto">
+                    <CheckCircle2 className="w-8 h-8" />
                   </div>
                   <div className="space-y-1">
                     <h3 className="text-base sm:text-lg font-black text-theme-text">
-                      {isAr ? "تم تسجيل طلب التوصيل بنجاح!" : "Commande enregistrée !"}
+                      {isAr ? "تم تسجيل طلبك بنجاح! 🎉" : "Commande enregistrée avec succès !"}
                     </h3>
-                    <p className="text-xs text-theme-secondary max-w-sm mx-auto">
+                    <p className="text-xs text-theme-muted max-w-sm mx-auto">
                       {isAr
-                        ? "سيتصل بك عون التوصيل لتأكيد موعد التسليم والدفع نقداً عند استلام البطاقة."
-                        : "Le livreur vous contactera pour confirmer la livraison."}
+                        ? `سيتم الاتصال بك على الرقم (${shippingPhone}) لتأكيد عنوان التسليم والتوصيل لباب منزلك.`
+                        : `Nous vous contacterons au (${shippingPhone}) pour confirmer votre livraison.`}
                     </p>
                   </div>
-
                   <Link
                     href="/dashboard"
                     className="inline-flex items-center justify-center px-6 py-2.5 rounded-xl font-bold text-xs bg-[var(--color-primary)] text-white shadow-md"
@@ -960,22 +961,23 @@ export default function SubscribePage() {
                   </div>
 
                   <div className="space-y-3">
-                    {/* Auto-filled Name & Phone */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <label className="text-[11px] font-semibold text-theme-secondary block flex items-center gap-1">
-                          <User className="w-3 h-3 text-[var(--color-primary)]" />
-                          <span>{isAr ? "الاسم واللقب" : "Nom et prénom"}</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={shippingName}
-                          onChange={(e) => setShippingName(e.target.value)}
-                          placeholder={isAr ? "الاسم واللقب" : "Nom et prénom"}
-                          className="w-full px-3 py-2 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
-                        />
-                      </div>
+                    {/* Auto-filled Name */}
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-semibold text-theme-secondary block flex items-center gap-1">
+                        <User className="w-3 h-3 text-[var(--color-primary)]" />
+                        <span>{isAr ? "الاسم واللقب" : "Nom et prénom"}</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={shippingName}
+                        onChange={(e) => setShippingName(e.target.value)}
+                        placeholder={isAr ? "الاسم واللقب" : "Nom et prénom"}
+                        className="w-full px-3 py-2 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                      />
+                    </div>
 
+                    {/* Auto-filled Phone & Optional Parent Phone */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div className="space-y-1">
                         <label className="text-[11px] font-semibold text-theme-secondary block flex items-center gap-1">
                           <Phone className="w-3 h-3 text-[var(--color-primary)]" />
@@ -986,6 +988,21 @@ export default function SubscribePage() {
                           dir="ltr"
                           value={shippingPhone}
                           onChange={(e) => setShippingPhone(e.target.value)}
+                          placeholder="05 / 06 / 07..."
+                          className="w-full px-3 py-2 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-semibold text-theme-secondary block flex items-center gap-1">
+                          <Phone className="w-3 h-3 text-stone-400" />
+                          <span>{isAr ? "رقم ولي الأمر (اختياري)" : "Téléphone du parent (optionnel)"}</span>
+                        </label>
+                        <input
+                          type="tel"
+                          dir="ltr"
+                          value={shippingParentPhone}
+                          onChange={(e) => setShippingParentPhone(e.target.value)}
                           placeholder="05 / 06 / 07..."
                           className="w-full px-3 py-2 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono"
                         />

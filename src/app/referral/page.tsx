@@ -123,15 +123,15 @@ export default function ReferralPage() {
               <div className="space-y-2 max-w-xl">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold">
                   <Gift className="w-3.5 h-3.5 text-amber-300" />
-                  <span>{isAr ? "مكافأة 700 دج رصيد شاطر" : "700 DA de crédit par ami"}</span>
+                  <span>{isAr ? "مكافأة تخفيض 10%" : "10% de réduction par ami"}</span>
                 </div>
                 <h1 className="text-2xl sm:text-4xl font-black leading-tight">
                   {isAr ? "ادعُ زملاءك في البكالوريا، واربحوا في زوج!" : "Parrainez vos camarades du BAC !"}
                 </h1>
                 <p className="text-xs sm:text-sm text-white/90 leading-relaxed">
                   {isAr
-                    ? "صاحبك يستفاد من 7 أيام تجربة مجانية كاملة ومفتوحة 100%. وكي يفعّل اشتراكه في شاطر، يدخلك 700 دج رصيد شاطر مباشرة في حسابك!"
-                    : "Votre ami profite de 7 jours d'essai gratuit complet. Dès qu'il s'abonne, vous recevez 700 DA de crédit SHATER !"}
+                    ? "صاحبك يستفاد من 7 أيام تجربة مجانية كاملة ومفتوحة 100%. وكي يسجل بكودك يستفاد من تخفيض 10% وأنت تستفاد من تخفيض 10%!"
+                    : "Votre ami profite de 7 jours d'essai gratuit. Dès qu'il s'inscrit avec votre code, vous recevez tous les deux 10% de réduction !"}
                 </p>
               </div>
 
@@ -321,8 +321,8 @@ export default function ReferralPage() {
                   </p>
                   <p className="text-xs text-theme-muted mt-1 max-w-sm mx-auto">
                     {isAr
-                      ? "شارك كودك مع أصحابك في الليسي أو عبر الواتساب، وأول ما يسجلوا ويشتركوا تظهر نتائجهم هنا وتكسب 700 دج!"
-                      : "Partagez votre lien pour commencer à gagner des crédits !"}
+                      ? "شارك كودك مع أصحابك في الليسي أو عبر الواتساب، وأول ما يسجلوا ويشتركوا تظهر نتائجهم هنا وتكسب تخفيض 10%!"
+                      : "Partagez votre lien pour commencer à obtenir 10% de réduction !"}
                   </p>
                 </div>
               </div>
@@ -399,11 +399,11 @@ export default function ReferralPage() {
                 <span className="w-6 h-6 rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)] font-bold flex items-center justify-center font-mono text-xs">
                   3
                 </span>
-                <h4 className="font-bold text-theme-text">{isAr ? "تربح 700 دج فور الاشتراك" : "3. Gagnez 700 DA"}</h4>
+                <h4 className="font-bold text-theme-text">{isAr ? "تربح تخفيض 10%" : "3. 10% de réduction"}</h4>
                 <p>
                   {isAr
-                    ? "بمجرد تأكيد اشتراك زميلك (عبر بريدي موب، CCP، أو بطاقة التوصيل)، يدخل 700 دج رصيد شاطر في حسابك."
-                    : "Dès validation de l'abonnement de votre ami, 700 DA de crédit sont ajoutés à votre compte."}
+                    ? "بمجرد اشتراك زميلك بكودك، يستفيد هو من تخفيض 10% وتستفيد أنت من تخفيض 10%."
+                    : "Dès que votre ami utilise votre code, vous bénéficiez tous les deux de 10% de réduction."}
                 </p>
               </div>
             </div>

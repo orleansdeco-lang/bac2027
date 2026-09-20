@@ -46,6 +46,7 @@ export interface PaymentOrder {
   orderType?: OrderType;
   shippingName?: string | null;
   shippingPhone?: string | null;
+  parentPhone?: string | null;
   shippingWilaya?: string | null;
   shippingCommune?: string | null;
   shippingAddress?: string | null;

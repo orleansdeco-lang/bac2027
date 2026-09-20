@@ -931,6 +931,7 @@ export interface CreateCodOrderInput {
   plan?: string;
   shippingName: string;
   shippingPhone: string;
+  parentPhone?: string;
   shippingWilaya: string;
   shippingCommune?: string;
   shippingAddress?: string;
@@ -979,6 +980,7 @@ export async function createCodOrder(
     deliveryStatus: "PENDING",
     shippingName: input.shippingName,
     shippingPhone: input.shippingPhone,
+    parentPhone: input.parentPhone,
     shippingWilaya: input.shippingWilaya,
     shippingCommune: input.shippingCommune,
     shippingAddress: input.shippingAddress,

@@ -21,6 +21,7 @@ export async function POST(req: Request) {
     const {
       shippingName,
       shippingPhone,
+      parentPhone,
       shippingWilaya,
       shippingCommune,
       shippingAddress,
@@ -60,15 +61,18 @@ export async function POST(req: Request) {
       ? authHeader.replace(/^Bearer\s+/i, "").trim()
       : null;
 
+    const cleanParentPhone = parentPhone ? parentPhone.replace(/\s+/g, "") : undefined;
+
     const order = await createCodOrder(
       {
         userId,
         plan,
         shippingName: shippingName.trim(),
         shippingPhone: cleanPhone,
+        parentPhone: cleanParentPhone,
         shippingWilaya: shippingWilaya.trim(),
         shippingCommune: (shippingCommune || "").trim(),
-        shippingAddress: shippingAddress.trim(),
+        shippingAddress: effectiveAddress,
         notes,
         studentEmail: body.studentEmail,
       },

@@ -250,7 +250,7 @@ export default function DashboardPage() {
                 </h3>
                 <p className="text-stone-600 dark:text-stone-400 text-xs max-w-xl leading-relaxed">
                   {isAr
-                    ? "جميع مهاراتك المكتسبة، تشخيصك الأولي، ونتائج معمل الأخطاء محفوظة 100%. فعّل اشتراكك الآن عبر بريدي موب، CCP أو بطاقة شاطر باص للتوصيل."
+                    ? "جميع مهاراتك المكتسبة، تشخيصك الأولي، ونتائج معمل الأخطاء محفوظة 100%. فعّل اشتراكك الآن عبر الدفع الإلكتروني أو الدفع عند الاستلام."
                     : "Toutes vos compétences et diagnostics sont conservés intacts. Activez votre pass pour continuer."}
                 </p>
               </div>
@@ -264,7 +264,7 @@ export default function DashboardPage() {
               </Link>
               <Link href="/referral" className="w-full sm:w-auto">
                 <Button size="sm" variant="outline" className="w-full sm:w-auto rounded-xl border-theme text-theme-text font-bold">
-                  <span>{isAr ? "🎁 اربح 700 دج رصيد" : "Parrainage (+700 DA)"}</span>
+                  <span>{isAr ? "🎁 اربح تخفيض 10%" : "Parrainage (-10%)"}</span>
                 </Button>
               </Link>
             </div>
@@ -284,7 +284,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex items-center gap-3 self-start sm:self-center">
               <Link href="/referral" className="text-blue-600 dark:text-blue-400 hover:underline font-bold text-xs">
-                {isAr ? "🎁 ادعُ زملاءك واربح 700 دج" : "🎁 Inviter des amis (+700 DA)"}
+                {isAr ? "🎁 ادعُ زملاءك واربح تخفيض 10%" : "🎁 Inviter des amis (-10%)"}
               </Link>
               <span className="text-stone-300 dark:text-stone-600">•</span>
               <Link href="/subscribe" className="text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200 font-semibold text-xs">

@@ -428,7 +428,7 @@ export default function AccountPage() {
               <div>
                 <span className="text-[10px] text-purple-600 dark:text-purple-400 font-bold block uppercase tracking-wider flex items-center gap-1">
                   <Gift className="w-3 h-3" />
-                  <span>{isAr ? "كود الإحالة (اربح 700 دج):" : "Code parrainage :"}</span>
+                  <span>{isAr ? "كود الإحالة (تخفيض 10%):" : "Code parrainage (-10%) :"}</span>
                 </span>
                 <span className="font-mono font-black text-sm sm:text-base text-purple-600 dark:text-purple-400 tracking-wider select-all block mt-0.5">
                   {referralCode}
@@ -466,7 +466,7 @@ export default function AccountPage() {
                   {isAr ? `رصيد أرباح شاطر: ${creditBalance.toLocaleString()} دج` : `Solde Crédit : ${creditBalance.toLocaleString()} DA`}
                 </span>
                 <span className="text-[11px] text-theme-muted">
-                  {isAr ? "تحصل على 700 دج رصيد على كل صديق يشترك باشتراك مدفوع" : "+700 DA par ami abonné"}
+                  {isAr ? "شارك كودك مع أصحابك؛ كل ما يسجل صاحبك بكودك يربح تخفيض 10% وأنت تربح تخفيض 10%" : "Partagez votre code : 10% de réduction pour vous et votre ami"}
                 </span>
               </div>
             </div>
