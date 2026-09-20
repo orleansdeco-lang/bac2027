@@ -30,6 +30,8 @@ import { trackEvent } from "@/lib/analytics";
 import { getAllTopics, getSkillsForTopic } from "@/data/curriculum";
 import { getSkillsForSubject } from "@/data/skills";
 import { useLearningAccessGate } from "@/lib/hooks";
+import { getStreamSubjects, ALL_SUBJECTS } from "@/lib/constants/streams";
+import { ContentService } from "@/lib/services/content-service";
 import {
   normalizeStreamIdWithDefault,
   getStreamMetadata,
@@ -44,6 +46,7 @@ import {
   Sparkles,
   Info,
   CheckCircle2,
+  AlertTriangle,
   Brain,
   BarChart3,
   BookOpen,
@@ -51,6 +54,7 @@ import {
   ListOrdered,
   Map,
   Lock,
+  Layers,
 } from "lucide-react";
 
 export default function RoadmapPage() {
@@ -176,9 +180,73 @@ export default function RoadmapPage() {
   const profile = gate.profile;
   const streamId = normalizeStreamIdWithDefault(profile.streamId || (profile as any)?.stream, "sciences_exp");
   const streamMeta = getStreamMetadata(streamId);
+  const [activeSubject, setActiveSubject] = useState<string>("all");
+
+  const streamSubjects = React.useMemo(() => {
+    return [...getStreamSubjects(streamId)].sort((a, b) => b.coefficient - a.coefficient);
+  }, [streamId]);
+
+  const streamSkills = React.useMemo(() => {
+    return ContentService.getSkillsForStream(streamId);
+  }, [streamId]);
 
   const isEmpirical = diagnosticResults !== null;
-  const nextMission = roadmapState?.nextMission;
+
+  const effectiveNextMission = React.useMemo(() => {
+    if (!roadmapState) return null;
+    if (activeSubject === "all") return roadmapState.nextMission;
+
+    if (roadmapState.nextMission?.subjectId === activeSubject) {
+      return roadmapState.nextMission;
+    }
+
+    const subjectQueued = roadmapState.queuedMissions.find(
+      (qm) => qm.mission.subjectId === activeSubject
+    );
+    if (subjectQueued) return subjectQueued.mission;
+
+    const subjSkills = streamSkills.filter((s) => s.subjectId === activeSubject);
+    const masteredIds = new Set(roadmapState.masteredSkills.map((m) => m.skillId));
+    const nextSkill = subjSkills.find((s) => !masteredIds.has(s.id)) || subjSkills[0];
+
+    if (nextSkill) {
+      return {
+        id: `mission-${nextSkill.id}`,
+        educationLevel: "secondary" as const,
+        examType: "bac" as const,
+        streamId,
+        subjectId: activeSubject,
+        skillId: nextSkill.id,
+        title: nextSkill.title_ar,
+        description: nextSkill.description_ar,
+        reason: "أولوية دراسية محددة في منهاج المادة.",
+        title_ar: nextSkill.title_ar,
+        title_fr: nextSkill.title_fr,
+        description_ar: nextSkill.description_ar,
+        description_fr: nextSkill.description_fr,
+        reason_ar: "أولوية دراسية محددة في منهاج المادة.",
+        reason_fr: "Priorité pédagogique dans le programme.",
+        priority: "high" as const,
+        source: "curriculum" as const,
+        status: "available" as const,
+        practiceQuestionIds: [],
+        retestQuestionIds: [],
+        estimatedMinutes: 20,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    return roadmapState.nextMission;
+  }, [roadmapState, activeSubject, streamSkills, streamId]);
+
+  const effectiveQueuedMissions = React.useMemo(() => {
+    if (!roadmapState) return [];
+    if (activeSubject === "all") return roadmapState.queuedMissions;
+    return roadmapState.queuedMissions.filter((qm) => qm.mission.subjectId === activeSubject);
+  }, [roadmapState, activeSubject]);
+
+  const nextMission = effectiveNextMission;
   const rationale = roadmapState?.nextMissionRationale;
 
   return (
@@ -249,6 +317,77 @@ export default function RoadmapPage() {
       {/* =================================================================== */}
       <Container size="lg" className="py-6 sm:py-10 space-y-8 sm:space-y-10">
 
+        {/* ================================================================= */}
+        {/* MULTI-SUBJECT STREAM NAVIGATION TABS                              */}
+        {/* ================================================================= */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-xs font-bold text-theme-muted flex items-center gap-1.5">
+              <Layers className="w-4 h-4 text-[var(--color-primary)]" />
+              <span>{isAr ? "مواد الشعبة (اختر مادة للتركيز على مسارها أو تصفح المسار الشامل):" : "Matières de la filière :"}</span>
+            </span>
+            {activeSubject !== "all" && (
+              <button
+                type="button"
+                onClick={() => setActiveSubject("all")}
+                className="text-xs font-bold text-[var(--color-primary)] hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <span>{isAr ? "الرجوع للمسار الشامل ←" : "Vue globale →"}</span>
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
+            <button
+              type="button"
+              onClick={() => setActiveSubject("all")}
+              className={`px-4 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all select-none flex items-center gap-2 cursor-pointer ${
+                activeSubject === "all"
+                  ? "bg-[var(--color-primary)] text-white shadow-clay scale-[1.02]"
+                  : "bg-card border border-theme text-theme-secondary hover:text-theme-text hover:bg-card-hover"
+              }`}
+            >
+              <Compass className="w-3.5 h-3.5" />
+              <span>{isAr ? "المسار الشامل (كل المواد)" : "Toutes les matières"}</span>
+            </button>
+
+            {streamSubjects.map((subj) => {
+              const isSelected = activeSubject === subj.subjectId;
+              const progress = roadmapState?.subjectProgress?.[subj.subjectId];
+              return (
+                <button
+                  key={subj.subjectId}
+                  type="button"
+                  onClick={() => setActiveSubject(subj.subjectId)}
+                  className={`px-3.5 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all select-none flex items-center gap-2 cursor-pointer ${
+                    isSelected
+                      ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-clay scale-[1.02]"
+                      : "bg-card border border-theme text-theme-secondary hover:text-theme-text hover:bg-card-hover"
+                  }`}
+                >
+                  <span>
+                    {isAr
+                      ? ALL_SUBJECTS[subj.subjectId as keyof typeof ALL_SUBJECTS]?.name_ar || subj.subjectId
+                      : ALL_SUBJECTS[subj.subjectId as keyof typeof ALL_SUBJECTS]?.name_fr || subj.subjectId}
+                  </span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.5 rounded-md font-mono font-bold ${
+                      isSelected
+                        ? "bg-white/20 dark:bg-slate-900/20 text-inherit"
+                        : "bg-surface-soft text-theme-muted"
+                    }`}
+                  >
+                    معامل {subj.coefficient}
+                  </span>
+                  {progress && progress.demonstratedCount > 0 && (
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
         {/* ----------------------------------------------------------------- */}
         {/* SECTION 2: YOUR CURRENT NEXT ACTION (NOW — VISUALLY DOMINATING)   */}
         {/* ----------------------------------------------------------------- */}
@@ -256,7 +395,11 @@ export default function RoadmapPage() {
           <div className="flex items-center justify-between px-1">
             <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-primary)] flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-[var(--color-primary)]" />
-              <span>{t.roadmap.currentMissionBadge || (isAr ? "مهمتك الآن" : "Votre mission maintenant")}</span>
+              <span>
+                {activeSubject !== "all"
+                  ? (isAr ? `مهمتك المقترحة في ${ALL_SUBJECTS[activeSubject as keyof typeof ALL_SUBJECTS]?.name_ar || activeSubject}` : `Mission : ${activeSubject}`)
+                  : (t.roadmap.currentMissionBadge || (isAr ? "مهمتك الآن" : "Votre mission maintenant"))}
+              </span>
             </span>
             {nextMission && (
               <Badge
@@ -288,9 +431,7 @@ export default function RoadmapPage() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="space-y-1">
                     <span className="text-xs font-semibold text-[var(--color-primary)]">
-                      {nextMission.subjectId === "math" ? (isAr ? "الرياضيات" : "Mathématiques")
-                        : nextMission.subjectId === "physics" ? (isAr ? "العلوم الفيزيائية" : "Physique-Chimie")
-                        : (isAr ? "علوم الطبيعة والحياة" : "Sciences de la Nature et de la Vie")}
+                      {ALL_SUBJECTS[nextMission.subjectId as keyof typeof ALL_SUBJECTS]?.name_ar || nextMission.subjectId}
                     </span>
                     <h2 className="text-xl sm:text-2xl font-black text-theme-text tracking-tight font-sans">
                       {locale === "ar" ? nextMission.title_ar : nextMission.title_fr}
@@ -363,15 +504,95 @@ export default function RoadmapPage() {
           </Card>
         </section>
 
+        {/* ================================================================= */}
+        {/* MULTI-SUBJECT STREAM PROGRESS MATRIX                              */}
+        {/* ================================================================= */}
+        {activeSubject === "all" && (
+          <section className="space-y-4">
+            <div className="flex items-center justify-between px-1">
+              <div className="space-y-0.5">
+                <h3 className="text-sm sm:text-base font-bold text-theme-text flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-[var(--color-primary)]" />
+                  <span>{isAr ? "مسارات جميع مواد شعبتك للبكالوريا" : "Parcours par matière"}</span>
+                </h3>
+                <p className="text-xs text-theme-muted">
+                  {isAr
+                    ? "تتبع تقدمك في كل مادة حسب معاملها الرسمي، واضغط على أي مادة للتركيز على مهاراتها وتمارينها."
+                    : "Suivez votre progression par matière selon les coefficients officiels."}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {streamSubjects.map((subj) => {
+                const sp = roadmapState?.subjectProgress?.[subj.subjectId];
+                const subjSkills = streamSkills.filter((s) => s.subjectId === subj.subjectId);
+                const demonstrated = sp?.demonstratedCount || 0;
+                const total = sp?.totalPilotSkills || subjSkills.length || 10;
+                const errors = sp?.openErrorsCount || 0;
+
+                return (
+                  <div
+                    key={subj.subjectId}
+                    onClick={() => setActiveSubject(subj.subjectId)}
+                    className="p-4 rounded-2xl border border-theme bg-card hover:border-[var(--color-primary)]/50 hover:bg-card-hover transition-all space-y-3 cursor-pointer group shadow-sm"
+                  >
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-bold text-sm text-theme-text group-hover:text-[var(--color-primary)] transition-colors">
+                        {isAr
+                          ? ALL_SUBJECTS[subj.subjectId as keyof typeof ALL_SUBJECTS]?.name_ar || subj.subjectId
+                          : ALL_SUBJECTS[subj.subjectId as keyof typeof ALL_SUBJECTS]?.name_fr || subj.subjectId}
+                      </h4>
+                      <Badge variant="outline" size="sm" className="font-mono text-[10px] font-bold">
+                        معامل {subj.coefficient}
+                      </Badge>
+                    </div>
+
+                    <div className="space-y-1.5 text-xs">
+                      <div className="flex justify-between text-theme-muted">
+                        <span>المهارات المتقنة:</span>
+                        <span className="font-bold text-[var(--color-success)] font-mono">
+                          {demonstrated} / {total}
+                        </span>
+                      </div>
+                      <div className="w-full h-1.5 rounded-full bg-surface-soft overflow-hidden">
+                        <div
+                          className="h-full bg-[var(--color-primary)] rounded-full transition-all duration-300"
+                          style={{ width: `${Math.min(100, Math.round((demonstrated / Math.max(1, total)) * 100))}%` }}
+                        />
+                      </div>
+                      {errors > 0 && (
+                        <div className="text-[11px] text-[var(--color-error)] font-semibold flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3" />
+                          <span>{errors} أخطاء قيد المعالجة</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-2 border-t border-theme/60 flex items-center justify-between text-xs text-[var(--color-primary)] font-semibold">
+                      <span>عرض مسار المادة والمهام</span>
+                      <Arrow className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
+
         {/* ----------------------------------------------------------------- */}
         {/* SECTION 4: WHAT COMES NEXT (بعدها)                                */}
         {/* ----------------------------------------------------------------- */}
-        {roadmapState && roadmapState.queuedMissions.length > 0 && (
+        {effectiveQueuedMissions.length > 0 && (
           <section className="space-y-3">
             <div className="px-1">
               <h3 className="text-sm font-bold text-theme-text flex items-center gap-1.5">
                 <ListOrdered className="h-4 w-4 text-[var(--color-primary)]" />
-                <span>{isAr ? "بعدها" : "Ensuite"}</span>
+                <span>
+                  {activeSubject !== "all"
+                    ? (isAr ? `المهام التالية في ${ALL_SUBJECTS[activeSubject as keyof typeof ALL_SUBJECTS]?.name_ar || activeSubject}` : "Ensuite")
+                    : (isAr ? "بعدها" : "Ensuite")}
+                </span>
               </h3>
               <p className="text-xs text-theme-muted">
                 {isAr
@@ -381,7 +602,7 @@ export default function RoadmapPage() {
             </div>
 
             <div className="space-y-2.5">
-              {roadmapState.queuedMissions.slice(0, 3).map((item: QueuedMissionItem, idx: number) => (
+              {effectiveQueuedMissions.slice(0, 4).map((item: QueuedMissionItem, idx: number) => (
                 <div
                   key={item.mission.id}
                   className="p-4 rounded-2xl border border-theme bg-card hover:border-[var(--color-primary)]/40 hover:bg-card-hover transition-colors flex items-center justify-between gap-3 shadow-sm"
@@ -394,6 +615,9 @@ export default function RoadmapPage() {
                       <span className="font-bold text-theme-text text-xs sm:text-sm truncate">
                         {locale === "ar" ? item.mission.title_ar : item.mission.title_fr}
                       </span>
+                      <Badge variant="outline" size="sm" className="text-[9px]">
+                        {ALL_SUBJECTS[item.mission.subjectId as keyof typeof ALL_SUBJECTS]?.name_ar || item.mission.subjectId}
+                      </Badge>
                     </div>
                     <p className="text-[11px] text-theme-muted truncate max-w-md">
                       {locale === "ar" ? item.rationale.reasonLabel_ar : item.rationale.reasonLabel_fr}

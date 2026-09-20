@@ -327,17 +327,23 @@ export function TopBar() {
           {/* Mobile Hamburger Button */}
           <button
             type="button"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            aria-label={isMobileMenuOpen ? "Fermer le menu" : "Ouvrir le menu"}
+            onClick={() => {
+              if (isLandingPage) {
+                setIsMobileMenuOpen(!isMobileMenuOpen);
+              } else {
+                window.dispatchEvent(new CustomEvent("shater_toggle_mobile_sidebar"));
+              }
+            }}
+            aria-label="القائمة الرئيسية"
             className="md:hidden p-1.5 rounded-lg border border-theme bg-card text-theme-secondary hover:text-theme-text transition-colors cursor-pointer"
           >
-            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            <Menu className="w-5 h-5" />
           </button>
         </div>
       </div>
 
-      {/* Mobile Drawer Menu */}
-      {isMobileMenuOpen && (
+      {/* Mobile Landing Links Drawer (Only for Landing Page) */}
+      {isLandingPage && isMobileMenuOpen && (
         <div className="md:hidden border-b border-theme bg-surface/98 backdrop-blur-xl px-4 py-4 space-y-4 shadow-xl animate-in slide-in-from-top-2 duration-200">
           {/* User Status Card */}
           <div className="p-3.5 rounded-2xl bg-card border border-theme">

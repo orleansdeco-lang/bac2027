@@ -239,6 +239,13 @@ export const AiPlannerService = {
   },
 };
 
+export const PlannerAiService = {
+  generateStudyPlan: (request: any, existingEvents: PlannerEvent[] = []) =>
+    AiPlannerService.generatePlan(request, existingEvents),
+  generatePlan: (request: any, existingEvents: PlannerEvent[] = []) =>
+    AiPlannerService.generatePlan(request, existingEvents),
+};
+
 export const generateAiStudyPlan = (request: any, existingEvents: PlannerEvent[] = []) =>
   AiPlannerService.generatePlan(request, existingEvents);
 

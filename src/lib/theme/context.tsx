@@ -63,7 +63,7 @@ export const THEMES: Record<Theme, ThemeInfo> = {
   },
 };
 
-export const DEFAULT_THEME: Theme = "boys";
+export const DEFAULT_THEME: Theme = "bac-mastery";
 
 interface ThemeContextType {
   theme: Theme;
@@ -83,13 +83,20 @@ export function ThemeProvider({
 }) {
   const [theme, setThemeState] = useState<Theme>(initialTheme || DEFAULT_THEME);
 
-  // Initialize theme from localStorage if available
+  // Initialize theme from localStorage if available, ensuring default is authentic bac-mastery
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
       const stored = localStorage.getItem("shater_theme") as Theme | null;
-      if (stored && THEMES[stored]) {
+      if (stored === "boys" || stored === "girls") {
+        // Reset previously forced boys/girls theme back to authentic bac-mastery
+        setThemeState("bac-mastery");
+        localStorage.setItem("shater_theme", "bac-mastery");
+      } else if (stored && THEMES[stored]) {
         setThemeState(stored);
+      } else {
+        setThemeState("bac-mastery");
+        localStorage.setItem("shater_theme", "bac-mastery");
       }
     } catch {}
   }, []);
@@ -99,7 +106,7 @@ export function ThemeProvider({
     if (typeof document === "undefined") return;
     const root = document.documentElement;
     root.setAttribute("data-theme", theme);
-    const info = THEMES[theme] || THEMES["boys"];
+    const info = THEMES[theme] || THEMES["bac-mastery"];
     root.style.colorScheme = info.colorScheme;
 
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');

@@ -1,21 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Link from "next/link";
-import { useTheme } from "@/lib/theme/context";
 import { PlannerEvent } from "@/lib/planner/types";
-import {
-  X,
-  Play,
-  Pause,
-  CheckCircle2,
-  Clock,
-  Flame,
-  Award,
-  ExternalLink,
-  RotateCcw,
-  Sparkles
-} from "lucide-react";
+import { X, Play, Pause, CheckCircle2, RotateCcw, ExternalLink } from "lucide-react";
+import Link from "next/link";
 
 interface StudySessionModalProps {
   isOpen: boolean;
@@ -30,48 +18,44 @@ export const StudySessionModal: React.FC<StudySessionModalProps> = ({
   onClose,
   onCompleteSession,
 }) => {
-  const { theme } = useTheme();
-  const isGirls = theme === "girls";
+  const [secondsRemaining, setSecondsRemaining] = useState<number>(0);
+  const [isActive, setIsActive] = useState(false);
+  const [initialSeconds, setInitialSeconds] = useState(0);
 
-  const targetMinutes = event?.duration_minutes || 45;
-  const initialSeconds = targetMinutes * 60;
-
-  const [secondsRemaining, setSecondsRemaining] = useState(initialSeconds);
-  const [isActive, setIsActive] = useState(true);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-
-  // Sync state when event changes or modal opens
+  // Initialize timer whenever event changes or modal opens
   useEffect(() => {
-    if (event) {
+    if (isOpen && event) {
       const totalSecs = (event.duration_minutes || 45) * 60;
       setSecondsRemaining(totalSecs);
-      setElapsedSeconds(0);
-      setIsActive(true);
+      setInitialSeconds(totalSecs);
+      setIsActive(true); // Auto-start countdown
+    } else {
+      setIsActive(false);
     }
-  }, [event, isOpen]);
+  }, [isOpen, event]);
 
-  // Timer interval
+  // Countdown effect
   useEffect(() => {
-    let interval: any = null;
-    if (isActive && isOpen && secondsRemaining > 0) {
+    let interval: NodeJS.Timeout;
+    if (isActive && secondsRemaining > 0) {
       interval = setInterval(() => {
-        setSecondsRemaining((prev) => Math.max(prev - 1, 0));
-        setElapsedSeconds((prev) => prev + 1);
+        setSecondsRemaining((prev) => prev - 1);
       }, 1000);
-    } else if (secondsRemaining === 0) {
+    } else if (secondsRemaining === 0 && isActive) {
       setIsActive(false);
     }
     return () => clearInterval(interval);
-  }, [isActive, isOpen, secondsRemaining]);
+  }, [isActive, secondsRemaining]);
 
   if (!isOpen || !event) return null;
 
-  const minsLeft = Math.floor(secondsRemaining / 60);
-  const secsLeft = secondsRemaining % 60;
-  const formattedTime = `${String(minsLeft).padStart(2, "0")}:${String(secsLeft).padStart(2, "0")}`;
+  const mins = Math.floor(secondsRemaining / 60);
+  const secs = secondsRemaining % 60;
+  const formattedTime = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 
+  const elapsedSeconds = initialSeconds - secondsRemaining;
   const elapsedMins = Math.max(1, Math.round(elapsedSeconds / 60));
-  const progressPercent = Math.min(100, Math.round((elapsedSeconds / initialSeconds) * 100));
+  const progressPercent = initialSeconds > 0 ? (elapsedSeconds / initialSeconds) * 100 : 0;
 
   const handleFinish = () => {
     onCompleteSession(event.id, elapsedMins);
@@ -79,143 +63,109 @@ export const StudySessionModal: React.FC<StudySessionModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in">
-      <div
-        className={`w-full max-w-md rounded-3xl border shadow-2xl p-6 sm:p-8 relative text-center transition-all ${
-          isGirls
-            ? "bg-white border-pink-200 text-[#4A2040]"
-            : "bg-[#0F1B3B] border-[#1E3160] text-slate-100"
-        }`}
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in text-center">
+      <div className="w-full max-w-md rounded-3xl border border-theme bg-card text-theme-text shadow-clay p-6 sm:p-8 relative text-center transition-all">
         {/* Close */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full opacity-60 hover:opacity-100 transition-all"
+          className="absolute top-5 left-5 p-2 rounded-full text-theme-muted hover:text-theme-text hover:bg-surface transition-all cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Task Info */}
-        <div className="mb-6">
-          <span
-            className={`inline-block text-[11px] px-3 py-1 rounded-full font-bold uppercase tracking-wider mb-2 ${
-              isGirls
-                ? "bg-pink-100 text-pink-800"
-                : "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
-            }`}
-          >
-            {event.subject_id || "Session de travail"}
+        <div className="mb-4">
+          <span className="inline-block text-[11px] px-3 py-1 rounded-full font-bold bg-[var(--color-primary-soft)] text-[var(--color-primary)] border border-[var(--color-primary)]/20 mb-2">
+            {event.subject_id || "جلسة مذاكرة"}
           </span>
-          <h2 className="text-xl font-black font-heading leading-snug">
+          <h2 className="text-lg sm:text-xl font-black text-theme-text font-sans leading-snug">
             {event.title}
           </h2>
           {event.description && (
-            <p className="text-xs opacity-75 mt-1 max-w-xs mx-auto truncate">
+            <p className="text-xs text-theme-secondary mt-1 max-w-xs mx-auto truncate font-medium">
               {event.description}
             </p>
           )}
         </div>
 
-        {/* Big Circular / Radial Timer */}
-        <div className="relative w-56 h-56 mx-auto my-6 flex items-center justify-center">
+        {/* Radial Timer */}
+        <div className="relative w-52 h-52 mx-auto my-5 flex items-center justify-center">
           <svg className="w-full h-full -rotate-90 transform" viewBox="0 0 200 200">
-            {/* Background ring */}
             <circle
               cx="100"
               cy="100"
-              r="85"
+              r="82"
               stroke="currentColor"
-              strokeWidth="10"
+              strokeWidth="9"
               fill="transparent"
-              className={isGirls ? "text-pink-100" : "text-[#1C2C54]"}
+              className="text-theme-muted/20"
             />
-            {/* Progress ring */}
             <circle
               cx="100"
               cy="100"
-              r="85"
+              r="82"
               stroke="currentColor"
-              strokeWidth="10"
-              strokeDasharray={2 * Math.PI * 85}
-              strokeDashoffset={2 * Math.PI * 85 * (1 - progressPercent / 100)}
+              strokeWidth="9"
+              strokeDasharray={2 * Math.PI * 82}
+              strokeDashoffset={2 * Math.PI * 82 * (1 - progressPercent / 100)}
               strokeLinecap="round"
               fill="transparent"
-              className={`transition-all duration-300 ${
-                isGirls ? "text-[#E879A8]" : "text-[#0EA5E9]"
-              }`}
+              className="text-[var(--color-primary)] transition-all duration-300"
             />
           </svg>
 
           {/* Time digits */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-4xl font-black font-mono tracking-tight">
+            <span className="text-4xl font-black font-mono tracking-tight text-theme-text">
               {formattedTime}
             </span>
-            <span className="text-xs opacity-70 mt-1 font-sans">
-              {isActive ? "Reste concentré 🧘" : "En pause"}
+            <span className="text-xs text-theme-secondary font-bold mt-1">
+              {isActive ? "تركيز تام 🎯" : "مؤقت متوقف مؤقتاً"}
             </span>
           </div>
         </div>
 
-        {/* Motivational pill */}
-        <div
-          className={`py-2 px-4 rounded-xl text-xs font-medium max-w-xs mx-auto mb-6 ${
-            isGirls
-              ? "bg-pink-50 text-[#B8487A] border border-pink-200"
-              : "bg-[#152347] text-cyan-300 border border-[#223668]"
-          }`}
-        >
-          {isGirls
-            ? "« اللهم لا سهل إلا ما جعلته سهلاً » 🌸"
-            : "« وما توفيقي إلا بالله عليه توكلت » ⚡"}
+        {/* Motivational Quote */}
+        <div className="py-2 px-4 rounded-xl text-xs font-bold max-w-xs mx-auto mb-5 bg-[var(--color-accent-soft)] text-[#8F5E1F] border border-[var(--color-accent)]/30 font-serif">
+          « وما توفيقي إلا بالله عليه توكلت وإليه أنيب »
         </div>
 
         {/* Timer Controls */}
-        <div className="flex items-center justify-center gap-3 mb-6">
+        <div className="flex items-center justify-center gap-3 mb-5">
           {/* Pause / Resume */}
           <button
             type="button"
             onClick={() => setIsActive(!isActive)}
-            className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all shadow-md ${
+            className={`w-13 h-13 rounded-2xl flex items-center justify-center transition-all shadow-xs cursor-pointer ${
               isActive
-                ? isGirls
-                  ? "bg-pink-100 text-pink-700 hover:bg-pink-200"
-                  : "bg-slate-800 text-slate-200 hover:bg-slate-700"
-                : isGirls
-                ? "bg-[#E879A8] text-white hover:bg-[#D46092]"
-                : "bg-[#0EA5E9] text-white hover:bg-cyan-600"
+                ? "bg-surface border border-theme text-theme-text hover:bg-card"
+                : "bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)]"
             }`}
-            title={isActive ? "Mettre en pause" : "Reprendre"}
+            title={isActive ? "إيقاف مؤقت" : "استئناف"}
           >
-            {isActive ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6 fill-current ml-0.5" />}
+            {isActive ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
           </button>
 
           {/* Finish & Log */}
           <button
             type="button"
             onClick={handleFinish}
-            className={`px-5 py-3.5 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all shadow-md ${
-              isGirls
-                ? "bg-gradient-to-r from-pink-500 to-rose-500 text-white hover:from-pink-600 hover:to-rose-600"
-                : "bg-gradient-to-r from-cyan-500 to-blue-600 text-white hover:from-cyan-600 hover:to-blue-700 shadow-cyan-500/20"
-            }`}
+            className="px-5 py-3 rounded-2xl text-xs font-bold flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-xs cursor-pointer"
           >
             <CheckCircle2 className="w-4 h-4" />
-            <span>Terminer la session ({elapsedMins}m)</span>
+            <span>إنهاء الجلسة ({elapsedMins} دقيقة)</span>
           </button>
         </div>
 
-        {/* BAC Mastery Mission Bridge */}
-        <div className="pt-4 border-t border-theme">
+        {/* Practice Link */}
+        <div className="pt-3 border-t border-theme">
           <Link
             href="/practice"
             target="_blank"
-            className={`text-xs font-medium inline-flex items-center gap-1.5 opacity-80 hover:opacity-100 transition-opacity ${
-              isGirls ? "text-[#B8487A]" : "text-cyan-400"
-            }`}
+            className="text-xs font-bold inline-flex items-center gap-1.5 text-[var(--color-primary)] hover:underline"
           >
-            <span>Pratiquer les exercices sur SHATER Mastery</span>
+            <span>فتح بنك التمارين على شاطر</span>
             <ExternalLink className="w-3.5 h-3.5" />
           </Link>
         </div>

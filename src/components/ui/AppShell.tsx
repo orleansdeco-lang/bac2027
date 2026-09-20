@@ -3,7 +3,6 @@
 import React from "react";
 import { usePathname } from "next/navigation";
 import { TopBar } from "./TopBar";
-import { BottomNav } from "./BottomNav";
 import { Sidebar } from "./Sidebar";
 
 import { cn } from "@/lib/utils";
@@ -12,7 +11,6 @@ interface AppShellProps {
   children: React.ReactNode;
   activeNav?: "home" | "roadmap" | "missions" | "progress" | string;
   showTopBar?: boolean;
-  showBottomNav?: boolean;
   showSidebar?: boolean;
   showFooter?: boolean;
   noPadding?: boolean;
@@ -22,7 +20,6 @@ export function AppShell({
   children,
   activeNav,
   showTopBar = true,
-  showBottomNav = true,
   showSidebar,
   showFooter = true,
   noPadding = false,
@@ -51,7 +48,7 @@ export function AppShell({
           "flex-1 w-full mx-auto flex gap-4 md:gap-5 lg:gap-6 xl:gap-8",
           noPadding
             ? "p-0 max-w-none"
-            : "max-w-[1920px] 3xl:max-w-[2400px] px-3 sm:px-4 md:px-6 lg:px-8 3xl:px-12 py-4 md:py-6 pb-24 md:pb-12"
+            : "max-w-[1920px] 3xl:max-w-[2400px] px-3 sm:px-4 md:px-6 lg:px-8 3xl:px-12 py-4 md:py-6 pb-8 md:pb-12"
         )}
       >
         {shouldShowSidebar && <Sidebar />}
@@ -77,8 +74,6 @@ export function AppShell({
           </div>
         </footer>
       )}
-
-      {showBottomNav && <BottomNav />}
     </div>
   );
 }

@@ -240,7 +240,59 @@ html {
 }
 
 /* ========================================================================== */
-/* DESIGN A: BOYS — THÈME SOMBRE (Élégant, Moderne & Dynamique)               */
+/* AUTHENTIC SHATER IDENTITY (Warm Beige, Sage Teal & Clay Off-White)        */
+/* ========================================================================== */
+[data-theme="bac-mastery"],
+[data-theme="freemium"] {
+  --color-bg-base: #F7F3EA;
+  --color-bg-secondary: #EFE9DC;
+  --color-bg-surface: #FFFCF7;
+  --color-bg-card: #FFFFFF;
+  --color-bg-card-hover: #FBF8F2;
+  --color-bg-card-muted: #EFE9DC;
+  --color-bg-elevated: #FFFFFF;
+  --color-sidebar: #EFE9DC;
+
+  --color-border-subtle: #E4DED2;
+  --color-border-hover: #5F8F86;
+  --color-border-strong: #26302F;
+
+  --color-text-primary: #26302F;
+  --color-text-secondary: #65706D;
+  --color-text-muted: #8C9691;
+
+  --color-primary: #5F8F86;
+  --color-primary-hover: #527D75;
+  --color-primary-active: #456B64;
+  --color-primary-text: #FFFFFF;
+  --color-primary-soft: #DCE9E4;
+  --color-primary-muted: rgba(95, 143, 134, 0.14);
+
+  --color-secondary: #AFC8BD;
+  --color-secondary-muted: rgba(175, 200, 189, 0.2);
+  --color-accent: #D7A66A;
+  --color-accent-soft: #F9EFE2;
+  --color-accent-muted: rgba(215, 166, 106, 0.16);
+
+  --color-success: #6E9B7B;
+  --color-success-soft: #E8F2EB;
+  --color-warning: #D5A45E;
+  --color-warning-soft: #FAF0E2;
+  --color-error: #C8796B;
+  --color-error-soft: #F9EAE8;
+  --color-info: #6D8F87;
+  --color-info-soft: #E5EFEF;
+
+  --color-ring: #5F8F86;
+  --scrollbar-track: #F7F3EA;
+  --scrollbar-thumb: #D8D0C3;
+  --scrollbar-thumb-hover: #C5BCAD;
+
+  color-scheme: light;
+}
+
+/* ========================================================================== */
+/* OPTIONAL EXPERIMENTAL THEMES                                               */
 /* ========================================================================== */
 [data-theme="boys"] {
   --color-bg-base: #0B132B;

@@ -8,7 +8,6 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import {
-  StreamSelector,
   SubjectDashboard,
   UnifiedLessonReader,
   CurriculumDisplayItem,
@@ -281,27 +280,25 @@ export default function FreeRoamCurriculumPage() {
                 <Badge variant="primary" size="sm" className="font-bold text-xs px-3 py-1">
                   المكتبة الشاملة • المنهاج الوزاري الموحد
                 </Badge>
-                {selectedStream === enrolledStream && (
-                  <Badge
-                    variant="outline"
-                    size="sm"
-                    className="text-xs bg-emerald-500/10 text-emerald-400 border-emerald-500/30 font-bold"
-                  >
-                    شعبتك الرسمية المسجلة
-                  </Badge>
-                )}
+                <Badge
+                  variant="outline"
+                  size="sm"
+                  className="text-xs bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 font-bold"
+                >
+                  شعبتك الرسمية: {streamInfo?.name_ar || "العلوم التجريبية"}
+                </Badge>
                 <Badge variant="outline" size="sm" className="text-xs text-theme-muted">
-                  452 كفاءة معتمدة للبكالوريا
+                  {displayItems.length} كفاءة ودرس معتمد
                 </Badge>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-theme-text">
-                منهاج {streamInfo?.name_ar || "البكالوريا"} كاملاً
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-theme-text font-sans">
+                منهاج شعبة {streamInfo?.name_ar || "البكالوريا"} كاملاً
               </h1>
 
               <p className="text-xs sm:text-sm text-theme-secondary leading-relaxed">
-                تصفح كل المواد حسب المعاملات الرسمية والفصول الدراسية، اقرأ الشروحات النظرية،
-                حل المسائل النموذجية، واختبر استيعابك بأسئلة تشخيصية متطابقة مع امتحانات البكالوريا.
+                تصفح كل مواد شعبتك الرسمية مرتبة حسب المعاملات الوزارية المعتمدة في البكالوريا، اقرأ الشروحات النظرية المركزة،
+                حل المسائل والتمارين، واختبر استيعابك بأسئلة تشخيصية متطابقة مع امتحانات البكالوريا.
               </p>
             </div>
 
@@ -329,21 +326,6 @@ export default function FreeRoamCurriculumPage() {
             </div>
           </div>
         </section>
-
-        {/* ================================================================= */}
-        {/* STREAM SELECTOR (6 ALGERIAN BAC STREAMS)                          */}
-        {/* ================================================================= */}
-        <StreamSelector
-          selectedStream={selectedStream}
-          onSelectStream={(newStream) => {
-            setSelectedStream(newStream);
-            setSelectedSubject("all");
-            setSelectedTrimester("all");
-            setSearchQuery("");
-          }}
-          enrolledStream={enrolledStream}
-          skillCounts={streamSkillCounts}
-        />
 
         {/* ================================================================= */}
         {/* SUBJECT DASHBOARD WITH TRIMESTERS & SEARCH                        */}

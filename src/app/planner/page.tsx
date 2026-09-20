@@ -12,7 +12,6 @@ import { NotificationService } from "@/lib/planner/notification-service";
 import {
   PlannerEvent,
   PlannerWeeklyStats,
-  StreamSubjectProgress,
   DailyReflection,
   NotificationPreferences,
   PlannerNotification,
@@ -24,8 +23,6 @@ import {
   TodayObjectivesCard,
   DailyObjective,
   DailyTimeline,
-  WeeklyStatsGrid,
-  SubjectProgressSection,
   TodayBilanSummary,
   AddTaskModal,
   AiPlannerModal,
@@ -129,10 +126,6 @@ export default function PlannerPage() {
   const weeklyStats: PlannerWeeklyStats = useMemo(() => {
     return PlannerService.getWeeklyStats(events);
   }, [events]);
-
-  const streamProgress: StreamSubjectProgress[] = useMemo(() => {
-    return PlannerService.getStreamProgress(streamId);
-  }, [streamId]);
 
   // Daily Objectives
   const dailyObjectives: DailyObjective[] = useMemo(() => {
@@ -276,12 +269,14 @@ export default function PlannerPage() {
   return (
     <AppShell activeNav="planner">
       <div className="space-y-6 max-w-7xl mx-auto pb-16">
-        {/* 1. Hero Section (Greeting, BAC Target, Theme Toggle) */}
+        {/* 1. Hero Section (Greeting, BAC Target, Quick Action Buttons) */}
         <PlannerHero
           studentName={studentName}
           streamNameAr={streamNameAr}
           bacTargetScore={targetScore}
           onUpdateTargetScore={handleUpdateTargetScore}
+          onOpenAddTask={() => setIsAddTaskOpen(true)}
+          onOpenAiPlanner={() => setIsAiPlannerOpen(true)}
         />
 
         {/* 2. Date Navigation Strip */}
@@ -294,9 +289,9 @@ export default function PlannerPage() {
           onOpenNotifications={() => setIsNotificationsOpen(true)}
         />
 
-        {/* 3. Main Two-Column Responsive Layout */}
+        {/* 3. Main Two-Column Clean Responsive Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Column (2/3): Objectives, Daily Timeline, Weekly Stats */}
+          {/* Main Column (2/3): Objectives & Daily Timeline */}
           <div className="lg:col-span-2 space-y-6">
             {/* Today's Objectives Checklist */}
             <TodayObjectivesCard
@@ -319,14 +314,10 @@ export default function PlannerPage() {
               onOpenAddTask={() => setIsAddTaskOpen(true)}
               onOpenAiPlanner={() => setIsAiPlannerOpen(true)}
             />
-
-            {/* Weekly Stats Grid */}
-            <WeeklyStatsGrid stats={weeklyStats} />
           </div>
 
-          {/* Side Column (1/3): Today Bilan & Stream Subject Progress */}
+          {/* Side Column (1/3): Today Bilan & Evening Reflection */}
           <div className="space-y-6">
-            {/* Today Bilan & Evening Reflection */}
             <TodayBilanSummary
               studyMinutesToday={studyMinutesToday}
               tasksCompletedToday={todayCompletedEvents.length}
@@ -336,9 +327,6 @@ export default function PlannerPage() {
               reflectionToday={todayReflection}
               onOpenReflectionModal={() => setIsReflectionOpen(true)}
             />
-
-            {/* Stream Subject Progress */}
-            <SubjectProgressSection progressList={streamProgress} />
           </div>
         </div>
       </div>

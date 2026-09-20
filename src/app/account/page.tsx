@@ -48,7 +48,9 @@ import {
   Gift,
   Users,
   MessageCircle,
+  QrCode,
 } from "lucide-react";
+import QRCode from "qrcode";
 import { exportAnonymizedPilotData } from "@/lib/analytics";
 
 export default function AccountPage() {
@@ -62,6 +64,7 @@ export default function AccountPage() {
   const [paymentRecord, setPaymentRecord] = useState<PilotPaymentRecord | null>(null);
   const [referralSummary, setReferralSummary] = useState<any>(null);
   const [copiedCodeField, setCopiedCodeField] = useState<string | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string>("");
 
   // Live progress metrics from ProgressService & Supabase
   const {
@@ -307,11 +310,6 @@ export default function AccountPage() {
   const currentCharacterKey = (regDraft as any)?.characterId || (profile as any)?.characterId || "scholar";
   const characterInfo = characterMap[currentCharacterKey] || characterMap.scholar;
 
-  const studentCode =
-    (profile as any)?.studentCode ||
-    (profile as any)?.student_code ||
-    `STU-${(user?.id || profile?.id || "BAC27").replace(/[^a-zA-Z0-9]/g, "").slice(0, 8).toUpperCase()}`;
-
   const referralCode =
     referralSummary?.referralCode ||
     (profile as any)?.referral_code ||
@@ -320,42 +318,52 @@ export default function AccountPage() {
 
   const creditBalance = referralSummary?.creditBalanceDzd ?? (profile as any)?.credit_balance_dzd ?? 0;
 
+  // Generate QR code pointing to registration with referral code
+  useEffect(() => {
+    if (referralCode) {
+      const regUrl = typeof window !== "undefined"
+        ? `${window.location.origin}/auth/register?ref=${encodeURIComponent(referralCode)}`
+        : `https://shater.dz/auth/register?ref=${encodeURIComponent(referralCode)}`;
+
+      QRCode.toDataURL(regUrl, {
+        width: 320,
+        margin: 2,
+        color: {
+          dark: "#26302F",
+          light: "#FFFFFF",
+        },
+      })
+        .then((url) => setQrDataUrl(url))
+        .catch((err) => console.error("Error generating QR Code:", err));
+    }
+  }, [referralCode]);
+
+  const handleDownloadQr = () => {
+    if (!qrDataUrl) return;
+    const a = document.createElement("a");
+    a.href = qrDataUrl;
+    a.download = `shater_referral_${referralCode}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+
   return (
     <AppShell activeNav="account">
       <Container size="sm" className="py-6 sm:py-10 space-y-6">
-        {/* Account Header */}
-        <div className="flex items-center justify-between border-b border-theme pb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-theme-text tracking-tight font-sans">
-              {isAr ? "حساب التلميذ وإحصائيات التعلم" : "Compte & Statistiques Réelles"}
-            </h1>
-            <p className="text-xs text-theme-secondary mt-1">
-              {isAr
-                ? "متابعة تقدمك الحقيقي، وقت المذاكرة، حالة المواد، وإعدادات الحساب."
-                : "Suivi réel de votre temps d'étude, compétences validées et profil."}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" size="sm" className="flex items-center gap-1.5 px-3 py-1 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-bold">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
-              <span>{isAr ? "حساب موثق" : "Compte vérifié"}</span>
-            </Badge>
-          </div>
-        </div>
-
         {/* ================================================================= */}
-        {/* STUDENT OFFICIAL ID & REFERRAL CARD (كود الطالب وبياناته)         */}
+        {/* 1. TOP PRIMARY CARD: REFERRAL CODE, QR CODE & STUDENT IDENTITY    */}
         {/* ================================================================= */}
-        <Card className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-card via-surface/60 to-card border-2 border-[var(--color-primary)]/30 shadow-md space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-theme pb-3.5">
+        <Card className="p-5 sm:p-7 rounded-3xl bg-card border-2 border-[var(--color-primary)]/30 shadow-clay space-y-5">
+          {/* Student Profile Identity header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-theme pb-4">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center font-bold text-lg shadow-sm">
+              <div className="w-12 h-12 rounded-2xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center font-bold text-xl shadow-xs">
                 🎓
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-base font-black text-theme-text">
+                  <h2 className="text-base sm:text-lg font-black text-theme-text">
                     {profile?.firstName && profile?.lastName
                       ? `${profile.firstName} ${profile.lastName}`
                       : regDraft?.firstName && regDraft?.lastName
@@ -391,178 +399,214 @@ export default function AccountPage() {
             </div>
           </div>
 
-          {/* Codes Grid: Student ID Code + Referral Code */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Student ID Code */}
-            <div className="p-3.5 rounded-2xl bg-surface border border-theme flex items-center justify-between gap-2">
-              <div>
-                <span className="text-[10px] text-theme-muted font-bold block uppercase tracking-wider">
-                  {isAr ? "كود الطالب الرسمي (Student ID):" : "Code Étudiant :"}
-                </span>
-                <span className="font-mono font-black text-sm sm:text-base text-theme-text tracking-wider select-all block mt-0.5">
-                  {studentCode}
-                </span>
+          {/* Referral Code & QR Section */}
+          <div className="space-y-4">
+            {/* Header info */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Gift className="w-5 h-5 text-[var(--color-accent)]" />
+                <h3 className="text-sm sm:text-base font-bold text-theme-text">
+                  {isAr ? "كود الإحالة والمشاركة (تخفيض 10%)" : "Code Parrainage (-10%)"}
+                </h3>
               </div>
-              <button
-                type="button"
-                onClick={() => copyCode(studentCode, "student_code")}
-                className="px-3 py-1.5 rounded-xl bg-card border border-theme hover:border-[var(--color-primary)] text-xs font-bold text-theme-text transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
-                title={isAr ? "نسخ كود الطالب" : "Copier"}
+              <Link
+                href="/referral"
+                className="text-xs font-bold text-[var(--color-primary)] hover:underline inline-flex items-center gap-1"
               >
-                {copiedCodeField === "student_code" ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span className="text-emerald-600 text-[11px]">{isAr ? "تم النسخ" : "Copié"}</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5 text-theme-muted" />
-                    <span className="text-[11px]">{isAr ? "نسخ" : "Copier"}</span>
-                  </>
-                )}
-              </button>
+                <span>{isAr ? "لوحة الإحالة الكاملة ←" : "Tableau de bord →"}</span>
+              </Link>
             </div>
 
-            {/* Referral Code */}
-            <div className="p-3.5 rounded-2xl bg-surface border border-theme flex items-center justify-between gap-2">
+            {/* Referral Code Box with Copy */}
+            <div className="p-4 rounded-2xl bg-surface border border-theme flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <div>
-                <span className="text-[10px] text-purple-600 dark:text-purple-400 font-bold block uppercase tracking-wider flex items-center gap-1">
-                  <Gift className="w-3 h-3" />
-                  <span>{isAr ? "كود الإحالة (تخفيض 10%):" : "Code parrainage (-10%) :"}</span>
+                <span className="text-[11px] text-theme-muted font-bold block">
+                  {isAr ? "كود الإحالة الخاص بك (يمنح صديقك 10% وأنت 10%):" : "Votre code parrainage :"}
                 </span>
-                <span className="font-mono font-black text-sm sm:text-base text-purple-600 dark:text-purple-400 tracking-wider select-all block mt-0.5">
+                <span className="font-mono font-black text-xl sm:text-2xl text-[var(--color-primary)] tracking-widest select-all block mt-0.5">
                   {referralCode}
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={() => copyCode(referralCode, "referral_code")}
-                className="px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
-                title={isAr ? "نسخ كود الإحالة" : "Copier"}
-              >
-                {copiedCodeField === "referral_code" ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span className="text-emerald-600 text-[11px]">{isAr ? "تم النسخ" : "Copié"}</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span className="text-[11px]">{isAr ? "نسخ" : "Copier"}</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-
-          {/* Referral Credit & Share Bar */}
-          <div className="p-3.5 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-600 flex items-center justify-center shrink-0">
-                <Users className="w-4 h-4" />
-              </div>
-              <div>
-                <span className="font-bold text-theme-text block">
-                  {isAr ? `رصيد أرباح شاطر: ${creditBalance.toLocaleString()} دج` : `Solde Crédit : ${creditBalance.toLocaleString()} DA`}
-                </span>
-                <span className="text-[11px] text-theme-muted">
-                  {isAr ? "شارك كودك مع أصحابك؛ كل ما يسجل صاحبك بكودك يربح تخفيض 10% وأنت تربح تخفيض 10%" : "Partagez votre code : 10% de réduction pour vous et votre ami"}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              {referralSummary?.whatsappMessage && (
-                <a
-                  href={`https://wa.me/?text=${encodeURIComponent(referralSummary.whatsappMessage)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs shadow-sm"
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => copyCode(referralCode, "referral_code")}
+                  className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-card border border-theme hover:border-[var(--color-primary)] text-xs font-bold text-theme-text transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
+                  title={isAr ? "نسخ كود الإحالة" : "Copier"}
                 >
-                  <MessageCircle className="w-3.5 h-3.5 fill-current" />
-                  <span>{isAr ? "مشاركة عبر واتساب" : "Partager"}</span>
-                </a>
-              )}
+                  {copiedCodeField === "referral_code" ? (
+                    <>
+                      <Check className="w-4 h-4 text-emerald-600" />
+                      <span className="text-emerald-600 font-bold">{isAr ? "تم النسخ ✓" : "Copié"}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4 text-theme-secondary" />
+                      <span>{isAr ? "نسخ الكود" : "Copier"}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
 
-              <Link
-                href="/referral"
-                className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-xl bg-card hover:bg-surface border border-theme font-bold text-xs text-theme-text"
-              >
-                <span>{isAr ? "لوحة الإحالة ←" : "Parrainage →"}</span>
-              </Link>
+            {/* QR Code Presentation Card */}
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-surface to-card border border-theme flex flex-col sm:flex-row items-center justify-between gap-5 shadow-xs">
+              {/* QR Image Frame */}
+              <div className="flex flex-col items-center p-3.5 rounded-2xl bg-white border border-stone-200 shadow-sm shrink-0">
+                <span className="text-[10px] font-black tracking-widest text-[#26302F] mb-1 font-sans">
+                  SHATER · شاطر
+                </span>
+                <div className="w-36 h-36 bg-white p-1 rounded-xl flex items-center justify-center">
+                  {qrDataUrl ? (
+                    <img
+                      src={qrDataUrl}
+                      alt={`QR Code ${referralCode}`}
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-stone-100 rounded-lg">
+                      <QrCode className="w-8 h-8 text-stone-400 animate-pulse" />
+                    </div>
+                  )}
+                </div>
+                <div className="text-center mt-2 space-y-0.5">
+                  <span className="text-[10px] text-stone-500 font-mono block">shater.dz</span>
+                  <span className="text-xs font-mono font-black text-[#5F8F86] block bg-stone-100 px-2 py-0.5 rounded">
+                    {referralCode}
+                  </span>
+                </div>
+              </div>
+
+              {/* QR Explanation & Actions */}
+              <div className="flex-1 space-y-3 text-center sm:text-start">
+                <div>
+                  <h4 className="text-sm font-bold text-theme-text">
+                    {isAr ? "بطاقة المشاركة السريعة عبر QR Code" : "Partage instantané par QR Code"}
+                  </h4>
+                  <p className="text-xs text-theme-secondary mt-1 leading-relaxed">
+                    {isAr
+                      ? "شارك هذه البطاقة مع زملائك؛ بمجرد مسح الكود بكاميرا الهاتف ينتقل مباشرة لصفحة التسجيل مع تفعيل كود الخصم تلقائياً. وعند وصوله للدفع يستفيد من خصم 10% أو يمكنه إدخال الكود المكتوب في البطاقة."
+                      : "Scannez pour accéder directement à l'inscription avec le code promo de 10% pré-rempli."}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+                  {qrDataUrl && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleDownloadQr}
+                      className="text-xs rounded-xl font-bold border-theme text-theme-text flex items-center gap-1.5"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      <span>{isAr ? "تحميل صورة QR" : "Télécharger"}</span>
+                    </Button>
+                  )}
+
+                  {referralSummary?.whatsappMessage && (
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent(referralSummary.whatsappMessage)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs shadow-xs"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5 fill-current" />
+                      <span>{isAr ? "واتساب" : "WhatsApp"}</span>
+                    </a>
+                  )}
+
+                  <Link href="/referral">
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      className="text-xs rounded-xl font-bold flex items-center gap-1.5 shadow-sm"
+                    >
+                      <span>{isAr ? "لوحة الإحالة" : "Tableau de bord"}</span>
+                      <NextArrow className="w-3.5 h-3.5" />
+                    </Button>
+                  </Link>
+                </div>
+
+                {creditBalance > 0 && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] text-xs font-bold">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{isAr ? `رصيد أرباحك: ${creditBalance.toLocaleString()} دج` : `Solde : ${creditBalance.toLocaleString()} DA`}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </Card>
 
         {/* ================================================================= */}
-        {/* 1. REAL-TIME TACTILE KPI METRICS ROW                              */}
+        {/* 2. REAL-TIME STAT CARDS ROW (AUTHENTIC SHATER PALETTE)             */}
         {/* ================================================================= */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
           {/* Metric 1: Live Total Study Time */}
-          <div className="p-4 rounded-3xl bg-[#E8F2EB] dark:bg-emerald-950/20 border border-[#6E9B7B]/30 shadow-clay flex flex-col justify-between space-y-2">
+          <Card className="p-4 sm:p-5 rounded-3xl border border-theme shadow-clay flex flex-col justify-between space-y-2 bg-card">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-[#2E5439] dark:text-emerald-300">
-                {isAr ? "وقت المذاكرة" : "Temps actif"}
+              <span className="text-xs font-bold text-theme-secondary">
+                {isAr ? "وقت المذاكرة الفعلي" : "Temps actif"}
               </span>
-              <div className="w-7 h-7 rounded-xl bg-[#6E9B7B]/20 text-[#3B6647] dark:text-emerald-400 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center shadow-xs">
                 <Clock className="w-4 h-4" />
               </div>
             </div>
             <div>
-              <span className="text-lg sm:text-xl font-black text-[#2E5439] dark:text-emerald-200 font-mono block">
+              <span className="text-xl sm:text-2xl font-black text-theme-text font-mono block">
                 {formatStudyTime(totalStudyTimeSeconds)}
               </span>
-              <span className="text-[10px] text-[#3B6647]/80 dark:text-emerald-400/70 block mt-0.5">
-                {isAr ? "تتبع نشط تراكمي" : "Temps effectif"}
+              <span className="text-[11px] text-theme-muted block mt-0.5">
+                {isAr ? "تتبع نشط ومسجل" : "Temps effectif"}
               </span>
             </div>
-          </div>
+          </Card>
 
           {/* Metric 2: Live Mastered Skills */}
-          <div className="p-4 rounded-3xl bg-[#F9EFE2] dark:bg-amber-950/20 border border-[#D7A66A]/35 shadow-clay flex flex-col justify-between space-y-2">
+          <Card className="p-4 sm:p-5 rounded-3xl border border-theme shadow-clay flex flex-col justify-between space-y-2 bg-card">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-[#8F5E1F] dark:text-amber-300">
-                {isAr ? "مهارات متقنة" : "Compétences"}
+              <span className="text-xs font-bold text-theme-secondary">
+                {isAr ? "المهارات المتقنة" : "Compétences"}
               </span>
-              <div className="w-7 h-7 rounded-xl bg-[#D7A66A]/20 text-[#8F5E1F] dark:text-amber-400 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-xl bg-[var(--color-accent-soft)] text-[var(--color-accent)] flex items-center justify-center shadow-xs">
                 <Award className="w-4 h-4" />
               </div>
             </div>
             <div>
               <div className="flex items-baseline gap-1 font-mono">
-                <span className="text-lg sm:text-xl font-black text-[#8F5E1F] dark:text-amber-200">
+                <span className="text-xl sm:text-2xl font-black text-theme-text">
                   {masteredCount}
                 </span>
-                <span className="text-[10px] text-[#8F5E1F]/70 dark:text-amber-400/70">
+                <span className="text-xs text-theme-muted">
                   /{streamMeta.totalSkills}
                 </span>
               </div>
-              <span className="text-[10px] text-[#8F5E1F]/80 dark:text-amber-400/70 block mt-0.5">
-                {inProgressCount > 0 ? (isAr ? `${inProgressCount} قيد البناء` : `${inProgressCount} en cours`) : (isAr ? "تثبيت برهاني" : "Validées")}
+              <span className="text-[11px] text-theme-muted block mt-0.5">
+                {inProgressCount > 0 ? (isAr ? `${inProgressCount} قيد البناء` : `${inProgressCount} en cours`) : (isAr ? "مكتملة برهانياً" : "Validées")}
               </span>
             </div>
-          </div>
+          </Card>
 
           {/* Metric 3: Target Score */}
-          <div className="p-4 rounded-3xl bg-[#F6EEF5] dark:bg-purple-950/20 border border-[#C59FC2]/35 shadow-clay flex flex-col justify-between space-y-2">
+          <Card className="p-4 sm:p-5 rounded-3xl border border-theme shadow-clay flex flex-col justify-between space-y-2 bg-card">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-[#6D3467] dark:text-purple-300">
-                {isAr ? "الهدف في الباك" : "Objectif"}
+              <span className="text-xs font-bold text-theme-secondary">
+                {isAr ? "الهدف في البكالوريا" : "Objectif BAC"}
               </span>
-              <div className="w-7 h-7 rounded-xl bg-[#C59FC2]/20 text-[#6D3467] dark:text-purple-400 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center shadow-xs">
                 <Target className="w-4 h-4" />
               </div>
             </div>
             <div>
-              <span className="text-lg sm:text-xl font-black text-[#6D3467] dark:text-purple-200 font-mono block">
+              <span className="text-xl sm:text-2xl font-black text-[var(--color-accent)] font-mono block">
                 {profile?.targetScore ? `${profile.targetScore.toFixed(1)}` : "16.0"}
                 <span className="text-xs">/20</span>
               </span>
-              <span className="text-[10px] text-[#6D3467]/80 dark:text-purple-400/70 block mt-0.5">
+              <span className="text-[11px] text-theme-muted block mt-0.5">
                 {isAr ? "معدل النجاح" : "Mention visée"}
               </span>
             </div>
-          </div>
+          </Card>
         </div>
 
         {/* ================================================================= */}
@@ -691,210 +735,7 @@ export default function AccountPage() {
         </Card>
 
         {/* ================================================================= */}
-        {/* 4. SUBSCRIPTION & TRIAL CARD                                      */}
-        {/* ================================================================= */}
-        <Card className="p-5 space-y-4 shadow-card" data-testid="account-subscription-card">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm font-bold text-theme-text">
-              <Clock className="h-4 w-4 text-[var(--color-primary)]" />
-              <span>{isAr ? "الاشتراك وحالة الوصول" : "Abonnement & Accès"}</span>
-            </div>
-            {access.status === "PAID_ACTIVE" ? (
-              <Badge variant="success" size="sm">
-                {isAr ? "اشتراك كامل مفعل" : "Actif"}
-              </Badge>
-            ) : access.status === "TRIAL_ACTIVE" ? (
-              <Badge variant="warning" size="sm">
-                {isAr
-                  ? `تجربة مجانية (${formatTrialCountdown(access.remainingHours, true)})`
-                  : `Essai (${formatTrialCountdown(access.remainingHours, false)})`}
-              </Badge>
-            ) : (
-              <Badge variant="outline" size="sm" className="text-rose-400 border-rose-500/30">
-                {isAr ? "فترة التجربة منتهية" : "Essai expiré"}
-              </Badge>
-            )}
-          </div>
-
-          <div className="p-4 rounded-2xl bg-card-muted border border-theme space-y-2.5">
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-theme-muted">{isAr ? "نوع الخطة الحالية:" : "Plan actuel :"}</span>
-              <span className="font-bold text-theme-text">
-                {isPaidActive
-                  ? (access.plan === "monthly"
-                      ? (isAr ? "الاشتراك الشهري (30 يوماً)" : "Pass Mensuel (30 jours)")
-                      : (isAr ? "اشتراك السنة الدراسية (موسم كامل)" : "Pass Année Scolaire (Saison Complète)"))
-                  : (isAr ? "تجربة مجانية استكشافية (72 ساعة)" : "Essai Découverte (72h)")}
-              </span>
-            </div>
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-theme-muted">{isAr ? "حالة الوصول:" : "Statut :"}</span>
-              <span className={`font-bold ${access.canUseProduct ? "text-emerald-500" : "text-amber-500"}`}>
-                {access.canUseProduct
-                  ? (isAr ? "وصول كامل متاح" : "Accès complet")
-                  : (isAr ? "الوصول مقفل (مطلوب التفعيل)" : "Accès restreint")}
-              </span>
-            </div>
-            {access.trialExpiresAt && (
-              <div className="flex justify-between items-center text-xs">
-                <span className="text-theme-muted">{isAr ? "تاريخ نهاية التجربة:" : "Date de fin :"}</span>
-                <span className="font-bold text-theme-text font-sans">
-                  {formatTrialExpiryDate(access.trialExpiresAt, isAr)}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Honest Trial Status / Countdown banner */}
-          <div data-testid="account-trial-countdown" className="p-3.5 rounded-2xl bg-card-muted border border-theme text-xs space-y-1">
-            {access.status === "TRIAL_ACTIVE" && access.trialExpiresAt && (
-              <div className="flex items-center gap-2 text-[var(--color-primary)] font-medium">
-                <Clock className="w-4 h-4 shrink-0 text-[var(--color-primary)] animate-pulse" />
-                <span>
-                  {isAr
-                    ? `تنتهي تجربتك المجانية بتاريخ ${formatTrialExpiryDate(access.trialExpiresAt, true)} (متبقي: ${formatTrialCountdown(access.remainingHours, true)}).`
-                    : `Votre essai gratuit se termine le ${formatTrialExpiryDate(access.trialExpiresAt, false)} (restant : ${formatTrialCountdown(access.remainingHours, false)}).`}
-                </span>
-              </div>
-            )}
-            {access.status === "TRIAL_EXPIRED" && (
-              <div className="flex items-center gap-2 text-rose-500 font-medium">
-                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
-                <span>
-                  {isAr
-                    ? "انتهت تجربتك المجانية. جميع بياناتك ومكتسباتك السابقة محفوظة بأمان."
-                    : "Votre période d'essai gratuit est terminée. Vos acquis restent sauvegardés."}
-                </span>
-              </div>
-            )}
-            {access.status === "PAID_ACTIVE" && (
-              <div className="flex items-center gap-2 text-emerald-600 font-medium">
-                <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-500" />
-                <span>
-                  {isAr
-                    ? "حسابك مفعل باشتراك كامل (Pass BAC 2027) حتى يوم الامتحان الرسمي."
-                    : "Accès intégral activé jusqu'au jour de l'épreuve du BAC."}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Pending Payment Record Display */}
-          {!isPaidActive && paymentRecord && paymentRecord.state !== "PAYMENT_CONFIRMED" && (
-            <div data-testid="account-payment-record" className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-xs space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-amber-700 font-bold flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5" />
-                  <span>{isAr ? "طلب اشتراك قيد المعالجة" : "Demande de paiement"}</span>
-                </span>
-                <Badge variant="warning" size="sm" className="text-[10px] uppercase">
-                  {paymentRecord.state === "PAYMENT_PENDING_VERIFICATION"
-                    ? isAr ? "بانتظار تأكيد المشرف" : "En vérification"
-                    : isAr ? "طلب مسجل" : "Demandé"}
-                </Badge>
-              </div>
-              <div className="font-mono text-[11px] text-theme-secondary">
-                <span>{isAr ? "الرمز المرجعي: " : "Réf : "}</span>
-                <span className="text-theme-text font-bold">{paymentRecord.requestId}</span>
-              </div>
-            </div>
-          )}
-
-          {access.status !== "PAID_ACTIVE" && (
-            <Link href="/subscribe">
-              <Button variant="primary" size="sm" className="w-full font-bold shadow-clay py-5 rounded-2xl">
-                <Sparkles className="h-4 w-4 text-amber-300" />
-                <span>{isAr ? "تفعيل اشتراك BAC Mastery الكامل" : "Passer au Pass BAC Complet"}</span>
-              </Button>
-            </Link>
-          )}
-        </Card>
-
-        {/* ================================================================= */}
-        {/* 5. PWA & WEB PUSH NOTIFICATION SETTINGS                           */}
-        {/* ================================================================= */}
-        <Card className="p-5 space-y-4 shadow-card">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-bold text-theme-text flex items-center gap-2">
-              <Bell className="h-4 w-4 text-[var(--color-primary)]" />
-              <span>{isAr ? "إشعارات التذكير وتطبيق الهاتف" : "Notifications & PWA"}</span>
-            </h2>
-
-            {isStandaloneApp ? (
-              <Badge variant="success" size="sm" className="flex items-center gap-1 text-[11px]">
-                <Smartphone className="w-3 h-3" />
-                <span>{isAr ? "تطبيق مثبت" : "Installé"}</span>
-              </Badge>
-            ) : (
-              <Badge variant="outline" size="sm" className="text-[11px] text-theme-muted">
-                <span>{isAr ? "نسخة المتصفح" : "Web"}</span>
-              </Badge>
-            )}
-          </div>
-
-          <div className="p-4 rounded-2xl bg-card-muted border border-theme space-y-3">
-            <div className="flex items-start justify-between gap-3">
-              <div className="space-y-1">
-                <span className="font-bold text-theme-text text-xs block">
-                  {isAr ? "إشعارات التذكير بالمهام اليومية" : "Rappels quotidiens d'étude"}
-                </span>
-                <p className="text-[11px] text-theme-muted leading-relaxed">
-                  {isAr
-                    ? "تنبيه خفيف يُرسل في موعد دراستك المفضل لتذكيرك بإنجاز مهمتك اليومية وسد ثغراتك."
-                    : "Recevez une notification discrète pour maintenir votre régularité BAC."}
-                </p>
-              </div>
-
-              <span
-                className={`text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
-                  notificationPermission === "granted"
-                    ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
-                    : notificationPermission === "denied"
-                    ? "bg-rose-500/20 text-rose-500"
-                    : "bg-stone-200 dark:bg-stone-700 text-theme-muted"
-                }`}
-              >
-                {notificationPermission === "granted"
-                  ? isAr ? "مفعّلة ✓" : "Activées"
-                  : notificationPermission === "denied"
-                  ? isAr ? "محظورة" : "Bloquées"
-                  : isAr ? "غير مفعلة" : "Désactivées"}
-              </span>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-theme/60">
-              <Button
-                size="sm"
-                variant={notificationPermission === "granted" ? "outline" : "primary"}
-                onClick={handleToggleNotifications}
-                disabled={notificationPermission === "unsupported"}
-                className="text-xs font-bold rounded-xl py-2 px-4"
-              >
-                <BellRing className="w-3.5 h-3.5 me-1.5" />
-                <span>
-                  {notificationPermission === "granted"
-                    ? (isAr ? "تحديث الصلاحية" : "Actualiser")
-                    : (isAr ? "تفعيل إشعارات التذكير اليومي" : "Activer les rappels")}
-                </span>
-              </Button>
-
-              {notificationPermission === "granted" && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleSendTestNotification}
-                  className="text-xs rounded-xl py-2 px-3 border-theme text-theme-secondary hover:text-theme-text"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500 me-1" />
-                  <span>{testNotificationSent ? (isAr ? "تم الإرسال ✓" : "Envoyé") : (isAr ? "إرسال إشعار تجريبي" : "Tester")}</span>
-                </Button>
-              )}
-            </div>
-          </div>
-        </Card>
-
-        {/* ================================================================= */}
-        {/* 6. ACADEMIC PROFILE & CHARACTER DETAILS                           */}
+        {/* 4. ACADEMIC PROFILE & CHARACTER DETAILS                           */}
         {/* ================================================================= */}
         <Card className="p-5 space-y-4 shadow-card">
           <div className="flex items-center justify-between">
@@ -1016,6 +857,209 @@ export default function AccountPage() {
                 </>
               )}
             </Button>
+          </div>
+        </Card>
+
+        {/* ================================================================= */}
+        {/* 6. SUBSCRIPTION & ACCESS STATUS CARD                              */}
+        {/* ================================================================= */}
+        <Card className="p-5 space-y-4 shadow-card" data-testid="account-subscription-card">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-bold text-theme-text">
+              <Clock className="h-4 w-4 text-[var(--color-primary)]" />
+              <span>{isAr ? "الاشتراك وحالة الوصول" : "Abonnement & Accès"}</span>
+            </div>
+            {access.status === "PAID_ACTIVE" ? (
+              <Badge variant="success" size="sm">
+                {isAr ? "اشتراك كامل مفعل" : "Actif"}
+              </Badge>
+            ) : access.status === "TRIAL_ACTIVE" ? (
+              <Badge variant="warning" size="sm">
+                {isAr
+                  ? `تجربة مجانية (${formatTrialCountdown(access.remainingHours, true)})`
+                  : `Essai (${formatTrialCountdown(access.remainingHours, false)})`}
+              </Badge>
+            ) : (
+              <Badge variant="outline" size="sm" className="text-rose-400 border-rose-500/30">
+                {isAr ? "فترة التجربة منتهية" : "Essai expiré"}
+              </Badge>
+            )}
+          </div>
+
+          <div className="p-4 rounded-2xl bg-card-muted border border-theme space-y-2.5">
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-theme-muted">{isAr ? "نوع الخطة الحالية:" : "Plan actuel :"}</span>
+              <span className="font-bold text-theme-text">
+                {isPaidActive
+                  ? (access.plan === "monthly"
+                      ? (isAr ? "الاشتراك الشهري (30 يوماً)" : "Pass Mensuel (30 jours)")
+                      : (isAr ? "اشتراك السنة الدراسية (موسم كامل)" : "Pass Année Scolaire (Saison Complète)"))
+                  : (isAr ? "تجربة مجانية استكشافية (72 ساعة)" : "Essai Découverte (72h)")}
+              </span>
+            </div>
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-theme-muted">{isAr ? "حالة الوصول:" : "Statut :"}</span>
+              <span className={`font-bold ${access.canUseProduct ? "text-emerald-500" : "text-amber-500"}`}>
+                {access.canUseProduct
+                  ? (isAr ? "وصول كامل متاح" : "Accès complet")
+                  : (isAr ? "الوصول مقفل (مطلوب التفعيل)" : "Accès restreint")}
+              </span>
+            </div>
+            {access.trialExpiresAt && (
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-theme-muted">{isAr ? "تاريخ نهاية التجربة:" : "Date de fin :"}</span>
+                <span className="font-bold text-theme-text font-sans">
+                  {formatTrialExpiryDate(access.trialExpiresAt, isAr)}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Honest Trial Status / Countdown banner */}
+          <div data-testid="account-trial-countdown" className="p-3.5 rounded-2xl bg-card-muted border border-theme text-xs space-y-1">
+            {access.status === "TRIAL_ACTIVE" && access.trialExpiresAt && (
+              <div className="flex items-center gap-2 text-[var(--color-primary)] font-medium">
+                <Clock className="w-4 h-4 shrink-0 text-[var(--color-primary)] animate-pulse" />
+                <span>
+                  {isAr
+                    ? `تنتهي تجربتك المجانية بتاريخ ${formatTrialExpiryDate(access.trialExpiresAt, true)} (متبقي: ${formatTrialCountdown(access.remainingHours, true)}).`
+                    : `Votre essai gratuit se termine le ${formatTrialExpiryDate(access.trialExpiresAt, false)} (restant : ${formatTrialCountdown(access.remainingHours, false)}).`}
+                </span>
+              </div>
+            )}
+            {access.status === "TRIAL_EXPIRED" && (
+              <div className="flex items-center gap-2 text-rose-500 font-medium">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                <span>
+                  {isAr
+                    ? "انتهت تجربتك المجانية. جميع بياناتك ومكتسباتك السابقة محفوظة بأمان."
+                    : "Votre période d'essai gratuit est terminée. Vos acquis restent sauvegardés."}
+                </span>
+              </div>
+            )}
+            {access.status === "PAID_ACTIVE" && (
+              <div className="flex items-center gap-2 text-emerald-600 font-medium">
+                <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-500" />
+                <span>
+                  {isAr
+                    ? "حسابك مفعل باشتراك كامل (Pass BAC 2027) حتى يوم الامتحان الرسمي."
+                    : "Accès intégral activé jusqu'au jour de l'épreuve du BAC."}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Pending Payment Record Display */}
+          {!isPaidActive && paymentRecord && paymentRecord.state !== "PAYMENT_CONFIRMED" && (
+            <div data-testid="account-payment-record" className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-xs space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-amber-700 font-bold flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>{isAr ? "طلب اشتراك قيد المعالجة" : "Demande de paiement"}</span>
+                </span>
+                <Badge variant="warning" size="sm" className="text-[10px] uppercase">
+                  {paymentRecord.state === "PAYMENT_PENDING_VERIFICATION"
+                    ? isAr ? "بانتظار تأكيد المشرف" : "En vérification"
+                    : isAr ? "طلب مسجل" : "Demandé"}
+                </Badge>
+              </div>
+              <div className="font-mono text-[11px] text-theme-secondary">
+                <span>{isAr ? "الرمز المرجعي: " : "Réf : "}</span>
+                <span className="text-theme-text font-bold">{paymentRecord.requestId}</span>
+              </div>
+            </div>
+          )}
+
+          {access.status !== "PAID_ACTIVE" && (
+            <Link href="/subscribe">
+              <Button variant="primary" size="sm" className="w-full font-bold shadow-clay py-5 rounded-2xl">
+                <Sparkles className="h-4 w-4 text-amber-300" />
+                <span>{isAr ? "تفعيل اشتراك BAC Mastery الكامل" : "Passer au Pass BAC Complet"}</span>
+              </Button>
+            </Link>
+          )}
+        </Card>
+
+        {/* ================================================================= */}
+        {/* 7. PWA & WEB PUSH NOTIFICATION SETTINGS                           */}
+        {/* ================================================================= */}
+        <Card className="p-5 space-y-4 shadow-card">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold text-theme-text flex items-center gap-2">
+              <Bell className="h-4 w-4 text-[var(--color-primary)]" />
+              <span>{isAr ? "إشعارات التذكير وتطبيق الهاتف" : "Notifications & PWA"}</span>
+            </h2>
+
+            {isStandaloneApp ? (
+              <Badge variant="success" size="sm" className="flex items-center gap-1 text-[11px]">
+                <Smartphone className="w-3 h-3" />
+                <span>{isAr ? "تطبيق مثبت" : "Installé"}</span>
+              </Badge>
+            ) : (
+              <Badge variant="outline" size="sm" className="text-[11px] text-theme-muted">
+                <span>{isAr ? "نسخة المتصفح" : "Web"}</span>
+              </Badge>
+            )}
+          </div>
+
+          <div className="p-4 rounded-2xl bg-card-muted border border-theme space-y-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <span className="font-bold text-theme-text text-xs block">
+                  {isAr ? "إشعارات التذكير بالمهام اليومية" : "Rappels quotidiens d'étude"}
+                </span>
+                <p className="text-[11px] text-theme-muted leading-relaxed">
+                  {isAr
+                    ? "تنبيه خفيف يُرسل في موعد دراستك المفضل لتذكيرك بإنجاز مهمتك اليومية وسد ثغراتك."
+                    : "Recevez une notification discrète pour maintenir votre régularité BAC."}
+                </p>
+              </div>
+
+              <span
+                className={`text-[11px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                  notificationPermission === "granted"
+                    ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400"
+                    : notificationPermission === "denied"
+                    ? "bg-rose-500/20 text-rose-500"
+                    : "bg-stone-200 dark:bg-stone-700 text-theme-muted"
+                }`}
+              >
+                {notificationPermission === "granted"
+                  ? isAr ? "مفعّلة ✓" : "Activées"
+                  : notificationPermission === "denied"
+                  ? isAr ? "محظورة" : "Bloquées"
+                  : isAr ? "غير مفعلة" : "Désactivées"}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-theme/60">
+              <Button
+                size="sm"
+                variant={notificationPermission === "granted" ? "outline" : "primary"}
+                onClick={handleToggleNotifications}
+                disabled={notificationPermission === "unsupported"}
+                className="text-xs font-bold rounded-xl py-2 px-4"
+              >
+                <BellRing className="w-3.5 h-3.5 me-1.5" />
+                <span>
+                  {notificationPermission === "granted"
+                    ? (isAr ? "تحديث الصلاحية" : "Actualiser")
+                    : (isAr ? "تفعيل إشعارات التذكير اليومي" : "Activer les rappels")}
+                </span>
+              </Button>
+
+              {notificationPermission === "granted" && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleSendTestNotification}
+                  className="text-xs rounded-xl py-2 px-3 border-theme text-theme-secondary hover:text-theme-text"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500 me-1" />
+                  <span>{testNotificationSent ? (isAr ? "تم الإرسال ✓" : "Envoyé") : (isAr ? "إرسال إشعار تجريبي" : "Tester")}</span>
+                </Button>
+              )}
+            </div>
           </div>
         </Card>
 

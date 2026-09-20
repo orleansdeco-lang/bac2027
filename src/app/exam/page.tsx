@@ -37,7 +37,6 @@ import {
 } from "lucide-react";
 
 import { DDaySimulator } from "@/components/exam/DDaySimulator";
-import { snvTerm1Exam } from "@/domain/content/snv-daily-lessons";
 
 export default function ExamModePage() {
   const { t, locale } = useTranslation();
@@ -321,17 +320,17 @@ export default function ExamModePage() {
             }`}
           >
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>{isAr ? "محاكي D-Day (امتحان الفصل الأول)" : "Simulateur D-Day"}</span>
+            <span>{isAr ? "محاكي الامتحان الرسمي (جميع مواد الشعبة)" : "Simulateur BAC par matière"}</span>
           </button>
           <button
             onClick={() => setActiveTab("strategy")}
             className={`px-4 py-2 rounded-xl transition-all shrink-0 ${
               activeTab === "strategy"
-                ? "bg-[var(--color-primary)] text-white shadow-clay"
+                ? "bg-[var(--color-primary)] text-white shadow-clay font-bold"
                 : "text-theme-secondary hover:text-theme-text hover:bg-card-hover"
             }`}
           >
-            {isAr ? "استراتيجية 30 دقيقة لاختيار الموضوع" : "Règle des 30 minutes"}
+            {isAr ? "منهجية اختيار وحل مواضيع البكالوريا" : "Méthodologie de Réussite"}
           </button>
           <button
             onClick={() => setActiveTab("readiness")}
@@ -358,11 +357,11 @@ export default function ExamModePage() {
         {/* TAB 0: D-DAY EXAM SIMULATOR */}
         {activeTab === "simulator" && (
           <div className="space-y-6 animate-fade-in">
-            <DDaySimulator examData={snvTerm1Exam} />
+            <DDaySimulator streamId={streamId} />
           </div>
         )}
 
-        {/* TAB 1: 30-MINUTE GOLDEN RULE */}
+        {/* TAB 1: BAC METHODOLOGY & TACTICAL CHOICE */}
         {activeTab === "strategy" && (
           <div className="space-y-6 animate-fade-in">
             <Card className="p-6 sm:p-7 space-y-5 border-theme bg-card shadow-card">
@@ -371,13 +370,13 @@ export default function ExamModePage() {
                   <Clock className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-bold text-theme-text">
-                    {isAr ? "قاعدة 30 دقيقة الذهبية: كيف تختار بين الموضوع الأول والثاني؟" : "La Règle des 30 minutes"}
+                  <h3 className="text-base sm:text-lg font-bold text-theme-text font-sans">
+                    {isAr ? "المنهجية الذهبية لاختيار ومعالجة مواضيع البكالوريا" : "Méthodologie du Choix Tactique au BAC"}
                   </h3>
                   <p className="text-xs text-theme-secondary mt-0.5">
                     {isAr
-                      ? "أكبر خطأ يقع فيه المترشح هو التسرع في البدء بالحل قبل قراءة كلا الموضوعين بدقة."
-                      : "Ne commencez jamais à rédiger avant d'avoir analysé les deux sujets complets."}
+                      ? "اقرأ كلا الموضوعين بتمارينهما كاملة، قارن التمارين التي تضمن نقاطها، ثم انطلق في الحل المركز."
+                      : "Analysez les deux sujets dans leur intégralité pour identifier vos points forts."}
                   </p>
                 </div>
               </div>
@@ -388,12 +387,12 @@ export default function ExamModePage() {
                     1
                   </span>
                   <h4 className="text-xs sm:text-sm font-bold text-theme-text">
-                    {isAr ? "قراءة استكشافية متكاملة (15 د)" : "Lecture intégrale (15 min)"}
+                    {isAr ? "قراءة استكشافية متأنية لكلا الموضوعين" : "Lecture intégrale comparative"}
                   </h4>
                   <p className="text-xs text-theme-secondary leading-relaxed">
                     {isAr
-                      ? "اقرأ الموضوع الأول كاملاً دون قلم، ثم اقرأ الموضوع الثاني كاملاً. لاحظ المسألة المركبة وتمرين الفيزياء التجريبي."
-                      : "Lisez l'ensemble du sujet 1 puis du sujet 2 sans rédiger pour identifier les blocages potentiels."}
+                      ? "اقرأ تمارين الموضوع الأول كاملة بسياقاتها وأسئلتها، ثم اقرأ تمارين الموضوع الثاني. حدد التمارين المألوفة لديك."
+                      : "Lisez l'ensemble du sujet 1 puis du sujet 2 pour identifier les questions familières."}
                   </p>
                 </div>
 
@@ -402,12 +401,12 @@ export default function ExamModePage() {
                     2
                   </span>
                   <h4 className="text-xs sm:text-sm font-bold text-theme-text">
-                    {isAr ? "تقييم النقاط المضمونة (10 د)" : "Calcul des points sûrs (10 min)"}
+                    {isAr ? "حساب النقاط المضمونة" : "Calcul des points assurés"}
                   </h4>
                   <p className="text-xs text-theme-secondary leading-relaxed">
                     {isAr
                       ? "احسب عدد النقاط التي تضمن حلها بنسبة 100% في كل موضوع. اختر الموضوع الذي يمنحك أعلى رصيد مضمون."
-                      : "Évaluez les questions dont vous maîtrisez la méthode à 100% pour maximiser votre score de départ."}
+                      : "Évaluez les questions dont vous maîtrisez la méthode à 100% pour maximiser votre capital points."}
                   </p>
                 </div>
 
@@ -416,12 +415,12 @@ export default function ExamModePage() {
                     3
                   </span>
                   <h4 className="text-xs sm:text-sm font-bold text-theme-text">
-                    {isAr ? "قرار نهائي لا رجعة فيه (5 د)" : "Décision ferme et définitive (5 min)"}
+                    {isAr ? "حسم الاختيار واستغلال كامل الوقت الرسمي" : "Gestion optimale du temps officiel"}
                   </h4>
                   <p className="text-xs text-theme-secondary leading-relaxed">
                     {isAr
-                      ? "بعد حسم اختيارك، ضع الموضوع الآخر جانباً ولا تفكر فيه مجدداً لتجنب التشتت وضياع الوقت."
-                      : "Une fois votre choix arrêté, rangez l'autre sujet. Ne changez jamais d'avis en cours d'épreuve."}
+                      ? "بعد حسم اختيارك، ركز في ورقتك ومسودتك ولا تفكر في الموضوع الآخر. استغل كل دقيقة من التوقيت الرسمي للمادة."
+                      : "Une fois votre choix arrêté, concentrez-vous sur votre copie et exploitez tout le temps officiel alloué."}
                   </p>
                 </div>
               </div>

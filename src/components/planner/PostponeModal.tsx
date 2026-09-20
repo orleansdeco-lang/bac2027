@@ -1,15 +1,19 @@
 "use client";
 
 import React, { useState } from "react";
-import { useTheme } from "@/lib/theme/context";
 import { PlannerEvent } from "@/lib/planner/types";
-import { X, Calendar, Clock, Sparkles, RotateCcw, ArrowRight } from "lucide-react";
+import { X, RotateCcw, Calendar, Sparkles, Clock } from "lucide-react";
 
 interface PostponeModalProps {
   isOpen: boolean;
   event: PlannerEvent | null;
   onClose: () => void;
-  onConfirmPostpone: (eventId: string, newDate: string, newStartTime?: string, reason?: string) => void;
+  onConfirmPostpone: (
+    eventId: string,
+    newDate: string,
+    newStartTime?: string,
+    reason?: string
+  ) => void;
 }
 
 export const PostponeModal: React.FC<PostponeModalProps> = ({
@@ -18,34 +22,31 @@ export const PostponeModal: React.FC<PostponeModalProps> = ({
   onClose,
   onConfirmPostpone,
 }) => {
-  const { theme } = useTheme();
-  const isGirls = theme === "girls";
-
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowIso = tomorrow.toISOString().split("T")[0];
-
-  const [mode, setMode] = useState<"tomorrow" | "custom" | "smart">("tomorrow");
-  const [customDate, setCustomDate] = useState(tomorrowIso);
-  const [customTime, setCustomTime] = useState(event?.start_time || "10:00");
+  const [mode, setMode] = useState<"tomorrow" | "smart" | "custom">("tomorrow");
+  const [customDate, setCustomDate] = useState("");
+  const [customTime, setCustomTime] = useState("18:00");
   const [reason, setReason] = useState("");
 
   if (!isOpen || !event) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    let targetDate = tomorrowIso;
+
+    let targetDate = event.date;
     let targetTime = event.start_time;
 
-    if (mode === "custom") {
-      targetDate = customDate;
-      targetTime = customTime;
+    if (mode === "tomorrow") {
+      const d = new Date(event.date + "T00:00:00");
+      d.setDate(d.getDate() + 1);
+      targetDate = d.toISOString().split("T")[0];
     } else if (mode === "smart") {
-      // Pick 2 days from now at free afternoon slot
-      const inTwoDays = new Date();
-      inTwoDays.setDate(inTwoDays.getDate() + 2);
-      targetDate = inTwoDays.toISOString().split("T")[0];
-      targetTime = "16:00";
+      const d = new Date(event.date + "T00:00:00");
+      d.setDate(d.getDate() + 1);
+      targetDate = d.toISOString().split("T")[0];
+      targetTime = "19:00";
+    } else if (mode === "custom" && customDate) {
+      targetDate = customDate;
+      targetTime = customTime || event.start_time;
     }
 
     onConfirmPostpone(event.id, targetDate, targetTime, reason || undefined);
@@ -53,19 +54,13 @@ export const PostponeModal: React.FC<PostponeModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-      <div
-        className={`w-full max-w-md rounded-3xl border shadow-2xl p-6 sm:p-7 relative transition-all ${
-          isGirls
-            ? "bg-white border-pink-200 text-[#4A2040]"
-            : "bg-[#101C38] border-[#1E3160] text-slate-100"
-        }`}
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in text-start">
+      <div className="w-full max-w-md rounded-3xl border border-theme bg-card text-theme-text shadow-clay p-6 sm:p-7 relative transition-all">
         {/* Close Button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full opacity-60 hover:opacity-100 transition-all"
+          className="absolute top-5 left-5 p-2 rounded-full text-theme-muted hover:text-theme-text hover:bg-surface transition-all cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
@@ -73,24 +68,14 @@ export const PostponeModal: React.FC<PostponeModalProps> = ({
         {/* Title */}
         <div className="mb-5">
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold font-heading">
-              Reporter la tâche
+            <h2 className="text-lg sm:text-xl font-black text-theme-text font-sans">
+              تأجيل المهمة
             </h2>
-            <span
-              className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
-                isGirls
-                  ? "bg-pink-100 text-pink-700"
-                  : "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
-              }`}
-            >
+            <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-[var(--color-accent-soft)] text-[#8F5E1F] border border-[var(--color-accent)]/30">
               إعادة جدولة ⏩
             </span>
           </div>
-          <p
-            className={`text-xs mt-1 truncate ${
-              isGirls ? "text-pink-600/70" : "text-slate-400"
-            }`}
-          >
+          <p className="text-xs text-theme-secondary mt-1 font-bold truncate">
             {event.title}
           </p>
         </div>
@@ -99,16 +84,12 @@ export const PostponeModal: React.FC<PostponeModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Options */}
           <div className="space-y-2.5">
-            {/* Option 1: Tomorrow same time */}
+            {/* Option 1: Tomorrow */}
             <label
               className={`flex items-center justify-between p-3 rounded-2xl border cursor-pointer transition-all ${
                 mode === "tomorrow"
-                  ? isGirls
-                    ? "bg-pink-50/90 border-[#E879A8] ring-2 ring-pink-300"
-                    : "bg-[#16274e] border-cyan-500 ring-2 ring-cyan-500/30"
-                  : isGirls
-                  ? "border-pink-200 bg-pink-50/20 hover:bg-pink-50"
-                  : "border-slate-700 bg-slate-800/40 hover:bg-slate-800"
+                  ? "bg-[var(--color-primary-soft)] border-[var(--color-primary)] text-[var(--color-primary)] shadow-xs"
+                  : "bg-surface border-theme text-theme-secondary hover:text-theme-text"
               }`}
             >
               <div className="flex items-center gap-3">
@@ -117,26 +98,22 @@ export const PostponeModal: React.FC<PostponeModalProps> = ({
                   name="postpone_mode"
                   checked={mode === "tomorrow"}
                   onChange={() => setMode("tomorrow")}
-                  className="accent-[#E879A8] dark:accent-cyan-400"
+                  className="accent-[var(--color-primary)]"
                 />
                 <div>
-                  <div className="text-xs font-bold">Reporter à demain</div>
-                  <div className="text-[10px] opacity-70">نفس التوقيت غداً</div>
+                  <div className="text-xs font-bold text-theme-text">تأجيل إلى يوم الغد</div>
+                  <div className="text-[10px] text-theme-secondary font-medium">بنفس التوقيت المحدد</div>
                 </div>
               </div>
-              <Calendar className="w-4 h-4 opacity-50" />
+              <Calendar className="w-4 h-4 opacity-60" />
             </label>
 
-            {/* Option 2: Smart AI Redistribution */}
+            {/* Option 2: Smart */}
             <label
               className={`flex items-center justify-between p-3 rounded-2xl border cursor-pointer transition-all ${
                 mode === "smart"
-                  ? isGirls
-                    ? "bg-pink-50/90 border-[#E879A8] ring-2 ring-pink-300"
-                    : "bg-[#16274e] border-cyan-500 ring-2 ring-cyan-500/30"
-                  : isGirls
-                  ? "border-pink-200 bg-pink-50/20 hover:bg-pink-50"
-                  : "border-slate-700 bg-slate-800/40 hover:bg-slate-800"
+                  ? "bg-[var(--color-primary-soft)] border-[var(--color-primary)] text-[var(--color-primary)] shadow-xs"
+                  : "bg-surface border-theme text-theme-secondary hover:text-theme-text"
               }`}
             >
               <div className="flex items-center gap-3">
@@ -145,26 +122,22 @@ export const PostponeModal: React.FC<PostponeModalProps> = ({
                   name="postpone_mode"
                   checked={mode === "smart"}
                   onChange={() => setMode("smart")}
-                  className="accent-[#E879A8] dark:accent-cyan-400"
+                  className="accent-[var(--color-primary)]"
                 />
                 <div>
-                  <div className="text-xs font-bold">Redistribution intelligente (IA)</div>
-                  <div className="text-[10px] opacity-70">إيجاد أقرب خانة زمنية مناسبة تلقائياً</div>
+                  <div className="text-xs font-bold text-theme-text">إعادة توزيع ذكي (شاطر)</div>
+                  <div className="text-[10px] text-theme-secondary font-medium">إيجاد أقرب خانة زمنية ملائمة</div>
                 </div>
               </div>
-              <Sparkles className="w-4 h-4 text-emerald-400" />
+              <Sparkles className="w-4 h-4 text-amber-500" />
             </label>
 
             {/* Option 3: Custom Date & Time */}
             <label
               className={`flex items-center justify-between p-3 rounded-2xl border cursor-pointer transition-all ${
                 mode === "custom"
-                  ? isGirls
-                    ? "bg-pink-50/90 border-[#E879A8] ring-2 ring-pink-300"
-                    : "bg-[#16274e] border-cyan-500 ring-2 ring-cyan-500/30"
-                  : isGirls
-                  ? "border-pink-200 bg-pink-50/20 hover:bg-pink-50"
-                  : "border-slate-700 bg-slate-800/40 hover:bg-slate-800"
+                  ? "bg-[var(--color-primary-soft)] border-[var(--color-primary)] text-[var(--color-primary)] shadow-xs"
+                  : "bg-surface border-theme text-theme-secondary hover:text-theme-text"
               }`}
             >
               <div className="flex items-center gap-3">
@@ -173,14 +146,14 @@ export const PostponeModal: React.FC<PostponeModalProps> = ({
                   name="postpone_mode"
                   checked={mode === "custom"}
                   onChange={() => setMode("custom")}
-                  className="accent-[#E879A8] dark:accent-cyan-400"
+                  className="accent-[var(--color-primary)]"
                 />
                 <div>
-                  <div className="text-xs font-bold">Choisir une date précise</div>
-                  <div className="text-[10px] opacity-70">تحديد موعد مخصص</div>
+                  <div className="text-xs font-bold text-theme-text">اختيار تاريخ ووقت مخصص</div>
+                  <div className="text-[10px] text-theme-secondary font-medium">تحديد موعد دقيق باليوم والساعة</div>
                 </div>
               </div>
-              <Clock className="w-4 h-4 opacity-50" />
+              <Clock className="w-4 h-4 opacity-60" />
             </label>
           </div>
 
@@ -188,33 +161,25 @@ export const PostponeModal: React.FC<PostponeModalProps> = ({
           {mode === "custom" && (
             <div className="grid grid-cols-2 gap-3 pt-1">
               <div>
-                <label className="block text-[11px] font-bold mb-1 opacity-80">
-                  Nouvelle date
+                <label className="block text-[11px] font-bold text-theme-text mb-1">
+                  التاريخ الجديد
                 </label>
                 <input
                   type="date"
                   value={customDate}
                   onChange={(e) => setCustomDate(e.target.value)}
-                  className={`w-full text-xs rounded-xl p-2 border outline-none ${
-                    isGirls
-                      ? "bg-white border-pink-200"
-                      : "bg-[#152347] border-[#223668]"
-                  }`}
+                  className="w-full text-xs font-medium rounded-xl p-2 border border-theme bg-surface text-theme-text focus:outline-none focus:border-[var(--color-primary)]"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold mb-1 opacity-80">
-                  Heure de début
+                <label className="block text-[11px] font-bold text-theme-text mb-1">
+                  توقيت البداية
                 </label>
                 <input
                   type="time"
                   value={customTime}
                   onChange={(e) => setCustomTime(e.target.value)}
-                  className={`w-full text-xs rounded-xl p-2 border outline-none ${
-                    isGirls
-                      ? "bg-white border-pink-200"
-                      : "bg-[#152347] border-[#223668]"
-                  }`}
+                  className="w-full text-xs font-medium rounded-xl p-2 border border-theme bg-surface text-theme-text focus:outline-none focus:border-[var(--color-primary)]"
                 />
               </div>
             </div>
@@ -222,40 +187,32 @@ export const PostponeModal: React.FC<PostponeModalProps> = ({
 
           {/* Reason */}
           <div>
-            <label className="block text-[11px] font-bold mb-1 opacity-80">
+            <label className="block text-[11px] font-bold text-theme-text mb-1">
               سبب التأجيل (اختياري)
             </label>
             <input
               type="text"
-              placeholder="Ex: تعب، أو ضيق الوقت..."
+              placeholder="مثال: تعب أو وجود واجبات أخرى..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              className={`w-full text-xs rounded-xl p-2.5 border outline-none ${
-                isGirls
-                  ? "bg-pink-50/40 border-pink-200 text-pink-950"
-                  : "bg-[#152347] border-[#223668] text-slate-100"
-              }`}
+              className="w-full text-xs font-medium rounded-xl p-2.5 border border-theme bg-surface text-theme-text placeholder:text-theme-muted focus:outline-none focus:border-[var(--color-primary)]"
             />
           </div>
 
           {/* Submit */}
-          <div className="pt-3 flex items-center justify-end gap-3 border-t border-theme">
+          <div className="pt-3 flex items-center justify-end gap-2.5 border-t border-theme">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs opacity-70 hover:opacity-100"
+              className="px-4 py-2 rounded-xl text-xs font-bold text-theme-muted hover:text-theme-text cursor-pointer"
             >
-              Annuler
+              إلغاء
             </button>
             <button
               type="submit"
-              className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-md ${
-                isGirls
-                  ? "bg-[#E879A8] text-white hover:bg-[#D46092]"
-                  : "bg-[#0EA5E9] text-white hover:bg-cyan-600"
-              }`}
+              className="px-5 py-2.5 rounded-xl text-xs font-bold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white shadow-xs transition-all cursor-pointer"
             >
-              Confirmer le report
+              تأكيد التأجيل
             </button>
           </div>
         </form>

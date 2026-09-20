@@ -54,6 +54,7 @@ export type EventSource = "MANUAL" | "AI" | "ROADMAP" | "RECURRING" | "manual" |
 
 export type DayMood = "EXCELLENT" | "GOOD" | "AVERAGE" | "DIFFICULT" | "great" | "good" | "neutral" | "hard" | "tired";
 export type StudentMood = DayMood;
+export type ReflectionMood = StudentMood;
 
 export type ThemePreference = "boys" | "girls" | "bac-mastery";
 
