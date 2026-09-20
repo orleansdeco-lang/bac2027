@@ -370,7 +370,7 @@ export default function MissionPage() {
 
   const access = getStudentAccess(profile);
 
-  if (access.status === "TRIAL_EXPIRED") {
+  if (!access.canUseProduct) {
     return (
       <AppShell>
         <Container size="sm" className="py-12 sm:py-16 text-center space-y-6">
@@ -380,12 +380,12 @@ export default function MissionPage() {
             </div>
             <div className="space-y-2">
               <h1 className="text-xl sm:text-2xl font-bold text-theme-text">
-                {isAr ? "انتهت فترة التجربة المجانية (72 ساعة)" : "Votre essai gratuit de 72h a expiré"}
+                {isAr ? "مسارك مازال محفوظ. فعّل اشتراكك باش تكمل" : "Votre progression est sauvegardée. Activez votre pass"}
               </h1>
               <p className="text-xs sm:text-sm text-theme-secondary leading-relaxed max-w-md mx-auto">
                 {isAr
-                  ? "جميع مهامك وتقدمك الدراسي محفوظان بدقة. لتتمكن من حل التمارين وإجراء الاختبارات، يرجى تفعيل اشتراكك."
-                  : "Votre historique et progression restent intacts. Activez votre pass pour débloquer les exercices et retests."}
+                  ? "انتهت فترة التجربة المجانية (7 أيام). جميع نقاطك وتشخيصاتك محفوظة بدقة. لتتمكن من حل المهام والتمارين، يرجى تفعيل اشتراكك."
+                  : "Votre essai gratuit de 7 jours est terminé. Vos diagnostics restent intacts. Activez votre pass pour débloquer les exercices et retests."}
               </p>
             </div>
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">

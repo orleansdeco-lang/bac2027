@@ -32,6 +32,7 @@ import {
   GraduationCap,
   MessageSquareQuote,
   Gift,
+  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -152,6 +153,12 @@ export function Sidebar({ className }: SidebarProps) {
       label: isAr ? "خريطة الطريق الذكية" : "Feuille de route",
       icon: Map,
       matches: (p: string) => p.startsWith("/roadmap"),
+    },
+    {
+      href: "/planner",
+      label: isAr ? "المخطط الدراسي (Planner)" : "Mon Planner",
+      icon: Calendar,
+      matches: (p: string) => p.startsWith("/planner"),
     },
     {
       href: "/error-lab",

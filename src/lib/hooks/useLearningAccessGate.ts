@@ -7,10 +7,13 @@ import { StudentService } from "@/lib/services";
 import { StudentProfile } from "@/types/student";
 import { StudentLearningContext, getStudentSubjects } from "@/domain/student";
 import { getRegistrationDraft } from "@/lib/onboarding/profile";
+import { getStudentAccess, StudentAccessDecision } from "@/lib/access";
 
 export interface LearningAccessGateState {
   isLoading: boolean;
   isAuthorized: boolean;
+  hasPremiumAccess: boolean;
+  accessDecision: StudentAccessDecision | null;
   profile: StudentProfile | null;
   learningContext: StudentLearningContext | null;
   streamSubjects: ReturnType<typeof getStudentSubjects>;
@@ -21,7 +24,7 @@ export interface LearningAccessGateState {
  * 1. Authenticated account
  * 2. Personal registration completion
  * 3. Academic profile completion
- * 4. 72-hour trial & stream scoping
+ * 4. 7-day trial (168h) & subscription status verification
  */
 export function useLearningAccessGate(options?: {
   redirectToAuth?: boolean;
@@ -30,6 +33,8 @@ export function useLearningAccessGate(options?: {
   const router = useRouter();
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [learningContext, setLearningContext] = useState<StudentLearningContext | null>(null);
+  const [accessDecision, setAccessDecision] = useState<StudentAccessDecision | null>(null);
+  const [hasPremiumAccess, setHasPremiumAccess] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isAuthorized, setIsAuthorized] = useState<boolean>(false);
 
@@ -113,9 +118,14 @@ export function useLearningAccessGate(options?: {
         // 3. Authorized - establish learning context
         const ctx = await StudentService.getLearningContext(effectiveUserId);
 
+        // 4. Calculate authoritative trial & subscription status
+        const access = getStudentAccess(studentProfile);
+
         if (isMounted) {
           setProfile(studentProfile);
           setLearningContext(ctx);
+          setAccessDecision(access);
+          setHasPremiumAccess(access.canUseProduct);
           setIsAuthorized(true);
           setIsLoading(false);
         }
@@ -144,6 +154,8 @@ export function useLearningAccessGate(options?: {
   return {
     isLoading: isAuthLoading || isLoading,
     isAuthorized,
+    hasPremiumAccess,
+    accessDecision,
     profile,
     learningContext,
     streamSubjects,

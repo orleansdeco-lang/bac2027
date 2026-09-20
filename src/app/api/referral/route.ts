@@ -10,25 +10,35 @@ export const dynamic = "force-dynamic";
  */
 export async function GET(req: Request) {
   try {
-    const { searchParams } = new URL(req.url);
-    let userId = searchParams.get("userId");
-
-    if (!userId) {
-      userId = await extractAuthenticatedUserId(req);
-    }
-
-    if (!userId) {
+    const authUserId = await extractAuthenticatedUserId(req);
+    if (!authUserId) {
       return NextResponse.json(
         { success: false, error: "Authentication required" },
         { status: 401 }
       );
     }
 
+    const { searchParams } = new URL(req.url);
+    const requestedUserId = searchParams.get("userId");
+
+    let targetUserId = authUserId;
+    if (requestedUserId && requestedUserId !== authUserId) {
+      const { isServerOperator } = await import("@/lib/operations/auth");
+      const isOperator = await isServerOperator(authUserId);
+      if (!isOperator) {
+        return NextResponse.json(
+          { success: false, error: "Forbidden: Cannot view another student's referral data" },
+          { status: 403 }
+        );
+      }
+      targetUserId = requestedUserId;
+    }
+
     const host = req.headers.get("host");
     const proto = req.headers.get("x-forwarded-proto") || "http";
     const origin = host ? `${proto}://${host}` : undefined;
 
-    const summary = await getReferralSummary(userId, origin);
+    const summary = await getReferralSummary(targetUserId, origin);
     return NextResponse.json({ success: true, summary });
   } catch (err: any) {
     console.error("[API] Error fetching referral summary:", err);
@@ -53,14 +63,12 @@ export async function POST(req: Request) {
       );
     }
 
-    let referredUserId = body.referredUserId;
-    if (!referredUserId) {
-      referredUserId = await extractAuthenticatedUserId(req);
-    }
+    const authUserId = await extractAuthenticatedUserId(req);
+    const referredUserId = authUserId || body.referredUserId;
 
     if (!referredUserId) {
       return NextResponse.json(
-        { success: false, error: "معرف الطالب مطلوب" },
+        { success: false, error: "معرف الطالب مطلوب للتسجيل عبر الإحالة" },
         { status: 401 }
       );
     }

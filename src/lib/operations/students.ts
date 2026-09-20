@@ -30,7 +30,8 @@ export function isRealStudentId(id?: string): boolean {
     lower.startsWith("test_") ||
     lower.startsWith("mock-") ||
     lower.startsWith("mock_") ||
-    lower.startsWith("student_")
+    lower.startsWith("dummy-") ||
+    lower.startsWith("dummy_")
   ) {
     return false;
   }

@@ -27,6 +27,7 @@ import {
   Sparkles,
   ShieldCheck,
   RotateCcw,
+  Lock,
 } from "lucide-react";
 
 export default function MindPage() {
@@ -60,6 +61,40 @@ export default function MindPage() {
 
   if (!gate.isAuthorized || !gate.profile) {
     return null;
+  }
+
+  if (!gate.hasPremiumAccess) {
+    return (
+      <AppShell activeNav="home">
+        <Container size="sm" className="py-12 sm:py-16 text-center space-y-6" dir="rtl">
+          <div data-testid="mind-trial-expired-gate" className="p-6 sm:p-8 rounded-3xl bg-card border border-theme space-y-5 shadow-clay animate-fade-in">
+            <div className="h-12 w-12 rounded-2xl bg-[var(--color-accent-soft)] border border-[var(--color-accent)]/30 flex items-center justify-center text-[var(--color-accent)] mx-auto">
+              <Lock className="h-6 w-6" />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-xl sm:text-2xl font-bold text-theme-text font-sans">
+                مسارك مازال محفوظ. فعّل اشتراكك باش تكمل
+              </h1>
+              <p className="text-xs sm:text-sm text-theme-secondary leading-relaxed max-w-md mx-auto font-sans">
+                انتهت فترة التجربة المجانية (7 أيام). سجلات استقرارك الذهني وطاقتك الدراسية محفوظة بدقة. فعّل اشتراكك الآن لتعديل حمولة الدراسة اليومية حسب طاقتك.
+              </p>
+            </div>
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link href="/subscribe" className="w-full sm:w-auto">
+                <Button size="lg" variant="primary" fullWidth className="font-bold text-sm shadow-clay">
+                  <span>كمّل مع الشاطر</span>
+                </Button>
+              </Link>
+              <Link href="/dashboard" className="w-full sm:w-auto">
+                <Button size="lg" variant="outline" fullWidth className="text-xs">
+                  <span>العودة للوحة التحكم</span>
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </Container>
+      </AppShell>
+    );
   }
 
   const profile = gate.profile;

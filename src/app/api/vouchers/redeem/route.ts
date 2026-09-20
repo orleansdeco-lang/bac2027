@@ -18,19 +18,15 @@ export async function POST(req: Request) {
       );
     }
 
-    let userId = body.userId;
-    if (!userId) {
-      userId = await extractAuthenticatedUserId(req);
-    }
-
-    if (!userId) {
+    const authUserId = await extractAuthenticatedUserId(req);
+    if (!authUserId) {
       return NextResponse.json(
-        { success: false, error: "يجب تسجيل الدخول لتفعيل بطاقة شاطر" },
+        { success: false, error: "يجب تسجيل الدخول بحسابك لتفعيل بطاقة شاطر" },
         { status: 401 }
       );
     }
 
-    const result = await redeemVoucher(userId, body.voucherCode);
+    const result = await redeemVoucher(authUserId, body.voucherCode);
 
     if (!result.success) {
       return NextResponse.json(

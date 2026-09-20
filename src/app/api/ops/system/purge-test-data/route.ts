@@ -60,12 +60,12 @@ export async function POST(req: Request) {
   if (isSupabaseConfigured && client) {
     try {
       // Purge test student profiles
-      const { data: testProfiles, error: pError } = await client
-        .from("student_profiles")
-        .delete()
-        .neq("email", "azinox27@gmail.com")
-        .or("email.ilike.%@test.dz,email.ilike.%@mock.dz,id.ilike.test-%,id.ilike.student_%")
-        .select("id");
+        const { data: testProfiles, error: pError } = await client
+          .from("student_profiles")
+          .delete()
+          .neq("id", "7f7f704e-d9f1-4edf-9952-591f41fc0c55")
+          .or("id.ilike.test-%,id.ilike.mock-%,id.ilike.student_%")
+          .select("id");
 
       if (!pError && testProfiles) {
         purgedDbStudents = testProfiles.length;

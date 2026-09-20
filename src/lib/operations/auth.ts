@@ -197,40 +197,7 @@ export async function extractAuthenticatedUserId(req: Request): Promise<string |
     token = extractTokenFromCookies(cookieHeader);
   }
 
-  // 3. Fast JWT decoding check for Absolute Owner
-  if (token) {
-    try {
-      const parts = token.split(".");
-      if (parts.length >= 2) {
-        const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-        const json = atob(base64);
-        const payload = JSON.parse(json);
-        const email = (payload.email || payload.user_metadata?.email || "")?.toLowerCase();
-        const sub = (payload.sub || payload.id || "")?.toLowerCase();
-        if (email === OWNER_EMAIL.toLowerCase() || sub === OWNER_UUID.toLowerCase()) {
-          const ownerId = sub || OWNER_UUID;
-          memoryRoles.set(ownerId, "OWNER");
-          return ownerId;
-        }
-      }
-    } catch {}
-  }
-
-  // 4. Raw cookie header inspection for Absolute Owner
-  const rawCookie = req.headers.get("cookie") || req.headers.get("Cookie");
-  if (rawCookie) {
-    const lower = rawCookie.toLowerCase();
-    if (
-      lower.includes("ops_owner_bypass=true") ||
-      lower.includes(OWNER_EMAIL.toLowerCase()) ||
-      lower.includes(OWNER_UUID.toLowerCase())
-    ) {
-      memoryRoles.set(OWNER_UUID, "OWNER");
-      return OWNER_UUID;
-    }
-  }
-
-  // 5. Verify token with Supabase
+  // 3. Cryptographically verify token with Supabase Auth
   if (token && isSupabaseConfigured && supabase) {
     try {
       const { data: { user }, error } = await supabase.auth.getUser(token);
@@ -245,8 +212,8 @@ export async function extractAuthenticatedUserId(req: Request): Promise<string |
     }
   }
 
-  // 4. Testing/development header support
-  if (process.env.NODE_ENV !== "production") {
+  // 4. Testing/development header support (strictly disabled in production)
+  if (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== undefined) {
     const headerUid = req.headers.get("x-test-user-id") || req.headers.get("x-user-id");
     if (headerUid) return headerUid;
   }

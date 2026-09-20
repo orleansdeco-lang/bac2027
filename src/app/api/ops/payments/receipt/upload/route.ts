@@ -96,7 +96,13 @@ export async function POST(req: Request) {
       fileBuffer = Buffer.from(body.fileBase64, "base64");
     }
 
-    const effectiveUserId = caller?.userId || studentUserId;
+    let effectiveUserId = caller?.userId;
+    if (caller?.isOperator && studentUserId) {
+      effectiveUserId = studentUserId;
+    } else if (!effectiveUserId) {
+      effectiveUserId = studentUserId;
+    }
+
     if (!effectiveUserId) {
       return NextResponse.json(
         { success: false, error: "Authentication or student ID required to submit receipts" },

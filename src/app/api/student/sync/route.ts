@@ -54,10 +54,10 @@ export async function POST(req: Request) {
       new Date(existingSubExpires).getTime() > Date.now()
     );
 
+    // Determine authoritative paid status strictly from verified database records
     const isAuthoritativePaid = Boolean(
       approvedOrder ||
-      isExistingPaidActive ||
-      (body.isServerAuthoritativePaid && body.accessStatus === "PAID")
+      isExistingPaidActive
     );
 
     let effectiveAccessStatus: "TRIAL" | "PAID" | "EXPIRED" | "REJECTED" = "TRIAL";
@@ -66,6 +66,9 @@ export async function POST(req: Request) {
     let subExpiresAt = existingSubExpires;
     let rejectionReason = existingServerProfile?.rejectionReason;
 
+    const profileCreated = existingServerProfile?.createdAt || existingServerProfile?.trialStartedAt || body.createdAt || new Date().toISOString();
+    const isTrialExpired = Date.now() - new Date(profileCreated).getTime() > 7 * 24 * 60 * 60 * 1000;
+
     if (isAuthoritativePaid) {
       effectiveAccessStatus = "PAID";
       if (approvedOrder) {
@@ -73,15 +76,14 @@ export async function POST(req: Request) {
         subStartedAt = approvedOrder.reviewedAt || approvedOrder.updatedAt || approvedOrder.submittedAt || new Date().toISOString();
         const durationMonths = effectivePlan === "monthly" ? 1 : 10;
         subExpiresAt = new Date(new Date(subStartedAt).getTime() + durationMonths * 30 * 86400000).toISOString();
-      } else if (!subExpiresAt) {
-        const durationMonths = effectivePlan === "monthly" ? 1 : 10;
-        subExpiresAt = new Date(Date.now() + durationMonths * 30 * 86400000).toISOString();
       }
     } else if (latestOrder && latestOrder.status === "REJECTED") {
       effectiveAccessStatus = "REJECTED";
       rejectionReason = latestOrder.rejectionReason || "تم رفض وصل التحويل";
+    } else if (isTrialExpired) {
+      effectiveAccessStatus = "EXPIRED";
     } else {
-      effectiveAccessStatus = body.accessStatus || existingServerProfile?.accessStatus || "TRIAL";
+      effectiveAccessStatus = "TRIAL";
     }
 
     // 3. Save to durable server registry for immediate /ops visibility

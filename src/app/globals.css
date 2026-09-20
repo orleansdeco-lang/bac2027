@@ -239,4 +239,102 @@ html {
   word-break: break-word;
 }
 
+/* ========================================================================== */
+/* DESIGN A: BOYS — THÈME SOMBRE (Élégant, Moderne & Dynamique)               */
+/* ========================================================================== */
+[data-theme="boys"] {
+  --color-bg-base: #0B132B;
+  --color-bg-secondary: #101B3B;
+  --color-bg-surface: #111E40;
+  --color-bg-card: #142247;
+  --color-bg-card-hover: #1A2B59;
+  --color-bg-card-muted: #111C3D;
+  --color-bg-elevated: #192954;
+  --color-sidebar: #0E1733;
 
+  --color-border-subtle: #1E3160;
+  --color-border-hover: #38BDF8;
+  --color-border-strong: #60A5FA;
+
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted: #64748B;
+
+  --color-primary: #0EA5E9;
+  --color-primary-hover: #0284C7;
+  --color-primary-active: #0369A1;
+  --color-primary-text: #FFFFFF;
+  --color-primary-soft: rgba(14, 165, 233, 0.18);
+  --color-primary-muted: rgba(14, 165, 233, 0.12);
+
+  --color-secondary: #38BDF8;
+  --color-secondary-muted: rgba(56, 189, 248, 0.15);
+  --color-accent: #38BDF8;
+  --color-accent-soft: rgba(56, 189, 248, 0.12);
+
+  --color-success: #10B981;
+  --color-success-soft: rgba(16, 185, 129, 0.16);
+  --color-warning: #F59E0B;
+  --color-warning-soft: rgba(245, 158, 11, 0.16);
+  --color-error: #EF4444;
+  --color-error-soft: rgba(239, 68, 68, 0.16);
+  --color-info: #0EA5E9;
+  --color-info-soft: rgba(14, 165, 233, 0.16);
+
+  --color-ring: #0EA5E9;
+  --scrollbar-track: #0B132B;
+  --scrollbar-thumb: #1E2D54;
+  --scrollbar-thumb-hover: #38BDF8;
+
+  color-scheme: dark;
+}
+
+/* ========================================================================== */
+/* DESIGN B: GIRLS — THÈME CLAIR (Doux, Inspirant & Élégant)                  */
+/* ========================================================================== */
+[data-theme="girls"] {
+  --color-bg-base: #FDF7F9;
+  --color-bg-secondary: #FBEBF1;
+  --color-bg-surface: #FFF3F7;
+  --color-bg-card: #FFFFFF;
+  --color-bg-card-hover: #FFF1F5;
+  --color-bg-card-muted: #FBEBF1;
+  --color-bg-elevated: #FFFFFF;
+  --color-sidebar: #FBEBF1;
+
+  --color-border-subtle: #F3D3DF;
+  --color-border-hover: #E879A8;
+  --color-border-strong: #BE185D;
+
+  --color-text-primary: #2D1823;
+  --color-text-secondary: #745163;
+  --color-text-muted: #9E7B8D;
+
+  --color-primary: #E879A8;
+  --color-primary-hover: #DB2777;
+  --color-primary-active: #BE185D;
+  --color-primary-text: #FFFFFF;
+  --color-primary-soft: #FDF2F8;
+  --color-primary-muted: rgba(232, 121, 168, 0.14);
+
+  --color-secondary: #C084FC;
+  --color-secondary-muted: rgba(192, 132, 252, 0.15);
+  --color-accent: #EC4899;
+  --color-accent-soft: rgba(236, 72, 153, 0.12);
+
+  --color-success: #10B981;
+  --color-success-soft: rgba(16, 185, 129, 0.14);
+  --color-warning: #F59E0B;
+  --color-warning-soft: rgba(245, 158, 11, 0.14);
+  --color-error: #F43F5E;
+  --color-error-soft: rgba(244, 63, 94, 0.14);
+  --color-info: #E879A8;
+  --color-info-soft: rgba(232, 121, 168, 0.14);
+
+  --color-ring: #E879A8;
+  --scrollbar-track: #FDF7F9;
+  --scrollbar-thumb: #F3D3DF;
+  --scrollbar-thumb-hover: #E879A8;
+
+  color-scheme: light;
+}

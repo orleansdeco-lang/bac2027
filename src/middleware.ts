@@ -20,6 +20,8 @@ export const PROTECTED_STUDENT_PREFIXES = [
   "/account",
   "/profile",
   "/progress",
+  "/curriculum",
+  "/mind",
 ];
 
 /**
@@ -38,27 +40,17 @@ export function isOwnerPayload(payload: any): boolean {
 export function checkIsOwner(raw: string | undefined | null): boolean {
   if (!raw) return false;
 
-  // 1. Direct match or substring in raw cookie/token
-  const lower = raw.toLowerCase();
-  if (lower.includes(OWNER_EMAIL.toLowerCase()) || lower.includes(OWNER_UUID.toLowerCase())) {
-    return true;
-  }
-
-  // 2. Try parsing as JSON (e.g. Supabase session array, user object)
+  // Try parsing as JSON (e.g. Supabase session array, user object)
   try {
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed[0]) {
-      if (checkIsOwner(String(parsed[0]))) return true;
-    }
     if (isOwnerPayload(parsed)) return true;
-    if (parsed.access_token && checkIsOwner(String(parsed.access_token))) return true;
     if (parsed.user && isOwnerPayload(parsed.user)) return true;
   } catch {}
 
-  // 3. Try decoding JWT payload (header.payload.signature)
+  // Try decoding JWT payload (header.payload.signature)
   try {
     const parts = raw.split(".");
-    if (parts.length >= 2) {
+    if (parts.length === 3) {
       const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
       const decodedJson = atob(base64);
       const payload = JSON.parse(decodedJson);
@@ -208,5 +200,17 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/ops/:path*"],
+  matcher: [
+    "/ops/:path*",
+    "/dashboard/:path*",
+    "/mission/:path*",
+    "/exam/:path*",
+    "/roadmap/:path*",
+    "/error-lab/:path*",
+    "/account/:path*",
+    "/profile/:path*",
+    "/progress/:path*",
+    "/curriculum/:path*",
+    "/mind/:path*",
+  ],
 };

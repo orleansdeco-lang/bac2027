@@ -9,35 +9,6 @@ import Link from "next/link";
 import { opsFetch } from "@/lib/operations/client-api";
 import { AdminNotifications } from "@/components/ops/AdminNotifications";
 
-function checkIsClientOwner(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    const directCookie = document.cookie.toLowerCase();
-    if (
-      directCookie.includes("ops_owner_bypass=true") ||
-      directCookie.includes("azinox27%40gmail.com") ||
-      directCookie.includes("azinox27@gmail.com") ||
-      directCookie.includes("7f7f704e-d9f1-4edf-9952-591f41fc0c55")
-    ) {
-      return true;
-    }
-
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (k) {
-        const val = localStorage.getItem(k);
-        if (val) {
-          const lower = val.toLowerCase();
-          if (lower.includes("azinox27@gmail.com") || lower.includes("7f7f704e-d9f1-4edf-9952-591f41fc0c55")) {
-            return true;
-          }
-        }
-      }
-    }
-  } catch {}
-  return false;
-}
-
 export default function OpsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, isLoading } = useAuth();
@@ -54,19 +25,10 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Immediate client storage/cookie Owner check
-    if (checkIsClientOwner()) {
-      setAuthorized(true);
-      return;
-    }
-
     if (isLoading) return;
 
-    // Immediate Owner bypass for azinox27@gmail.com or UUID 7f7f704e-d9f1-4edf-9952-591f41fc0c55
-    const userEmail = user?.email?.toLowerCase();
-    const userId = user?.id?.toLowerCase();
-    if (userEmail === "azinox27@gmail.com" || userId === "7f7f704e-d9f1-4edf-9952-591f41fc0c55") {
-      setAuthorized(true);
+    if (!user) {
+      setAuthorized(false);
       return;
     }
 
