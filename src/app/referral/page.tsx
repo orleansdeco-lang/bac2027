@@ -26,6 +26,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { ReferralSummary } from "@/lib/referral/types";
+import { MarketingPosterCard } from "@/components/referral/MarketingPosterCard";
 
 export default function ReferralPage() {
   const { t, locale } = useTranslation();
@@ -152,6 +153,13 @@ export default function ReferralPage() {
             {/* Decorative background glow */}
             <div className="absolute -bottom-12 -left-12 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none" />
           </div>
+
+          {/* Marketing Poster Card with QR & Referral Code */}
+          <MarketingPosterCard
+            referralCode={summary?.referralCode || "SHATERBAC"}
+            discountPercentage={10}
+            locale={locale}
+          />
 
           {/* Quick Sharing & Referral Code Section */}
           <Card className="p-6 sm:p-8 bg-card border-theme rounded-3xl space-y-6 shadow-sm">

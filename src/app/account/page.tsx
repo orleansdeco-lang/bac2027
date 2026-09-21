@@ -52,6 +52,7 @@ import {
 } from "lucide-react";
 import QRCode from "qrcode";
 import { exportAnonymizedPilotData } from "@/lib/analytics";
+import { MarketingPosterCard } from "@/components/referral/MarketingPosterCard";
 
 export default function AccountPage() {
   const router = useRouter();
@@ -399,143 +400,19 @@ export default function AccountPage() {
             </div>
           </div>
 
-          {/* Referral Code & QR Section */}
-          <div className="space-y-4">
-            {/* Header info */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Gift className="w-5 h-5 text-[var(--color-accent)]" />
-                <h3 className="text-sm sm:text-base font-bold text-theme-text">
-                  {isAr ? "كود الإحالة والمشاركة (تخفيض 10%)" : "Code Parrainage (-10%)"}
-                </h3>
-              </div>
-              <Link
-                href="/referral"
-                className="text-xs font-bold text-[var(--color-primary)] hover:underline inline-flex items-center gap-1"
-              >
-                <span>{isAr ? "لوحة الإحالة الكاملة ←" : "Tableau de bord →"}</span>
-              </Link>
-            </div>
-
-            {/* Referral Code Box with Copy */}
-            <div className="p-4 rounded-2xl bg-surface border border-theme flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-              <div>
-                <span className="text-[11px] text-theme-muted font-bold block">
-                  {isAr ? "كود الإحالة الخاص بك (يمنح صديقك 10% وأنت 10%):" : "Votre code parrainage :"}
-                </span>
-                <span className="font-mono font-black text-xl sm:text-2xl text-[var(--color-primary)] tracking-widest select-all block mt-0.5">
-                  {referralCode}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => copyCode(referralCode, "referral_code")}
-                  className="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-card border border-theme hover:border-[var(--color-primary)] text-xs font-bold text-theme-text transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs"
-                  title={isAr ? "نسخ كود الإحالة" : "Copier"}
-                >
-                  {copiedCodeField === "referral_code" ? (
-                    <>
-                      <Check className="w-4 h-4 text-emerald-600" />
-                      <span className="text-emerald-600 font-bold">{isAr ? "تم النسخ ✓" : "Copié"}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4 text-theme-secondary" />
-                      <span>{isAr ? "نسخ الكود" : "Copier"}</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* QR Code Presentation Card */}
-            <div className="p-5 rounded-2xl bg-gradient-to-br from-surface to-card border border-theme flex flex-col sm:flex-row items-center justify-between gap-5 shadow-xs">
-              {/* QR Image Frame */}
-              <div className="flex flex-col items-center p-3.5 rounded-2xl bg-white border border-stone-200 shadow-sm shrink-0">
-                <span className="text-[10px] font-black tracking-widest text-[#26302F] mb-1 font-sans">
-                  SHATER · شاطر
-                </span>
-                <div className="w-36 h-36 bg-white p-1 rounded-xl flex items-center justify-center">
-                  {qrDataUrl ? (
-                    <img
-                      src={qrDataUrl}
-                      alt={`QR Code ${referralCode}`}
-                      className="w-full h-full object-contain"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-stone-100 rounded-lg">
-                      <QrCode className="w-8 h-8 text-stone-400 animate-pulse" />
-                    </div>
-                  )}
-                </div>
-                <div className="text-center mt-2 space-y-0.5">
-                  <span className="text-[10px] text-stone-500 font-mono block">shater.dz</span>
-                  <span className="text-xs font-mono font-black text-[#5F8F86] block bg-stone-100 px-2 py-0.5 rounded">
-                    {referralCode}
-                  </span>
-                </div>
-              </div>
-
-              {/* QR Explanation & Actions */}
-              <div className="flex-1 space-y-3 text-center sm:text-start">
-                <div>
-                  <h4 className="text-sm font-bold text-theme-text">
-                    {isAr ? "بطاقة المشاركة السريعة عبر QR Code" : "Partage instantané par QR Code"}
-                  </h4>
-                  <p className="text-xs text-theme-secondary mt-1 leading-relaxed">
-                    {isAr
-                      ? "شارك هذه البطاقة مع زملائك؛ بمجرد مسح الكود بكاميرا الهاتف ينتقل مباشرة لصفحة التسجيل مع تفعيل كود الخصم تلقائياً. وعند وصوله للدفع يستفيد من خصم 10% أو يمكنه إدخال الكود المكتوب في البطاقة."
-                      : "Scannez pour accéder directement à l'inscription avec le code promo de 10% pré-rempli."}
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
-                  {qrDataUrl && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={handleDownloadQr}
-                      className="text-xs rounded-xl font-bold border-theme text-theme-text flex items-center gap-1.5"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>{isAr ? "تحميل صورة QR" : "Télécharger"}</span>
-                    </Button>
-                  )}
-
-                  {referralSummary?.whatsappMessage && (
-                    <a
-                      href={`https://wa.me/?text=${encodeURIComponent(referralSummary.whatsappMessage)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs shadow-xs"
-                    >
-                      <MessageCircle className="w-3.5 h-3.5 fill-current" />
-                      <span>{isAr ? "واتساب" : "WhatsApp"}</span>
-                    </a>
-                  )}
-
-                  <Link href="/referral">
-                    <Button
-                      size="sm"
-                      variant="primary"
-                      className="text-xs rounded-xl font-bold flex items-center gap-1.5 shadow-sm"
-                    >
-                      <span>{isAr ? "لوحة الإحالة" : "Tableau de bord"}</span>
-                      <NextArrow className="w-3.5 h-3.5" />
-                    </Button>
-                  </Link>
-                </div>
-
-                {creditBalance > 0 && (
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] text-xs font-bold">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>{isAr ? `رصيد أرباحك: ${creditBalance.toLocaleString()} دج` : `Solde : ${creditBalance.toLocaleString()} DA`}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          {/* Marketing Poster Card & QR Referral Section */}
+          <MarketingPosterCard
+            referralCode={referralCode}
+            studentName={
+              profile?.firstName && profile?.lastName
+                ? `${profile.firstName} ${profile.lastName}`
+                : regDraft?.firstName && regDraft?.lastName
+                ? `${regDraft.firstName} ${regDraft.lastName}`
+                : undefined
+            }
+            discountPercentage={10}
+            locale={locale}
+          />
         </Card>
 
         {/* ================================================================= */}

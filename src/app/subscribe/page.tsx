@@ -758,7 +758,11 @@ export default function SubscribePage() {
                     <span className="text-[10px] text-theme-muted font-mono uppercase block">
                       {isAr ? "رقم الـ RIP:" : "Numéro RIP :"}
                     </span>
-                    <span className="font-mono font-bold text-theme-text text-sm sm:text-base select-all">
+                    <span
+                      dir="ltr"
+                      className="font-mono font-bold text-theme-text text-sm sm:text-base select-all inline-block text-left"
+                      style={{ unicodeBidi: "isolate" }}
+                    >
                       {BARIDIMOB_RIP}
                     </span>
                   </div>
@@ -787,7 +791,11 @@ export default function SubscribePage() {
                     <span className="text-[10px] text-theme-muted font-mono uppercase block">
                       {isAr ? "رقم الحساب:" : "Numéro de compte :"}
                     </span>
-                    <div className="flex items-center gap-2 font-mono font-bold text-theme-text text-sm sm:text-base">
+                    <div
+                      dir="ltr"
+                      className="flex items-center gap-2 font-mono font-bold text-theme-text text-sm sm:text-base text-left"
+                      style={{ unicodeBidi: "isolate" }}
+                    >
                       <span>{CCP_ACCOUNT}</span>
                       <span className="text-theme-muted">|</span>
                       <span>{isAr ? `المفتاح: ${CCP_KEY}` : `Clé : ${CCP_KEY}`}</span>

@@ -296,16 +296,16 @@ export function Sidebar({ className }: SidebarProps) {
         </div>
 
         {/* Student Profile Identity Card */}
-        <div className="flex items-center gap-3 p-3 rounded-2xl bg-surface/60 dark:bg-slate-800/60 border border-theme/80 shadow-xs backdrop-blur-md">
+        <div className="flex items-center gap-3 p-3 rounded-2xl bg-card border border-theme shadow-xs">
           <div className="relative shrink-0">
-            <div className="w-12 h-12 rounded-2xl overflow-hidden border-2 border-white/90 dark:border-slate-700 shadow-sm ring-2 ring-[var(--color-primary)]/20">
+            <div className="w-12 h-12 rounded-2xl overflow-hidden border-2 border-white shadow-xs ring-2 ring-[var(--color-primary)]/20">
               <img
                 src={avatarSrc}
                 alt={firstName}
                 className="w-full h-full object-cover object-top"
               />
             </div>
-            <span className="absolute -bottom-0.5 -end-0.5 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900 shadow-xs" />
+            <span className="absolute -bottom-0.5 -end-0.5 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-white shadow-xs" />
           </div>
 
           <div className="min-w-0 flex-1">
@@ -325,7 +325,7 @@ export function Sidebar({ className }: SidebarProps) {
           {navigationCategories.map((group, gIdx) => (
             <div key={gIdx} className="space-y-1.5">
               <div className="px-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-theme-muted/80 block font-sans">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-theme-muted font-sans">
                   {isAr ? group.title_ar : group.title_fr}
                 </span>
               </div>
@@ -345,8 +345,8 @@ export function Sidebar({ className }: SidebarProps) {
                         isActive
                           ? "bg-[var(--color-primary-muted)] text-[var(--color-primary)] font-bold shadow-xs border border-[var(--color-primary)]/25"
                           : item.highlight
-                          ? "text-amber-500 hover:bg-amber-500/10 hover:text-amber-400 border border-transparent hover:border-amber-500/20"
-                          : "text-theme-secondary hover:text-theme-text hover:bg-surface-soft border border-transparent"
+                          ? "text-amber-600 hover:bg-amber-500/10 hover:text-amber-700 border border-transparent hover:border-amber-500/20"
+                          : "text-theme-secondary hover:text-theme-text hover:bg-card border border-transparent"
                       )}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
@@ -356,7 +356,7 @@ export function Sidebar({ className }: SidebarProps) {
                             isActive
                               ? "bg-[var(--color-primary)] text-white shadow-xs"
                               : item.highlight
-                              ? "bg-amber-500/15 text-amber-500 group-hover:bg-amber-500 group-hover:text-white"
+                              ? "bg-amber-500/15 text-amber-600 group-hover:bg-amber-500 group-hover:text-white"
                               : "bg-surface-soft text-theme-secondary group-hover:text-theme-text"
                           )}
                         >
@@ -389,7 +389,7 @@ export function Sidebar({ className }: SidebarProps) {
       {/* Bottom Section: Premium Card & Support Direct Action */}
       <div className="pt-4 border-t border-theme/70 space-y-3">
         {/* Pass Status / Pro Card */}
-        <div className="p-3.5 rounded-2xl bg-gradient-to-br from-[var(--color-primary-muted)]/70 to-[var(--color-secondary-muted)]/40 border border-[var(--color-primary)]/25 shadow-xs text-center space-y-2">
+        <div className="p-3.5 rounded-2xl bg-card border border-[var(--color-primary)]/25 shadow-xs text-center space-y-2">
           <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-theme-text font-sans">
             <Crown className="w-4 h-4 text-amber-500 fill-amber-500" />
             <span>{isPaid ? (isAr ? "اشتراكك مفعّل • Pro" : "Pass Actif • Pro") : (isAr ? "عضوية الشاطر" : "Pass SHATER")}</span>
@@ -406,7 +406,7 @@ export function Sidebar({ className }: SidebarProps) {
           <Link
             href="/subscribe"
             onClick={() => isMobile && setIsMobileOpen(false)}
-            className="block w-full py-1.5 px-3 rounded-xl text-xs font-bold bg-[var(--color-primary)] text-white hover:opacity-95 active:scale-98 shadow-xs transition-all"
+            className="block w-full py-1.5 px-3 rounded-xl text-xs font-bold bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] active:scale-98 shadow-xs transition-all"
           >
             {isPaid
               ? (isAr ? "تفاصيل الاشتراك" : "Mon Abonnement")
@@ -420,22 +420,26 @@ export function Sidebar({ className }: SidebarProps) {
           target="_blank"
           rel="noopener noreferrer"
           data-testid="sidebar-whatsapp-support-btn"
-          className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/25 text-emerald-600 dark:text-emerald-400 transition-all group cursor-pointer text-xs"
+          className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-card hover:bg-white border border-emerald-500/25 hover:border-emerald-500/40 text-emerald-800 shadow-xs transition-all group cursor-pointer text-xs"
         >
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+            <div className="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
               <MessageCircle className="w-3.5 h-3.5 fill-current" />
             </div>
             <div className="text-start">
-              <span className="font-bold text-[11px] block leading-none font-sans">
+              <span className="font-bold text-[11px] block leading-none font-sans text-theme-text">
                 {isAr ? "الدعم الفني المباشر" : "Support WhatsApp"}
               </span>
-              <span className="text-[10px] text-theme-muted font-mono leading-none mt-1 block">
+              <span
+                dir="ltr"
+                className="text-[10px] text-theme-muted font-mono leading-none mt-1 inline-block text-left"
+                style={{ unicodeBidi: "isolate" }}
+              >
                 +213 550 85 32 34
               </span>
             </div>
           </div>
-          <ExternalLink className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+          <ExternalLink className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
         </a>
       </div>
     </div>
@@ -447,7 +451,7 @@ export function Sidebar({ className }: SidebarProps) {
       <aside
         aria-label="Navigation latérale"
         className={cn(
-          "hidden md:flex flex-col justify-between w-64 xl:w-72 shrink-0 sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto bg-card/90 dark:bg-slate-900/90 backdrop-blur-xl border border-theme rounded-3xl p-4 shadow-clay select-none scrollbar-thin transition-all duration-200",
+          "hidden md:flex flex-col justify-between w-64 xl:w-72 shrink-0 sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto bg-sidebar/85 backdrop-blur-md border border-theme rounded-3xl p-4 shadow-clay select-none scrollbar-thin transition-all duration-200",
           className
         )}
       >
@@ -456,15 +460,22 @@ export function Sidebar({ className }: SidebarProps) {
 
       {/* 2. Mobile Full-Featured Slide-Over Drawer */}
       {isMobileOpen && (
-        <div className="md:hidden fixed inset-0 z-50 flex" dir={isAr ? "rtl" : "ltr"}>
+        <div className="md:hidden fixed inset-0 z-50" dir={isAr ? "rtl" : "ltr"}>
           {/* Backdrop Overlay */}
           <div
             onClick={() => setIsMobileOpen(false)}
-            className="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity animate-fade-in"
+            className="fixed inset-0 bg-stone-900/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-200"
           />
 
-          {/* Drawer Panel */}
-          <div className="relative w-[85%] max-w-xs bg-surface dark:bg-slate-900 border-e border-theme h-full p-5 overflow-y-auto shadow-2xl z-10 animate-in slide-in-from-right duration-200">
+          {/* Drawer Panel - Anchored cleanly to start (right in RTL, left in LTR) */}
+          <div
+            className={cn(
+              "fixed inset-y-0 start-0 z-50 w-[82%] max-w-xs bg-sidebar border-e border-theme h-full p-5 overflow-y-auto shadow-2xl",
+              isAr
+                ? "animate-in slide-in-from-right duration-250"
+                : "animate-in slide-in-from-left duration-250"
+            )}
+          >
             {renderSidebarContent(true)}
           </div>
         </div>

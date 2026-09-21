@@ -129,8 +129,23 @@ export function TopBar() {
   return (
     <header className="sticky top-0 z-40 border-b border-theme bg-surface/95 backdrop-blur-md transition-colors duration-200">
       <div className="w-full max-w-[1920px] 3xl:max-w-[2400px] mx-auto flex h-16 items-center justify-between px-3.5 sm:px-6 md:px-8 3xl:px-12">
-        {/* Left: Logo + Stream Badge + Trial Indicator */}
+        {/* Start: Mobile Menu Toggle + Logo + Stream Badge + Trial Indicator */}
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              if (isLandingPage) {
+                setIsMobileMenuOpen(!isMobileMenuOpen);
+              } else {
+                window.dispatchEvent(new CustomEvent("shater_toggle_mobile_sidebar"));
+              }
+            }}
+            aria-label="القائمة الرئيسية"
+            className="md:hidden p-2 rounded-xl border border-theme bg-card hover:bg-card-hover text-theme-secondary hover:text-theme-text transition-colors cursor-pointer shadow-xs"
+          >
+            {isLandingPage && isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+
           <Logo size="md" showTagline={false} />
           {streamLabel && !isLandingPage && (
             <Badge
@@ -323,22 +338,6 @@ export function TopBar() {
           <div className="hidden sm:block">
             <LanguageSwitcher />
           </div>
-
-          {/* Mobile Hamburger Button */}
-          <button
-            type="button"
-            onClick={() => {
-              if (isLandingPage) {
-                setIsMobileMenuOpen(!isMobileMenuOpen);
-              } else {
-                window.dispatchEvent(new CustomEvent("shater_toggle_mobile_sidebar"));
-              }
-            }}
-            aria-label="القائمة الرئيسية"
-            className="md:hidden p-1.5 rounded-lg border border-theme bg-card text-theme-secondary hover:text-theme-text transition-colors cursor-pointer"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
         </div>
       </div>
 

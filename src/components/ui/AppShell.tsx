@@ -69,7 +69,13 @@ export function AppShell({
               rel="noopener noreferrer"
               className="text-[var(--color-primary)] hover:underline font-medium inline-flex items-center gap-1.5 transition-colors"
             >
-              <span>خدمة المساعدة والدعم WhatsApp (+213 550 85 32 34)</span>
+              <span>
+                خدمة المساعدة والدعم WhatsApp (
+                <span dir="ltr" className="font-mono inline-block text-left" style={{ unicodeBidi: "isolate" }}>
+                  +213 550 85 32 34
+                </span>
+                )
+              </span>
             </a>
           </div>
         </footer>

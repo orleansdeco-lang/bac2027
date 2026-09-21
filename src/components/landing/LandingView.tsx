@@ -688,7 +688,10 @@ export function LandingView() {
                 rel="noopener noreferrer"
                 className="text-[var(--color-primary)] font-bold hover:underline"
               >
-                WhatsApp: +213 550 85 32 34
+                WhatsApp:{" "}
+                <span dir="ltr" className="font-mono inline-block text-left" style={{ unicodeBidi: "isolate" }}>
+                  +213 550 85 32 34
+                </span>
               </a>
             </div>
           </div>
