@@ -36,6 +36,7 @@ import {
   GraduationCap,
   MessageSquareQuote,
 } from "lucide-react";
+import { GlobalSearchModal } from "./GlobalSearchModal";
 
 export function TopBar() {
   const pathname = usePathname();
@@ -46,6 +47,20 @@ export function TopBar() {
   const [regData, setRegData] = useState<StudentRegistrationData | null>(null);
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  // Global Ctrl+K / Cmd+K shortcut listener to open search anywhere
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -211,6 +226,14 @@ export function TopBar() {
             >
               <span>{isAr ? "المكتبة الحرة" : "Bibliothèque"}</span>
             </Link>
+            <button
+              type="button"
+              onClick={() => setIsSearchOpen(true)}
+              className="text-xs font-bold text-theme-secondary hover:text-[var(--color-primary)] transition-colors flex items-center gap-1.5 cursor-pointer"
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span>{isAr ? "البحث" : "Recherche"}</span>
+            </button>
             <Link
               href="/experiences"
               className="text-xs font-bold text-amber-500 hover:text-amber-400 transition-colors flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 shadow-xs"
@@ -221,20 +244,21 @@ export function TopBar() {
           </nav>
         ) : (
           <div className="hidden md:flex items-center flex-1 max-w-sm lg:max-w-md xl:max-w-lg 3xl:max-w-xl mx-3 lg:mx-6 min-w-0">
-            <div className="relative w-full">
-              <Search className={`w-4 h-4 text-theme-muted absolute top-2.5 ${isAr ? "right-3.5" : "left-3.5"}`} />
-              <input
-                type="text"
-                readOnly
-                placeholder={isAr ? "ابحث في مهارات المنهاج، الدروس..." : "Rechercher une compétence, formule..."}
-                onClick={() => {
-                  window.location.href = "/roadmap";
-                }}
-                className={`w-full py-1.5 rounded-full bg-card/80 border border-theme text-xs text-theme-text placeholder:text-theme-muted shadow-sm hover:border-[var(--color-border-hover)] cursor-pointer transition-all ${
-                  isAr ? "pr-9 pl-4" : "pl-9 pr-4"
-                }`}
-              />
-            </div>
+            <button
+              type="button"
+              onClick={() => setIsSearchOpen(true)}
+              className={`w-full py-1.5 px-3.5 rounded-full bg-card/80 border border-theme hover:border-[var(--color-primary)]/50 text-xs text-theme-muted shadow-sm hover:shadow-md cursor-pointer transition-all flex items-center justify-between gap-2 group text-start`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <Search className="w-4 h-4 text-theme-muted group-hover:text-[var(--color-primary)] transition-colors shrink-0" />
+                <span className="truncate">
+                  {isAr ? "ابحث في مهارات المنهاج، الدروس..." : "Rechercher une compétence, formule..."}
+                </span>
+              </div>
+              <kbd className="hidden lg:inline-flex items-center gap-0.5 text-[10px] font-mono text-theme-muted bg-surface/80 px-2 py-0.5 rounded border border-theme shrink-0">
+                <span className="text-xs">⌘</span>K
+              </kbd>
+            </button>
           </div>
         )}
 
@@ -283,6 +307,16 @@ export function TopBar() {
 
           {/* Mobile Quick Action Buttons */}
           <div className="flex md:hidden items-center gap-1.5">
+            {/* Mobile Search Button */}
+            <button
+              type="button"
+              onClick={() => setIsSearchOpen(true)}
+              aria-label={isAr ? "البحث في المنصة" : "Recherche"}
+              className="p-1.5 rounded-lg border border-theme bg-card text-theme-secondary hover:text-theme-text transition-colors cursor-pointer"
+            >
+              <Search className="w-4 h-4" />
+            </button>
+
             {/* Direct Mobile Experiences Button */}
             <Link
               href="/experiences"
@@ -450,6 +484,24 @@ export function TopBar() {
             </div>
           )}
 
+          {/* Mobile Search Button in Drawer */}
+          <button
+            type="button"
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              setIsSearchOpen(true);
+            }}
+            className="w-full py-2.5 px-3.5 rounded-2xl bg-card border border-theme hover:border-[var(--color-primary)]/50 text-xs font-medium text-theme-secondary hover:text-theme-text flex items-center justify-between shadow-sm cursor-pointer transition-colors"
+          >
+            <div className="flex items-center gap-2.5">
+              <Search className="w-4 h-4 text-[var(--color-primary)]" />
+              <span>{isAr ? "ابحث عن درس، مادة، أو أداة..." : "Rechercher un cours, outil..."}</span>
+            </div>
+            <span className="text-[10px] font-mono text-theme-muted bg-surface px-1.5 py-0.5 rounded border border-theme">
+              {isAr ? "بحث" : "Chercher"}
+            </span>
+          </button>
+
           {/* Primary Navigation Links Grid */}
           <div className="grid grid-cols-2 gap-2">
             <Link
@@ -552,6 +604,13 @@ export function TopBar() {
           </div>
         </div>
       )}
+
+      {/* Interactive Global Search Modal */}
+      <GlobalSearchModal
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        activeStream={activeStream}
+      />
     </header>
   );
 }
