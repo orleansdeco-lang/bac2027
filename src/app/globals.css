@@ -25,10 +25,10 @@
   --color-border-hover: #5F8F86;
   --color-border-strong: #26302F;
 
-  /* Typography */
-  --color-text-primary: #26302F;
-  --color-text-secondary: #65706D;
-  --color-text-muted: #8C9691;
+  /* Typography - Enhanced High Contrast, Warm, Ultra-Legible */
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #334155;
+  --color-text-muted: #475569;
 
   /* Brand Interactive: Muted Teal / Sage */
   --color-primary: #5F8F86;
@@ -257,9 +257,9 @@ html {
   --color-border-hover: #5F8F86;
   --color-border-strong: #26302F;
 
-  --color-text-primary: #26302F;
-  --color-text-secondary: #65706D;
-  --color-text-muted: #8C9691;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #334155;
+  --color-text-muted: #475569;
 
   --color-primary: #5F8F86;
   --color-primary-hover: #527D75;
@@ -309,8 +309,8 @@ html {
   --color-border-strong: #60A5FA;
 
   --color-text-primary: #F8FAFC;
-  --color-text-secondary: #94A3B8;
-  --color-text-muted: #64748B;
+  --color-text-secondary: #CBD5E1;
+  --color-text-muted: #94A3B8;
 
   --color-primary: #0EA5E9;
   --color-primary-hover: #0284C7;
@@ -359,8 +359,8 @@ html {
   --color-border-strong: #BE185D;
 
   --color-text-primary: #2D1823;
-  --color-text-secondary: #745163;
-  --color-text-muted: #9E7B8D;
+  --color-text-secondary: #4A2E3D;
+  --color-text-muted: #6B4759;
 
   --color-primary: #E879A8;
   --color-primary-hover: #DB2777;

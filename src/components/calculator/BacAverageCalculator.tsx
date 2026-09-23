@@ -328,22 +328,22 @@ export function BacAverageCalculator() {
             </div>
 
             <div className="space-y-1">
-              <div className="text-xs text-slate-500 dark:text-slate-400">المعدل العام التقديري للبكالوريا:</div>
+              <div className="text-xs text-slate-700 dark:text-slate-300 font-bold">المعدل العام التقديري للبكالوريا:</div>
               <div className="text-5xl sm:text-6xl font-serif font-black text-[#1E3A34] dark:text-emerald-300 tracking-tight font-mono">
                 {average.toFixed(2)}
-                <span className="text-base text-slate-400 font-sans mr-2">/ 20</span>
+                <span className="text-base text-slate-600 dark:text-slate-300 font-sans mr-2 font-bold">/ 20</span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3 pt-2 border-t border-[#E4DED2] dark:border-slate-800">
               <div className="p-3.5 rounded-2xl bg-white/90 dark:bg-card border border-[#E4DED2] dark:border-theme">
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 block">مجموع النقاط</span>
+                <span className="text-[10px] text-slate-600 dark:text-slate-300 font-bold block">مجموع النقاط</span>
                 <span className="text-xl font-black text-slate-800 dark:text-white font-mono">
                   {totalPoints.toFixed(2)}
                 </span>
               </div>
               <div className="p-3.5 rounded-2xl bg-white/90 dark:bg-card border border-[#E4DED2] dark:border-theme">
-                <span className="text-[10px] text-slate-500 dark:text-slate-400 block">مجموع المعاملات</span>
+                <span className="text-[10px] text-slate-600 dark:text-slate-300 font-bold block">مجموع المعاملات</span>
                 <span className="text-xl font-black text-slate-800 dark:text-white font-mono">
                   {totalCoeffs}
                 </span>
@@ -366,7 +366,7 @@ export function BacAverageCalculator() {
                     >
                       <div>
                         <div className="font-bold text-slate-900 dark:text-white">{opp.title}</div>
-                        <div className="text-[10px] text-slate-500 dark:text-slate-400">{opp.category}</div>
+                        <div className="text-[10px] text-slate-600 dark:text-slate-300 font-medium">{opp.category}</div>
                       </div>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
                         {opp.badge}
@@ -375,7 +375,7 @@ export function BacAverageCalculator() {
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
                   ضع نقاطك لاكتشاف التخصصات الجامعية والمدارس العليا التي تتطابق مع مستواك.
                 </p>
               )}

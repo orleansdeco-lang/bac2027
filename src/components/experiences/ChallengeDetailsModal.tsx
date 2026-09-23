@@ -146,8 +146,8 @@ export function ChallengeDetailsModal({
                   </span>
                 )}
               </div>
-              <span className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
-                <Clock className="w-3 h-3" />
+              <span className="text-[11px] text-slate-300 font-medium flex items-center gap-1 mt-0.5">
+                <Clock className="w-3 h-3 text-cyan-400" />
                 <span>
                   {new Date(challenge.created_at).toLocaleDateString("ar-DZ", {
                     year: "numeric",
@@ -211,7 +211,7 @@ export function ChallengeDetailsModal({
           {/* Attached Document / Image Viewer */}
           {challenge.file_url && (
             <div className="space-y-2">
-              <h4 className="text-xs font-semibold text-slate-400">وثيقة / صورة التمرين المرفقة:</h4>
+              <h4 className="text-xs font-bold text-slate-200">وثيقة / صورة التمرين المرفقة:</h4>
               {isPdf ? (
                 <div className="border border-slate-700 rounded-2xl overflow-hidden bg-slate-950 h-96">
                   <iframe
@@ -281,7 +281,7 @@ export function ChallengeDetailsModal({
                   )}
                 </div>
               ) : (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-200 font-medium">
                   حاول حل المسألة بنفسك أولاً، ثم انقر على "إظهار الحل النموذجي" للمطابقة والتصحيح.
                 </p>
               )}
@@ -292,10 +292,10 @@ export function ChallengeDetailsModal({
           <div className="flex items-center justify-between pt-3 border-t border-slate-800">
             <button
               onClick={handleUpvote}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer ${
                 upvoted
                   ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
-                  : "bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700"
+                  : "bg-slate-800/80 hover:bg-slate-800 text-slate-200 border border-slate-700"
               }`}
             >
               <ThumbsUp className={`w-4 h-4 ${upvoted ? "fill-cyan-400 text-cyan-400" : ""}`} />
@@ -303,7 +303,7 @@ export function ChallengeDetailsModal({
               <span>تحدي مفيد ومميز</span>
             </button>
 
-            <span className="text-xs text-slate-400">
+            <span className="text-xs text-slate-300 font-bold">
               {comments.length} تعليق ومحاولة حل
             </span>
           </div>
@@ -322,12 +322,12 @@ export function ChallengeDetailsModal({
                 value={commentText}
                 onChange={(e) => setCommentText(e.target.value)}
                 placeholder="اكتب فكرة حلك، أو استفسر عن خطوة غير واضحة..."
-                className="flex-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                className="flex-1 bg-slate-900 border border-slate-700/80 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-400 font-medium focus:outline-none focus:border-cyan-500"
               />
               <button
                 type="submit"
                 disabled={isSubmittingComment || !commentText.trim()}
-                className="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-semibold transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-md"
+                className="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-md cursor-pointer"
               >
                 {isSubmittingComment ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
@@ -342,7 +342,7 @@ export function ChallengeDetailsModal({
 
             {/* Comments List */}
             {comments.length === 0 ? (
-              <p className="text-xs text-slate-500 text-center py-6">
+              <p className="text-xs text-slate-300 font-medium text-center py-6">
                 كن أول من يشارك محاولة حله أو استفساره حول هذا التمرين!
               </p>
             ) : (
@@ -358,13 +358,13 @@ export function ChallengeDetailsModal({
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-semibold text-white">{com.author_name}</span>
+                          <span className="text-xs font-bold text-white">{com.author_name}</span>
                           {com.wilaya && (
-                            <span className="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded">
+                            <span className="text-[10px] text-slate-200 bg-slate-800 px-1.5 py-0.5 rounded font-medium">
                               {com.wilaya}
                             </span>
                           )}
-                          <span className="text-[10px] text-slate-500">
+                          <span className="text-[10px] text-slate-300 font-medium">
                             {new Date(com.created_at).toLocaleDateString("ar-DZ", {
                               month: "short",
                               day: "numeric",
@@ -375,14 +375,14 @@ export function ChallengeDetailsModal({
                         {canDeleteCom && (
                           <button
                             onClick={() => handleDeleteComment(com.id)}
-                            className="text-slate-500 hover:text-red-400 transition-colors p-1"
+                            className="text-slate-400 hover:text-red-400 transition-colors p-1"
                             title="حذف التعليق"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         )}
                       </div>
-                      <p className="text-xs text-slate-300 leading-relaxed">{com.content}</p>
+                      <p className="text-xs text-slate-100 leading-relaxed font-normal">{com.content}</p>
                     </div>
                   );
                 })}

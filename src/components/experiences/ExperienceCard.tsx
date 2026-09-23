@@ -400,31 +400,31 @@ export function ExperienceCard({
 
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-bold text-theme-text text-base sm:text-lg font-sans">
+                  <h3 className="font-extrabold text-slate-950 dark:text-white text-base sm:text-lg font-sans">
                     {cleanAuthorName}
                   </h3>
 
                   {experience.is_verified && (
                     <span
-                      className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
+                      className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:text-emerald-200 border border-emerald-500/30"
                       title="تجربة موثقة رسمياً"
                     >
-                      <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                       <span>موثقة</span>
                     </span>
                   )}
 
                   {/* Wilaya badge */}
                   {experience.wilaya && (
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-surface px-2 py-0.5 text-[11px] font-medium text-theme-secondary border border-theme">
-                      <MapPin className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-surface px-2.5 py-0.5 text-xs font-bold text-slate-700 dark:text-slate-200 border border-theme">
+                      <MapPin className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
                       <span>{experience.wilaya}</span>
                     </span>
                   )}
 
                   {/* Date badge */}
-                  <span className="inline-flex items-center gap-1 text-[11px] text-theme-muted bg-surface/60 px-2 py-0.5 rounded-lg border border-theme/60">
-                    <Calendar className="h-3 w-3" />
+                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-surface px-2.5 py-0.5 rounded-lg border border-theme">
+                    <Calendar className="h-3.5 w-3.5" />
                     <span>{formattedDate}</span>
                   </span>
                 </div>
@@ -432,24 +432,24 @@ export function ExperienceCard({
                 {/* Candidate Track & Stream Badges */}
                 <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
                   <span
-                    className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-0.5 font-bold border ${streamInfo.bg} ${streamInfo.text} ${streamInfo.border} text-[11px]`}
+                    className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-0.5 font-bold border ${streamInfo.bg} ${streamInfo.text} ${streamInfo.border} text-xs`}
                   >
-                    <GraduationCap className="h-3 w-3" />
+                    <GraduationCap className="h-3.5 w-3.5" />
                     <span>{streamInfo.label}</span>
                   </span>
 
                   {/* Track Badge */}
                   {experience.candidate_type === "current_student" ? (
-                    <span className="inline-flex items-center rounded-lg bg-sky-500/10 px-2 py-0.5 font-bold text-sky-700 dark:text-sky-300 border border-sky-500/20 text-[10px]">
+                    <span className="inline-flex items-center rounded-lg bg-sky-500/15 px-2.5 py-0.5 font-bold text-sky-800 dark:text-sky-200 border border-sky-500/30 text-xs">
                       🎯 مقبل على الباك 2027
                     </span>
                   ) : experience.initial_grade && experience.final_grade ? (
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500/10 px-2 py-0.5 font-bold text-amber-700 dark:text-amber-300 border border-amber-500/20 text-[10px]">
-                      <TrendingUp className="h-3 w-3" />
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500/15 px-2.5 py-0.5 font-bold text-amber-800 dark:text-amber-200 border border-amber-500/30 text-xs">
+                      <TrendingUp className="h-3.5 w-3.5" />
                       <span>قصة نجاح وتدارك</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center rounded-lg bg-emerald-500/10 px-2 py-0.5 font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-[10px]">
+                    <span className="inline-flex items-center rounded-lg bg-emerald-500/15 px-2.5 py-0.5 font-bold text-emerald-800 dark:text-emerald-200 border border-emerald-500/30 text-xs">
                       🎓 خريج بكالوريا
                     </span>
                   )}
@@ -460,17 +460,17 @@ export function ExperienceCard({
             {/* GPA Score Badge (Clean, High Contrast) */}
             <div className="flex flex-col items-end gap-1 shrink-0">
               {experience.final_grade && (
-                <div className="flex items-center gap-1.5 rounded-2xl bg-[#2C5E54]/10 dark:bg-[#2C5E54]/20 px-3 py-1.5 border border-[#2C5E54]/30 text-[#1E3A34] dark:text-emerald-300 font-bold shadow-xs">
-                  <span className="text-[10px] text-theme-muted">المعدل:</span>
-                  <span className="font-extrabold text-base sm:text-xl font-mono text-[#2C5E54] dark:text-emerald-400">
+                <div className="flex items-center gap-1.5 rounded-2xl bg-[#2C5E54]/15 dark:bg-[#2C5E54]/30 px-3.5 py-1.5 border border-[#2C5E54]/40 text-[#1E3A34] dark:text-emerald-300 font-bold shadow-xs">
+                  <span className="text-xs text-slate-700 dark:text-slate-300 font-bold">المعدل:</span>
+                  <span className="font-black text-base sm:text-xl font-mono text-[#2C5E54] dark:text-emerald-300">
                     {experience.final_grade.toFixed(2)}
                   </span>
-                  <span className="text-[10px] text-theme-muted">/20</span>
+                  <span className="text-xs text-slate-700 dark:text-slate-300 font-bold">/20</span>
                 </div>
               )}
 
               {experience.initial_grade && experience.final_grade && (
-                <div className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 flex items-center gap-1">
+                <div className="text-xs font-bold text-amber-800 dark:text-amber-200 bg-amber-500/15 px-2 py-0.5 rounded-md border border-amber-500/30 flex items-center gap-1">
                   <TrendingUp className="h-3 w-3" />
                   <span>من {experience.initial_grade.toFixed(2)}</span>
                 </div>
@@ -482,30 +482,30 @@ export function ExperienceCard({
           {/* BIG HEADLINE / TITLE (العنوان الكبير الذي طلبه المستخدم)            */}
           {/* ================================================================= */}
           <div className="mt-4">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-serif font-black text-theme-text group-hover:text-[var(--color-primary)] transition-colors leading-snug tracking-tight">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-serif font-black text-slate-900 dark:text-white group-hover:text-[#2C5E54] dark:group-hover:text-emerald-400 transition-colors leading-snug tracking-tight">
               {bigTitle}
             </h2>
 
             {/* Short Teaser / Quote before expansion */}
             {!isExpanded && (
               <div className="mt-2.5 space-y-2">
-                <p className="text-xs sm:text-sm text-theme-secondary line-clamp-2 leading-relaxed italic pr-2 border-r-2 border-[var(--color-primary)]/40">
+                <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-100 line-clamp-2 leading-relaxed font-semibold italic pr-2 border-r-3 border-[#2C5E54]">
                   &ldquo;{experience.winning_routine}&rdquo;
                 </p>
 
                 {/* Quick Indicators */}
-                <div className="flex items-center gap-3 pt-2 text-[11px] text-theme-muted font-medium flex-wrap">
+                <div className="flex items-center gap-3 pt-2 text-xs text-slate-700 dark:text-slate-200 font-bold flex-wrap">
                   <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-theme-muted" />
+                    <Clock className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" />
                     <span>قراءة: دقيقتان</span>
                   </span>
                   <span>•</span>
-                  <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400">
+                  <span className="flex items-center gap-1 text-rose-700 dark:text-rose-300">
                     <AlertTriangle className="w-3.5 h-3.5" />
                     <span>فخ محذر منه</span>
                   </span>
                   <span>•</span>
-                  <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                  <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300">
                     <Lightbulb className="w-3.5 h-3.5" />
                     <span>روتين التفوق</span>
                   </span>
@@ -521,47 +521,47 @@ export function ExperienceCard({
             <div className="mt-6 space-y-5 animate-in fade-in slide-in-from-top-3 duration-300 border-t border-theme/60 pt-5">
               {/* Target / Current Major */}
               {(experience.university_major || experience.target_major) && (
-                <div className="flex items-center gap-2.5 rounded-2xl bg-surface-soft px-4 py-2.5 text-xs text-theme-text border border-theme">
+                <div className="flex items-center gap-2.5 rounded-2xl bg-surface px-4 py-2.5 text-xs text-slate-900 dark:text-white border border-theme">
                   <Target className="h-4 w-4 text-[var(--color-primary)] shrink-0" />
-                  <span className="text-theme-muted">
+                  <span className="text-slate-700 dark:text-slate-200 font-bold">
                     {experience.university_major ? "التخصص الجامعي الحالي:" : "الوجهة المستهدفة:"}
                   </span>
-                  <span className="font-bold text-[var(--color-primary)] font-serif text-sm">
+                  <span className="font-black text-[#2C5E54] dark:text-emerald-400 font-serif text-sm sm:text-base">
                     {experience.university_major || experience.target_major}
                   </span>
                 </div>
               )}
 
-              {/* Danger Box: The Biggest Trap (أكبر فخ) - Soft, Soothing Eye-Friendly Theme */}
-              <div className="rounded-2xl border border-rose-200/90 dark:border-rose-900/40 bg-rose-50/80 dark:bg-rose-950/20 p-4 sm:p-5 shadow-xs">
-                <div className="flex items-center gap-2 text-rose-800 dark:text-rose-300 font-bold text-sm sm:text-base mb-2 font-serif">
+              {/* Danger Box: The Biggest Trap (أكبر فخ) - High Contrast & Eye Comfort */}
+              <div className="rounded-2xl border border-rose-300 dark:border-rose-900/60 bg-rose-50/90 dark:bg-rose-950/30 p-4 sm:p-5 shadow-xs">
+                <div className="flex items-center gap-2 text-rose-950 dark:text-rose-200 font-black text-sm sm:text-base mb-2 font-serif">
                   <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
                   <span>⚠️ أكبر فخ نحذركم منه (إياك والوقوع فيه):</span>
                 </div>
-                <p className="text-xs sm:text-sm leading-relaxed text-slate-800 dark:text-rose-100/90 pr-1 select-text font-sans">
+                <p className="text-xs sm:text-sm leading-relaxed text-slate-950 dark:text-rose-50 pr-1 select-text font-medium">
                   {experience.biggest_trap}
                 </p>
               </div>
 
-              {/* Success Box: Winning Routine (الروتين الحاسم) - Soft, Soothing Eye-Friendly Theme */}
-              <div className="rounded-2xl border border-emerald-200/90 dark:border-emerald-900/40 bg-emerald-50/80 dark:bg-emerald-950/20 p-4 sm:p-5 shadow-xs">
-                <div className="flex items-center gap-2 text-emerald-900 dark:text-emerald-300 font-bold text-sm sm:text-base mb-2 font-serif">
+              {/* Success Box: Winning Routine (الروتين الحاسم) - High Contrast & Eye Comfort */}
+              <div className="rounded-2xl border border-emerald-300 dark:border-emerald-900/60 bg-emerald-50/90 dark:bg-emerald-950/30 p-4 sm:p-5 shadow-xs">
+                <div className="flex items-center gap-2 text-emerald-950 dark:text-emerald-200 font-black text-sm sm:text-base mb-2 font-serif">
                   <Lightbulb className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
                   <span>💡 السر أو الروتين اليومي الذي صنع الفارق:</span>
                 </div>
-                <p className="text-xs sm:text-sm leading-relaxed text-slate-800 dark:text-emerald-100/90 pr-1 select-text font-sans">
+                <p className="text-xs sm:text-sm leading-relaxed text-slate-950 dark:text-emerald-50 pr-1 select-text font-medium">
                   {experience.winning_routine}
                 </p>
               </div>
 
               {/* Best Resources & Teachers (المراجع والأساتذة) */}
               {experience.best_resources && (
-                <div className="rounded-2xl border border-amber-200/80 dark:border-amber-900/40 bg-amber-50/70 dark:bg-amber-950/20 p-4 shadow-xs">
-                  <div className="flex items-center gap-2 text-amber-900 dark:text-amber-300 font-bold text-xs sm:text-sm mb-1.5 font-serif">
+                <div className="rounded-2xl border border-amber-300 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/30 p-4 shadow-xs">
+                  <div className="flex items-center gap-2 text-amber-950 dark:text-amber-200 font-black text-xs sm:text-sm mb-1.5 font-serif">
                     <BookOpen className="h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" />
                     <span>📚 أفضل المراجع وقنوات المراجعة الموصى بها:</span>
                   </div>
-                  <p className="text-xs sm:text-sm leading-relaxed text-slate-800 dark:text-amber-100/90 pr-1">
+                  <p className="text-xs sm:text-sm leading-relaxed text-slate-950 dark:text-amber-50 pr-1 font-medium">
                     {experience.best_resources}
                   </p>
                 </div>
@@ -574,12 +574,12 @@ export function ExperienceCard({
         <div className="mt-5 border-t border-theme/60 pt-3.5">
           {!isExpanded ? (
             <div className="flex items-center justify-between gap-3">
-              <span className="text-xs font-bold text-[var(--color-primary)] inline-flex items-center gap-1.5 group-hover:translate-x-[-4px] transition-transform">
+              <span className="text-xs font-black text-[#2C5E54] dark:text-emerald-400 inline-flex items-center gap-1.5 group-hover:translate-x-[-4px] transition-transform">
                 <span>اضغط لقراءة التفاصيل الكاملة</span>
                 <ChevronDown className="w-4 h-4" />
               </span>
 
-              <div className="flex items-center gap-3 text-xs text-theme-muted">
+              <div className="flex items-center gap-3 text-xs text-slate-700 dark:text-slate-200 font-bold">
                 <span className="flex items-center gap-1">
                   <ThumbsUp className="w-3.5 h-3.5 text-emerald-600" />
                   <span className="font-bold">{upvotesCount}</span>
@@ -619,8 +619,8 @@ export function ExperienceCard({
                     onClick={handleToggleComments}
                     className={`flex items-center gap-1.5 rounded-xl px-3 py-2 font-bold transition-colors cursor-pointer border ${
                       showComments
-                        ? "bg-surface border-theme text-theme-text"
-                        : "bg-surface-soft border-theme text-theme-secondary hover:text-theme-text"
+                        ? "bg-surface border-theme text-slate-950 dark:text-white font-extrabold"
+                        : "bg-surface-soft border-theme text-slate-800 dark:text-slate-200 hover:text-slate-950 font-bold"
                     }`}
                   >
                     <MessageCircle className="h-4 w-4 text-[var(--color-primary)]" />
@@ -636,8 +636,8 @@ export function ExperienceCard({
                     onClick={handleToggleFavorite}
                     className={`flex items-center gap-1 rounded-xl px-2.5 py-2 font-bold transition-colors cursor-pointer border ${
                       isFavorite
-                        ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
-                        : "bg-surface text-theme-secondary hover:text-theme-text border-theme"
+                        ? "bg-amber-500/15 text-amber-800 dark:text-amber-200 border-amber-500/30"
+                        : "bg-surface text-slate-800 dark:text-slate-200 hover:text-slate-950 border-theme"
                     }`}
                     title="حفظ في المفضلة"
                   >
@@ -657,7 +657,7 @@ export function ExperienceCard({
                   <button
                     type="button"
                     onClick={handleNativeShare}
-                    className="flex items-center gap-1 rounded-xl px-2.5 py-2 bg-surface hover:bg-card-hover text-theme-secondary hover:text-theme-text border border-theme transition-colors cursor-pointer"
+                    className="flex items-center gap-1 rounded-xl px-2.5 py-2 bg-surface hover:bg-card-hover text-slate-800 dark:text-slate-200 hover:text-slate-950 border border-theme transition-colors cursor-pointer font-bold"
                     title="مشاركة التجربة"
                   >
                     <Share2 className="h-4 w-4" />
@@ -670,7 +670,7 @@ export function ExperienceCard({
                       e.stopPropagation();
                       setShowImageCardModal(true);
                     }}
-                    className="flex items-center gap-1 rounded-xl px-2.5 py-2 bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 font-bold transition-colors cursor-pointer"
+                    className="flex items-center gap-1 rounded-xl px-2.5 py-2 bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-500/30 font-bold transition-colors cursor-pointer"
                     title="مشاركة التجربة كصورة أنيقة"
                   >
                     <ImageIcon className="h-4 w-4" />
@@ -684,7 +684,7 @@ export function ExperienceCard({
                       e.stopPropagation();
                       setIsExpanded(false);
                     }}
-                    className="flex items-center gap-1 rounded-xl px-2.5 py-2 bg-surface text-theme-muted hover:text-theme-text border border-theme transition-colors cursor-pointer"
+                    className="flex items-center gap-1 rounded-xl px-2.5 py-2 bg-surface text-slate-800 dark:text-slate-200 hover:text-slate-950 border border-theme transition-colors cursor-pointer font-bold"
                     title="طي التجربة"
                   >
                     <ChevronUp className="h-4 w-4" />
@@ -757,19 +757,19 @@ export function ExperienceCard({
                   onClick={(e) => e.stopPropagation()}
                   className="pt-4 border-t border-theme/60 space-y-3 animate-in fade-in duration-200"
                 >
-                  <h4 className="font-bold text-xs text-theme-text flex items-center gap-1.5">
+                  <h4 className="font-extrabold text-xs sm:text-sm text-slate-950 dark:text-white flex items-center gap-1.5">
                     <MessageCircle className="h-3.5 w-3.5 text-[var(--color-primary)]" />
                     <span>تعليقات واستفسارات الطلبة ({commentsCount})</span>
                   </h4>
 
                   {/* Comments List */}
                   {loadingComments ? (
-                    <div className="py-4 text-center text-xs text-theme-muted flex items-center justify-center gap-2">
+                    <div className="py-4 text-center text-xs text-slate-600 dark:text-slate-300 flex items-center justify-center gap-2 font-semibold">
                       <RefreshCw className="h-3.5 w-3.5 animate-spin text-[var(--color-primary)]" />
                       <span>جاري تحميل التعليقات...</span>
                     </div>
                   ) : comments.length === 0 ? (
-                    <p className="text-xs text-theme-muted py-2">
+                    <p className="text-xs text-slate-600 dark:text-slate-300 py-2 font-medium">
                       لا توجد تعليقات بعد. كن أول من يترك انطباعاً أو استفساراً لصاحب التجربة! ✍️
                     </p>
                   ) : (
@@ -786,19 +786,19 @@ export function ExperienceCard({
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-bold text-theme-text">
+                                <span className="font-black text-slate-950 dark:text-white text-xs sm:text-sm">
                                   {comment.author_name}
                                 </span>
 
                                 {comment.wilaya && (
-                                  <span className="inline-flex items-center gap-0.5 text-[10px] text-theme-muted bg-card px-1.5 py-0.5 rounded border border-theme">
+                                  <span className="inline-flex items-center gap-0.5 text-xs text-slate-700 dark:text-slate-200 bg-card px-2 py-0.5 rounded border border-theme font-semibold">
                                     <MapPin className="h-2.5 w-2.5 text-amber-500" />
                                     <span>{comment.wilaya}</span>
                                   </span>
                                 )}
 
                                 {isAuthor && (
-                                  <span className="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.2 rounded border border-emerald-500/20 font-semibold">
+                                  <span className="text-xs bg-emerald-500/15 text-emerald-800 dark:text-emerald-200 px-2 py-0.5 rounded border border-emerald-500/30 font-bold">
                                     أنت
                                   </span>
                                 )}
@@ -812,7 +812,7 @@ export function ExperienceCard({
                                       setEditingCommentId(comment.id);
                                       setEditCommentContent(comment.content);
                                     }}
-                                    className="p-1 text-theme-muted hover:text-theme-text transition-colors"
+                                    className="p-1 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors"
                                     title="تعديل"
                                   >
                                     <Edit2 className="h-3 w-3" />
@@ -834,14 +834,14 @@ export function ExperienceCard({
                                 <textarea
                                   value={editCommentContent}
                                   onChange={(e) => setEditCommentContent(e.target.value)}
-                                  className="w-full rounded-xl bg-card border border-theme p-2 text-xs text-theme-text focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
+                                  className="w-full rounded-xl bg-card border border-theme p-2 text-xs text-slate-950 dark:text-white focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] font-medium"
                                   rows={2}
                                 />
                                 <div className="flex items-center justify-end gap-1.5">
                                   <button
                                     type="button"
                                     onClick={() => setEditingCommentId(null)}
-                                    className="px-2 py-1 text-[11px] rounded-lg text-theme-muted hover:text-theme-text"
+                                    className="px-2 py-1 text-[11px] rounded-lg text-slate-700 dark:text-slate-300 hover:text-slate-950 font-bold"
                                   >
                                     إلغاء
                                   </button>
@@ -856,7 +856,7 @@ export function ExperienceCard({
                                 </div>
                               </div>
                             ) : (
-                              <p className="text-theme-secondary text-xs leading-relaxed select-text">
+                              <p className="text-slate-900 dark:text-slate-100 text-xs sm:text-sm leading-relaxed font-medium select-text">
                                 {comment.content}
                               </p>
                             )}
@@ -874,7 +874,7 @@ export function ExperienceCard({
                         placeholder="اطرح سؤالاً أو اترك كلمة تشجيعية..."
                         value={newCommentText}
                         onChange={(e) => setNewCommentText(e.target.value)}
-                        className="flex-1 rounded-xl bg-surface border border-theme px-3 py-2 text-xs text-theme-text placeholder:text-theme-muted focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                        className="flex-1 rounded-xl bg-surface border border-theme px-3.5 py-2 text-xs sm:text-sm text-slate-950 dark:text-white placeholder:text-slate-500 font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                       />
                       <button
                         type="submit"

@@ -354,19 +354,19 @@ export default function ExperiencesPage() {
                 {/* Highlights Row */}
                 <div className="relative z-10 mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 border-t border-white/20 text-xs sm:text-sm">
                   <div className="rounded-2xl bg-white/10 backdrop-blur-sm p-3.5 border border-white/15">
-                    <div className="text-emerald-100/80">إجمالي التجارب</div>
+                    <div className="text-white/90 font-bold">إجمالي التجارب</div>
                     <div className="mt-1 text-xl sm:text-2xl font-black text-white font-mono">{expStats.total}</div>
                   </div>
                   <div className="rounded-2xl bg-white/10 backdrop-blur-sm p-3.5 border border-white/15">
-                    <div className="text-emerald-100/80">متفوقو 16+ فما فوق</div>
+                    <div className="text-white/90 font-bold">متفوقو 16+ فما فوق</div>
                     <div className="mt-1 text-xl sm:text-2xl font-black text-amber-300 font-mono">{expStats.highGrades}</div>
                   </div>
                   <div className="rounded-2xl bg-white/10 backdrop-blur-sm p-3.5 border border-white/15">
-                    <div className="text-emerald-100/80">قصص نجاح المعيدين</div>
+                    <div className="text-white/90 font-bold">قصص نجاح المعيدين</div>
                     <div className="mt-1 text-xl sm:text-2xl font-black text-white font-mono">{expStats.repeaters}</div>
                   </div>
                   <div className="rounded-2xl bg-white/10 backdrop-blur-sm p-3.5 border border-white/15">
-                    <div className="text-emerald-100/80">تدقيق ومراجعة معتمدة</div>
+                    <div className="text-white/90 font-bold">تدقيق ومراجعة معتمدة</div>
                     <div className="mt-1 text-xl sm:text-2xl font-black text-emerald-300 font-mono">100%</div>
                   </div>
                 </div>
@@ -376,13 +376,13 @@ export default function ExperiencesPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
                   <div className="relative md:col-span-6">
-                    <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-theme-muted" />
+                    <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="ابحث بالاسم، التخصص الجامعي (طب، ESI...)، أو الفخاخ..."
-                      className="w-full rounded-2xl border border-theme bg-card pr-10 pl-4 py-2.5 text-xs sm:text-sm text-theme-text placeholder:text-theme-muted focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] shadow-xs"
+                      className="w-full rounded-2xl border border-theme bg-card pr-10 pl-4 py-2.5 text-xs sm:text-sm text-slate-950 dark:text-white placeholder:text-slate-500 font-medium focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] shadow-xs"
                     />
                   </div>
 
@@ -391,7 +391,7 @@ export default function ExperiencesPage() {
                     <select
                       value={selectedWilaya}
                       onChange={(e) => setSelectedWilaya(e.target.value)}
-                      className="w-full rounded-2xl border border-theme bg-card pr-9 pl-4 py-2.5 text-xs sm:text-sm text-theme-text focus:border-[var(--color-primary)] focus:outline-none cursor-pointer appearance-none shadow-xs"
+                      className="w-full rounded-2xl border border-theme bg-card pr-9 pl-4 py-2.5 text-xs sm:text-sm text-slate-950 dark:text-white font-semibold focus:border-[var(--color-primary)] focus:outline-none cursor-pointer appearance-none shadow-xs"
                     >
                       <option value="all">📍 جميع الولايات (الـ 58 ولاية)</option>
                       {ALGERIAN_WILAYAS.map((w) => (
@@ -415,7 +415,7 @@ export default function ExperiencesPage() {
                         className={`w-full flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
                           onlyTargetMatch
                             ? "bg-[#2C5E54] text-white border-[#2C5E54] shadow-xs"
-                            : "bg-card text-theme-secondary border-theme hover:bg-card-hover hover:text-theme-text"
+                            : "bg-card text-slate-800 dark:text-slate-200 border-theme hover:bg-card-hover hover:text-slate-950"
                         }`}
                       >
                         <Target className="h-4 w-4" />
@@ -438,7 +438,7 @@ export default function ExperiencesPage() {
                         className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition-all cursor-pointer border ${
                           isActive
                             ? "bg-[#2C5E54] text-white border-[#2C5E54] shadow-xs"
-                            : "bg-card text-theme-secondary border-theme hover:bg-surface-soft hover:text-theme-text"
+                            : "bg-card text-slate-800 dark:text-slate-200 border-theme hover:bg-surface-soft hover:text-slate-950"
                         }`}
                       >
                         <Icon className="h-4 w-4" />
@@ -451,7 +451,7 @@ export default function ExperiencesPage() {
                 {/* Stream Selector Pills */}
                 {!onlyTargetMatch && (
                   <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                    <span className="flex items-center gap-1 text-xs text-theme-muted ml-2 font-medium">
+                    <span className="flex items-center gap-1 text-xs text-slate-700 dark:text-slate-300 ml-2 font-bold">
                       <Filter className="h-3.5 w-3.5 text-[var(--color-primary)]" />
                       <span>الشعبة:</span>
                     </span>
@@ -465,7 +465,7 @@ export default function ExperiencesPage() {
                           className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer border ${
                             isSelected
                               ? "bg-[#2C5E54] text-white border-[#2C5E54] shadow-xs"
-                              : "bg-card text-theme-secondary border-theme hover:border-slate-400 hover:text-theme-text"
+                              : "bg-card text-slate-800 dark:text-slate-200 border-theme hover:border-slate-500 hover:text-slate-950"
                           }`}
                         >
                           {s.label}
@@ -492,7 +492,7 @@ export default function ExperiencesPage() {
                     <Search className="h-6 w-6" />
                   </div>
                   <h3 className="text-lg font-bold text-white">لا توجد تجارب مطابقة لهذا البحث حالياً</h3>
-                  <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+                  <p className="text-xs sm:text-sm text-slate-200 max-w-md mx-auto font-medium">
                     جرب تغيير خيارات الفلترة للاطلاع على كافة التجارب الملهمة المتاحة.
                   </p>
                 </div>
@@ -555,15 +555,15 @@ export default function ExperiencesPage() {
                 {/* Challenges Highlights Row */}
                 <div className="relative z-10 mt-8 grid grid-cols-2 sm:grid-cols-3 gap-3 pt-6 border-t border-slate-800/80 text-xs sm:text-sm">
                   <div className="rounded-2xl bg-slate-950/50 p-3.5 border border-slate-800/80">
-                    <div className="text-slate-400">إجمالي التحديات</div>
+                    <div className="text-slate-200 font-bold">إجمالي التحديات</div>
                     <div className="mt-1 text-xl sm:text-2xl font-black text-white">{chalStats.total}</div>
                   </div>
                   <div className="rounded-2xl bg-slate-950/50 p-3.5 border border-slate-800/80">
-                    <div className="text-slate-400">مرفقة بالحل النموذجي</div>
+                    <div className="text-slate-200 font-bold">مرفقة بالحل النموذجي</div>
                     <div className="mt-1 text-xl sm:text-2xl font-black text-cyan-400">{chalStats.withSolution}</div>
                   </div>
                   <div className="rounded-2xl bg-slate-950/50 p-3.5 border border-slate-800/80">
-                    <div className="text-slate-400">أفكار تعمق وتحدي 19+</div>
+                    <div className="text-slate-200 font-bold">أفكار تعمق وتحدي 19+</div>
                     <div className="mt-1 text-xl sm:text-2xl font-black text-amber-400">{chalStats.highDiff}</div>
                   </div>
                 </div>
@@ -579,7 +579,7 @@ export default function ExperiencesPage() {
                       value={challengeSearch}
                       onChange={(e) => setChallengeSearch(e.target.value)}
                       placeholder="ابحث بعنوان التمرين، المحور (دوال، متتاليات...)، أو اسم الطالب..."
-                      className="w-full rounded-2xl border border-slate-800 bg-slate-900/90 pr-10 pl-4 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 shadow-inner"
+                      className="w-full rounded-2xl border border-theme bg-card pr-10 pl-4 py-2.5 text-xs sm:text-sm text-slate-950 dark:text-white placeholder:text-slate-500 font-medium focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 shadow-xs"
                     />
                   </div>
 
@@ -587,7 +587,7 @@ export default function ExperiencesPage() {
                     <select
                       value={challengeSubject}
                       onChange={(e) => setChallengeSubject(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-800 bg-slate-900/90 px-3.5 py-2.5 text-xs sm:text-sm text-slate-200 focus:border-cyan-500 focus:outline-none cursor-pointer"
+                      className="w-full rounded-2xl border border-theme bg-card px-3.5 py-2.5 text-xs sm:text-sm text-slate-950 dark:text-white font-semibold focus:border-cyan-500 focus:outline-none cursor-pointer shadow-xs"
                     >
                       <option value="all">جميع المواد الدراسية</option>
                       {Object.values(ALL_SUBJECTS).map((sub) => (
@@ -602,7 +602,7 @@ export default function ExperiencesPage() {
                     <select
                       value={challengeDifficulty}
                       onChange={(e) => setChallengeDifficulty(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-800 bg-slate-900/90 px-3.5 py-2.5 text-xs sm:text-sm text-slate-200 focus:border-cyan-500 focus:outline-none cursor-pointer"
+                      className="w-full rounded-2xl border border-theme bg-card px-3.5 py-2.5 text-xs sm:text-sm text-slate-950 dark:text-white font-semibold focus:border-cyan-500 focus:outline-none cursor-pointer shadow-xs"
                     >
                       <option value="all">جميع مستويات الصعوبة</option>
                       <option value="normal">مستوى عادي</option>
@@ -615,8 +615,8 @@ export default function ExperiencesPage() {
 
                 {/* Stream Selector Pills for Challenges */}
                 <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  <span className="flex items-center gap-1 text-xs text-slate-400 ml-2 font-medium">
-                    <Filter className="h-3.5 w-3.5 text-cyan-400" />
+                  <span className="flex items-center gap-1 text-xs text-slate-700 dark:text-slate-300 ml-2 font-bold">
+                    <Filter className="h-3.5 w-3.5 text-cyan-500" />
                     <span>الشعبة:</span>
                   </span>
                   {STREAMS.map((s) => {
@@ -625,10 +625,10 @@ export default function ExperiencesPage() {
                       <button
                         key={s.id}
                         onClick={() => setChallengeStream(s.id)}
-                        className={`rounded-xl px-3 py-1.5 text-xs font-medium transition-all cursor-pointer ${
+                        className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer border ${
                           isSelected
-                            ? "bg-cyan-500 text-slate-950 font-bold shadow-sm"
-                            : "bg-slate-900/80 text-slate-400 border border-slate-800 hover:border-slate-700 hover:text-slate-300"
+                            ? "bg-cyan-600 text-white font-black shadow-xs"
+                            : "bg-card text-slate-800 dark:text-slate-200 border-theme hover:border-slate-500 hover:text-slate-950"
                         }`}
                       >
                         {s.label}
@@ -654,7 +654,7 @@ export default function ExperiencesPage() {
                     <Flame className="h-7 w-7" />
                   </div>
                   <h3 className="text-lg font-bold text-white">لا توجد تمارين وتحديات مطابقة حالياً</h3>
-                  <p className="text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+                  <p className="text-xs sm:text-sm text-slate-200 max-w-md mx-auto font-medium">
                     كن أول من يشارك موضوعاً أو مسألة رياضية/فيزيائية من ثانويتك مع زملائك في البكالوريا!
                   </p>
                   <button

@@ -317,7 +317,7 @@ export function ExperienceImageCard({ experience, isOpen, onClose }: ExperienceI
               <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
               <span>⚠️ أكبر فخ نحذركم منه:</span>
             </div>
-            <p className="text-slate-700 leading-relaxed line-clamp-4 text-[11px]">
+            <p className="text-slate-900 font-medium leading-relaxed line-clamp-4 text-[11px]">
               {experience.biggest_trap}
             </p>
           </div>
@@ -328,13 +328,13 @@ export function ExperienceImageCard({ experience, isOpen, onClose }: ExperienceI
               <Lightbulb className="w-3.5 h-3.5 shrink-0" />
               <span>💡 السر أو الروتين الحاسم:</span>
             </div>
-            <p className="text-slate-700 leading-relaxed line-clamp-4 text-[11px]">
+            <p className="text-slate-900 font-medium leading-relaxed line-clamp-4 text-[11px]">
               {experience.winning_routine}
             </p>
           </div>
 
           {/* Footer watermark */}
-          <div className="pt-2 border-t border-[#E4DED2] flex items-center justify-between text-[10px] text-slate-500">
+          <div className="pt-2 border-t border-[#E4DED2] flex items-center justify-between text-[10px] text-slate-700 font-semibold">
             <span>منصة الشاطر الرسمية للبكالوريا</span>
             <span className="font-mono font-bold text-[#5F8F86]">bac2027-three.vercel.app</span>
           </div>
