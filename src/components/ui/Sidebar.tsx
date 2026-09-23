@@ -303,7 +303,7 @@ export function Sidebar({ className }: SidebarProps) {
           <Link
             href="/scientific-calculator"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2C5E54] hover:bg-[#20473f] text-white border border-emerald-600/40 text-xs font-black transition-all shadow-sm hover:shadow-md hover:scale-102 active:scale-98 group cursor-pointer"
-            title={isAr ? "الآلة الحاسبة العلمية ثلاثية الأبعاد (Casio 3D)" : "Calculatrice Scientifique 3D"}
+            title={isAr ? "الآلة الحاسبة العلمية" : "Calculatrice Scientifique"}
           >
             <span className="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center text-white shrink-0 group-hover:rotate-12 transition-transform">
               <Calculator className="w-3.5 h-3.5 text-white" />

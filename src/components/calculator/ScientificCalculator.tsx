@@ -463,7 +463,7 @@ export function ScientificCalculator() {
 
                 <div
                   className="w-16 h-5 rounded bg-gradient-to-b from-[#2b1708] to-[#120803] border border-[#482811] shadow-inner grid grid-cols-4 gap-[1px] p-[1.5px]"
-                  title="خلية شمسية مدمجة ثنائية الطاقة (Two-Way Power)"
+                  title="خلية شمسية مدمجة ثنائية الطاقة"
                 >
                   <div className="bg-[#1f1106] border-r border-[#3a1d08]/60" />
                   <div className="bg-[#1f1106] border-r border-[#3a1d08]/60" />
@@ -1089,7 +1089,7 @@ export function ScientificCalculator() {
           <div className="p-5 rounded-3xl bg-card border border-theme shadow-clay space-y-3">
             <div className="flex items-center gap-2 text-sm font-bold text-theme-text">
               <HelpCircle className="w-4 h-4 text-amber-500" />
-              <span>دليل اختصارات Casio المحترفة</span>
+              <span>دليل مفاتيح الآلة الحاسبة</span>
             </div>
             <div className="text-xs text-theme-secondary space-y-2 leading-relaxed">
               <div className="flex items-start gap-2">
@@ -1107,10 +1107,10 @@ export function ScientificCalculator() {
                 <span>يحول النتيجة بين كسر مضبوط وعدد عشري بدقة تامة.</span>
               </div>
               <div className="flex items-start gap-2">
-                <span className="font-bold font-mono text-slate-400 bg-card-muted px-1.5 py-0.5 rounded">
-                  D-PAD
+                <span className="font-bold font-sans text-slate-400 bg-card-muted px-1.5 py-0.5 rounded">
+                  الأسهم ◀▶
                 </span>
-                <span>القرص الدائري في الوسط للتنقل في السجل وتحريك المؤشر لتعديل المعادلة.</span>
+                <span>القرص الدائري في الوسط للتنقل في السجل وتحريك مؤشر الكتابة لتعديل المعادلة.</span>
               </div>
             </div>
           </div>
