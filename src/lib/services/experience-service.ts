@@ -49,6 +49,7 @@ export const ExperienceService = {
         if (!error && data && data.length > 0) {
           remoteExperiences = data.map((d: any) => ({
             id: d.id,
+            title: d.title || null,
             author_id: d.author_id,
             author_name: d.author_name,
             author_role: d.author_role,

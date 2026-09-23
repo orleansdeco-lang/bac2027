@@ -418,8 +418,8 @@ export function ScientificCalculator() {
         {/* 3D HARDWARE CALCULATOR (CASIO CLASSWIZ TACTILE BODY)             */}
         {/* ================================================================= */}
         <div className="lg:col-span-8 flex justify-center">
-          {/* Main 3D Beveled Calculator Housing */}
-          <div className="w-full max-w-[430px] p-5 sm:p-6 rounded-[40px] bg-gradient-to-b from-[#2d3239] via-[#21252b] to-[#181a1f] border-t-2 border-l border-white/20 border-b-4 border-r-2 border-[#0d0f12] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8),0_10px_20px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.15)] relative select-none">
+          {/* Main 3D Beveled Calculator Housing (Always authentic LTR layout) */}
+          <div dir="ltr" className="w-full max-w-[430px] p-5 sm:p-6 rounded-[40px] bg-gradient-to-b from-[#2d3239] via-[#21252b] to-[#181a1f] border-t-2 border-l border-white/20 border-b-4 border-r-2 border-[#0d0f12] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.8),0_10px_20px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.15)] relative select-none">
             {/* Corner Hardware Screws (Authentic physical look) */}
             <span className="absolute top-4 left-4 w-2 h-2 rounded-full bg-[#15171a] border border-white/10 shadow-inner flex items-center justify-center">
               <span className="w-1 h-[0.5px] bg-white/20 block transform rotate-45" />
@@ -512,7 +512,7 @@ export function ScientificCalculator() {
               </div>
 
               {/* Expression Input Line with Realistic Blinking Cursor */}
-              <div className="min-h-[26px] text-end text-sm sm:text-base tracking-wider overflow-x-auto whitespace-nowrap text-[#1a291a] pt-1.5 font-bold dir-ltr flex items-center justify-end">
+              <div className="min-h-[26px] text-left text-sm sm:text-base tracking-wider overflow-x-auto whitespace-nowrap text-[#1a291a] pt-1.5 font-bold flex items-center justify-start">
                 <span>
                   {expression.slice(0, cursorPos)}
                   <span className="inline-block w-0.5 h-4 bg-[#1a291a] animate-pulse align-middle" />

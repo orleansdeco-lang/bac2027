@@ -252,36 +252,37 @@ export default function ExperiencesPage() {
 
   return (
     <AppShell activeNav="experiences">
-      <div className="w-full min-h-screen bg-slate-950/90 text-slate-100 rounded-3xl p-3 sm:p-6 lg:p-8 border border-slate-800/80 shadow-2xl font-sans selection:bg-emerald-500 selection:text-slate-950">
+      <div className="w-full space-y-6 sm:space-y-8 font-sans selection:bg-[var(--color-primary)] selection:text-white">
         {/* Toast Notification */}
         {toastMessage && (
           <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-in fade-in slide-in-from-bottom-5 duration-300">
-            <div className="flex items-center gap-2 rounded-2xl bg-slate-900/95 border border-emerald-500/40 px-5 py-3 text-sm font-semibold text-emerald-300 shadow-2xl backdrop-blur-md">
-              <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
+            <div className="flex items-center gap-2 rounded-2xl bg-card border border-emerald-500/40 px-5 py-3 text-sm font-semibold text-emerald-700 dark:text-emerald-300 shadow-clay backdrop-blur-md">
+              <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
               <span>{toastMessage}</span>
             </div>
           </div>
         )}
 
-        <div className="max-w-7xl mx-auto space-y-8">
+        <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
           {/* Dual Top-Level Hub Navigation Switcher */}
           <div className="flex items-center justify-center pt-2">
-            <div className="bg-slate-900/95 border border-slate-800/90 p-1.5 rounded-2xl flex items-center gap-2 shadow-2xl backdrop-blur-2xl">
+            <div className="bg-card border border-theme p-1.5 rounded-2xl flex items-center gap-2 shadow-clay">
               <button
+                type="button"
                 onClick={() => setActiveHubTab("experiences")}
-                className={`flex items-center gap-2.5 px-6 py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 cursor-pointer ${
+                className={`flex items-center gap-2.5 px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer ${
                   activeHubTab === "experiences"
-                    ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 shadow-lg shadow-emerald-500/25"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                    ? "bg-[#2C5E54] text-white shadow-xs"
+                    : "text-theme-secondary hover:text-theme-text hover:bg-surface-soft"
                 }`}
               >
-                <GraduationCap className="w-5 h-5" />
+                <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>تجارب وعِبر البكالوريا</span>
                 <span
                   className={`text-xs px-2 py-0.5 rounded-full ${
                     activeHubTab === "experiences"
-                      ? "bg-black/20 text-slate-950 font-black"
-                      : "bg-slate-800 text-slate-400"
+                      ? "bg-white/20 text-white font-black"
+                      : "bg-surface-soft text-theme-muted"
                   }`}
                 >
                   {experiences.length}
@@ -289,20 +290,21 @@ export default function ExperiencesPage() {
               </button>
 
               <button
+                type="button"
                 onClick={() => setActiveHubTab("challenges")}
-                className={`flex items-center gap-2.5 px-6 py-3 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 cursor-pointer ${
+                className={`flex items-center gap-2.5 px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer ${
                   activeHubTab === "challenges"
-                    ? "bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25"
-                    : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                    ? "bg-[#2C5E54] text-white shadow-xs"
+                    : "text-theme-secondary hover:text-theme-text hover:bg-surface-soft"
                 }`}
               >
-                <Flame className="w-5 h-5 text-amber-400" />
+                <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
                 <span>مواضيع وتحديات الزملاء</span>
                 <span
                   className={`text-xs px-2 py-0.5 rounded-full ${
                     activeHubTab === "challenges"
                       ? "bg-white/20 text-white font-black"
-                      : "bg-slate-800 text-slate-400"
+                      : "bg-surface-soft text-theme-muted"
                   }`}
                 >
                   {challenges.length}
@@ -315,32 +317,33 @@ export default function ExperiencesPage() {
           {/* TAB 1: EXPERIENCES BANK                                                    */}
           {/* ========================================================================= */}
           {activeHubTab === "experiences" && (
-            <div className="space-y-8 animate-in fade-in duration-300">
-              {/* Hero Section */}
-              <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-gradient-to-b from-slate-900/90 via-slate-900/60 to-slate-950 p-6 sm:p-10 shadow-2xl">
-                <div className="absolute top-0 right-0 -mt-8 -mr-8 h-64 w-64 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
-                <div className="absolute bottom-0 left-0 -mb-8 -ml-8 h-64 w-64 rounded-full bg-teal-500/10 blur-3xl pointer-events-none" />
+            <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
+              {/* Hero Section: Majestic Forest Theme with Warm Glow */}
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1E3A34] via-[#244b43] to-[#2C5E54] text-white p-6 sm:p-10 shadow-clay border border-[#2C5E54]/40">
+                <div className="absolute top-0 right-0 -mt-8 -mr-8 h-64 w-64 rounded-full bg-emerald-400/10 blur-3xl pointer-events-none" />
+                <div className="absolute bottom-0 left-0 -mb-8 -ml-8 h-64 w-64 rounded-full bg-teal-300/10 blur-3xl pointer-events-none" />
 
                 <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                   <div className="space-y-3 max-w-2xl">
-                    <div className="inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3.5 py-1 text-xs font-bold text-emerald-400 border border-emerald-500/30">
-                      <Sparkles className="h-3.5 w-3.5" />
+                    <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1 text-xs font-bold text-emerald-200 border border-white/20">
+                      <Sparkles className="h-3.5 w-3.5 text-amber-300" />
                       <span>حكمة وخبرات الميدان للبكالوريا</span>
                     </div>
-                    <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white">
+                    <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white font-serif">
                       بنك التجارب والعِبر 🎓
                     </h1>
-                    <p className="text-sm sm:text-base text-slate-300 leading-relaxed">
-                      تجارب حقيقية من متفوقين ومعيدين وطلبة مقبلين على بكالوريا 2027.
-                      تعلم من أكبر الفخاخ التي تضيع النقاط، واكتشف الروتينات الحاسمة التي صنعت الفارق.
+                    <p className="text-sm sm:text-base text-slate-200 leading-relaxed font-sans">
+                      قصص واقعية ملهمة من متفوقين ومعيدين وطلبة مقبلين على بكالوريا 2027.
+                      اضغط على أي تجربة لاكتشاف الفخاخ التي تضيع النقاط، والروتين اليومي الحاسم للتفوق.
                     </p>
                   </div>
 
                   {/* CTA Button: Share Experience */}
                   <div className="w-full md:w-auto shrink-0">
                     <button
+                      type="button"
                       onClick={() => setIsShareModalOpen(true)}
-                      className="w-full md:w-auto flex items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 px-6 py-3.5 text-sm sm:text-base font-extrabold text-slate-950 shadow-xl shadow-emerald-500/25 hover:from-emerald-400 hover:to-teal-400 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
+                      className="w-full md:w-auto flex items-center justify-center gap-2.5 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 px-6 py-3.5 text-sm sm:text-base font-extrabold shadow-lg hover:scale-102 active:scale-98 transition-all cursor-pointer"
                     >
                       <PlusCircle className="h-5 w-5" />
                       <span>شارك تجربتك واصنع الفارق ✨</span>
@@ -349,46 +352,46 @@ export default function ExperiencesPage() {
                 </div>
 
                 {/* Highlights Row */}
-                <div className="relative z-10 mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 border-t border-slate-800/80 text-xs sm:text-sm">
-                  <div className="rounded-2xl bg-slate-950/50 p-3.5 border border-slate-800/80">
-                    <div className="text-slate-400">إجمالي التجارب</div>
-                    <div className="mt-1 text-xl sm:text-2xl font-black text-white">{expStats.total}</div>
+                <div className="relative z-10 mt-8 grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 border-t border-white/20 text-xs sm:text-sm">
+                  <div className="rounded-2xl bg-white/10 backdrop-blur-sm p-3.5 border border-white/15">
+                    <div className="text-emerald-100/80">إجمالي التجارب</div>
+                    <div className="mt-1 text-xl sm:text-2xl font-black text-white font-mono">{expStats.total}</div>
                   </div>
-                  <div className="rounded-2xl bg-slate-950/50 p-3.5 border border-slate-800/80">
-                    <div className="text-slate-400">متفوقو 16+ فما فوق</div>
-                    <div className="mt-1 text-xl sm:text-2xl font-black text-emerald-400">{expStats.highGrades}</div>
+                  <div className="rounded-2xl bg-white/10 backdrop-blur-sm p-3.5 border border-white/15">
+                    <div className="text-emerald-100/80">متفوقو 16+ فما فوق</div>
+                    <div className="mt-1 text-xl sm:text-2xl font-black text-amber-300 font-mono">{expStats.highGrades}</div>
                   </div>
-                  <div className="rounded-2xl bg-slate-950/50 p-3.5 border border-slate-800/80">
-                    <div className="text-slate-400">قصص نجاح المعيدين</div>
-                    <div className="mt-1 text-xl sm:text-2xl font-black text-amber-400">{expStats.repeaters}</div>
+                  <div className="rounded-2xl bg-white/10 backdrop-blur-sm p-3.5 border border-white/15">
+                    <div className="text-emerald-100/80">قصص نجاح المعيدين</div>
+                    <div className="mt-1 text-xl sm:text-2xl font-black text-white font-mono">{expStats.repeaters}</div>
                   </div>
-                  <div className="rounded-2xl bg-slate-950/50 p-3.5 border border-slate-800/80">
-                    <div className="text-slate-400">مراجعة وتدقيق معتمد</div>
-                    <div className="mt-1 text-xl sm:text-2xl font-black text-blue-400">100%</div>
+                  <div className="rounded-2xl bg-white/10 backdrop-blur-sm p-3.5 border border-white/15">
+                    <div className="text-emerald-100/80">تدقيق ومراجعة معتمدة</div>
+                    <div className="mt-1 text-xl sm:text-2xl font-black text-emerald-300 font-mono">100%</div>
                   </div>
                 </div>
               </div>
 
-              {/* Filter Controls */}
+              {/* Filter Controls (Comfortable Card Theme) */}
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
                   <div className="relative md:col-span-6">
-                    <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                    <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-theme-muted" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="ابحث بالاسم، التخصص الجامعي (طب، ESI...)، أو أكبر فخ..."
-                      className="w-full rounded-2xl border border-slate-800 bg-slate-900/90 pr-10 pl-4 py-2.5 text-xs sm:text-sm text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-inner"
+                      placeholder="ابحث بالاسم، التخصص الجامعي (طب، ESI...)، أو الفخاخ..."
+                      className="w-full rounded-2xl border border-theme bg-card pr-10 pl-4 py-2.5 text-xs sm:text-sm text-theme-text placeholder:text-theme-muted focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] shadow-xs"
                     />
                   </div>
 
                   <div className="relative md:col-span-3">
-                    <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#D7A66A] pointer-events-none" />
+                    <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-600 dark:text-amber-400 pointer-events-none" />
                     <select
                       value={selectedWilaya}
                       onChange={(e) => setSelectedWilaya(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-800 bg-slate-900/90 pr-9 pl-4 py-2.5 text-xs sm:text-sm text-slate-200 focus:border-emerald-500 focus:outline-none cursor-pointer appearance-none"
+                      className="w-full rounded-2xl border border-theme bg-card pr-9 pl-4 py-2.5 text-xs sm:text-sm text-theme-text focus:border-[var(--color-primary)] focus:outline-none cursor-pointer appearance-none shadow-xs"
                     >
                       <option value="all">📍 جميع الولايات (الـ 58 ولاية)</option>
                       {ALGERIAN_WILAYAS.map((w) => (
@@ -402,6 +405,7 @@ export default function ExperiencesPage() {
                   <div className="md:col-span-3">
                     {userStreamId ? (
                       <button
+                        type="button"
                         onClick={() => {
                           setOnlyTargetMatch(!onlyTargetMatch);
                           if (!onlyTargetMatch) {
@@ -410,11 +414,11 @@ export default function ExperiencesPage() {
                         }}
                         className={`w-full flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
                           onlyTargetMatch
-                            ? "bg-emerald-500 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/25 scale-[1.02]"
-                            : "bg-slate-900 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-white"
+                            ? "bg-[#2C5E54] text-white border-[#2C5E54] shadow-xs"
+                            : "bg-card text-theme-secondary border-theme hover:bg-card-hover hover:text-theme-text"
                         }`}
                       >
-                        <Target className="h-4 w-4 text-emerald-400" />
+                        <Target className="h-4 w-4" />
                         <span>تناسب شعبتي ({userStreamId}) 🎯</span>
                       </button>
                     ) : null}
@@ -429,11 +433,12 @@ export default function ExperiencesPage() {
                     return (
                       <button
                         key={c.id}
+                        type="button"
                         onClick={() => setSelectedCategory(c.id)}
-                        className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                        className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition-all cursor-pointer border ${
                           isActive
-                            ? "bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20 font-bold"
-                            : "bg-slate-900 text-slate-400 border border-slate-800 hover:bg-slate-800/80 hover:text-slate-200"
+                            ? "bg-[#2C5E54] text-white border-[#2C5E54] shadow-xs"
+                            : "bg-card text-theme-secondary border-theme hover:bg-surface-soft hover:text-theme-text"
                         }`}
                       >
                         <Icon className="h-4 w-4" />
@@ -446,8 +451,8 @@ export default function ExperiencesPage() {
                 {/* Stream Selector Pills */}
                 {!onlyTargetMatch && (
                   <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                    <span className="flex items-center gap-1 text-xs text-slate-400 ml-2 font-medium">
-                      <Filter className="h-3.5 w-3.5 text-emerald-400" />
+                    <span className="flex items-center gap-1 text-xs text-theme-muted ml-2 font-medium">
+                      <Filter className="h-3.5 w-3.5 text-[var(--color-primary)]" />
                       <span>الشعبة:</span>
                     </span>
                     {STREAMS.map((s) => {
@@ -455,11 +460,12 @@ export default function ExperiencesPage() {
                       return (
                         <button
                           key={s.id}
+                          type="button"
                           onClick={() => setSelectedStream(s.id)}
-                          className={`rounded-xl px-3 py-1.5 text-xs font-medium transition-all cursor-pointer ${
+                          className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer border ${
                             isSelected
-                              ? "bg-slate-200 text-slate-950 font-bold shadow-sm"
-                              : "bg-slate-900/80 text-slate-400 border border-slate-800 hover:border-slate-700 hover:text-slate-300"
+                              ? "bg-[#2C5E54] text-white border-[#2C5E54] shadow-xs"
+                              : "bg-card text-theme-secondary border-theme hover:border-slate-400 hover:text-theme-text"
                           }`}
                         >
                           {s.label}

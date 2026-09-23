@@ -434,12 +434,14 @@ GRANT SELECT ON public.ops_learning_summary TO authenticated, service_role;
 -- 7. RECORD SCHEMA MIGRATION VERSION
 -- ------------------------------------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS supabase_migrations.schema_migrations (
-  version TEXT PRIMARY KEY,
-  name TEXT,
-  inserted_at TIMESTAMPTZ DEFAULT now()
-);
-
-INSERT INTO supabase_migrations.schema_migrations (version, name, inserted_at)
-VALUES ('023', '023_phase1_security_and_authoritative_persistence', now())
-ON CONFLICT (version) DO NOTHING;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_schema = 'supabase_migrations' AND table_name = 'schema_migrations'
+  ) THEN
+    INSERT INTO supabase_migrations.schema_migrations (version)
+    VALUES ('023')
+    ON CONFLICT (version) DO NOTHING;
+  END IF;
+END $$;

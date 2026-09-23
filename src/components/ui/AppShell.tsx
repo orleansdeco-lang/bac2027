@@ -24,20 +24,16 @@ export function AppShell({
   showFooter = true,
   noPadding = false,
 }: AppShellProps) {
-  const pathname = usePathname();
-  const isAppPage =
-    Boolean(pathname) &&
-    (pathname.startsWith("/dashboard") ||
-      pathname.startsWith("/roadmap") ||
-      pathname.startsWith("/progress") ||
-      pathname.startsWith("/error-lab") ||
-      pathname.startsWith("/exam") ||
-      pathname.startsWith("/exams") ||
-      pathname.startsWith("/experiences") ||
-      pathname.startsWith("/planner") ||
-      pathname.startsWith("/account"));
+  const pathname = usePathname() || "";
+  const isExcluded =
+    pathname === "/" ||
+    pathname === "/landing" ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/ops") ||
+    pathname.startsWith("/onboarding") ||
+    pathname === "/reset-demo";
 
-  const shouldShowSidebar = showSidebar !== undefined ? showSidebar : isAppPage;
+  const shouldShowSidebar = showSidebar !== undefined ? showSidebar : !isExcluded;
 
   return (
     <div className="min-h-screen bg-canvas text-theme-text flex flex-col selection:bg-[var(--color-primary)] selection:text-[var(--color-primary-text)] transition-colors duration-200">

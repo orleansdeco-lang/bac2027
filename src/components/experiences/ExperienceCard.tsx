@@ -30,6 +30,9 @@ import {
   Check,
   X,
   ShieldCheck,
+  Clock,
+  Sparkles,
+  BookMarked,
 } from "lucide-react";
 
 interface ExperienceCardProps {
@@ -49,37 +52,37 @@ const STREAM_CONFIG: Record<
   sciences: {
     label: "علوم تجريبية",
     bg: "bg-emerald-500/10",
-    text: "text-emerald-400",
+    text: "text-emerald-700 dark:text-emerald-300",
     border: "border-emerald-500/30",
   },
   math: {
     label: "رياضيات",
     bg: "bg-blue-500/10",
-    text: "text-blue-400",
+    text: "text-blue-700 dark:text-blue-300",
     border: "border-blue-500/30",
   },
   technique_math: {
     label: "تقني رياضي",
     bg: "bg-amber-500/10",
-    text: "text-amber-400",
+    text: "text-amber-700 dark:text-amber-300",
     border: "border-amber-500/30",
   },
   gestion_economie: {
     label: "تسيير واقتصاد",
     bg: "bg-purple-500/10",
-    text: "text-purple-400",
+    text: "text-purple-700 dark:text-purple-300",
     border: "border-purple-500/30",
   },
   lettres_philo: {
     label: "آداب وفلسفة",
     bg: "bg-rose-500/10",
-    text: "text-rose-400",
+    text: "text-rose-700 dark:text-rose-300",
     border: "border-rose-500/30",
   },
   langues_etrangeres: {
     label: "لغات أجنبية",
     bg: "bg-cyan-500/10",
-    text: "text-cyan-400",
+    text: "text-cyan-700 dark:text-cyan-300",
     border: "border-cyan-500/30",
   },
 };
@@ -99,6 +102,21 @@ function formatArabicDate(dateStr?: string): string {
   }
 }
 
+// Generate an inspiring title if not explicitly set
+function getExperienceTitle(exp: BacExperience): string {
+  if (exp.title && exp.title.trim()) return exp.title;
+  if (exp.initial_grade && exp.final_grade) {
+    return `من معدل ${exp.initial_grade.toFixed(2)} إلى ${exp.final_grade.toFixed(2)}: كيف قلبت المعادلة في البكالوريا؟`;
+  }
+  if (exp.final_grade && exp.final_grade >= 16) {
+    return `طريقتي إلى معدل ${exp.final_grade.toFixed(2)}: الأسرار والروتين الحاسم لتفوق البكالوريا`;
+  }
+  if (exp.candidate_type === "current_student") {
+    return `خطتي والتحديات التي أواجهها للوصول إلى الامتياز في بكالوريا 2027`;
+  }
+  return `تجربتي في البكالوريا: كيف تجاوزت الفخاخ وحققت أهدافي`;
+}
+
 export function ExperienceCard({
   experience,
   userId,
@@ -108,6 +126,9 @@ export function ExperienceCard({
   isOperator = false,
   onToast,
 }: ExperienceCardProps) {
+  // Expansion state: Start collapsed with Big Title & Name, click to reveal details!
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+
   const [upvoted, setUpvoted] = useState(false);
   const [upvotesCount, setUpvotesCount] = useState(experience.upvotes_count);
   const [isFavorite, setIsFavorite] = useState(false);
@@ -142,71 +163,69 @@ export function ExperienceCard({
         Boolean(localStorage.getItem("ops_auth_token"))));
 
   useEffect(() => {
-    setUpvoted(ExperienceService.hasUserUpvoted(experience.id));
-    setIsFavorite(ExperienceService.isFavorite(experience.id));
+    if (typeof window !== "undefined") {
+      const upvotedIds = ExperienceService.getUpvotedIds();
+      setUpvoted(upvotedIds.includes(experience.id));
+      setIsFavorite(ExperienceService.isFavorite(experience.id));
+    }
   }, [experience.id]);
 
-  // Load comments when accordion expands
-  const handleToggleComments = async () => {
-    const nextState = !showComments;
-    setShowComments(nextState);
-
-    if (nextState && comments.length === 0) {
+  const handleToggleComments = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!showComments && comments.length === 0) {
       setLoadingComments(true);
       try {
         const fetched = await ExperienceService.getComments(experience.id);
         setComments(fetched);
         setCommentsCount(fetched.length);
-      } catch (err) {
-        console.error("Failed to load comments", err);
+      } catch {
+        onToast("تعذر تحميل التعليقات");
       } finally {
         setLoadingComments(false);
       }
     }
+    setShowComments((prev) => !prev);
   };
 
   const handleAddComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newCommentText.trim()) return;
+    if (!newCommentText.trim() || isSubmittingComment) return;
 
     setIsSubmittingComment(true);
-    const authorName = userFirstName || "طالب شاطر";
-
     try {
       const added = await ExperienceService.addComment(
         experience.id,
-        newCommentText,
-        authorName,
-        userId,
+        newCommentText.trim(),
+        userFirstName || "طالب(ة) الشاطر",
+        userId || null,
         userWilaya || null
       );
-      setComments((prev) => [...prev, added]);
-      setCommentsCount((prev) => prev + 1);
-      setNewCommentText("");
-      onToast("💬 تم إضافة تعليقك بنجاح!");
+
+      if (added) {
+        setComments((prev) => [...prev, added]);
+        setCommentsCount((prev) => prev + 1);
+        setNewCommentText("");
+        onToast("💬 تم نشر تعليقك بنجاح!");
+      } else {
+        onToast("تعذر نشر التعليق حالياً");
+      }
     } catch {
-      onToast("تعذر إضافة التعليق حالياً، يرجى المحاولة لاحقاً");
+      onToast("حدث خطأ أثناء إضافة التعليق");
     } finally {
       setIsSubmittingComment(false);
     }
   };
 
-  const handleStartEditComment = (comment: ExperienceComment) => {
-    setEditingCommentId(comment.id);
-    setEditCommentContent(comment.content);
-  };
-
   const handleSaveEditComment = async (commentId: string) => {
-    if (!editCommentContent.trim()) return;
+    if (!editCommentContent.trim() || isSavingEditComment) return;
     setIsSavingEditComment(true);
-
     try {
       const success = await ExperienceService.updateComment(
         experience.id,
         commentId,
-        editCommentContent,
-        userId,
-        userEmail
+        editCommentContent.trim(),
+        userId || null,
+        userEmail || null
       );
       if (success) {
         setComments((prev) =>
@@ -217,9 +236,10 @@ export function ExperienceCard({
           )
         );
         setEditingCommentId(null);
-        onToast("✏️ تم تحديث التعليق بنجاح");
+        setEditCommentContent("");
+        onToast("✅ تم تعديل التعليق بنجاح");
       } else {
-        onToast("فشل تحديث التعليق");
+        onToast("فشل حفظ التعديل");
       }
     } catch {
       onToast("حدث خطأ أثناء تعديل التعليق");
@@ -229,14 +249,13 @@ export function ExperienceCard({
   };
 
   const handleDeleteComment = async (commentId: string) => {
-    if (!confirm("هل أنت متأكد من حذف هذا التعليق؟")) return;
-
+    if (!confirm("هل أنت متأكد من رغبتك في حذف هذا التعليق؟")) return;
     try {
       const success = await ExperienceService.deleteComment(
         experience.id,
         commentId,
-        userId,
-        userEmail
+        userId || null,
+        userEmail || null
       );
       if (success) {
         setComments((prev) => prev.filter((c) => c.id !== commentId));
@@ -250,7 +269,8 @@ export function ExperienceCard({
     }
   };
 
-  const handleUpvote = async () => {
+  const handleUpvote = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (isLiking) return;
     setIsLiking(true);
 
@@ -272,17 +292,17 @@ export function ExperienceCard({
     }
   };
 
-  const handleToggleFavorite = () => {
+  const handleToggleFavorite = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const fav = ExperienceService.toggleFavorite(experience.id);
     setIsFavorite(fav);
     if (fav) {
-      onToast("⭐ تم حفظ التجربة في قائمة مفضلتك للرجوع إليها!");
+      onToast("⭐ تم حفظ التجربة في مفضلتك للرجوع إليها!");
     } else {
       onToast("تمت إزالة التجربة من المفضلة");
     }
   };
 
-  // Viral share message text
   const shareSnippet =
     experience.winning_routine.length > 90
       ? `${experience.winning_routine.slice(0, 90)}...`
@@ -293,15 +313,16 @@ export function ExperienceCard({
     return `${window.location.origin}/experiences#${experience.id}`;
   };
 
-  const shareText = `🇩🇿 نصيحة وتجربة بكالوريا حقيقية بقلم ${experience.author_name}:\n"💡 ${shareSnippet}"\n\nتصفح المزيد من النصائح وتجارب المتفوقين في منصة الشاطر:\n${getShareUrl()}`;
+  const shareText = `🇩🇿 تجربة بكالوريا ملهمة بقلم ${experience.author_name}:\n"${experience.title || getExperienceTitle(experience)}"\n💡 ${shareSnippet}\n\nتصفح كامل التجربة في منصة الشاطر:\n${getShareUrl()}`;
 
-  const handleNativeShare = async () => {
+  const handleNativeShare = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     const url = getShareUrl();
     if (typeof navigator !== "undefined" && navigator.share) {
       try {
         await navigator.share({
           title: `تجربة ${experience.author_name} في البكالوريا | الشاطر`,
-          text: `🇩🇿 نصيحة ذهبية في البكالوريا بقلم ${experience.author_name}:\n"${shareSnippet}"`,
+          text: shareText,
           url: url,
         });
         setShowShareMenu(false);
@@ -313,559 +334,573 @@ export function ExperienceCard({
         }
       }
     }
-    // Fallback: open share menu
     setShowShareMenu(true);
   };
 
-  const handleCopyLink = async () => {
+  const handleCopyLink = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const url = getShareUrl();
-    try {
-      await navigator.clipboard.writeText(url);
-      onToast("🔗 تم نسخ رابط التجربة بنجاح للمشاركة مع زملائك!");
-      setShowShareMenu(false);
-    } catch {
-      onToast("تعذر نسخ الرابط تلقائياً");
-    }
+    navigator.clipboard.writeText(url);
+    onToast("🔗 تم نسخ رابط التجربة بنجاح!");
+    setShowShareMenu(false);
   };
 
-  const handleShareWhatsApp = () => {
+  const handleShareWhatsApp = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const text = encodeURIComponent(shareText);
     window.open(`https://api.whatsapp.com/send?text=${text}`, "_blank");
     setShowShareMenu(false);
   };
 
-  const handleShareTelegram = () => {
+  const handleShareTelegram = (e: React.MouseEvent) => {
+    e.stopPropagation();
     const url = encodeURIComponent(getShareUrl());
-    const text = encodeURIComponent(
-      `🇩🇿 تجربة ملهمة في البكالوريا بقلم ${experience.author_name}:\n"${shareSnippet}"`
-    );
+    const text = encodeURIComponent(shareText);
     window.open(`https://t.me/share/url?url=${url}&text=${text}`, "_blank");
-    setShowShareMenu(false);
-  };
-
-  const handleShareFacebook = () => {
-    const url = encodeURIComponent(getShareUrl());
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, "_blank");
-    setShowShareMenu(false);
-  };
-
-  const handleShareX = () => {
-    const text = encodeURIComponent(
-      `🇩🇿 تجربة ملهمة في البكالوريا بقلم ${experience.author_name}:\n"${shareSnippet}"\n\n`
-    );
-    const url = encodeURIComponent(getShareUrl());
-    window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, "_blank");
     setShowShareMenu(false);
   };
 
   const streamInfo = STREAM_CONFIG[experience.stream_id] || {
     label: experience.stream_id,
     bg: "bg-slate-500/10",
-    text: "text-slate-400",
+    text: "text-slate-700 dark:text-slate-300",
     border: "border-slate-500/30",
   };
 
   const formattedDate = formatArabicDate(experience.created_at);
+  const bigTitle = getExperienceTitle(experience);
+
+  // Extract author name without bracketed wilaya for cleaner presentation
+  const cleanAuthorName = experience.author_name.replace(/\(ولاية[^)]+\)/g, "").trim();
 
   return (
     <>
-      <div
+      <article
         id={experience.id}
-        className="group relative rounded-2xl border border-slate-800/80 bg-slate-900/90 p-5 md:p-6 shadow-xl backdrop-blur-sm transition-all duration-300 hover:border-slate-700 hover:shadow-2xl hover:shadow-emerald-950/20 flex flex-col justify-between"
+        onClick={() => setIsExpanded((prev) => !prev)}
+        className={`group relative rounded-3xl border transition-all duration-300 cursor-pointer overflow-hidden ${
+          isExpanded
+            ? "bg-card border-[var(--color-primary)]/40 shadow-clay ring-2 ring-[var(--color-primary)]/10"
+            : "bg-card hover:bg-card-hover border-theme shadow-clay hover:shadow-lg hover:border-[var(--color-primary)]/30"
+        } p-5 sm:p-7 flex flex-col justify-between`}
       >
-        {/* Top Header Row */}
+        {/* Subtle Top Indicator when expanded */}
+        {isExpanded && (
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#2C5E54] via-emerald-400 to-teal-500" />
+        )}
+
         <div>
-          <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-800/60 pb-4">
-            <div className="flex items-start gap-3">
-              {/* Avatar Initial */}
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-lg font-bold text-white shadow-inner">
-                {experience.author_name.charAt(0)}
+          {/* Top Metadata Row: Student Profile, Wilaya, Date, GPA */}
+          <div className="flex items-start justify-between gap-3 border-b border-theme/60 pb-4">
+            <div className="flex items-center gap-3">
+              {/* Avatar Initial with Soft Editorial Gradient */}
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2C5E54] to-[#1E3A34] text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0 border border-white/20">
+                {cleanAuthorName.charAt(0)}
               </div>
 
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-bold text-slate-100 text-base md:text-lg">
-                    {experience.author_name}
+                  <h3 className="font-bold text-theme-text text-base sm:text-lg font-sans">
+                    {cleanAuthorName}
                   </h3>
+
                   {experience.is_verified && (
                     <span
-                      className="inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-semibold text-blue-400 border border-blue-500/20"
-                      title="تجربة تم التحقق من صحتها وسلم علامتها"
+                      className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
+                      title="تجربة موثقة رسمياً"
                     >
-                      <CheckCircle2 className="h-3 w-3 text-blue-400" />
-                      موثقة
+                      <CheckCircle2 className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                      <span>موثقة</span>
                     </span>
                   )}
 
-                  {/* Wilaya badge if present */}
+                  {/* Wilaya badge */}
                   {experience.wilaya && (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-slate-800/80 px-2 py-0.5 text-[11px] font-medium text-slate-300 border border-slate-700/60">
-                      <MapPin className="h-3 w-3 text-[#D7A66A]" />
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-surface px-2 py-0.5 text-[11px] font-medium text-theme-secondary border border-theme">
+                      <MapPin className="h-3 w-3 text-amber-600 dark:text-amber-400" />
                       <span>{experience.wilaya}</span>
                     </span>
                   )}
 
                   {/* Date badge */}
-                  <span className="inline-flex items-center gap-1 text-[11px] text-slate-400 bg-slate-800/60 px-2 py-0.5 rounded-md border border-slate-700/60">
-                    <Calendar className="h-3 w-3 text-slate-400" />
-                    {formattedDate}
+                  <span className="inline-flex items-center gap-1 text-[11px] text-theme-muted bg-surface/60 px-2 py-0.5 rounded-lg border border-theme/60">
+                    <Calendar className="h-3 w-3" />
+                    <span>{formattedDate}</span>
                   </span>
                 </div>
 
                 {/* Candidate Track & Stream Badges */}
-                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
-                  {/* Stream */}
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
                   <span
-                    className={`inline-flex items-center rounded-lg px-2.5 py-0.5 font-medium border ${streamInfo.bg} ${streamInfo.text} ${streamInfo.border}`}
+                    className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-0.5 font-bold border ${streamInfo.bg} ${streamInfo.text} ${streamInfo.border} text-[11px]`}
                   >
-                    <GraduationCap className="h-3 w-3 ml-1" />
-                    {streamInfo.label}
+                    <GraduationCap className="h-3 w-3" />
+                    <span>{streamInfo.label}</span>
                   </span>
 
-                  {/* Candidate Track Badge */}
+                  {/* Track Badge */}
                   {experience.candidate_type === "current_student" ? (
-                    <span className="inline-flex items-center rounded-lg bg-sky-500/10 px-2.5 py-0.5 font-semibold text-sky-400 border border-sky-500/20">
+                    <span className="inline-flex items-center rounded-lg bg-sky-500/10 px-2 py-0.5 font-bold text-sky-700 dark:text-sky-300 border border-sky-500/20 text-[10px]">
                       🎯 مقبل على الباك 2027
                     </span>
-                  ) : (
-                    <>
-                      {experience.passed_bac !== false && (
-                        <span className="inline-flex items-center rounded-lg bg-emerald-500/10 px-2.5 py-0.5 font-semibold text-emerald-400 border border-emerald-500/20">
-                          🎓 اجتاز الباك بنجاح
-                        </span>
-                      )}
-                      {experience.passed_bac === false && (
-                        <span className="inline-flex items-center rounded-lg bg-amber-500/10 px-2.5 py-0.5 font-semibold text-amber-400 border border-amber-500/20">
-                          💪 تجربة وتدارك للأخطاء
-                        </span>
-                      )}
-                      {experience.retaking_bac && (
-                        <span className="inline-flex items-center rounded-lg bg-purple-500/10 px-2.5 py-0.5 font-semibold text-purple-400 border border-purple-500/20">
-                          🔄 مترشح حر للتفوق
-                        </span>
-                      )}
-                    </>
-                  )}
-
-                  {/* Legacy author_role fallback tags */}
-                  {experience.author_role === "top_achiever" && !experience.candidate_type && (
-                    <span className="inline-flex items-center rounded-lg bg-emerald-500/10 px-2.5 py-0.5 font-semibold text-emerald-400 border border-emerald-500/20">
-                      🏆 متفوق 16+
+                  ) : experience.initial_grade && experience.final_grade ? (
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500/10 px-2 py-0.5 font-bold text-amber-700 dark:text-amber-300 border border-amber-500/20 text-[10px]">
+                      <TrendingUp className="h-3 w-3" />
+                      <span>قصة نجاح وتدارك</span>
                     </span>
-                  )}
-                  {experience.author_role === "repeater_success" && !experience.candidate_type && (
-                    <span className="inline-flex items-center rounded-lg bg-amber-500/10 px-2.5 py-0.5 font-semibold text-amber-400 border border-amber-500/20">
-                      🚀 قصة نجاح معيد
+                  ) : (
+                    <span className="inline-flex items-center rounded-lg bg-emerald-500/10 px-2 py-0.5 font-bold text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 text-[10px]">
+                      🎓 خريج بكالوريا
                     </span>
                   )}
                 </div>
               </div>
             </div>
 
-            {/* GPA & University / Target Major */}
-            <div className="flex flex-col items-end gap-1.5 shrink-0">
+            {/* GPA Score Badge (Clean, High Contrast) */}
+            <div className="flex flex-col items-end gap-1 shrink-0">
               {experience.final_grade && (
-                <div className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 px-3 py-1 border border-emerald-500/30 text-emerald-300 font-bold text-sm md:text-base shadow-sm">
-                  <span className="text-xs text-slate-400">المعدل:</span>
-                  <span className="font-extrabold text-white text-base md:text-lg">
+                <div className="flex items-center gap-1.5 rounded-2xl bg-[#2C5E54]/10 dark:bg-[#2C5E54]/20 px-3 py-1.5 border border-[#2C5E54]/30 text-[#1E3A34] dark:text-emerald-300 font-bold shadow-xs">
+                  <span className="text-[10px] text-theme-muted">المعدل:</span>
+                  <span className="font-extrabold text-base sm:text-xl font-mono text-[#2C5E54] dark:text-emerald-400">
                     {experience.final_grade.toFixed(2)}
                   </span>
-                  <span className="text-xs text-emerald-400">/20</span>
+                  <span className="text-[10px] text-theme-muted">/20</span>
                 </div>
               )}
 
               {experience.initial_grade && experience.final_grade && (
-                <div className="flex items-center gap-1 text-[11px] font-semibold text-amber-300/90 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                <div className="text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 flex items-center gap-1">
                   <TrendingUp className="h-3 w-3" />
-                  <span>
-                    من {experience.initial_grade.toFixed(2)} إلى {experience.final_grade.toFixed(2)}
-                  </span>
+                  <span>من {experience.initial_grade.toFixed(2)}</span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* University Major or Target Destination */}
-          {(experience.university_major || experience.target_major) && (
-            <div className="mt-3 flex items-center gap-2 rounded-xl bg-slate-800/40 px-3 py-1.5 text-xs text-slate-300 border border-slate-800">
-              <Target className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
-              <span className="text-slate-400">
-                {experience.university_major ? "التخصص الجامعي الحالي:" : "الوجهة المستهدفة:"}
-              </span>
-              <span className="font-bold text-emerald-300">
-                {experience.university_major || experience.target_major}
-              </span>
-            </div>
-          )}
+          {/* ================================================================= */}
+          {/* BIG HEADLINE / TITLE (العنوان الكبير الذي طلبه المستخدم)            */}
+          {/* ================================================================= */}
+          <div className="mt-4">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-serif font-black text-theme-text group-hover:text-[var(--color-primary)] transition-colors leading-snug tracking-tight">
+              {bigTitle}
+            </h2>
 
-          {/* Danger Box: Biggest Trap (أكبر فخ) - Sleek Dark High-Contrast */}
-          <div className="mt-4 rounded-xl border border-rose-500/30 bg-gradient-to-br from-rose-950/20 to-slate-900 p-4 shadow-sm">
-            <div className="flex items-center gap-2 text-rose-400 font-bold text-sm mb-2">
-              <AlertTriangle className="h-4 w-4 shrink-0 text-rose-400" />
-              <span>⚠️ أكبر فخ نحذركم منه:</span>
-            </div>
-            <p className="text-sm leading-relaxed text-slate-200 pr-1 select-text">
-              {experience.biggest_trap}
-            </p>
-          </div>
+            {/* Short Teaser / Quote before expansion */}
+            {!isExpanded && (
+              <div className="mt-2.5 space-y-2">
+                <p className="text-xs sm:text-sm text-theme-secondary line-clamp-2 leading-relaxed italic pr-2 border-r-2 border-[var(--color-primary)]/40">
+                  &ldquo;{experience.winning_routine}&rdquo;
+                </p>
 
-          {/* Success Box: Winning Routine (الروتين الحاسم) - Sleek Dark High-Contrast */}
-          <div className="mt-3.5 rounded-xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/20 to-slate-900 p-4 shadow-sm">
-            <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm mb-2">
-              <Lightbulb className="h-4 w-4 shrink-0 text-emerald-400" />
-              <span>💡 السر أو الروتين الذي صنع الفارق:</span>
-            </div>
-            <p className="text-sm leading-relaxed text-slate-200 pr-1 select-text">
-              {experience.winning_routine}
-            </p>
-          </div>
-
-          {/* Best Resources (المراجع والأساتذة) */}
-          {experience.best_resources && (
-            <div className="mt-3 rounded-xl border border-slate-800 bg-slate-950/40 p-3.5">
-              <div className="flex items-center gap-2 text-indigo-300 font-semibold text-xs mb-1.5">
-                <BookOpen className="h-3.5 w-3.5 shrink-0 text-indigo-400" />
-                <span>📚 أفضل المراجع وقنوات المراجعة:</span>
+                {/* Quick Indicators */}
+                <div className="flex items-center gap-3 pt-2 text-[11px] text-theme-muted font-medium flex-wrap">
+                  <span className="flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-theme-muted" />
+                    <span>قراءة: دقيقتان</span>
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1 text-rose-600 dark:text-rose-400">
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    <span>فخ محذر منه</span>
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                    <Lightbulb className="w-3.5 h-3.5" />
+                    <span>روتين التفوق</span>
+                  </span>
+                </div>
               </div>
-              <p className="text-xs leading-relaxed text-slate-300 pr-1">
-                {experience.best_resources}
-              </p>
+            )}
+          </div>
+
+          {/* ================================================================= */}
+          {/* EXPANDED CONTENT AREA ("تضغط عليه يظهرولك المعلومات")             */}
+          {/* ================================================================= */}
+          {isExpanded && (
+            <div className="mt-6 space-y-5 animate-in fade-in slide-in-from-top-3 duration-300 border-t border-theme/60 pt-5">
+              {/* Target / Current Major */}
+              {(experience.university_major || experience.target_major) && (
+                <div className="flex items-center gap-2.5 rounded-2xl bg-surface-soft px-4 py-2.5 text-xs text-theme-text border border-theme">
+                  <Target className="h-4 w-4 text-[var(--color-primary)] shrink-0" />
+                  <span className="text-theme-muted">
+                    {experience.university_major ? "التخصص الجامعي الحالي:" : "الوجهة المستهدفة:"}
+                  </span>
+                  <span className="font-bold text-[var(--color-primary)] font-serif text-sm">
+                    {experience.university_major || experience.target_major}
+                  </span>
+                </div>
+              )}
+
+              {/* Danger Box: The Biggest Trap (أكبر فخ) - Soft, Soothing Eye-Friendly Theme */}
+              <div className="rounded-2xl border border-rose-200/90 dark:border-rose-900/40 bg-rose-50/80 dark:bg-rose-950/20 p-4 sm:p-5 shadow-xs">
+                <div className="flex items-center gap-2 text-rose-800 dark:text-rose-300 font-bold text-sm sm:text-base mb-2 font-serif">
+                  <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
+                  <span>⚠️ أكبر فخ نحذركم منه (إياك والوقوع فيه):</span>
+                </div>
+                <p className="text-xs sm:text-sm leading-relaxed text-slate-800 dark:text-rose-100/90 pr-1 select-text font-sans">
+                  {experience.biggest_trap}
+                </p>
+              </div>
+
+              {/* Success Box: Winning Routine (الروتين الحاسم) - Soft, Soothing Eye-Friendly Theme */}
+              <div className="rounded-2xl border border-emerald-200/90 dark:border-emerald-900/40 bg-emerald-50/80 dark:bg-emerald-950/20 p-4 sm:p-5 shadow-xs">
+                <div className="flex items-center gap-2 text-emerald-900 dark:text-emerald-300 font-bold text-sm sm:text-base mb-2 font-serif">
+                  <Lightbulb className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  <span>💡 السر أو الروتين اليومي الذي صنع الفارق:</span>
+                </div>
+                <p className="text-xs sm:text-sm leading-relaxed text-slate-800 dark:text-emerald-100/90 pr-1 select-text font-sans">
+                  {experience.winning_routine}
+                </p>
+              </div>
+
+              {/* Best Resources & Teachers (المراجع والأساتذة) */}
+              {experience.best_resources && (
+                <div className="rounded-2xl border border-amber-200/80 dark:border-amber-900/40 bg-amber-50/70 dark:bg-amber-950/20 p-4 shadow-xs">
+                  <div className="flex items-center gap-2 text-amber-900 dark:text-amber-300 font-bold text-xs sm:text-sm mb-1.5 font-serif">
+                    <BookOpen className="h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" />
+                    <span>📚 أفضل المراجع وقنوات المراجعة الموصى بها:</span>
+                  </div>
+                  <p className="text-xs sm:text-sm leading-relaxed text-slate-800 dark:text-amber-100/90 pr-1">
+                    {experience.best_resources}
+                  </p>
+                </div>
+              )}
             </div>
           )}
         </div>
 
-        {/* Footer Actions: Upvote, Comments Count, Save, Share */}
-        <div className="mt-5 border-t border-slate-800/80 pt-3.5">
-          <div className="flex items-center justify-between text-xs flex-wrap gap-2">
-            {/* Left side: Upvote + Comments button */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={handleUpvote}
-                disabled={isLiking}
-                className={`flex items-center gap-2 rounded-xl px-3 py-1.5 font-bold transition-all cursor-pointer ${
-                  upvoted
-                    ? "bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30 scale-102"
-                    : "bg-slate-800/90 text-slate-300 hover:bg-slate-700 hover:text-white"
-                }`}
-                title="تصويت إيجابي لهذه النصيحة"
-              >
-                <ThumbsUp className={`h-4 w-4 ${upvoted ? "fill-slate-950" : ""}`} />
-                <span>مفيدة جداً</span>
-                <span
-                  className={`rounded-full px-1.5 py-0.2 text-[11px] font-extrabold ${
-                    upvoted ? "bg-slate-900 text-emerald-300" : "bg-slate-900/60 text-slate-400"
-                  }`}
-                >
-                  {upvotesCount}
+        {/* Card Footer: Expand trigger button (when collapsed) OR Full Interactions Bar (when expanded) */}
+        <div className="mt-5 border-t border-theme/60 pt-3.5">
+          {!isExpanded ? (
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs font-bold text-[var(--color-primary)] inline-flex items-center gap-1.5 group-hover:translate-x-[-4px] transition-transform">
+                <span>اضغط لقراءة التفاصيل الكاملة</span>
+                <ChevronDown className="w-4 h-4" />
+              </span>
+
+              <div className="flex items-center gap-3 text-xs text-theme-muted">
+                <span className="flex items-center gap-1">
+                  <ThumbsUp className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="font-bold">{upvotesCount}</span>
                 </span>
-              </button>
-
-              {/* Comments Toggle Button */}
-              <button
-                onClick={handleToggleComments}
-                className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 font-semibold transition-colors cursor-pointer ${
-                  showComments
-                    ? "bg-slate-800 text-white"
-                    : "bg-slate-800/60 text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`}
-                title="عرض وإضافة تعليقات"
-              >
-                <MessageCircle className="h-4 w-4 text-emerald-400" />
-                <span>التعليقات</span>
-                <span className="rounded-full bg-slate-900/80 px-1.5 py-0.2 text-[11px] font-bold text-slate-300 border border-slate-700">
-                  {commentsCount}
+                <span className="flex items-center gap-1">
+                  <MessageCircle className="w-3.5 h-3.5 text-blue-500" />
+                  <span className="font-bold">{commentsCount}</span>
                 </span>
-                {showComments ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-              </button>
-            </div>
-
-            {/* Right side: Favorite & Share */}
-            <div className="flex items-center gap-1.5 relative">
-              <button
-                onClick={handleToggleFavorite}
-                className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 font-medium transition-colors cursor-pointer ${
-                  isFavorite
-                    ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
-                    : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
-                }`}
-                title="حفظ في المفضلة"
-              >
-                {isFavorite ? (
-                  <>
-                    <BookmarkCheck className="h-4 w-4 text-amber-400" />
-                    <span className="hidden sm:inline">محفوظة</span>
-                  </>
-                ) : (
-                  <>
-                    <Bookmark className="h-4 w-4" />
-                    <span className="hidden sm:inline">حفظ</span>
-                  </>
-                )}
-              </button>
-
-              {/* Share Trigger Button */}
-              <button
-                onClick={handleNativeShare}
-                className="flex items-center gap-1 rounded-xl p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors cursor-pointer"
-                title="مشاركة التجربة"
-              >
-                <Share2 className="h-4 w-4" />
-                <span className="text-xs font-semibold hidden sm:inline">مشاركة</span>
-              </button>
-
-              {/* Image Card Quick Trigger */}
-              <button
-                onClick={() => setShowImageCardModal(true)}
-                className="flex items-center gap-1 rounded-xl p-2 text-amber-400 hover:bg-amber-500/10 hover:text-amber-300 transition-colors cursor-pointer border border-amber-500/20 bg-slate-800/60"
-                title="مشاركة التجربة كصورة للإنستغرام وتليغرام"
-              >
-                <ImageIcon className="h-4 w-4" />
-                <span className="text-xs font-semibold hidden md:inline">صورة 🎨</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Share Dropdown / Popover Modal if expanded */}
-          {showShareMenu && (
-            <div className="mt-3 p-3 rounded-xl border border-slate-800 bg-slate-950 animate-in fade-in duration-150">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-bold text-xs text-slate-200">اختر وسيلة المشاركة:</span>
-                <button
-                  onClick={() => setShowShareMenu(false)}
-                  className="text-xs text-slate-400 hover:text-white"
-                >
-                  إغلاق ✕
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-xs">
-                {/* WhatsApp */}
-                <button
-                  onClick={handleShareWhatsApp}
-                  className="flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 text-white py-2 px-2.5 font-bold hover:bg-emerald-700 transition-colors cursor-pointer"
-                >
-                  <span>واتساب</span>
-                </button>
-
-                {/* Telegram */}
-                <button
-                  onClick={handleShareTelegram}
-                  className="flex items-center justify-center gap-1.5 rounded-lg bg-sky-500 text-white py-2 px-2.5 font-bold hover:bg-sky-600 transition-colors cursor-pointer"
-                >
-                  <span>تليغرام</span>
-                </button>
-
-                {/* Facebook */}
-                <button
-                  onClick={handleShareFacebook}
-                  className="flex items-center justify-center gap-1.5 rounded-lg bg-blue-600 text-white py-2 px-2.5 font-bold hover:bg-blue-700 transition-colors cursor-pointer"
-                >
-                  <span>فيسبوك</span>
-                </button>
-
-                {/* X */}
-                <button
-                  onClick={handleShareX}
-                  className="flex items-center justify-center gap-1.5 rounded-lg bg-slate-800 text-white py-2 px-2.5 font-bold hover:bg-slate-700 transition-colors cursor-pointer"
-                >
-                  <span>منصة X</span>
-                </button>
-
-                {/* Copy Link */}
-                <button
-                  onClick={handleCopyLink}
-                  className="flex items-center justify-center gap-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 py-2 px-2.5 font-bold hover:bg-slate-800 transition-colors cursor-pointer"
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                  <span>نسخ الرابط</span>
-                </button>
-
-                {/* Image Card Generator */}
-                <button
-                  onClick={() => {
-                    setShowShareMenu(false);
-                    setShowImageCardModal(true);
-                  }}
-                  className="flex items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-600 to-amber-500 text-white py-2 px-2.5 font-bold hover:brightness-110 transition-colors cursor-pointer"
-                >
-                  <ImageIcon className="h-3.5 w-3.5" />
-                  <span>كصورة 🎨</span>
-                </button>
               </div>
             </div>
-          )}
-
-          {/* Comments Accordion Section */}
-          {showComments && (
-            <div className="mt-4 pt-4 border-t border-slate-800/80 space-y-3 animate-in fade-in duration-200">
-              <h4 className="font-bold text-xs text-slate-200 flex items-center gap-1.5">
-                <MessageCircle className="h-3.5 w-3.5 text-emerald-400" />
-                <span>تعليقات واستفسارات الطلبة ({commentsCount})</span>
-              </h4>
-
-              {/* Comments List */}
-              {loadingComments ? (
-                <div className="py-4 text-center text-xs text-slate-500 flex items-center justify-center gap-2">
-                  <RefreshCw className="h-3.5 w-3.5 animate-spin text-emerald-400" />
-                  <span>جاري تحميل التعليقات...</span>
-                </div>
-              ) : comments.length === 0 ? (
-                <p className="text-xs text-slate-500 py-2">
-                  لا توجد تعليقات بعد. كن أول من يترك انطباعاً أو استفساراً لصاحب التجربة! ✍️
-                </p>
-              ) : (
-                <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
-                  {comments.map((comment) => {
-                    const isAuthor = Boolean(userId && comment.author_id && comment.author_id === userId);
-                    const canManage = isAuthor || isPlatformOwner;
-                    const isEditingThis = editingCommentId === comment.id;
-
-                    return (
-                      <div
-                        key={comment.id}
-                        className="rounded-xl bg-slate-950/70 border border-slate-800/90 p-3 text-xs space-y-1.5 transition-colors"
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-bold text-slate-200">
-                              {comment.author_name}
-                            </span>
-
-                            {/* Commenter Wilaya */}
-                            {comment.wilaya && (
-                              <span className="inline-flex items-center gap-0.5 text-[10px] text-slate-400 bg-slate-900 px-1.5 py-0.2 rounded border border-slate-800">
-                                <MapPin className="h-2.5 w-2.5 text-[#D7A66A]" />
-                                <span>{comment.wilaya}</span>
-                              </span>
-                            )}
-
-                            {isAuthor && (
-                              <span className="text-[10px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.2 rounded border border-emerald-500/20 font-semibold">
-                                أنت
-                              </span>
-                            )}
-
-                            {isPlatformOwner && !isAuthor && (
-                              <span className="text-[10px] bg-purple-500/10 text-purple-400 px-1.5 py-0.2 rounded border border-purple-500/20 font-semibold inline-flex items-center gap-0.5">
-                                <ShieldCheck className="h-2.5 w-2.5" />
-                                إشراف
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] text-slate-500">
-                              {formatArabicDate(comment.created_at)}
-                              {comment.updated_at && " (معدل)"}
-                            </span>
-
-                            {/* Edit & Delete Buttons for Author or Owner */}
-                            {canManage && !isEditingThis && (
-                              <div className="flex items-center gap-1 mr-1">
-                                <button
-                                  onClick={() => handleStartEditComment(comment)}
-                                  className="text-slate-400 hover:text-indigo-400 p-1 transition-colors cursor-pointer"
-                                  title="تعديل التعليق"
-                                >
-                                  <Edit2 className="h-3 w-3" />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteComment(comment.id)}
-                                  className="text-slate-400 hover:text-rose-400 p-1 transition-colors cursor-pointer"
-                                  title="حذف التعليق"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Comment text or Edit Box */}
-                        {isEditingThis ? (
-                          <div className="mt-2 space-y-2">
-                            <textarea
-                              rows={2}
-                              value={editCommentContent}
-                              onChange={(e) => setEditCommentContent(e.target.value)}
-                              className="w-full rounded-lg border border-indigo-500/40 bg-slate-900 p-2 text-xs text-white focus:outline-none"
-                            />
-                            <div className="flex items-center justify-end gap-1.5">
-                              <button
-                                type="button"
-                                onClick={() => setEditingCommentId(null)}
-                                className="px-2 py-1 rounded bg-slate-800 text-slate-300 hover:text-white text-[11px]"
-                              >
-                                إلغاء
-                              </button>
-                              <button
-                                type="button"
-                                disabled={isSavingEditComment || !editCommentContent.trim()}
-                                onClick={() => handleSaveEditComment(comment.id)}
-                                className="px-2.5 py-1 rounded bg-emerald-600 font-bold text-white hover:bg-emerald-500 text-[11px] flex items-center gap-1"
-                              >
-                                <Check className="h-3 w-3" />
-                                <span>{isSavingEditComment ? "..." : "حفظ التعديل"}</span>
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <p className="text-slate-300 leading-relaxed whitespace-pre-line">
-                            {comment.content}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Add Comment Form: Locked user identity without surname notice */}
-              <form onSubmit={handleAddComment} className="mt-3 space-y-2 pt-2 border-t border-slate-800/60">
-                {/* Author Display Badge (Strictly first name, non-editable, + Wilaya) */}
-                <div className="flex items-center gap-2 text-xs text-slate-400 flex-wrap">
-                  <span>التعليق باسم:</span>
-                  <span className="font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
-                    {userFirstName || "طالب"}
-                  </span>
-                  {userWilaya && (
-                    <span className="inline-flex items-center gap-1 font-semibold text-slate-300 bg-slate-800 px-2 py-0.5 rounded-md border border-slate-700">
-                      <MapPin className="h-3 w-3 text-[#D7A66A]" />
-                      <span>{userWilaya}</span>
-                    </span>
-                  )}
-                </div>
-
+          ) : (
+            <div className="space-y-4">
+              {/* Action Buttons Row */}
+              <div className="flex items-center justify-between text-xs flex-wrap gap-2">
+                {/* Left side: Upvote + Comments toggle */}
                 <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={newCommentText}
-                    onChange={(e) => setNewCommentText(e.target.value)}
-                    placeholder="اكتب تعليقك أو سؤالك هنا..."
-                    required
-                    className="flex-1 rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 text-xs text-white placeholder-slate-500 focus:border-emerald-500 focus:outline-none"
-                  />
                   <button
-                    type="submit"
-                    disabled={isSubmittingComment || !newCommentText.trim()}
-                    className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 text-xs font-bold text-slate-950 hover:from-emerald-400 hover:to-teal-400 disabled:opacity-50 transition-all cursor-pointer"
+                    type="button"
+                    onClick={handleUpvote}
+                    disabled={isLiking}
+                    className={`flex items-center gap-2 rounded-xl px-3 py-2 font-bold transition-all cursor-pointer ${
+                      upvoted
+                        ? "bg-[#2C5E54] text-white shadow-xs"
+                        : "bg-surface hover:bg-card-hover text-theme-text border border-theme"
+                    }`}
+                    title="تصويت إيجابي لهذه النصيحة"
                   >
-                    <Send className="h-3 w-3" />
-                    <span>{isSubmittingComment ? "..." : "إرسال"}</span>
+                    <ThumbsUp className={`h-4 w-4 ${upvoted ? "fill-white" : ""}`} />
+                    <span>مفيدة جداً</span>
+                    <span className="rounded-full bg-white/20 px-1.5 py-0.2 text-[11px] font-black">
+                      {upvotesCount}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleToggleComments}
+                    className={`flex items-center gap-1.5 rounded-xl px-3 py-2 font-bold transition-colors cursor-pointer border ${
+                      showComments
+                        ? "bg-surface border-theme text-theme-text"
+                        : "bg-surface-soft border-theme text-theme-secondary hover:text-theme-text"
+                    }`}
+                  >
+                    <MessageCircle className="h-4 w-4 text-[var(--color-primary)]" />
+                    <span>التعليقات ({commentsCount})</span>
+                    {showComments ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                   </button>
                 </div>
-              </form>
+
+                {/* Right side: Save, Share, Image Card, Collapse */}
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleToggleFavorite}
+                    className={`flex items-center gap-1 rounded-xl px-2.5 py-2 font-bold transition-colors cursor-pointer border ${
+                      isFavorite
+                        ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
+                        : "bg-surface text-theme-secondary hover:text-theme-text border-theme"
+                    }`}
+                    title="حفظ في المفضلة"
+                  >
+                    {isFavorite ? (
+                      <>
+                        <BookmarkCheck className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        <span>محفوظة</span>
+                      </>
+                    ) : (
+                      <>
+                        <Bookmark className="h-4 w-4" />
+                        <span>حفظ</span>
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleNativeShare}
+                    className="flex items-center gap-1 rounded-xl px-2.5 py-2 bg-surface hover:bg-card-hover text-theme-secondary hover:text-theme-text border border-theme transition-colors cursor-pointer"
+                    title="مشاركة التجربة"
+                  >
+                    <Share2 className="h-4 w-4" />
+                    <span>مشاركة</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowImageCardModal(true);
+                    }}
+                    className="flex items-center gap-1 rounded-xl px-2.5 py-2 bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30 font-bold transition-colors cursor-pointer"
+                    title="مشاركة التجربة كصورة أنيقة"
+                  >
+                    <ImageIcon className="h-4 w-4" />
+                    <span>صورة 🎨</span>
+                  </button>
+
+                  {/* Collapse Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsExpanded(false);
+                    }}
+                    className="flex items-center gap-1 rounded-xl px-2.5 py-2 bg-surface text-theme-muted hover:text-theme-text border border-theme transition-colors cursor-pointer"
+                    title="طي التجربة"
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                    <span>إغلاق</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Share Drawer */}
+              {showShareMenu && (
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="p-3.5 rounded-2xl border border-theme bg-surface animate-in fade-in duration-150"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-xs text-theme-text">اختر وسيلة المشاركة:</span>
+                    <button
+                      type="button"
+                      onClick={() => setShowShareMenu(false)}
+                      className="text-xs text-theme-muted hover:text-theme-text"
+                    >
+                      إغلاق ✕
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={handleShareWhatsApp}
+                      className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 text-white py-2 px-3 font-bold hover:bg-emerald-700 transition-colors"
+                    >
+                      <span>واتساب</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleShareTelegram}
+                      className="flex items-center justify-center gap-1.5 rounded-xl bg-sky-500 text-white py-2 px-3 font-bold hover:bg-sky-600 transition-colors"
+                    >
+                      <span>تليغرام</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleCopyLink}
+                      className="flex items-center justify-center gap-1.5 rounded-xl bg-card border border-theme text-theme-text py-2 px-3 font-bold hover:bg-card-hover transition-colors"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                      <span>نسخ الرابط</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowShareMenu(false);
+                        setShowImageCardModal(true);
+                      }}
+                      className="flex items-center justify-center gap-1.5 rounded-xl bg-amber-600 text-white py-2 px-3 font-bold hover:bg-amber-700 transition-colors"
+                    >
+                      <ImageIcon className="h-3.5 w-3.5" />
+                      <span>كصورة 🎨</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Comments Section */}
+              {showComments && (
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="pt-4 border-t border-theme/60 space-y-3 animate-in fade-in duration-200"
+                >
+                  <h4 className="font-bold text-xs text-theme-text flex items-center gap-1.5">
+                    <MessageCircle className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+                    <span>تعليقات واستفسارات الطلبة ({commentsCount})</span>
+                  </h4>
+
+                  {/* Comments List */}
+                  {loadingComments ? (
+                    <div className="py-4 text-center text-xs text-theme-muted flex items-center justify-center gap-2">
+                      <RefreshCw className="h-3.5 w-3.5 animate-spin text-[var(--color-primary)]" />
+                      <span>جاري تحميل التعليقات...</span>
+                    </div>
+                  ) : comments.length === 0 ? (
+                    <p className="text-xs text-theme-muted py-2">
+                      لا توجد تعليقات بعد. كن أول من يترك انطباعاً أو استفساراً لصاحب التجربة! ✍️
+                    </p>
+                  ) : (
+                    <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                      {comments.map((comment) => {
+                        const isAuthor = Boolean(userId && comment.author_id && comment.author_id === userId);
+                        const canManage = isAuthor || isPlatformOwner;
+                        const isEditingThis = editingCommentId === comment.id;
+
+                        return (
+                          <div
+                            key={comment.id}
+                            className="rounded-2xl bg-surface border border-theme p-3 text-xs space-y-1.5"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-bold text-theme-text">
+                                  {comment.author_name}
+                                </span>
+
+                                {comment.wilaya && (
+                                  <span className="inline-flex items-center gap-0.5 text-[10px] text-theme-muted bg-card px-1.5 py-0.5 rounded border border-theme">
+                                    <MapPin className="h-2.5 w-2.5 text-amber-500" />
+                                    <span>{comment.wilaya}</span>
+                                  </span>
+                                )}
+
+                                {isAuthor && (
+                                  <span className="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.2 rounded border border-emerald-500/20 font-semibold">
+                                    أنت
+                                  </span>
+                                )}
+                              </div>
+
+                              {canManage && (
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setEditingCommentId(comment.id);
+                                      setEditCommentContent(comment.content);
+                                    }}
+                                    className="p-1 text-theme-muted hover:text-theme-text transition-colors"
+                                    title="تعديل"
+                                  >
+                                    <Edit2 className="h-3 w-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteComment(comment.id)}
+                                    className="p-1 text-rose-500 hover:text-rose-700 transition-colors"
+                                    title="حذف"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
+                            {isEditingThis ? (
+                              <div className="space-y-2 pt-1">
+                                <textarea
+                                  value={editCommentContent}
+                                  onChange={(e) => setEditCommentContent(e.target.value)}
+                                  className="w-full rounded-xl bg-card border border-theme p-2 text-xs text-theme-text focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
+                                  rows={2}
+                                />
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingCommentId(null)}
+                                    className="px-2 py-1 text-[11px] rounded-lg text-theme-muted hover:text-theme-text"
+                                  >
+                                    إلغاء
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSaveEditComment(comment.id)}
+                                    disabled={isSavingEditComment}
+                                    className="px-2.5 py-1 text-[11px] rounded-lg bg-[var(--color-primary)] text-white font-bold"
+                                  >
+                                    حفظ
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-theme-secondary text-xs leading-relaxed select-text">
+                                {comment.content}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Add New Comment Form */}
+                  <form onSubmit={handleAddComment} className="pt-2">
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="اطرح سؤالاً أو اترك كلمة تشجيعية..."
+                        value={newCommentText}
+                        onChange={(e) => setNewCommentText(e.target.value)}
+                        className="flex-1 rounded-xl bg-surface border border-theme px-3 py-2 text-xs text-theme-text placeholder:text-theme-muted focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!newCommentText.trim() || isSubmittingComment}
+                        className="rounded-xl bg-[#2C5E54] hover:bg-[#20473f] text-white px-3.5 py-2 text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1 cursor-pointer shrink-0"
+                      >
+                        <Send className="h-3 w-3" />
+                        <span>إرسال</span>
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
             </div>
           )}
         </div>
-      </div>
+      </article>
 
-      {/* Social Image Card Modal */}
-      <ExperienceImageCard
-        experience={experience}
-        isOpen={showImageCardModal}
-        onClose={() => setShowImageCardModal(false)}
-      />
+      {/* Image Card Modal */}
+      {showImageCardModal && (
+        <ExperienceImageCard
+          experience={experience}
+          isOpen={showImageCardModal}
+          onClose={() => setShowImageCardModal(false)}
+        />
+      )}
     </>
   );
 }

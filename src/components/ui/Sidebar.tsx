@@ -302,11 +302,13 @@ export function Sidebar({ className }: SidebarProps) {
           <Logo size="sm" href="/dashboard" />
           <Link
             href="/scientific-calculator"
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 dark:text-teal-300 border border-teal-500/30 text-[10px] font-bold transition-all shadow-2xs group"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2C5E54] hover:bg-[#20473f] text-white border border-emerald-600/40 text-xs font-black transition-all shadow-sm hover:shadow-md hover:scale-102 active:scale-98 group cursor-pointer"
             title={isAr ? "الآلة الحاسبة العلمية ثلاثية الأبعاد (Casio 3D)" : "Calculatrice Scientifique 3D"}
           >
-            <Calculator className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 group-hover:scale-110 transition-transform" />
-            <span>{isAr ? "الآلة الحاسبة 🔬" : "Calculatrice 🔬"}</span>
+            <span className="w-5 h-5 rounded-lg bg-white/20 flex items-center justify-center text-white shrink-0 group-hover:rotate-12 transition-transform">
+              <Calculator className="w-3.5 h-3.5 text-white" />
+            </span>
+            <span className="tracking-wide text-white font-extrabold">{isAr ? "الآلة الحاسبة 🔬" : "Calculatrice 🔬"}</span>
           </Link>
           {isMobile && (
             <button

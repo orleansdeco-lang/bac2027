@@ -157,12 +157,14 @@ export function extractTokenFromCookies(cookieHeader: string | null): string | n
       return decodeURIComponent(part.substring("auth_token=".length));
     }
     if (part.includes("-auth-token=")) {
+      const eqIdx = part.indexOf("=");
+      const val = decodeURIComponent(part.substring(eqIdx + 1));
       try {
-        const val = decodeURIComponent(part.split("=")[1]);
         const parsed = JSON.parse(val);
         if (parsed?.access_token) return parsed.access_token;
         if (Array.isArray(parsed) && parsed[0]) return parsed[0];
       } catch {}
+      if (val) return val;
     }
   }
   return null;

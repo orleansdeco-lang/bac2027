@@ -3,6 +3,7 @@ import { BacExperience } from "@/types/experience";
 export const CURATED_BAC_EXPERIENCES: BacExperience[] = [
   {
     id: "exp-001",
+    title: "من فخ تكديس الكراريس إلى معدل 18.64 وكلية الطب: كيف تروض مادة العلوم الطبيعية؟",
     author_name: "د. ياسمين بلقاسم (ولاية قسنطينة)",
     author_role: "top_achiever",
     stream_id: "sciences",
@@ -21,6 +22,7 @@ export const CURATED_BAC_EXPERIENCES: BacExperience[] = [
   },
   {
     id: "exp-002",
+    title: "قفزة 6 نقاط كاملة: كيف انتقلت من 11.40 إلى 17.85 والتحقت بـ ESI بعد تغيير روتين الفجر؟",
     author_name: "المهندس أكرم محي الدين (ولاية الجزائر)",
     author_role: "repeater_success",
     stream_id: "math",
@@ -39,6 +41,7 @@ export const CURATED_BAC_EXPERIENCES: BacExperience[] = [
   },
   {
     id: "exp-003",
+    title: "أكبر فخ أضاع مني أشهراً في الفيسبوك، وكيف غيرت البكالوريات الرسمية مساري إلى مدرسة الذكاء الاصطناعي",
     author_name: "أيمن كيحل (ولاية باتنة)",
     author_role: "top_achiever",
     stream_id: "technique_math",
@@ -57,6 +60,7 @@ export const CURATED_BAC_EXPERIENCES: BacExperience[] = [
   },
   {
     id: "exp-004",
+    title: "كيف تغلبت على صدمة العام الأول وقادتني الخرائط الذهنية إلى 16.74 نحو المدرسة العليا للتجارة",
     author_name: "خولة ساحلي (ولاية سطيف)",
     author_role: "repeater_success",
     stream_id: "gestion_economie",
@@ -75,6 +79,7 @@ export const CURATED_BAC_EXPERIENCES: BacExperience[] = [
   },
   {
     id: "exp-005",
+    title: "وداعاً لحفظ المقالات الجاهزة: طريقتي المبتكرة لبناء مقال فلسفي نلت به 17.5 في الفلسفة",
     author_name: "مريم رواس (ولاية وهران)",
     author_role: "top_achiever",
     stream_id: "lettres_philo",
@@ -93,6 +98,7 @@ export const CURATED_BAC_EXPERIENCES: BacExperience[] = [
   },
   {
     id: "exp-006",
+    title: "استراتيجية الـ 30 دقيقة اليومية: كيف تصنع التفوق في اللغات الأجنبية دون تعقيد؟",
     author_name: "سليم نايت (ولاية تيزي وزو)",
     author_role: "top_achiever",
     stream_id: "langues_etrangeres",
@@ -111,6 +117,7 @@ export const CURATED_BAC_EXPERIENCES: BacExperience[] = [
   },
   {
     id: "exp-007",
+    title: "سنة الإعادة ليست فشلاً: هكذا رفعت الفيزياء إلى 18 وقهرت هاجس الوقت في جراحة الأسنان",
     author_name: "طارق بن عيسى (ولاية عنابة)",
     author_role: "repeater_success",
     stream_id: "sciences",
@@ -129,6 +136,7 @@ export const CURATED_BAC_EXPERIENCES: BacExperience[] = [
   },
   {
     id: "exp-008",
+    title: "معدل 19.04 في الرياضيات: أسرار البرهان الرياضي الصارم نحو مدرسة الرياضيات العليا",
     author_name: "رميساء دحماني (ولاية تلمسان)",
     author_role: "top_achiever",
     stream_id: "math",
@@ -147,6 +155,7 @@ export const CURATED_BAC_EXPERIENCES: BacExperience[] = [
   },
   {
     id: "exp-009",
+    title: "عندما أوقفت الدروس الخصوصية: كيف قفزت بجهدي الذاتي من 11.20 إلى 17.15 في التقني الرياضي؟",
     author_name: "فؤاد جابر (ولاية ورقلة)",
     author_role: "repeater_success",
     stream_id: "technique_math",
@@ -165,6 +174,7 @@ export const CURATED_BAC_EXPERIENCES: BacExperience[] = [
   },
   {
     id: "exp-010",
+    title: "مادة القانون ليست حفظاً أعمى: أسلوبي في حل الوضعيات القانونية والحصول على 17.02 في التسيير",
     author_name: "إكرام بلخير (ولاية مستغانم)",
     author_role: "top_achiever",
     stream_id: "gestion_economie",
@@ -183,6 +193,7 @@ export const CURATED_BAC_EXPERIENCES: BacExperience[] = [
   },
   {
     id: "exp-011",
+    title: "من 9.80 واليأس إلى 15.85 في الآداب والفلسفة: تحليل ورقة الامتحان صنعت نجاحي",
     author_name: "يونس شرقي (ولاية بسكرة)",
     author_role: "repeater_success",
     stream_id: "lettres_philo",
@@ -201,6 +212,7 @@ export const CURATED_BAC_EXPERIENCES: BacExperience[] = [
   },
   {
     id: "exp-012",
+    title: "الفرصة الذهبية في اللغة الألمانية: كيف حصدت 18.5 في اللغة الثالثة بمعدل عام 16.95؟",
     author_name: "لينا مزيان (ولاية بجاية)",
     author_role: "top_achiever",
     stream_id: "langues_etrangeres",

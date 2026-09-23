@@ -19,6 +19,7 @@ export interface ExperienceComment {
 
 export interface BacExperience {
   id: string;
+  title?: string;
   author_id?: string | null;
   author_name: string;
   author_role: ExperienceRole;
@@ -43,6 +44,7 @@ export interface BacExperience {
 }
 
 export interface CreateExperienceInput {
+  title?: string;
   author_name: string;
   author_role?: ExperienceRole;
   candidate_type?: CandidateType;
