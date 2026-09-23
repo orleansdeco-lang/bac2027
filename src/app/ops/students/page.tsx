@@ -348,7 +348,7 @@ export default function OpsStudentsPage() {
             className="w-full md:w-auto bg-slate-950/80 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-cyan-500"
           >
             <option value="all">كل حالات الحساب</option>
-            <option value="trial">فترة التجربة (72h)</option>
+            <option value="trial">فترة التجربة (7 أيام)</option>
             <option value="paid">حساب مدفوع (PAID)</option>
             <option value="expired">منتهي الصلاحية (EXPIRED)</option>
             <option value="pending_payment">لديه طلب دفع قيد المراجعة</option>

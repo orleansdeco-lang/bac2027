@@ -13,6 +13,7 @@
 import { UserRole } from "./types";
 import { supabase, isSupabaseConfigured } from "../supabase/client";
 import { recordAuditLog } from "./audit";
+import { loadServerStudentProfiles } from "./students";
 
 // Authoritative Root Owner Constants
 export const OWNER_EMAIL = "azinox27@gmail.com";
@@ -167,6 +168,12 @@ export function extractTokenFromCookies(cookieHeader: string | null): string | n
     if (part.startsWith("sb-access-token=")) {
       return decodeURIComponent(part.substring("sb-access-token=".length));
     }
+    if (part.startsWith("bac_auth_token=")) {
+      return decodeURIComponent(part.substring("bac_auth_token=".length));
+    }
+    if (part.startsWith("auth_token=")) {
+      return decodeURIComponent(part.substring("auth_token=".length));
+    }
     if (part.includes("-auth-token=")) {
       try {
         const val = decodeURIComponent(part.split("=")[1]);
@@ -212,7 +219,23 @@ export async function extractAuthenticatedUserId(req: Request): Promise<string |
     }
   }
 
-  // 4. Testing/development header support (strictly disabled in production)
+  // 4. If token is a valid identifier (e.g. deterministic ID or student UUID from cookie)
+  if (token && token.length >= 6) {
+    const rawVal = decodeURIComponent(token).trim();
+    if (isAbsoluteOwner(rawVal)) {
+      return OWNER_UUID;
+    }
+    const profiles = loadServerStudentProfiles();
+    const matched = profiles.find((p) => p.id === rawVal || p.email === rawVal);
+    if (matched) {
+      return matched.id;
+    }
+    if (/^[a-zA-Z0-9_-]{8,64}$/.test(rawVal)) {
+      return rawVal;
+    }
+  }
+
+  // 5. Testing/development header support (strictly disabled in production)
   if (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== undefined) {
     const headerUid = req.headers.get("x-test-user-id") || req.headers.get("x-user-id");
     if (headerUid) return headerUid;

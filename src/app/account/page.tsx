@@ -53,6 +53,7 @@ import {
 import QRCode from "qrcode";
 import { exportAnonymizedPilotData } from "@/lib/analytics";
 import { MarketingPosterCard } from "@/components/referral/MarketingPosterCard";
+import { generateReferralCode } from "@/lib/referral/code";
 
 export default function AccountPage() {
   const router = useRouter();
@@ -84,12 +85,12 @@ export default function AccountPage() {
   const [testNotificationSent, setTestNotificationSent] = useState(false);
   const [isStandaloneApp, setIsStandaloneApp] = useState(false);
 
-  // If visitor is not authenticated, redirect to login & register page
+  // If visitor is not authenticated, redirect cleanly to login & register page
   useEffect(() => {
     if (!authLoading && !user) {
-      router.replace("/auth");
+      window.location.replace("/auth");
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading]);
 
   // Check notification permission and PWA status
   useEffect(() => {
@@ -180,9 +181,10 @@ export default function AccountPage() {
   const handleSignOut = async () => {
     try {
       await signOut();
-      router.replace("/auth");
+      window.location.replace("/auth");
     } catch (e) {
       console.error("Sign out failed:", e);
+      window.location.replace("/auth");
     }
   };
 
@@ -315,7 +317,12 @@ export default function AccountPage() {
     referralSummary?.referralCode ||
     (profile as any)?.referral_code ||
     (profile as any)?.referralCode ||
-    (user?.id ? `SHTR${user.id.replace(/[^a-zA-Z0-9]/g, "").slice(0, 4).toUpperCase()}` : "SHATERBAC");
+    (user?.id
+      ? generateReferralCode(
+          profile?.firstName || regDraft?.firstName || (user.user_metadata as any)?.full_name,
+          user.id
+        )
+      : "SHTR2027");
 
   const creditBalance = referralSummary?.creditBalanceDzd ?? (profile as any)?.credit_balance_dzd ?? 0;
 
@@ -771,7 +778,7 @@ export default function AccountPage() {
                   ? (access.plan === "monthly"
                       ? (isAr ? "الاشتراك الشهري (30 يوماً)" : "Pass Mensuel (30 jours)")
                       : (isAr ? "اشتراك السنة الدراسية (موسم كامل)" : "Pass Année Scolaire (Saison Complète)"))
-                  : (isAr ? "تجربة مجانية استكشافية (72 ساعة)" : "Essai Découverte (72h)")}
+                  : (isAr ? "تجربة مجانية استكشافية (أسبوع كامل - 7 أيام)" : "Essai Découverte (7 jours)")}
               </span>
             </div>
             <div className="flex justify-between items-center text-xs">

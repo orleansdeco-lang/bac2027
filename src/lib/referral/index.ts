@@ -134,28 +134,24 @@ function saveDurableCreditTransactions(records: CreditTransaction[]): void {
   } catch {}
 }
 
-/**
- * Generates an Algerian student friendly uppercase referral code
- * Format: 3-5 letters + 2-3 digits, e.g. "AMINE27" or "SHTR894"
- */
-export function generateReferralCode(studentName?: string): string {
-  let prefix = "SHTR";
-  if (studentName) {
-    // Keep only english letters from name if possible
-    const cleaned = studentName.replace(/[^a-zA-Z]/g, "").toUpperCase();
-    if (cleaned.length >= 3) {
-      prefix = cleaned.slice(0, 5);
-    }
-  }
-  const randomSuffix = Math.floor(100 + Math.random() * 900);
-  return `${prefix}${randomSuffix}`;
-}
+export {
+  generateReferralCode,
+  generateReferralShareUrl,
+  generateWhatsAppShareMessage,
+} from "./code";
+import {
+  generateReferralCode,
+  generateReferralShareUrl,
+  generateWhatsAppShareMessage,
+} from "./code";
 
 /**
  * Gets or creates the student's authoritative referral code
  */
 export async function getOrCreateReferralCode(userId: string, studentName?: string): Promise<string> {
-  if (!userId) return "SHATERBAC";
+  if (!userId) {
+    return generateReferralCode(studentName);
+  }
 
   if (isSupabaseConfigured && supabase) {
     try {
@@ -165,12 +161,12 @@ export async function getOrCreateReferralCode(userId: string, studentName?: stri
         .eq("id", userId)
         .single();
 
-      if (!error && data?.referral_code) {
+      if (!error && data?.referral_code && data.referral_code !== "SHATERBAC") {
         return data.referral_code;
       }
 
-      // Generate a new code and save
-      const newCode = generateReferralCode(studentName);
+      // Generate a new unique code and save
+      const newCode = generateReferralCode(studentName, userId);
       const { error: updateError } = await supabase
         .from("student_profiles")
         .update({ referral_code: newCode })
@@ -188,28 +184,14 @@ export async function getOrCreateReferralCode(userId: string, studentName?: stri
   const profiles = loadServerStudentProfiles();
   const profile = profiles.find((p) => p.id === userId);
   const existingCode = (profile as any)?.referral_code;
-  if (existingCode) return existingCode;
+  if (existingCode && existingCode !== "SHATERBAC") return existingCode;
 
-  const newCode = generateReferralCode(studentName || profile?.fullName);
+  const newCode = generateReferralCode(studentName || profile?.fullName, userId);
   if (profile) {
     (profile as any).referral_code = newCode;
     saveServerStudentProfile(profile);
   }
   return newCode;
-}
-
-/**
- * Builds the WhatsApp viral share message in Algerian dialect
- */
-export function generateWhatsAppShareMessage(referralCode: string, origin?: string): string {
-  const baseUrl = origin || (typeof window !== "undefined" ? window.location.origin : "https://shater-bac.dz");
-  const link = `${baseUrl}/auth?ref=${encodeURIComponent(referralCode)}`;
-  return `راك توجد للباك؟ 🎓 جرب منصة شاطر (SHATER) باطل لمدة 7 أيام كاملة! تكتشف ثغراتك وتلقى مسار مخصص ليك يضمنلك النجاح. سجل بكودي واستفاد من التجربة:\n${link}`;
-}
-
-export function generateReferralShareUrl(referralCode: string, origin?: string): string {
-  const baseUrl = origin || (typeof window !== "undefined" ? window.location.origin : "https://shater-bac.dz");
-  return `${baseUrl}/auth?ref=${encodeURIComponent(referralCode)}`;
 }
 
 /**
@@ -277,7 +259,14 @@ export async function recordReferralSignup(
 
   // Fallback storage
   const profiles = loadServerStudentProfiles();
-  const referrer = profiles.find((p) => (p as any).referral_code === referralCode);
+  const cleanLookup = referralCode.replace(/[^a-zA-Z0-9]/g, "");
+  const referrer = profiles.find(
+    (p) =>
+      (p as any).referral_code === referralCode ||
+      ((p as any).referral_code && (p as any).referral_code.replace(/[^a-zA-Z0-9]/g, "") === cleanLookup) ||
+      generateReferralCode(p.fullName, p.id) === referralCode ||
+      generateReferralCode(p.fullName, p.id).replace(/[^a-zA-Z0-9]/g, "") === cleanLookup
+  );
   if (!referrer) {
     return { success: false, message: "Invalid referral code" };
   }

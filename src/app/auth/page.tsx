@@ -283,8 +283,8 @@ function AuthContent() {
                     <Sparkles className="w-4 h-4 shrink-0 text-[var(--color-primary)]" />
                     <span>
                       {locale === "fr"
-                        ? "Essai gratuit de 72 heures inclus"
-                        : "فترة تجريبية مجانية لمدة 72 ساعة"}
+                        ? "Essai gratuit d'une semaine (7 jours) inclus"
+                        : "فترة تجريبية مجانية لمدة أسبوع كامل (7 أيام)"}
                     </span>
                   </div>
                   <p className="text-theme-secondary text-[11px] leading-relaxed">
@@ -431,8 +431,8 @@ function AuthContent() {
                             ? "Se connecter"
                             : "تسجيل الدخول"
                           : locale === "fr"
-                          ? "Démarrer mon essai de 72h"
-                          : "بدء التجربة المجانية (72 ساعة)"}
+                          ? "Démarrer mon essai gratuit (7 jours)"
+                          : "بدء التجربة المجانية (أسبوع مجاني)"}
                       </span>
                       {isRTL ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
                     </div>

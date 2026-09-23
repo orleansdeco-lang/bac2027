@@ -253,7 +253,7 @@ export default function StudentDossierPage() {
               </div>
               <div className="flex justify-between py-1">
                 <span className="text-slate-400">Trial Policy:</span>
-                <span className="text-blue-400 font-mono">72 Hours from registration</span>
+                <span className="text-blue-400 font-mono">7 Days (168 Hours) from registration</span>
               </div>
               <div className="flex justify-between py-1">
                 <span className="text-slate-400">Trial Expires At:</span>

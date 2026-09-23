@@ -494,7 +494,7 @@ export async function getStudentsOperationalList(
         accessStatus: isPaid ? "PAID" : "TRIAL",
         plan: order.plan || "season",
         trialStartedAt: order.submittedAt || order.createdAt,
-        remainingHours: 72,
+        remainingHours: 168,
         targetScore: 16.0,
         completedMissionsCount: 0,
         demonstratedSkillsCount: 0,

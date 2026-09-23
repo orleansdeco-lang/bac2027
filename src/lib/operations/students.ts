@@ -109,7 +109,7 @@ export function saveServerStudentProfile(student: Partial<StudentOperationalSumm
         : student.plan || existing?.plan || "season",
     trialStartedAt: student.trialStartedAt || existing?.trialStartedAt || new Date().toISOString(),
     trialExpiresAt: student.trialExpiresAt || existing?.trialExpiresAt,
-    remainingHours: student.remainingHours !== undefined ? student.remainingHours : existing?.remainingHours ?? 72,
+    remainingHours: student.remainingHours !== undefined ? student.remainingHours : existing?.remainingHours ?? 168,
     targetScore: student.targetScore !== undefined ? student.targetScore : existing?.targetScore ?? 16.0,
     completedMissionsCount: student.completedMissionsCount || existing?.completedMissionsCount || 0,
     demonstratedSkillsCount: student.demonstratedSkillsCount || existing?.demonstratedSkillsCount || 0,

@@ -123,7 +123,7 @@ export function TopBar() {
     ? (isAr ? streamLabels[activeStream].ar : streamLabels[activeStream].fr)
     : null;
 
-  // 72-Hour Server-Anchored Trial Calculation
+  // 7-Day (168-Hour) Server-Anchored Trial Calculation
   const trialExpiresAt = studentProfile?.trialExpiresAt;
   const trialRemainingHours = trialExpiresAt
     ? Math.max(0, Math.ceil((new Date(trialExpiresAt).getTime() - Date.now()) / (3600 * 1000)))
@@ -398,7 +398,7 @@ export function TopBar() {
                       )}
                       {isTrialActive && (
                         <span className="text-[10px] text-emerald-400 font-mono font-semibold">
-                          · {isAr ? `تجربة 72 سا: متبقي ${trialRemainingHours} سا` : `Essai 72h: ${trialRemainingHours}h`}
+                          · {isAr ? `تجربة مجانية (7 أيام): متبقي ${trialRemainingHours} سا` : `Essai 7j: ${trialRemainingHours}h`}
                         </span>
                       )}
                       {isTrialExpired && (

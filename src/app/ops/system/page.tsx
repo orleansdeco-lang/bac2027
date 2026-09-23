@@ -174,7 +174,7 @@ export default function OpsSystemPage() {
           <div className="bg-slate-950 border border-slate-800 rounded-lg p-3.5 space-y-1">
             <div className="text-[11px] text-slate-400 uppercase font-mono">Server-Authoritative Time</div>
             <div className="text-xs font-bold text-white font-mono truncate">{serverTime}</div>
-            <div className="text-[11px] text-slate-500">Protects 72h trial policy from clock spoofing</div>
+            <div className="text-[11px] text-slate-500">Protects 7-day trial policy from clock spoofing</div>
           </div>
 
           <div className="bg-slate-950 border border-slate-800 rounded-lg p-3.5 space-y-1">
@@ -244,7 +244,7 @@ export default function OpsSystemPage() {
 
           <div className="bg-slate-950 border border-slate-800 rounded-lg p-3.5 space-y-1">
             <div className="text-[11px] text-slate-400 uppercase font-mono">Official Trial Policy</div>
-            <div className="text-sm font-bold text-blue-400 font-mono">72 Hours Fixed</div>
+            <div className="text-sm font-bold text-blue-400 font-mono">7 Days (168 Hours) Fixed</div>
             <div className="text-[11px] text-slate-500">Anchored to account creation timestamp</div>
           </div>
 

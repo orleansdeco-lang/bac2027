@@ -26,6 +26,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { ReferralSummary } from "@/lib/referral/types";
+import { generateReferralCode } from "@/lib/referral/code";
 import { MarketingPosterCard } from "@/components/referral/MarketingPosterCard";
 
 export default function ReferralPage() {
@@ -42,7 +43,12 @@ export default function ReferralPage() {
   const fetchReferralData = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/referral", {
+      const storedUser = typeof window !== "undefined"
+        ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")
+        : null;
+      const uid = user?.id || storedUser?.id;
+      const url = uid ? `/api/referral?userId=${encodeURIComponent(uid)}` : "/api/referral";
+      const res = await fetch(url, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -50,17 +56,6 @@ export default function ReferralPage() {
       const data = await res.json();
       if (data.success && data.summary) {
         setSummary(data.summary);
-      } else {
-        // Fallback for guest or new user
-        const storedUser = typeof window !== "undefined"
-          ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")
-          : null;
-        const uid = user?.id || storedUser?.id || "guest";
-        const fallbackRes = await fetch(`/api/referral?userId=${encodeURIComponent(uid)}`);
-        const fallbackData = await fallbackRes.json();
-        if (fallbackData.success && fallbackData.summary) {
-          setSummary(fallbackData.summary);
-        }
       }
     } catch (err: any) {
       console.error("Error loading referral data:", err);
@@ -74,27 +69,50 @@ export default function ReferralPage() {
     fetchReferralData();
   }, [user]);
 
+  // Derive student identity and unique fallback referral code
+  const storedUser = typeof window !== "undefined"
+    ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")
+    : null;
+  const currentUserId = user?.id || storedUser?.id || "";
+  const currentStudentName =
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.studentName ||
+    storedUser?.email?.split("@")[0] ||
+    "";
+
+  const activeReferralCode =
+    summary?.referralCode ||
+    (currentUserId ? generateReferralCode(currentStudentName, currentUserId) : "SHTR2027");
+
+  const activeShareUrl =
+    summary?.shareUrl ||
+    (typeof window !== "undefined"
+      ? `${window.location.origin}/auth?ref=${encodeURIComponent(activeReferralCode)}`
+      : `https://shater-bac.dz/auth?ref=${encodeURIComponent(activeReferralCode)}`);
+
+  const activeWhatsappMessage =
+    summary?.whatsappMessage ||
+    `راك توجد للباك؟ 🎓 جرب منصة شاطر (SHATER) باطل لمدة 7 أيام كاملة! تكتشف ثغراتك وتلقى مسار مخصص ليك يضمنلك النجاح. سجل بكودي واستفاد من التجربة:\n${activeShareUrl}`;
+
   const copyCodeToClipboard = () => {
-    if (!summary?.referralCode) return;
+    if (!activeReferralCode) return;
     if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(summary.referralCode);
+      navigator.clipboard.writeText(activeReferralCode);
       setCopiedCode(true);
       setTimeout(() => setCopiedCode(false), 2500);
     }
   };
 
   const copyLinkToClipboard = () => {
-    if (!summary?.shareUrl) return;
+    if (!activeShareUrl) return;
     if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(summary.shareUrl);
+      navigator.clipboard.writeText(activeShareUrl);
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2500);
     }
   };
 
-  const whatsappUrl = summary?.whatsappMessage
-    ? `https://api.whatsapp.com/send?text=${encodeURIComponent(summary.whatsappMessage)}`
-    : "#";
+  const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(activeWhatsappMessage)}`;
 
   return (
     <AppShell activeNav="referral">
@@ -156,7 +174,7 @@ export default function ReferralPage() {
 
           {/* Marketing Poster Card with QR & Referral Code */}
           <MarketingPosterCard
-            referralCode={summary?.referralCode || "SHATERBAC"}
+            referralCode={activeReferralCode}
             discountPercentage={10}
             locale={locale}
           />
@@ -183,7 +201,7 @@ export default function ReferralPage() {
                     {isAr ? "رمز الإحالة الخاص بك (Referral Code):" : "Code de parrainage :"}
                   </span>
                   <span className="text-2xl font-black tracking-widest font-mono text-[var(--color-primary)] select-all block mt-1">
-                    {summary?.referralCode || "..."}
+                    {activeReferralCode}
                   </span>
                 </div>
                 <button
@@ -212,7 +230,7 @@ export default function ReferralPage() {
                     {isAr ? "رابط التسجيل المباشر:" : "Lien d'inscription direct :"}
                   </span>
                   <span className="text-xs font-mono text-theme-secondary block mt-1 truncate select-all">
-                    {summary?.shareUrl || "..."}
+                    {activeShareUrl}
                   </span>
                 </div>
                 <button

@@ -177,7 +177,7 @@ export function LandingView() {
 
               {/* Micro Trust Indicator */}
               <div className="pt-1 text-xs text-theme-muted font-medium flex items-center justify-center lg:justify-start gap-2">
-                <span>✨ 72 ساعة تجربة استكشافية مجانية (0 دج)</span>
+                <span>✨ أسبوع تجربة استكشافية مجانية (7 أيام - 0 دج)</span>
                 <span>•</span>
                 <span>بدون بطاقة دفع</span>
                 <span>•</span>
@@ -704,7 +704,7 @@ export function LandingView() {
       <div className="fixed bottom-0 left-0 right-0 p-3 bg-surface/95 backdrop-blur-md border-t border-theme md:hidden z-30 flex items-center justify-between gap-3 shadow-lg">
         <div className="text-start">
           <span className="text-xs font-bold text-theme-text block">SHATER BAC</span>
-          <span className="text-[10px] text-theme-muted">72 ساعة تجربة مجانية (0 دج)</span>
+          <span className="text-[10px] text-theme-muted">أسبوع تجربة مجانية (7 أيام - 0 دج)</span>
         </div>
         <Link href="/auth/register" className="shrink-0">
           <Button variant="primary" size="sm" className="rounded-xl font-bold text-xs px-4 py-2">
