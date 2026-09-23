@@ -11,6 +11,7 @@ const PRECACHE_ASSETS = [
   "/diagnostic",
   "/memorize",
   "/calculator",
+  "/scientific-calculator",
   "/manifest.json",
   "/favicon.svg",
   "/app-icon.svg",

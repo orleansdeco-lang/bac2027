@@ -2,12 +2,6 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 /**
- * Authoritative Absolute Owner Credentials
- */
-export const OWNER_EMAIL = "azinox27@gmail.com";
-export const OWNER_UUID = "7f7f704e-d9f1-4edf-9952-591f41fc0c55";
-
-/**
  * Protected learner route prefixes requiring active authentication
  */
 export const PROTECTED_STUDENT_PREFIXES = [
@@ -25,65 +19,7 @@ export const PROTECTED_STUDENT_PREFIXES = [
 ];
 
 /**
- * Checks if a parsed object corresponds to the Absolute Owner
- */
-export function isOwnerPayload(payload: any): boolean {
-  if (!payload || typeof payload !== "object") return false;
-  const email = (payload.email || payload.user_metadata?.email || "")?.toLowerCase();
-  const sub = (payload.sub || payload.id || "")?.toLowerCase();
-  return email === OWNER_EMAIL.toLowerCase() || sub === OWNER_UUID.toLowerCase();
-}
-
-/**
- * Inspects a token, cookie value, or JSON payload to check for Absolute Owner credentials
- */
-export function checkIsOwner(raw: string | undefined | null): boolean {
-  if (!raw) return false;
-
-  // Try parsing as JSON (e.g. Supabase session array, user object)
-  try {
-    const parsed = JSON.parse(raw);
-    if (isOwnerPayload(parsed)) return true;
-    if (parsed.user && isOwnerPayload(parsed.user)) return true;
-  } catch {}
-
-  // Try decoding JWT payload (header.payload.signature)
-  try {
-    const parts = raw.split(".");
-    if (parts.length === 3) {
-      const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
-      const decodedJson = atob(base64);
-      const payload = JSON.parse(decodedJson);
-      if (isOwnerPayload(payload)) return true;
-    }
-  } catch {}
-
-  return false;
-}
-
-/**
- * Checks if the request comes from the Absolute Owner (via Authorization header or cookies)
- */
-export function isOwnerRequest(request: NextRequest): boolean {
-  // 1. Check Authorization header
-  const authHeader = request.headers.get("authorization") || request.headers.get("Authorization");
-  if (authHeader && checkIsOwner(authHeader.replace(/^Bearer\s+/i, ""))) {
-    return true;
-  }
-
-  // 2. Check cookies
-  const allCookies = request.cookies.getAll();
-  for (const cookie of allCookies) {
-    if (checkIsOwner(cookie.value)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-/**
- * Checks if the request contains any valid authentication token or Supabase session
+ * Checks if the request contains any valid authentication token or Supabase session cookie
  */
 export function hasActiveSession(request: NextRequest): boolean {
   // 1. Authorization header
@@ -131,29 +67,14 @@ export function isProtectedStudentRoute(pathname: string): boolean {
 
 /**
  * Next.js Edge Middleware
- * Route guard and immediate pass-through for Absolute Owner,
- * protection of student routes with ?redirectTo=/auth preservation,
- * and ops center authorization.
+ * Route guard enforcing session presence for student and ops routes.
+ * Authoritative cryptographic and RBAC checks are executed in Route Handlers.
  */
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   // ---------------------------------------------------------------------------
-  // 1. ABSOLUTE OWNER BYPASS (Immediate pass-through on ALL routes)
-  // ---------------------------------------------------------------------------
-  const isOwner = isOwnerRequest(request);
-  if (isOwner) {
-    const response = NextResponse.next();
-    if (pathname.startsWith("/ops")) {
-      response.headers.set("x-operations-route", "true");
-      response.headers.set("x-operations-owner", "true");
-      response.headers.set("x-operations-role", "OWNER");
-    }
-    return response;
-  }
-
-  // ---------------------------------------------------------------------------
-  // 2. OPERATIONS CENTER GUARD (/ops/*)
+  // 1. OPERATIONS CENTER GUARD (/ops/*)
   // ---------------------------------------------------------------------------
   if (pathname.startsWith("/ops")) {
     // Exempt /ops/login from interception
@@ -176,8 +97,7 @@ export function middleware(request: NextRequest) {
   }
 
   // ---------------------------------------------------------------------------
-  // 3. PROTECTED STUDENT ROUTES GUARD
-  // ['/dashboard', '/mission/:path*', '/exam', '/roadmap', '/errors', '/account', '/profile/:path*']
+  // 2. PROTECTED STUDENT ROUTES GUARD
   // ---------------------------------------------------------------------------
   if (isProtectedStudentRoute(pathname)) {
     const hasSession = hasActiveSession(request);
@@ -194,7 +114,7 @@ export function middleware(request: NextRequest) {
   }
 
   // ---------------------------------------------------------------------------
-  // 4. PUBLIC & UNGUARDED ROUTES (Default pass-through)
+  // 3. PUBLIC & UNGUARDED ROUTES (Default pass-through)
   // ---------------------------------------------------------------------------
   return NextResponse.next();
 }

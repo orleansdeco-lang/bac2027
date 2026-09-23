@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createCodOrder } from "@/lib/operations/payments";
-import { extractAuthenticatedUserId } from "@/lib/operations/auth";
+import { extractAuthenticatedUserId, isServerOperator } from "@/lib/operations/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -47,19 +47,32 @@ export async function POST(req: Request) {
       );
     }
 
-    // Resolve user ID: from session or body
-    let userId = await extractAuthenticatedUserId(req);
-    if (!userId && body.userId) {
-      userId = body.userId;
-    }
-    if (!userId) {
-      userId = `guest_${cleanPhone}`;
-    }
-
     const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
     const token = authHeader && authHeader.startsWith("Bearer ")
       ? authHeader.replace(/^Bearer\s+/i, "").trim()
       : null;
+
+    // Resolve user ID: if caller is authenticated, verify ownership or operator privileges
+    const callerId = await extractAuthenticatedUserId(req);
+    let userId: string | null = null;
+
+    if (callerId) {
+      if (body.userId && body.userId !== callerId) {
+        const isOperator = await isServerOperator(callerId, token);
+        if (!isOperator) {
+          return NextResponse.json(
+            { success: false, error: "غير مصرح لك بإنشاء طلب باسم مستخدم آخر." },
+            { status: 403 }
+          );
+        }
+        userId = body.userId;
+      } else {
+        userId = callerId;
+      }
+    } else {
+      // Unauthenticated caller cannot claim any existing student UUID
+      userId = null;
+    }
 
     const cleanParentPhone = parentPhone ? parentPhone.replace(/\s+/g, "") : undefined;
 

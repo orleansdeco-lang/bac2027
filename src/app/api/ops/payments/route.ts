@@ -72,10 +72,7 @@ export async function POST(req: Request) {
     }
 
     // 1. Authenticate caller strictly
-    let callerId = await extractAuthenticatedUserId(req);
-    if (!callerId && body.userId) {
-      callerId = body.userId;
-    }
+    const callerId = await extractAuthenticatedUserId(req);
     if (!callerId) {
       return NextResponse.json(
         { success: false, error: "Authentication required to create a payment order" },
@@ -96,7 +93,7 @@ export async function POST(req: Request) {
     // 2. Prevent User ID Spoofing: student cannot create orders for another user
     let effectiveUserId = callerId;
     if (body.userId && body.userId !== callerId) {
-      const isOperator = await isServerOperator(callerId);
+      const isOperator = await isServerOperator(callerId, token);
       if (!isOperator) {
         return NextResponse.json(
           {

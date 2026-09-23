@@ -4,96 +4,21 @@
  * 
  * INVARIANTS:
  * 1. Exactly two plans: 'season' (اشتراك الموسم الدراسي) and 'monthly' (الاشتراك الشهري).
- * 2. No hardcoded prices in application logic; database/operations store is the source of truth.
+ * 2. No hardcoded prices in application logic; database (public.subscription_plans) is the source of truth.
  * 3. Operator manually controls price, duration, and open/closed state.
  * 4. Closing a plan immediately blocks new purchases, but never cancels active student subscriptions.
- * 5. Manual extension in student dossier happens server-side, emits audit logs, and creates zero payment orders.
- * 6. Dual-mode resilience: Supabase subscription_plans with in-memory fallback.
+ * 5. Manual extension in student dossier happens server-side in PostgreSQL, emits audit logs.
+ * 6. Authoritative persistence in Supabase PostgreSQL; no filesystem (.runtime / /tmp) fallbacks.
  */
 
 import { SubscriptionPlan, SubscriptionAlert } from "./types";
 import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "../supabase/client";
+import { getAdminClient } from "../supabase/admin";
 import { recordAuditLog } from "./audit";
-import { hasFinanceAccess, getServerUserRole, isAbsoluteOwner, OWNER_UUID } from "./auth";
+import { hasFinanceAccess, getServerUserRole } from "./auth";
 import { StudentRepository } from "../repositories/student-repository";
 import { getPaymentOrders } from "./payments";
 import { saveServerStudentProfile } from "./students";
-
-import fs from "fs";
-import path from "path";
-
-import os from "os";
-
-function getDurablePlansPath(): string {
-  const dir = path.join(process.cwd(), ".runtime");
-  if (!fs.existsSync(dir)) {
-    try {
-      fs.mkdirSync(dir, { recursive: true });
-    } catch {}
-  }
-  return path.join(dir, "subscription_plans.json");
-}
-
-function getTmpPlansPath(): string {
-  return path.join(os.tmpdir(), "bac_subscription_plans.json");
-}
-
-function loadDurablePlans(): SubscriptionPlan[] {
-  if (typeof window !== "undefined") return [];
-
-  // 1. Check globalThis in-memory cache
-  const globalCache = (globalThis as any).__BAC_SUBSCRIPTION_PLANS__;
-  if (Array.isArray(globalCache) && globalCache.length > 0) {
-    return globalCache;
-  }
-
-  // 2. Check /tmp durable storage (writable on Vercel / serverless)
-  try {
-    const tmpPath = getTmpPlansPath();
-    if (fs.existsSync(tmpPath)) {
-      const raw = fs.readFileSync(tmpPath, "utf8");
-      const list = JSON.parse(raw);
-      if (Array.isArray(list) && list.length > 0) {
-        (globalThis as any).__BAC_SUBSCRIPTION_PLANS__ = list;
-        return list;
-      }
-    }
-  } catch {}
-
-  // 3. Check bundled .runtime storage
-  try {
-    const filePath = getDurablePlansPath();
-    if (fs.existsSync(filePath)) {
-      const raw = fs.readFileSync(filePath, "utf8");
-      const list = JSON.parse(raw);
-      if (Array.isArray(list) && list.length > 0) {
-        (globalThis as any).__BAC_SUBSCRIPTION_PLANS__ = list;
-        return list;
-      }
-    }
-  } catch {}
-
-  return [];
-}
-
-function saveDurablePlans(plans: SubscriptionPlan[]): void {
-  if (typeof window !== "undefined") return;
-
-  // 1. Update globalThis cache
-  (globalThis as any).__BAC_SUBSCRIPTION_PLANS__ = plans;
-
-  // 2. Persist to /tmp (always writable in serverless environments)
-  try {
-    const tmpPath = getTmpPlansPath();
-    fs.writeFileSync(tmpPath, JSON.stringify(plans, null, 2), "utf8");
-  } catch {}
-
-  // 3. Persist to .runtime (local development / build cache)
-  try {
-    const filePath = getDurablePlansPath();
-    fs.writeFileSync(filePath, JSON.stringify(plans, null, 2), "utf8");
-  } catch {}
-}
 
 const DEFAULT_PLANS: SubscriptionPlan[] = [
   {
@@ -116,10 +41,9 @@ const DEFAULT_PLANS: SubscriptionPlan[] = [
   },
 ];
 
-// In-memory fallback plans registry initialized with durable storage or defaults
+// In-memory fallback plans cache
 const memorySubscriptionPlans: Map<string, SubscriptionPlan> = new Map();
-const initialPlans = typeof window === "undefined" && loadDurablePlans().length > 0 ? loadDurablePlans() : DEFAULT_PLANS;
-for (const p of initialPlans) {
+for (const p of DEFAULT_PLANS) {
   memorySubscriptionPlans.set(p.id, p);
 }
 
@@ -130,22 +54,22 @@ export function resetMemorySubscriptionPlans(): void {
   for (const p of DEFAULT_PLANS) {
     memorySubscriptionPlans.set(p.id, { ...p, price_dzd: 0.0, active: false });
   }
-  saveDurablePlans(Array.from(memorySubscriptionPlans.values()));
 }
 
 /**
- * Retrieves all subscription plans from database / durable store / memory
+ * Retrieves all subscription plans from Supabase PostgreSQL
  */
-export async function getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
-  if (isSupabaseConfigured && supabase) {
+export async function getSubscriptionPlans(token?: string | null): Promise<SubscriptionPlan[]> {
+  const client = getAdminClient() || (token ? createAuthenticatedSupabaseClient(token) : null) || supabase;
+  if (isSupabaseConfigured && client) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await client
         .from("subscription_plans")
         .select("*")
         .order("duration_months", { ascending: false });
 
       if (!error && data && data.length > 0) {
-        return data.map((d: any) => ({
+        const plans = data.map((d: any) => ({
           id: d.id,
           name: d.name,
           price_dzd: Number(d.price_dzd),
@@ -154,15 +78,14 @@ export async function getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
           created_at: d.created_at,
           updated_at: d.updated_at,
         }));
+        for (const p of plans) {
+          memorySubscriptionPlans.set(p.id, p);
+        }
+        return plans;
       }
     } catch {
-      // Durable fallback
+      // Fall through to memory
     }
-  }
-
-  const durable = loadDurablePlans();
-  if (durable.length > 0) {
-    return durable;
   }
 
   return Array.from(memorySubscriptionPlans.values());
@@ -171,20 +94,21 @@ export async function getSubscriptionPlans(): Promise<SubscriptionPlan[]> {
 /**
  * Retrieves a single subscription plan by ID
  */
-export async function getSubscriptionPlanById(planId: string): Promise<SubscriptionPlan | null> {
+export async function getSubscriptionPlanById(planId: string, token?: string | null): Promise<SubscriptionPlan | null> {
   const normalizedId = (planId || "").toLowerCase().trim();
   const targetId = normalizedId === "bac_season_pass_pilot" ? "season" : normalizedId;
 
-  if (isSupabaseConfigured && supabase) {
+  const client = getAdminClient() || (token ? createAuthenticatedSupabaseClient(token) : null) || supabase;
+  if (isSupabaseConfigured && client) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await client
         .from("subscription_plans")
         .select("*")
         .eq("id", targetId)
         .maybeSingle();
 
       if (!error && data) {
-        return {
+        const plan: SubscriptionPlan = {
           id: data.id,
           name: data.name,
           price_dzd: Number(data.price_dzd),
@@ -193,15 +117,13 @@ export async function getSubscriptionPlanById(planId: string): Promise<Subscript
           created_at: data.created_at,
           updated_at: data.updated_at,
         };
+        memorySubscriptionPlans.set(plan.id, plan);
+        return plan;
       }
     } catch {
       // Fallback
     }
   }
-
-  const durable = loadDurablePlans();
-  const foundDurable = durable.find((p) => p.id === targetId);
-  if (foundDurable) return foundDurable;
 
   return memorySubscriptionPlans.get(targetId) || null;
 }
@@ -219,10 +141,11 @@ export async function updateSubscriptionPlan(
     duration_months?: number;
     active?: boolean;
     name?: string;
-  }
+  },
+  token?: string | null
 ): Promise<{ success: boolean; error?: string; plan?: SubscriptionPlan }> {
   // 1. Authorization check
-  const authorized = await hasFinanceAccess(callerUserId);
+  const authorized = await hasFinanceAccess(callerUserId, token);
   if (!authorized) {
     return {
       success: false,
@@ -230,7 +153,7 @@ export async function updateSubscriptionPlan(
     };
   }
 
-  const existingPlan = await getSubscriptionPlanById(planId);
+  const existingPlan = await getSubscriptionPlanById(planId, token);
   if (!existingPlan) {
     return { success: false, error: `Subscription plan '${planId}' not found.` };
   }
@@ -255,14 +178,13 @@ export async function updateSubscriptionPlan(
     updated_at: now,
   };
 
-  // 3. Persist in memory & durable file registry
   memorySubscriptionPlans.set(updatedPlan.id, updatedPlan);
-  saveDurablePlans(Array.from(memorySubscriptionPlans.values()));
 
-  // 4. Persist in Supabase if configured
-  if (isSupabaseConfigured && supabase) {
+  // 3. Persist in Supabase PostgreSQL
+  const client = getAdminClient() || (token ? createAuthenticatedSupabaseClient(token) : null) || supabase;
+  if (isSupabaseConfigured && client) {
     try {
-      await supabase
+      await client
         .from("subscription_plans")
         .upsert(
           {
@@ -275,18 +197,18 @@ export async function updateSubscriptionPlan(
           },
           { onConflict: "id" }
         );
-    } catch {
-      // Retained in memory fallback
+    } catch (err: any) {
+      console.error("[updateSubscriptionPlan] Supabase error:", err);
     }
   }
 
-  // 5. Determine audit action
+  // 4. Determine audit action
   let auditAction: any = "SUBSCRIPTION_PLAN_UPDATED";
   if (updates.active !== undefined && updates.active !== beforeState.active) {
     auditAction = updates.active ? "SUBSCRIPTION_OPENED" : "SUBSCRIPTION_CLOSED";
   }
 
-  const role = (await getServerUserRole(callerUserId)) || "OPERATOR";
+  const role = (await getServerUserRole(callerUserId, token)) || "OPERATOR";
 
   await recordAuditLog({
     actorUserId: callerUserId,
@@ -303,25 +225,22 @@ export async function updateSubscriptionPlan(
 }
 
 /**
- * Manually extends an active or expired student's access.
- * Supports both School Year (season) and Monthly (monthly) activations.
- * Auto-provisions profile if user hasn't completed onboarding yet (including Absolute Owner).
- * Does NOT create a payment order.
- * Emits audit log: SUBSCRIPTION_EXTENDED.
+ * Manually extends or activates a student's subscription from the Operations dossier.
+ * Directly records an active subscription in public.subscriptions and updates student_profiles.
  */
-export async function extendStudentSubscription(
+export async function grantManualSubscription(
   callerUserId: string,
   rawStudentId: string,
   extension: {
-    type: "1_month" | "1_week" | "custom" | "season";
+    type: "1_week" | "1_month" | "season" | "custom";
+    plan?: "season" | "monthly";
     days?: number;
     reason?: string;
-    plan?: "season" | "monthly";
   },
   token?: string | null
 ): Promise<{ success: boolean; error?: string; newExpiresAt?: string; plan?: string }> {
   // 1. Authorization check
-  const authorized = await hasFinanceAccess(callerUserId);
+  const authorized = await hasFinanceAccess(callerUserId, token);
   if (!authorized) {
     return {
       success: false,
@@ -334,64 +253,48 @@ export async function extendStudentSubscription(
     return { success: false, error: "معرف الطالب أو بريده الإلكتروني مطلوب." };
   }
 
-  // 2. Resolve owner email or UUID
-  let effectiveStudentId = cleanStudentId;
-  const isOwner = isAbsoluteOwner(cleanStudentId);
-  if (isOwner) {
-    effectiveStudentId = OWNER_UUID;
+  const client = getAdminClient() || (token ? createAuthenticatedSupabaseClient(token) : null) || supabase;
+  if (!isSupabaseConfigured || !client) {
+    return { success: false, error: "Database configuration error: Supabase client unavailable." };
   }
 
-  // 3. Retrieve student profile from Repository or remote Supabase
-  const client = token ? createAuthenticatedSupabaseClient(token) : supabase;
-  let studentProfile: any = await StudentRepository.getProfile(effectiveStudentId);
+  // 2. Retrieve student profile from remote Supabase
+  let studentProfile: any = null;
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(cleanStudentId);
 
-  // If not in local repository, query remote Supabase
-  if (!studentProfile && isSupabaseConfigured && client) {
-    try {
-      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(effectiveStudentId);
-      if (isUuid) {
-        const { data } = await client
-          .from("student_profiles")
-          .select("*")
-          .eq("id", effectiveStudentId)
-          .maybeSingle();
-        if (data) studentProfile = data;
-      } else if (cleanStudentId.includes("@")) {
-        const { data } = await client
-          .from("student_profiles")
-          .select("*")
-          .ilike("raw_draft->>student_email", cleanStudentId)
-          .maybeSingle();
-        if (data) {
-          studentProfile = data;
-          effectiveStudentId = data.id;
-        }
-      }
-    } catch {}
+  if (isUuid) {
+    const { data } = await client
+      .from("student_profiles")
+      .select("*")
+      .eq("id", cleanStudentId)
+      .maybeSingle();
+    studentProfile = data;
+  } else if (cleanStudentId.includes("@")) {
+    const { data } = await client
+      .from("student_profiles")
+      .select("*")
+      .ilike("raw_draft->>student_email", cleanStudentId)
+      .maybeSingle();
+    studentProfile = data;
+  }
+
+  if (!studentProfile) {
+    studentProfile = await StudentRepository.getProfile(cleanStudentId);
   }
 
   const now = new Date();
 
-  // 4. Auto-provision student profile if not found
-  // Guarantees that neither Owner nor fresh registered students fail activation
+  // If student profile still not found, return explicit error
   if (!studentProfile) {
-    studentProfile = {
-      id: effectiveStudentId,
-      user_id: effectiveStudentId,
-      streamId: "sciences_exp",
-      targetScore: 16.0,
-      educationLevel: "secondary",
-      examType: "bac",
-      access_status: "PAID",
-      plan: extension.plan || (extension.type === "1_month" ? "monthly" : "season"),
-      first_name: isOwner ? "المالك (Admin)" : "طالب",
-      last_name: "BAC Mastery",
-      createdAt: now.toISOString(),
-      created_at: now.toISOString(),
+    return {
+      success: false,
+      error: `لم يتم العثور على ملف الطالب بالمعرف: ${cleanStudentId}`,
     };
   }
 
-  // 5. Calculate extension duration and plan type
+  const effectiveStudentId = studentProfile.id;
+
+  // 3. Calculate extension duration and plan type
   let extensionMs = 30 * 24 * 60 * 60 * 1000; // default 1 month
   let chosenPlan: "season" | "monthly" = extension.plan || (extension.type === "1_month" ? "monthly" : "season");
 
@@ -401,7 +304,7 @@ export async function extendStudentSubscription(
     extensionMs = 30 * 24 * 60 * 60 * 1000;
     chosenPlan = "monthly";
   } else if (extension.type === "season" || extension.plan === "season") {
-    const days = extension.days ? Number(extension.days) : 365;
+    const days = extension.days ? Number(extension.days) : 300;
     extensionMs = days * 24 * 60 * 60 * 1000;
     chosenPlan = "season";
   } else if (extension.type === "custom") {
@@ -410,8 +313,6 @@ export async function extendStudentSubscription(
     chosenPlan = safeDays > 60 ? "season" : "monthly";
   }
 
-  // Base anchor: if student is currently active (subscription_expires_at > now), add to existing end date;
-  // otherwise, start from now.
   const currentExpires = studentProfile.subscription_expires_at
     ? new Date(studentProfile.subscription_expires_at)
     : studentProfile.trial_expires_at
@@ -428,57 +329,50 @@ export async function extendStudentSubscription(
     trial_expires_at: studentProfile.trial_expires_at,
   };
 
-  // Update student profile authoritatively
-  const updatedProfile = {
-    ...studentProfile,
-    id: effectiveStudentId,
-    access_status: "PAID",
-    plan: chosenPlan,
-    subscription_started_at: studentProfile.subscription_started_at || now.toISOString(),
-    subscription_expires_at: newExpiration,
-    updated_at: now.toISOString(),
-  };
-
-  await StudentRepository.saveProfile(updatedProfile as any, effectiveStudentId);
-
-  // Persist into server student registry for immediate /ops directory visibility
-  try {
-    saveServerStudentProfile({
-      id: effectiveStudentId,
-      accessStatus: "PAID",
+  // 4. Update student profile in PostgreSQL
+  const { error: profileError } = await client
+    .from("student_profiles")
+    .update({
+      access_status: "PAID",
       plan: chosenPlan,
-      hasPendingPayment: false,
-      subscriptionStartedAt: updatedProfile.subscription_started_at,
-      subscriptionExpiresAt: newExpiration,
-    });
-  } catch {}
+      subscription_started_at: studentProfile.subscription_started_at || now.toISOString(),
+      subscription_expires_at: newExpiration,
+      updated_at: now.toISOString(),
+    })
+    .eq("id", effectiveStudentId);
 
-  // Directly upsert into Supabase student_profiles table if database is configured
-  if (isSupabaseConfigured && client) {
-    try {
-      await client.from("student_profiles").upsert(
-        {
-          id: effectiveStudentId,
-          user_id: effectiveStudentId,
-          stream_id: updatedProfile.streamId || "sciences_exp",
-          education_level: updatedProfile.educationLevel || "secondary",
-          exam_type: (updatedProfile.examType || "bac").toLowerCase(),
-          target_score: updatedProfile.targetScore || 16.0,
-          access_status: "PAID",
-          plan: chosenPlan,
-          subscription_started_at: updatedProfile.subscription_started_at,
-          subscription_expires_at: newExpiration,
-          updated_at: now.toISOString(),
-        },
-        { onConflict: "id" }
-      );
-    } catch (dbErr) {
-      console.warn("Direct Supabase upsert in extendStudentSubscription:", dbErr);
-    }
+  if (profileError) {
+    console.error("[grantManualSubscription] profile update error:", profileError);
   }
 
-  // Emit audit log
-  const role = (await getServerUserRole(callerUserId)) || "OPERATOR";
+  // 5. Insert record into canonical public.subscriptions table
+  try {
+    await client.from("subscriptions").insert({
+      id: crypto.randomUUID(),
+      student_id: effectiveStudentId,
+      plan_id: chosenPlan,
+      status: "ACTIVE",
+      started_at: now.toISOString(),
+      expires_at: newExpiration,
+      activated_by: callerUserId,
+      notes: extension.reason || `Manual subscription granted by operator`,
+    });
+  } catch (subErr) {
+    console.error("[grantManualSubscription] Subscriptions table insert warning:", subErr);
+  }
+
+  // Update in-memory cache
+  saveServerStudentProfile({
+    id: effectiveStudentId,
+    accessStatus: "PAID",
+    plan: chosenPlan,
+    hasPendingPayment: false,
+    subscriptionStartedAt: studentProfile.subscription_started_at || now.toISOString(),
+    subscriptionExpiresAt: newExpiration,
+  });
+
+  // 6. Emit audit log
+  const role = (await getServerUserRole(callerUserId, token)) || "OPERATOR";
   const reasonText = extension.reason || `Manual subscription activation (${chosenPlan}) by operator`;
 
   await recordAuditLog({
@@ -502,21 +396,19 @@ export async function extendStudentSubscription(
 }
 
 /**
- * Aggregates operational alerts for the Operations Center:
- * 🔔 New payment waiting for verification
- * 🔔 New receipt uploaded
- * 🔔 Student subscription expires today
- * 🔔 Student subscription expired
- * 🔔 Subscription plan is closed
- * 🔔 New subscription approved
+ * Backward compatibility alias for grantManualSubscription
  */
-export async function getSubscriptionAlerts(): Promise<SubscriptionAlert[]> {
+export const extendStudentSubscription = grantManualSubscription;
+
+/**
+ * Aggregates operational alerts for the Operations Center
+ */
+export async function getSubscriptionAlerts(token?: string | null): Promise<SubscriptionAlert[]> {
   const alerts: SubscriptionAlert[] = [];
   const now = new Date();
-  const oneDayMs = 24 * 60 * 60 * 1000;
 
   // 1. Check Plans: Are any plans closed?
-  const plans = await getSubscriptionPlans();
+  const plans = await getSubscriptionPlans(token);
   for (const plan of plans) {
     if (!plan.active) {
       alerts.push({
@@ -533,7 +425,7 @@ export async function getSubscriptionAlerts(): Promise<SubscriptionAlert[]> {
 
   // 2. Check Payments: Pending verification & Receipts
   try {
-    const orders = await getPaymentOrders({ limit: 50 });
+    const orders = await getPaymentOrders({ limit: 50 }, token);
     const pending = orders.filter((o) => o.status === "PENDING");
     if (pending.length > 0) {
       alerts.push({

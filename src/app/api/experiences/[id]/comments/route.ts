@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
 import { ExperienceComment } from "@/types/experience";
-import { extractAuthenticatedCaller, isAbsoluteOwner, OWNER_EMAIL } from "@/lib/operations/auth";
+import { extractAuthenticatedCaller } from "@/lib/operations/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -142,9 +142,9 @@ export async function PATCH(
 
     // Check operator / owner authorization
     const caller = await extractAuthenticatedCaller(req);
-    const isOwner = caller?.isOwner || caller?.isOperator || isAbsoluteOwner(userId, userEmail);
+    const isOwner = caller?.isOwner || caller?.isOperator;
 
-    let isAuthorized = isOwner;
+    let isAuthorized = Boolean(isOwner);
 
     // If not owner, check if user is the comment's author
     if (!isAuthorized && isSupabaseConfigured && supabase) {
@@ -216,9 +216,9 @@ export async function DELETE(
 
     // Check operator / owner authorization
     const caller = await extractAuthenticatedCaller(req);
-    const isOwner = caller?.isOwner || caller?.isOperator || isAbsoluteOwner(userId, userEmail);
+    const isOwner = caller?.isOwner || caller?.isOperator;
 
-    let isAuthorized = isOwner;
+    let isAuthorized = Boolean(isOwner);
 
     // If not owner, check if user is the comment's author
     if (!isAuthorized && isSupabaseConfigured && supabase) {

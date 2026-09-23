@@ -1,20 +1,19 @@
 import { NextResponse } from "next/server";
-import { extractAndVerifyOperator, isAbsoluteOwner } from "@/lib/operations/auth";
-import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "@/lib/supabase/client";
+import { extractAndVerifyOperator } from "@/lib/operations/auth";
+import { getAdminClient } from "@/lib/supabase/admin";
+import { createAuthenticatedSupabaseClient, isSupabaseConfigured, supabase } from "@/lib/supabase/client";
 import { recordAuditLog } from "@/lib/operations/audit";
-import fs from "fs";
-import path from "path";
 
 export const dynamic = "force-dynamic";
 
 /**
  * POST /api/ops/system/purge-test-data
- * Strictly restricted to Platform Owner (azinox27@gmail.com).
- * Wipes all dummy, test, and mock subscribers while safeguarding the real Owner account.
+ * Strictly restricted to platform OWNER verified via public.user_roles.
+ * Wipes dummy/test/mock data without hardcoded UUID backdoors.
  */
 export async function POST(req: Request) {
   const operator = await extractAndVerifyOperator(req);
-  if (!operator || (!operator.isOwner && !isAbsoluteOwner(operator.userId))) {
+  if (!operator || !operator.isOwner) {
     return NextResponse.json(
       { success: false, error: "Unauthorized: Only platform owner can purge test data" },
       { status: 403 }
@@ -23,50 +22,38 @@ export async function POST(req: Request) {
 
   const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
   const token = authHeader?.startsWith("Bearer ") ? authHeader.replace(/^Bearer\s+/i, "").trim() : null;
-  const client = token ? createAuthenticatedSupabaseClient(token) : supabase;
+  const client = getAdminClient() || (token ? createAuthenticatedSupabaseClient(token) : null) || supabase;
 
   let purgedDbStudents = 0;
   let purgedDbOrders = 0;
 
-  // 1. Reset durable runtime files
-  const runtimeDir = path.join(process.cwd(), ".runtime");
-  const filesToReset = [
-    "students.json",
-    "payment_orders.json",
-    "referrals.json",
-    "credit_transactions.json",
-    "vouchers.json",
-  ];
-
-  try {
-    if (fs.existsSync(runtimeDir)) {
-      for (const file of filesToReset) {
-        const p = path.join(runtimeDir, file);
-        if (fs.existsSync(p)) {
-          fs.writeFileSync(p, "[]", "utf8");
-        }
-      }
-    }
-  } catch (err) {
-    console.error("Failed to reset runtime files:", err);
-  }
-
-  // 2. Clear global in-memory buffers
+  // Clear global in-memory buffers
   if (typeof globalThis !== "undefined") {
     (globalThis as any).__BAC_STUDENTS_REGISTRY__ = [];
   }
 
-  // 3. Purge test records from Supabase (preserving azinox27@gmail.com)
+  // Purge test records from PostgreSQL (protecting all administrative users)
   if (isSupabaseConfigured && client) {
     try {
-      // Purge test student profiles
-        const { data: testProfiles, error: pError } = await client
-          .from("student_profiles")
-          .delete()
-          .neq("id", "7f7f704e-d9f1-4edf-9952-591f41fc0c55")
-          .or("id.ilike.test-%,id.ilike.mock-%,id.ilike.student_%")
-          .select("id");
+      // Find all owners and operators to protect them from deletion
+      const { data: adminRoles } = await client
+        .from("user_roles")
+        .select("user_id")
+        .in("role", ["OWNER", "OPERATOR"]);
 
+      const protectedIds = (adminRoles || []).map((r) => r.user_id).filter(Boolean);
+
+      // Purge test student profiles
+      let studentQuery = client
+        .from("student_profiles")
+        .delete()
+        .or("id.ilike.test-%,id.ilike.mock-%,id.ilike.student_%");
+
+      if (protectedIds.length > 0) {
+        studentQuery = studentQuery.not("id", "in", `(${protectedIds.join(",")})`);
+      }
+
+      const { data: testProfiles, error: pError } = await studentQuery.select("id");
       if (!pError && testProfiles) {
         purgedDbStudents = testProfiles.length;
       }
@@ -93,16 +80,15 @@ export async function POST(req: Request) {
     targetType: "student_profile",
     targetId: "ALL_TEST_DATA",
     reason: "Purge test data requested by platform owner",
-    afterState: { purgedDbStudents, purgedDbOrders, runtimeReset: true },
+    afterState: { purgedDbStudents, purgedDbOrders },
   });
 
   return NextResponse.json({
     success: true,
-    message: "تم تطهير وحذف كافة بيانات الاختبار بنجاح مع الحفاظ على حساب المدير الرئيسي.",
+    message: "تم تطهير وحذف كافة بيانات الاختبار بنجاح مع الحفاظ على حسابات الإدارة.",
     purged: {
       dbStudents: purgedDbStudents,
       dbOrders: purgedDbOrders,
-      runtimeFilesReset: true,
     },
   });
 }

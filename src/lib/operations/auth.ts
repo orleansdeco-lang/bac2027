@@ -1,6 +1,6 @@
 /**
  * BAC Mastery — Server-Side RBAC & Authorization Layer
- * Phase P0.1 Commercial Hardening
+ * Phase P0.1 Commercial Hardening & Security Hardening
  * 
  * INVARIANTS:
  * 1. Authorization is strictly server-enforced; client claims are never trusted blindly.
@@ -8,29 +8,15 @@
  * 3. Content Reviewers are restricted to pedagogy; strictly DENIED finance, receipts, audit and roles.
  * 4. Operators have finance and audit access; strictly DENIED role management and owner escalation.
  * 5. Owners have complete authority over finance, audit, and role assignment.
+ * 6. ZERO hardcoded bypasses: all roles are authoritatively determined by public.user_roles in PostgreSQL.
  */
 
 import { UserRole } from "./types";
-import { supabase, isSupabaseConfigured } from "../supabase/client";
+import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "../supabase/client";
+import { getAdminClient } from "../supabase/admin";
 import { recordAuditLog } from "./audit";
-import { loadServerStudentProfiles } from "./students";
 
-// Authoritative Root Owner Constants
-export const OWNER_EMAIL = "azinox27@gmail.com";
-export const OWNER_UUID = "7f7f704e-d9f1-4edf-9952-591f41fc0c55";
 
-/**
- * Check whether a user ID or email corresponds to the absolute platform Owner
- */
-export function isAbsoluteOwner(userId?: string | null, email?: string | null): boolean {
-  if (userId && (userId.toLowerCase() === OWNER_UUID.toLowerCase() || userId.toLowerCase() === OWNER_EMAIL.toLowerCase())) {
-    return true;
-  }
-  if (email && email.toLowerCase() === OWNER_EMAIL.toLowerCase()) {
-    return true;
-  }
-  return false;
-}
 
 /**
  * Normalizes any database role string (e.g. lowercase "owner" or mixed-case)
@@ -46,7 +32,7 @@ export function normalizeUserRole(rawRole: any): UserRole | null {
   return null;
 }
 
-// In-memory fallback role registry for testing or bootstrap environments
+// In-memory fallback role registry for isolated unit tests only
 const memoryRoles = new Map<string, UserRole>();
 
 export function setMemoryUserRole(userId: string, role: UserRole): void {
@@ -58,24 +44,22 @@ export function clearMemoryUserRoles(): void {
 }
 
 /**
- * Retrieve the role for a specific user ID
+ * Retrieve the role for a specific user ID authoritatively from PostgreSQL public.user_roles
  */
-export async function getServerUserRole(userId: string): Promise<UserRole | null> {
+export async function getServerUserRole(userId: string, token?: string | null): Promise<UserRole | null> {
   if (!userId) return null;
 
-  // 1. Immediate absolute Owner grant
-  if (isAbsoluteOwner(userId)) {
-    return "OWNER";
-  }
-
-  // 2. Check in-memory role registry
-  if (memoryRoles.has(userId)) {
+  // Check test memory registry if in test environment
+  if (process.env.NODE_ENV === "test" && memoryRoles.has(userId)) {
     return memoryRoles.get(userId) || null;
   }
 
-  if (isSupabaseConfigured && supabase) {
+  // Query database authoritatively via admin client (service_role) or authenticated token
+  const client = getAdminClient() || (token ? createAuthenticatedSupabaseClient(token) : null) || supabase;
+
+  if (isSupabaseConfigured && client) {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await client
         .from("user_roles")
         .select("role")
         .eq("user_id", userId)
@@ -85,11 +69,11 @@ export async function getServerUserRole(userId: string): Promise<UserRole | null
         return normalizeUserRole(data.role);
       }
       if (!error && !data) {
-        // Authoritative from remote Supabase: No administrative role assigned
+        // Authoritative: user has no administrative role in public.user_roles
         return null;
       }
     } catch {
-      // Fallback only if remote call threw network error
+      // Fall through to null on error
     }
   }
 
@@ -99,29 +83,27 @@ export async function getServerUserRole(userId: string): Promise<UserRole | null
 /**
  * Checks if a user has OPERATOR or OWNER privileges
  */
-export async function isServerOperator(userId: string): Promise<boolean> {
+export async function isServerOperator(userId: string, token?: string | null): Promise<boolean> {
   if (!userId) return false;
-  if (isAbsoluteOwner(userId)) return true;
-  const role = await getServerUserRole(userId);
+  const role = await getServerUserRole(userId, token);
   return role === "OWNER" || role === "OPERATOR";
 }
 
 /**
  * Checks if a user is an OWNER
  */
-export async function isServerOwner(userId: string): Promise<boolean> {
+export async function isServerOwner(userId: string, token?: string | null): Promise<boolean> {
   if (!userId) return false;
-  if (isAbsoluteOwner(userId)) return true;
-  const role = await getServerUserRole(userId);
+  const role = await getServerUserRole(userId, token);
   return role === "OWNER";
 }
 
 /**
  * Checks if a user is a CONTENT_REVIEWER
  */
-export async function isServerContentReviewer(userId: string): Promise<boolean> {
+export async function isServerContentReviewer(userId: string, token?: string | null): Promise<boolean> {
   if (!userId) return false;
-  const role = await getServerUserRole(userId);
+  const role = await getServerUserRole(userId, token);
   return role === "CONTENT_REVIEWER";
 }
 
@@ -129,9 +111,9 @@ export async function isServerContentReviewer(userId: string): Promise<boolean> 
  * Checks if a user has finance access (OWNER or OPERATOR only)
  * CONTENT_REVIEWER is strictly denied.
  */
-export async function hasFinanceAccess(userId: string): Promise<boolean> {
+export async function hasFinanceAccess(userId: string, token?: string | null): Promise<boolean> {
   if (!userId) return false;
-  const role = await getServerUserRole(userId);
+  const role = await getServerUserRole(userId, token);
   return role === "OWNER" || role === "OPERATOR";
 }
 
@@ -139,9 +121,9 @@ export async function hasFinanceAccess(userId: string): Promise<boolean> {
  * Checks if a user has audit trail access (OWNER or OPERATOR only)
  * CONTENT_REVIEWER is strictly denied.
  */
-export async function hasAuditAccess(userId: string): Promise<boolean> {
+export async function hasAuditAccess(userId: string, token?: string | null): Promise<boolean> {
   if (!userId) return false;
-  const role = await getServerUserRole(userId);
+  const role = await getServerUserRole(userId, token);
   return role === "OWNER" || role === "OPERATOR";
 }
 
@@ -149,9 +131,9 @@ export async function hasAuditAccess(userId: string): Promise<boolean> {
  * Checks if a user has role management access (OWNER only)
  * OPERATOR and CONTENT_REVIEWER are strictly denied.
  */
-export async function hasRoleManagementAccess(userId: string): Promise<boolean> {
+export async function hasRoleManagementAccess(userId: string, token?: string | null): Promise<boolean> {
   if (!userId) return false;
-  const role = await getServerUserRole(userId);
+  const role = await getServerUserRole(userId, token);
   return role === "OWNER";
 }
 
@@ -187,7 +169,8 @@ export function extractTokenFromCookies(cookieHeader: string | null): string | n
 }
 
 /**
- * Extract authenticated user ID from request headers or cookies
+ * Extract authenticated user ID from request headers or cookies.
+ * Cryptographically verifies JWT with Supabase Auth.
  */
 export async function extractAuthenticatedUserId(req: Request): Promise<string | null> {
   let token: string | null = null;
@@ -209,9 +192,6 @@ export async function extractAuthenticatedUserId(req: Request): Promise<string |
     try {
       const { data: { user }, error } = await supabase.auth.getUser(token);
       if (!error && user?.id) {
-        if (isAbsoluteOwner(user.id, user.email)) {
-          memoryRoles.set(user.id, "OWNER");
-        }
         return user.id;
       }
     } catch {
@@ -219,24 +199,8 @@ export async function extractAuthenticatedUserId(req: Request): Promise<string |
     }
   }
 
-  // 4. If token is a valid identifier (e.g. deterministic ID or student UUID from cookie)
-  if (token && token.length >= 6) {
-    const rawVal = decodeURIComponent(token).trim();
-    if (isAbsoluteOwner(rawVal)) {
-      return OWNER_UUID;
-    }
-    const profiles = loadServerStudentProfiles();
-    const matched = profiles.find((p) => p.id === rawVal || p.email === rawVal);
-    if (matched) {
-      return matched.id;
-    }
-    if (/^[a-zA-Z0-9_-]{8,64}$/.test(rawVal)) {
-      return rawVal;
-    }
-  }
-
-  // 5. Testing/development header support (strictly disabled in production)
-  if (process.env.NODE_ENV !== "production" && process.env.NODE_ENV !== undefined) {
+  // 4. Testing header support (strictly restricted to test environment)
+  if (process.env.NODE_ENV === "test") {
     const headerUid = req.headers.get("x-test-user-id") || req.headers.get("x-user-id");
     if (headerUid) return headerUid;
   }
@@ -245,7 +209,7 @@ export async function extractAuthenticatedUserId(req: Request): Promise<string |
 }
 
 /**
- * Extract authenticated user and their resolved role
+ * Extract authenticated user and their resolved role authoritatively
  */
 export async function extractAuthenticatedCaller(req: Request): Promise<{
   userId: string;
@@ -253,28 +217,27 @@ export async function extractAuthenticatedCaller(req: Request): Promise<{
   isOwner: boolean;
   isOperator: boolean;
   isContentReviewer: boolean;
+  token: string | null;
 } | null> {
+  const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
+  let token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.replace(/^Bearer\s+/i, "").trim() : null;
+  if (!token) {
+    const cookieHeader = req.headers.get("cookie") || req.headers.get("Cookie");
+    token = extractTokenFromCookies(cookieHeader);
+  }
+
   const userId = await extractAuthenticatedUserId(req);
   if (!userId) return null;
 
-  if (isAbsoluteOwner(userId)) {
-    return {
-      userId,
-      role: "OWNER",
-      isOwner: true,
-      isOperator: true,
-      isContentReviewer: false,
-    };
-  }
-
-  const role = await getServerUserRole(userId);
-  const isOwner = role === "OWNER" || isAbsoluteOwner(userId);
+  const role = await getServerUserRole(userId, token);
+  const isOwner = role === "OWNER";
   return {
     userId,
-    role: isOwner ? "OWNER" : role,
+    role,
     isOwner,
     isOperator: isOwner || role === "OPERATOR",
     isContentReviewer: role === "CONTENT_REVIEWER",
+    token,
   };
 }
 
@@ -285,6 +248,7 @@ export async function extractAndVerifyOperator(req: Request): Promise<{
   userId: string;
   role: UserRole;
   isOwner: boolean;
+  token: string | null;
 } | null> {
   const caller = await extractAuthenticatedCaller(req);
   if (!caller || !caller.role || (caller.role !== "OWNER" && caller.role !== "OPERATOR")) {
@@ -295,6 +259,7 @@ export async function extractAndVerifyOperator(req: Request): Promise<{
     userId: caller.userId,
     role: caller.role,
     isOwner: caller.isOwner,
+    token: caller.token,
   };
 }
 
@@ -307,20 +272,20 @@ export async function extractAndVerifyFinanceOperator(req: Request): Promise<{
   userId?: string;
   role?: UserRole;
   isOwner?: boolean;
+  token?: string | null;
   status: 200 | 401 | 403;
   error?: string;
 }> {
-  const userId = await extractAuthenticatedUserId(req);
-  if (!userId) {
+  const caller = await extractAuthenticatedCaller(req);
+  if (!caller) {
     return { authorized: false, status: 401, error: "Authentication required" };
   }
 
-  const role = await getServerUserRole(userId);
-  if (!role) {
+  if (!caller.role) {
     return { authorized: false, status: 403, error: "Forbidden: No administrative role assigned" };
   }
 
-  if (role === "CONTENT_REVIEWER") {
+  if (caller.role === "CONTENT_REVIEWER") {
     return {
       authorized: false,
       status: 403,
@@ -328,15 +293,16 @@ export async function extractAndVerifyFinanceOperator(req: Request): Promise<{
     };
   }
 
-  if (role !== "OWNER" && role !== "OPERATOR") {
+  if (caller.role !== "OWNER" && caller.role !== "OPERATOR") {
     return { authorized: false, status: 403, error: "Forbidden: Finance operator access required" };
   }
 
   return {
     authorized: true,
-    userId,
-    role,
-    isOwner: role === "OWNER",
+    userId: caller.userId,
+    role: caller.role,
+    isOwner: caller.isOwner,
+    token: caller.token,
     status: 200,
   };
 }
@@ -347,16 +313,16 @@ export async function extractAndVerifyFinanceOperator(req: Request): Promise<{
 export async function extractAndVerifyOwner(req: Request): Promise<{
   authorized: boolean;
   userId?: string;
+  token?: string | null;
   status: 200 | 401 | 403;
   error?: string;
 }> {
-  const userId = await extractAuthenticatedUserId(req);
-  if (!userId) {
+  const caller = await extractAuthenticatedCaller(req);
+  if (!caller) {
     return { authorized: false, status: 401, error: "Authentication required" };
   }
 
-  const isOwner = await isServerOwner(userId);
-  if (!isOwner) {
+  if (!caller.isOwner) {
     return {
       authorized: false,
       status: 403,
@@ -364,23 +330,24 @@ export async function extractAndVerifyOwner(req: Request): Promise<{
     };
   }
 
-  return { authorized: true, userId, status: 200 };
+  return { authorized: true, userId: caller.userId, token: caller.token, status: 200 };
 }
 
 /**
  * Assign or update a user's role authoritatively.
- * Strictly enforced: Only OWNER can assign roles. OPERATOR self-escalation is blocked.
+ * Strictly enforced: Only OWNER can assign roles.
  */
 export async function assignUserRole(
   callerUserId: string,
   targetUserId: string,
-  newRole: UserRole
+  newRole: UserRole,
+  token?: string | null
 ): Promise<{ success: boolean; error?: string }> {
   if (!callerUserId || !targetUserId || !newRole) {
     return { success: false, error: "Missing required parameters" };
   }
 
-  const isOwner = await isServerOwner(callerUserId);
+  const isOwner = await isServerOwner(callerUserId, token);
   if (!isOwner) {
     return {
       success: false,
@@ -388,21 +355,20 @@ export async function assignUserRole(
     };
   }
 
-  const existingRole = await getServerUserRole(targetUserId);
+  const existingRole = await getServerUserRole(targetUserId, token);
 
-  // Update memory role registry
-  setMemoryUserRole(targetUserId, newRole);
+  const client = getAdminClient() || (token ? createAuthenticatedSupabaseClient(token) : null) || supabase;
+  if (!client) {
+    return { success: false, error: "Database client unavailable" };
+  }
 
-  // Attempt database upsert
-  if (isSupabaseConfigured && supabase) {
-    try {
-      await supabase.from("user_roles").upsert(
-        { user_id: targetUserId, role: newRole },
-        { onConflict: "user_id,role" }
-      );
-    } catch {
-      // Memory fallback
-    }
+  const { error } = await client.from("user_roles").upsert(
+    { user_id: targetUserId, role: newRole },
+    { onConflict: "user_id,role" }
+  );
+
+  if (error) {
+    return { success: false, error: error.message };
   }
 
   // Record audit log

@@ -253,12 +253,12 @@ export function Sidebar({ className }: SidebarProps) {
         },
         {
           href: "/calculator",
-          label_ar: "حاسبة المعدل والآلة العلمية",
-          label_fr: "Calculatrice BAC & Scientifique",
-          icon: Calculator,
+          label_ar: "حاسبة معدل البكالوريا",
+          label_fr: "Calculateur de Moyenne BAC",
+          icon: GraduationCap,
           matches: (p: string) => p.startsWith("/calculator"),
-          badge: isAr ? "علمية 🔬" : "Scientifique",
-          badgeColor: "bg-teal-500/15 text-teal-600 dark:text-teal-400 border-teal-500/30",
+          badge: isAr ? "رسمية" : "Officiel",
+          badgeColor: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
         },
       ],
     },
@@ -297,12 +297,17 @@ export function Sidebar({ className }: SidebarProps) {
   const renderSidebarContent = (isMobile: boolean = false) => (
     <div className="flex flex-col justify-between h-full space-y-6">
       <div className="space-y-5">
-        {/* Header: Logo & BAC 2027 Tag */}
+        {/* Header: Logo & 3D Scientific Calculator Button */}
         <div className="flex items-center justify-between px-1">
           <Logo size="sm" href="/dashboard" />
-          <span className="text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 rounded-full bg-surface-soft border border-theme text-theme-secondary font-bold">
-            BAC 2027
-          </span>
+          <Link
+            href="/scientific-calculator"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-teal-500/10 hover:bg-teal-500/20 text-teal-700 dark:text-teal-300 border border-teal-500/30 text-[10px] font-bold transition-all shadow-2xs group"
+            title={isAr ? "الآلة الحاسبة العلمية ثلاثية الأبعاد (Casio 3D)" : "Calculatrice Scientifique 3D"}
+          >
+            <Calculator className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400 group-hover:scale-110 transition-transform" />
+            <span>{isAr ? "الآلة الحاسبة 🔬" : "Calculatrice 🔬"}</span>
+          </Link>
           {isMobile && (
             <button
               type="button"

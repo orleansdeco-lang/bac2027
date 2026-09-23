@@ -1,12 +1,17 @@
 import { NextResponse } from "next/server";
-import { saveServerStudentProfile, loadServerStudentProfiles } from "@/lib/operations/students";
+import { extractAuthenticatedUserId, isServerOperator } from "@/lib/operations/auth";
+import { getAdminClient } from "@/lib/supabase/admin";
 import { createAuthenticatedSupabaseClient, isSupabaseConfigured, supabase } from "@/lib/supabase/client";
+import { fetchAuthoritativeStudentProfile, saveServerStudentProfile } from "@/lib/operations/students";
 
 export const dynamic = "force-dynamic";
 
 /**
  * POST /api/student/sync
- * Securely synchronizes a student's profile to server storage and Supabase.
+ * Securely synchronizes a student's demographic profile to Supabase PostgreSQL.
+ * Strictly prevents IDOR: caller must be authenticated and match target id (or have OPERATOR role).
+ * Access status is strictly authoritatively derived from PostgreSQL (subscriptions / payment_orders)
+ * and cannot be elevated or manipulated by client payloads.
  */
 export async function POST(req: Request) {
   try {
@@ -25,117 +30,136 @@ export async function POST(req: Request) {
       }
     }
 
-    // 1. Authoritative check: Search existing server profiles
-    const serverProfiles = loadServerStudentProfiles();
-    const existingServerProfile = serverProfiles.find(
-      (s) =>
-        s.id === body.id ||
-        (body.email && s.email && s.email.toLowerCase() === body.email.toLowerCase()) ||
-        (body.studentPhone && s.studentPhone && s.studentPhone === body.studentPhone)
-    );
+    // 1. Strict Authentication & IDOR Guard
+    const callerId = await extractAuthenticatedUserId(req);
+    if (!callerId) {
+      return NextResponse.json(
+        { success: false, error: "Authentication required to synchronize student profile" },
+        { status: 401 }
+      );
+    }
 
-    // 2. Authoritative check: Look up all payment orders matching id, email, or phone
-    const { getPaymentOrders } = await import("@/lib/operations/payments");
-    const allOrders = await getPaymentOrders({ limit: 200 }, token);
-    const userOrders = allOrders.filter(
-      (o) =>
-        o.userId === body.id ||
-        (body.email && o.studentEmail && o.studentEmail.toLowerCase() === body.email.toLowerCase()) ||
-        (body.studentPhone && o.studentPhone && o.studentPhone === body.studentPhone)
-    );
-    const approvedOrder = userOrders.find((o) => o.status === "APPROVED");
-    const latestOrder = userOrders[0];
+    if (body.id !== callerId) {
+      const isOperator = await isServerOperator(callerId, token);
+      if (!isOperator) {
+        return NextResponse.json(
+          { success: false, error: "Forbidden: You cannot modify or synchronize another student's profile." },
+          { status: 403 }
+        );
+      }
+    }
 
-    // Check if student has valid active paid subscription
-    const existingSubExpires = existingServerProfile?.subscriptionExpiresAt;
-    const isExistingPaidActive = Boolean(
-      existingServerProfile?.accessStatus === "PAID" &&
-      existingSubExpires &&
-      new Date(existingSubExpires).getTime() > Date.now()
-    );
+    const targetStudentId = body.id;
+    const client = getAdminClient() || (token ? createAuthenticatedSupabaseClient(token) : null) || supabase;
 
-    // Determine authoritative paid status strictly from verified database records
-    const isAuthoritativePaid = Boolean(
-      approvedOrder ||
-      isExistingPaidActive
+    if (!isSupabaseConfigured || !client) {
+      return NextResponse.json(
+        { success: false, error: "Database service unavailable" },
+        { status: 503 }
+      );
+    }
+
+    // 2. Authoritatively fetch student's active subscriptions and payment orders from PostgreSQL
+    const [subRes, orderRes, profileRes] = await Promise.all([
+      client
+        .from("subscriptions")
+        .select("*")
+        .eq("student_id", targetStudentId)
+        .eq("status", "ACTIVE")
+        .gt("expires_at", new Date().toISOString())
+        .order("expires_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      client
+        .from("payment_orders")
+        .select("*")
+        .eq("user_id", targetStudentId)
+        .order("submitted_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      client
+        .from("student_profiles")
+        .select("*")
+        .eq("id", targetStudentId)
+        .maybeSingle(),
+    ]);
+
+    const activeSub = subRes.data;
+    const latestOrder = orderRes.data;
+    const existingProfile = profileRes.data;
+
+    // 3. Determine authoritative access status (client cannot self-elevate)
+    const isPaidActive = Boolean(
+      activeSub ||
+      (existingProfile?.access_status === "PAID" &&
+        existingProfile?.subscription_expires_at &&
+        new Date(existingProfile.subscription_expires_at).getTime() > Date.now())
     );
 
     let effectiveAccessStatus: "TRIAL" | "PAID" | "EXPIRED" | "REJECTED" = "TRIAL";
-    let effectivePlan = approvedOrder?.plan || existingServerProfile?.plan || body.plan || "season";
-    let subStartedAt = approvedOrder?.reviewedAt || existingServerProfile?.subscriptionStartedAt;
-    let subExpiresAt = existingSubExpires;
-    let rejectionReason = existingServerProfile?.rejectionReason;
+    let effectivePlan = activeSub?.plan_id || existingProfile?.plan || "season";
+    let subStartedAt = activeSub?.started_at || existingProfile?.subscription_started_at;
+    let subExpiresAt = activeSub?.expires_at || existingProfile?.subscription_expires_at;
+    let rejectionReason = existingProfile?.rejection_reason;
 
-    const profileCreated = existingServerProfile?.createdAt || existingServerProfile?.trialStartedAt || body.createdAt || new Date().toISOString();
+    const profileCreated = existingProfile?.created_at || existingProfile?.trial_started_at || new Date().toISOString();
     const isTrialExpired = Date.now() - new Date(profileCreated).getTime() > 7 * 24 * 60 * 60 * 1000;
 
-    if (isAuthoritativePaid) {
+    if (isPaidActive) {
       effectiveAccessStatus = "PAID";
-      if (approvedOrder) {
-        effectivePlan = approvedOrder.plan || "season";
-        subStartedAt = approvedOrder.reviewedAt || approvedOrder.updatedAt || approvedOrder.submittedAt || new Date().toISOString();
-        const durationMonths = effectivePlan === "monthly" ? 1 : 10;
-        subExpiresAt = new Date(new Date(subStartedAt).getTime() + durationMonths * 30 * 86400000).toISOString();
-      }
     } else if (latestOrder && latestOrder.status === "REJECTED") {
       effectiveAccessStatus = "REJECTED";
-      rejectionReason = latestOrder.rejectionReason || "تم رفض وصل التحويل";
+      rejectionReason = latestOrder.rejection_reason || "تم رفض وصل التحويل";
     } else if (isTrialExpired) {
       effectiveAccessStatus = "EXPIRED";
     } else {
       effectiveAccessStatus = "TRIAL";
     }
 
-    // 3. Save to durable server registry for immediate /ops visibility
-    const student = saveServerStudentProfile({
-      id: body.id,
-      fullName: body.fullName || `${body.firstName || ""} ${body.lastName || ""}`.trim() || existingServerProfile?.fullName || undefined,
-      email: body.email || existingServerProfile?.email,
-      studentPhone: body.studentPhone || existingServerProfile?.studentPhone,
-      parentPhone: body.parentPhone || existingServerProfile?.parentPhone,
-      streamId: body.streamId || existingServerProfile?.streamId,
-      wilayaName: body.wilayaName || existingServerProfile?.wilayaName,
-      communeName: body.communeName || existingServerProfile?.communeName,
-      targetScore: body.targetScore ?? existingServerProfile?.targetScore,
-      accessStatus: effectiveAccessStatus,
+    // 4. Update demographic profile fields in Supabase PostgreSQL (access_status is authoritative)
+    const updatePayload: Record<string, any> = {
+      id: targetStudentId,
+      user_id: targetStudentId,
+      updated_at: new Date().toISOString(),
+      access_status: effectiveAccessStatus,
       plan: effectivePlan,
-      subscriptionStartedAt: subStartedAt,
-      subscriptionExpiresAt: subExpiresAt,
-      rejectionReason,
-      onboardingCompleted: body.onboardingCompleted !== undefined ? body.onboardingCompleted : (existingServerProfile?.onboardingCompleted ?? true),
-    });
+    };
 
-    // 2. Also attempt Supabase upsert if configured and client available
-    const client = token ? createAuthenticatedSupabaseClient(token) : supabase;
-    if (isSupabaseConfigured && client) {
-      try {
-        await client.from("student_profiles").upsert(
-          {
-            id: body.id,
-            user_id: body.id,
-            first_name: body.firstName,
-            last_name: body.lastName,
-            student_phone: body.studentPhone,
-            parent_phone: body.parentPhone,
-            student_status: body.studentStatus,
-            stream_id: body.streamId || "sciences_exp",
-            wilaya_code: body.wilayaCode,
-            wilaya_name: body.wilayaName,
-            commune_code: body.communeCode,
-            commune_name: body.communeName,
-            school_name: body.schoolName,
-            target_score: body.targetScore || 16.0,
-            registration_completed_at: body.registrationCompletedAt || new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: "id" }
-        );
-      } catch {
-        // Non-blocking fallback
-      }
+    if (body.firstName !== undefined) updatePayload.first_name = body.firstName;
+    if (body.lastName !== undefined) updatePayload.last_name = body.lastName;
+    if (body.studentPhone !== undefined) updatePayload.student_phone = body.studentPhone;
+    if (body.parentPhone !== undefined) updatePayload.parent_phone = body.parentPhone;
+    if (body.studentStatus !== undefined) updatePayload.student_status = body.studentStatus;
+    if (body.streamId !== undefined) updatePayload.stream_id = body.streamId;
+    if (body.wilayaCode !== undefined) updatePayload.wilaya_code = body.wilayaCode;
+    if (body.wilayaName !== undefined) updatePayload.wilaya_name = body.wilayaName;
+    if (body.communeCode !== undefined) updatePayload.commune_code = body.communeCode;
+    if (body.communeName !== undefined) updatePayload.commune_name = body.communeName;
+    if (body.schoolName !== undefined) updatePayload.school_name = body.schoolName;
+    if (body.targetScore !== undefined) updatePayload.target_score = body.targetScore;
+    if (body.registrationCompletedAt) updatePayload.registration_completed_at = body.registrationCompletedAt;
+
+    const { error: upsertError } = await client
+      .from("student_profiles")
+      .upsert(updatePayload, { onConflict: "id" });
+
+    if (upsertError) {
+      console.error("[/api/student/sync] Upsert error in PostgreSQL:", upsertError);
     }
 
-    return NextResponse.json({ success: true, student, latestOrder });
+    // 5. Fetch updated authoritative student summary
+    const student = await fetchAuthoritativeStudentProfile(targetStudentId, token);
+
+    // Update in-memory cache for any immediate local read
+    if (student) {
+      saveServerStudentProfile(student);
+    }
+
+    return NextResponse.json({
+      success: true,
+      student,
+      latestOrder,
+    });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unknown error";
     return NextResponse.json({ success: false, error: message }, { status: 500 });

@@ -1,4 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
+import { getAdminClient, isServiceRoleConfigured } from "./admin";
+
+if (typeof window !== "undefined") {
+  throw new Error("SECURITY VIOLATION: server.ts can only be executed in a Node.js server context.");
+}
 
 /**
  * Server-side Supabase client scaffolding for Route Handlers and Server Actions.
@@ -10,7 +15,6 @@ const DEFAULT_SUPABASE_ANON_KEY =
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
 export function createServerSupabaseClient(token?: string | null) {
   if (!supabaseUrl || !supabaseAnonKey) {
@@ -31,16 +35,11 @@ export function createServerSupabaseClient(token?: string | null) {
 }
 
 /**
- * Returns a privileged client using service_role key if available, otherwise anon client.
+ * Returns a privileged client using service_role key if available.
+ * Does NOT masquerade anon key as admin.
  */
 export function createAdminSupabaseClient() {
-  const key = supabaseServiceRoleKey || supabaseAnonKey;
-  if (!supabaseUrl || !key) {
-    return null;
-  }
-  return createClient(supabaseUrl, key, {
-    auth: {
-      persistSession: false,
-    },
-  });
+  return getAdminClient();
 }
+
+export { isServiceRoleConfigured };

@@ -21,9 +21,8 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const orderId = body.orderId;
-    const reason = body.reason || "Payment verified by operator";
-    const fallbackOrder = body.fallbackOrder || body.order;
+    const orderId = typeof body.orderId === "string" ? body.orderId.trim() : "";
+    const reason = typeof body.reason === "string" && body.reason.trim() ? body.reason.trim() : "Payment verified by operator";
 
     if (!orderId) {
       return NextResponse.json(
@@ -32,10 +31,18 @@ export async function POST(req: Request) {
       );
     }
 
-    const result = await approvePaymentOrder(orderId, authRes.userId, reason, fallbackOrder);
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!UUID_REGEX.test(orderId)) {
+      return NextResponse.json(
+        { success: false, error: `Invalid order ID format: "${orderId}". Order ID must be a standard UUID.` },
+        { status: 400 }
+      );
+    }
+
+    const result = await approvePaymentOrder(orderId, authRes.userId, reason, authRes.token);
     if (!result.success) {
       return NextResponse.json(
-        { success: false, error: result.error || "Approval failed" },
+        { success: false, error: result.error || "Approval failed in database." },
         { status: 400 }
       );
     }
