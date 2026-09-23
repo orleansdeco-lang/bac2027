@@ -359,3 +359,97 @@ export interface ContentSkillSummary {
   missingResources?: string[];
 }
 
+// ------------------------------------------------------------------------------
+// PHASE 3: COMMAND CENTER DASHBOARD & TELEMETRY FUNNEL TYPES
+// ------------------------------------------------------------------------------
+
+export interface DashboardKPIs {
+  totalStudents: number;
+  paidStudents: number;
+  trialStudents: number;
+  expiredStudents: number;
+  paidRatio: number;
+
+  pendingOrdersCount: number;
+  pendingOrdersRevenue: number;
+  stalePendingCount: number; // > 12 hours old
+
+  todayRevenue: number;
+  weekRevenue: number;
+  monthRevenue: number;
+  totalRevenue: number;
+  totalApprovedOrders: number;
+  onlineRevenue: number;
+  codRevenue: number;
+
+  activeStudentsToday: number;
+  lessonsViewedToday: number;
+  exercisesCompletedToday: number;
+  estimatedStudyHoursToday: number;
+}
+
+export interface ExpiringSoonAlert {
+  studentId: string;
+  studentName: string;
+  studentPhone?: string;
+  parentPhone?: string;
+  wilayaName?: string;
+  streamId?: string;
+  plan: string;
+  expiresAt: string;
+  daysRemaining: number;
+}
+
+export interface StalePendingAlert {
+  orderId: string;
+  userId?: string;
+  studentName: string;
+  studentPhone?: string;
+  amount: number;
+  paymentMethod: string;
+  submittedAt: string;
+  hoursWaiting: number;
+}
+
+export interface DropoffAlert {
+  studentId: string;
+  studentName: string;
+  studentPhone?: string;
+  wilayaName?: string;
+  streamId?: string;
+  createdAt: string;
+  stage: "ONBOARDING_INCOMPLETE" | "DIAGNOSTIC_NOT_STARTED" | "NO_FIRST_MISSION";
+}
+
+export interface ConversionFunnelStep {
+  id: string;
+  label: string;
+  count: number;
+  percentageOfTotal: number;
+  percentageOfPrevious: number;
+  dropoffCount: number;
+}
+
+export interface LearningIntelligenceMetrics {
+  exerciseCompletionRate: number;
+  correctAnswersCount: number;
+  totalAttemptsCount: number;
+  missionsMasteredCount: number;
+  retestsPassedCount: number;
+  topStreams: { streamId: string; nameAr: string; count: number; percentage: number }[];
+  topWilayas: { wilayaName: string; count: number; percentage: number }[];
+}
+
+export interface OperationsDashboardData {
+  kpis: DashboardKPIs;
+  alerts: {
+    expiringSoon: ExpiringSoonAlert[];
+    stalePending: StalePendingAlert[];
+    dropoffs: DropoffAlert[];
+  };
+  funnel: ConversionFunnelStep[];
+  learning: LearningIntelligenceMetrics;
+  generatedAt: string;
+}
+
+
