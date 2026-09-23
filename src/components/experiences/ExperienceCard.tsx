@@ -51,39 +51,39 @@ const STREAM_CONFIG: Record<
 > = {
   sciences: {
     label: "علوم تجريبية",
-    bg: "bg-emerald-500/10",
-    text: "text-emerald-700 dark:text-emerald-300",
-    border: "border-emerald-500/30",
+    bg: "bg-emerald-50",
+    text: "text-emerald-950 font-black",
+    border: "border-emerald-300",
   },
   math: {
     label: "رياضيات",
-    bg: "bg-blue-500/10",
-    text: "text-blue-700 dark:text-blue-300",
-    border: "border-blue-500/30",
+    bg: "bg-blue-50",
+    text: "text-blue-950 font-black",
+    border: "border-blue-300",
   },
   technique_math: {
     label: "تقني رياضي",
-    bg: "bg-amber-500/10",
-    text: "text-amber-700 dark:text-amber-300",
-    border: "border-amber-500/30",
+    bg: "bg-amber-50",
+    text: "text-amber-950 font-black",
+    border: "border-amber-300",
   },
   gestion_economie: {
     label: "تسيير واقتصاد",
-    bg: "bg-purple-500/10",
-    text: "text-purple-700 dark:text-purple-300",
-    border: "border-purple-500/30",
+    bg: "bg-purple-50",
+    text: "text-purple-950 font-black",
+    border: "border-purple-300",
   },
   lettres_philo: {
     label: "آداب وفلسفة",
-    bg: "bg-rose-500/10",
-    text: "text-rose-700 dark:text-rose-300",
-    border: "border-rose-500/30",
+    bg: "bg-rose-50",
+    text: "text-rose-950 font-black",
+    border: "border-rose-300",
   },
   langues_etrangeres: {
     label: "لغات أجنبية",
-    bg: "bg-cyan-500/10",
-    text: "text-cyan-700 dark:text-cyan-300",
-    border: "border-cyan-500/30",
+    bg: "bg-cyan-50",
+    text: "text-cyan-950 font-black",
+    border: "border-cyan-300",
   },
 };
 
@@ -362,9 +362,9 @@ export function ExperienceCard({
 
   const streamInfo = STREAM_CONFIG[experience.stream_id] || {
     label: experience.stream_id,
-    bg: "bg-slate-500/10",
-    text: "text-slate-700 dark:text-slate-300",
-    border: "border-slate-500/30",
+    bg: "bg-slate-100",
+    text: "text-black font-black",
+    border: "border-slate-300",
   };
 
   const formattedDate = formatArabicDate(experience.created_at);
@@ -378,10 +378,10 @@ export function ExperienceCard({
       <article
         id={experience.id}
         onClick={() => setIsExpanded((prev) => !prev)}
-        className={`group relative rounded-3xl border transition-all duration-300 cursor-pointer overflow-hidden ${
+        className={`group relative rounded-3xl border-2 transition-all duration-300 cursor-pointer overflow-hidden ${
           isExpanded
-            ? "bg-card border-[var(--color-primary)]/40 shadow-clay ring-2 ring-[var(--color-primary)]/10"
-            : "bg-card hover:bg-card-hover border-theme shadow-clay hover:shadow-lg hover:border-[var(--color-primary)]/30"
+            ? "bg-white border-[#2C5E54] shadow-xl ring-2 ring-[#2C5E54]/15"
+            : "bg-white hover:bg-slate-50 border-slate-200 shadow-md hover:shadow-lg hover:border-[#2C5E54]/40"
         } p-5 sm:p-7 flex flex-col justify-between`}
       >
         {/* Subtle Top Indicator when expanded */}
@@ -391,7 +391,7 @@ export function ExperienceCard({
 
         <div>
           {/* Top Metadata Row: Student Profile, Wilaya, Date, GPA */}
-          <div className="flex items-start justify-between gap-3 border-b border-theme/60 pb-4">
+          <div className="flex items-start justify-between gap-3 border-b-2 border-slate-200 pb-4">
             <div className="flex items-center gap-3">
               {/* Avatar Initial with Soft Editorial Gradient */}
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#2C5E54] to-[#1E3A34] text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0 border border-white/20">
@@ -400,56 +400,56 @@ export function ExperienceCard({
 
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-extrabold text-slate-950 dark:text-white text-base sm:text-lg font-sans">
+                  <h3 className="font-black text-black text-lg sm:text-xl font-sans">
                     {cleanAuthorName}
                   </h3>
 
                   {experience.is_verified && (
                     <span
-                      className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-bold text-emerald-800 dark:text-emerald-200 border border-emerald-500/30"
+                      className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-black text-emerald-950 border border-emerald-300"
                       title="تجربة موثقة رسمياً"
                     >
-                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <CheckCircle2 className="h-4 w-4 text-emerald-700" />
                       <span>موثقة</span>
                     </span>
                   )}
 
                   {/* Wilaya badge */}
                   {experience.wilaya && (
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-surface px-2.5 py-0.5 text-xs font-bold text-slate-700 dark:text-slate-200 border border-theme">
-                      <MapPin className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-slate-100 px-3 py-1 text-xs font-bold text-black border border-slate-300">
+                      <MapPin className="h-4 w-4 text-amber-600" />
                       <span>{experience.wilaya}</span>
                     </span>
                   )}
 
                   {/* Date badge */}
-                  <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300 bg-surface px-2.5 py-0.5 rounded-lg border border-theme">
-                    <Calendar className="h-3.5 w-3.5" />
+                  <span className="inline-flex items-center gap-1 text-xs font-bold text-black bg-slate-100 px-3 py-1 rounded-lg border border-slate-300">
+                    <Calendar className="h-4 w-4 text-slate-700" />
                     <span>{formattedDate}</span>
                   </span>
                 </div>
 
                 {/* Candidate Track & Stream Badges */}
-                <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs">
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                   <span
-                    className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-0.5 font-bold border ${streamInfo.bg} ${streamInfo.text} ${streamInfo.border} text-xs`}
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 font-black border ${streamInfo.bg} ${streamInfo.text} ${streamInfo.border} text-xs sm:text-sm`}
                   >
-                    <GraduationCap className="h-3.5 w-3.5" />
+                    <GraduationCap className="h-4 w-4" />
                     <span>{streamInfo.label}</span>
                   </span>
 
                   {/* Track Badge */}
                   {experience.candidate_type === "current_student" ? (
-                    <span className="inline-flex items-center rounded-lg bg-sky-500/15 px-2.5 py-0.5 font-bold text-sky-800 dark:text-sky-200 border border-sky-500/30 text-xs">
+                    <span className="inline-flex items-center rounded-lg bg-sky-100 px-3 py-1 font-black text-sky-950 border border-sky-300 text-xs sm:text-sm">
                       🎯 مقبل على الباك 2027
                     </span>
                   ) : experience.initial_grade && experience.final_grade ? (
-                    <span className="inline-flex items-center gap-1 rounded-lg bg-amber-500/15 px-2.5 py-0.5 font-bold text-amber-800 dark:text-amber-200 border border-amber-500/30 text-xs">
-                      <TrendingUp className="h-3.5 w-3.5" />
+                    <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-100 px-3 py-1 font-black text-amber-950 border border-amber-300 text-xs sm:text-sm">
+                      <TrendingUp className="h-4 w-4 text-amber-800" />
                       <span>قصة نجاح وتدارك</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center rounded-lg bg-emerald-500/15 px-2.5 py-0.5 font-bold text-emerald-800 dark:text-emerald-200 border border-emerald-500/30 text-xs">
+                    <span className="inline-flex items-center rounded-lg bg-emerald-100 px-3 py-1 font-black text-emerald-950 border border-emerald-300 text-xs sm:text-sm">
                       🎓 خريج بكالوريا
                     </span>
                   )}
@@ -457,21 +457,21 @@ export function ExperienceCard({
               </div>
             </div>
 
-            {/* GPA Score Badge (Clean, High Contrast) */}
-            <div className="flex flex-col items-end gap-1 shrink-0">
+            {/* GPA Score Badge (Clean, Solid Black & High Contrast) */}
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
               {experience.final_grade && (
-                <div className="flex items-center gap-1.5 rounded-2xl bg-[#2C5E54]/15 dark:bg-[#2C5E54]/30 px-3.5 py-1.5 border border-[#2C5E54]/40 text-[#1E3A34] dark:text-emerald-300 font-bold shadow-xs">
-                  <span className="text-xs text-slate-700 dark:text-slate-300 font-bold">المعدل:</span>
-                  <span className="font-black text-base sm:text-xl font-mono text-[#2C5E54] dark:text-emerald-300">
+                <div className="flex items-center gap-1.5 rounded-2xl bg-emerald-50 px-3.5 py-1.5 border-2 border-emerald-300 text-black font-black shadow-xs">
+                  <span className="text-xs text-black font-bold">المعدل:</span>
+                  <span className="font-black text-lg sm:text-2xl font-mono text-[#2C5E54]">
                     {experience.final_grade.toFixed(2)}
                   </span>
-                  <span className="text-xs text-slate-700 dark:text-slate-300 font-bold">/20</span>
+                  <span className="text-xs text-black font-bold">/20</span>
                 </div>
               )}
 
               {experience.initial_grade && experience.final_grade && (
-                <div className="text-xs font-bold text-amber-800 dark:text-amber-200 bg-amber-500/15 px-2 py-0.5 rounded-md border border-amber-500/30 flex items-center gap-1">
-                  <TrendingUp className="h-3 w-3" />
+                <div className="text-xs font-black text-amber-950 bg-amber-100 px-2.5 py-1 rounded-lg border border-amber-300 flex items-center gap-1">
+                  <TrendingUp className="h-3.5 w-3.5" />
                   <span>من {experience.initial_grade.toFixed(2)}</span>
                 </div>
               )}
@@ -479,34 +479,34 @@ export function ExperienceCard({
           </div>
 
           {/* ================================================================= */}
-          {/* BIG HEADLINE / TITLE (العنوان الكبير الذي طلبه المستخدم)            */}
+          {/* BIG HEADLINE / TITLE (العنوان الكبير الواضح بحجم بارز)            */}
           {/* ================================================================= */}
-          <div className="mt-4">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-serif font-black text-slate-900 dark:text-white group-hover:text-[#2C5E54] dark:group-hover:text-emerald-400 transition-colors leading-snug tracking-tight">
+          <div className="mt-5">
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-serif font-black text-black group-hover:text-[#2C5E54] transition-colors leading-snug tracking-tight">
               {bigTitle}
             </h2>
 
-            {/* Short Teaser / Quote before expansion */}
+            {/* Short Teaser / Quote before expansion - comfortable large font */}
             {!isExpanded && (
-              <div className="mt-2.5 space-y-2">
-                <p className="text-xs sm:text-sm text-slate-800 dark:text-slate-100 line-clamp-2 leading-relaxed font-semibold italic pr-2 border-r-3 border-[#2C5E54]">
+              <div className="mt-3 space-y-3">
+                <p className="text-base sm:text-lg text-black leading-relaxed font-bold italic pr-3 border-r-4 border-[#2C5E54]">
                   &ldquo;{experience.winning_routine}&rdquo;
                 </p>
 
                 {/* Quick Indicators */}
-                <div className="flex items-center gap-3 pt-2 text-xs text-slate-700 dark:text-slate-200 font-bold flex-wrap">
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" />
+                <div className="flex items-center gap-3 pt-2 text-xs sm:text-sm text-black font-bold flex-wrap">
+                  <span className="flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-slate-700" />
                     <span>قراءة: دقيقتان</span>
                   </span>
                   <span>•</span>
-                  <span className="flex items-center gap-1 text-rose-700 dark:text-rose-300">
-                    <AlertTriangle className="w-3.5 h-3.5" />
+                  <span className="flex items-center gap-1.5 text-rose-900 font-black">
+                    <AlertTriangle className="w-4 h-4 text-rose-600" />
                     <span>فخ محذر منه</span>
                   </span>
                   <span>•</span>
-                  <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-300">
-                    <Lightbulb className="w-3.5 h-3.5" />
+                  <span className="flex items-center gap-1.5 text-emerald-900 font-black">
+                    <Lightbulb className="w-4 h-4 text-emerald-600" />
                     <span>روتين التفوق</span>
                   </span>
                 </div>
@@ -518,50 +518,50 @@ export function ExperienceCard({
           {/* EXPANDED CONTENT AREA ("تضغط عليه يظهرولك المعلومات")             */}
           {/* ================================================================= */}
           {isExpanded && (
-            <div className="mt-6 space-y-5 animate-in fade-in slide-in-from-top-3 duration-300 border-t border-theme/60 pt-5">
+            <div className="mt-6 space-y-5 animate-in fade-in slide-in-from-top-3 duration-300 border-t-2 border-slate-200 pt-5">
               {/* Target / Current Major */}
               {(experience.university_major || experience.target_major) && (
-                <div className="flex items-center gap-2.5 rounded-2xl bg-surface px-4 py-2.5 text-xs text-slate-900 dark:text-white border border-theme">
-                  <Target className="h-4 w-4 text-[var(--color-primary)] shrink-0" />
-                  <span className="text-slate-700 dark:text-slate-200 font-bold">
+                <div className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-black border-2 border-slate-200">
+                  <Target className="h-5 w-5 text-[#2C5E54] shrink-0" />
+                  <span className="text-black font-bold">
                     {experience.university_major ? "التخصص الجامعي الحالي:" : "الوجهة المستهدفة:"}
                   </span>
-                  <span className="font-black text-[#2C5E54] dark:text-emerald-400 font-serif text-sm sm:text-base">
+                  <span className="font-black text-[#2C5E54] font-serif text-base sm:text-lg">
                     {experience.university_major || experience.target_major}
                   </span>
                 </div>
               )}
 
-              {/* Danger Box: The Biggest Trap (أكبر فخ) - High Contrast & Eye Comfort */}
-              <div className="rounded-2xl border border-rose-300 dark:border-rose-900/60 bg-rose-50/90 dark:bg-rose-950/30 p-4 sm:p-5 shadow-xs">
-                <div className="flex items-center gap-2 text-rose-950 dark:text-rose-200 font-black text-sm sm:text-base mb-2 font-serif">
-                  <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600 dark:text-rose-400" />
+              {/* Danger Box: The Biggest Trap (أكبر فخ) - High Contrast & Large Easy-to-Read Font */}
+              <div className="rounded-2xl border-2 border-rose-300 bg-rose-50/90 p-5 sm:p-6 shadow-xs">
+                <div className="flex items-center gap-2.5 text-rose-950 font-black text-base sm:text-lg mb-2.5 font-serif">
+                  <AlertTriangle className="h-5 w-5 shrink-0 text-rose-600" />
                   <span>⚠️ أكبر فخ نحذركم منه (إياك والوقوع فيه):</span>
                 </div>
-                <p className="text-xs sm:text-sm leading-relaxed text-slate-950 dark:text-rose-50 pr-1 select-text font-medium">
+                <p className="text-base sm:text-lg leading-relaxed sm:leading-loose text-black pr-1 select-text font-semibold">
                   {experience.biggest_trap}
                 </p>
               </div>
 
-              {/* Success Box: Winning Routine (الروتين الحاسم) - High Contrast & Eye Comfort */}
-              <div className="rounded-2xl border border-emerald-300 dark:border-emerald-900/60 bg-emerald-50/90 dark:bg-emerald-950/30 p-4 sm:p-5 shadow-xs">
-                <div className="flex items-center gap-2 text-emerald-950 dark:text-emerald-200 font-black text-sm sm:text-base mb-2 font-serif">
-                  <Lightbulb className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+              {/* Success Box: Winning Routine (الروتين الحاسم) - High Contrast & Large Easy-to-Read Font */}
+              <div className="rounded-2xl border-2 border-emerald-300 bg-emerald-50/90 p-5 sm:p-6 shadow-xs">
+                <div className="flex items-center gap-2.5 text-emerald-950 font-black text-base sm:text-lg mb-2.5 font-serif">
+                  <Lightbulb className="h-5 w-5 shrink-0 text-emerald-600" />
                   <span>💡 السر أو الروتين اليومي الذي صنع الفارق:</span>
                 </div>
-                <p className="text-xs sm:text-sm leading-relaxed text-slate-950 dark:text-emerald-50 pr-1 select-text font-medium">
+                <p className="text-base sm:text-lg leading-relaxed sm:leading-loose text-black pr-1 select-text font-semibold">
                   {experience.winning_routine}
                 </p>
               </div>
 
               {/* Best Resources & Teachers (المراجع والأساتذة) */}
               {experience.best_resources && (
-                <div className="rounded-2xl border border-amber-300 dark:border-amber-900/60 bg-amber-50/90 dark:bg-amber-950/30 p-4 shadow-xs">
-                  <div className="flex items-center gap-2 text-amber-950 dark:text-amber-200 font-black text-xs sm:text-sm mb-1.5 font-serif">
-                    <BookOpen className="h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" />
+                <div className="rounded-2xl border-2 border-amber-300 bg-amber-50/90 p-5 sm:p-6 shadow-xs">
+                  <div className="flex items-center gap-2.5 text-amber-950 font-black text-base sm:text-lg mb-2 font-serif">
+                    <BookOpen className="h-5 w-5 shrink-0 text-amber-700" />
                     <span>📚 أفضل المراجع وقنوات المراجعة الموصى بها:</span>
                   </div>
-                  <p className="text-xs sm:text-sm leading-relaxed text-slate-950 dark:text-amber-50 pr-1 font-medium">
+                  <p className="text-base sm:text-lg leading-relaxed text-black pr-1 select-text font-semibold">
                     {experience.best_resources}
                   </p>
                 </div>
@@ -571,45 +571,45 @@ export function ExperienceCard({
         </div>
 
         {/* Card Footer: Expand trigger button (when collapsed) OR Full Interactions Bar (when expanded) */}
-        <div className="mt-5 border-t border-theme/60 pt-3.5">
+        <div className="mt-5 border-t-2 border-slate-200 pt-3.5">
           {!isExpanded ? (
             <div className="flex items-center justify-between gap-3">
-              <span className="text-xs font-black text-[#2C5E54] dark:text-emerald-400 inline-flex items-center gap-1.5 group-hover:translate-x-[-4px] transition-transform">
+              <span className="text-sm font-black text-[#2C5E54] inline-flex items-center gap-1.5 group-hover:translate-x-[-4px] transition-transform">
                 <span>اضغط لقراءة التفاصيل الكاملة</span>
                 <ChevronDown className="w-4 h-4" />
               </span>
 
-              <div className="flex items-center gap-3 text-xs text-slate-700 dark:text-slate-200 font-bold">
-                <span className="flex items-center gap-1">
-                  <ThumbsUp className="w-3.5 h-3.5 text-emerald-600" />
-                  <span className="font-bold">{upvotesCount}</span>
+              <div className="flex items-center gap-3 text-sm text-black font-black">
+                <span className="flex items-center gap-1 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+                  <ThumbsUp className="w-4 h-4 text-emerald-700" />
+                  <span className="font-black">{upvotesCount}</span>
                 </span>
-                <span className="flex items-center gap-1">
-                  <MessageCircle className="w-3.5 h-3.5 text-blue-500" />
-                  <span className="font-bold">{commentsCount}</span>
+                <span className="flex items-center gap-1 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+                  <MessageCircle className="w-4 h-4 text-blue-700" />
+                  <span className="font-black">{commentsCount}</span>
                 </span>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
               {/* Action Buttons Row */}
-              <div className="flex items-center justify-between text-xs flex-wrap gap-2">
+              <div className="flex items-center justify-between text-xs sm:text-sm flex-wrap gap-2">
                 {/* Left side: Upvote + Comments toggle */}
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={handleUpvote}
                     disabled={isLiking}
-                    className={`flex items-center gap-2 rounded-xl px-3 py-2 font-bold transition-all cursor-pointer ${
+                    className={`flex items-center gap-2 rounded-xl px-4 py-2 font-black transition-all cursor-pointer ${
                       upvoted
                         ? "bg-[#2C5E54] text-white shadow-xs"
-                        : "bg-surface hover:bg-card-hover text-theme-text border border-theme"
+                        : "bg-slate-100 hover:bg-slate-200 text-black border border-slate-300"
                     }`}
                     title="تصويت إيجابي لهذه النصيحة"
                   >
                     <ThumbsUp className={`h-4 w-4 ${upvoted ? "fill-white" : ""}`} />
                     <span>مفيدة جداً</span>
-                    <span className="rounded-full bg-white/20 px-1.5 py-0.2 text-[11px] font-black">
+                    <span className="rounded-full bg-black/10 px-2 py-0.5 text-xs font-black">
                       {upvotesCount}
                     </span>
                   </button>
@@ -617,15 +617,15 @@ export function ExperienceCard({
                   <button
                     type="button"
                     onClick={handleToggleComments}
-                    className={`flex items-center gap-1.5 rounded-xl px-3 py-2 font-bold transition-colors cursor-pointer border ${
+                    className={`flex items-center gap-2 rounded-xl px-4 py-2 font-black transition-colors cursor-pointer border ${
                       showComments
-                        ? "bg-surface border-theme text-slate-950 dark:text-white font-extrabold"
-                        : "bg-surface-soft border-theme text-slate-800 dark:text-slate-200 hover:text-slate-950 font-bold"
+                        ? "bg-[#2C5E54] text-white border-[#2C5E54]"
+                        : "bg-slate-100 border-slate-300 text-black hover:bg-slate-200"
                     }`}
                   >
-                    <MessageCircle className="h-4 w-4 text-[var(--color-primary)]" />
+                    <MessageCircle className="h-4 w-4" />
                     <span>التعليقات ({commentsCount})</span>
-                    {showComments ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                    {showComments ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                   </button>
                 </div>
 
@@ -634,16 +634,16 @@ export function ExperienceCard({
                   <button
                     type="button"
                     onClick={handleToggleFavorite}
-                    className={`flex items-center gap-1 rounded-xl px-2.5 py-2 font-bold transition-colors cursor-pointer border ${
+                    className={`flex items-center gap-1.5 rounded-xl px-3 py-2 font-black transition-colors cursor-pointer border ${
                       isFavorite
-                        ? "bg-amber-500/15 text-amber-800 dark:text-amber-200 border-amber-500/30"
-                        : "bg-surface text-slate-800 dark:text-slate-200 hover:text-slate-950 border-theme"
+                        ? "bg-amber-100 text-amber-950 border-amber-300"
+                        : "bg-slate-100 text-black hover:bg-slate-200 border-slate-300"
                     }`}
                     title="حفظ في المفضلة"
                   >
                     {isFavorite ? (
                       <>
-                        <BookmarkCheck className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        <BookmarkCheck className="h-4 w-4 text-amber-700" />
                         <span>محفوظة</span>
                       </>
                     ) : (
@@ -657,7 +657,7 @@ export function ExperienceCard({
                   <button
                     type="button"
                     onClick={handleNativeShare}
-                    className="flex items-center gap-1 rounded-xl px-2.5 py-2 bg-surface hover:bg-card-hover text-slate-800 dark:text-slate-200 hover:text-slate-950 border border-theme transition-colors cursor-pointer font-bold"
+                    className="flex items-center gap-1.5 rounded-xl px-3 py-2 bg-slate-100 hover:bg-slate-200 text-black border border-slate-300 transition-colors cursor-pointer font-black"
                     title="مشاركة التجربة"
                   >
                     <Share2 className="h-4 w-4" />
@@ -670,7 +670,7 @@ export function ExperienceCard({
                       e.stopPropagation();
                       setShowImageCardModal(true);
                     }}
-                    className="flex items-center gap-1 rounded-xl px-2.5 py-2 bg-amber-500/15 text-amber-800 dark:text-amber-200 border border-amber-500/30 font-bold transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 rounded-xl px-3 py-2 bg-amber-100 text-amber-950 border border-amber-300 font-black transition-colors cursor-pointer"
                     title="مشاركة التجربة كصورة أنيقة"
                   >
                     <ImageIcon className="h-4 w-4" />
@@ -684,7 +684,7 @@ export function ExperienceCard({
                       e.stopPropagation();
                       setIsExpanded(false);
                     }}
-                    className="flex items-center gap-1 rounded-xl px-2.5 py-2 bg-surface text-slate-800 dark:text-slate-200 hover:text-slate-950 border border-theme transition-colors cursor-pointer font-bold"
+                    className="flex items-center gap-1.5 rounded-xl px-3 py-2 bg-slate-100 text-black hover:bg-slate-200 border border-slate-300 transition-colors cursor-pointer font-black"
                     title="طي التجربة"
                   >
                     <ChevronUp className="h-4 w-4" />
@@ -697,14 +697,14 @@ export function ExperienceCard({
               {showShareMenu && (
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className="p-3.5 rounded-2xl border border-theme bg-surface animate-in fade-in duration-150"
+                  className="p-3.5 rounded-2xl border-2 border-slate-200 bg-slate-50 animate-in fade-in duration-150"
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-xs text-theme-text">اختر وسيلة المشاركة:</span>
+                    <span className="font-black text-xs text-black">اختر وسيلة المشاركة:</span>
                     <button
                       type="button"
                       onClick={() => setShowShareMenu(false)}
-                      className="text-xs text-theme-muted hover:text-theme-text"
+                      className="text-xs text-black hover:text-slate-700 font-bold"
                     >
                       إغلاق ✕
                     </button>
@@ -730,7 +730,7 @@ export function ExperienceCard({
                     <button
                       type="button"
                       onClick={handleCopyLink}
-                      className="flex items-center justify-center gap-1.5 rounded-xl bg-card border border-theme text-theme-text py-2 px-3 font-bold hover:bg-card-hover transition-colors"
+                      className="flex items-center justify-center gap-1.5 rounded-xl bg-white border border-slate-300 text-black py-2 px-3 font-bold hover:bg-slate-100 transition-colors"
                     >
                       <Copy className="h-3.5 w-3.5" />
                       <span>نسخ الرابط</span>
@@ -755,25 +755,25 @@ export function ExperienceCard({
               {showComments && (
                 <div
                   onClick={(e) => e.stopPropagation()}
-                  className="pt-4 border-t border-theme/60 space-y-3 animate-in fade-in duration-200"
+                  className="pt-4 border-t-2 border-slate-200 space-y-3 animate-in fade-in duration-200"
                 >
-                  <h4 className="font-extrabold text-xs sm:text-sm text-slate-950 dark:text-white flex items-center gap-1.5">
-                    <MessageCircle className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+                  <h4 className="font-black text-sm sm:text-base text-black flex items-center gap-2">
+                    <MessageCircle className="h-4 w-4 text-[#2C5E54]" />
                     <span>تعليقات واستفسارات الطلبة ({commentsCount})</span>
                   </h4>
 
                   {/* Comments List */}
                   {loadingComments ? (
-                    <div className="py-4 text-center text-xs text-slate-600 dark:text-slate-300 flex items-center justify-center gap-2 font-semibold">
-                      <RefreshCw className="h-3.5 w-3.5 animate-spin text-[var(--color-primary)]" />
+                    <div className="py-4 text-center text-sm text-black flex items-center justify-center gap-2 font-bold">
+                      <RefreshCw className="h-4 w-4 animate-spin text-[#2C5E54]" />
                       <span>جاري تحميل التعليقات...</span>
                     </div>
                   ) : comments.length === 0 ? (
-                    <p className="text-xs text-slate-600 dark:text-slate-300 py-2 font-medium">
+                    <p className="text-sm text-black py-2 font-semibold">
                       لا توجد تعليقات بعد. كن أول من يترك انطباعاً أو استفساراً لصاحب التجربة! ✍️
                     </p>
                   ) : (
-                    <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                    <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
                       {comments.map((comment) => {
                         const isAuthor = Boolean(userId && comment.author_id && comment.author_id === userId);
                         const canManage = isAuthor || isPlatformOwner;
@@ -782,23 +782,23 @@ export function ExperienceCard({
                         return (
                           <div
                             key={comment.id}
-                            className="rounded-2xl bg-surface border border-theme p-3 text-xs space-y-1.5"
+                            className="rounded-2xl bg-slate-50 border-2 border-slate-200 p-3.5 text-sm space-y-2"
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-black text-slate-950 dark:text-white text-xs sm:text-sm">
+                                <span className="font-black text-black text-sm sm:text-base">
                                   {comment.author_name}
                                 </span>
 
                                 {comment.wilaya && (
-                                  <span className="inline-flex items-center gap-0.5 text-xs text-slate-700 dark:text-slate-200 bg-card px-2 py-0.5 rounded border border-theme font-semibold">
-                                    <MapPin className="h-2.5 w-2.5 text-amber-500" />
+                                  <span className="inline-flex items-center gap-1 text-xs text-black bg-white px-2.5 py-0.5 rounded-md border border-slate-300 font-bold">
+                                    <MapPin className="h-3 w-3 text-amber-500" />
                                     <span>{comment.wilaya}</span>
                                   </span>
                                 )}
 
                                 {isAuthor && (
-                                  <span className="text-xs bg-emerald-500/15 text-emerald-800 dark:text-emerald-200 px-2 py-0.5 rounded border border-emerald-500/30 font-bold">
+                                  <span className="text-xs bg-emerald-100 text-emerald-950 px-2 py-0.5 rounded-md border border-emerald-300 font-black">
                                     أنت
                                   </span>
                                 )}
@@ -812,18 +812,18 @@ export function ExperienceCard({
                                       setEditingCommentId(comment.id);
                                       setEditCommentContent(comment.content);
                                     }}
-                                    className="p-1 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors"
+                                    className="p-1 text-slate-700 hover:text-black transition-colors"
                                     title="تعديل"
                                   >
-                                    <Edit2 className="h-3 w-3" />
+                                    <Edit2 className="h-3.5 w-3.5" />
                                   </button>
                                   <button
                                     type="button"
                                     onClick={() => handleDeleteComment(comment.id)}
-                                    className="p-1 text-rose-500 hover:text-rose-700 transition-colors"
+                                    className="p-1 text-rose-600 hover:text-rose-800 transition-colors"
                                     title="حذف"
                                   >
-                                    <Trash2 className="h-3 w-3" />
+                                    <Trash2 className="h-3.5 w-3.5" />
                                   </button>
                                 </div>
                               )}
@@ -834,14 +834,14 @@ export function ExperienceCard({
                                 <textarea
                                   value={editCommentContent}
                                   onChange={(e) => setEditCommentContent(e.target.value)}
-                                  className="w-full rounded-xl bg-card border border-theme p-2 text-xs text-slate-950 dark:text-white focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] font-medium"
+                                  className="w-full rounded-xl bg-white border-2 border-slate-300 p-2.5 text-sm text-black focus:outline-none focus:ring-2 focus:ring-[#2C5E54] font-semibold"
                                   rows={2}
                                 />
-                                <div className="flex items-center justify-end gap-1.5">
+                                <div className="flex items-center justify-end gap-2">
                                   <button
                                     type="button"
                                     onClick={() => setEditingCommentId(null)}
-                                    className="px-2 py-1 text-[11px] rounded-lg text-slate-700 dark:text-slate-300 hover:text-slate-950 font-bold"
+                                    className="px-3 py-1.5 text-xs rounded-lg text-black hover:bg-slate-200 font-bold"
                                   >
                                     إلغاء
                                   </button>
@@ -849,14 +849,14 @@ export function ExperienceCard({
                                     type="button"
                                     onClick={() => handleSaveEditComment(comment.id)}
                                     disabled={isSavingEditComment}
-                                    className="px-2.5 py-1 text-[11px] rounded-lg bg-[var(--color-primary)] text-white font-bold"
+                                    className="px-3.5 py-1.5 text-xs rounded-lg bg-[#2C5E54] text-white font-bold"
                                   >
                                     حفظ
                                   </button>
                                 </div>
                               </div>
                             ) : (
-                              <p className="text-slate-900 dark:text-slate-100 text-xs sm:text-sm leading-relaxed font-medium select-text">
+                              <p className="text-black text-sm sm:text-base leading-relaxed font-semibold select-text">
                                 {comment.content}
                               </p>
                             )}
@@ -874,14 +874,18 @@ export function ExperienceCard({
                         placeholder="اطرح سؤالاً أو اترك كلمة تشجيعية..."
                         value={newCommentText}
                         onChange={(e) => setNewCommentText(e.target.value)}
-                        className="flex-1 rounded-xl bg-surface border border-theme px-3.5 py-2 text-xs sm:text-sm text-slate-950 dark:text-white placeholder:text-slate-500 font-medium focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                        className="flex-1 rounded-xl bg-white border-2 border-slate-300 px-4 py-2.5 text-sm text-black placeholder:text-slate-500 font-semibold focus:outline-none focus:ring-2 focus:ring-[#2C5E54]"
                       />
                       <button
                         type="submit"
-                        disabled={!newCommentText.trim() || isSubmittingComment}
-                        className="rounded-xl bg-[#2C5E54] hover:bg-[#20473f] text-white px-3.5 py-2 text-xs font-bold transition-all disabled:opacity-50 flex items-center gap-1 cursor-pointer shrink-0"
+                        disabled={isSubmittingComment || !newCommentText.trim()}
+                        className="rounded-xl bg-[#2C5E54] hover:bg-[#1E3A34] text-white px-5 py-2.5 text-sm font-bold flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
                       >
-                        <Send className="h-3 w-3" />
+                        {isSubmittingComment ? (
+                          <RefreshCw className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Send className="h-4 w-4" />
+                        )}
                         <span>إرسال</span>
                       </button>
                     </div>

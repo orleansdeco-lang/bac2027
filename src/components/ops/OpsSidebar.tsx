@@ -47,6 +47,7 @@ const navGroups: NavGroup[] = [
   {
     title: "OPERATIONS",
     items: [
+      { href: "/ops/payments", label: "Payments & Orders", icon: CreditCard, badge: "LIVE" },
       { href: "/ops/subscriptions", label: "Subscriptions", icon: Sliders },
       { href: "/ops/finance", label: "Finance & Orders", icon: CreditCard },
       { href: "/ops/exams", label: "Exams & Subjects Bank", icon: FileCheck, badge: "NEW" },
@@ -88,7 +89,7 @@ export function OpsSidebar({ className = "", onClose }: OpsSidebarProps) {
     window.location.href = "/ops/login";
   };
 
-  const userEmail = user?.email || "azinox27@gmail.com";
+  const userEmail = user?.email || "operator@shater.app";
   const userInitials = userEmail
     ? userEmail.slice(0, 2).toUpperCase()
     : "OP";

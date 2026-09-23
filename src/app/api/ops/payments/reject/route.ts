@@ -24,12 +24,22 @@ export async function POST(req: Request) {
     const orderId = body.orderId;
     const reason = body.reason;
 
-    if (!orderId) {
+    const cleanOrderId = typeof orderId === "string" ? orderId.trim() : "";
+    if (!cleanOrderId) {
       return NextResponse.json(
         { success: false, error: "orderId is required" },
         { status: 400 }
       );
     }
+
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!UUID_REGEX.test(cleanOrderId)) {
+      return NextResponse.json(
+        { success: false, error: `Invalid order ID format: "${cleanOrderId}". Must be a valid UUID.` },
+        { status: 400 }
+      );
+    }
+
     if (!reason || !reason.trim()) {
       return NextResponse.json(
         { success: false, error: "Rejection reason is mandatory." },
@@ -37,7 +47,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const result = await rejectPaymentOrder(orderId, authRes.userId, reason.trim());
+    const result = await rejectPaymentOrder(cleanOrderId, authRes.userId, reason.trim(), authRes.token);
     if (!result.success) {
       return NextResponse.json(
         { success: false, error: result.error || "Rejection failed" },

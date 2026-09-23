@@ -256,8 +256,8 @@ export default function ExperiencesPage() {
         {/* Toast Notification */}
         {toastMessage && (
           <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-in fade-in slide-in-from-bottom-5 duration-300">
-            <div className="flex items-center gap-2 rounded-2xl bg-card border border-emerald-500/40 px-5 py-3 text-sm font-semibold text-emerald-700 dark:text-emerald-300 shadow-clay backdrop-blur-md">
-              <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
+            <div className="flex items-center gap-2 rounded-2xl bg-white border-2 border-emerald-500 px-5 py-3 text-sm font-black text-emerald-950 shadow-lg backdrop-blur-md">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
               <span>{toastMessage}</span>
             </div>
           </div>
@@ -266,23 +266,23 @@ export default function ExperiencesPage() {
         <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
           {/* Dual Top-Level Hub Navigation Switcher */}
           <div className="flex items-center justify-center pt-2">
-            <div className="bg-card border border-theme p-1.5 rounded-2xl flex items-center gap-2 shadow-clay">
+            <div className="bg-white border-2 border-slate-200 p-1.5 rounded-2xl flex items-center gap-2 shadow-sm">
               <button
                 type="button"
                 onClick={() => setActiveHubTab("experiences")}
-                className={`flex items-center gap-2.5 px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer ${
+                className={`flex items-center gap-2.5 px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-black text-xs sm:text-sm transition-all duration-200 cursor-pointer ${
                   activeHubTab === "experiences"
                     ? "bg-[#2C5E54] text-white shadow-xs"
-                    : "text-theme-secondary hover:text-theme-text hover:bg-surface-soft"
+                    : "text-black hover:bg-slate-100"
                 }`}
               >
-                <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5" />
+                <GraduationCap className="w-4 h-4 sm:w-5 sm:h-5 text-[#2C5E54]" />
                 <span>تجارب وعِبر البكالوريا</span>
                 <span
                   className={`text-xs px-2 py-0.5 rounded-full ${
                     activeHubTab === "experiences"
                       ? "bg-white/20 text-white font-black"
-                      : "bg-surface-soft text-theme-muted"
+                      : "bg-slate-100 text-black font-bold border border-slate-300"
                   }`}
                 >
                   {experiences.length}
@@ -292,10 +292,10 @@ export default function ExperiencesPage() {
               <button
                 type="button"
                 onClick={() => setActiveHubTab("challenges")}
-                className={`flex items-center gap-2.5 px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 cursor-pointer ${
+                className={`flex items-center gap-2.5 px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl font-black text-xs sm:text-sm transition-all duration-200 cursor-pointer ${
                   activeHubTab === "challenges"
                     ? "bg-[#2C5E54] text-white shadow-xs"
-                    : "text-theme-secondary hover:text-theme-text hover:bg-surface-soft"
+                    : "text-black hover:bg-slate-100"
                 }`}
               >
                 <Flame className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
@@ -304,7 +304,7 @@ export default function ExperiencesPage() {
                   className={`text-xs px-2 py-0.5 rounded-full ${
                     activeHubTab === "challenges"
                       ? "bg-white/20 text-white font-black"
-                      : "bg-surface-soft text-theme-muted"
+                      : "bg-slate-100 text-black font-bold border border-slate-300"
                   }`}
                 >
                   {challenges.length}
@@ -372,26 +372,26 @@ export default function ExperiencesPage() {
                 </div>
               </div>
 
-              {/* Filter Controls (Comfortable Card Theme) */}
+              {/* Filter Controls (Comfortable High-Contrast Theme) */}
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
                   <div className="relative md:col-span-6">
-                    <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                    <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="ابحث بالاسم، التخصص الجامعي (طب، ESI...)، أو الفخاخ..."
-                      className="w-full rounded-2xl border border-theme bg-card pr-10 pl-4 py-2.5 text-xs sm:text-sm text-slate-950 dark:text-white placeholder:text-slate-500 font-medium focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)] shadow-xs"
+                      className="w-full rounded-2xl border-2 border-slate-200 bg-white pr-11 pl-4 py-3 text-sm sm:text-base text-black placeholder:text-slate-500 font-bold focus:border-[#2C5E54] focus:outline-none focus:ring-2 focus:ring-[#2C5E54]/20 shadow-xs"
                     />
                   </div>
 
                   <div className="relative md:col-span-3">
-                    <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-amber-600 dark:text-amber-400 pointer-events-none" />
+                    <MapPin className="absolute right-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-amber-600 pointer-events-none" />
                     <select
                       value={selectedWilaya}
                       onChange={(e) => setSelectedWilaya(e.target.value)}
-                      className="w-full rounded-2xl border border-theme bg-card pr-9 pl-4 py-2.5 text-xs sm:text-sm text-slate-950 dark:text-white font-semibold focus:border-[var(--color-primary)] focus:outline-none cursor-pointer appearance-none shadow-xs"
+                      className="w-full rounded-2xl border-2 border-slate-200 bg-white pr-10 pl-4 py-3 text-sm sm:text-base text-black font-black focus:border-[#2C5E54] focus:outline-none cursor-pointer appearance-none shadow-xs"
                     >
                       <option value="all">📍 جميع الولايات (الـ 58 ولاية)</option>
                       {ALGERIAN_WILAYAS.map((w) => (
@@ -412,10 +412,10 @@ export default function ExperiencesPage() {
                             setSelectedStream("all");
                           }
                         }}
-                        className={`w-full flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
+                        className={`w-full flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-black border-2 transition-all cursor-pointer ${
                           onlyTargetMatch
                             ? "bg-[#2C5E54] text-white border-[#2C5E54] shadow-xs"
-                            : "bg-card text-slate-800 dark:text-slate-200 border-theme hover:bg-card-hover hover:text-slate-950"
+                            : "bg-white text-black border-slate-200 hover:bg-slate-100"
                         }`}
                       >
                         <Target className="h-4 w-4" />
@@ -435,10 +435,10 @@ export default function ExperiencesPage() {
                         key={c.id}
                         type="button"
                         onClick={() => setSelectedCategory(c.id)}
-                        className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold transition-all cursor-pointer border ${
+                        className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-black transition-all cursor-pointer border-2 ${
                           isActive
                             ? "bg-[#2C5E54] text-white border-[#2C5E54] shadow-xs"
-                            : "bg-card text-slate-800 dark:text-slate-200 border-theme hover:bg-surface-soft hover:text-slate-950"
+                            : "bg-white text-black border-slate-200 hover:bg-slate-100"
                         }`}
                       >
                         <Icon className="h-4 w-4" />
@@ -450,9 +450,9 @@ export default function ExperiencesPage() {
 
                 {/* Stream Selector Pills */}
                 {!onlyTargetMatch && (
-                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                    <span className="flex items-center gap-1 text-xs text-slate-700 dark:text-slate-300 ml-2 font-bold">
-                      <Filter className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <span className="flex items-center gap-1 text-sm text-black ml-2 font-black">
+                      <Filter className="h-4 w-4 text-[#2C5E54]" />
                       <span>الشعبة:</span>
                     </span>
                     {STREAMS.map((s) => {
@@ -462,10 +462,10 @@ export default function ExperiencesPage() {
                           key={s.id}
                           type="button"
                           onClick={() => setSelectedStream(s.id)}
-                          className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer border ${
+                          className={`rounded-xl px-3.5 py-1.5 text-xs sm:text-sm font-black transition-all cursor-pointer border-2 ${
                             isSelected
                               ? "bg-[#2C5E54] text-white border-[#2C5E54] shadow-xs"
-                              : "bg-card text-slate-800 dark:text-slate-200 border-theme hover:border-slate-500 hover:text-slate-950"
+                              : "bg-white text-black border-slate-200 hover:border-slate-400 hover:bg-slate-50"
                           }`}
                         >
                           {s.label}
@@ -482,17 +482,17 @@ export default function ExperiencesPage() {
                   {[1, 2, 3, 4].map((n) => (
                     <div
                       key={n}
-                      className="h-72 rounded-2xl border border-slate-800 bg-slate-900/40 animate-pulse"
+                      className="h-72 rounded-2xl border-2 border-slate-200 bg-slate-100 animate-pulse"
                     />
                   ))}
                 </div>
               ) : experiences.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-slate-800 bg-slate-900/30 p-12 text-center space-y-4">
-                  <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-800/80 text-slate-400">
-                    <Search className="h-6 w-6" />
+                <div className="rounded-3xl border-2 border-dashed border-slate-300 bg-white p-12 text-center space-y-4 shadow-sm">
+                  <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+                    <Search className="h-8 w-8" />
                   </div>
-                  <h3 className="text-lg font-bold text-white">لا توجد تجارب مطابقة لهذا البحث حالياً</h3>
-                  <p className="text-xs sm:text-sm text-slate-200 max-w-md mx-auto font-medium">
+                  <h3 className="text-xl sm:text-2xl font-black text-black">لا توجد تجارب مطابقة لهذا البحث حالياً</h3>
+                  <p className="text-sm sm:text-base text-black max-w-md mx-auto font-semibold">
                     جرب تغيير خيارات الفلترة للاطلاع على كافة التجارب الملهمة المتاحة.
                   </p>
                 </div>
@@ -573,13 +573,13 @@ export default function ExperiencesPage() {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
                   <div className="relative md:col-span-6">
-                    <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+                    <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
                     <input
                       type="text"
                       value={challengeSearch}
                       onChange={(e) => setChallengeSearch(e.target.value)}
                       placeholder="ابحث بعنوان التمرين، المحور (دوال، متتاليات...)، أو اسم الطالب..."
-                      className="w-full rounded-2xl border border-theme bg-card pr-10 pl-4 py-2.5 text-xs sm:text-sm text-slate-950 dark:text-white placeholder:text-slate-500 font-medium focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 shadow-xs"
+                      className="w-full rounded-2xl border-2 border-slate-200 bg-white pr-11 pl-4 py-3 text-sm sm:text-base text-black placeholder:text-slate-500 font-bold focus:border-cyan-600 focus:outline-none focus:ring-2 focus:ring-cyan-600/20 shadow-xs"
                     />
                   </div>
 
@@ -587,7 +587,7 @@ export default function ExperiencesPage() {
                     <select
                       value={challengeSubject}
                       onChange={(e) => setChallengeSubject(e.target.value)}
-                      className="w-full rounded-2xl border border-theme bg-card px-3.5 py-2.5 text-xs sm:text-sm text-slate-950 dark:text-white font-semibold focus:border-cyan-500 focus:outline-none cursor-pointer shadow-xs"
+                      className="w-full rounded-2xl border-2 border-slate-200 bg-white px-3.5 py-3 text-sm sm:text-base text-black font-black focus:border-cyan-600 focus:outline-none cursor-pointer shadow-xs"
                     >
                       <option value="all">جميع المواد الدراسية</option>
                       {Object.values(ALL_SUBJECTS).map((sub) => (
@@ -602,7 +602,7 @@ export default function ExperiencesPage() {
                     <select
                       value={challengeDifficulty}
                       onChange={(e) => setChallengeDifficulty(e.target.value)}
-                      className="w-full rounded-2xl border border-theme bg-card px-3.5 py-2.5 text-xs sm:text-sm text-slate-950 dark:text-white font-semibold focus:border-cyan-500 focus:outline-none cursor-pointer shadow-xs"
+                      className="w-full rounded-2xl border-2 border-slate-200 bg-white px-3.5 py-3 text-sm sm:text-base text-black font-black focus:border-cyan-600 focus:outline-none cursor-pointer shadow-xs"
                     >
                       <option value="all">جميع مستويات الصعوبة</option>
                       <option value="normal">مستوى عادي</option>
@@ -614,9 +614,9 @@ export default function ExperiencesPage() {
                 </div>
 
                 {/* Stream Selector Pills for Challenges */}
-                <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  <span className="flex items-center gap-1 text-xs text-slate-700 dark:text-slate-300 ml-2 font-bold">
-                    <Filter className="h-3.5 w-3.5 text-cyan-500" />
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <span className="flex items-center gap-1 text-sm text-black ml-2 font-black">
+                    <Filter className="h-4 w-4 text-cyan-600" />
                     <span>الشعبة:</span>
                   </span>
                   {STREAMS.map((s) => {
@@ -625,10 +625,10 @@ export default function ExperiencesPage() {
                       <button
                         key={s.id}
                         onClick={() => setChallengeStream(s.id)}
-                        className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer border ${
+                        className={`rounded-xl px-3.5 py-1.5 text-xs sm:text-sm font-black transition-all cursor-pointer border-2 ${
                           isSelected
-                            ? "bg-cyan-600 text-white font-black shadow-xs"
-                            : "bg-card text-slate-800 dark:text-slate-200 border-theme hover:border-slate-500 hover:text-slate-950"
+                            ? "bg-cyan-600 text-white shadow-xs border-cyan-600"
+                            : "bg-white text-black border-slate-200 hover:border-slate-400 hover:bg-slate-50"
                         }`}
                       >
                         {s.label}
@@ -644,22 +644,22 @@ export default function ExperiencesPage() {
                   {[1, 2, 3, 4, 5, 6].map((n) => (
                     <div
                       key={n}
-                      className="h-80 rounded-2xl border border-slate-800 bg-slate-900/40 animate-pulse"
+                      className="h-80 rounded-2xl border-2 border-slate-200 bg-slate-100 animate-pulse"
                     />
                   ))}
                 </div>
               ) : challenges.length === 0 ? (
-                <div className="rounded-3xl border border-dashed border-slate-800 bg-slate-900/30 p-12 text-center space-y-4">
-                  <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                    <Flame className="h-7 w-7" />
+                <div className="rounded-3xl border-2 border-dashed border-slate-300 bg-white p-12 text-center space-y-4 shadow-sm">
+                  <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-50 text-cyan-600 border border-cyan-200">
+                    <Flame className="h-8 w-8" />
                   </div>
-                  <h3 className="text-lg font-bold text-white">لا توجد تمارين وتحديات مطابقة حالياً</h3>
-                  <p className="text-xs sm:text-sm text-slate-200 max-w-md mx-auto font-medium">
+                  <h3 className="text-xl sm:text-2xl font-black text-black">لا توجد تمارين وتحديات مطابقة حالياً</h3>
+                  <p className="text-sm sm:text-base text-black max-w-md mx-auto font-semibold">
                     كن أول من يشارك موضوعاً أو مسألة رياضية/فيزيائية من ثانويتك مع زملائك في البكالوريا!
                   </p>
                   <button
                     onClick={() => setIsShareChallengeModalOpen(true)}
-                    className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-cyan-500 transition-colors cursor-pointer shadow-lg shadow-cyan-600/25"
+                    className="inline-flex items-center gap-2 rounded-xl bg-cyan-600 px-6 py-3 text-sm font-black text-white hover:bg-cyan-500 transition-colors cursor-pointer shadow-lg shadow-cyan-600/25"
                   >
                     <PlusCircle className="w-4 h-4" />
                     <span>إضافة أول تحدي الآن</span>

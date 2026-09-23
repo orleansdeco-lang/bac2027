@@ -62,6 +62,7 @@ export async function getAuditLogs(filters?: {
   actorUserId?: string;
   action?: string;
   targetType?: string;
+  targetId?: string;
   limit?: number;
 }): Promise<OperationsAuditLog[]> {
   const limit = filters?.limit || 50;
@@ -82,6 +83,9 @@ export async function getAuditLogs(filters?: {
       }
       if (filters?.targetType) {
         query = query.eq("target_type", filters.targetType);
+      }
+      if (filters?.targetId) {
+        query = query.eq("target_id", filters.targetId);
       }
 
       const { data, error } = await query;
