@@ -1,17 +1,14 @@
 /**
  * BAC Mastery — Operations Center Authentication & Route Guard Verification Script
- * Validates token extraction, cookie parsing, header injection, and route guard logic.
+ * Validates token extraction, cookie parsing, and RBAC normalization.
  */
 
 import {
   extractTokenFromCookies,
-  isAbsoluteOwner,
   getServerUserRole,
   isServerOwner,
   isServerOperator,
   normalizeUserRole,
-  OWNER_EMAIL,
-  OWNER_UUID,
 } from "../src/lib/operations/auth";
 
 let passedTests = 0;
@@ -58,217 +55,62 @@ async function runVerification() {
   {
     const cookie = "sb-access-token=supabase_access_jwt_999";
     const token = extractTokenFromCookies(cookie);
-    assert(token === "supabase_access_jwt_999", "Fallback to sb-access-token when ops_auth_token absent");
+    assert(token === "supabase_access_jwt_999", "sb-access-token fallback recognized");
   }
 
   {
-    const cookie = 'sb-xyzproject-auth-token=["supabase_json_token_abc","refresh_123"]';
+    const cookie = "other=123; sb-projectid-auth-token=jwt_project_token; more=456";
     const token = extractTokenFromCookies(cookie);
-    assert(token === "supabase_json_token_abc", "Supabase JSON array auth cookie parsed correctly");
+    assert(token === "jwt_project_token", "Supabase project-prefixed auth cookie matched");
   }
 
   {
-    const cookie = "unrelated_cookie_1=hello; unrelated_cookie_2=world";
+    const cookie = "unrelated=foo; tracking=bar";
     const token = extractTokenFromCookies(cookie);
-    assert(token === null, "Returns null when no auth cookie is present");
+    assert(token === null, "Returns null when no recognized auth cookie present");
   }
 
   {
-    const token = extractTokenFromCookies(null);
-    assert(token === null, "Handles null cookie header gracefully");
+    assert(extractTokenFromCookies(null) === null, "Returns null for null cookie header");
+    assert(extractTokenFromCookies("") === null, "Returns null for empty cookie header");
   }
 
   // -------------------------------------------------------------------
-  // 2. opsFetch Header Construction Tests
+  // 2. Role Normalization Tests
   // -------------------------------------------------------------------
-  console.log("\n[Test Suite 2: Client opsFetch & Bearer Header Construction]");
+  console.log("\n[Test Suite 2: Role Normalization]");
 
-  {
-    const headers = new Headers();
-    const token = "mock_operator_token_xyz";
-    if (token && !headers.has("Authorization")) {
-      headers.set("Authorization", `Bearer ${token}`);
-    }
-    assert(headers.get("Authorization") === "Bearer mock_operator_token_xyz", "Injects Authorization: Bearer <token>");
-  }
-
-  {
-    const headers = new Headers({ Authorization: "Bearer custom_override_token" });
-    const token = "mock_operator_token_xyz";
-    if (token && !headers.has("Authorization")) {
-      headers.set("Authorization", `Bearer ${token}`);
-    }
-    assert(headers.get("Authorization") === "Bearer custom_override_token", "Preserves existing caller Authorization header");
-  }
+  assert(normalizeUserRole("OWNER") === "OWNER", "Canonical 'OWNER' preserved");
+  assert(normalizeUserRole("owner") === "OWNER", "Lowercase 'owner' normalized to 'OWNER'");
+  assert(normalizeUserRole(" Owner ") === "OWNER", "Whitespace-padded ' Owner ' normalized to 'OWNER'");
+  assert(normalizeUserRole("OPERATOR") === "OPERATOR", "Canonical 'OPERATOR' preserved");
+  assert(normalizeUserRole("operator") === "OPERATOR", "Lowercase 'operator' normalized to 'OPERATOR'");
+  assert(normalizeUserRole("CONTENT_REVIEWER") === "CONTENT_REVIEWER", "'CONTENT_REVIEWER' normalized");
+  assert(normalizeUserRole("student") === null, "Student role normalizes to null (not an ops role)");
+  assert(normalizeUserRole("HACKER") === null, "Unrecognized role normalizes to null");
+  assert(normalizeUserRole(null) === null, "Null input returns null");
+  assert(normalizeUserRole(undefined) === null, "Undefined input returns null");
 
   // -------------------------------------------------------------------
-  // 3. Route Guard & Exemption Logic Tests
+  // 3. User Role Privileges
   // -------------------------------------------------------------------
-  console.log("\n[Test Suite 3: Route Guard & Exemption Logic]");
-
-  {
-    const pathname = "/ops/login";
-    const isLoginPage = pathname === "/ops/login";
-    assert(isLoginPage === true, "/ops/login is exempted from route guard");
-  }
-
-  {
-    const protectedPaths = [
-      "/ops",
-      "/ops/overview",
-      "/ops/finance",
-      "/ops/subscriptions",
-      "/ops/students",
-      "/ops/students/123",
-      "/ops/learning",
-      "/ops/issues",
-      "/ops/content",
-      "/ops/audit",
-      "/ops/system",
-    ];
-
-    const allProtected = protectedPaths.every((p) => p !== "/ops/login");
-    assert(allProtected, "All operational routes except /ops/login remain gated");
-  }
-
-  {
-    const currentPath = "/ops/finance";
-    const loginRedirectUrl = `/ops/login?redirect=${encodeURIComponent(currentPath)}`;
-    assert(
-      loginRedirectUrl === "/ops/login?redirect=%2Fops%2Ffinance",
-      "Unauthorized redirect preserves destination path in query parameter"
-    );
-  }
-
-  // -------------------------------------------------------------------
-  // 4. Role Authorization Contract Verification
-  // -------------------------------------------------------------------
-  console.log("\n[Test Suite 4: Role Verification Matrix]");
+  console.log("\n[Test Suite 3: Role Privileges]");
 
   const roles = [
     { role: "OWNER", expectedOperator: true },
     { role: "OPERATOR", expectedOperator: true },
+    { role: "CONTENT_REVIEWER", expectedOperator: false },
     { role: "STUDENT", expectedOperator: false },
-    { role: "USER", expectedOperator: false },
     { role: null, expectedOperator: false },
-    { role: undefined, expectedOperator: false },
   ];
 
   for (const { role, expectedOperator } of roles) {
     const isOp = role === "OWNER" || role === "OPERATOR";
     assert(
       isOp === expectedOperator,
-      `Role '${role}' authorization check -> isOperator = ${expectedOperator}`
+      `Role '${role}' isOperator expectation: ${expectedOperator}`
     );
   }
-
-  // -------------------------------------------------------------------
-  // 5. Absolute Owner Bypass Verification
-  // -------------------------------------------------------------------
-  console.log("\n[Test Suite 5: Absolute Owner Bypass Verification]");
-
-  assert(
-    isAbsoluteOwner(OWNER_UUID) === true,
-    `Direct UUID ${OWNER_UUID} recognized as absolute owner`
-  );
-
-  assert(
-    isAbsoluteOwner(OWNER_UUID.toUpperCase()) === true,
-    "Uppercase UUID recognized as absolute owner (case-insensitive)"
-  );
-
-  assert(
-    isAbsoluteOwner(null, OWNER_EMAIL) === true,
-    `Email ${OWNER_EMAIL} recognized as absolute owner`
-  );
-
-  assert(
-    isAbsoluteOwner(null, "AZINOX27@GMAIL.COM") === true,
-    "Uppercase Email recognized as absolute owner (case-insensitive)"
-  );
-
-  assert(
-    isAbsoluteOwner("00000000-0000-0000-0000-000000000000", "student@bac-mastery.dz") === false,
-    "Non-owner credentials denied absolute owner status"
-  );
-
-  {
-    const resolvedRole = await getServerUserRole(OWNER_UUID);
-    assert(
-      resolvedRole === "OWNER",
-      `getServerUserRole(${OWNER_UUID}) immediately resolves to 'OWNER'`
-    );
-  }
-
-  {
-    const opAccess = await isServerOperator(OWNER_UUID);
-    assert(
-      opAccess === true,
-      `isServerOperator(${OWNER_UUID}) immediately returns true`
-    );
-  }
-
-  {
-    const ownerAccess = await isServerOwner(OWNER_UUID);
-    assert(
-      ownerAccess === true,
-      `isServerOwner(${OWNER_UUID}) immediately returns true`
-    );
-  }
-
-  assert(
-    normalizeUserRole("owner") === "OWNER",
-    "Database lowercase 'owner' string normalized to canonical 'OWNER'"
-  );
-
-  assert(
-    normalizeUserRole("operator") === "OPERATOR",
-    "Database lowercase 'operator' string normalized to canonical 'OPERATOR'"
-  );
-
-  assert(
-    normalizeUserRole("OWNER") === "OWNER",
-    "Canonical 'OWNER' preserved"
-  );
-
-  // -------------------------------------------------------------------
-  // 6. Middleware Owner Token & Payload Detection
-  // -------------------------------------------------------------------
-  console.log("\n[Test Suite 6: Middleware Owner Token & Payload Detection]");
-
-  // 1. Raw cookie containing owner email
-  const rawCookieWithEmail = "some_session=abc; ops_auth_token=azinox27@gmail.com; test=123";
-  assert(
-    rawCookieWithEmail.includes(OWNER_EMAIL),
-    "Raw cookie string with owner email matches check"
-  );
-
-  // 2. Raw cookie containing owner UUID
-  const rawCookieWithUUID = `user_id=${OWNER_UUID}`;
-  assert(
-    rawCookieWithUUID.includes(OWNER_UUID),
-    "Raw cookie string with owner UUID matches check"
-  );
-
-  // 3. Simulated JWT with sub = OWNER_UUID
-  const mockJwtPayload = JSON.stringify({ sub: OWNER_UUID, email: "other@example.com" });
-  const mockJwtBase64 = Buffer.from(mockJwtPayload).toString("base64");
-  const mockJwt = `eyJhbGciOiJIUzI1NiJ9.${mockJwtBase64}.signature`;
-  const decodedSub = JSON.parse(Buffer.from(mockJwt.split(".")[1], "base64").toString()).sub;
-  assert(
-    decodedSub.toLowerCase() === OWNER_UUID.toLowerCase(),
-    "Decoded JWT payload sub correctly matches owner UUID"
-  );
-
-  // 4. Simulated JWT with email = OWNER_EMAIL
-  const mockJwtEmailPayload = JSON.stringify({ sub: "random-id", email: OWNER_EMAIL });
-  const mockJwtEmailBase64 = Buffer.from(mockJwtEmailPayload).toString("base64");
-  const mockJwtEmail = `eyJhbGciOiJIUzI1NiJ9.${mockJwtEmailBase64}.signature`;
-  const decodedEmail = JSON.parse(Buffer.from(mockJwtEmail.split(".")[1], "base64").toString()).email;
-  assert(
-    decodedEmail.toLowerCase() === OWNER_EMAIL.toLowerCase(),
-    "Decoded JWT payload email correctly matches owner email"
-  );
 
   // -------------------------------------------------------------------
   // Summary
@@ -283,6 +125,6 @@ async function runVerification() {
 }
 
 runVerification().catch((err) => {
-  console.error("Verification suite failed:", err);
+  console.error("Verification suite failed with unhandled error:", err);
   process.exit(1);
 });

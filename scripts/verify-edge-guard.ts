@@ -8,8 +8,6 @@ import { NextRequest } from "next/server";
 import {
   middleware,
   PROTECTED_STUDENT_PREFIXES,
-  OWNER_EMAIL,
-  OWNER_UUID,
 } from "../src/middleware";
 
 let passedTests = 0;
@@ -173,45 +171,43 @@ async function runEdgeGuardVerification() {
   }
 
   // -------------------------------------------------------------------
-  // 4. Absolute Owner Bypass
+  // 4. Session Presence & Guarding Verification
   // -------------------------------------------------------------------
-  console.log("\n[Test Suite 4: Absolute Owner Bypass Verification]");
+  console.log("\n[Test Suite 4: Valid Session Presence Verification]");
 
   {
     const req = createRequest("/dashboard", {
-      headers: { authorization: `Bearer ${OWNER_EMAIL}` },
+      headers: { authorization: `Bearer valid_session_token_12345` },
     });
     const res = middleware(req);
 
     assert(
       res.status === 200 && !res.headers.get("location"),
-      "Owner email in Bearer header bypasses student route guarding"
+      "Bearer authorization token permits student access to /dashboard"
     );
   }
 
   {
     const req = createRequest("/exam", {
-      cookies: { ops_auth_token: OWNER_UUID },
+      cookies: { "sb-access-token": "valid_session_token_12345" },
     });
     const res = middleware(req);
 
     assert(
       res.status === 200 && !res.headers.get("location"),
-      "Owner UUID in ops_auth_token cookie bypasses student route guarding"
+      "Supabase access token cookie permits student access to /exam"
     );
   }
 
   {
     const req = createRequest("/ops/overview", {
-      headers: { authorization: `Bearer ${OWNER_EMAIL}` },
+      headers: { authorization: `Bearer valid_operator_token_12345` },
     });
     const res = middleware(req);
 
     assert(
-      res.status === 200 &&
-        res.headers.get("x-operations-owner") === "true" &&
-        res.headers.get("x-operations-role") === "OWNER",
-      "Owner accessing /ops/overview receives immediate pass with OWNER headers"
+      res.status === 200 && res.headers.get("x-operations-route") === "true",
+      "Authenticated operator accessing /ops/overview receives pass with ops header"
     );
   }
 
@@ -254,7 +250,7 @@ async function runEdgeGuardVerification() {
   // -------------------------------------------------------------------
   console.log("\n[Test Suite 6: Public Route Neutrality]");
 
-  const publicRoutes = ["/", "/auth", "/auth/login", "/onboarding", "/subscribe", "/curriculum"];
+  const publicRoutes = ["/", "/auth", "/auth/login", "/onboarding", "/subscribe", "/landing", "/faq"];
   for (const p of publicRoutes) {
     const req = createRequest(p);
     const res = middleware(req);

@@ -8,9 +8,8 @@
  * 5. Entitlement and subscription gate enforcement
  */
 
-import { extractAuthenticatedUserId, isAbsoluteOwner, OWNER_EMAIL, OWNER_UUID } from "../src/lib/operations/auth";
+import { extractAuthenticatedUserId, normalizeUserRole } from "../src/lib/operations/auth";
 import { getStudentAccess, hasPremiumAccess } from "../src/lib/access";
-import { isOwnerPayload, checkIsOwner } from "../src/middleware";
 
 async function runSecurityTests() {
   console.log("==================================================================");
@@ -31,23 +30,27 @@ async function runSecurityTests() {
   }
 
   // -------------------------------------------------------------------------
-  // TEST 1: Absolute Owner Identity Constants
+  // TEST 1: Role Normalization Security
   // -------------------------------------------------------------------------
   assert(
-    isAbsoluteOwner(OWNER_UUID, OWNER_EMAIL) === true,
-    "1a. Authoritative Owner identity recognized for owner UUID and email"
+    normalizeUserRole("OWNER") === "OWNER",
+    "1a. Authoritative OWNER role recognized"
   );
   assert(
-    isAbsoluteOwner("attacker_id", "attacker@evil.com") === false,
-    "1b. Random attacker identity strictly rejected by isAbsoluteOwner"
+    normalizeUserRole("attacker_custom_role") === null,
+    "1b. Random attacker custom role strictly rejected"
+  );
+  assert(
+    normalizeUserRole("student") === null,
+    "1c. Student role denied administrative access"
   );
 
   // -------------------------------------------------------------------------
   // TEST 2: Forged JWT Rejection (No Signature Verification Bypass)
   // -------------------------------------------------------------------------
   const forgedPayload = Buffer.from(JSON.stringify({
-    email: OWNER_EMAIL,
-    sub: OWNER_UUID,
+    email: "fake_admin@example.com",
+    sub: "00000000-0000-0000-0000-000000000000",
     role: "authenticated",
   })).toString("base64");
   const forgedJwt = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${forgedPayload}.fake_signature`;
@@ -80,18 +83,8 @@ async function runSecurityTests() {
   );
 
   // -------------------------------------------------------------------------
-  // TEST 4: Middleware Substring Leak Fix
+  // TEST 4: Client-Side Paid Escalation Prevention
   // -------------------------------------------------------------------------
-  const maliciousCookie = `session_data=${OWNER_EMAIL}; role=guest`;
-  assert(
-    checkIsOwner(maliciousCookie) === false,
-    "4. Middleware checkIsOwner strictly rejects raw strings containing owner email substring"
-  );
-
-  // -------------------------------------------------------------------------
-  // TEST 5: Client-Side Paid Escalation Prevention
-  // -------------------------------------------------------------------------
-  // Simulate an expired student sending isServerAuthoritativePaid: true in body
   const eightDaysAgo = new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString();
   const fakeStudentProfile = {
     id: "student_attacker_1",
@@ -103,15 +96,15 @@ async function runSecurityTests() {
   const accessDecision = getStudentAccess(fakeStudentProfile as any);
   assert(
     accessDecision.status === "TRIAL_EXPIRED" && accessDecision.canUseProduct === false,
-    "5a. Student past 7 days evaluates strictly to TRIAL_EXPIRED with canUseProduct = false"
+    "4a. Student past 7 days evaluates strictly to TRIAL_EXPIRED with canUseProduct = false"
   );
   assert(
     hasPremiumAccess(fakeStudentProfile as any) === false,
-    "5b. hasPremiumAccess is false for expired student"
+    "4b. hasPremiumAccess is false for expired student"
   );
 
   // -------------------------------------------------------------------------
-  // TEST 6: Genuine Active Paid Subscription Evaluation
+  // TEST 5: Genuine Active Paid Subscription Evaluation
   // -------------------------------------------------------------------------
   const paidStudentProfile = {
     id: "student_paid_1",
@@ -123,11 +116,11 @@ async function runSecurityTests() {
   const paidAccessDecision = getStudentAccess(paidStudentProfile as any);
   assert(
     paidAccessDecision.status === "PAID_ACTIVE" && paidAccessDecision.canUseProduct === true,
-    "6. Genuine paid student with unexpired subscription evaluates to PAID_ACTIVE with canUseProduct = true"
+    "5. Genuine paid student with unexpired subscription evaluates to PAID_ACTIVE with canUseProduct = true"
   );
 
   // -------------------------------------------------------------------------
-  // TEST 7: Expired Paid Subscription
+  // TEST 6: Expired Paid Subscription
   // -------------------------------------------------------------------------
   const expiredPaidProfile = {
     id: "student_paid_expired",
@@ -139,11 +132,11 @@ async function runSecurityTests() {
   const expiredPaidDecision = getStudentAccess(expiredPaidProfile as any);
   assert(
     expiredPaidDecision.status === "EXPIRED" && expiredPaidDecision.canUseProduct === false,
-    "7. Student whose paid subscription expired evaluates to EXPIRED with canUseProduct = false"
+    "6. Student whose paid subscription expired evaluates to EXPIRED with canUseProduct = false"
   );
 
   // -------------------------------------------------------------------------
-  // TEST 8: Explicitly Rejected Payment
+  // TEST 7: Explicitly Rejected Payment
   // -------------------------------------------------------------------------
   const rejectedProfile = {
     id: "student_rejected",
@@ -154,7 +147,7 @@ async function runSecurityTests() {
   const rejectedDecision = getStudentAccess(rejectedProfile as any);
   assert(
     rejectedDecision.status === "EXPIRED" && rejectedDecision.canUseProduct === false,
-    "8. Student whose payment was rejected evaluates to canUseProduct = false"
+    "7. Student whose payment was rejected evaluates to canUseProduct = false"
   );
 
   console.log("==================================================================");
