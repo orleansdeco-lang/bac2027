@@ -9,6 +9,8 @@ const PRECACHE_ASSETS = [
   "/dashboard",
   "/curriculum",
   "/diagnostic",
+  "/memorize",
+  "/calculator",
   "/manifest.json",
   "/favicon.svg",
   "/app-icon.svg",

@@ -37,6 +37,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Layers,
+  Calculator,
+  Brain,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -239,6 +241,24 @@ export function Sidebar({ className }: SidebarProps) {
           label_fr: "Diagnostics par matière",
           icon: Stethoscope,
           matches: (p: string) => p.startsWith("/diagnostic"),
+        },
+        {
+          href: "/memorize",
+          label_ar: "لعبة الحفظ (شخصيات وتواريخ)",
+          label_fr: "Jeu de Mémorisation (BAC)",
+          icon: Brain,
+          matches: (p: string) => p.startsWith("/memorize"),
+          badge: isAr ? "جديد 🧠" : "Nouveau",
+          badgeColor: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30",
+        },
+        {
+          href: "/calculator",
+          label_ar: "حاسبة المعدل والآلة العلمية",
+          label_fr: "Calculatrice BAC & Scientifique",
+          icon: Calculator,
+          matches: (p: string) => p.startsWith("/calculator"),
+          badge: isAr ? "علمية 🔬" : "Scientifique",
+          badgeColor: "bg-teal-500/15 text-teal-600 dark:text-teal-400 border-teal-500/30",
         },
       ],
     },

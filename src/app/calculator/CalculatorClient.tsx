@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import {
   Calculator,
@@ -14,7 +14,9 @@ import {
   Award,
   Layers,
   BookOpen,
+  Atom,
 } from "lucide-react";
+import { ScientificCalculator } from "@/components/calculator/ScientificCalculator";
 
 interface SubjectRule {
   id: string;
@@ -128,6 +130,7 @@ const STREAM_DEFINITIONS: Record<
 };
 
 export function CalculatorClient() {
+  const [activeTab, setActiveTab] = useState<"bac" | "scientific">("bac");
   const [streamKey, setStreamKey] = useState<string>("sciences");
   const [scores, setScores] = useState<Record<string, string>>({
     snv: "15",
@@ -242,6 +245,15 @@ export function CalculatorClient() {
 
   const opportunities = getOpportunities(average, streamKey);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("mode") === "scientific" || params.get("tab") === "scientific") {
+        setActiveTab("scientific");
+      }
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#FAF8F5] text-slate-900 font-sans antialiased">
       {/* Header */}
@@ -252,7 +264,9 @@ export function CalculatorClient() {
               الشاطر
             </Link>
             <span className="text-slate-300">/</span>
-            <span className="text-xs font-bold text-[#2C5E54]">حاسبة معدل البكالوريا</span>
+            <span className="text-xs font-bold text-[#2C5E54]">
+              {activeTab === "bac" ? "حاسبة معدل البكالوريا والتوجيه" : "الآلة الحاسبة العلمية"}
+            </span>
           </div>
           <div className="flex items-center gap-3">
             <Link
@@ -278,23 +292,65 @@ export function CalculatorClient() {
       </header>
 
       {/* Hero */}
-      <section className="px-4 pt-10 pb-8 md:pt-14 md:pb-10 border-b border-[#E8E2D5] text-center">
+      <section className="px-4 pt-10 pb-12 md:pt-12 md:pb-14 border-b border-[#E8E2D5] text-center">
         <div className="max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#2C5E54]/10 text-[#2C5E54] text-xs font-bold">
-            <Calculator className="w-4 h-4" />
-            <span>المعاملات الرسمية المعتمدة لوزارة التربية الوطنية الجزائرية</span>
+            {activeTab === "bac" ? <Calculator className="w-4 h-4" /> : <Atom className="w-4 h-4" />}
+            <span>
+              {activeTab === "bac"
+                ? "المعاملات الرسمية المعتمدة لوزارة التربية الوطنية الجزائرية"
+                : "حسابات علمية، دوال مثلثية ولوغاريتمية مع ثوابت الفيزياء الرسمية"}
+            </span>
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif font-black text-[#1E3A34] leading-tight">
-            حاسبة معدل البكالوريا 2027
+            {activeTab === "bac" ? "حاسبة معدل البكالوريا 2027" : "الآلة الحاسبة العلمية للبكالوريا"}
           </h1>
           <p className="text-sm sm:text-base text-slate-600 max-w-xl mx-auto">
-            اختر شعبتك، ضع نقاطك المتوقعة أو المحصل عليها في الاختبارات التجريبية، واكتشف معدلك التقديري والتخصصات الجامعية المتاحة أمامك.
+            {activeTab === "bac"
+              ? "اختر شعبتك، ضع نقاطك المتوقعة أو المحصل عليها في الاختبارات التجريبية، واكتشف معدلك التقديري والتخصصات الجامعية المتاحة أمامك."
+              : "أداة علمية متطورة ومطابقة لمنهاج البكالوريا لحساب الدوال المثلثية، الأسية، اللوغاريتمية، الترتيبات والاحتمالات بدقة عالية."}
           </p>
         </div>
       </section>
 
-      {/* Main interactive area */}
-      <main className="max-w-6xl mx-auto px-4 py-10">
+      {/* Dual Tab Navigation */}
+      <div className="max-w-xl mx-auto px-4 -mt-6 sm:-mt-7 mb-8 relative z-10">
+        <div className="bg-white p-1.5 rounded-3xl border border-[#E8E2D5] shadow-clay flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setActiveTab("bac")}
+            className={`flex-1 py-3 px-3 sm:px-4 rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+              activeTab === "bac"
+                ? "bg-[#2C5E54] text-white shadow-sm"
+                : "text-slate-600 hover:text-slate-900 hover:bg-[#FAF8F5]"
+            }`}
+          >
+            <GraduationCap className="w-4 h-4" />
+            <span>حاسبة معدل البكالوريا</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("scientific")}
+            className={`flex-1 py-3 px-3 sm:px-4 rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all ${
+              activeTab === "scientific"
+                ? "bg-[#2C5E54] text-white shadow-sm"
+                : "text-slate-600 hover:text-slate-900 hover:bg-[#FAF8F5]"
+            }`}
+          >
+            <Atom className="w-4 h-4" />
+            <span>الآلة الحاسبة العلمية</span>
+          </button>
+        </div>
+      </div>
+
+      {activeTab === "scientific" ? (
+        <main className="max-w-6xl mx-auto px-4 pb-12">
+          <ScientificCalculator />
+        </main>
+      ) : (
+        /* Main interactive area for BAC Calculator */
+        <main className="max-w-6xl mx-auto px-4 pb-12">
         {/* Stream Selector */}
         <div className="space-y-3 mb-8">
           <label className="block text-xs font-bold text-slate-700">اختر الشعبة:</label>
@@ -479,6 +535,7 @@ export function CalculatorClient() {
           </div>
         </div>
       </main>
+    )}
 
       {/* Footer */}
       <footer className="border-t border-[#E8E2D5] bg-[#F2ECE1]/40 py-8 px-4 text-center text-xs text-slate-500 mt-16">
