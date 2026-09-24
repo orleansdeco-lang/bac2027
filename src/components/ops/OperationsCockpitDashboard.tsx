@@ -687,7 +687,7 @@ export function OperationsCockpitDashboard() {
                         ? "bg-gradient-to-r from-emerald-500 to-teal-400 shadow-md shadow-emerald-500/30"
                         : "bg-gradient-to-r from-cyan-600 via-indigo-600 to-indigo-400"
                     }`}
-                    style={{ width: `${Math.max(4, step.percentageOfTotal)}%` }}
+                    style={{ width: `${step.percentageOfTotal > 0 ? Math.max(2, step.percentageOfTotal) : 0}%` }}
                   />
                 </div>
               </div>
@@ -715,13 +715,13 @@ export function OperationsCockpitDashboard() {
               <div className="flex items-center justify-between text-xs">
                 <span className="text-slate-300 font-bold">نسبة نجاح التمارين (Practice Success)</span>
                 <span className="font-mono font-black text-emerald-400 text-sm">
-                  {learning?.exerciseCompletionRate ?? 76}%
+                  {learning?.exerciseCompletionRate ?? 0}%
                 </span>
               </div>
               <div className="w-full h-2 rounded-full bg-slate-900 overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full"
-                  style={{ width: `${learning?.exerciseCompletionRate ?? 76}%` }}
+                  style={{ width: `${learning?.exerciseCompletionRate ?? 0}%` }}
                 />
               </div>
               <div className="text-[10px] text-slate-400 font-mono">
@@ -781,7 +781,7 @@ export function OperationsCockpitDashboard() {
                   <div className="w-full h-1.5 bg-slate-900 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-indigo-500 to-cyan-400 rounded-full"
-                      style={{ width: `${Math.max(5, s.percentage)}%` }}
+                      style={{ width: `${s.percentage > 0 ? Math.max(3, s.percentage) : 0}%` }}
                     />
                   </div>
                 </div>

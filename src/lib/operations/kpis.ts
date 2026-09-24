@@ -242,13 +242,6 @@ export async function getOperationsOverviewKPIs(
   const distinctOrderUsers = new Set(allOrders.map((o) => o.userId).filter(Boolean));
   totalStudents = Math.max(totalStudents, serverStudents.length, distinctOrderUsers.size);
   paidSubscribers = Math.max(paidSubscribers, approvedOrders.length);
-  if (activeTrials === 0 && totalStudents > paidSubscribers) {
-    activeTrials = totalStudents - paidSubscribers;
-  }
-  if (pendingOrders.length > 0 && activeTrials === 0) {
-    activeTrials = pendingOrders.length;
-  }
-
   const conversionRate = totalStudents > 0 ? (paidSubscribers / totalStudents) * 100 : 0;
   const averagePracticeAccuracy =
     totalPracticeAttempts > 0

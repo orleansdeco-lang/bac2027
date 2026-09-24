@@ -91,25 +91,30 @@ export async function getOperationsDashboardData(
   // Sort stale pending alerts longest waiting first
   stalePendingAlerts.sort((a, b) => b.hoursWaiting - a.hoursWaiting);
 
-  // 2. Fetch Students Profiles from PostgreSQL
+  // 2. Fetch Students Profiles and Subscriptions from PostgreSQL
   let studentProfiles: any[] = [];
+  let subscriptions: any[] = [];
+
   if (isSupabaseConfigured && client) {
     try {
-      const { data: profiles, error: pErr } = await client
-        .from("student_profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+      const [profilesRes, subsRes] = await Promise.all([
+        client.from("student_profiles").select("*").order("created_at", { ascending: false }),
+        client.from("subscriptions").select("*"),
+      ]);
 
-      if (!pErr && profiles) {
-        studentProfiles = profiles;
+      if (!profilesRes.error && profilesRes.data) {
+        studentProfiles = profilesRes.data;
+      }
+      if (!subsRes.error && subsRes.data) {
+        subscriptions = subsRes.data;
       }
     } catch (err) {
-      console.warn("[DashboardService] student_profiles query fallback:", err);
+      console.warn("[DashboardService] student_profiles / subscriptions query fallback:", err);
     }
   }
 
   // Students Breakdown & Alerts
-  let totalStudents = studentProfiles.length;
+  const totalStudents = studentProfiles.length;
   let paidStudents = 0;
   let trialStudents = 0;
   let expiredStudents = 0;
@@ -131,7 +136,16 @@ export async function getOperationsDashboardData(
       wilayaDistribution[wName] = (wilayaDistribution[wName] || 0) + 1;
     }
 
+    // Active subscription verification (Cross-reference public.subscriptions and student_profiles)
+    const studentSubs = subscriptions.filter(
+      (s) => s.student_id === sp.id || s.user_id === sp.id
+    );
+    const activeSub = studentSubs.find(
+      (s) => s.status === "ACTIVE" && s.expires_at && s.expires_at > now.toISOString()
+    );
+
     const isPaid =
+      Boolean(activeSub) ||
       sp.access_status === "PAID" ||
       sp.plan === "PAID" ||
       (sp.subscription_expires_at && sp.subscription_expires_at > now.toISOString());
@@ -140,8 +154,9 @@ export async function getOperationsDashboardData(
       paidStudents++;
 
       // Check expiring soon within 3 to 7 days
-      if (sp.subscription_expires_at) {
-        const expMs = new Date(sp.subscription_expires_at).getTime();
+      const expirationDate = activeSub?.expires_at || sp.subscription_expires_at;
+      if (expirationDate) {
+        const expMs = new Date(expirationDate).getTime();
         if (expMs > nowMs && expMs <= new Date(sevenDaysFromNow).getTime()) {
           const daysLeft = Math.max(1, Math.ceil((expMs - nowMs) / (1000 * 60 * 60 * 24)));
           const fullName = `${sp.first_name || ""} ${sp.last_name || ""}`.trim() || "طالب مسجل";
@@ -152,16 +167,18 @@ export async function getOperationsDashboardData(
             parentPhone: sp.parent_phone ?? undefined,
             wilayaName: sp.wilaya_name ?? undefined,
             streamId: sp.stream_id ?? undefined,
-            plan: sp.plan || "season",
-            expiresAt: sp.subscription_expires_at,
+            plan: activeSub?.plan_id || sp.plan || "season",
+            expiresAt: expirationDate,
             daysRemaining: daysLeft,
           });
         }
       }
     } else {
-      const trialExp = sp.trial_expires_at ? new Date(sp.trial_expires_at).getTime() : nowMs;
-      if (sp.access_status === "EXPIRED" || trialExp <= nowMs) {
+      const trialExp = sp.trial_expires_at ? new Date(sp.trial_expires_at).getTime() : 0;
+      if (sp.access_status === "EXPIRED" || (trialExp > 0 && trialExp <= nowMs)) {
         expiredStudents++;
+      } else if (sp.access_status === "TRIAL" || trialExp > nowMs) {
+        trialStudents++;
       } else {
         trialStudents++;
       }
@@ -183,15 +200,9 @@ export async function getOperationsDashboardData(
     }
   }
 
-  // Ensure counts make sense even if database has only payment orders
-  totalStudents = Math.max(totalStudents, approvedOrders.length + pendingOrders.length);
-  paidStudents = Math.max(paidStudents, approvedOrders.length);
-  if (totalStudents > paidStudents && trialStudents === 0 && expiredStudents === 0) {
-    trialStudents = totalStudents - paidStudents;
-  }
   const paidRatio = totalStudents > 0 ? Math.round((paidStudents / totalStudents) * 100) : 0;
 
-  // Sort expiring soon by nearest expiration
+  // Sort alerts
   expiringSoonAlerts.sort((a, b) => a.daysRemaining - b.daysRemaining);
   dropoffAlerts.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
@@ -234,10 +245,11 @@ export async function getOperationsDashboardData(
       (e.event_name || e.eventName) === "retest_completed"
   ).length;
 
-  // Approximate study hours based on learning interactions (average ~12 min per engaged session/lesson)
-  const estimatedStudyHoursToday = Number(
-    Math.max(0.5, ((activeUserIdsToday.size * 20 + lessonsViewedToday * 12 + exercisesCompletedToday * 5) / 60)).toFixed(1)
-  );
+  // Approximate study hours based on learning interactions (0 when no activity)
+  const estimatedStudyHoursToday =
+    activeUserIdsToday.size === 0 && lessonsViewedToday === 0 && exercisesCompletedToday === 0
+      ? 0
+      : Number(((activeUserIdsToday.size * 20 + lessonsViewedToday * 12 + exercisesCompletedToday * 5) / 60).toFixed(1));
 
   // 4. Learning Signals: Practice, Missions, Retests
   let correctAttempts = 0;
@@ -264,56 +276,56 @@ export async function getOperationsDashboardData(
   const exerciseCompletionRate =
     totalPracticeAttempts > 0
       ? Math.round((correctAttempts / totalPracticeAttempts) * 100)
-      : 76; // Realistic learning benchmark baseline
+      : 0;
 
-  // 5. Conversion Funnel Calculation
-  const totalLandingViews = Math.max(
-    totalStudents * 4,
-    telemetryEvents.filter((e) => {
-      const name = e.event_name || e.eventName;
-      return name === "landing" || name === "landing_view" || name === "visitor";
-    }).length
-  );
+  // 5. Authentic Conversion Funnel Calculation (Strict single source of truth)
+  const totalLandingViews = telemetryEvents.filter((e) => {
+    const name = e.event_name || e.eventName;
+    return name === "landing" || name === "landing_view" || name === "visitor";
+  }).length;
 
   const totalSignups = Math.max(
     totalStudents,
-    telemetryEvents.filter((e) => (e.event_name || e.eventName) === "registration_completed").length
-  );
-
-  const totalDiagnosticsCompleted = Math.max(
-    Math.round(totalSignups * 0.72),
-    telemetryEvents.filter((e) => (e.event_name || e.eventName) === "diagnostic_completed").length
-  );
-
-  const totalPricingViews = Math.max(
-    Math.round(totalSignups * 0.55),
     telemetryEvents.filter((e) => {
       const name = e.event_name || e.eventName;
-      return name === "checkout_started" || name === "conversion_viewed";
+      return name === "registration_completed" || name === "signup_completed";
     }).length
   );
 
+  const totalDiagnosticsCompleted = Math.max(
+    studentProfiles.filter((sp) => sp.onboarding_completed || sp.academic_profile_completed_at).length,
+    telemetryEvents.filter((e) => (e.event_name || e.eventName) === "diagnostic_completed").length
+  );
+
+  const totalPricingViews = telemetryEvents.filter((e) => {
+    const name = e.event_name || e.eventName;
+    return name === "checkout_started" || name === "conversion_viewed" || name === "pricing_viewed";
+  }).length;
+
   const totalPaymentsSubmitted = Math.max(
     orders.length,
-    telemetryEvents.filter((e) => (e.event_name || e.eventName) === "payment_submitted").length
+    telemetryEvents.filter((e) => {
+      const name = e.event_name || e.eventName;
+      return name === "payment_submitted" || name === "payment_order_created";
+    }).length
   );
 
   const totalSubscriptionsApproved = paidStudents;
 
   const funnelRaw = [
-    { id: "landing", label: "زيارة الموقع والتعريف بالمنهج", count: Math.max(1, totalLandingViews) },
-    { id: "signup", label: "إنشاء الحساب والتسجيل الرسمي", count: Math.max(1, totalSignups) },
-    { id: "diagnostic", label: "إكمال التقييم التشخيصي وتحديد المستوى", count: Math.max(1, totalDiagnosticsCompleted) },
-    { id: "pricing", label: "الاطلاع على الخطط والأسعار", count: Math.max(1, totalPricingViews) },
-    { id: "payment", label: "إرسال وصل الدفع أو طلب البطاقة", count: Math.max(1, totalPaymentsSubmitted) },
-    { id: "approved", label: "تفعيل الاشتراك والوصول الشامل (PAID)", count: Math.max(1, totalSubscriptionsApproved) },
+    { id: "landing", label: "زيارة الموقع والتعريف بالمنهج", count: totalLandingViews },
+    { id: "signup", label: "إنشاء الحساب والتسجيل الرسمي", count: totalSignups },
+    { id: "diagnostic", label: "إكمال التقييم التشخيصي وتحديد المستوى", count: totalDiagnosticsCompleted },
+    { id: "pricing", label: "الاطلاع على الخطط والأسعار", count: totalPricingViews },
+    { id: "payment", label: "إرسال وصل الدفع أو طلب البطاقة", count: totalPaymentsSubmitted },
+    { id: "approved", label: "تفعيل الاشتراك والوصول الشامل (PAID)", count: totalSubscriptionsApproved },
   ];
 
   const funnel: ConversionFunnelStep[] = funnelRaw.map((step, idx) => {
     const baseCount = funnelRaw[0].count;
     const prevCount = idx === 0 ? step.count : funnelRaw[idx - 1].count;
-    const percentageOfTotal = Math.round((step.count / baseCount) * 100);
-    const percentageOfPrevious = Math.min(100, Math.round((step.count / prevCount) * 100));
+    const percentageOfTotal = baseCount > 0 ? Math.round((step.count / baseCount) * 100) : 0;
+    const percentageOfPrevious = prevCount > 0 ? Math.min(100, Math.round((step.count / prevCount) * 100)) : 0;
     const dropoffCount = Math.max(0, prevCount - step.count);
 
     return {
@@ -362,7 +374,7 @@ export async function getOperationsDashboardData(
     totalApprovedOrders: approvedOrders.length,
     onlineRevenue,
     codRevenue,
-    activeStudentsToday: Math.max(1, activeUserIdsToday.size),
+    activeStudentsToday: activeUserIdsToday.size,
     lessonsViewedToday,
     exercisesCompletedToday,
     estimatedStudyHoursToday,
