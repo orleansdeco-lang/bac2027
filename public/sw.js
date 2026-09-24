@@ -102,12 +102,14 @@ self.addEventListener("fetch", (event) => {
   );
 });
 
-// Push Notifications handler
+// Push Notifications handler (Active Recall & Smart Coach)
 self.addEventListener("push", (event) => {
   let data = {
-    title: "BAC Mastery — تذكير دراسي",
-    body: "حان موعد مراجعة مهمتك اليومية! استمر في التقدم نحو معدل البكالوريا المستهدف.",
-    url: "/dashboard",
+    title: "SHATER BAC — استرجاع نشط ⚡",
+    body: "حان موعد سؤال الاسترجاع السريع لتثبيت مكتسباتك.",
+    url: "/student/arena/quick-recall",
+    questionId: null,
+    actions: [],
   };
 
   if (event.data) {
@@ -118,39 +120,105 @@ self.addEventListener("push", (event) => {
     }
   }
 
+  // Construct notification options with Actionable Buttons if provided
+  const notificationActions = [];
+  if (Array.isArray(data.actions) && data.actions.length > 0) {
+    // Add up to 4 choice buttons for inline answering
+    data.actions.slice(0, 4).forEach((act) => {
+      notificationActions.push({
+        action: act.action,
+        title: act.title,
+      });
+    });
+  } else {
+    // Fallback actions
+    notificationActions.push(
+      { action: "open_challenge", title: "تحدي الاسترجاع السريع ⚡" },
+      { action: "close", title: "لاحقاً" }
+    );
+  }
+
   const options = {
     body: data.body,
     icon: "/app-icon.svg",
     badge: "/favicon.svg",
     dir: "rtl",
     lang: "ar",
-    vibrate: [100, 50, 100],
+    vibrate: [150, 80, 150],
+    tag: data.tag || (data.questionId ? `recall_${data.questionId}` : "bac_push"),
+    renotify: true,
     data: {
-      url: data.url || "/dashboard",
+      url: data.url || (data.questionId ? `/student/arena/quick-recall?questionId=${data.questionId}` : "/student/arena/quick-recall"),
+      questionId: data.questionId,
     },
-    actions: [
-      {
-        action: "open",
-        title: "ابدأ المراجعة",
-      },
-      {
-        action: "close",
-        title: "لاحقاً",
-      },
-    ],
+    actions: notificationActions,
   };
 
   event.waitUntil(self.registration.showNotification(data.title, options));
 });
 
-// Notification click handler
+// Notification click handler (Dual-Mode: Inline Action vs In-App Deep Link)
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
   if (event.action === "close") return;
 
-  const targetUrl = event.notification.data?.url || "/dashboard";
+  const notifData = event.notification.data || {};
+  const questionId = notifData.questionId;
+  const targetUrl = notifData.url || (questionId ? `/student/arena/quick-recall?questionId=${questionId}` : "/student/arena/quick-recall");
 
+  // MODE 1: User clicked an Actionable Option button (e.g. opt_0, opt_1, opt_2, opt_3)
+  if (event.action && event.action.startsWith("opt_") && questionId) {
+    const selectedIndex = parseInt(event.action.replace("opt_", ""), 10);
+
+    const answerPromise = fetch("/api/recall/answer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        questionId: questionId,
+        selectedOptionIndex: selectedIndex,
+        source: "inline_push",
+      }),
+    })
+      .then((res) => res.json())
+      .then((resData) => {
+        // Show immediate feedback notification
+        if (resData.is_correct) {
+          const streakMsg = resData.consecutive_correct > 1
+            ? `متتالي: ${resData.consecutive_correct} 🔥 (المستوى ${resData.new_box_level})`
+            : `المستوى ${resData.new_box_level}`;
+          return self.registration.showNotification("✅ إجابة صحيحة! أحسنت 🎯", {
+            body: `تم تسجيل استرجاعك بنجاح. ${streakMsg}. تم تحديث موعد المراجعة القادمة.`,
+            icon: "/app-icon.svg",
+            badge: "/favicon.svg",
+            dir: "rtl",
+            lang: "ar",
+            tag: `feedback_${questionId}`,
+            data: { url: "/student/arena/quick-recall" },
+            actions: [{ action: "open_challenge", title: "مواصلة التحدي ⚡" }],
+          });
+        } else {
+          return self.registration.showNotification("❌ إجابة خاطئة — تم نقل السؤال لمعمل الأخطاء", {
+            body: `${resData.explanation || "راجع الثغرة في الدرس لترميمها."}\nانقر الآن للعلاج الفوري.`,
+            icon: "/app-icon.svg",
+            badge: "/favicon.svg",
+            dir: "rtl",
+            lang: "ar",
+            tag: `feedback_${questionId}`,
+            data: { url: resData.target_lesson_url || `/student/arena/quick-recall?questionId=${questionId}` },
+            actions: [{ action: "open_remedy", title: "راجع ثغرة هذا الدرس 📖" }],
+          });
+        }
+      })
+      .catch((err) => {
+        console.error("[SW] Error answering inline:", err);
+      });
+
+    event.waitUntil(answerPromise);
+    return;
+  }
+
+  // MODE 2: Deep Link into Quick Sprint challenge
   event.waitUntil(
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })

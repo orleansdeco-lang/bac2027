@@ -17,6 +17,8 @@ export interface StudentProfile {
   examType?: ExamType;
   streamId: StreamId;
   techniqueMathSpecialty?: TechniqueMathSpecialty;
+  currentTerm?: 1 | 2 | 3;
+  current_term?: 1 | 2 | 3;
   wilayaCode?: string;
   wilayaName?: string;
   communeCode?: string;

@@ -53,7 +53,13 @@ export type PilotAnalyticsEventName =
   | "cod_order_placed"
   | "voucher_redeemed"
   | "referral_viewed"
-  | "referral_shared";
+  | "referral_shared"
+  | "recall_sprint_started"
+  | "recall_sprint_completed"
+  | "recall_notification_sent"
+  | "recall_answered_inline"
+  | "recall_answered_in_app"
+  | "error_lab_item_remediated";
 
 export interface PilotAnalyticsProperties {
   userId?: string | null;

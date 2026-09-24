@@ -24,6 +24,7 @@ import {
   Flame,
   Wrench,
   HelpCircle,
+  Zap,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 import { ErrorRepository } from "@/lib/repositories/error-repository";
@@ -140,9 +141,35 @@ export default function ErrorLabPage() {
             </h1>
             <p className="text-xs sm:text-sm text-theme-secondary max-w-xl">
               {locale === "ar"
-                ? "الغلط ماشي فشل. الغلط معلومة. كل خطأ مرصود هنا هو فرصة مباشرة لتثبيت نقطة في البكالوريا."
-                : t.errorLab.subtitle}
+                 ? "الغلط ماشي فشل. الغلط معلومة. كل خطأ مرصود هنا هو فرصة مباشرة لتثبيت نقطة في البكالوريا."
+                 : t.errorLab.subtitle}
             </p>
+          </div>
+
+          {/* Active Recall Engine Banner */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-[var(--color-primary)]/10 to-emerald-500/10 border border-[var(--color-primary)]/30 backdrop-blur-sm">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[var(--color-primary)]/20 text-[var(--color-primary)] flex items-center justify-center shrink-0">
+                <Zap className="w-5 h-5 fill-current" />
+              </div>
+              <div>
+                <div className="font-bold text-sm text-theme-text flex items-center gap-2">
+                  <span>معمل الاسترجاع النشط والتكرار المتباعد ⚡</span>
+                  <Badge variant="primary" size="sm">Leitner</Badge>
+                </div>
+                <div className="text-xs text-theme-muted mt-0.5">
+                  تصفية الثغرات عبر جولات الاسترجاع السريعة ونظام الإشعارات الذكي لشاشة القفل
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Link href="/student/error-lab" className="w-full sm:w-auto">
+                <Button variant="primary" size="sm" className="w-full gap-1.5 text-xs">
+                  <span>فتح المعمل التفاعلي</span>
+                  <NextArrow className="w-3.5 h-3.5" />
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Summary Stats Cards */}

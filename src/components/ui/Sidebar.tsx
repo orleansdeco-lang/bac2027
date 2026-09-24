@@ -39,6 +39,8 @@ import {
   Layers,
   Calculator,
   Brain,
+  Zap,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -185,6 +187,15 @@ export function Sidebar({ className }: SidebarProps) {
           matches: (p: string) => p.startsWith("/roadmap"),
         },
         {
+          href: "/ypt",
+          label_ar: "غرفة التركيز (YPT) ⏱️",
+          label_fr: "Focus Room (YPT) ⏱️",
+          icon: Clock,
+          matches: (p: string) => p.startsWith("/ypt"),
+          badge: isAr ? "حصري" : "YPT",
+          badgeColor: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+        },
+        {
           href: "/curriculum",
           label_ar: "منهاج ودروس شعبتي",
           label_fr: "Mon Programme",
@@ -221,11 +232,22 @@ export function Sidebar({ className }: SidebarProps) {
           matches: (p: string) => p.startsWith("/exams/terms"),
         },
         {
-          href: "/error-lab",
-          label_ar: "مختبر الأخطاء والترميم",
-          label_fr: "Lab d'erreurs",
+          href: "/student/error-lab",
+          label_ar: "معمل الأخطاء والترميم",
+          label_fr: "Lab d'erreurs & Recall",
           icon: AlertTriangle,
-          matches: (p: string) => p.startsWith("/error-lab") || p.startsWith("/errors"),
+          matches: (p: string) => p.startsWith("/student/error-lab") || p.startsWith("/error-lab") || p.startsWith("/errors"),
+          badge: isAr ? "Leitner" : "Recall",
+          badgeColor: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
+        },
+        {
+          href: "/student/arena/quick-recall",
+          label_ar: "الاسترجاع السريع ⚡",
+          label_fr: "Quick Recall Sprint",
+          icon: Zap,
+          matches: (p: string) => p.startsWith("/student/arena/quick-recall"),
+          badge: isAr ? "نشط" : "Sprint",
+          badgeColor: "bg-[var(--color-primary)]/15 text-[var(--color-primary)] border-[var(--color-primary)]/30",
         },
         {
           href: "/experiences",

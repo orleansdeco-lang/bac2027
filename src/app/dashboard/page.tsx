@@ -394,6 +394,17 @@ export default function DashboardPage() {
                     <span>{isAr ? "بنك التجارب والعِبر 🎓" : "Témoignages BAC"}</span>
                   </Button>
                 </Link>
+
+                <Link href="/student/arena/quick-recall">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="rounded-full px-6 min-h-[48px] font-bold border-[var(--color-primary)]/40 bg-[var(--color-primary)]/10 text-[var(--color-primary)] hover:bg-[var(--color-primary)]/20 transition-colors flex items-center gap-2 shadow-sm"
+                  >
+                    <Zap className="w-4 h-4 text-[var(--color-primary)] fill-current" />
+                    <span>{isAr ? "الاسترجاع السريع ⚡" : "Quick Recall"}</span>
+                  </Button>
+                </Link>
               </div>
             </div>
 
