@@ -32,6 +32,39 @@ export default function ResetDemoPage() {
     }
   };
 
+  const handleExtendTrial = () => {
+    if (typeof window !== "undefined") {
+      const authUser = localStorage.getItem("bac_auth_user");
+      let userId = "demo_user";
+      if (authUser) {
+        try {
+          const parsed = JSON.parse(authUser);
+          if (parsed?.id) userId = parsed.id;
+        } catch {}
+      }
+      const draftKey = `shater_student_profile_${userId}`;
+      const existing = localStorage.getItem(draftKey);
+      let draftObj: any = {};
+      if (existing) {
+        try { draftObj = JSON.parse(existing); } catch {}
+      }
+      const nowIso = new Date().toISOString();
+      const expiresAtIso = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      draftObj.created_at = nowIso;
+      draftObj.trial_started_at = nowIso;
+      draftObj.trial_expires_at = expiresAtIso;
+      draftObj.trialStatus = "active";
+      draftObj.accessStatus = "TRIAL";
+      draftObj.access_status = "TRIAL";
+      localStorage.setItem(draftKey, JSON.stringify(draftObj));
+      localStorage.setItem("shater_local_trial_active", "true");
+      setCleared(true);
+      setTimeout(() => {
+        router.push("/curriculum");
+      }, 1200);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-canvas flex items-center justify-center p-4">
       <Container size="sm">
@@ -62,6 +95,11 @@ export default function ResetDemoPage() {
             </div>
           ) : (
             <div className="space-y-3 pt-2">
+              <Button size="lg" variant="primary" fullWidth onClick={handleExtendTrial} className="bg-emerald-600 hover:bg-emerald-700 font-bold">
+                <CheckCircle2 className="h-4 w-4" />
+                <span>تمديد التجربة وفتح جميع المسارات المغلقة (+7 أيام)</span>
+              </Button>
+
               <Button size="lg" fullWidth onClick={handleResetMissions}>
                 <RotateCcw className="h-4 w-4" />
                 <span>Reset Missions, Errors & Mastery Only</span>

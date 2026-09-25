@@ -18,6 +18,13 @@ import {
   Shield,
   Wifi,
   WifiOff,
+  Share2,
+  Copy,
+  Check,
+  MessageCircle,
+  HelpCircle,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { useSilentStudyRoom } from "@/lib/study-os/useSilentStudyRoom";
 import { RoomSeatOccupant, PresenceStatus } from "@/types/study-room";
@@ -258,7 +265,7 @@ function SeatCard({
  * Body Doubling virtual desk with exactly 6 visible seats.
  */
 export function SilentStudyRoom() {
-  const gate = useLearningAccessGate();
+  const gate = useLearningAccessGate({ redirectToAuth: false });
   const { startSession, openFocusMode } = useFocus();
 
   const {
@@ -277,6 +284,21 @@ export function SilentStudyRoom() {
   const [targetSeatIndex, setTargetSeatIndex] = useState<number | null>(null);
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>("math");
   const [goalNoteInput, setGoalNoteInput] = useState<string>("");
+  const [isGuideOpen, setIsGuideOpen] = useState<boolean>(false);
+  const [showCopiedToast, setShowCopiedToast] = useState<boolean>(false);
+
+  const [guestName, setGuestName] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("shater_guest_student_name") || "";
+    }
+    return "";
+  });
+  const [guestStream, setGuestStream] = useState<StreamId>(() => {
+    if (typeof window !== "undefined") {
+      return (localStorage.getItem("shater_guest_student_stream") as StreamId) || "sciences_exp";
+    }
+    return "sciences_exp";
+  });
 
   // Persistent Global Audio State
   const {
@@ -287,7 +309,7 @@ export function SilentStudyRoom() {
     setSound: setAudioSound,
   } = useStudyAudio();
 
-  const rawStream = (gate.profile?.streamId || (gate.profile as any)?.stream || "sciences_exp") as StreamId;
+  const rawStream = (gate.profile?.streamId || (gate.profile as any)?.stream || guestStream || "sciences_exp") as StreamId;
   const streamSubjects = getStreamSubjects(rawStream);
 
   const handleOpenSitModal = (seatIndex: number) => {
@@ -299,10 +321,29 @@ export function SilentStudyRoom() {
 
   const handleConfirmSit = async () => {
     if (targetSeatIndex === null) return;
-    const ok = await sitAtSeat(targetSeatIndex, selectedSubjectId, goalNoteInput);
+    const effectiveName = gate.profile?.firstName ? undefined : (guestName.trim() || "طالب بكالوريا");
+    const effectiveStream = gate.profile?.streamId ? undefined : guestStream;
+    const ok = await sitAtSeat(targetSeatIndex, selectedSubjectId, goalNoteInput, effectiveName, effectiveStream);
     if (ok) {
       setIsSitModalOpen(false);
     }
+  };
+
+  const handleCopyShareLink = async () => {
+    const url = typeof window !== "undefined" ? `${window.location.origin}/table` : "https://shater.dz/table";
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      }
+    } catch {}
+    setShowCopiedToast(true);
+    setTimeout(() => setShowCopiedToast(false), 4000);
+  };
+
+  const handleShareWhatsApp = () => {
+    const url = typeof window !== "undefined" ? `${window.location.origin}/table` : "https://shater.dz/table";
+    const text = `ارواح نقراو مع بعض في طاولة المذاكرة الصامتة لشاطر 🪑 (نقراو بصمت ونشجعو بعض):\n${url}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   const handleToggleAmbiance = (type: any) => {
@@ -356,6 +397,63 @@ export function SilentStudyRoom() {
               فضاء دراسة هادئ لطلاب البكالوريا بنظام المذاكرة المتوازية. اختر مقعدك، ثبّت هدفك الدراسي،
               وادرس جنباً إلى جنب مع زملائك دون أي تشتيت أو تعليقات. التفاعل الوحيد المتاح: إرسال فنجان قهوة تشجيعي ☕.
             </p>
+
+            {/* Share & Invite Action Bar */}
+            <div className="flex flex-wrap items-center gap-2 pt-2">
+              <button
+                type="button"
+                onClick={handleCopyShareLink}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border border-amber-500/30 text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+              >
+                {showCopiedToast ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-400" />
+                    <span className="text-emerald-400 font-bold">تم نسخ الرابط! أرسله لزملائك</span>
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="w-4 h-4 text-amber-400" />
+                    <span>دعوة زميل إلى طاولتك 🔗</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleShareWhatsApp}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                title="مشاركة عبر واتساب"
+              >
+                <MessageCircle className="w-4 h-4 text-emerald-400" />
+                <span>مشاركة على WhatsApp</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsGuideOpen(!isGuideOpen)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-card hover:bg-surface text-theme-secondary border border-theme text-xs font-bold transition-all cursor-pointer"
+              >
+                <HelpCircle className="w-3.5 h-3.5 text-theme-muted" />
+                <span>كيف يدخل زملاؤك؟</span>
+                {isGuideOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+
+            {/* Collapsible Explanatory Guide */}
+            {isGuideOpen && (
+              <div className="p-4 rounded-2xl bg-card/90 border border-theme space-y-2 text-xs text-theme-secondary animate-in fade-in">
+                <div className="font-bold text-theme-text text-sm flex items-center gap-2">
+                  <span>💡</span>
+                  <span>دليل مشاركة الطاولة مع زملائك:</span>
+                </div>
+                <ul className="space-y-1.5 list-disc list-inside text-[11px] sm:text-xs leading-relaxed">
+                  <li><strong>1. كيف يدخل معك الآخرون؟</strong> انقر على زر «دعوة زميل إلى طاولتك» وشاركه عبر واتساب أو تيليغرام. الرابط مباشر ومفتوح لجميع الطلاب بدون أي قيود.</li>
+                  <li><strong>2. كيف تظهر لهم؟</strong> عندما يفتح زميلك الرابط، يرى طاولتك ومقعدك ظاهراً باسمك والمادة والعداد الزمني يعمل مباشرة في الوقت الحقيقي.</li>
+                  <li><strong>3. كيف تقبل بهم؟</strong> الطاولة مبنية على مبدأ <em>المذاكرة الموازية الصامتة (Body Doubling)</em> بنظام <strong>المقعد المتاح فوراً (6 مقاعد كحد أقصى)</strong>. لا توجد قاعة انتظار ولا حاجة لزر قبول؛ زميلك يضغط «اقعد هنا» ويبدأ الدراسة معك فوراً لتفادي تضييع أي دقيقة.</li>
+                  <li><strong>4. التفاعل الصامت:</strong> عندما تريد تشجيع زميلك، انقر على زر ☕ في مقعده لتصل إليه كؤوس قهوة تشجيعية متحركة.</li>
+                </ul>
+              </div>
+            )}
           </div>
 
           {/* Soundscape Ambiance Controls (Web Audio Procedural via StudyAudioContext) */}
@@ -544,6 +642,48 @@ export function SilentStudyRoom() {
                   ✕
                 </button>
               </div>
+
+              {/* Guest student name and stream inputs if not logged in */}
+              {!gate.profile?.firstName && (
+                <div className="space-y-3 pb-3 border-b border-theme/60">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-theme-text block">
+                      اسمك أو لقبك الدراسي:
+                    </label>
+                    <input
+                      type="text"
+                      value={guestName}
+                      onChange={(e) => setGuestName(e.target.value)}
+                      placeholder="مثال: أمين، سارة، طالب بكالوريا..."
+                      maxLength={30}
+                      className="w-full bg-surface border border-theme rounded-2xl px-3.5 py-2.5 text-xs text-theme-text font-bold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-theme-text block">
+                      شعبتك الدراسية:
+                    </label>
+                    <select
+                      value={guestStream}
+                      onChange={(e) => {
+                        const newStr = e.target.value as StreamId;
+                        setGuestStream(newStr);
+                        const subjList = getStreamSubjects(newStr);
+                        if (subjList[0]) setSelectedSubjectId(subjList[0].subjectId);
+                      }}
+                      className="w-full bg-surface border border-theme rounded-2xl px-3.5 py-2.5 text-xs text-theme-text font-bold focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                    >
+                      <option value="sciences_exp">علوم تجريبية</option>
+                      <option value="math">رياضيات</option>
+                      <option value="technique_math">تقني رياضي</option>
+                      <option value="gestion_eco">تسيير واقتصاد</option>
+                      <option value="lettres_philo">آداب وفلسفة</option>
+                      <option value="langues_etrangeres">لغات أجنبية</option>
+                    </select>
+                  </div>
+                </div>
+              )}
 
               {/* Subject selector */}
               <div className="space-y-2">

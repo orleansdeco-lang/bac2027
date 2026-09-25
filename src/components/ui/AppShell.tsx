@@ -4,6 +4,7 @@ import React from "react";
 import { usePathname } from "next/navigation";
 import { TopBar } from "./TopBar";
 import { Sidebar } from "./Sidebar";
+import { GlobalTutorButton } from "../tutor/GlobalTutorButton";
 
 import { cn } from "@/lib/utils";
 
@@ -53,6 +54,8 @@ export function AppShell({
           {children}
         </main>
       </div>
+
+      <GlobalTutorButton />
 
       {showFooter && (
         <footer className="hidden md:block py-6 border-t border-theme text-center text-xs text-theme-muted transition-colors duration-200">

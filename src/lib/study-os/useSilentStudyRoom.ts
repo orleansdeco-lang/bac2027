@@ -11,7 +11,7 @@ import { useFocus } from "@/context/FocusContext";
 import { useAuth } from "@/lib/auth/hooks";
 import { useLearningAccessGate } from "@/lib/hooks";
 import { ALL_SUBJECTS, ALGERIAN_BAC_STREAMS } from "@/lib/constants/streams";
-import { SubjectId } from "@/types/education";
+import { SubjectId, StreamId } from "@/types/education";
 import { getSubjectMeta } from "@/lib/focus/focus-engine";
 
 const CHANNEL_NAME = "realtime:shater-silent-room";
@@ -279,7 +279,13 @@ export function useSilentStudyRoom() {
 
   // Claim a seat
   const sitAtSeat = useCallback(
-    async (seatIndex: number, subjectId: string, goalNote?: string): Promise<boolean> => {
+    async (
+      seatIndex: number,
+      subjectId: string,
+      goalNote?: string,
+      customName?: string,
+      customStream?: string
+    ): Promise<boolean> => {
       if (seatIndex < 0 || seatIndex >= MAX_SEATS) return false;
 
       // Check if seat is currently occupied by someone else
@@ -290,13 +296,18 @@ export function useSilentStudyRoom() {
       const meta = getSubjectMeta(subjectId as SubjectId);
       const isCurrentlyFocusing = isSessionActive && !isPaused;
 
+      const effectiveStream = (customStream || rawStream) as StreamId;
+      const effectiveStreamLabel =
+        ALGERIAN_BAC_STREAMS[effectiveStream as keyof typeof ALGERIAN_BAC_STREAMS]?.name_ar || streamLabel;
+      const effectiveDisplayName = customName?.trim() || studentDisplayName;
+
       const newOccupant: RoomSeatOccupant = {
         presenceId,
         seatIndex,
-        displayName: studentDisplayName,
+        displayName: effectiveDisplayName,
         avatar,
-        streamId: rawStream,
-        streamLabel,
+        streamId: effectiveStream,
+        streamLabel: effectiveStreamLabel,
         subjectId: subjectId,
         subjectName: meta.nameAr,
         subjectHex: meta.hexColor,
@@ -310,6 +321,12 @@ export function useSilentStudyRoom() {
 
       try {
         localStorage.setItem(LOCAL_STORAGE_SEAT_KEY, JSON.stringify(newOccupant));
+        if (customName?.trim()) {
+          localStorage.setItem("shater_guest_student_name", customName.trim());
+        }
+        if (customStream) {
+          localStorage.setItem("shater_guest_student_stream", customStream);
+        }
       } catch {}
 
       setActiveSeatIndex(seatIndex);

@@ -42,6 +42,7 @@ import {
   Zap,
   Clock,
   Users,
+  Bot,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -258,6 +259,15 @@ export function Sidebar({ className }: SidebarProps) {
           matches: (p: string) => p.startsWith("/student/arena/quick-recall"),
           badge: isAr ? "نشط" : "Sprint",
           badgeColor: "bg-[var(--color-primary)]/15 text-[var(--color-primary)] border-[var(--color-primary)]/30",
+        },
+        {
+          href: "/tutor",
+          label_ar: "الأستاذ الذكي 🤖",
+          label_fr: "Tuteur IA BAC",
+          icon: Bot,
+          matches: (p: string) => p.startsWith("/tutor"),
+          badge: isAr ? "Socratic AI" : "AI Tutor",
+          badgeColor: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30",
         },
         {
           href: "/experiences",
