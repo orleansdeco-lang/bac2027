@@ -121,19 +121,19 @@ export const OrientationExploreView: React.FC<OrientationExploreViewProps> = ({
 
   return (
     <section id="results" className="max-w-5xl mx-auto px-4 sm:px-6 mb-16 scroll-mt-6" dir="rtl">
-      {/* Sleek Results Header Strip (no redundant score duplication) */}
+      {/* Sleek Results Header Strip */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-black text-[#1E3A34] tracking-tight">
               التخصصات المقترحة لنتيجتك
             </h2>
-            <span className="text-xs font-bold text-teal-800 bg-teal-50 border border-teal-200/80 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-bold text-[#2C5E54] bg-[#E8F2EB] border border-[#AFC8BD] px-2.5 py-0.5 rounded-full">
               {filteredPrograms.length} تخصص
             </span>
           </div>
-          <p className="text-xs text-slate-500 font-medium mt-0.5">
-            بناءً على شعبة <strong className="text-slate-700">{streamInfo?.nameAr}</strong> ومعدل <strong className="text-slate-700 font-mono">{student.generalAverage.toFixed(2)}</strong> بولاية <strong className="text-slate-700">{userWilaya?.nameAr}</strong>
+          <p className="text-xs text-[#64748B] font-medium mt-1">
+            بناءً على شعبة <strong className="text-[#1E3A34]">{streamInfo?.nameAr}</strong> ومعدل <strong className="text-[#2C5E54] font-mono">{student.generalAverage.toFixed(2)}</strong> بولاية <strong className="text-[#1E3A34]">{userWilaya?.nameAr}</strong>
           </p>
         </div>
 
@@ -143,19 +143,19 @@ export const OrientationExploreView: React.FC<OrientationExploreViewProps> = ({
             trackEvent('orientation_share', { average: student.generalAverage });
             onOpenShareModal();
           }}
-          className="self-start sm:self-auto px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200 text-xs font-bold shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+          className="self-start sm:self-auto px-3.5 py-2 rounded-xl bg-white hover:bg-[#F7F3EA] text-[#2C5E54] hover:text-[#1E3A34] border border-[#DCE9E4] text-xs font-bold shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
         >
-          <Share2 className="w-3.5 h-3.5 text-teal-600" />
+          <Share2 className="w-3.5 h-3.5 text-[#5F8F86]" />
           <span>مشاركة القائمة</span>
         </button>
       </div>
 
-      {/* Control Bar: Search & Compact Filters */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 mb-5 shadow-xs space-y-3">
+      {/* Control Bar: Search & Compact Warm Filters */}
+      <div className="bg-white rounded-2xl border border-[#E4DED2] p-3 sm:p-4 mb-5 shadow-xs space-y-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
           {/* Search Box */}
           <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#78716C]" />
             <input
               type="text"
               placeholder="ابحث عن تخصص، مدرسة عليا، أو جامعة (مثال: ESI، طب، ذكاء اصطناعي، عمارة...)"
@@ -166,13 +166,13 @@ export const OrientationExploreView: React.FC<OrientationExploreViewProps> = ({
                   trackEvent('orientation_search', { query: e.target.value });
                 }
               }}
-              className="w-full pl-8 pr-9 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-teal-600 focus:outline-hidden transition-all"
+              className="w-full pl-8 pr-9 py-2.5 rounded-xl bg-[#FAF8F5] border border-[#E4DED2] text-xs sm:text-sm font-medium text-[#1E3A34] placeholder:text-[#78716C] focus:bg-white focus:border-[#2C5E54] focus:outline-hidden transition-all"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#78716C] hover:text-[#1E3A34] p-0.5"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -182,14 +182,14 @@ export const OrientationExploreView: React.FC<OrientationExploreViewProps> = ({
           {/* Location Scope & Sort Buttons */}
           <div className="flex items-center gap-2 shrink-0">
             {/* Location Scope Selector */}
-            <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl text-xs font-medium">
+            <div className="flex items-center gap-1 bg-[#F7F3EA] p-1 rounded-xl border border-[#E4DED2] text-xs font-medium">
               <button
                 type="button"
                 onClick={() => setSelectedLocationScope('all')}
-                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
                   selectedLocationScope === 'all'
-                    ? 'bg-white font-bold text-slate-900 shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white font-bold text-[#1E3A34] shadow-xs'
+                    : 'text-[#64748B] hover:text-[#1E3A34]'
                 }`}
               >
                 كل الجزائر
@@ -197,10 +197,10 @@ export const OrientationExploreView: React.FC<OrientationExploreViewProps> = ({
               <button
                 type="button"
                 onClick={() => setSelectedLocationScope('my_wilaya')}
-                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
                   selectedLocationScope === 'my_wilaya'
-                    ? 'bg-white font-bold text-slate-900 shadow-2xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white font-bold text-[#1E3A34] shadow-xs'
+                    : 'text-[#64748B] hover:text-[#1E3A34]'
                 }`}
               >
                 📍 ولايتي فقط
@@ -208,12 +208,12 @@ export const OrientationExploreView: React.FC<OrientationExploreViewProps> = ({
             </div>
 
             {/* Sort Dropdown */}
-            <div className="flex items-center gap-1 bg-slate-100 px-2.5 py-1 rounded-xl text-xs font-medium">
-              <ArrowUpDown className="w-3 h-3 text-slate-500" />
+            <div className="flex items-center gap-1.5 bg-[#FAF8F5] border border-[#E4DED2] px-2.5 py-1.5 rounded-xl text-xs font-medium">
+              <ArrowUpDown className="w-3.5 h-3.5 text-[#5F8F86]" />
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value as any)}
-                className="bg-transparent font-bold text-slate-800 focus:outline-hidden cursor-pointer text-xs"
+                className="bg-transparent font-bold text-[#1E3A34] focus:outline-hidden cursor-pointer text-xs"
               >
                 <option value="RELEVANCE">الأقرب لفرصك</option>
                 <option value="SCORE_DESC">الأعلى معدلاً</option>
@@ -223,15 +223,15 @@ export const OrientationExploreView: React.FC<OrientationExploreViewProps> = ({
           </div>
         </div>
 
-        {/* Category Filter Pills (Horizontal Scroll) */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pt-2 border-t border-slate-100 no-scrollbar">
+        {/* Category Filter Pills (Horizontal Scroll with soothing theme) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pt-2 border-t border-[#E4DED2] no-scrollbar">
           <button
             type="button"
             onClick={() => setSelectedCategory('ALL')}
-            className={`px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
               selectedCategory === 'ALL'
-                ? 'bg-teal-800 text-white'
-                : 'bg-slate-100 hover:bg-slate-200/80 text-slate-600'
+                ? 'bg-[#2C5E54] text-white shadow-xs border border-[#2C5E54]'
+                : 'bg-[#FAF8F5] hover:bg-[#F7F3EA] text-[#475569] border border-[#E4DED2]'
             }`}
           >
             جميع الميادين
@@ -242,10 +242,10 @@ export const OrientationExploreView: React.FC<OrientationExploreViewProps> = ({
               key={cat.id}
               type="button"
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
                 selectedCategory === cat.id
-                  ? 'bg-teal-700 text-white shadow-2xs'
-                  : 'bg-slate-100 hover:bg-slate-200/80 text-slate-600'
+                  ? 'bg-[#2C5E54] text-white shadow-xs border border-[#2C5E54]'
+                  : 'bg-[#FAF8F5] hover:bg-[#F7F3EA] text-[#475569] border border-[#E4DED2]'
               }`}
             >
               <span>{cat.icon}</span>
@@ -269,12 +269,12 @@ export const OrientationExploreView: React.FC<OrientationExploreViewProps> = ({
           ))}
         </div>
       ) : (
-        <div className="p-10 text-center bg-white rounded-2xl border border-slate-200 text-slate-600">
-          <GraduationCap className="w-10 h-10 text-slate-400 mx-auto mb-2" />
-          <h3 className="font-bold text-slate-800 text-sm mb-1">
+        <div className="p-10 text-center bg-white rounded-2xl border border-[#E4DED2] text-[#475569]">
+          <GraduationCap className="w-10 h-10 text-[#78716C] mx-auto mb-2" />
+          <h3 className="font-bold text-[#1E3A34] text-sm mb-1">
             لا توجد تخصصات مطابقة لمعايير البحث الحالية
           </h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto mb-3">
+          <p className="text-xs text-[#64748B] max-w-sm mx-auto mb-3">
             جرب كتابة اسم تخصص آخر أو تصفير فلاتر الميدان والولاية لعرض كافة الخيارات المتاحة.
           </p>
           <button
@@ -285,7 +285,7 @@ export const OrientationExploreView: React.FC<OrientationExploreViewProps> = ({
               setSelectedLocationScope('all');
               setStatusFilter('ALL');
             }}
-            className="px-3.5 py-1.5 rounded-xl bg-teal-700 text-white font-bold text-xs cursor-pointer inline-flex items-center gap-1"
+            className="px-4 py-2 rounded-xl bg-[#2C5E54] text-white font-bold text-xs cursor-pointer inline-flex items-center gap-1.5 shadow-xs"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>إعادة ضبط الفلاتر</span>

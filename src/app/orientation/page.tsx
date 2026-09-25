@@ -126,7 +126,7 @@ export default function OrientationPage() {
 
   return (
     <AppShell activeNav="orientation" showSidebar={false} noPadding={true}>
-      <div className="min-h-screen bg-[#FAF9F6] text-stone-900 pb-28" dir="rtl">
+      <div className="min-h-screen bg-[#F7F3EA] text-[#0F172A] pb-28" dir="rtl">
         
         {/* Hero Section */}
         <OrientationHeroModern
@@ -169,16 +169,16 @@ export default function OrientationPage() {
         {/* Sticky Floating Comparison Tray */}
         {comparedPrograms.length > 0 && !isComparisonModalOpen && (
           <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-full max-w-xl px-4 animate-in slide-in-from-bottom duration-300">
-            <div className="bg-stone-900 text-white border border-stone-800 rounded-2xl p-4 shadow-2xl flex items-center justify-between gap-4">
+            <div className="bg-[#1E3A34] text-white border border-[#2C5E54] rounded-2xl p-3.5 shadow-elevated flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-teal-500/20 text-teal-400">
+                <div className="p-2 rounded-xl bg-white/10 text-[#AFC8BD]">
                   <Scale className="w-5 h-5" />
                 </div>
                 <div>
                   <span className="text-xs font-bold text-white block">
                     تم تحديد {comparedPrograms.length} تخصصات للمقارنة
                   </span>
-                  <span className="text-[11px] text-stone-400">
+                  <span className="text-[11px] text-[#AFC8BD]">
                     {comparedPrograms.map(p => p.nameAr).join(' • ').slice(0, 42)}...
                   </span>
                 </div>
@@ -188,7 +188,7 @@ export default function OrientationPage() {
                 <button
                   type="button"
                   onClick={() => setIsComparisonModalOpen(true)}
-                  className="px-4 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 text-stone-950 font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                  className="px-4 py-2 rounded-xl bg-[#5F8F86] hover:bg-[#527D75] text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
                 >
                   <span>عرض المقارنة</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -196,7 +196,7 @@ export default function OrientationPage() {
                 <button
                   type="button"
                   onClick={handleClearCompare}
-                  className="px-2.5 py-2 rounded-xl text-stone-400 hover:text-rose-400 text-xs transition-colors cursor-pointer"
+                  className="px-2.5 py-2 rounded-xl text-[#AFC8BD] hover:text-[#C8796B] text-xs transition-colors cursor-pointer"
                   title="إلغاء الكل"
                 >
                   مسح

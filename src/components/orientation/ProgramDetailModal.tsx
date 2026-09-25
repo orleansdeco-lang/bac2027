@@ -28,51 +28,51 @@ export const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
   if (!program) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs animate-in fade-in duration-200" dir="rtl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#17201E]/60 backdrop-blur-xs animate-in fade-in duration-200" dir="rtl">
       <div
-        className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white border border-stone-200 rounded-3xl p-6 md:p-8 shadow-2xl text-right"
+        className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white border border-[#E4DED2] rounded-3xl p-6 md:p-8 shadow-elevated text-right"
       >
         {/* Close Button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-5 left-5 p-2 rounded-full hover:bg-stone-100 text-stone-400 hover:text-stone-700 transition-colors cursor-pointer"
+          className="absolute top-5 left-5 p-2 rounded-full hover:bg-[#F7F3EA] text-[#78716C] hover:text-[#1E3A34] transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Modal Header */}
         <div className="mb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 border border-teal-200/80 text-teal-800 text-xs font-semibold mb-2">
-            <ShieldCheck className="w-3.5 h-3.5 text-teal-700" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F2EB] border border-[#AFC8BD] text-[#2C5E54] text-xs font-semibold mb-2">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#2C5E54]" />
             <span>رمز التخصص بالمنشور الوزاري: {program.programCode}</span>
           </div>
 
-          <h2 className="text-2xl font-black text-stone-900 leading-tight">
+          <h2 className="text-2xl font-black text-[#1E3A34] leading-tight">
             {program.nameAr}
           </h2>
           {program.nameFr && (
-            <p className="text-stone-400 text-xs font-sans mt-0.5" dir="ltr">
+            <p className="text-[#64748B] text-xs font-sans mt-0.5" dir="ltr">
               {program.nameFr}
             </p>
           )}
           {program.specialtyAr && (
-            <p className="text-teal-700 font-semibold text-xs mt-1">
+            <p className="text-[#2C5E54] font-semibold text-xs mt-1">
               التخصص الدقيق: {program.specialtyAr}
             </p>
           )}
 
-          <div className="flex flex-wrap items-center gap-2 mt-4 text-xs text-stone-600">
-            <span className="flex items-center gap-1.5 bg-stone-100 px-3 py-1.5 rounded-xl font-medium">
-              <GraduationCap className="w-4 h-4 text-teal-700" />
+          <div className="flex flex-wrap items-center gap-2 mt-4 text-xs text-[#475569]">
+            <span className="flex items-center gap-1.5 bg-[#FAF8F5] border border-[#E4DED2] px-3 py-1.5 rounded-xl font-medium">
+              <GraduationCap className="w-4 h-4 text-[#2C5E54]" />
               <span>{program.degreeType}</span>
             </span>
-            <span className="flex items-center gap-1.5 bg-stone-100 px-3 py-1.5 rounded-xl font-medium">
-              <Calendar className="w-4 h-4 text-stone-500" />
+            <span className="flex items-center gap-1.5 bg-[#FAF8F5] border border-[#E4DED2] px-3 py-1.5 rounded-xl font-medium">
+              <Calendar className="w-4 h-4 text-[#78716C]" />
               <span>مدة الدراسة: {program.durationYears} سنوات</span>
             </span>
-            <span className="flex items-center gap-1.5 bg-stone-100 px-3 py-1.5 rounded-xl font-medium">
-              <FileText className="w-4 h-4 text-stone-500" />
+            <span className="flex items-center gap-1.5 bg-[#FAF8F5] border border-[#E4DED2] px-3 py-1.5 rounded-xl font-medium">
+              <FileText className="w-4 h-4 text-[#78716C]" />
               <span>الدورة: {program.academicYear}</span>
             </span>
           </div>
@@ -80,15 +80,15 @@ export const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
 
         {/* Section 1: Conditions & Priorities per Stream */}
         <div className="mb-6">
-          <h3 className="text-sm font-bold text-stone-900 mb-3 flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-teal-700" />
+          <h3 className="text-sm font-bold text-[#1E3A34] mb-3 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[#2C5E54]" />
             <span>الشروط البيداغوجية والأولويات حسب شعبة البكالوريا</span>
           </h3>
 
-          <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-stone-50/50">
+          <div className="overflow-x-auto rounded-2xl border border-[#E4DED2] bg-[#FAF8F5]/60">
             <table className="w-full text-right text-xs">
               <thead>
-                <tr className="border-b border-stone-200 text-stone-500 bg-stone-100/70 font-semibold">
+                <tr className="border-b border-[#E4DED2] text-[#78716C] bg-[#FAF8F5] font-semibold">
                   <th className="py-2.5 px-3">الشعبة</th>
                   <th className="py-2.5 px-3">الأولوية</th>
                   <th className="py-2.5 px-3">طريقة الترتيب</th>
@@ -96,10 +96,10 @@ export const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
                   <th className="py-2.5 px-3">صيغة الحساب / الشروط</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-stone-200/70 text-stone-700">
+              <tbody className="divide-y divide-[#E4DED2] text-[#334155]">
                 {program.eligibilityRules?.map((r, idx) => (
                   <tr key={idx} className="hover:bg-white transition-colors">
-                    <td className="py-2.5 px-3 font-bold text-stone-900">
+                    <td className="py-2.5 px-3 font-bold text-[#1E3A34]">
                       {r.bacStreamId === 'sciences_exp' && 'علوم تجريبية'}
                       {r.bacStreamId === 'math' && 'رياضيات'}
                       {r.bacStreamId === 'technique_math' && 'تقني رياضي'}
@@ -109,10 +109,10 @@ export const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
                     </td>
                     <td className="py-2.5 px-3">
                       <span
-                        className={`inline-block px-2 py-0.5 rounded-full font-bold text-[11px] ${
+                        className={`inline-block px-2.5 py-0.5 rounded-full font-bold text-[11px] ${
                           r.priority === 1
-                            ? 'bg-teal-50 text-teal-800 border border-teal-200'
-                            : 'bg-stone-100 text-stone-600'
+                            ? 'bg-[#E8F2EB] text-[#245248] border border-[#AFC8BD]'
+                            : 'bg-[#F2EFE9] text-[#78716C]'
                         }`}
                       >
                         أولوية {r.priority}
@@ -121,16 +121,16 @@ export const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
                     <td className="py-2.5 px-3 font-medium">
                       {r.rankingBasis === 'weighted_average' ? 'معدل موزون' : 'معدل عام'}
                     </td>
-                    <td className="py-2.5 px-3 font-mono font-bold text-stone-900">
+                    <td className="py-2.5 px-3 font-mono font-bold text-[#1E3A34]">
                       {r.minimumGeneralAverage ? `${r.minimumGeneralAverage.toFixed(2)} / 20` : '10.00 / 20'}
                     </td>
                     <td className="py-2.5 px-3">
                       {r.weightedFormula ? (
-                        <span className="font-mono text-teal-700 text-[11px] font-semibold" dir="ltr">
+                        <span className="font-mono text-[#2C5E54] text-[11px] font-semibold" dir="ltr">
                           {r.weightedFormula.expressionAr}
                         </span>
                       ) : (
-                        <span className="text-stone-500">المعدل العام</span>
+                        <span className="text-[#78716C]">المعدل العام</span>
                       )}
                     </td>
                   </tr>
@@ -142,8 +142,8 @@ export const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
 
         {/* Section 2: Institutions & Registration Scopes */}
         <div className="mb-6">
-          <h3 className="text-sm font-bold text-stone-900 mb-3 flex items-center gap-2">
-            <Building2 className="w-4 h-4 text-teal-700" />
+          <h3 className="text-sm font-bold text-[#1E3A34] mb-3 flex items-center gap-2">
+            <Building2 className="w-4 h-4 text-[#2C5E54]" />
             <span>المؤسسات الجامعية التي تضمن التكوين والدوائر الجغرافية</span>
           </h3>
 
@@ -151,14 +151,14 @@ export const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
             {program.institutions?.map((instOffer, idx) => (
               <div
                 key={idx}
-                className="p-3.5 rounded-xl bg-stone-50 border border-stone-200 flex items-start justify-between gap-3 text-xs"
+                className="p-3.5 rounded-xl bg-[#FAF8F5] border border-[#E4DED2] flex items-start justify-between gap-3 text-xs"
               >
                 <div>
-                  <h4 className="font-bold text-stone-900 text-xs">
+                  <h4 className="font-bold text-[#1E3A34] text-xs">
                     {instOffer.institution.nameAr}
                   </h4>
-                  <div className="flex items-center gap-1.5 text-stone-500 mt-1">
-                    <MapPin className="w-3.5 h-3.5 text-stone-400" />
+                  <div className="flex items-center gap-1.5 text-[#78716C] mt-1">
+                    <MapPin className="w-3.5 h-3.5 text-[#5F8F86]" />
                     <span>ولاية {instOffer.institution.wilayaId}</span>
                   </div>
                 </div>
@@ -167,8 +167,8 @@ export const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
                   <span
                     className={`inline-block px-2.5 py-0.5 rounded-lg text-[11px] font-bold ${
                       instOffer.registrationScope === 'national'
-                        ? 'bg-teal-50 text-teal-800 border border-teal-200'
-                        : 'bg-stone-200/70 text-stone-700'
+                        ? 'bg-[#E8F2EB] text-[#245248] border border-[#AFC8BD]'
+                        : 'bg-[#F2EFE9] text-[#78716C]'
                     }`}
                   >
                     {instOffer.registrationScope === 'national' ? 'تسجيل وطني' : 'تسجيل جهوي'}
@@ -178,7 +178,7 @@ export const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
                       href={instOffer.institution.websiteUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-[10px] text-teal-700 hover:underline mt-1 font-semibold"
+                      className="flex items-center gap-1 text-[10px] text-[#2C5E54] hover:underline mt-1 font-semibold"
                     >
                       <span>الموقع الرسمي</span>
                       <ExternalLink className="w-2.5 h-2.5" />
@@ -193,18 +193,18 @@ export const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
         {/* Section 3: Historical Cutoffs */}
         {program.cutoffs && program.cutoffs.length > 0 && (
           <div className="mb-6">
-            <h3 className="text-sm font-bold text-stone-900 mb-1 flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-teal-700" />
+            <h3 className="text-sm font-bold text-[#1E3A34] mb-1 flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-[#2C5E54]" />
               <span>معدلات القبول السابقة حسب الشعبة (مؤشرات استرشادية غير ملزمة)</span>
             </h3>
-            <p className="text-[11px] text-stone-500 mb-3">
+            <p className="text-[11px] text-[#78716C] mb-3">
               معدل القبول يتغير سنوياً حسب مستوى نتائج البكالوريا وعدد المقاعد ورغبات الطلبة.
             </p>
 
-            <div className="overflow-x-auto rounded-2xl border border-stone-200 bg-stone-50/50">
+            <div className="overflow-x-auto rounded-2xl border border-[#E4DED2] bg-[#FAF8F5]/60">
               <table className="w-full text-right text-xs">
                 <thead>
-                  <tr className="border-b border-stone-200 text-stone-500 bg-stone-100/70 font-semibold">
+                  <tr className="border-b border-[#E4DED2] text-[#78716C] bg-[#FAF8F5] font-semibold">
                     <th className="py-2.5 px-3">السنة</th>
                     <th className="py-2.5 px-3">الشعبة</th>
                     <th className="py-2.5 px-3">الأولوية</th>
@@ -212,11 +212,11 @@ export const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
                     <th className="py-2.5 px-3">المصدر الإحصائي</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-stone-200/70 text-stone-700">
+                <tbody className="divide-y divide-[#E4DED2] text-[#334155]">
                   {program.cutoffs.map((c, idx) => (
                     <tr key={idx} className="hover:bg-white transition-colors">
-                      <td className="py-2.5 px-3 font-mono font-bold text-stone-800">{c.academicYear}</td>
-                      <td className="py-2.5 px-3 font-bold text-stone-900">
+                      <td className="py-2.5 px-3 font-mono font-bold text-[#1E3A34]">{c.academicYear}</td>
+                      <td className="py-2.5 px-3 font-bold text-[#1E3A34]">
                         {c.bacStreamId === 'sciences_exp' && 'علوم تجريبية'}
                         {c.bacStreamId === 'math' && 'رياضيات'}
                         {c.bacStreamId === 'technique_math' && 'تقني رياضي'}
@@ -227,15 +227,15 @@ export const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
                       </td>
                       <td className="py-2.5 px-3">
                         {c.priority ? (
-                          <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${c.priority === 1 ? 'bg-teal-50 text-teal-800' : 'bg-stone-100 text-stone-600'}`}>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${c.priority === 1 ? 'bg-[#E8F2EB] text-[#245248] border border-[#AFC8BD]' : 'bg-[#F2EFE9] text-[#78716C]'}`}>
                             أولوية {c.priority}
                           </span>
                         ) : '—'}
                       </td>
-                      <td className="py-2.5 px-3 font-mono font-black text-stone-900">
+                      <td className="py-2.5 px-3 font-mono font-black text-[#2C5E54]">
                         {(c.cutoffWeightedAverage || c.cutoffGeneralAverage)?.toFixed(2)} / 20
                       </td>
-                      <td className="py-2.5 px-3 text-stone-500 text-[11px]">
+                      <td className="py-2.5 px-3 text-[#78716C] text-[11px]">
                         {c.source}
                       </td>
                     </tr>
@@ -247,18 +247,18 @@ export const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
         )}
 
         {/* Section 4: Legal Reference Footer */}
-        <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-xs text-stone-600">
+        <div className="p-4 rounded-2xl bg-[#FAF8F5] border border-[#E4DED2] text-xs text-[#475569]">
           <div className="flex items-start gap-2.5">
-            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <AlertTriangle className="w-4 h-4 text-[#D7A66A] shrink-0 mt-0.5" />
             <div>
-              <p className="text-stone-800 font-bold mb-1">
+              <p className="text-[#1E3A34] font-bold mb-1">
                 تنبيه بيداغوجي وقانوني من وزارة التعليم العالي والبحث العلمي:
               </p>
               <p className="leading-relaxed">
                 استيفاء الشروط المذكورة أعلاه يمنح المترشح صفة "الأهلية للترشح" فقط، ولا يعتبر قبولاً نهائياً بأي حال.
                 يخضع القبول الفعلي للترتيب التنافسي حسب المقاعد الشاغرة لدى المؤسسة الجامعية ورغبات الدفعة الحالية.
               </p>
-              <div className="mt-1.5 text-[11px] text-stone-400 font-sans">
+              <div className="mt-1.5 text-[11px] text-[#78716C] font-sans">
                 المرجع: {OFFICIAL_CIRCULAR_REF}
               </div>
             </div>
