@@ -16,6 +16,8 @@ export const PROTECTED_STUDENT_PREFIXES = [
   "/progress",
   "/curriculum",
   "/mind",
+  "/campus",
+  "/tutor",
 ];
 
 /**
@@ -132,5 +134,7 @@ export const config = {
     "/progress/:path*",
     "/curriculum/:path*",
     "/mind/:path*",
+    "/campus/:path*",
+    "/tutor/:path*",
   ],
 };

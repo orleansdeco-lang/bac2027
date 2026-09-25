@@ -292,10 +292,63 @@ function generateLocalExpertReply(
   };
 }
 
+import { requireServerAuth } from "@/lib/auth/server-guard";
+import { rateLimiter } from "@/lib/security/rate-limiter";
+import { TutorRequestSchema } from "@/lib/validation/campus-schemas";
+import { sanitizeUserContent } from "@/lib/security/sanitize";
+
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as TutorRequestBody;
-    const { messages = [], mode = "general", streamId = "sciences_exp", subjectId, lessonContext, clientApiKey } = body;
+    // 1. Authoritative Server-Side Authentication & Subscription Gate
+    const authResult = await requireServerAuth(req);
+    if (!authResult.authenticated || !authResult.authorized) {
+      if (authResult.errorResponse) return authResult.errorResponse;
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const clientKey = authResult.userId || req.ip || "unknown-client";
+
+    // 2. Rate Limiting Protection (Max 15 requests per minute)
+    const rateCheck = rateLimiter.check(clientKey, 15, 60000);
+    if (!rateCheck.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Too Many Requests",
+          message: "تجاوزت الحد المسموح من الأسئلة في الدقيقة. يرجى الانتظار قليلاً.",
+          retryAfterSeconds: rateCheck.resetSeconds,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateCheck.resetSeconds),
+            "X-RateLimit-Limit": String(rateCheck.limit),
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": String(rateCheck.resetSeconds),
+          },
+        }
+      );
+    }
+
+    // 3. Payload Validation with Zod
+    const rawBody = await req.json().catch(() => null);
+    const parseResult = TutorRequestSchema.safeParse(rawBody);
+
+    if (!parseResult.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Invalid Request Payload",
+          details: parseResult.error.format(),
+        },
+        { status: 400 }
+      );
+    }
+
+    const { messages, mode, streamId = "sciences_exp", subjectId, lessonContext, clientApiKey } = parseResult.data;
 
     const apiKey =
       process.env.GEMINI_API_KEY ||
@@ -303,9 +356,17 @@ export async function POST(req: NextRequest) {
       clientApiKey ||
       "";
 
-    const lastUserMessage = messages.filter((m) => m.role === "user").pop()?.content || "";
+    // Extract and sanitize last user query
+    const rawLastMessage = messages.filter((m) => m.role === "user").pop()?.content || "";
+    const lastUserMessage = sanitizeUserContent(rawLastMessage);
 
-    // 1. Try Gemini API via @google/genai if API key is provided
+    const rateHeaders = {
+      "X-RateLimit-Limit": String(rateCheck.limit),
+      "X-RateLimit-Remaining": String(rateCheck.remaining),
+      "X-RateLimit-Reset": String(rateCheck.resetSeconds),
+    };
+
+    // 4. Try Gemini API via @google/genai if API key is provided
     if (apiKey) {
       try {
         const ai = new GoogleGenAI({ apiKey });
@@ -331,14 +392,14 @@ export async function POST(req: NextRequest) {
             mode,
             provider: "gemini",
           };
-          return NextResponse.json(result);
+          return NextResponse.json(result, { headers: rateHeaders });
         }
       } catch (geminiError: any) {
         console.warn("[Tutor API] Gemini call failed, falling back to local pedagogical engine:", geminiError?.message || geminiError);
       }
     }
 
-    // 2. High-Fidelity Local Pedagogical Expert Fallback (Zero-failure guarantee)
+    // 5. High-Fidelity Local Pedagogical Expert Fallback (Zero-failure guarantee)
     const { reply, suggestedTask } = generateLocalExpertReply(lastUserMessage, mode, streamId);
 
     const result: TutorResponse = {
@@ -348,7 +409,7 @@ export async function POST(req: NextRequest) {
       provider: "local_expert",
     };
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: rateHeaders });
   } catch (error: any) {
     console.error("[Tutor API] Global error:", error);
     return NextResponse.json(

@@ -192,36 +192,36 @@ export function BacAverageCalculator() {
 
     if (avg >= 16.5) {
       if (stKey === "sciences" || stKey === "math") {
-        opps.push({ title: "كليات الطب، الصيدلة، وطب الأسنان", category: "علوم طبية", badge: "مضمون بنسبة عالية" });
+        opps.push({ title: "كليات الطب، الصيدلة، وطب الأسنان", category: "علوم طبية", badge: "فرصة تنافسية قوية" });
       }
-      opps.push({ title: "المدرسة الوطنية العليا للذكاء الاصطناعي (ENSIA)", category: "مدارس النخبة", badge: "تنافسي" });
-      opps.push({ title: "المدرسة الوطنية العليا للإعلام الآلي (ESI Alger)", category: "تكنولوجيا", badge: "متاح" });
+      opps.push({ title: "المدرسة الوطنية العليا للذكاء الاصطناعي (ENSIA)", category: "مدارس النخبة", badge: "تنافسي (موزون)" });
+      opps.push({ title: "المدرسة الوطنية العليا للإعلام الآلي (ESI Alger)", category: "تكنولوجيا", badge: "تنافسي (موزون)" });
     }
 
     if (avg >= 14.5) {
-      opps.push({ title: "المدارس العليا للأساتذة (ENS)", category: "تكوين أساتذة", badge: "متاح" });
-      opps.push({ title: "المدرسة الوطنية العليا للبيوتكنولوجيا (ENSB)", category: "بيولوجيا متقدمة", badge: "متاح" });
+      opps.push({ title: "المدارس العليا للأساتذة (ENS)", category: "تكوين أساتذة", badge: "مؤهل للترشح (مقابلة)" });
+      opps.push({ title: "المدرسة الوطنية العليا للبيوتكنولوجيا (ENSB)", category: "بيولوجيا متقدمة", badge: "مؤهل للترشح" });
       if (stKey === "gestion") {
-        opps.push({ title: "المدرسة العليا للتجارة والمصارف (ESC / EHEC)", category: "مالية وأعمال", badge: "متاح بقوة" });
+        opps.push({ title: "المدرسة العليا للتجارة والمصارف (ESC / EHEC)", category: "مالية وأعمال", badge: "فرصة تنافسية" });
       }
       if (stKey === "technique" || stKey === "math") {
-        opps.push({ title: "المدرسة المتعددة التقنيات (ENP Polytech)", category: "هندسة دولة", badge: "متاح بقوة" });
+        opps.push({ title: "المدرسة المتعددة التقنيات (ENP Polytech)", category: "هندسة دولة", badge: "فرصة تنافسية" });
       }
       if (stKey === "lettres" || stKey === "langues") {
-        opps.push({ title: "المعهد العالي للترجمة ومدارس العلوم السياسية", category: "لغات وعلاقات", badge: "متاح بقوة" });
+        opps.push({ title: "المعهد العالي للترجمة ومدارس العلوم السياسية", category: "لغات وعلاقات", badge: "فرصة تنافسية" });
       }
     }
 
     if (avg >= 12.0) {
-      opps.push({ title: "الهندسة المعمارية والعمران (Architecture)", category: "هندسة معمارية", badge: "متاح" });
-      opps.push({ title: "علوم المادة والرياضيات والإعلام الآلي (MI / SM)", category: "جامعي", badge: "متاح" });
-      opps.push({ title: "كليات الحقوق والعلوم الاقتصادية", category: "علوم إدارية", badge: "متاح" });
-      opps.push({ title: "بيولوجيا وعلوم الأرض (SNV)", category: "علوم طبيعية", badge: "متاح" });
+      opps.push({ title: "الهندسة المعمارية والعمران (Architecture)", category: "هندسة معمارية", badge: "مؤهل للترشح" });
+      opps.push({ title: "علوم المادة والرياضيات والإعلام الآلي (MI / SM)", category: "جامعي", badge: "مؤهل للترشح" });
+      opps.push({ title: "كليات الحقوق والعلوم الاقتصادية", category: "علوم إدارية", badge: "مؤهل للترشح" });
+      opps.push({ title: "بيولوجيا وعلوم الأرض (SNV)", category: "علوم طبيعية", badge: "مؤهل للترشح" });
     }
 
     if (avg >= 10.0 && opps.length === 0) {
-      opps.push({ title: "العلوم والتكنولوجيا (ST)", category: "جامعي", badge: "متاح" });
-      opps.push({ title: "الآداب واللغات الأجنبية والعلوم الإنسانية", category: "جامعي", badge: "متاح" });
+      opps.push({ title: "العلوم والتكنولوجيا (ST)", category: "جامعي", badge: "مؤهل للترشح" });
+      opps.push({ title: "الآداب واللغات الأجنبية والعلوم الإنسانية", category: "جامعي", badge: "مؤهل للترشح" });
     }
 
     return opps;
@@ -379,16 +379,28 @@ export function BacAverageCalculator() {
                   ضع نقاطك لاكتشاف التخصصات الجامعية والمدارس العليا التي تتطابق مع مستواك.
                 </p>
               )}
+
+              {/* Legal Disclaimer Note */}
+              <p className="text-[10px] text-slate-500 leading-tight">
+                * ملاحظة رسمية: هذه النتائج استرشادية بحسب معدلات الدفعات السابقة. القبول النهائي يخضع لمعايير الترتيب التنافسي للدفعة الحالية.
+              </p>
             </div>
 
-            {/* Call to action */}
-            <div className="pt-2">
+            {/* Direct Link to Official Orientation Subsystem */}
+            <div className="pt-2 space-y-2">
+              <Link
+                href="/orientation"
+                className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black shadow-md transition-all cursor-pointer"
+              >
+                <span>مستكشف التوجيه الجامعي الرسمي (حساب المعدل الموزون)</span>
+                <ArrowLeft className="w-4 h-4" />
+              </Link>
+
               <Link
                 href="/auth/register"
-                className="w-full inline-flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-[#2C5E54] hover:bg-[#234b43] text-white text-xs font-bold shadow-md transition-all cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-2xl bg-[#2C5E54]/20 hover:bg-[#2C5E54]/30 text-[#2C5E54] dark:text-emerald-400 text-xs font-bold transition-all cursor-pointer border border-[#2C5E54]/30"
               >
                 <span>أريد رفع معدلي — ابدأ التشخيص مع الشاطر</span>
-                <ArrowLeft className="w-4 h-4" />
               </Link>
             </div>
           </div>
