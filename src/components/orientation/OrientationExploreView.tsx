@@ -3,16 +3,15 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Search, 
-  SlidersHorizontal, 
   MapPin, 
   Filter, 
-  Check, 
   Sparkles, 
   X, 
   GraduationCap,
   Building2,
   Share2,
-  ArrowUpDown
+  ArrowUpDown,
+  RotateCcw
 } from 'lucide-react';
 import { 
   ProgramEvaluationResult, 
@@ -121,58 +120,45 @@ export const OrientationExploreView: React.FC<OrientationExploreViewProps> = ({
   }, [report.programs, searchQuery, selectedCategory, selectedLocationScope, otherWilayaId, statusFilter, sortBy, student.wilayaId]);
 
   return (
-    <section id="results" className="max-w-6xl mx-auto px-4 sm:px-6 mb-20 scroll-mt-6" dir="rtl">
-      {/* Top Banner: Student Summary & Share Action */}
-      <div className="bg-white rounded-3xl border border-stone-200/90 shadow-sm p-5 sm:p-7 mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-teal-50 border border-teal-200/80 flex flex-col items-center justify-center shrink-0">
-              <span className="text-[11px] font-bold text-teal-700">معدلك</span>
-              <span className="text-xl font-black text-stone-900 leading-none">
-                {student.generalAverage.toFixed(2)}
-              </span>
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <h2 className="text-lg sm:text-xl font-black text-stone-900 tracking-tight">
-                  التخصصات اللي ممكن تناسبك
-                </h2>
-                <span className="text-xs font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded-md">
-                  {filteredPrograms.length} خيار
-                </span>
-              </div>
-              <p className="text-xs text-stone-500 font-medium">
-                الشعبة: <strong className="text-stone-700">{streamInfo?.nameAr}</strong> • الولاية: <strong className="text-stone-700">{userWilaya?.nameAr}</strong>
-              </p>
-            </div>
-          </div>
-
+    <section id="results" className="max-w-5xl mx-auto px-4 sm:px-6 mb-16 scroll-mt-6" dir="rtl">
+      {/* Sleek Results Header Strip (no redundant score duplication) */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                trackEvent('orientation_share', { average: student.generalAverage });
-                onOpenShareModal();
-              }}
-              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Share2 className="w-4 h-4" />
-              <span>شارك نتيجتك</span>
-            </button>
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+              التخصصات المقترحة لنتيجتك
+            </h2>
+            <span className="text-xs font-bold text-teal-800 bg-teal-50 border border-teal-200/80 px-2 py-0.5 rounded-full">
+              {filteredPrograms.length} تخصص
+            </span>
           </div>
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
+            بناءً على شعبة <strong className="text-slate-700">{streamInfo?.nameAr}</strong> ومعدل <strong className="text-slate-700 font-mono">{student.generalAverage.toFixed(2)}</strong> بولاية <strong className="text-slate-700">{userWilaya?.nameAr}</strong>
+          </p>
         </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            trackEvent('orientation_share', { average: student.generalAverage });
+            onOpenShareModal();
+          }}
+          className="self-start sm:self-auto px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200 text-xs font-bold shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+        >
+          <Share2 className="w-3.5 h-3.5 text-teal-600" />
+          <span>مشاركة القائمة</span>
+        </button>
       </div>
 
-      {/* Control Bar: Search & Quick Filters */}
-      <div className="bg-white rounded-2xl border border-stone-200/90 p-4 mb-6 shadow-xs">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+      {/* Control Bar: Search & Compact Filters */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-3 sm:p-4 mb-5 shadow-xs space-y-3">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
           {/* Search Box */}
           <div className="relative flex-1">
-            <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              placeholder="وش حاب تقرا؟ (مثال: informatique، طب، ذكاء اصطناعي، عمارة...)"
+              placeholder="ابحث عن تخصص، مدرسة عليا، أو جامعة (مثال: ESI، طب، ذكاء اصطناعي، عمارة...)"
               value={searchQuery}
               onChange={e => {
                 setSearchQuery(e.target.value);
@@ -180,62 +166,54 @@ export const OrientationExploreView: React.FC<OrientationExploreViewProps> = ({
                   trackEvent('orientation_search', { query: e.target.value });
                 }
               }}
-              className="w-full pl-3 pr-10 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs sm:text-sm font-medium text-stone-900 placeholder:text-stone-400 focus:bg-white focus:border-teal-600 focus:outline-hidden transition-all"
+              className="w-full pl-8 pr-9 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-teal-600 focus:outline-hidden transition-all"
             />
-          </div>
-
-          {/* Quick Filter Buttons & Mobile Trigger */}
-          <div className="flex items-center gap-2 shrink-0">
-            {/* Mobile Filter Drawer Button */}
-            <button
-              type="button"
-              onClick={() => setIsMobileFilterOpen(true)}
-              className="md:hidden flex-1 sm:flex-none px-3.5 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <Filter className="w-4 h-4 text-stone-600" />
-              <span>فلاتر متقدمة</span>
-            </button>
-
-            {/* Desktop Location Scope Selector */}
-            <div className="hidden md:flex items-center gap-1 bg-stone-100 p-1 rounded-xl text-xs font-medium text-stone-600">
-              <span className="px-2 text-stone-400 font-bold text-[11px]">وين تحب تقرا؟</span>
+            {searchQuery && (
               <button
                 type="button"
-                onClick={() => {
-                  setSelectedLocationScope('all');
-                  trackEvent('orientation_filter_used', { filter: 'location', value: 'all' });
-                }}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                onClick={() => setSearchQuery('')}
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Location Scope & Sort Buttons */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Location Scope Selector */}
+            <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl text-xs font-medium">
+              <button
+                type="button"
+                onClick={() => setSelectedLocationScope('all')}
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                   selectedLocationScope === 'all'
-                    ? 'bg-white font-bold text-stone-900 shadow-2xs'
-                    : 'hover:text-stone-900'
+                    ? 'bg-white font-bold text-slate-900 shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 كل الجزائر
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setSelectedLocationScope('my_wilaya');
-                  trackEvent('orientation_filter_used', { filter: 'location', value: 'my_wilaya' });
-                }}
-                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                onClick={() => setSelectedLocationScope('my_wilaya')}
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                   selectedLocationScope === 'my_wilaya'
-                    ? 'bg-white font-bold text-stone-900 shadow-2xs'
-                    : 'hover:text-stone-900'
+                    ? 'bg-white font-bold text-slate-900 shadow-2xs'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                ولايتي ({userWilaya?.nameAr})
+                📍 ولايتي فقط
               </button>
             </div>
 
             {/* Sort Dropdown */}
-            <div className="flex items-center gap-1.5 bg-stone-100 px-3 py-1.5 rounded-xl text-xs font-medium">
-              <ArrowUpDown className="w-3.5 h-3.5 text-stone-500" />
+            <div className="flex items-center gap-1 bg-slate-100 px-2.5 py-1 rounded-xl text-xs font-medium">
+              <ArrowUpDown className="w-3 h-3 text-slate-500" />
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value as any)}
-                className="bg-transparent font-bold text-stone-800 focus:outline-hidden cursor-pointer"
+                className="bg-transparent font-bold text-slate-800 focus:outline-hidden cursor-pointer text-xs"
               >
                 <option value="RELEVANCE">الأقرب لفرصك</option>
                 <option value="SCORE_DESC">الأعلى معدلاً</option>
@@ -245,18 +223,15 @@ export const OrientationExploreView: React.FC<OrientationExploreViewProps> = ({
           </div>
         </div>
 
-        {/* Domain Filter Pills Scroll */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pt-3 mt-3 border-t border-stone-100 no-scrollbar">
+        {/* Category Filter Pills (Horizontal Scroll) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pt-2 border-t border-slate-100 no-scrollbar">
           <button
             type="button"
-            onClick={() => {
-              setSelectedCategory('ALL');
-              trackEvent('orientation_filter_used', { filter: 'category', value: 'ALL' });
-            }}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+            onClick={() => setSelectedCategory('ALL')}
+            className={`px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
               selectedCategory === 'ALL'
-                ? 'bg-stone-900 text-white'
-                : 'bg-stone-100 hover:bg-stone-200/70 text-stone-700'
+                ? 'bg-teal-800 text-white'
+                : 'bg-slate-100 hover:bg-slate-200/80 text-slate-600'
             }`}
           >
             جميع الميادين
@@ -266,14 +241,11 @@ export const OrientationExploreView: React.FC<OrientationExploreViewProps> = ({
             <button
               key={cat.id}
               type="button"
-              onClick={() => {
-                setSelectedCategory(cat.id);
-                trackEvent('orientation_filter_used', { filter: 'category', value: cat.id });
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1 cursor-pointer ${
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1 cursor-pointer ${
                 selectedCategory === cat.id
                   ? 'bg-teal-700 text-white shadow-2xs'
-                  : 'bg-stone-100 hover:bg-stone-200/70 text-stone-700'
+                  : 'bg-slate-100 hover:bg-slate-200/80 text-slate-600'
               }`}
             >
               <span>{cat.icon}</span>
@@ -285,7 +257,7 @@ export const OrientationExploreView: React.FC<OrientationExploreViewProps> = ({
 
       {/* Program Cards Grid */}
       {filteredPrograms.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {filteredPrograms.map(evalRes => (
             <ProgramEvaluationCard
               key={`${evalRes.program.id}-${evalRes.institutionOffer.institution.id}`}
@@ -297,13 +269,13 @@ export const OrientationExploreView: React.FC<OrientationExploreViewProps> = ({
           ))}
         </div>
       ) : (
-        <div className="p-12 text-center bg-white rounded-3xl border border-stone-200 text-stone-600">
-          <GraduationCap className="w-10 h-10 text-stone-400 mx-auto mb-3" />
-          <h3 className="font-bold text-stone-800 text-base mb-1">
+        <div className="p-10 text-center bg-white rounded-2xl border border-slate-200 text-slate-600">
+          <GraduationCap className="w-10 h-10 text-slate-400 mx-auto mb-2" />
+          <h3 className="font-bold text-slate-800 text-sm mb-1">
             لا توجد تخصصات مطابقة لمعايير البحث الحالية
           </h3>
-          <p className="text-xs text-stone-500 max-w-sm mx-auto mb-4">
-            جرب تغيير كلمات البحث، أو تصفير فلاتر الميدان والولاية لعرض كافة الخيارات المتاحة.
+          <p className="text-xs text-slate-500 max-w-sm mx-auto mb-3">
+            جرب كتابة اسم تخصص آخر أو تصفير فلاتر الميدان والولاية لعرض كافة الخيارات المتاحة.
           </p>
           <button
             type="button"
@@ -313,98 +285,11 @@ export const OrientationExploreView: React.FC<OrientationExploreViewProps> = ({
               setSelectedLocationScope('all');
               setStatusFilter('ALL');
             }}
-            className="px-4 py-2 rounded-xl bg-teal-700 text-white font-bold text-xs cursor-pointer"
+            className="px-3.5 py-1.5 rounded-xl bg-teal-700 text-white font-bold text-xs cursor-pointer inline-flex items-center gap-1"
           >
-            إعادة ضبط الفلاتر
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>إعادة ضبط الفلاتر</span>
           </button>
-        </div>
-      )}
-
-      {/* Mobile Filter Bottom Sheet Modal */}
-      {isMobileFilterOpen && (
-        <div className="fixed inset-0 z-50 bg-stone-900/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="w-full sm:max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl max-h-[85vh] overflow-y-auto animate-in slide-in-from-bottom duration-300">
-            <div className="flex items-center justify-between pb-4 border-b border-stone-100 mb-4">
-              <h3 className="font-black text-stone-900 text-lg">تصفية التخصصات</h3>
-              <button
-                type="button"
-                onClick={() => setIsMobileFilterOpen(false)}
-                className="p-1.5 rounded-full hover:bg-stone-100 text-stone-500"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Location Filter */}
-            <div className="mb-6">
-              <label className="block text-xs font-bold text-stone-700 mb-2">
-                وين تحب تقرا؟
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedLocationScope('all')}
-                  className={`p-2.5 rounded-xl text-xs font-bold border ${
-                    selectedLocationScope === 'all'
-                      ? 'bg-teal-50 border-teal-600 text-teal-900'
-                      : 'border-stone-200 text-stone-700'
-                  }`}
-                >
-                  كل الجزائر
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSelectedLocationScope('my_wilaya')}
-                  className={`p-2.5 rounded-xl text-xs font-bold border ${
-                    selectedLocationScope === 'my_wilaya'
-                      ? 'bg-teal-50 border-teal-600 text-teal-900'
-                      : 'border-stone-200 text-stone-700'
-                  }`}
-                >
-                  ولايتي ({userWilaya?.nameAr})
-                </button>
-              </div>
-            </div>
-
-            {/* Eligibility Status Filter */}
-            <div className="mb-6">
-              <label className="block text-xs font-bold text-stone-700 mb-2">
-                حالة الأهلية:
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setStatusFilter('ALL')}
-                  className={`p-2 rounded-xl text-xs font-bold border ${
-                    statusFilter === 'ALL'
-                      ? 'bg-stone-900 text-white border-stone-900'
-                      : 'border-stone-200 text-stone-700'
-                  }`}
-                >
-                  الكل
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStatusFilter('ELIGIBLE')}
-                  className={`p-2 rounded-xl text-xs font-bold border ${
-                    statusFilter === 'ELIGIBLE'
-                      ? 'bg-emerald-50 border-emerald-600 text-emerald-800'
-                      : 'border-stone-200 text-stone-700'
-                  }`}
-                >
-                  مؤهل فقط
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setIsMobileFilterOpen(false)}
-              className="w-full py-3.5 rounded-xl bg-teal-700 text-white font-bold text-sm"
-            >
-              عرض {filteredPrograms.length} تخصص
-            </button>
-          </div>
         </div>
       )}
     </section>

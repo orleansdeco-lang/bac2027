@@ -142,7 +142,6 @@ export default function OrientationPage() {
           <SmartGradeCalculator
             onEvaluate={async (profile) => {
               await evaluateProfile(profile);
-              handleScrollToExplore();
             }}
             isLoading={isLoading}
           />

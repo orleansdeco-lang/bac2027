@@ -232,18 +232,18 @@ export function BacAverageCalculator() {
   return (
     <div className="space-y-6">
       {/* Stream Selector */}
-      <div className="space-y-2.5">
+      <div className="space-y-2">
         <label className="block text-xs font-bold text-theme-text">اختر الشعبة:</label>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-1.5 p-1.5 bg-stone-100 dark:bg-stone-800 rounded-2xl border border-theme">
           {Object.entries(STREAM_DEFINITIONS).map(([k, def]) => (
             <button
               key={k}
               type="button"
               onClick={() => setStreamKey(k)}
-              className={`py-2.5 px-3 rounded-2xl text-xs font-bold transition-all border text-center cursor-pointer ${
+              className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all text-center cursor-pointer ${
                 streamKey === k
-                  ? "bg-[#2C5E54] text-white border-[#2C5E54] shadow-sm"
-                  : "bg-card text-theme-text border-theme hover:border-slate-400"
+                  ? "bg-[#0F766E] text-white shadow-xs"
+                  : "text-theme-text hover:bg-white/80 dark:hover:bg-stone-700"
               }`}
             >
               {def.badge}
@@ -252,61 +252,61 @@ export function BacAverageCalculator() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* Left Column: Grade Inputs */}
-        <div className="lg:col-span-7 bg-card p-5 sm:p-7 rounded-3xl border border-theme shadow-clay space-y-5">
-          <div className="flex items-center justify-between border-b border-theme/60 pb-3.5">
+        <div className="lg:col-span-7 bg-card p-4 sm:p-5 rounded-3xl border border-theme shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-theme/60 pb-3">
             <div>
-              <h2 className="text-base sm:text-lg font-bold text-theme-text font-serif">نقاط المواد (على 20)</h2>
-              <p className="text-xs text-theme-muted">أدخل العلامة بين 0 و 20 لكل مادة وفق المعاملات الرسمية</p>
+              <h2 className="text-sm sm:text-base font-bold text-theme-text font-serif">نقاط المواد (على 20)</h2>
+              <p className="text-[11px] text-theme-muted">المعاملات الرسمية معتمدة آلياً حسب الشعبة</p>
             </div>
             <button
               type="button"
               onClick={resetScores}
-              className="inline-flex items-center gap-1.5 text-xs text-theme-muted hover:text-theme-text transition-colors font-semibold p-1.5 rounded-xl hover:bg-card-hover"
+              className="inline-flex items-center gap-1.5 text-xs text-theme-muted hover:text-theme-text transition-colors font-semibold p-1 rounded-lg hover:bg-card-hover"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>إعادة ضبط</span>
             </button>
           </div>
 
-          <div className="space-y-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {currentStream.subjects.map((subj) => {
               const isKey = subj.coeff >= 5;
               const score = scores[subj.id] || "";
               return (
                 <div
                   key={subj.id}
-                  className={`flex items-center justify-between p-3 rounded-2xl border transition-colors ${
-                    isKey ? "bg-[var(--color-primary-muted)]/20 border-[var(--color-primary)]/30" : "bg-surface-soft border-theme"
+                  className={`flex items-center justify-between p-2.5 rounded-xl border transition-colors ${
+                    isKey ? "bg-teal-50/40 dark:bg-teal-950/20 border-teal-200 dark:border-teal-800/40" : "bg-surface-soft border-theme"
                   }`}
                 >
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs sm:text-sm font-bold text-theme-text">{subj.name}</span>
+                  <div className="space-y-0.5 min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-bold text-theme-text truncate">{subj.name}</span>
                       {isKey && (
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#2C5E54] text-white font-bold">
+                        <span className="text-[9px] px-1.5 py-0.2 rounded-md bg-[#0F766E] text-white font-bold shrink-0">
                           أساسية
                         </span>
                       )}
                     </div>
-                    <span className="text-[11px] text-theme-muted font-mono">
+                    <span className="text-[10px] text-theme-muted font-mono block">
                       المعامل: <strong className="text-theme-text">{subj.coeff}</strong>
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 shrink-0">
                     <input
                       type="number"
                       min="0"
                       max="20"
                       step="0.25"
-                      placeholder="0.00"
+                      placeholder="00"
                       value={score}
                       onChange={(e) => handleScoreChange(subj.id, e.target.value)}
-                      className="w-20 text-center py-1.5 px-2 text-sm font-mono font-bold bg-card border border-theme rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2C5E54] text-theme-text"
+                      className="w-16 h-8 text-center font-mono font-bold text-xs bg-card border border-theme rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0F766E] text-theme-text"
                     />
-                    <span className="text-xs text-theme-muted font-mono">/ 20</span>
+                    <span className="text-[10px] text-theme-muted">/20</span>
                   </div>
                 </div>
               );
@@ -315,67 +315,67 @@ export function BacAverageCalculator() {
         </div>
 
         {/* Right Column: Instant Results Card */}
-        <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-20">
-          <div className="p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-[#EFE9DC] via-[#F7F3EA] to-[#FFFCF7] dark:from-[#1b2320] dark:via-[#19201d] dark:to-[#161a18] border border-[#E4DED2] dark:border-slate-800 shadow-clay space-y-5">
+        <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-20">
+          <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-teal-900 via-teal-850 to-emerald-900 text-white shadow-md space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-[#2C5E54] dark:text-emerald-400 flex items-center gap-1.5">
+              <span className="text-xs font-bold text-emerald-300 flex items-center gap-1.5">
                 <Sparkles className="w-4 h-4" />
                 <span>النتيجة التقديرية</span>
               </span>
-              <span className={`text-[11px] font-bold px-3 py-1 rounded-full border ${mention.color}`}>
+              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-white/10 text-white border border-white/20">
                 {mention.label}
               </span>
             </div>
 
             <div className="space-y-1">
-              <div className="text-xs text-slate-700 dark:text-slate-300 font-bold">المعدل العام التقديري للبكالوريا:</div>
-              <div className="text-5xl sm:text-6xl font-serif font-black text-[#1E3A34] dark:text-emerald-300 tracking-tight font-mono">
+              <div className="text-xs text-emerald-200/80 font-medium">المعدل العام التقديري للبكالوريا:</div>
+              <div className="text-4xl sm:text-5xl font-black text-white tracking-tight font-mono">
                 {average.toFixed(2)}
-                <span className="text-base text-slate-600 dark:text-slate-300 font-sans mr-2 font-bold">/ 20</span>
+                <span className="text-xs text-emerald-300 font-sans mr-2 font-bold">/ 20</span>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-[#E4DED2] dark:border-slate-800">
-              <div className="p-3.5 rounded-2xl bg-white/90 dark:bg-card border border-[#E4DED2] dark:border-theme">
-                <span className="text-[10px] text-slate-600 dark:text-slate-300 font-bold block">مجموع النقاط</span>
-                <span className="text-xl font-black text-slate-800 dark:text-white font-mono">
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-white/15">
+              <div className="p-2.5 rounded-xl bg-white/10 border border-white/10 text-center">
+                <span className="text-[10px] text-emerald-200 block">مجموع النقاط</span>
+                <span className="text-base font-black text-white font-mono">
                   {totalPoints.toFixed(2)}
                 </span>
               </div>
-              <div className="p-3.5 rounded-2xl bg-white/90 dark:bg-card border border-[#E4DED2] dark:border-theme">
-                <span className="text-[10px] text-slate-600 dark:text-slate-300 font-bold block">مجموع المعاملات</span>
-                <span className="text-xl font-black text-slate-800 dark:text-white font-mono">
+              <div className="p-2.5 rounded-xl bg-white/10 border border-white/10 text-center">
+                <span className="text-[10px] text-emerald-200 block">مجموع المعاملات</span>
+                <span className="text-base font-black text-white font-mono">
                   {totalCoeffs}
                 </span>
               </div>
             </div>
 
             {/* Opportunities List */}
-            <div className="space-y-3 pt-2 border-t border-[#E4DED2] dark:border-slate-800">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
-                <GraduationCap className="w-4 h-4 text-[#2C5E54] dark:text-emerald-400" />
-                <span>أفق التوجيه والفرص المتاحة بمعدل ({average.toFixed(2)}):</span>
+            <div className="space-y-2 pt-2 border-t border-white/15">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-100">
+                <GraduationCap className="w-4 h-4 text-emerald-300" />
+                <span>أفق التوجيه والفرص بمعدل ({average.toFixed(2)}):</span>
               </div>
 
               {opportunities.length > 0 ? (
-                <div className="space-y-2">
+                <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1 scrollbar-thin">
                   {opportunities.map((opp, idx) => (
                     <div
                       key={idx}
-                      className="p-3 rounded-2xl bg-white/90 dark:bg-card border border-[#E4DED2] dark:border-theme flex items-center justify-between text-xs"
+                      className="p-2.5 rounded-xl bg-white/10 border border-white/10 flex items-center justify-between text-xs"
                     >
                       <div>
-                        <div className="font-bold text-slate-900 dark:text-white">{opp.title}</div>
-                        <div className="text-[10px] text-slate-600 dark:text-slate-300 font-medium">{opp.category}</div>
+                        <div className="font-bold text-white text-xs">{opp.title}</div>
+                        <div className="text-[10px] text-emerald-200/80 font-medium">{opp.category}</div>
                       </div>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-400/20 text-emerald-200 border border-emerald-400/30">
                         {opp.badge}
                       </span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-slate-700 dark:text-slate-300 font-medium leading-relaxed">
+                <p className="text-xs text-emerald-100/80 font-medium leading-relaxed">
                   ضع نقاطك لاكتشاف التخصصات الجامعية والمدارس العليا التي تتطابق مع مستواك.
                 </p>
               )}

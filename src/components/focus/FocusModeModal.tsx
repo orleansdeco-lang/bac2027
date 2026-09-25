@@ -14,7 +14,6 @@ import {
   Target,
   Flame,
 } from "lucide-react";
-import { AmbientAudioPlayer } from "@/components/study-os";
 
 export function FocusModeModal() {
   const {
@@ -188,13 +187,6 @@ export function FocusModeModal() {
 
       {/* Bottom Bar: Action Controls, Ambient Sound, & Abandon Dialog */}
       <footer className="relative z-10 w-full max-w-xl mx-auto flex flex-col items-center gap-3">
-        {/* Embedded Ambient Audio Player (Focus Ambiance) */}
-        {!confirmAbandon && (
-          <AmbientAudioPlayer
-            embedded
-            className="w-full max-w-md shadow-2xl bg-zinc-950/85 border-zinc-800/80 backdrop-blur-xl"
-          />
-        )}
 
         {confirmAbandon ? (
           <div className="w-full p-4 rounded-2xl bg-rose-950/40 border border-rose-800/60 text-center animate-in zoom-in-95 duration-200">
