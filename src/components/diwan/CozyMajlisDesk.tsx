@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import { Users, Sparkles, Coffee, Clock, Heart, Volume2, Shield } from "lucide-react";
+import { Users, Sparkles, Coffee, Clock, Heart, Volume2, Shield, UserCheck, Plus } from "lucide-react";
 
 export interface StudentSeat {
   id: string;
@@ -14,6 +14,8 @@ export interface StudentSeat {
   initialSeconds: number;
   position: "top-right" | "top-left" | "left" | "right" | "bottom-left" | "bottom-right";
   status?: string;
+  isCurrentUser?: boolean;
+  isEmpty?: boolean;
 }
 
 const DEFAULT_SEATS: StudentSeat[] = [
@@ -79,7 +81,7 @@ const DEFAULT_SEATS: StudentSeat[] = [
   },
 ];
 
-function formatStopwatch(totalSeconds: number): string {
+export function formatStopwatch(totalSeconds: number): string {
   const h = Math.floor(totalSeconds / 3600);
   const m = Math.floor((totalSeconds % 3600) / 60);
   const s = totalSeconds % 60;
@@ -92,14 +94,28 @@ interface CozyMajlisDeskProps {
   topicTitle?: string;
   occupiedSeatsCount?: number;
   maxSeatsCount?: number;
+  isUserSeated?: boolean;
+  currentUser?: {
+    name: string;
+    avatar: string;
+    subject: string;
+  } | null;
+  userElapsedSeconds?: number;
   onSeatClick?: (seat: StudentSeat) => void;
+  onJoinSeat?: () => void;
+  onLeaveSeat?: () => void;
 }
 
 export function CozyMajlisDesk({
   topicTitle = "المتتاليات",
   occupiedSeatsCount = 6,
   maxSeatsCount = 6,
+  isUserSeated = false,
+  currentUser = null,
+  userElapsedSeconds = 0,
   onSeatClick,
+  onJoinSeat,
+  onLeaveSeat,
 }: CozyMajlisDeskProps) {
   const [secondsOffset, setSecondsOffset] = useState(0);
   const [cheeredStudent, setCheeredStudent] = useState<string | null>(null);
@@ -114,12 +130,41 @@ export function CozyMajlisDesk({
 
   const handleEncourage = (seat: StudentSeat, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (seat.isEmpty && onJoinSeat) {
+      onJoinSeat();
+      return;
+    }
     setCheeredStudent(seat.id);
     if (onSeatClick) onSeatClick(seat);
     setTimeout(() => {
       setCheeredStudent((current) => (current === seat.id ? null : current));
     }, 2200);
   };
+
+  // Build reactive seat 5 (bottom-left) based on user seated status
+  const seat5: StudentSeat = isUserSeated
+    ? {
+        id: "seat-user",
+        name: currentUser?.name || "أنت (طالب)",
+        avatar: currentUser?.avatar || "/illustrations/characters/ali.jpg",
+        subject: currentUser?.subject || "رياضيات",
+        subjectColor: "text-emerald-400",
+        subjectBg: "bg-emerald-500/20 border-emerald-500/40",
+        initialSeconds: 0,
+        position: "bottom-left",
+        isCurrentUser: true,
+      }
+    : {
+        id: "seat-5-available",
+        name: "مقعد متاح",
+        avatar: "/illustrations/characters/sarah.jpg",
+        subject: "انضم الآن 🪑",
+        subjectColor: "text-blue-400",
+        subjectBg: "bg-blue-500/20 border-blue-500/40",
+        initialSeconds: 0,
+        position: "bottom-left",
+        isEmpty: true,
+      };
 
   return (
     <div
@@ -164,6 +209,11 @@ export function CozyMajlisDesk({
           <span>
             {occupiedSeatsCount}/{maxSeatsCount} مقاعد نشطة
           </span>
+          {isUserSeated && (
+            <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-500/30">
+              أنت جالس 🪑
+            </span>
+          )}
         </div>
       </div>
 
@@ -210,13 +260,13 @@ export function CozyMajlisDesk({
             />
           </div>
 
-          {/* Bottom-Left: Noha */}
+          {/* Bottom-Left: User Seat (when seated) or Open Seat */}
           <div className="absolute bottom-[8%] left-[8%] sm:bottom-[12%] sm:left-[18%]">
             <SeatPill
-              seat={DEFAULT_SEATS[4]}
-              elapsed={DEFAULT_SEATS[4].initialSeconds + secondsOffset}
-              isCheered={cheeredStudent === DEFAULT_SEATS[4].id}
-              onEncourage={(e) => handleEncourage(DEFAULT_SEATS[4], e)}
+              seat={seat5}
+              elapsed={isUserSeated ? userElapsedSeconds : 0}
+              isCheered={cheeredStudent === seat5.id}
+              onEncourage={(e) => handleEncourage(seat5, e)}
             />
           </div>
 
@@ -246,21 +296,49 @@ function SeatPill({
   isCheered: boolean;
   onEncourage: (e: React.MouseEvent) => void;
 }) {
+  if (seat.isEmpty) {
+    return (
+      <div
+        onClick={onEncourage}
+        className="group relative flex items-center gap-2 p-2 rounded-2xl bg-blue-950/60 hover:bg-blue-900/80 border-2 border-dashed border-blue-400/50 hover:border-blue-300 shadow-xl backdrop-blur-md transition-all duration-200 hover:scale-105 cursor-pointer animate-pulse"
+        title="انقر لحجز هذا المقعد على الطاولة 🪑"
+      >
+        <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/40 flex items-center justify-center shrink-0">
+          <Plus className="w-5 h-5 text-blue-400" />
+        </div>
+        <div className="flex flex-col text-right">
+          <span className="text-xs sm:text-sm font-black text-white">مقعد متاح</span>
+          <span className="text-[10px] text-blue-300 font-bold">انضم للمجلس 🪑</span>
+        </div>
+      </div>
+    );
+  }
+
+  const isUser = seat.isCurrentUser;
+
   return (
     <div
       onClick={onEncourage}
-      className="group relative flex items-center gap-2 p-1.5 sm:p-2 pr-2.5 sm:pr-3 rounded-2xl bg-[#0B1222]/85 hover:bg-[#131F38] border border-white/10 hover:border-white/20 shadow-xl backdrop-blur-md transition-all duration-200 hover:scale-105 cursor-pointer"
-      title={`انقر لتشجيع ${seat.name} بكوب قهوة ☕`}
+      className={`group relative flex items-center gap-2 p-1.5 sm:p-2 pr-2.5 sm:pr-3 rounded-2xl shadow-xl backdrop-blur-md transition-all duration-200 hover:scale-105 cursor-pointer ${
+        isUser
+          ? "bg-[#091a18]/90 hover:bg-[#0c2421] border-2 border-emerald-400 shadow-emerald-500/20"
+          : "bg-[#0B1222]/85 hover:bg-[#131F38] border border-white/10 hover:border-white/20"
+      }`}
+      title={isUser ? "أنت حاضر في هذا المقعد" : `انقر لتشجيع ${seat.name} بكوب قهوة ☕`}
     >
       {/* Floating Encouragement Animation */}
       {isCheered && (
-        <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black shadow-lg animate-bounce flex items-center gap-1 z-30">
+        <div className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black shadow-lg animate-bounce flex items-center gap-1 z-30 whitespace-nowrap">
           <span>☕ +1 تشجيع!</span>
         </div>
       )}
 
       {/* Avatar with Status Ring */}
-      <div className="relative w-9 h-9 sm:w-11 sm:h-11 rounded-full overflow-hidden border-2 border-emerald-400 shadow-md shrink-0">
+      <div
+        className={`relative w-9 h-9 sm:w-11 sm:h-11 rounded-full overflow-hidden border-2 shadow-md shrink-0 ${
+          isUser ? "border-emerald-400 ring-2 ring-emerald-400/40" : "border-emerald-400"
+        }`}
+      >
         <Image
           src={seat.avatar}
           alt={seat.name}
@@ -278,6 +356,11 @@ function SeatPill({
           <span className="text-xs sm:text-sm font-bold text-white leading-tight">
             {seat.name}
           </span>
+          {isUser && (
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/30 text-emerald-300 border border-emerald-400/40">
+              أنت 🌟
+            </span>
+          )}
           {/* Subject Badge */}
           <span
             className={`text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-md border ${seat.subjectBg} ${seat.subjectColor}`}

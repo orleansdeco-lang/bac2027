@@ -243,11 +243,11 @@ export function TopBar() {
               <span>{isAr ? "البحث" : "Recherche"}</span>
             </button>
             <Link
-              href="/experiences"
-              className="text-xs font-bold text-amber-500 hover:text-amber-400 transition-colors flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 shadow-xs"
+              href="/diwan"
+              className="text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 shadow-xs"
             >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>{isAr ? "بنك التجارب" : "Témoignages"}</span>
+              <Landmark className="w-3.5 h-3.5 text-blue-400" />
+              <span>{isAr ? "ديوان العلم 🏛️" : "Diwan 🏛️"}</span>
             </Link>
           </nav>
         ) : (
@@ -272,33 +272,21 @@ export function TopBar() {
 
         {/* Right Action: Desktop & Mobile Controls */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Study OS Focus Engine: Active MiniTimer or Quick Focus Button */}
-          {isSessionActive ? (
-            <MiniTimer />
-          ) : !isLandingPage ? (
-            <button
-              type="button"
-              onClick={() => setIsQuickFocusOpen(true)}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all border text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 cursor-pointer shadow-xs"
-              title={isAr ? "بدء جلسة تركيز جديدة" : "Session de concentration"}
-            >
-              <Zap className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{isAr ? "جلسة تركيز" : "Focus"}</span>
-            </button>
-          ) : null}
+          {/* Active MiniTimer if Focus Session is Running */}
+          {isSessionActive && <MiniTimer />}
 
-          {/* Desktop Experiences Link Button - Always visible on desktop */}
+          {/* Prominent Unified Diwan Navigation Button */}
           <Link
-            href="/experiences"
-            className={`hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all border ${
-              pathname?.startsWith("/experiences")
-                ? "bg-amber-500 text-slate-950 border-amber-400 shadow-md shadow-amber-500/20"
-                : "text-amber-500 hover:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30"
+            href="/diwan"
+            className={`hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all border shadow-sm ${
+              pathname?.startsWith("/diwan")
+                ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-400 shadow-blue-500/25 ring-2 ring-blue-500/30"
+                : "bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 border-blue-500/30 hover:border-blue-400/50"
             }`}
-            title={isAr ? "بنك تجارب وعِبر البكالوريا" : "Témoignages & Conseils BAC"}
+            title={isAr ? "ديوان العلم ومجالس المذاكرة" : "Diwan Al-Ilm 🏛️"}
           >
-            <MessageSquareQuote className="w-3.5 h-3.5" />
-            <span>{isAr ? "بنك التجارب" : "Témoignages"}</span>
+            <Landmark className="w-4 h-4 text-blue-400 shrink-0" />
+            <span>{isAr ? "ديوان العلم 🏛️" : "Diwan Al-Ilm 🏛️"}</span>
           </Link>
 
           {/* Desktop CTA Buttons */}
@@ -330,44 +318,19 @@ export function TopBar() {
 
           {/* Mobile Quick Action Buttons */}
           <div className="flex md:hidden items-center gap-1.5">
-            {/* Mobile Focus: MiniTimer (if active) or Quick Launch */}
-            {isSessionActive ? (
-              <MiniTimer />
-            ) : !isLandingPage ? (
-              <button
-                type="button"
-                onClick={() => setIsQuickFocusOpen(true)}
-                aria-label={isAr ? "جلسة تركيز" : "Focus"}
-                className="p-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors cursor-pointer"
-                title={isAr ? "جلسة تركيز" : "Focus"}
-              >
-                <Zap className="w-4 h-4" />
-              </button>
-            ) : null}
-
-            {/* Mobile Search Button */}
-            <button
-              type="button"
-              onClick={() => setIsSearchOpen(true)}
-              aria-label={isAr ? "البحث في المنصة" : "Recherche"}
-              className="p-1.5 rounded-lg border border-theme bg-card text-theme-secondary hover:text-theme-text transition-colors cursor-pointer"
-            >
-              <Search className="w-4 h-4" />
-            </button>
-
-            {/* Direct Mobile Experiences Button */}
+            {/* Direct Mobile Diwan Button */}
             <Link
-              href="/experiences"
-              aria-label={isAr ? "بنك التجارب" : "Témoignages"}
-              className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-bold transition-all border ${
-                pathname?.startsWith("/experiences")
-                  ? "bg-amber-500 text-slate-950 border-amber-400 shadow-sm"
-                  : "text-amber-500 hover:text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30"
+              href="/diwan"
+              aria-label={isAr ? "ديوان العلم" : "Diwan"}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold transition-all border ${
+                pathname?.startsWith("/diwan")
+                  ? "bg-blue-600 text-white border-blue-400 shadow-xs"
+                  : "text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30"
               }`}
-              title={isAr ? "بنك التجارب والعِبر" : "Témoignages & Conseils"}
+              title={isAr ? "ديوان العلم ومجالس المذاكرة" : "Diwan Al-Ilm 🏛️"}
             >
-              <MessageSquareQuote className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-              <span className="text-[11px] whitespace-nowrap">{isAr ? "التجارب" : "Avis"}</span>
+              <Landmark className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+              <span className="text-[11px] whitespace-nowrap">{isAr ? "ديوان العلم 🏛️" : "Diwan 🏛️"}</span>
             </Link>
 
             {!hasAccount ? (
@@ -588,12 +551,12 @@ export function TopBar() {
             </Link>
 
             <Link
-              href="/experiences"
+              href="/diwan"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="flex items-center gap-2.5 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs font-bold text-amber-500 hover:border-amber-500/50 transition-colors"
+              className="flex items-center gap-2.5 p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-xs font-bold text-blue-400 hover:border-blue-500/50 transition-colors"
             >
-              <MessageSquareQuote className="w-4 h-4 text-amber-500" />
-              <span>{isAr ? "بنك التجارب والعِبر" : "Témoignages"}</span>
+              <Landmark className="w-4 h-4 text-blue-400" />
+              <span>{isAr ? "ديوان العلم 🏛️" : "Diwan Al-Ilm 🏛️"}</span>
             </Link>
 
             <Link

@@ -29,7 +29,6 @@ import {
   ExternalLink,
   FileText,
   GraduationCap,
-  MessageSquareQuote,
   Gift,
   Calendar,
   X,
@@ -265,14 +264,6 @@ export function Sidebar({ className }: SidebarProps) {
           matches: (p: string) => p.startsWith("/tutor"),
           badge: isAr ? "Socratic AI" : "AI Tutor",
           badgeColor: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30",
-        },
-        {
-          href: "/experiences",
-          label_ar: "بنك التجارب والعِبر",
-          label_fr: "Témoignages & Conseils",
-          icon: MessageSquareQuote,
-          matches: (p: string) => p.startsWith("/experiences"),
-          highlight: true,
         },
         {
           href: "/diagnostic",

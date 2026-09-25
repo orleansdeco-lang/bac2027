@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Compass,
@@ -15,6 +15,7 @@ import {
   Zap,
   Activity,
   Plus,
+  Sparkles,
 } from "lucide-react";
 import { MajlisHeroBanner } from "./MajlisHeroBanner";
 import { CozyMajlisDesk, StudentSeat } from "./CozyMajlisDesk";
@@ -22,13 +23,148 @@ import { MajlisInspectorPanel } from "./MajlisInspectorPanel";
 import { MajlisAudioBar } from "./MajlisAudioBar";
 import { MajlisInteractiveGrid } from "./MajlisInteractiveGrid";
 import { CreateMajlisModal } from "./CreateMajlisModal";
+import { useAuth } from "@/lib/auth/context";
+import { getStrategicProfile } from "@/lib/onboarding/profile";
+import { PlannerStorage } from "@/lib/planner/storage";
+import { StreamId } from "@/types/education";
+
+const STORAGE_SESSION_KEY = "shater_active_majlis_seat_v1";
 
 export function MajlisWorkspace() {
+  const { user } = useAuth();
   const [activeSubject, setActiveSubject] = useState("math");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [isJoined, setIsJoined] = useState(false);
   const [activeTableTopic, setActiveTableTopic] = useState("المتتاليات");
   const [mobileTab, setMobileTab] = useState<"home" | "forums" | "majlis" | "games" | "more">("majlis");
+
+  // User Profile
+  const [userName, setUserName] = useState("طالب بكالوريا");
+  const [userStream, setUserStream] = useState<StreamId>("sciences_exp");
+
+  // Active Majlis Session State
+  const [isUserSeated, setIsUserSeated] = useState(false);
+  const [sessionStart, setSessionStart] = useState<number | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  // Load user details & check if previously seated
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const profile = getStrategicProfile(user?.id);
+      if (profile?.fullName) {
+        setUserName(profile.fullName);
+      } else if (user?.email) {
+        setUserName(user.email.split("@")[0]);
+      }
+
+      if (profile?.streamId) {
+        setUserStream(profile.streamId as StreamId);
+      }
+
+      // Check saved active seat
+      try {
+        const savedSeat = localStorage.getItem(STORAGE_SESSION_KEY);
+        if (savedSeat) {
+          const parsed = JSON.parse(savedSeat);
+          if (parsed && parsed.startedAt) {
+            setIsUserSeated(true);
+            setSessionStart(parsed.startedAt);
+            if (parsed.topic) setActiveTableTopic(parsed.topic);
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to parse active majlis session", e);
+      }
+    }
+  }, [user]);
+
+  // Live Stopwatch Ticker anchored to Date.now()
+  useEffect(() => {
+    if (!isUserSeated || !sessionStart) {
+      setElapsedSeconds(0);
+      return;
+    }
+
+    const updateTimer = () => {
+      const now = Date.now();
+      const diffSec = Math.max(0, Math.floor((now - sessionStart) / 1000));
+      setElapsedSeconds(diffSec);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [isUserSeated, sessionStart]);
+
+  const handleJoin = () => {
+    if (!user) {
+      showToast("يرجى تسجيل الدخول أو إنشاء حساب لحجز مقعدك على الطاولة 🏛️");
+      return;
+    }
+
+    const now = Date.now();
+    setIsUserSeated(true);
+    setSessionStart(now);
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem(
+        STORAGE_SESSION_KEY,
+        JSON.stringify({
+          topic: activeTableTopic,
+          startedAt: now,
+          userId: user.id,
+        })
+      );
+    }
+    showToast(`مرحباً بك يا ${userName}! تم حجز مقعدك على طاولة ${activeTableTopic} بنجاح 🪑`);
+  };
+
+  const handleLeave = async () => {
+    if (!sessionStart) {
+      setIsUserSeated(false);
+      return;
+    }
+
+    const totalSeconds = Math.max(1, Math.floor((Date.now() - sessionStart) / 1000));
+    const totalMinutes = Math.max(1, Math.round(totalSeconds / 60));
+
+    try {
+      // Log session to PlannerStorage
+      await PlannerStorage.saveStudySession({
+        id: `majlis-session-${Date.now()}`,
+        userId: user?.id || "demo-user",
+        streamId: userStream,
+        subjectId: activeSubject,
+        plannedDurationMinutes: 45,
+        actualDurationSeconds: totalSeconds,
+        startedAt: new Date(sessionStart).toISOString(),
+        endedAt: new Date().toISOString(),
+        status: "COMPLETED",
+        interruptionsCount: 0,
+        notes: `جلسة مذاكرة جماعية في مجلس العلم: ${activeTableTopic}`,
+      });
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("study-session-logged"));
+        window.dispatchEvent(new CustomEvent("planner-events-changed"));
+        localStorage.removeItem(STORAGE_SESSION_KEY);
+      }
+
+      showToast(`أحسنت! تم تسجيل ${totalMinutes} دقيقة مذاكرة في رصيدك اليومي 🎉`);
+    } catch (e) {
+      console.warn("Error logging majlis study session", e);
+      showToast(`تمت مغادرة المجلس بنجاح.`);
+    }
+
+    setIsUserSeated(false);
+    setSessionStart(null);
+    setElapsedSeconds(0);
+  };
 
   const activeTablesList = [
     { id: "1", title: "المتتاليات", time: "منذ 126 دقيقة", seats: "5/6", subject: "رياضيات" },
@@ -37,11 +173,35 @@ export function MajlisWorkspace() {
   ];
 
   const handleSeatClick = (seat: StudentSeat) => {
-    // Encouragement logic or member inspect
+    if (seat.isEmpty && !isUserSeated) {
+      handleJoin();
+    }
+  };
+
+  const subjectLabels: Record<string, string> = {
+    math: "رياضيات",
+    physics: "فيزياء",
+    sciences: "علوم طبيعية",
+    french: "فرنسية",
+    history_geo: "تاريخ وجغرافيا",
+  };
+
+  const currentUserData = {
+    name: userName,
+    avatar: "/illustrations/characters/ali.jpg",
+    subject: subjectLabels[activeSubject] || "رياضيات",
   };
 
   return (
     <div className="space-y-6 sm:space-y-8" dir="rtl">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-2xl bg-blue-600 text-white text-xs font-bold shadow-2xl border border-blue-400/40 animate-in fade-in slide-in-from-top-3 flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-amber-300" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
       {/* 1. Header Banner with Stats & Subject Pills */}
       <MajlisHeroBanner
         activeSubject={activeSubject}
@@ -55,9 +215,14 @@ export function MajlisWorkspace() {
         <div className="lg:col-span-8 flex flex-col justify-between">
           <CozyMajlisDesk
             topicTitle={activeTableTopic}
-            occupiedSeatsCount={6}
+            occupiedSeatsCount={isUserSeated ? 6 : 5}
             maxSeatsCount={6}
+            isUserSeated={isUserSeated}
+            currentUser={currentUserData}
+            userElapsedSeconds={elapsedSeconds}
             onSeatClick={handleSeatClick}
+            onJoinSeat={handleJoin}
+            onLeaveSeat={handleLeave}
           />
         </div>
 
@@ -65,8 +230,11 @@ export function MajlisWorkspace() {
         <div className="lg:col-span-4 flex flex-col">
           <MajlisInspectorPanel
             topic={activeTableTopic}
-            isJoined={isJoined}
-            onJoin={() => setIsJoined(!isJoined)}
+            isJoined={isUserSeated}
+            userElapsedSeconds={elapsedSeconds}
+            currentUser={currentUserData}
+            onJoin={handleJoin}
+            onLeave={handleLeave}
           />
         </div>
       </div>
@@ -74,7 +242,7 @@ export function MajlisWorkspace() {
       {/* 3. Ambient Audio Bar */}
       <MajlisAudioBar />
 
-      {/* Mobile-Only Active Tables Section (Matches Reference Phone Screen) */}
+      {/* Mobile-Only Active Tables Section */}
       <div className="lg:hidden rounded-3xl p-5 border border-white/[0.08] bg-[#0B1222]/90 space-y-3">
         <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
           <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
@@ -107,9 +275,9 @@ export function MajlisWorkspace() {
       </div>
 
       {/* 4. Bottom 4-Column Interactive Grid */}
-      <MajlisInteractiveGrid />
+      <MajlisInteractiveGrid topicTitle={activeTableTopic} />
 
-      {/* Community Banner Footer (From Reference Bottom Right) */}
+      {/* Community Banner Footer */}
       <div
         className="rounded-3xl p-6 sm:p-8 border border-white/[0.08] shadow-xl text-center relative overflow-hidden"
         style={{
@@ -138,7 +306,7 @@ export function MajlisWorkspace() {
         </div>
       </div>
 
-      {/* Mobile Sticky Bottom Navigation Bar (Matches Phone Screen Mockup) */}
+      {/* Mobile Sticky Bottom Navigation Bar */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0B1222]/95 border-t border-white/10 backdrop-blur-xl px-4 py-2 flex items-center justify-around shadow-2xl">
         <Link
           href="/dashboard"
@@ -192,6 +360,7 @@ export function MajlisWorkspace() {
         onClose={() => setIsCreateModalOpen(false)}
         onCreate={(tableData) => {
           setActiveTableTopic(tableData.lesson || tableData.title);
+          showToast(`تم فتح مجلس جديد: ${tableData.title} 🎉`);
         }}
       />
     </div>
