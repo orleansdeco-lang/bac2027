@@ -15,6 +15,9 @@ import { StreamId, SubjectId } from "@/types/education";
 import { getStudentSubjects } from "@/domain/student";
 import { SUBJECT_REGISTRY } from "@/domain/curriculum/subjects";
 import { useLearningAccessGate } from "@/lib/hooks";
+import { AnalyticsService } from "@/lib/study-os/analytics-service";
+import { StudyAnalyticsDashboard } from "@/components/study-os";
+import { StudyOsAnalyticsReport } from "@/types/study-analytics";
 import {
   CheckCircle2,
   Brain,
@@ -32,6 +35,7 @@ export default function ProgressPage() {
   const isAr = locale === "ar";
   const gate = useLearningAccessGate();
   const [report, setReport] = useState<any>(null);
+  const [analyticsReport, setAnalyticsReport] = useState<StudyOsAnalyticsReport | null>(null);
   const [loading, setLoading] = useState(true);
 
   const NextArrow = isAr ? ArrowLeft : ArrowRight;
@@ -41,8 +45,12 @@ export default function ProgressPage() {
     async function loadProgress() {
       if (!gate.isAuthorized || !gate.profile) return;
       try {
-        const data = await ProgressService.getProgressReport(gate.profile.id);
+        const [data, analytics] = await Promise.all([
+          ProgressService.getProgressReport(gate.profile.id),
+          AnalyticsService.getStudentAnalytics(gate.profile.id, gate.profile.streamId as StreamId),
+        ]);
         setReport(data);
+        setAnalyticsReport(analytics);
         trackEvent("progress_viewed", {
           streamId: gate.profile.streamId,
           demonstratedCount: data?.demonstratedSkills?.length,
@@ -132,8 +140,13 @@ export default function ProgressPage() {
           </Link>
         </div>
 
+        {/* SHATER Study OS — Unified Activity vs Real Learning Analytics */}
+        {analyticsReport && (
+          <StudyAnalyticsDashboard report={analyticsReport} />
+        )}
+
         {/* 4 Core Evidence KPI Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 xl:gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 xl:gap-6 pt-6 border-t border-theme">
           <Card className="border-[var(--color-success)]/30 bg-card p-5 space-y-2 shadow-sm">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-[var(--color-success)]">

@@ -35,8 +35,12 @@ import {
   FileText,
   GraduationCap,
   MessageSquareQuote,
+  Zap,
+  Users,
 } from "lucide-react";
 import { GlobalSearchModal } from "./GlobalSearchModal";
+import { MiniTimer, QuickStartFocusModal } from "@/components/focus";
+import { useFocus } from "@/context/FocusContext";
 
 export function TopBar() {
   const pathname = usePathname();
@@ -48,6 +52,8 @@ export function TopBar() {
   const [studentProfile, setStudentProfile] = useState<StudentProfile | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isQuickFocusOpen, setIsQuickFocusOpen] = useState(false);
+  const { isSessionActive } = useFocus();
 
   // Global Ctrl+K / Cmd+K shortcut listener to open search anywhere
   useEffect(() => {
@@ -86,6 +92,7 @@ export function TopBar() {
 
   const navLinks = [
     { href: "/dashboard", label: isAr ? "لوحة التحكم" : "Tableau de bord", icon: Compass },
+    { href: "/table", label: isAr ? "طاولة المذاكرة 🪑" : "Salle d'étude 🪑", icon: Users },
     { href: "/curriculum", label: isAr ? "المكتبة الشاملة" : "Bibliothèque", icon: BookOpen },
     { href: "/exams", label: isAr ? "بنك البكالوريات" : "Annales BAC", icon: FileText },
     { href: "/exams/terms", label: isAr ? "فروض واختبارات الفصول" : "Devoirs & Examens", icon: GraduationCap },
@@ -264,6 +271,21 @@ export function TopBar() {
 
         {/* Right Action: Desktop & Mobile Controls */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Study OS Focus Engine: Active MiniTimer or Quick Focus Button */}
+          {isSessionActive ? (
+            <MiniTimer />
+          ) : !isLandingPage ? (
+            <button
+              type="button"
+              onClick={() => setIsQuickFocusOpen(true)}
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-xl transition-all border text-emerald-400 hover:text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 cursor-pointer shadow-xs"
+              title={isAr ? "بدء جلسة تركيز جديدة" : "Session de concentration"}
+            >
+              <Zap className="w-3.5 h-3.5 text-emerald-400" />
+              <span>{isAr ? "جلسة تركيز" : "Focus"}</span>
+            </button>
+          ) : null}
+
           {/* Desktop Experiences Link Button - Always visible on desktop */}
           <Link
             href="/experiences"
@@ -307,6 +329,21 @@ export function TopBar() {
 
           {/* Mobile Quick Action Buttons */}
           <div className="flex md:hidden items-center gap-1.5">
+            {/* Mobile Focus: MiniTimer (if active) or Quick Launch */}
+            {isSessionActive ? (
+              <MiniTimer />
+            ) : !isLandingPage ? (
+              <button
+                type="button"
+                onClick={() => setIsQuickFocusOpen(true)}
+                aria-label={isAr ? "جلسة تركيز" : "Focus"}
+                className="p-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                title={isAr ? "جلسة تركيز" : "Focus"}
+              >
+                <Zap className="w-4 h-4" />
+              </button>
+            ) : null}
+
             {/* Mobile Search Button */}
             <button
               type="button"
@@ -610,6 +647,13 @@ export function TopBar() {
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         activeStream={activeStream}
+      />
+
+      {/* Quick Start Focus Modal */}
+      <QuickStartFocusModal
+        isOpen={isQuickFocusOpen}
+        onClose={() => setIsQuickFocusOpen(false)}
+        defaultSubjectId={activeStream === "gestion_eco" ? "accounting_finance" : "math"}
       />
     </header>
   );

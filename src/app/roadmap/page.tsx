@@ -71,6 +71,78 @@ export default function RoadmapPage() {
   const [roadmapState, setRoadmapState] = useState<AdaptiveRoadmapState | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [showCurriculumMap, setShowCurriculumMap] = useState(false);
+  const [activeSubject, setActiveSubject] = useState<string>("all");
+
+  const profile = gate.profile;
+  const streamId = normalizeStreamIdWithDefault(profile?.streamId || (profile as any)?.stream, "sciences_exp");
+  const streamMeta = getStreamMetadata(streamId);
+
+  const streamSubjects = React.useMemo(() => {
+    return [...getStreamSubjects(streamId)].sort((a, b) => b.coefficient - a.coefficient);
+  }, [streamId]);
+
+  const streamSkills = React.useMemo(() => {
+    return ContentService.getSkillsForStream(streamId);
+  }, [streamId]);
+
+  const isEmpirical = diagnosticResults !== null;
+
+  const effectiveNextMission = React.useMemo(() => {
+    if (!roadmapState) return null;
+    if (activeSubject === "all") return roadmapState.nextMission;
+
+    if (roadmapState.nextMission?.subjectId === activeSubject) {
+      return roadmapState.nextMission;
+    }
+
+    const subjectQueued = roadmapState.queuedMissions.find(
+      (qm) => qm.mission.subjectId === activeSubject
+    );
+    if (subjectQueued) return subjectQueued.mission;
+
+    const subjSkills = streamSkills.filter((s) => s.subjectId === activeSubject);
+    const masteredIds = new Set(roadmapState.masteredSkills.map((m) => m.skillId));
+    const nextSkill = subjSkills.find((s) => !masteredIds.has(s.id)) || subjSkills[0];
+
+    if (nextSkill) {
+      return {
+        id: `mission-${nextSkill.id}`,
+        educationLevel: "secondary" as const,
+        examType: "bac" as const,
+        streamId,
+        subjectId: activeSubject,
+        skillId: nextSkill.id,
+        title: nextSkill.title_ar,
+        description: nextSkill.description_ar,
+        reason: "أولوية دراسية محددة في منهاج المادة.",
+        title_ar: nextSkill.title_ar,
+        title_fr: nextSkill.title_fr,
+        description_ar: nextSkill.description_ar,
+        description_fr: nextSkill.description_fr,
+        reason_ar: "أولوية دراسية محددة في منهاج المادة.",
+        reason_fr: "Priorité pédagogique dans le programme.",
+        priority: "high" as const,
+        source: "curriculum" as const,
+        status: "available" as const,
+        practiceQuestionIds: [],
+        retestQuestionIds: [],
+        estimatedMinutes: 20,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    return roadmapState.nextMission;
+  }, [roadmapState, activeSubject, streamSkills, streamId]);
+
+  const effectiveQueuedMissions = React.useMemo(() => {
+    if (!roadmapState) return [];
+    if (activeSubject === "all") return roadmapState.queuedMissions;
+    return roadmapState.queuedMissions.filter((qm) => qm.mission.subjectId === activeSubject);
+  }, [roadmapState, activeSubject]);
+
+  const nextMission = effectiveNextMission;
+  const rationale = roadmapState?.nextMissionRationale;
 
   useEffect(() => {
     async function loadRoadmap() {
@@ -139,7 +211,7 @@ export default function RoadmapPage() {
     );
   }
 
-  if (!gate.isAuthorized || !gate.profile) {
+  if (!gate.isAuthorized || !gate.profile || !profile) {
     return null;
   }
 
@@ -176,78 +248,6 @@ export default function RoadmapPage() {
       </AppShell>
     );
   }
-
-  const profile = gate.profile;
-  const streamId = normalizeStreamIdWithDefault(profile.streamId || (profile as any)?.stream, "sciences_exp");
-  const streamMeta = getStreamMetadata(streamId);
-  const [activeSubject, setActiveSubject] = useState<string>("all");
-
-  const streamSubjects = React.useMemo(() => {
-    return [...getStreamSubjects(streamId)].sort((a, b) => b.coefficient - a.coefficient);
-  }, [streamId]);
-
-  const streamSkills = React.useMemo(() => {
-    return ContentService.getSkillsForStream(streamId);
-  }, [streamId]);
-
-  const isEmpirical = diagnosticResults !== null;
-
-  const effectiveNextMission = React.useMemo(() => {
-    if (!roadmapState) return null;
-    if (activeSubject === "all") return roadmapState.nextMission;
-
-    if (roadmapState.nextMission?.subjectId === activeSubject) {
-      return roadmapState.nextMission;
-    }
-
-    const subjectQueued = roadmapState.queuedMissions.find(
-      (qm) => qm.mission.subjectId === activeSubject
-    );
-    if (subjectQueued) return subjectQueued.mission;
-
-    const subjSkills = streamSkills.filter((s) => s.subjectId === activeSubject);
-    const masteredIds = new Set(roadmapState.masteredSkills.map((m) => m.skillId));
-    const nextSkill = subjSkills.find((s) => !masteredIds.has(s.id)) || subjSkills[0];
-
-    if (nextSkill) {
-      return {
-        id: `mission-${nextSkill.id}`,
-        educationLevel: "secondary" as const,
-        examType: "bac" as const,
-        streamId,
-        subjectId: activeSubject,
-        skillId: nextSkill.id,
-        title: nextSkill.title_ar,
-        description: nextSkill.description_ar,
-        reason: "أولوية دراسية محددة في منهاج المادة.",
-        title_ar: nextSkill.title_ar,
-        title_fr: nextSkill.title_fr,
-        description_ar: nextSkill.description_ar,
-        description_fr: nextSkill.description_fr,
-        reason_ar: "أولوية دراسية محددة في منهاج المادة.",
-        reason_fr: "Priorité pédagogique dans le programme.",
-        priority: "high" as const,
-        source: "curriculum" as const,
-        status: "available" as const,
-        practiceQuestionIds: [],
-        retestQuestionIds: [],
-        estimatedMinutes: 20,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-    }
-
-    return roadmapState.nextMission;
-  }, [roadmapState, activeSubject, streamSkills, streamId]);
-
-  const effectiveQueuedMissions = React.useMemo(() => {
-    if (!roadmapState) return [];
-    if (activeSubject === "all") return roadmapState.queuedMissions;
-    return roadmapState.queuedMissions.filter((qm) => qm.mission.subjectId === activeSubject);
-  }, [roadmapState, activeSubject]);
-
-  const nextMission = effectiveNextMission;
-  const rationale = roadmapState?.nextMissionRationale;
 
   return (
     <AppShell>

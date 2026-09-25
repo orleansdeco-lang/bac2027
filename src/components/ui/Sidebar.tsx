@@ -41,6 +41,7 @@ import {
   Brain,
   Zap,
   Clock,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -191,9 +192,18 @@ export function Sidebar({ className }: SidebarProps) {
           label_ar: "غرفة التركيز (YPT) ⏱️",
           label_fr: "Focus Room (YPT) ⏱️",
           icon: Clock,
-          matches: (p: string) => p.startsWith("/ypt"),
+          matches: (p: string) => p.startsWith("/ypt") && !p.startsWith("/ypt/table"),
           badge: isAr ? "حصري" : "YPT",
           badgeColor: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+        },
+        {
+          href: "/table",
+          label_ar: "طاولة المذاكرة الصامتة 🪑",
+          label_fr: "Salle d'étude silencieuse",
+          icon: Users,
+          matches: (p: string) => p.startsWith("/table") || p.startsWith("/ypt/table"),
+          badge: isAr ? "مباشر" : "Live",
+          badgeColor: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
         },
         {
           href: "/curriculum",

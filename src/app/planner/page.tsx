@@ -6,6 +6,7 @@ import { useTheme } from "@/lib/theme/context";
 import { useTranslation } from "@/lib/i18n/context";
 import { StudentService } from "@/lib/services";
 import { AppShell } from "@/components/ui/AppShell";
+import { useFocus } from "@/context/FocusContext";
 import { PlannerStorage } from "@/lib/planner/storage";
 import { PlannerService } from "@/lib/planner/planner-service";
 import { NotificationService } from "@/lib/planner/notification-service";
@@ -36,6 +37,7 @@ export default function PlannerPage() {
   const { user } = useAuth();
   const { theme } = useTheme();
   const { locale } = useTranslation();
+  const { startSession, openFocusMode } = useFocus();
   const isGirls = theme === "girls";
 
   const todayIso = useMemo(() => new Date().toISOString().split("T")[0], []);
@@ -173,10 +175,15 @@ export default function PlannerPage() {
   };
 
   const handleStartSession = (event: PlannerEvent) => {
-    PlannerService.startStudySession(event.id);
-    setActiveSessionEvent(event);
-    setIsSessionOpen(true);
-    refreshData();
+    startSession({
+      eventId: event.id,
+      subjectId: event.subject_id || "math",
+      taskTitle: event.title,
+      targetDurationMinutes: event.duration_minutes || 30,
+      mode: event.duration_minutes ? "custom" : "25m",
+      streamId: streamId,
+    });
+    openFocusMode();
   };
 
   const handleCompleteSession = (eventId: string, actualMinutes: number) => {

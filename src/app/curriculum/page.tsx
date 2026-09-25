@@ -11,12 +11,18 @@ import {
   SubjectDashboard,
   UnifiedLessonReader,
   CurriculumDisplayItem,
+  CurriculumEvidenceView,
 } from "@/components/curriculum";
+import {
+  CurriculumEvidenceService,
+  CurriculumTreeSummary,
+} from "@/lib/study-os/curriculum-evidence-service";
 import { ContentService } from "@/lib/services/content-service";
 import { getSkillLearningBundle } from "@/data/curriculum/registry";
 import { ALL_SUBJECTS, ALGERIAN_BAC_STREAMS, getStreamSubjects } from "@/lib/constants/streams";
 import { StreamId, SubjectId } from "@/types/education";
 import { useLearningAccessGate, useUserProgress } from "@/lib/hooks";
+import { useAuth } from "@/lib/auth/hooks";
 import { normalizeStreamIdWithDefault } from "@/lib/curriculum/filter";
 import {
   BookOpen,
@@ -93,6 +99,7 @@ const CURRICULUM_DIAGRAMS: Record<number, { caption_ar: string; diagramUrl: stri
 };
 
 export default function FreeRoamCurriculumPage() {
+  const { user } = useAuth();
   const gate = useLearningAccessGate();
   const enrolledStream = normalizeStreamIdWithDefault(
     gate.profile?.streamId || (gate.profile as any)?.stream,
@@ -113,12 +120,46 @@ export default function FreeRoamCurriculumPage() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [activeModalSkillId, setActiveModalSkillId] = useState<string | null>(null);
 
+  // Phase 3 Study OS: Pedagogical Evidence State & View Switcher
+  const [viewMode, setViewMode] = useState<"evidence_map" | "browser">("evidence_map");
+  const [evidenceSummary, setEvidenceSummary] = useState<CurriculumTreeSummary | null>(null);
+  const [isLoadingEvidence, setIsLoadingEvidence] = useState<boolean>(true);
+
   // Keep selectedStream in sync if user profile loads
   useEffect(() => {
     if (gate.profile?.streamId) {
       setSelectedStream(normalizeStreamIdWithDefault(gate.profile.streamId, "sciences_exp"));
     }
   }, [gate.profile?.streamId]);
+
+  // Fetch authentic pedagogical evidence summary for the active stream
+  useEffect(() => {
+    let cancelled = false;
+    async function loadEvidence() {
+      setIsLoadingEvidence(true);
+      try {
+        const userId = user?.id || (gate.profile as any)?.userId || gate.profile?.id || "";
+        const summary = await CurriculumEvidenceService.getCurriculumTree(
+          userId,
+          selectedStream,
+          userSkills
+        );
+        if (!cancelled) {
+          setEvidenceSummary(summary);
+        }
+      } catch (err) {
+        console.error("Failed to load curriculum evidence summary:", err);
+      } finally {
+        if (!cancelled) {
+          setIsLoadingEvidence(false);
+        }
+      }
+    }
+    loadEvidence();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, (gate.profile as any)?.userId, gate.profile?.id, selectedStream, userSkills]);
 
   // Track study time on curriculum page every 10 seconds
   useEffect(() => {
@@ -302,7 +343,7 @@ export default function FreeRoamCurriculumPage() {
               </p>
             </div>
 
-            {/* Live Study Time & Mastery Counter */}
+            {/* Live Study Time & Authentic Pedagogical Evidence Counter */}
             <div className="flex items-center gap-3 shrink-0">
               <div className="p-4 rounded-2xl bg-card border border-theme shadow-sm text-center min-w-[130px]">
                 <div className="flex items-center justify-center gap-1.5 text-xs text-theme-muted mb-1 font-bold">
@@ -316,11 +357,14 @@ export default function FreeRoamCurriculumPage() {
 
               <div className="p-4 rounded-2xl bg-card border border-theme shadow-sm text-center min-w-[130px]">
                 <div className="flex items-center justify-center gap-1.5 text-xs text-theme-muted mb-1 font-bold">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>الدروس المتقنة</span>
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>الإتقان المثبت</span>
                 </div>
                 <span className="text-xl sm:text-2xl font-black text-emerald-500 font-mono">
-                  {masteredCount}
+                  {evidenceSummary ? `${evidenceSummary.overallMasteryPercentage}%` : `${masteredCount}`}
+                </span>
+                <span className="block text-[10px] text-theme-muted mt-0.5">
+                  {evidenceSummary ? `${evidenceSummary.demonstratedSkillsCount}/${evidenceSummary.totalSkillsCount} مهارة` : "تقييم مثبت"}
                 </span>
               </div>
             </div>
@@ -328,23 +372,98 @@ export default function FreeRoamCurriculumPage() {
         </section>
 
         {/* ================================================================= */}
-        {/* SUBJECT DASHBOARD WITH TRIMESTERS & SEARCH                        */}
+        {/* VIEW MODE TOGGLE & STREAM SELECTOR                                */}
         {/* ================================================================= */}
-        <SubjectDashboard
-          selectedStream={selectedStream}
-          selectedSubject={selectedSubject}
-          onSelectSubject={(subj) => setSelectedSubject(subj)}
-          selectedTrimester={selectedTrimester}
-          onSelectTrimester={(trim) => setSelectedTrimester(trim)}
-          searchQuery={searchQuery}
-          onSearchChange={(q) => setSearchQuery(q)}
-          items={displayItems}
-          userSkills={userSkills}
-          onOpenLesson={(skillId) => setActiveModalSkillId(skillId)}
-          onToggleMastery={async (skillId, streamId, subjectId) => {
-            await markSkillMastered(skillId, streamId, subjectId);
-          }}
-        />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-2.5 rounded-2xl bg-card border border-theme shadow-sm">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setViewMode("evidence_map")}
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                viewMode === "evidence_map"
+                  ? "bg-[var(--color-primary)] text-white shadow-sm"
+                  : "text-theme-muted hover:text-theme-text hover:bg-surface/60"
+              }`}
+            >
+              <Compass className="w-4 h-4" />
+              <span>خريطة الإتقان البيداغوجي 🗺️</span>
+              {evidenceSummary && (
+                <span className="px-1.5 py-0.5 rounded-full bg-white/20 text-[10px] font-mono">
+                  {evidenceSummary.overallMasteryPercentage}%
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setViewMode("browser")}
+              className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                viewMode === "browser"
+                  ? "bg-[var(--color-primary)] text-white shadow-sm"
+                  : "text-theme-muted hover:text-theme-text hover:bg-surface/60"
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              <span>تصفح الفصول والتمارين 📖</span>
+              <span className="px-1.5 py-0.5 rounded-full bg-surface text-theme-muted text-[10px] font-mono border border-theme">
+                {displayItems.length}
+              </span>
+            </button>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 text-xs pt-1 sm:pt-0 border-t sm:border-t-0 border-theme/40">
+            <span className="text-theme-muted font-bold">الشعبة المعروضة:</span>
+            <select
+              value={selectedStream}
+              onChange={(e) => setSelectedStream(e.target.value as StreamId)}
+              className="bg-surface border border-theme rounded-xl px-3 py-1.5 text-xs text-theme-text font-bold focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)]"
+            >
+              {Object.entries(ALGERIAN_BAC_STREAMS).map(([id, s]) => (
+                <option key={id} value={id}>
+                  {s.name_ar}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* ================================================================= */}
+        {/* MAIN CURRICULUM VIEW (EVIDENCE MAP OR SUBJECT BROWSER)            */}
+        {/* ================================================================= */}
+        {viewMode === "evidence_map" ? (
+          isLoadingEvidence && !evidenceSummary ? (
+            <div className="p-12 text-center rounded-3xl border border-theme bg-card shadow-clay space-y-4 animate-pulse">
+              <Compass className="w-10 h-10 text-[var(--color-primary)] mx-auto animate-spin" />
+              <div className="text-sm font-bold text-theme-text">جاري استخراج الأدلة البيداغوجية وتحليل المهارات...</div>
+              <p className="text-xs text-theme-muted">نطابق بين جلساتك والتمارين المحلولة واختبارات التشخيص</p>
+            </div>
+          ) : evidenceSummary ? (
+            <CurriculumEvidenceView
+              summary={evidenceSummary}
+              onOpenLesson={(skillId) => setActiveModalSkillId(skillId)}
+            />
+          ) : (
+            <div className="p-8 text-center text-xs text-theme-muted">
+              تعذر تحميل بيانات الأدلة البيداغوجية. يرجى إعادة المحاولة.
+            </div>
+          )
+        ) : (
+          <SubjectDashboard
+            selectedStream={selectedStream}
+            selectedSubject={selectedSubject}
+            onSelectSubject={(subj) => setSelectedSubject(subj)}
+            selectedTrimester={selectedTrimester}
+            onSelectTrimester={(trim) => setSelectedTrimester(trim)}
+            searchQuery={searchQuery}
+            onSearchChange={(q) => setSearchQuery(q)}
+            items={displayItems}
+            userSkills={userSkills}
+            onOpenLesson={(skillId) => setActiveModalSkillId(skillId)}
+            onToggleMastery={async (skillId, streamId, subjectId) => {
+              await markSkillMastered(skillId, streamId, subjectId);
+            }}
+          />
+        )}
 
         {/* ================================================================= */}
         {/* UNIFIED LESSON READER MODAL (14 PEDAGOGICAL ASSETS)               */}

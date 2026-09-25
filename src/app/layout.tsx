@@ -99,6 +99,9 @@ export const viewport: Viewport = {
 
 import { ServiceWorkerRegister } from "@/components/pwa/ServiceWorkerRegister";
 import { PWAInstallPrompt } from "@/components/pwa/PWAInstallPrompt";
+import { FocusProvider } from "@/context/FocusContext";
+import { StudyAudioProvider } from "@/context/StudyAudioContext";
+import { FocusOverlayManager } from "@/components/focus";
 
 export default function RootLayout({
   children,
@@ -117,10 +120,15 @@ export default function RootLayout({
           <I18nProvider>
             <AuthProvider>
               <ProgressProvider>
-                <VisitorTracker />
-                <ServiceWorkerRegister />
-                {children}
-                <PWAInstallPrompt />
+                <FocusProvider>
+                  <StudyAudioProvider>
+                    <VisitorTracker />
+                    <ServiceWorkerRegister />
+                    {children}
+                    <FocusOverlayManager />
+                    <PWAInstallPrompt />
+                  </StudyAudioProvider>
+                </FocusProvider>
               </ProgressProvider>
             </AuthProvider>
           </I18nProvider>

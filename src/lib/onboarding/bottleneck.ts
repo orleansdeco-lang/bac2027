@@ -10,6 +10,7 @@ export function detectStrategicBottleneck(
   gapResult: InitialGapResult
 ): StrategicBottleneckAnalysis {
   const secondaryBottlenecks: StrategicBottleneck[] = [];
+  const targetScore = typeof profile?.targetScore === "number" ? profile.targetScore : 14;
 
   // 1. Identify highest academic gap subject
   const topSubjectGap = gapResult.subjectGaps[0];
@@ -24,20 +25,20 @@ export function detectStrategicBottleneck(
       title_ar: `${topSubjectMeta.name_ar} — فجوة المعامل والتقدير`,
       title_fr: `${topSubjectMeta.name_fr} — Écart coefficient et niveau`,
       explanation_ar: isAcute
-        ? `مستواك التقديري في ${topSubjectMeta.name_ar} (ضعيف) يشكل أكبر عائق للوصول إلى معدل ${profile.targetScore}، نظراً لمعاملها العالي (${topSubjectGap.coefficient}). رفع هذه المادة يعطيك أعلى قفزة في المعدل.`
-        : `تمثل ${topSubjectMeta.name_ar} الفرصة الكبرى لتقليص المسافة نحو هدفك (${profile.targetScore}). التركيز عليها يساعدك على تحقيق أفضل عائد للوقت المستثمر.`,
+        ? `مستواك التقديري في ${topSubjectMeta.name_ar} (ضعيف) يشكل أكبر عائق للوصول إلى معدل ${targetScore}، نظراً لمعاملها العالي (${topSubjectGap.coefficient}). رفع هذه المادة يعطيك أعلى قفزة في المعدل.`
+        : `تمثل ${topSubjectMeta.name_ar} الفرصة الكبرى لتقليص المسافة نحو هدفك (${targetScore}). التركيز عليها يساعدك على تحقيق أفضل عائد للوقت المستثمر.`,
       explanation_fr: isAcute
-        ? `Votre estimation en ${topSubjectMeta.name_fr} représente le principal obstacle pour atteindre ${profile.targetScore}, vu son coefficient élevé (${topSubjectGap.coefficient}).`
-        : `${topSubjectMeta.name_fr} offre le plus fort levier pour combler l'écart vers votre objectif (${profile.targetScore}).`,
+        ? `Votre estimation en ${topSubjectMeta.name_fr} représente le principal obstacle pour atteindre ${targetScore}, vu son coefficient élevé (${topSubjectGap.coefficient}).`
+        : `${topSubjectMeta.name_fr} offre le plus fort levier pour combler l'écart vers votre objectif (${targetScore}).`,
       recommendedFirstMission_ar: `تشخيص أساسيات مادة ${topSubjectMeta.name_ar} وتحديد مواضيع الثغرات الأولى`,
       recommendedFirstMission_fr: `Diagnostic des fondamentaux en ${topSubjectMeta.name_fr} pour identifier les premiers points de blocage`,
     };
   }
 
   // 2. Identify behavioral / methodological bottlenecks from obstacles and time
-  const obstacles = profile.obstacles || [];
-  const hasTimeDeficit = profile.availableTime === "less_than_5" || profile.availableTime === "not_sure";
-  const highTarget = profile.targetScore >= 14;
+  const obstacles = profile?.obstacles || [];
+  const hasTimeDeficit = profile?.availableTime === "less_than_5" || profile?.availableTime === "not_sure";
+  const highTarget = targetScore >= 14;
 
   let behavioralBottleneck: StrategicBottleneck | null = null;
 
@@ -46,8 +47,8 @@ export function detectStrategicBottleneck(
       category: "time_management",
       title_ar: "إدارة الوقت والانتظام الأسبوعي",
       title_fr: "Gestion du temps et régularité hebdomadaire",
-      explanation_ar: `هدفك (${profile.targetScore}/20) طموح ويحتاج مساراً واضحاً. وقت الدراسة المتاح حالياً يحتاج إعادة ضبط لبناء وتيرة مستقرة دون إجهاد.`,
-      explanation_fr: `Votre objectif (${profile.targetScore}/20) nécessite un rythme d'étude stable pour éviter l'épuisement.`,
+      explanation_ar: `هدفك (${targetScore}/20) طموح ويحتاج مساراً واضحاً. وقت الدراسة المتاح حالياً يحتاج إعادة ضبط لبناء وتيرة مستقرة دون إجهاد.`,
+      explanation_fr: `Votre objectif (${targetScore}/20) nécessite un rythme d'étude stable pour éviter l'épuisement.`,
       recommendedFirstMission_ar: "تحديد جدول أسبوعي واقعي يبدأ بـ 60 دقيقة يومياً دون تراكم",
       recommendedFirstMission_fr: "Établir un planning réaliste démarrant par 60 min quotidiennes",
     };

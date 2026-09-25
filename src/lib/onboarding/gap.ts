@@ -22,20 +22,22 @@ export const RATING_TO_BASELINE_GRADE: Record<SelfRatedLevel, number> = {
  * Clearly separates self-reported estimates from empirical diagnostics.
  */
 export function calculateInitialStrategicGap(profile: StrategicProfile): InitialGapResult {
-  const streamSubjects = getStreamSubjects(profile.streamId, profile.techniqueMathSpecialty);
+  const streamSubjects = getStreamSubjects(profile?.streamId, profile?.techniqueMathSpecialty);
   const totalCoefficients = getTotalStreamCoefficients(streamSubjects);
+  const targetScore = typeof profile?.targetScore === "number" ? profile.targetScore : 14.0;
+  const estimates = profile?.subjectEstimates || {};
 
   let weightedSum = 0;
   const subjectGaps: InitialSubjectGap[] = [];
 
   for (const rule of streamSubjects) {
     // Default to average (3 -> 12.0) if unrated non-core subject
-    const rating: SelfRatedLevel = profile.subjectEstimates[rule.subjectId] || 3;
-    const estimatedGrade = RATING_TO_BASELINE_GRADE[rating];
+    const rating: SelfRatedLevel = estimates[rule.subjectId] || 3;
+    const estimatedGrade = RATING_TO_BASELINE_GRADE[rating] ?? 12.0;
 
     weightedSum += estimatedGrade * rule.coefficient;
 
-    const rawGap = Math.max(0, profile.targetScore - estimatedGrade);
+    const rawGap = Math.max(0, targetScore - estimatedGrade);
     const weightedGap = rawGap * rule.coefficient;
 
     subjectGaps.push({
@@ -51,13 +53,13 @@ export function calculateInitialStrategicGap(profile: StrategicProfile): Initial
   const rawBaseline = totalCoefficients > 0 ? weightedSum / totalCoefficients : 10;
   // Round cleanly to 1 decimal place to prevent false precision
   const estimatedBaselineScore = Math.round(rawBaseline * 10) / 10;
-  const approximateGap = Math.max(0, Math.round((profile.targetScore - estimatedBaselineScore) * 10) / 10);
+  const approximateGap = Math.max(0, Math.round((targetScore - estimatedBaselineScore) * 10) / 10);
 
   // Sort subjects by weighted gap descending
   subjectGaps.sort((a, b) => b.weightedGap - a.weightedGap);
 
   return {
-    targetScore: profile.targetScore,
+    targetScore,
     estimatedBaselineScore,
     approximateGap,
     subjectGaps,

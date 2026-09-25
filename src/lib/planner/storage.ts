@@ -3,7 +3,15 @@
  * Invariant: Works seamlessly offline via localStorage, syncs with Supabase when available
  */
 
-import {
+export type {
+  PlannerEvent,
+  StudySession,
+  DailyReflection,
+  PlannerPreferences,
+  NotificationPreferences,
+  PlannerNotificationItem,
+} from "./types";
+import type {
   PlannerEvent,
   StudySession,
   DailyReflection,

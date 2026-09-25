@@ -54,6 +54,7 @@ import {
 } from "@/lib/curriculum/filter";
 
 import { validateContentStreamCompatibility } from "@/domain/student";
+import { TodayCommandCenter } from "@/components/study-os";
 
 export default function DashboardPage() {
   const { t, locale } = useTranslation();
@@ -269,6 +270,17 @@ export default function DashboardPage() {
             </div>
           </div>
         ) : null}
+
+        {/* ================================================================= */}
+        {/* SHATER STUDY OS — TODAY COMMAND CENTER (PHASE 2)                  */}
+        {/* ================================================================= */}
+        {profile?.id && (
+          <TodayCommandCenter
+            userId={profile.id}
+            studentName={firstName}
+            streamId={streamId}
+          />
+        )}
 
         {/* ================================================================= */}
         {/* 1. TACTILE 3D HERO SECTION (REFERENCE #1 INSPIRATION)             */}
