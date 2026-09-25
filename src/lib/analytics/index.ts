@@ -59,7 +59,17 @@ export type PilotAnalyticsEventName =
   | "recall_notification_sent"
   | "recall_answered_inline"
   | "recall_answered_in_app"
-  | "error_lab_item_remediated";
+  | "error_lab_item_remediated"
+  | "orientation_started"
+  | "orientation_stream_selected"
+  | "orientation_score_completed"
+  | "orientation_results_viewed"
+  | "orientation_program_clicked"
+  | "orientation_search"
+  | "orientation_filter_used"
+  | "orientation_compare"
+  | "orientation_share"
+  | "orientation_shater_cta";
 
 export interface PilotAnalyticsProperties {
   userId?: string | null;

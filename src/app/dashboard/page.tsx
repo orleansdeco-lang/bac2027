@@ -38,6 +38,7 @@ import {
   ChevronDown,
   FileText,
   MessageSquareQuote,
+  GraduationCap,
 } from "lucide-react";
 
 import { ALL_SUBJECTS } from "@/lib/constants/streams";
@@ -476,7 +477,7 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5 xl:gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-5 xl:gap-6">
             {/* Mode 1: Smart Guided Road */}
             <div className="relative overflow-hidden rounded-3xl p-5 border border-emerald-500/25 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent flex flex-col justify-between shadow-sm hover:shadow-clay transition-all group">
               <div className="space-y-3">
@@ -568,7 +569,40 @@ export default function DashboardPage() {
                 <Link href="/diagnostic">
                   <Button size="sm" variant="outline" className="w-full rounded-xl font-bold border-amber-500/30 hover:bg-amber-500/10 text-amber-700 dark:text-amber-300 shadow-sm flex items-center justify-center gap-2">
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>{isAr ? "اختيار مادة وتشخيصها" : "Choisir une matière"}</span>
+                    <span>{isAr ? "تشخيص المواد" : "Choisir une matière"}</span>
+                    <NextArrow className="w-3.5 h-3.5" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Mode 4: University Orientation Engine ("واش نقدر نقرا؟") */}
+            <div className="relative overflow-hidden rounded-3xl p-5 border border-teal-500/25 bg-gradient-to-br from-teal-500/10 via-teal-500/5 to-transparent flex flex-col justify-between shadow-sm hover:shadow-clay transition-all group">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-2xl bg-teal-500/20 text-teal-600 dark:text-teal-400 flex items-center justify-center font-bold shadow-xs">
+                    <GraduationCap className="w-5 h-5" />
+                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-500/15 text-teal-700 dark:text-teal-300 border border-teal-500/20">
+                    {isAr ? "واش نقدر نقرا؟" : "Orientation"}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-theme-text group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+                    {isAr ? "مستكشف التوجيه الجامعي 🎓" : "Orientation Universitaire"}
+                  </h3>
+                  <p className="text-xs text-theme-secondary mt-1 leading-relaxed">
+                    {isAr
+                      ? "احسب معدلك التقديري واكتشف التخصصات والمدارس العليا المتاحة لشعبتك وفق المنشور الوزاري 2026."
+                      : "Estimez vos filières universitaires et écoles supérieures selon les règles officielles du MESRS."}
+                  </p>
+                </div>
+              </div>
+              <div className="pt-4">
+                <Link href="/orientation">
+                  <Button size="sm" variant="outline" className="w-full rounded-xl font-bold border-teal-500/30 hover:bg-teal-500/10 text-teal-700 dark:text-teal-300 shadow-sm flex items-center justify-center gap-2">
+                    <Compass className="w-3.5 h-3.5" />
+                    <span>{isAr ? "استكشاف التخصصات" : "Découvrir"}</span>
                     <NextArrow className="w-3.5 h-3.5" />
                   </Button>
                 </Link>

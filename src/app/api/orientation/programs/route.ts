@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
 
     const { stream, field, scope, q } = parseResult.data;
 
-    let programs = await OrientationService.getPrograms();
+    let programs = await OrientationService.getPrograms({ includeVerified: true });
 
     if (field) {
       programs = programs.filter(p => p.fieldId.toLowerCase() === field.toLowerCase());

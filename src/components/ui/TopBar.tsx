@@ -98,6 +98,7 @@ export function TopBar() {
     { href: "/exams", label: isAr ? "بنك البكالوريات" : "Annales BAC", icon: FileText },
     { href: "/exams/terms", label: isAr ? "فروض واختبارات الفصول" : "Devoirs & Examens", icon: GraduationCap },
     { href: "/experiences", label: isAr ? "بنك التجارب والعِبر" : "Témoignages & Conseils", icon: MessageSquareQuote },
+    { href: "/orientation", label: isAr ? "واش نقدر نقرا؟ 🎓" : "Orientation 🎓", icon: GraduationCap },
     { href: "/diagnostic", label: isAr ? "تشخيص المواد" : "Diagnostics", icon: Stethoscope },
     { href: "/roadmap", label: isAr ? "الخريطة" : "Feuille de route", icon: Map },
     { href: "/error-lab", label: isAr ? "مختبر الأخطاء" : "Lab d'erreurs", icon: AlertTriangle },
@@ -481,6 +482,13 @@ export function TopBar() {
                 className="block p-2 text-xs font-bold text-[var(--color-primary)] hover:bg-card rounded-lg transition-colors"
               >
                 {isAr ? "← المكتبة الحرة" : "Bibliothèque Libre"}
+              </Link>
+              <Link
+                href="/orientation"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="block p-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-card rounded-lg transition-colors"
+              >
+                {isAr ? "← واش نقدر نقرا؟ (التوجيه الجامعي 🎓)" : "← Orientation Universitaire 🎓"}
               </Link>
             </div>
           )}

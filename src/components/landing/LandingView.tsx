@@ -25,6 +25,9 @@ import {
   MessageCircle,
   MessageSquareQuote,
   Laptop,
+  GraduationCap,
+  Compass,
+  Calculator,
 } from "lucide-react";
 
 export function LandingView() {
@@ -109,7 +112,14 @@ export function LandingView() {
                   className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/20 px-3.5 py-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 transition-all shadow-xs hover:scale-105"
                 >
                   <MessageSquareQuote className="w-3.5 h-3.5 text-amber-500" />
-                  <span>{isAr ? "جديد: بنك التجارب والعِبر 🎓" : "Nouveau : Témoignages BAC 🎓"}</span>
+                  <span>{isAr ? "بنك التجارب والعِبر 🎓" : "Témoignages BAC 🎓"}</span>
+                </Link>
+                <Link
+                  href="/orientation"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/20 px-3.5 py-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300 transition-all shadow-xs hover:scale-105"
+                >
+                  <GraduationCap className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <span>{isAr ? "جديد: واش نقدر نقرا؟ 🏛️" : "Nouveau : Orientation 🏛️"}</span>
                 </Link>
               </div>
 
@@ -153,6 +163,17 @@ export function LandingView() {
                   </Button>
                 </Link>
 
+                <Link href="/orientation" className="w-full sm:w-auto">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full sm:w-auto px-6 py-6 rounded-2xl font-bold text-sm bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/40 text-emerald-700 dark:text-emerald-300 flex items-center justify-center gap-2 shadow-xs"
+                  >
+                    <GraduationCap className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                    <span>{isAr ? "واش نقدر نقرا؟ (حاسبة التوجيه)" : "Estimer mes filières"}</span>
+                  </Button>
+                </Link>
+
                 <Link href="/experiences" className="w-full sm:w-auto">
                   <Button
                     variant="outline"
@@ -160,7 +181,7 @@ export function LandingView() {
                     className="w-full sm:w-auto px-6 py-6 rounded-2xl font-bold text-sm bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/40 text-amber-600 dark:text-amber-400 flex items-center justify-center gap-2"
                   >
                     <MessageSquareQuote className="h-4 w-4 text-amber-500" />
-                    <span>{isAr ? "بنك التجارب والعِبر" : "Témoignages BAC"}</span>
+                    <span>{isAr ? "بنك التجارب" : "Témoignages"}</span>
                   </Button>
                 </Link>
 
@@ -594,6 +615,170 @@ export function LandingView() {
       </section>
 
       {/* =================================================================== */}
+      {/* SECTION 6.5 — مستكشف التوجيه الجامعي ("واش نقدر نقرا؟")              */}
+      {/* =================================================================== */}
+      <section className="py-16 sm:py-24 bg-gradient-to-b from-canvas via-surface to-canvas border-b border-theme relative overflow-hidden" id="orientation-showcase">
+        <div className="absolute top-1/2 left-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2" />
+        <Container size="lg" className="relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            
+            {/* Visual Teaser: Dynamic Score & Major Cards */}
+            <div className="lg:col-span-6 order-2 lg:order-1">
+              <div className="p-6 sm:p-8 rounded-[32px] bg-[#FAF9F6] dark:bg-stone-900 border border-stone-200 dark:border-stone-800 shadow-clay space-y-6">
+                
+                {/* Score Header Preview */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-[#0F766E]/15 text-[#0F766E] dark:text-emerald-400 flex items-center justify-center font-bold text-2xl shadow-xs">
+                      🎓
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-stone-500 block">شعبة علوم تجريبية • 2026-2027</span>
+                      <span className="text-base font-black text-stone-900 dark:text-white">معدل البكالوريا التقديري</span>
+                    </div>
+                  </div>
+                  <div className="px-4 py-2 rounded-2xl bg-[#0F766E] text-white font-mono font-black text-xl shadow-md">
+                    14.72
+                  </div>
+                </div>
+
+                {/* Specialties Teaser Cards */}
+                <div className="space-y-3">
+                  <div className="p-3.5 rounded-2xl bg-white dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 flex items-center justify-between shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">🩺</span>
+                      <div>
+                        <div className="text-xs font-bold text-stone-900 dark:text-white">علوم طبية (Médecine)</div>
+                        <div className="text-[11px] text-stone-500">المعدل الموزون: ((2×Bac) + علوم) ÷ 3</div>
+                      </div>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/20">
+                      تنافسي
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-white dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 flex items-center justify-between shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">💻</span>
+                      <div>
+                        <div className="text-xs font-bold text-stone-900 dark:text-white">إعلام آلي (ESI & Universités)</div>
+                        <div className="text-[11px] text-stone-500">المعدل الموزون: ((2×Bac) + رياضيات) ÷ 3</div>
+                      </div>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                      مؤهل للتسجيل
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-white dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 flex items-center justify-between shadow-xs">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl">📐</span>
+                      <div>
+                        <div className="text-xs font-bold text-stone-900 dark:text-white">هندسة معمارية (Architecture)</div>
+                        <div className="text-[11px] text-stone-500">حسب الترتيب الوطني والمقاعد المتاحة</div>
+                      </div>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                      مؤهل للتسجيل
+                    </span>
+                  </div>
+                </div>
+
+                {/* Micro Disclaimer */}
+                <div className="text-[11px] text-stone-500 bg-stone-100 dark:bg-stone-800/60 p-3 rounded-xl border border-stone-200/60 dark:border-stone-700 flex items-center gap-2">
+                  <span>🏛️</span>
+                  <span>مبني 100% على المنشور الوزاري الرسمي وقرارات وزارة التعليم العالي والبحث العلمي MESRS.</span>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Content & Call to Action */}
+            <div className="lg:col-span-6 space-y-6 text-start order-1 lg:order-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                <Compass className="w-3.5 h-3.5" />
+                <span>أداة مجانية ذكية لكل تلاميذ الجزائر</span>
+              </div>
+
+              <h2 className="text-3xl sm:text-5xl font-black text-theme-text font-sans leading-tight">
+                واش نقدر نقرا؟ <br />
+                <span className="text-emerald-600 dark:text-emerald-400">
+                  اكتشف تخصصاتك الجامعية الحقيقية.
+                </span>
+              </h2>
+
+              <p className="text-sm sm:text-base text-theme-secondary leading-relaxed">
+                لا تبقَ تائهاً بين صفحات الفيسبوك والتكهنات العشوائية. احسب معدلك التقديري بالمواد والمعاملات الرسمية لشعبتك، واكتشف كل التخصصات والمدارس العليا المؤهل لها بدقة، مع شروط القبول ومعادلات الترتيب الرسمية.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <div className="p-3.5 rounded-2xl bg-surface border border-theme flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
+                    1
+                  </div>
+                  <div className="text-xs">
+                    <strong className="block text-theme-text mb-0.5">حساب رسمي بالمعاملات</strong>
+                    <span className="text-theme-muted">دعم كامل لجميع شعب البكالوريا الست.</span>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-surface border border-theme flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
+                    2
+                  </div>
+                  <div className="text-xs">
+                    <strong className="block text-theme-text mb-0.5">معادلات الترتيب الموزونة</strong>
+                    <span className="text-theme-muted">حساب دقيق لمعدل الطب، الصيدلة، والإعلام الآلي.</span>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-surface border border-theme flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
+                    3
+                  </div>
+                  <div className="text-xs">
+                    <strong className="block text-theme-text mb-0.5">بدون حواجز تسجيل</strong>
+                    <span className="text-theme-muted">استكشاف فوري ومجاني بدون طلب حساب أو بريد.</span>
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-surface border border-theme flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
+                    4
+                  </div>
+                  <div className="text-xs">
+                    <strong className="block text-theme-text mb-0.5">مقارنة التخصصات</strong>
+                    <span className="text-theme-muted">قارن بين أي تخصصين لمعرفة الفرق بوضوح.</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+                <Link href="/orientation" className="w-full sm:w-auto">
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="w-full sm:w-auto font-bold px-8 py-6 rounded-2xl text-base bg-emerald-600 hover:bg-emerald-700 text-white shadow-clay flex items-center justify-center gap-2.5"
+                  >
+                    <GraduationCap className="w-5 h-5" />
+                    <span>جرّب "واش نقدر نقرا؟" الآن مجاناً</span>
+                    <Arrow className="w-4 h-4" />
+                  </Button>
+                </Link>
+                <Link href="/orientation/medecine" className="w-full sm:w-auto text-center">
+                  <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-300 hover:underline">
+                    أو تصفح شروط الطب والإعلام الآلي ←
+                  </span>
+                </Link>
+              </div>
+
+            </div>
+
+          </div>
+        </Container>
+      </section>
+
+      {/* =================================================================== */}
       {/* SECTION 7 — الصورة الأخيرة + FINAL CTA                             */}
       {/* =================================================================== */}
       <section className="py-16 sm:py-24 bg-surface relative overflow-hidden border-b border-theme">
@@ -676,7 +861,9 @@ export function LandingView() {
 
             <div className="flex items-center gap-4 text-xs font-medium flex-wrap">
               <Link href="/bac-2027" className="hover:text-[var(--color-primary)] font-bold">دليل BAC 2027</Link>
-              <Link href="/calculator" className="hover:text-[var(--color-primary)] font-bold">حاسبة المعدل والتوجيه</Link>
+              <Link href="/orientation" className="hover:text-emerald-600 font-bold text-emerald-600 dark:text-emerald-400">واش نقدر نقرا؟ 🎓</Link>
+              <Link href="/experiences" className="hover:text-amber-600 font-bold text-amber-600 dark:text-amber-400">تجارب البكالوريا</Link>
+              <Link href="/calculator" className="hover:text-[var(--color-primary)]">حاسبة المعدل</Link>
               <Link href="/curriculum" className="hover:text-[var(--color-primary)]">المكتبة الحرة</Link>
               <Link href="/exams" className="hover:text-[var(--color-primary)]">بنك البكالوريات</Link>
               <Link href="/faq" className="hover:text-[var(--color-primary)]">الأسئلة الشائعة</Link>

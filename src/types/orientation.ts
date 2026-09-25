@@ -95,6 +95,13 @@ export type PublicationStatus =
   | 'PUBLISHED'
   | 'LEGACY';
 
+export type SourceQualityTier = 
+  | 'OFFICIAL_PRIMARY'       // Official Ministerial Circular No. 01, Executive Decrees, Ministerial Decrees
+  | 'OFFICIAL_INSTITUTIONAL' // University/Higher School internal regulations, official school portals
+  | 'OFFICIAL_HISTORICAL'    // MESRS / ESI annual automated processing cutoff statistical reports
+  | 'SECONDARY'              // Press releases, media briefs, academic studies
+  | 'UNVERIFIED';            // Unofficial forums, social media, unconfirmed leaks
+
 export interface OrientationSource {
   id: string;
   title: string;
@@ -102,10 +109,65 @@ export interface OrientationSource {
   publicationYear: string;
   academicYear: string;
   sourceType: 'OFFICIAL_CIRCULAR' | 'MINISTERIAL_DECREE' | 'ANNUAL_CUTOFF_REPORT' | 'INSTITUTION_REGULATION' | 'ADDENDUM';
+  sourceTier?: SourceQualityTier;
   referenceSection?: string;
+  pageNumber?: number | string;
+  articleNumber?: string;
+  exactCircularQuote?: string;
   verificationStatus: 'VERIFIED' | 'PARTIALLY_VERIFIED' | 'UNVERIFIED' | 'DEPRECATED';
   verifiedAt?: string;
   notes?: string;
+}
+
+export interface RuleEvidenceRecord {
+  id: string;
+  programId: string;
+  programCode: string;
+  programNameAr: string;
+  ruleId: string;
+  bacStreamId: BacStreamCode;
+  sourceId: string;
+  sourceTier: SourceQualityTier;
+  documentTitle: string;
+  academicYear: string;
+  pageOrSection: string;
+  exactCircularQuote: string;
+  streamPriority: number;
+  rankingBasis: RankingBasis;
+  formulaExpression: string | null;
+  minimumGeneralAverage: number | null;
+  minimumWeightedAverage: number | null;
+  subjectMinimums: Record<string, number | null>;
+  geographicScope: RegistrationScope;
+  geographicStatus?: 'OFFICIALLY_VERIFIED' | 'PENDING_OFFICIAL_ANNEX';
+  additionalConditions: Array<{
+    type: string;
+    titleAr: string;
+    descriptionAr: string;
+  }>;
+  firstReviewer: string;
+  firstReviewedAt: string;
+  firstReviewerRole: string;
+  secondReviewer: string | null;
+  secondReviewedAt: string | null;
+  secondReviewerRole: string | null;
+  verificationStatus: 'OFFICIALLY_VERIFIED' | 'PENDING_VERIFICATION' | 'BLOCKED_CONFLICT';
+  publicationStatus: PublicationStatus;
+  auditNotes?: string;
+}
+
+export interface ReviewAuditLog {
+  id: string;
+  recordType: 'PROGRAM' | 'ADMISSION_RULE' | 'CUTOFF' | 'GEOGRAPHIC_RULE' | 'SOURCE' | 'FORMULA';
+  recordId: string;
+  reviewer: string;
+  reviewerRole: 'data_engineer' | 'technical_auditor' | 'pedagogical_auditor' | 'education_specialist';
+  action: 'SUBMIT_FOR_VERIFICATION' | 'FIRST_VERIFY' | 'SECOND_REVIEW_APPROVE' | 'REJECT' | 'PUBLISH' | 'UNPUBLISH';
+  previousStatus: string;
+  newStatus: string;
+  sourceId?: string;
+  notes: string;
+  timestamp: string;
 }
 
 export interface OrientationVersion {

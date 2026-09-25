@@ -5,8 +5,10 @@
 // Invariants:
 // 1. Strict separation: Legal Eligibility != Ranking Score != Historical Guidance
 // 2. Data-driven formulas: Exact MESRS formulas with Bac General Average coefficients
-// 3. No arbitrary heuristics: -0.50 rule removed; historical cutoffs never alter eligibility
+// 3. No arbitrary heuristics: arbitrary point deductions removed; historical cutoffs never alter eligibility
 // 4. Missing data: Returns UNKNOWN, never converts to 0 or falsifies eligibility
+// 5. Stream Applicability: Non-applicable subjects are NOT_APPLICABLE (never 0)
+// 6. Two-Person Verified Data Gate: Only verified or published data evaluated
 // ==============================================================================
 
 import {
@@ -21,6 +23,7 @@ import {
   WeightedFormula,
   BacSubjectCode,
   DataTrustStatus,
+  OrientationSource,
 } from '@/types/orientation';
 import { isSubjectApplicableToStream } from './data/streams';
 import { getSource } from './data/sources';
@@ -130,7 +133,7 @@ export function evaluateProgramOffer(
   const reasons: string[] = [];
   const blockers: string[] = [];
   const warnings: string[] = [];
-  const additionalRequirements: string[] = [];
+  const additionalConditions: string[] = [];
   let missingRequiredGrade = false;
 
   // 1. Find admission rule matching student's stream
@@ -138,30 +141,47 @@ export function evaluateProgramOffer(
 
   if (!rule) {
     blockers.push(`شعبة البكالوريا (${student.streamId}) غير مقبولة في هذا التخصص وفق المنشور الوزاري.`);
+    const sources: OrientationSource[] = [];
+    if (program.sourceId) {
+      const s = getSource(program.sourceId);
+      if (s) sources.push(s);
+    }
     return {
       program,
       institutionOffer: offer,
       rule: null,
+      eligibility: 'NOT_ELIGIBLE',
       eligibilityStatus: 'NOT_ELIGIBLE',
+      admissionScore: {
+        scoreUsed: student.generalAverage,
+        scoreType: 'GENERAL_AVERAGE',
+        calculatedWeightedAverage: null,
+        formulaExpression: null,
+        formulaSource: null,
+      },
+      historicalCutoff: null,
+      historicalComparison: 'NO_HISTORICAL_DATA',
+      additionalConditions: [],
+      dataStatus: (program.dataQualityStatus === 'verified' ? 'VERIFIED' : 'PARTIALLY_VERIFIED') as DataTrustStatus,
+      sources,
       calculatedWeightedAverage: null,
       studentAverageUsed: student.generalAverage,
       priority: null,
       reasons,
       blockers,
       warnings,
-      historicalComparison: 'NO_HISTORICAL_DATA',
       historicalCutoffs: [],
-      additionalRequirements,
+      additionalRequirements: [],
       officialDisclaimer: OFFICIAL_DISCLAIMER,
-      dataStatus: 'VERIFIED',
-      source: program.sourceId ? getSource(program.sourceId) : null,
+      source: sources[0] || null,
     };
   }
 
-  // 2. Priority in Circular
+  // 2. Priority in Circular (CONF-02: Resolved at specific program & stream level)
   reasons.push(`الأولوية في الترتيب: ${rule.priority === 1 ? 'الأولوية 1 (أولوية قصوى)' : `الأولوية ${rule.priority}`}`);
 
   // 3. Geographic Scope Check (Wilaya of High School Baccalaureate)
+  // (CONF-01: Explicit handling of missing regional annex)
   if (offer.registrationScope === 'national') {
     reasons.push('التسجيل وطني: متاح لحاملي البكالوريا من جميع ولايات الوطن (58 ولاية).');
   } else if (offer.registrationScope === 'regional' || offer.registrationScope === 'local') {
@@ -174,7 +194,9 @@ export function evaluateProgramOffer(
     } else if (offer.institution.wilayaId !== student.wilayaId && offer.registrationScope === 'local') {
       blockers.push(`التسجيل محلي مخصص لحاملي بكالوريا ولاية ${offer.institution.wilayaId} فقط.`);
     } else if (offer.registrationScope === 'regional' && (!offer.eligibleWilayas || offer.eligibleWilayas.length === 0)) {
-      warnings.push('التسجيل جهوي: لم تحدد قائمة الولايات المؤهلة بدقة في الملحق الجغرافي المسجل.');
+      // CONF-01 Resolution: Show available institution wilaya and add explicit warning
+      warnings.push('التسجيل جهوي: الملحق الجغرافي التفصيلي للولايات التابعة لهذه المؤسسة لم يصدر بعد في المنشور الرسمي، والتبعية الجغرافية النهائية مشروطة بصدور الملحق الرسمي.');
+      reasons.push(`المؤسسة تقع في ولاية ${offer.institution.wilayaId} والتسجيل مصنف كجهوي.`);
     }
   }
 
@@ -187,8 +209,9 @@ export function evaluateProgramOffer(
     }
   }
 
-  // 5. Subject Specific Minimum Thresholds
-  if (rule.mathematicsMin !== null) {
+  // 5. Subject Specific Minimum Thresholds (With Stream Applicability Safeguard)
+  // Mathematics
+  if (rule.mathematicsMin !== null && isSubjectApplicableToStream(student.streamId, 'math')) {
     const mathGrade = getSubjectGrade(student.grades, 'math');
     if (mathGrade !== null) {
       if (mathGrade < rule.mathematicsMin) {
@@ -202,7 +225,8 @@ export function evaluateProgramOffer(
     }
   }
 
-  if (rule.physicsMin !== null) {
+  // Physics
+  if (rule.physicsMin !== null && isSubjectApplicableToStream(student.streamId, 'physics')) {
     const physGrade = getSubjectGrade(student.grades, 'physics');
     if (physGrade !== null) {
       if (physGrade < rule.physicsMin) {
@@ -216,7 +240,7 @@ export function evaluateProgramOffer(
     }
   }
 
-  // Natural sciences: verify applicability to stream first!
+  // Natural sciences: verify applicability to stream first! (e.g. not applicable to technique_math)
   if (rule.naturalSciencesMin !== null && isSubjectApplicableToStream(student.streamId, 'natural_sciences')) {
     const natGrade = getSubjectGrade(student.grades, 'natural_sciences');
     if (natGrade !== null) {
@@ -231,7 +255,38 @@ export function evaluateProgramOffer(
     }
   }
 
-  if (rule.englishMin !== null) {
+  // Arabic
+  if (rule.arabicMin !== null && isSubjectApplicableToStream(student.streamId, 'arabic')) {
+    const arGrade = getSubjectGrade(student.grades, 'arabic');
+    if (arGrade !== null) {
+      if (arGrade < rule.arabicMin) {
+        blockers.push(`نقطة اللغة العربية (${arGrade.toFixed(2)}) أقل من الحد الأدنى المطلوب (${rule.arabicMin.toFixed(2)}).`);
+      } else {
+        reasons.push(`استيفاء شرط مادة اللغة العربية: ${arGrade.toFixed(2)} >= ${rule.arabicMin.toFixed(2)}.`);
+      }
+    } else {
+      missingRequiredGrade = true;
+      warnings.push(`يشترط الحصول على علامة >= ${rule.arabicMin.toFixed(2)} في اللغة العربية.`);
+    }
+  }
+
+  // French
+  if (rule.frenchMin !== null && isSubjectApplicableToStream(student.streamId, 'french')) {
+    const frGrade = getSubjectGrade(student.grades, 'french');
+    if (frGrade !== null) {
+      if (frGrade < rule.frenchMin) {
+        blockers.push(`نقطة اللغة الفرنسية (${frGrade.toFixed(2)}) أقل من الحد الأدنى المطلوب (${rule.frenchMin.toFixed(2)}).`);
+      } else {
+        reasons.push(`استيفاء شرط مادة اللغة الفرنسية: ${frGrade.toFixed(2)} >= ${rule.frenchMin.toFixed(2)}.`);
+      }
+    } else {
+      missingRequiredGrade = true;
+      warnings.push(`يشترط الحصول على علامة >= ${rule.frenchMin.toFixed(2)} في اللغة الفرنسية.`);
+    }
+  }
+
+  // English
+  if (rule.englishMin !== null && isSubjectApplicableToStream(student.streamId, 'english')) {
     const engGrade = getSubjectGrade(student.grades, 'english');
     if (engGrade !== null) {
       if (engGrade < rule.englishMin) {
@@ -245,6 +300,7 @@ export function evaluateProgramOffer(
     }
   }
 
+  // Custom required subject threshold
   if (rule.requiredSubject !== null && rule.requiredSubjectMin !== null) {
     const reqSub = rule.requiredSubject as BacSubjectCode;
     if (isSubjectApplicableToStream(student.streamId, reqSub)) {
@@ -279,14 +335,17 @@ export function evaluateProgramOffer(
     }
   }
 
-  // 7. Additional conditions (ENS interviews, medical check, age limit)
+  // 7. Additional conditions (CONF-03: ENS interviews, medical check, physical aptitude)
   let hasConditionalRequirements = false;
   if (rule.additionalConditions && rule.additionalConditions.length > 0) {
     for (const cond of rule.additionalConditions) {
-      additionalRequirements.push(`${cond.titleAr}: ${cond.descriptionAr}`);
+      additionalConditions.push(`${cond.titleAr}: ${cond.descriptionAr}`);
       if (cond.type === 'medical_interview' || cond.type === 'physical_aptitude') {
         hasConditionalRequirements = true;
       }
+    }
+    if (hasConditionalRequirements) {
+      warnings.push('شرط خاص: القبول مشروط بالنجاح في المقابلة الشفوية / الفحص الطبي لسلامة الحواس أمام اللجنة المختصة.');
     }
   }
 
@@ -306,9 +365,13 @@ export function evaluateProgramOffer(
     eligibilityStatus = 'CONDITIONAL'; // Eligible, but requires interview / medical exam
   }
 
-  // 10. Historical Cutoffs Analysis (Separated, purely informational)
+  // 10. Historical Cutoffs Analysis (Separated, purely informational reference)
+  // (CONF-04: Never claim quota percentages; label as historical reference)
+  reasons.push('ملاحظة بيداغوجية: المقاعد البيداغوجية ونسب الكوطة لكل شعبة غير معلنة في المنشور الرسمي؛ الترتيب تنافسي مباشر بحسب عدد المترشحين.');
+
   const cutoffs = getHistoricalCutoffs(program, offer.institution.id, student.streamId);
   let historicalComparison: HistoricalComparison = 'NO_HISTORICAL_DATA';
+  let historicalCutoff: ProgramEvaluationResult['historicalCutoff'] = null;
 
   if (cutoffs.length > 0) {
     const latestCutoff = cutoffs[0];
@@ -316,41 +379,78 @@ export function evaluateProgramOffer(
       ? latestCutoff.weightedCutoff
       : latestCutoff.generalCutoff;
 
+    historicalCutoff = {
+      academicYear: latestCutoff.year,
+      streamScope: latestCutoff.stream ? 'STREAM' : 'GENERAL',
+      stream: latestCutoff.stream,
+      cutoffValue: targetCutoff,
+      cutoffType: (rule.rankingBasis === 'weighted_average' && latestCutoff.weightedCutoff !== null) ? 'WEIGHTED' : 'GENERAL',
+      sourceTitle: latestCutoff.source || 'إحصائيات التوجيه الجامعي الرسمية',
+    };
+
     if (targetCutoff !== null) {
       const diff = studentScore - targetCutoff;
       if (diff >= 0) {
-        historicalComparison = 'ABOVE_HISTORICAL_CUTOFF';
-        reasons.push(`مؤشر تاريخي: معدلك (${studentScore.toFixed(2)}) أعلى من آخر معدل قبول مسجل لهذه الشعبة (${targetCutoff.toFixed(2)}).`);
+        historicalComparison = 'ABOVE_HISTORICAL_REFERENCE';
+        reasons.push(`مؤشر استرشادي: معدلك (${studentScore.toFixed(2)}) أعلى من معدل القبول المرجعي لدفعة ${latestCutoff.year} (${targetCutoff.toFixed(2)}).`);
       } else if (diff >= -0.25) {
-        historicalComparison = 'NEAR_HISTORICAL_CUTOFF';
-        warnings.push(`مؤشر تاريخي: معدلك (${studentScore.toFixed(2)}) قريب من آخر معدل قبول مسجل (${targetCutoff.toFixed(2)}).`);
+        historicalComparison = 'NEAR_HISTORICAL_REFERENCE';
+        warnings.push(`مؤشر استرشادي: معدلك (${studentScore.toFixed(2)}) قريب من معدل القبول المرجعي لدفعة ${latestCutoff.year} (${targetCutoff.toFixed(2)}).`);
       } else {
-        historicalComparison = 'BELOW_HISTORICAL_CUTOFF';
-        warnings.push(`مؤشر تاريخي: معدلك (${studentScore.toFixed(2)}) يمنحك حق الترشح قانوناً، لكنه أقل من معدل القبول الأخير (${targetCutoff.toFixed(2)}).`);
+        historicalComparison = 'BELOW_HISTORICAL_REFERENCE';
+        warnings.push(`مؤشر استرشادي: معدلك (${studentScore.toFixed(2)}) يمنحك حق الترشح قانوناً، لكنه أدنى من معدل القبول المرجعي لدفعة ${latestCutoff.year} (${targetCutoff.toFixed(2)}).`);
       }
+    }
+  } else {
+    historicalComparison = 'CURRENT_CUTOFF_UNAVAILABLE';
+    warnings.push('معدل القبول التنافسي لسنة 2026 غير محدد مسبقاً ولا يمكن حسابه قبل صدور نتائج التوجيه؛ ولا توجد معدلات مرجعية سابقة.');
+  }
+
+  // 11. Compile Sources
+  const sources: OrientationSource[] = [];
+  if (rule.sourceId) {
+    const s = getSource(rule.sourceId);
+    if (s) sources.push(s);
+  }
+  if (program.sourceId) {
+    const s = getSource(program.sourceId);
+    if (s && !sources.some(existing => existing.id === s.id)) {
+      sources.push(s);
     }
   }
 
-  const dataStatus: DataTrustStatus = rule.verificationStatus || 'VERIFIED';
-  const source = rule.sourceId ? getSource(rule.sourceId) : (program.sourceId ? getSource(program.sourceId) : null);
+  const dataStatus: DataTrustStatus = rule.verificationStatus || (program.dataQualityStatus === 'verified' ? 'VERIFIED' : 'PARTIALLY_VERIFIED');
 
   return {
     program,
     institutionOffer: offer,
     rule,
+    eligibility: eligibilityStatus,
     eligibilityStatus,
+    admissionScore: {
+      scoreUsed: studentScore,
+      scoreType: (rule.rankingBasis === 'weighted_average' && calculatedWeighted !== null) ? 'WEIGHTED_AVERAGE' : 'GENERAL_AVERAGE',
+      calculatedWeightedAverage: calculatedWeighted,
+      formulaExpression: rule.weightedFormula?.expressionAr || null,
+      formulaSource: rule.weightedFormula?.sourceId || rule.sourceId || null,
+    },
+    historicalCutoff,
+    historicalComparison,
+    additionalConditions,
+    dataStatus,
+    sources,
+
+    // Backward-compatibility fields
     calculatedWeightedAverage: calculatedWeighted,
     studentAverageUsed: studentScore,
     priority: rule.priority,
     reasons,
     blockers,
     warnings,
-    historicalComparison,
     historicalCutoffs: cutoffs,
-    additionalRequirements,
+    additionalRequirements: additionalConditions,
     officialDisclaimer: OFFICIAL_DISCLAIMER,
-    dataStatus,
-    source,
+    source: sources[0] || null,
   };
 }
 
@@ -381,16 +481,22 @@ function getHistoricalCutoffs(program: Program, institutionId: string, streamId:
 }
 
 /**
- * Evaluates student profile across all programs in catalog
+ * Evaluates student profile across programs in catalog
+ * Filters out inactive, legacy, or DRAFT programs (CONF-05)
  */
 export function evaluateAllPrograms(
   student: StudentBacProfile,
-  programs: Program[]
+  programs: Program[],
+  options?: { onlyPublished?: boolean }
 ): OrientationReport {
   const results: ProgramEvaluationResult[] = [];
 
   for (const prog of programs) {
     if (!prog.isActive) continue;
+    if (prog.isLegacy) continue;
+    // CONF-05: Exclude draft or unmapped specialties from live evaluation
+    if (prog.publicationStatus === 'DRAFT') continue;
+    if (options?.onlyPublished && prog.publicationStatus !== 'PUBLISHED') continue;
 
     const offers = prog.institutions && prog.institutions.length > 0
       ? prog.institutions
@@ -402,7 +508,7 @@ export function evaluateAllPrograms(
     }
   }
 
-  // Sort results by:
+  // Sort results:
   // 1. Eligibility Status (ELIGIBLE > CONDITIONAL > UNKNOWN > NOT_ELIGIBLE)
   // 2. Stream Priority (Priority 1 first)
   // 3. Historical Comparison (ABOVE > NEAR > BELOW > NO_DATA)
@@ -416,14 +522,18 @@ export function evaluateAllPrograms(
   };
 
   const comparisonRank: Record<HistoricalComparison, number> = {
+    ABOVE_HISTORICAL_REFERENCE: 1,
     ABOVE_HISTORICAL_CUTOFF: 1,
+    NEAR_HISTORICAL_REFERENCE: 2,
     NEAR_HISTORICAL_CUTOFF: 2,
     NO_HISTORICAL_DATA: 3,
-    BELOW_HISTORICAL_CUTOFF: 4,
+    CURRENT_CUTOFF_UNAVAILABLE: 4,
+    BELOW_HISTORICAL_REFERENCE: 5,
+    BELOW_HISTORICAL_CUTOFF: 5,
   };
 
   results.sort((a, b) => {
-    const rankDiff = statusRank[a.eligibilityStatus] - statusRank[b.eligibilityStatus];
+    const rankDiff = statusRank[a.eligibility] - statusRank[b.eligibility];
     if (rankDiff !== 0) return rankDiff;
 
     const pA = a.priority ?? 99;
@@ -433,13 +543,13 @@ export function evaluateAllPrograms(
     const compDiff = comparisonRank[a.historicalComparison] - comparisonRank[b.historicalComparison];
     if (compDiff !== 0) return compDiff;
 
-    return b.studentAverageUsed - a.studentAverageUsed;
+    return b.admissionScore.scoreUsed - a.admissionScore.scoreUsed;
   });
 
-  const eligibleCount = results.filter(r => r.eligibilityStatus === 'ELIGIBLE').length;
-  const conditionalCount = results.filter(r => r.eligibilityStatus === 'CONDITIONAL').length;
-  const unknownCount = results.filter(r => r.eligibilityStatus === 'UNKNOWN').length;
-  const notEligibleCount = results.filter(r => r.eligibilityStatus === 'NOT_ELIGIBLE').length;
+  const eligibleCount = results.filter(r => r.eligibility === 'ELIGIBLE').length;
+  const conditionalCount = results.filter(r => r.eligibility === 'CONDITIONAL').length;
+  const unknownCount = results.filter(r => r.eligibility === 'UNKNOWN').length;
+  const notEligibleCount = results.filter(r => r.eligibility === 'NOT_ELIGIBLE').length;
 
   return {
     studentProfile: student,
@@ -452,6 +562,6 @@ export function evaluateAllPrograms(
     generatedAt: new Date().toISOString(),
     officialYear: OFFICIAL_ORIENTATION_YEAR,
     circularReference: OFFICIAL_CIRCULAR_REF,
-    dataTrustStatus: 'VERIFIED',
+    dataTrustStatus: results.length > 0 ? 'VERIFIED' : 'UNKNOWN',
   };
 }

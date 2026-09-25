@@ -58,7 +58,9 @@ export async function POST(req: NextRequest) {
       grades: grades || {},
     };
 
-    const report = await OrientationService.evaluateStudentOrientation(studentProfile);
+    const report = await OrientationService.evaluateStudentOrientation(studentProfile, {
+      includeVerified: true,
+    });
 
     return NextResponse.json(report, { status: 200 });
   } catch (error) {
