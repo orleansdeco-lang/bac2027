@@ -9,28 +9,30 @@ import {
   Building2,
   GraduationCap,
   Calendar,
-  Sparkles,
   ChevronDown,
   ChevronUp,
   Scale,
+  Sparkles,
   Info,
+  ShieldCheck,
 } from 'lucide-react';
 import { ProgramEvaluationResult, Program } from '@/types/orientation';
 
 interface ProgramEvaluationCardProps {
   evaluation: ProgramEvaluationResult;
-  onViewDetails: (program: Program) => void;
   onToggleCompare: (program: Program) => void;
   isCompared: boolean;
+  onViewDetails: (program: Program) => void;
 }
 
 export const ProgramEvaluationCard: React.FC<ProgramEvaluationCardProps> = ({
   evaluation,
-  onViewDetails,
   onToggleCompare,
   isCompared,
+  onViewDetails,
 }) => {
   const [expanded, setExpanded] = useState(false);
+
   const {
     program,
     institutionOffer,
@@ -43,47 +45,75 @@ export const ProgramEvaluationCard: React.FC<ProgramEvaluationCardProps> = ({
     blockers,
     warnings,
     historicalCutoffs,
+    historicalComparison,
     additionalRequirements,
+    source,
   } = evaluation;
 
-  // Status Styling & Badges
+  // Strict Legal Status Styling & Badges
   const statusConfig = {
-    COMPETITIVE: {
-      label: 'فرصة تنافسية قوية',
-      sublabel: 'مستوفٍ للشروط ومعدلك منافس تاريخياً',
+    ELIGIBLE: {
+      label: 'مستوفٍ للشروط القانونية للترشح',
+      sublabel: 'يحق لك الترشح قانوناً في بطاقة الرغبات',
       badgeClass: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
       icon: CheckCircle2,
       borderClass: 'border-emerald-500/30 hover:border-emerald-500/50',
     },
-    ELIGIBLE: {
-      label: 'مستوفٍ للشروط القانونية',
-      sublabel: 'يحق لك الترشح في بطاقة الرغبات',
-      badgeClass: 'bg-teal-500/15 text-teal-400 border-teal-500/30',
-      icon: CheckCircle2,
-      borderClass: 'border-teal-500/30 hover:border-teal-500/50',
-    },
-    STRETCH: {
-      label: 'مؤهل قانوناً (تنافسي)',
-      sublabel: 'مستوفٍ للشروط / معدل القبول الأخير أعلى',
+    CONDITIONAL: {
+      label: 'مؤهل بشرط المقابلة / الفحص الطبي',
+      sublabel: 'مستوفٍ للشروط الأكاديمية مع إلزامية اجتياز المقابلة أو الفحص',
       badgeClass: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
       icon: AlertTriangle,
       borderClass: 'border-amber-500/30 hover:border-amber-500/50',
     },
     UNKNOWN: {
-      label: 'بحاجة لعلامات المواد',
-      sublabel: 'يرجى إدخال النقاط لحساب المعدل الموزون',
+      label: 'يتطلب إدخال علامات المواد الأساسية',
+      sublabel: 'يرجى إدخال النقاط لحساب المعدل الموزون والتحقق من الشروط',
       badgeClass: 'bg-cyan-500/15 text-cyan-400 border-cyan-500/30',
       icon: HelpCircle,
       borderClass: 'border-cyan-500/30 hover:border-cyan-500/50',
     },
+    INSUFFICIENT_DATA: {
+      label: 'بيانات غير مكتملة',
+      sublabel: 'القاعدة الوزارية قيد التوثيق الرسمي',
+      badgeClass: 'bg-slate-500/15 text-slate-400 border-slate-500/30',
+      icon: HelpCircle,
+      borderClass: 'border-slate-500/30 hover:border-slate-500/50',
+    },
     NOT_ELIGIBLE: {
-      label: 'غير مستوفٍ للشروط',
+      label: 'غير مستوفٍ للشروط الوزارية للترشح',
       sublabel: 'لا يمكن إدراجه في بطاقة الرغبات',
       badgeClass: 'bg-rose-500/15 text-rose-400 border-rose-500/30',
       icon: XCircle,
       borderClass: 'border-rose-500/20 opacity-80 hover:opacity-100',
     },
-  }[eligibilityStatus];
+  }[eligibilityStatus] || {
+    label: 'قيد التقييم',
+    sublabel: '',
+    badgeClass: 'bg-slate-500/15 text-slate-400 border-slate-500/30',
+    icon: HelpCircle,
+    borderClass: 'border-slate-700',
+  };
+
+  // Historical Comparison Badge (Strictly informational)
+  const comparisonConfig = {
+    ABOVE_HISTORICAL_CUTOFF: {
+      label: 'معدلك أعلى من آخر معدل قبول سابق',
+      badgeClass: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    },
+    NEAR_HISTORICAL_CUTOFF: {
+      label: 'معدلك قريب من آخر معدل قبول سابق',
+      badgeClass: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    },
+    BELOW_HISTORICAL_CUTOFF: {
+      label: 'معدلك أقل من آخر معدل قبول سابق',
+      badgeClass: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    },
+    NO_HISTORICAL_DATA: {
+      label: 'لا تتوفر إحصائيات سابقة لهذه الشعبة',
+      badgeClass: 'bg-slate-800 text-slate-400 border-slate-700',
+    },
+  }[historicalComparison || 'NO_HISTORICAL_DATA'];
 
   const StatusIcon = statusConfig.icon;
 
@@ -93,7 +123,7 @@ export const ProgramEvaluationCard: React.FC<ProgramEvaluationCardProps> = ({
     local: { label: 'تسجيل محلي', class: 'bg-slate-700/60 text-slate-300 border-slate-600/40' },
     wilaya_group: { label: 'دوائر ولائية', class: 'bg-slate-700/60 text-slate-300 border-slate-600/40' },
     commune_group: { label: 'دوائر بلديات', class: 'bg-slate-700/60 text-slate-300 border-slate-600/40' },
-  }[institutionOffer.registrationScope];
+  }[institutionOffer.registrationScope] || { label: 'تسجيل عام', class: 'bg-slate-800 text-slate-400' };
 
   return (
     <div
@@ -175,67 +205,80 @@ export const ProgramEvaluationCard: React.FC<ProgramEvaluationCardProps> = ({
         </div>
       </div>
 
+      {/* Historical Comparison Indicator Banner */}
+      {comparisonConfig && (
+        <div className="mb-4">
+          <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-xl border text-xs font-semibold ${comparisonConfig.badgeClass}`}>
+            <Info className="w-3.5 h-3.5" />
+            <span>{comparisonConfig.label}</span>
+          </div>
+        </div>
+      )}
+
       {/* Numerical Stats & Weighted Average Breakdown */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 mb-4">
         {/* Student Score / Weighted */}
-        <div>
-          <span className="text-[11px] text-slate-400 block mb-0.5">المعدل المعتمد في الترتيب:</span>
-          <div className="flex items-baseline gap-2">
-            <span className="text-xl font-black text-white">
+        <div className="flex flex-col">
+          <span className="text-[11px] text-slate-400">
+            {rule?.rankingBasis === 'weighted_average' ? 'المعدل الموزون المحسوب' : 'معدل الترتيب (المعدل العام)'}
+          </span>
+          <div className="flex items-baseline gap-1.5 mt-0.5">
+            <span className="text-xl font-black text-emerald-400">
               {studentAverageUsed.toFixed(2)}
             </span>
             <span className="text-xs text-slate-500">/ 20</span>
-            {calculatedWeightedAverage !== null && rule?.weightedFormula && (
-              <span className="text-[11px] text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded font-medium">
-                موزون
-              </span>
-            )}
           </div>
         </div>
 
-        {/* Minimum Required */}
-        <div>
-          <span className="text-[11px] text-slate-400 block mb-0.5">الحد الأدنى للترشح (المنشور):</span>
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-base font-bold text-slate-300">
-              {rule?.minimumGeneralAverage
-                ? `${rule.minimumGeneralAverage.toFixed(2)} / 20`
-                : '10.00 / 20'}
+        {/* Required Min Average */}
+        <div className="flex flex-col">
+          <span className="text-[11px] text-slate-400">الحد الأدنى للترشح قانوناً</span>
+          <div className="flex items-baseline gap-1.5 mt-0.5">
+            <span className="text-xl font-bold text-white">
+              {rule?.minimumGeneralAverage !== null
+                ? `${rule?.minimumGeneralAverage?.toFixed(2)}`
+                : '10.00'}
             </span>
-            {rule?.rankingBasis === 'weighted_average' && (
-              <span className="text-[10px] text-slate-500">(أساس الترتيب موزون)</span>
-            )}
+            <span className="text-xs text-slate-500">/ 20</span>
           </div>
         </div>
 
-        {/* Historical Cutoff (Last Year) */}
-        <div>
-          <span className="text-[11px] text-slate-400 block mb-0.5">معدل القبول الأخير (2025/2024):</span>
-          {historicalCutoffs.length > 0 && (historicalCutoffs[0].weightedCutoff || historicalCutoffs[0].generalCutoff) ? (
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-base font-bold text-amber-300">
-                {(historicalCutoffs[0].weightedCutoff || historicalCutoffs[0].generalCutoff)?.toFixed(2)}
-              </span>
-              <span className="text-xs text-slate-500">/ 20</span>
-              <span className="text-[10px] text-slate-500 font-sans">
-                ({historicalCutoffs[0].year.slice(0, 4)})
-              </span>
-            </div>
-          ) : (
-            <span className="text-xs text-slate-500 italic">غير متوفر / يتحدد حسب الطلب</span>
-          )}
+        {/* Historical Cutoff Reference */}
+        <div className="flex flex-col sm:col-span-2 lg:col-span-1">
+          <span className="text-[11px] text-slate-400">معدل قبول آخر دورة (استرشادي)</span>
+          <div className="flex items-baseline gap-1.5 mt-0.5">
+            {historicalCutoffs.length > 0 ? (
+              <>
+                <span className="text-xl font-bold text-amber-400">
+                  {historicalCutoffs[0].weightedCutoff
+                    ? `${historicalCutoffs[0].weightedCutoff.toFixed(2)}`
+                    : historicalCutoffs[0].generalCutoff
+                    ? `${historicalCutoffs[0].generalCutoff.toFixed(2)}`
+                    : '—'}
+                </span>
+                <span className="text-xs text-slate-500">({historicalCutoffs[0].year})</span>
+              </>
+            ) : (
+              <span className="text-sm font-medium text-slate-500">غير متوفر</span>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Weighted Formula Box if exists */}
+      {/* Weighted Formula Description Banner */}
       {rule?.weightedFormula && (
-        <div className="text-xs bg-slate-800/50 rounded-lg p-2.5 border border-slate-700/60 mb-3 flex items-start gap-2">
+        <div className="mb-4 p-3 rounded-xl bg-emerald-950/20 border border-emerald-500/20 flex items-start gap-2.5">
           <Sparkles className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-          <div>
-            <span className="text-slate-400 font-medium">صيغة المعدل الموزون الرسمية: </span>
-            <span className="text-emerald-300 font-mono font-semibold" dir="ltr">
+          <div className="text-xs">
+            <div className="font-semibold text-emerald-300">
+              صيغة حساب المعدل الموزون المعتمدة رسمياً في المنشور الوزاري:
+            </div>
+            <div className="text-slate-300 font-mono mt-0.5" dir="ltr">
+              {rule.weightedFormula.expressionFr}
+            </div>
+            <div className="text-slate-400 mt-0.5">
               {rule.weightedFormula.expressionAr}
-            </span>
+            </div>
             {calculatedWeightedAverage !== null && (
               <div className="text-slate-300 mt-1">
                 النتيجة المحسوبة لنقاطك: <strong className="text-white">{calculatedWeightedAverage.toFixed(2)}</strong>
@@ -308,13 +351,14 @@ export const ProgramEvaluationCard: React.FC<ProgramEvaluationCardProps> = ({
           {historicalCutoffs.length > 0 && (
             <div className="pt-2">
               <span className="font-semibold text-slate-300 block mb-1.5">
-                سجل معدلات القبول السابقة (بيانات استرشادية فقط):
+                سجل معدلات القبول السابقة لهذه الشعبة (مؤشرات استرشادية فقط):
               </span>
               <div className="overflow-x-auto">
                 <table className="w-full text-right border-collapse">
                   <thead>
                     <tr className="border-b border-slate-800 text-[11px] text-slate-500">
                       <th className="py-1">السنة الجامعية</th>
+                      <th className="py-1">الشعبة</th>
                       <th className="py-1">المعدل العام الأدنى</th>
                       <th className="py-1">المعدل الموزون</th>
                     </tr>
@@ -323,6 +367,7 @@ export const ProgramEvaluationCard: React.FC<ProgramEvaluationCardProps> = ({
                     {historicalCutoffs.map((c, idx) => (
                       <tr key={idx} className="text-slate-300">
                         <td className="py-1 font-mono">{c.year}</td>
+                        <td className="py-1 text-slate-400">{c.stream || 'عام'}</td>
                         <td className="py-1 font-bold text-white">
                           {c.generalCutoff ? `${c.generalCutoff.toFixed(2)}` : '—'}
                         </td>
@@ -334,27 +379,40 @@ export const ProgramEvaluationCard: React.FC<ProgramEvaluationCardProps> = ({
                   </tbody>
                 </table>
               </div>
+              <p className="text-[11px] text-slate-500 mt-1.5">
+                * تنبيه: معدل القبول يتغير سنوياً حسب عدد المقاعد المتاحة ونتائج البكالوريا ورغبات المترشحين، ولا يشكل ضماناً للقبول.
+              </p>
+            </div>
+          )}
+
+          {/* Provenance Source Citation */}
+          {source && (
+            <div className="pt-2 border-t border-slate-800/60 flex items-center justify-between text-[11px] text-slate-400">
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span>المصدر المعتمد: {source.title}</span>
+              </div>
+              <span className="text-slate-500">دورة {source.academicYear}</span>
             </div>
           )}
         </div>
       )}
 
-      {/* Card Actions Footer */}
-      <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-800/70 text-xs">
+      {/* Card Footer Toggle Buttons */}
+      <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-800 text-xs">
         <button
-          onClick={() => onViewDetails(program)}
-          className="text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1 transition-colors"
+          onClick={() => setExpanded(!expanded)}
+          className="flex items-center gap-1 text-slate-400 hover:text-white transition-colors"
         >
-          <Info className="w-3.5 h-3.5" />
-          <span>بطاقة التخصص الرسمية</span>
+          <span>{expanded ? 'إخفاء التفاصيل' : 'عرض الشروط والتفاصيل الكاملة'}</span>
+          {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
         </button>
 
         <button
-          onClick={() => setExpanded(!expanded)}
-          className="text-slate-400 hover:text-slate-200 flex items-center gap-1 font-medium transition-colors"
+          onClick={() => onViewDetails(program)}
+          className="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors"
         >
-          <span>{expanded ? 'إخفاء التفاصيل' : 'عرض الشروط والتفاصيل'}</span>
-          {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+          بطاقة التخصص الرسمية &larr;
         </button>
       </div>
     </div>

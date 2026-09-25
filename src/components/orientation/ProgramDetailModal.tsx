@@ -203,7 +203,82 @@ export const ProgramDetailModal: React.FC<ProgramDetailModalProps> = ({
           </div>
         </div>
 
-        {/* Section 3: Legal Reference Footer */}
+        {/* Section 3: Stream-Stratified Historical Cutoffs */}
+        {program.cutoffs && program.cutoffs.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-base font-bold text-white mb-2 flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-cyan-400" />
+              <span>معدلات القبول في السنوات السابقة حسب الشعبة (مؤشرات استرشادية غير ملزمة)</span>
+            </h3>
+            <p className="text-[11px] text-slate-400 mb-3">
+              معدل القبول يتغير سنوياً حسب مستوى نتائج البكالوريا وعدد المقاعد ورغبات الطلبة. لا يمثل الحد الأدنى للترشح.
+            </p>
+
+            <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950/60">
+              <table className="w-full text-right text-xs">
+                <thead>
+                  <tr className="border-b border-slate-800 text-slate-400 bg-slate-900/80">
+                    <th className="py-2.5 px-3">السنة</th>
+                    <th className="py-2.5 px-3">الشعبة</th>
+                    <th className="py-2.5 px-3">الأولوية</th>
+                    <th className="py-2.5 px-3">معدل القبول العام</th>
+                    <th className="py-2.5 px-3">معدل القبول الموزون</th>
+                    <th className="py-2.5 px-3">المصدر</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60 text-slate-200">
+                  {program.cutoffs.map((c, idx) => (
+                    <tr key={idx} className="hover:bg-slate-800/30">
+                      <td className="py-2.5 px-3 font-mono text-cyan-300 font-semibold">{c.academicYear}</td>
+                      <td className="py-2.5 px-3 font-semibold text-white">
+                        {c.bacStreamId === 'sciences_exp' && 'علوم تجريبية'}
+                        {c.bacStreamId === 'math' && 'رياضيات'}
+                        {c.bacStreamId === 'technique_math' && 'تقني رياضي'}
+                        {c.bacStreamId === 'gestion_eco' && 'تسيير واقتصاد'}
+                        {c.bacStreamId === 'lettres_philo' && 'آداب وفلسفة'}
+                        {c.bacStreamId === 'langues_etrangeres' && 'لغات أجنبية'}
+                        {!c.bacStreamId && 'عام (كافة الشعب)'}
+                      </td>
+                      <td className="py-2.5 px-3">
+                        {c.priority ? (
+                          <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${c.priority === 1 ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-800 text-slate-300'}`}>
+                            أولوية {c.priority}
+                          </span>
+                        ) : '—'}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono font-bold text-white">
+                        {c.cutoffGeneralAverage ? `${c.cutoffGeneralAverage.toFixed(2)}` : '—'}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono text-emerald-400 font-bold">
+                        {c.cutoffWeightedAverage ? `${c.cutoffWeightedAverage.toFixed(2)}` : '—'}
+                      </td>
+                      <td className="py-2.5 px-3 text-slate-400 text-[11px]">
+                        {c.source}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Section 4: Provenance & Verified Official Source */}
+        {program.sourceId && (
+          <div className="mb-6 p-3.5 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 text-xs">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 text-emerald-300 font-semibold">
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span>مصدر البيانات المعتمد: {program.sourceId}</span>
+              </div>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-bold">
+                موثق رسمياً (VERIFIED)
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Section 5: Legal Reference Footer */}
         <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-xs text-slate-400">
           <div className="flex items-start gap-2.5">
             <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />

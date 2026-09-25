@@ -1,7 +1,8 @@
 // ==============================================================================
 // src/types/orientation.ts
 // Official Algerian Higher Education Orientation Data Types (MESRS)
-// Source of truth: circulaire.mesrs.dz
+// Source of truth: circulaire.mesrs.dz (Ministère de l'Enseignement Supérieur)
+// Strict Separation: Eligibility != Ranking Admission Score != Historical Cutoff
 // ==============================================================================
 
 export type BacStreamCode = 
@@ -11,6 +12,18 @@ export type BacStreamCode =
   | 'gestion_eco'
   | 'lettres_philo'
   | 'langues_etrangeres';
+
+export type BacSubjectCode = 
+  | 'general_average'
+  | 'math'
+  | 'physics'
+  | 'natural_sciences'
+  | 'arabic'
+  | 'french'
+  | 'english'
+  | 'philosophy'
+  | 'history_geo'
+  | 'accounting';
 
 export type RegistrationScope = 'national' | 'regional' | 'local' | 'wilaya_group' | 'commune_group';
 
@@ -44,12 +57,56 @@ export type RankingBasis =
   | 'weighted_average'
   | 'highest_of_general_or_weighted';
 
+/**
+ * Strict legal eligibility status — NEVER mixed with historical cutoffs
+ */
 export type EligibilityStatus = 
-  | 'ELIGIBLE'       // Meets all legal ministerial requirements
-  | 'COMPETITIVE'    // Meets requirements + close to or exceeds historical cutoffs
-  | 'STRETCH'        // Meets legal requirements, but historical cutoffs are significantly higher
-  | 'NOT_ELIGIBLE'   // Fails one or more legal requirements (stream, average, subject grade, geo)
-  | 'UNKNOWN';       // Missing required subject grades to calculate weighted average
+  | 'ELIGIBLE'          // Meets all official circular legal criteria (stream, average, subject mins, geo)
+  | 'NOT_ELIGIBLE'      // Fails one or more legal requirements
+  | 'CONDITIONAL'       // Meets legal requirements, but subject to mandatory interview, medical exam or age limit
+  | 'UNKNOWN'           // Missing student subject grades necessary to evaluate subject thresholds or formula
+  | 'INSUFFICIENT_DATA';// Official circular rules not yet fully verified or recorded for this option
+
+/**
+ * Historical cutoff guidance — strictly informational reference, never guarantees admission
+ */
+export type HistoricalComparison = 
+  | 'ABOVE_HISTORICAL_REFERENCE'  // Student's score meets or exceeds last observed cutoff reference
+  | 'NEAR_HISTORICAL_REFERENCE'   // Student's score is within narrow margin of last observed cutoff reference
+  | 'BELOW_HISTORICAL_REFERENCE'  // Student's score is below last observed cutoff reference
+  | 'CURRENT_CUTOFF_UNAVAILABLE'   // Current year (2026) competitive cutoff has not occurred yet
+  | 'NO_HISTORICAL_DATA'          // No verified historical cutoff available for this stream/institution
+  // Backward-compatibility aliases
+  | 'ABOVE_HISTORICAL_CUTOFF'
+  | 'NEAR_HISTORICAL_CUTOFF'
+  | 'BELOW_HISTORICAL_CUTOFF';
+
+export type DataTrustStatus = 
+  | 'VERIFIED'
+  | 'PARTIALLY_VERIFIED'
+  | 'CONDITIONAL'
+  | 'UNKNOWN'
+  | 'LEGACY_UNVERIFIED';
+
+export type PublicationStatus = 
+  | 'DRAFT'
+  | 'PENDING_VERIFICATION'
+  | 'VERIFIED'
+  | 'PUBLISHED'
+  | 'LEGACY';
+
+export interface OrientationSource {
+  id: string;
+  title: string;
+  url: string;
+  publicationYear: string;
+  academicYear: string;
+  sourceType: 'OFFICIAL_CIRCULAR' | 'MINISTERIAL_DECREE' | 'ANNUAL_CUTOFF_REPORT' | 'INSTITUTION_REGULATION' | 'ADDENDUM';
+  referenceSection?: string;
+  verificationStatus: 'VERIFIED' | 'PARTIALLY_VERIFIED' | 'UNVERIFIED' | 'DEPRECATED';
+  verifiedAt?: string;
+  notes?: string;
+}
 
 export interface OrientationVersion {
   id: string;
@@ -61,6 +118,7 @@ export interface OrientationVersion {
   publishedAt?: string;
   verifiedAt?: string;
   isCurrent: boolean;
+  notes?: string;
 }
 
 export interface BacStream {
@@ -70,6 +128,7 @@ export interface BacStream {
   nameFr: string;
   shortName: string;
   isActive: boolean;
+  applicableSubjects: BacSubjectCode[];
 }
 
 export interface Wilaya {
@@ -104,6 +163,7 @@ export interface Institution {
   address?: string;
   websiteUrl?: string;
   isActive: boolean;
+  sourceId?: string;
 }
 
 export interface Field {
@@ -115,15 +175,18 @@ export interface Field {
 }
 
 export interface WeightedFormulaTerm {
-  subject: 'math' | 'physics' | 'natural_sciences' | 'arabic' | 'french' | 'english' | 'philosophy' | 'history_geo' | 'accounting';
+  subject: BacSubjectCode;
   coefficient: number;
 }
 
 export interface WeightedFormula {
-  expressionAr: string; // e.g. "(2 × الرياضيات + الفيزياء) / 3"
-  expressionFr: string; // e.g. "(2M + P) / 3"
+  id?: string;
+  expressionAr: string; // e.g. "((2 × معدل البكالوريا) + علوم الطبيعة والحياة) / 3"
+  expressionFr: string; // e.g. "((2 × Bac) + Sciences) / 3"
   divisor: number;
   terms: WeightedFormulaTerm[];
+  sourceId?: string;
+  verificationStatus?: 'VERIFIED' | 'UNVERIFIED';
 }
 
 export interface AdmissionRule {
@@ -151,7 +214,9 @@ export interface AdmissionRule {
     descriptionAr: string;
   }>;
   academicYear: string;
+  sourceId?: string;
   dataConfidence: 'HIGH' | 'MEDIUM' | 'LOW';
+  verificationStatus: DataTrustStatus;
 }
 
 export interface ProgramBacEligibility {
@@ -166,15 +231,20 @@ export interface ProgramCutoff {
   id: string;
   programId: string;
   institutionId?: string;
-  bacStreamId?: BacStreamCode;
+  bacStreamId?: BacStreamCode; // Stream dimension is REQUIRED for accurate orientation
+  scope?: 'STREAM' | 'GENERAL';
+  cutoffType?: 'WEIGHTED' | 'GENERAL';
   priority?: number;
-  academicYear: string; // e.g. '2025-2026', '2024-2025'
+  academicYear: string; // e.g. '2024-2025', '2023-2024'
   cutoffGeneralAverage: number | null;
   cutoffWeightedAverage: number | null;
   lastAdmittedRank: number | null;
   source: string;
   sourceUrl?: string;
+  sourceId?: string;
   isOfficial: boolean;
+  verificationStatus: DataTrustStatus;
+  publicationStatus?: PublicationStatus;
 }
 
 export interface Program {
@@ -193,6 +263,9 @@ export interface Program {
   institutions?: InstitutionOffer[];
   eligibilityRules?: AdmissionRule[];
   cutoffs?: ProgramCutoff[];
+  sourceId?: string;
+  publicationStatus?: PublicationStatus;
+  isLegacy?: boolean;
 }
 
 export interface InstitutionOffer {
@@ -222,7 +295,29 @@ export interface ProgramEvaluationResult {
   program: Program;
   institutionOffer: InstitutionOffer;
   rule: AdmissionRule | null;
-  eligibilityStatus: EligibilityStatus;
+  eligibility: EligibilityStatus; // Separated canonical model
+  eligibilityStatus: EligibilityStatus; // Backward-compatibility alias
+  admissionScore: {
+    scoreUsed: number;
+    scoreType: 'WEIGHTED_AVERAGE' | 'GENERAL_AVERAGE';
+    calculatedWeightedAverage: number | null;
+    formulaExpression: string | null;
+    formulaSource?: string | null;
+  };
+  historicalCutoff: {
+    academicYear: string;
+    streamScope: 'STREAM' | 'GENERAL';
+    stream?: string;
+    cutoffValue: number | null;
+    cutoffType: 'WEIGHTED' | 'GENERAL';
+    sourceTitle?: string;
+  } | null;
+  historicalComparison: HistoricalComparison;
+  additionalConditions: string[];
+  dataStatus: DataTrustStatus;
+  sources: OrientationSource[];
+
+  // Compatibility fields
   calculatedWeightedAverage: number | null;
   studentAverageUsed: number;
   priority: number | null;
@@ -231,22 +326,27 @@ export interface ProgramEvaluationResult {
   warnings: string[];
   historicalCutoffs: {
     year: string;
+    stream?: string;
     generalCutoff: number | null;
     weightedCutoff: number | null;
+    source?: string;
+    isOfficial: boolean;
   }[];
   additionalRequirements: string[];
   officialDisclaimer: string;
+  source?: OrientationSource | null;
 }
 
 export interface OrientationReport {
   studentProfile: StudentBacProfile;
   totalEvaluated: number;
   eligibleCount: number;
-  competitiveCount: number;
-  stretchCount: number;
+  conditionalCount: number;
   notEligibleCount: number;
+  unknownCount: number;
   programs: ProgramEvaluationResult[];
   generatedAt: string;
   officialYear: string;
   circularReference: string;
+  dataTrustStatus: DataTrustStatus;
 }

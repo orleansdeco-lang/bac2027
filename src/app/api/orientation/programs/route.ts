@@ -1,22 +1,49 @@
 // ==============================================================================
 // src/app/api/orientation/programs/route.ts
 // GET /api/orientation/programs
-// Retrieves and filters official higher education programs
+// Retrieves and filters official higher education programs with Zod query validation
 // ==============================================================================
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { OrientationService } from '@/lib/orientation/orientation-service';
 import { BacStreamCode } from '@/types/orientation';
 
 export const dynamic = 'force-dynamic';
 
+const ProgramsQuerySchema = z.object({
+  stream: z.enum([
+    'sciences_exp',
+    'math',
+    'technique_math',
+    'gestion_eco',
+    'lettres_philo',
+    'langues_etrangeres',
+  ]).optional(),
+  field: z.string().max(20).optional(),
+  scope: z.enum(['national', 'regional', 'local', 'wilaya_group', 'commune_group']).optional(),
+  q: z.string().max(100).optional(),
+});
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const stream = searchParams.get('stream') as BacStreamCode | null;
-    const field = searchParams.get('field');
-    const scope = searchParams.get('scope');
-    const q = searchParams.get('q')?.trim().toLowerCase();
+    const rawQuery = {
+      stream: searchParams.get('stream') || undefined,
+      field: searchParams.get('field') || undefined,
+      scope: searchParams.get('scope') || undefined,
+      q: searchParams.get('q') || undefined,
+    };
+
+    const parseResult = ProgramsQuerySchema.safeParse(rawQuery);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: 'معايير التصفية والبحث غير صالحة.' },
+        { status: 400 }
+      );
+    }
+
+    const { stream, field, scope, q } = parseResult.data;
 
     let programs = await OrientationService.getPrograms();
 
@@ -26,7 +53,7 @@ export async function GET(req: NextRequest) {
 
     if (stream) {
       programs = programs.filter(p => 
-        p.eligibilityRules?.some(r => r.bacStreamId === stream)
+        p.eligibilityRules?.some(r => r.bacStreamId === stream as BacStreamCode)
       );
     }
 
@@ -37,11 +64,12 @@ export async function GET(req: NextRequest) {
     }
 
     if (q) {
+      const queryLower = q.trim().toLowerCase();
       programs = programs.filter(p =>
-        p.nameAr.toLowerCase().includes(q) ||
-        p.nameFr.toLowerCase().includes(q) ||
-        p.specialtyAr?.toLowerCase().includes(q) ||
-        p.programCode.includes(q)
+        p.nameAr.toLowerCase().includes(queryLower) ||
+        p.nameFr.toLowerCase().includes(queryLower) ||
+        p.specialtyAr?.toLowerCase().includes(queryLower) ||
+        p.programCode.includes(queryLower)
       );
     }
 

@@ -53,7 +53,7 @@ const CATEGORIES: { id: ExperienceCategory; label: string; icon: any }[] = [
   { id: "top_upvoted", label: "الأعلى تقييماً", icon: Flame },
 ];
 
-export default function ExperiencesPage() {
+export function ExperiencesView({ embedded = false }: { embedded?: boolean }) {
   const { user } = useAuth();
 
   // Top-Level Segmented Tab
@@ -250,9 +250,8 @@ export default function ExperiencesPage() {
     return { total, withSolution, highDiff };
   }, [challenges]);
 
-  return (
-    <AppShell activeNav="experiences">
-      <div className="w-full space-y-6 sm:space-y-8 font-sans selection:bg-[var(--color-primary)] selection:text-white">
+  const innerContent = (
+    <div className="w-full space-y-6 sm:space-y-8 font-sans selection:bg-[var(--color-primary)] selection:text-white">
         {/* Toast Notification */}
         {toastMessage && (
           <div className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2 animate-in fade-in slide-in-from-bottom-5 duration-300">
@@ -718,6 +717,15 @@ export default function ExperiencesPage() {
           isOperator={isOperatorUser}
         />
       </div>
-    </AppShell>
   );
+
+  if (embedded) {
+    return innerContent;
+  }
+
+  return <AppShell activeNav="experiences">{innerContent}</AppShell>;
+}
+
+export default function ExperiencesPage() {
+  return <ExperiencesView />;
 }

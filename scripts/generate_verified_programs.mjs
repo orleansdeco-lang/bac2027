@@ -1,4 +1,6 @@
-// ==============================================================================
+import fs from 'fs';
+
+const verifiedProgramsContent = `// ==============================================================================
 // Official MESRS Programs & Admission Circular Data (Verified Data Layer)
 // Source of truth: circulaire.mesrs.dz (Ministère de l'Enseignement Supérieur)
 // Grounded in Official Ministerial Circular No. 01 and 2024 Statistical Reports
@@ -9,7 +11,7 @@ import { OFFICIAL_INSTITUTIONS } from './institutions';
 const instMap = new Map(OFFICIAL_INSTITUTIONS.map(i => [i.id, i]));
 const getInst = (id: string) => {
   const inst = instMap.get(id);
-  if (!inst) throw new Error(`Institution ${id} not found`);
+  if (!inst) throw new Error(\`Institution \${id} not found\`);
   return inst;
 };
 
@@ -504,14 +506,14 @@ export const OFFICIAL_PROGRAMS: Program[] = [
         minimumGeneralAverage: 16.00,
         minimumWeightedAverage: 16.00,
         minimumSubjectAverage: null,
-        mathematicsMin: null,
+        mathematicsMin: 14.00,
         physicsMin: null,
         naturalSciencesMin: null,
         arabicMin: null,
         frenchMin: null,
         englishMin: null,
-        requiredSubject: null,
-        requiredSubjectMin: null,
+        requiredSubject: 'math',
+        requiredSubjectMin: 14.00,
         weightedFormula: {
           id: 'form-cs-math',
           expressionAr: '((2 × معدل البكالوريا) + علامة الرياضيات) / 3',
@@ -540,14 +542,14 @@ export const OFFICIAL_PROGRAMS: Program[] = [
         minimumGeneralAverage: 16.50,
         minimumWeightedAverage: 16.50,
         minimumSubjectAverage: null,
-        mathematicsMin: null,
+        mathematicsMin: 14.00,
         physicsMin: null,
         naturalSciencesMin: null,
         arabicMin: null,
         frenchMin: null,
         englishMin: null,
-        requiredSubject: null,
-        requiredSubjectMin: null,
+        requiredSubject: 'math',
+        requiredSubjectMin: 14.00,
         weightedFormula: {
           id: 'form-cs-math',
           expressionAr: '((2 × معدل البكالوريا) + علامة الرياضيات) / 3',
@@ -576,14 +578,14 @@ export const OFFICIAL_PROGRAMS: Program[] = [
         minimumGeneralAverage: 16.50,
         minimumWeightedAverage: 16.50,
         minimumSubjectAverage: null,
-        mathematicsMin: null,
+        mathematicsMin: 14.00,
         physicsMin: null,
         naturalSciencesMin: null,
         arabicMin: null,
         frenchMin: null,
         englishMin: null,
-        requiredSubject: null,
-        requiredSubjectMin: null,
+        requiredSubject: 'math',
+        requiredSubjectMin: 14.00,
         weightedFormula: {
           id: 'form-cs-math',
           expressionAr: '((2 × معدل البكالوريا) + علامة الرياضيات) / 3',
@@ -2342,5 +2344,7 @@ export const OFFICIAL_PROGRAMS: Program[] = [
     ],
   },
 ];
+`;
 
-export const VERIFIED_PROGRAMS = OFFICIAL_PROGRAMS;
+fs.writeFileSync('src/lib/orientation/data/programs.ts', verifiedProgramsContent, 'utf8');
+console.log('Successfully written verified programs.ts');

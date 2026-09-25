@@ -43,6 +43,7 @@ import {
   Clock,
   Users,
   Bot,
+  Landmark,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -189,40 +190,18 @@ export function Sidebar({ className }: SidebarProps) {
           matches: (p: string) => p.startsWith("/roadmap"),
         },
         {
-          href: "/ypt",
-          label_ar: "غرفة التركيز (YPT) ⏱️",
-          label_fr: "Focus Room (YPT) ⏱️",
-          icon: Clock,
-          matches: (p: string) => p.startsWith("/ypt") && !p.startsWith("/ypt/table"),
-          badge: isAr ? "حصري" : "YPT",
-          badgeColor: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
-        },
-        {
-          href: "/campus/tables",
-          label_ar: "مجالس العلم 3D 🏛️",
-          label_fr: "Majlis 3D Interactif",
-          icon: Users,
-          matches: (p: string) => p.startsWith("/campus/table") || p.startsWith("/campus/tables"),
-          badge: isAr ? "3D Live" : "3D Live",
-          badgeColor: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30",
-        },
-        {
-          href: "/campus",
-          label_ar: "بنك التجارب والمعرفة 🎒",
-          label_fr: "Campus & Bag",
-          icon: BookOpen,
-          matches: (p: string) => p === "/campus" || p.startsWith("/campus/feed"),
-          badge: isAr ? "جديد" : "Nouveau",
-          badgeColor: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
-        },
-        {
-          href: "/table",
-          label_ar: "طاولة المذاكرة الصامتة 🪑",
-          label_fr: "Salle d'étude silencieuse",
-          icon: Users,
-          matches: (p: string) => p.startsWith("/table") || p.startsWith("/ypt/table"),
-          badge: isAr ? "مباشر" : "Live",
-          badgeColor: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
+          href: "/diwan",
+          label_ar: "ديوان العلم 🏛️",
+          label_fr: "Diwan El Ilm",
+          icon: Landmark,
+          matches: (p: string) =>
+            p.startsWith("/diwan") ||
+            p.startsWith("/campus") ||
+            p.startsWith("/table") ||
+            p.startsWith("/ypt"),
+          badge: isAr ? "3D مجلس" : "3D",
+          badgeColor: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
+          highlight: true,
         },
         {
           href: "/curriculum",

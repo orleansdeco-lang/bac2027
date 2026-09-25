@@ -67,7 +67,7 @@ export const OrientationWizard: React.FC<OrientationWizardProps> = ({
   const [selectedProgramForModal, setSelectedProgramForModal] = useState<Program | null>(null);
 
   // Results filtering
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'COMPETITIVE' | 'ELIGIBLE' | 'STRETCH' | 'NOT_ELIGIBLE'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'ELIGIBLE' | 'CONDITIONAL' | 'UNKNOWN' | 'NOT_ELIGIBLE'>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Handle step completion & evaluation
@@ -469,45 +469,45 @@ export const OrientationWizard: React.FC<OrientationWizardProps> = ({
               {/* Counter Badges */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
                 <div
-                  onClick={() => setStatusFilter('COMPETITIVE')}
+                  onClick={() => setStatusFilter('ELIGIBLE')}
                   className={`p-4 rounded-2xl border cursor-pointer transition-all ${
-                    statusFilter === 'COMPETITIVE'
+                    statusFilter === 'ELIGIBLE'
                       ? 'bg-emerald-500/20 border-emerald-500 shadow-lg shadow-emerald-500/10'
                       : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
                   }`}
                 >
                   <span className="text-2xl font-black text-emerald-400 block">
-                    {report.competitiveCount}
+                    {report.eligibleCount}
                   </span>
-                  <span className="text-xs text-slate-300 font-semibold">فرص تنافسية قوية</span>
+                  <span className="text-xs text-slate-300 font-semibold">مؤهل قانوناً للترشح</span>
                 </div>
 
                 <div
-                  onClick={() => setStatusFilter('ELIGIBLE')}
+                  onClick={() => setStatusFilter('CONDITIONAL')}
                   className={`p-4 rounded-2xl border cursor-pointer transition-all ${
-                    statusFilter === 'ELIGIBLE'
-                      ? 'bg-teal-500/20 border-teal-500 shadow-lg'
+                    statusFilter === 'CONDITIONAL'
+                      ? 'bg-cyan-500/20 border-cyan-500 shadow-lg'
                       : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
                   }`}
                 >
-                  <span className="text-2xl font-black text-teal-400 block">
-                    {report.eligibleCount - report.competitiveCount - report.stretchCount}
+                  <span className="text-2xl font-black text-cyan-400 block">
+                    {report.conditionalCount}
                   </span>
-                  <span className="text-xs text-slate-300 font-semibold">مستوفٍ للشروط</span>
+                  <span className="text-xs text-slate-300 font-semibold">مؤهل بشروط (مقابلة/فحص)</span>
                 </div>
 
                 <div
-                  onClick={() => setStatusFilter('STRETCH')}
+                  onClick={() => setStatusFilter('UNKNOWN')}
                   className={`p-4 rounded-2xl border cursor-pointer transition-all ${
-                    statusFilter === 'STRETCH'
+                    statusFilter === 'UNKNOWN'
                       ? 'bg-amber-500/20 border-amber-500 shadow-lg'
                       : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
                   }`}
                 >
                   <span className="text-2xl font-black text-amber-400 block">
-                    {report.stretchCount}
+                    {report.unknownCount}
                   </span>
-                  <span className="text-xs text-slate-300 font-semibold">مؤهل (تنافسي)</span>
+                  <span className="text-xs text-slate-300 font-semibold">بحاجة لنقاط المواد</span>
                 </div>
 
                 <div
@@ -521,7 +521,7 @@ export const OrientationWizard: React.FC<OrientationWizardProps> = ({
                   <span className="text-2xl font-black text-rose-400 block">
                     {report.notEligibleCount}
                   </span>
-                  <span className="text-xs text-slate-300 font-semibold">غير مؤهل للترشح</span>
+                  <span className="text-xs text-slate-300 font-semibold">غير مؤهل</span>
                 </div>
               </div>
 
@@ -543,9 +543,9 @@ export const OrientationWizard: React.FC<OrientationWizardProps> = ({
               <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
                 {[
                   { key: 'ALL', label: 'جميع التخصصات' },
-                  { key: 'COMPETITIVE', label: 'تنافسية قوية' },
-                  { key: 'ELIGIBLE', label: 'مستوفٍ للشروط' },
-                  { key: 'STRETCH', label: 'مؤهل (تنافسي)' },
+                  { key: 'ELIGIBLE', label: 'مؤهل للترشح' },
+                  { key: 'CONDITIONAL', label: 'مؤهل بشروط' },
+                  { key: 'UNKNOWN', label: 'بحاجة لنقاط' },
                   { key: 'NOT_ELIGIBLE', label: 'غير مؤهل' },
                 ].map(f => (
                   <button

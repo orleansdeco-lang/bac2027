@@ -1,0 +1,1856 @@
+[
+  {
+    "id": "prog-med-01",
+    "code": "011",
+    "nameAr": "دكتور في الطب (العلوم الطبية)",
+    "nameFr": "Doctorat en Médecine",
+    "trainingType": "medicine",
+    "degreeType": "دكتوراه في الطب (Doctorat d'État)",
+    "durationYears": 7,
+    "academicYear": "2026-2027",
+    "institutionsCount": 8,
+    "institutions": [
+      {
+        "nameAr": "جامعة الجزائر 1 - بن يوسف بن خدة (كلية الطب والعلوم)",
+        "nameFr": "Université Alger 1 - Benyoucef Benkhedda",
+        "type": "university",
+        "scope": "regional",
+        "eligibleWilayasCount": 4,
+        "eligibleWilayas": [
+          16,
+          9,
+          35,
+          42
+        ]
+      },
+      {
+        "nameAr": "جامعة وهران 1 - أحمد بن بلة (كلية الطب والعلوم)",
+        "nameFr": "Université Oran 1 - Ahmed Ben Bella",
+        "type": "university",
+        "scope": "regional",
+        "eligibleWilayasCount": 6,
+        "eligibleWilayas": [
+          31,
+          13,
+          27,
+          29,
+          46,
+          48
+        ]
+      },
+      {
+        "nameAr": "جامعة قسنطينة 3 - صلاح بوبنيدر (كلية الطب والهندسة المعمارية)",
+        "nameFr": "Université Constantine 3 - Salah Boubnider",
+        "type": "university",
+        "scope": "regional",
+        "eligibleWilayasCount": 4,
+        "eligibleWilayas": [
+          25,
+          4,
+          18,
+          43
+        ]
+      },
+      {
+        "nameAr": "جامعة فرحات عباس - سطيف 1 (كلية الطب والعلوم والتكنولوجيا)",
+        "nameFr": "Université Ferhat Abbas - Sétif 1",
+        "type": "university",
+        "scope": "regional",
+        "eligibleWilayasCount": 4,
+        "eligibleWilayas": [
+          19,
+          6,
+          28,
+          34
+        ]
+      },
+      {
+        "nameAr": "جامعة باجي مختار - عنابة (كلية الطب والهندسة)",
+        "nameFr": "Université Badji Mokhtar - Annaba",
+        "type": "university",
+        "scope": "regional",
+        "eligibleWilayasCount": 5,
+        "eligibleWilayas": [
+          23,
+          21,
+          24,
+          36,
+          41
+        ]
+      },
+      {
+        "nameAr": "جامعة مصطفى بن بولعيد - باتنة 2",
+        "nameFr": "Université Mustapha Ben Boulaïd - Batna 2",
+        "type": "university",
+        "scope": "regional",
+        "eligibleWilayasCount": 5,
+        "eligibleWilayas": [
+          5,
+          7,
+          12,
+          40,
+          51
+        ]
+      },
+      {
+        "nameAr": "جامعة قاصدي مرباح - ورقلة (كلية الطب والعلوم)",
+        "nameFr": "Université Kasdi Merbah - Ouargla",
+        "type": "university",
+        "scope": "regional",
+        "eligibleWilayasCount": 6,
+        "eligibleWilayas": [
+          30,
+          39,
+          47,
+          55,
+          57,
+          58
+        ]
+      },
+      {
+        "nameAr": "جامعة طاهري محمد - بشار (كلية الطب والعلوم)",
+        "nameFr": "Université Tahri Mohamed - Béchar",
+        "type": "university",
+        "scope": "regional",
+        "eligibleWilayasCount": 11,
+        "eligibleWilayas": [
+          8,
+          1,
+          32,
+          37,
+          45,
+          49,
+          50,
+          52,
+          53,
+          54,
+          56
+        ]
+      }
+    ],
+    "rulesCount": 3,
+    "rules": [
+      {
+        "stream": "sciences_exp",
+        "priority": 1,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 15,
+        "minWeightedAvg": 15,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(Math + 2 × Sciences + Physique) / 4",
+        "formulaAr": "(نقطة الرياضيات + 2 × نقطة علوم الطبيعة والحياة + نقطة الفيزياء) / 4",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "math",
+        "priority": 2,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 15,
+        "minWeightedAvg": 15,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(Math + 2 × Sciences + Physique) / 4",
+        "formulaAr": "(نقطة الرياضيات + 2 × نقطة علوم الطبيعة والحياة + نقطة الفيزياء) / 4",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "technique_math",
+        "priority": 2,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 15,
+        "minWeightedAvg": 15,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(Math + 2 × Sciences + Physique) / 4",
+        "formulaAr": "(نقطة الرياضيات + 2 × نقطة علوم الطبيعة والحياة + نقطة الفيزياء) / 4",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      }
+    ],
+    "cutoffsCount": 4,
+    "cutoffs": [
+      {
+        "year": "2025-2026",
+        "institutionId": "inst-univ-alger1",
+        "generalCutoff": 16.92,
+        "weightedCutoff": 17.04,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      },
+      {
+        "year": "2024-2025",
+        "institutionId": "inst-univ-alger1",
+        "generalCutoff": 16.8,
+        "weightedCutoff": 16.95,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      },
+      {
+        "year": "2025-2026",
+        "institutionId": "inst-univ-oran1",
+        "generalCutoff": 16.75,
+        "weightedCutoff": 16.88,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      },
+      {
+        "year": "2024-2025",
+        "institutionId": "inst-univ-oran1",
+        "generalCutoff": 16.6,
+        "weightedCutoff": 16.72,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      }
+    ]
+  },
+  {
+    "id": "prog-pharm-01",
+    "code": "012",
+    "nameAr": "دكتور في الصيدلة",
+    "nameFr": "Doctorat en Pharmacie",
+    "trainingType": "pharmacy",
+    "degreeType": "دكتوراه في الصيدلة (Doctorat d'État)",
+    "durationYears": 6,
+    "academicYear": "2026-2027",
+    "institutionsCount": 3,
+    "institutions": [
+      {
+        "nameAr": "جامعة الجزائر 1 - بن يوسف بن خدة (كلية الطب والعلوم)",
+        "nameFr": "Université Alger 1 - Benyoucef Benkhedda",
+        "type": "university",
+        "scope": "regional",
+        "eligibleWilayasCount": 7,
+        "eligibleWilayas": [
+          16,
+          9,
+          35,
+          42,
+          10,
+          26,
+          44
+        ]
+      },
+      {
+        "nameAr": "جامعة وهران 1 - أحمد بن بلة (كلية الطب والعلوم)",
+        "nameFr": "Université Oran 1 - Ahmed Ben Bella",
+        "type": "university",
+        "scope": "regional",
+        "eligibleWilayasCount": 8,
+        "eligibleWilayas": [
+          31,
+          13,
+          27,
+          29,
+          46,
+          48,
+          20,
+          14
+        ]
+      },
+      {
+        "nameAr": "جامعة قسنطينة 3 - صلاح بوبنيدر (كلية الطب والهندسة المعمارية)",
+        "nameFr": "Université Constantine 3 - Salah Boubnider",
+        "type": "university",
+        "scope": "regional",
+        "eligibleWilayasCount": 9,
+        "eligibleWilayas": [
+          25,
+          4,
+          18,
+          43,
+          23,
+          21,
+          24,
+          36,
+          41
+        ]
+      }
+    ],
+    "rulesCount": 2,
+    "rules": [
+      {
+        "stream": "sciences_exp",
+        "priority": 1,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 15,
+        "minWeightedAvg": 15,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(Math + 2 × Sciences + Physique) / 4",
+        "formulaAr": "(نقطة الرياضيات + 2 × نقطة علوم الطبيعة والحياة + نقطة الفيزياء) / 4",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "math",
+        "priority": 2,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 15,
+        "minWeightedAvg": 15,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(Math + 2 × Sciences + Physique) / 4",
+        "formulaAr": "(نقطة الرياضيات + 2 × نقطة علوم الطبيعة والحياة + نقطة الفيزياء) / 4",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      }
+    ],
+    "cutoffsCount": 2,
+    "cutoffs": [
+      {
+        "year": "2025-2026",
+        "institutionId": "inst-univ-alger1",
+        "generalCutoff": 16.15,
+        "weightedCutoff": 16.3,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      },
+      {
+        "year": "2024-2025",
+        "institutionId": "inst-univ-alger1",
+        "generalCutoff": 15.9,
+        "weightedCutoff": 16.08,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      }
+    ]
+  },
+  {
+    "id": "prog-dent-01",
+    "code": "013",
+    "nameAr": "دكتور في طب الأسنان",
+    "nameFr": "Doctorat en Médecine Dentaire",
+    "trainingType": "dentistry",
+    "degreeType": "دكتوراه في طب الأسنان (Doctorat d'État)",
+    "durationYears": 6,
+    "academicYear": "2026-2027",
+    "institutionsCount": 3,
+    "institutions": [
+      {
+        "nameAr": "جامعة الجزائر 1 - بن يوسف بن خدة (كلية الطب والعلوم)",
+        "nameFr": "Université Alger 1 - Benyoucef Benkhedda",
+        "type": "university",
+        "scope": "regional",
+        "eligibleWilayasCount": 7,
+        "eligibleWilayas": [
+          16,
+          9,
+          35,
+          42,
+          10,
+          26,
+          44
+        ]
+      },
+      {
+        "nameAr": "جامعة وهران 1 - أحمد بن بلة (كلية الطب والعلوم)",
+        "nameFr": "Université Oran 1 - Ahmed Ben Bella",
+        "type": "university",
+        "scope": "regional",
+        "eligibleWilayasCount": 8,
+        "eligibleWilayas": [
+          31,
+          13,
+          27,
+          29,
+          46,
+          48,
+          20,
+          14
+        ]
+      },
+      {
+        "nameAr": "جامعة قسنطينة 3 - صلاح بوبنيدر (كلية الطب والهندسة المعمارية)",
+        "nameFr": "Université Constantine 3 - Salah Boubnider",
+        "type": "university",
+        "scope": "regional",
+        "eligibleWilayasCount": 9,
+        "eligibleWilayas": [
+          25,
+          4,
+          18,
+          43,
+          23,
+          21,
+          24,
+          36,
+          41
+        ]
+      }
+    ],
+    "rulesCount": 2,
+    "rules": [
+      {
+        "stream": "sciences_exp",
+        "priority": 1,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 15,
+        "minWeightedAvg": 15,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(Math + 2 × Sciences + Physique) / 4",
+        "formulaAr": "(نقطة الرياضيات + 2 × نقطة علوم الطبيعة والحياة + نقطة الفيزياء) / 4",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "math",
+        "priority": 2,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 15,
+        "minWeightedAvg": 15,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(Math + 2 × Sciences + Physique) / 4",
+        "formulaAr": "(نقطة الرياضيات + 2 × نقطة علوم الطبيعة والحياة + نقطة الفيزياء) / 4",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      }
+    ],
+    "cutoffsCount": 2,
+    "cutoffs": [
+      {
+        "year": "2025-2026",
+        "institutionId": "inst-univ-alger1",
+        "generalCutoff": 16.45,
+        "weightedCutoff": 16.58,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      },
+      {
+        "year": "2024-2025",
+        "institutionId": "inst-univ-alger1",
+        "generalCutoff": 16.3,
+        "weightedCutoff": 16.42,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      }
+    ]
+  },
+  {
+    "id": "prog-esi-01",
+    "code": "071",
+    "nameAr": "إعلام آلي - تحضيري مدرسة عليا (ESI الجزائر)",
+    "nameFr": "Classes Préparatoires Intégrées en Informatique (ESI Alger)",
+    "trainingType": "higher_school",
+    "degreeType": "مهندس دولة + ماستر في الإعلام الآلي (Ingénieur d'État)",
+    "durationYears": 5,
+    "academicYear": "2026-2027",
+    "institutionsCount": 1,
+    "institutions": [
+      {
+        "nameAr": "المدرسة الوطنية العليا للإعلام الآلي (واد السمار، الجزائر)",
+        "nameFr": "École Nationale Supérieure d'Informatique (Alger)",
+        "type": "higher_school",
+        "scope": "national",
+        "eligibleWilayasCount": 0,
+        "eligibleWilayas": []
+      }
+    ],
+    "rulesCount": 3,
+    "rules": [
+      {
+        "stream": "math",
+        "priority": 1,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 16,
+        "minWeightedAvg": 16,
+        "mathMin": 14,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": "math",
+        "requiredSubjectMin": 14,
+        "formulaFr": "(2 × Math + Physique) / 3",
+        "formulaAr": "(2 × نقطة الرياضيات + نقطة الفيزياء) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "technique_math",
+        "priority": 2,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 16.5,
+        "minWeightedAvg": 16.5,
+        "mathMin": 14,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": "math",
+        "requiredSubjectMin": 14,
+        "formulaFr": "(2 × Math + Physique) / 3",
+        "formulaAr": "(2 × نقطة الرياضيات + نقطة الفيزياء) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "sciences_exp",
+        "priority": 2,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 16.5,
+        "minWeightedAvg": 16.5,
+        "mathMin": 14,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": "math",
+        "requiredSubjectMin": 14,
+        "formulaFr": "(2 × Math + Physique) / 3",
+        "formulaAr": "(2 × نقطة الرياضيات + نقطة الفيزياء) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      }
+    ],
+    "cutoffsCount": 2,
+    "cutoffs": [
+      {
+        "year": "2025-2026",
+        "institutionId": "inst-esi-alger",
+        "generalCutoff": 18.42,
+        "weightedCutoff": 18.75,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      },
+      {
+        "year": "2024-2025",
+        "institutionId": "inst-esi-alger",
+        "generalCutoff": 18.25,
+        "weightedCutoff": 18.52,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      }
+    ]
+  },
+  {
+    "id": "prog-ensia-01",
+    "code": "072",
+    "nameAr": "ذكاء اصطناعي وعلوم البيانات (ENSIA سيدي عبد الله)",
+    "nameFr": "Intelligence Artificielle et Science des Données (ENSIA)",
+    "trainingType": "higher_school",
+    "degreeType": "مهندس دولة في الذكاء الاصطناعي (Ingénieur d'État)",
+    "durationYears": 5,
+    "academicYear": "2026-2027",
+    "institutionsCount": 1,
+    "institutions": [
+      {
+        "nameAr": "المدرسة الوطنية العليا للذكاء الاصطناعي (سيدي عبد الله)",
+        "nameFr": "École Nationale Supérieure d'Intelligence Artificielle (Sidi Abdellah)",
+        "type": "higher_school",
+        "scope": "national",
+        "eligibleWilayasCount": 0,
+        "eligibleWilayas": []
+      }
+    ],
+    "rulesCount": 3,
+    "rules": [
+      {
+        "stream": "math",
+        "priority": 1,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 16.5,
+        "minWeightedAvg": 16.5,
+        "mathMin": 14,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": "math",
+        "requiredSubjectMin": 14,
+        "formulaFr": "(2 × Math + Physique) / 3",
+        "formulaAr": "(2 × نقطة الرياضيات + نقطة الفيزياء) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "technique_math",
+        "priority": 2,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 17,
+        "minWeightedAvg": 17,
+        "mathMin": 14,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": "math",
+        "requiredSubjectMin": 14,
+        "formulaFr": "(2 × Math + Physique) / 3",
+        "formulaAr": "(2 × نقطة الرياضيات + نقطة الفيزياء) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "sciences_exp",
+        "priority": 2,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 17,
+        "minWeightedAvg": 17,
+        "mathMin": 14,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": "math",
+        "requiredSubjectMin": 14,
+        "formulaFr": "(2 × Math + Physique) / 3",
+        "formulaAr": "(2 × نقطة الرياضيات + نقطة الفيزياء) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      }
+    ],
+    "cutoffsCount": 2,
+    "cutoffs": [
+      {
+        "year": "2025-2026",
+        "institutionId": "inst-ensia",
+        "generalCutoff": 18.05,
+        "weightedCutoff": 18.35,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      },
+      {
+        "year": "2024-2025",
+        "institutionId": "inst-ensia",
+        "generalCutoff": 17.9,
+        "weightedCutoff": 18.2,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      }
+    ]
+  },
+  {
+    "id": "prog-enp-01",
+    "code": "081",
+    "nameAr": "أقسام تحضيرية في العلوم والتقنيات (المدرسة الوطنية متعددة التقنيات - ENP)",
+    "nameFr": "Classes Préparatoires en Sciences et Techniques (ENP Alger)",
+    "trainingType": "higher_school",
+    "degreeType": "مهندس دولة (Ingénieur d'État)",
+    "durationYears": 5,
+    "academicYear": "2026-2027",
+    "institutionsCount": 1,
+    "institutions": [
+      {
+        "nameAr": "المدرسة الوطنية متعددة التقنيات (الحراش، الجزائر)",
+        "nameFr": "École Nationale Polytechnique (Alger)",
+        "type": "higher_school",
+        "scope": "national",
+        "eligibleWilayasCount": 0,
+        "eligibleWilayas": []
+      }
+    ],
+    "rulesCount": 3,
+    "rules": [
+      {
+        "stream": "math",
+        "priority": 1,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 14.5,
+        "minWeightedAvg": 14.5,
+        "mathMin": 12,
+        "physMin": 12,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(2 × Math + Physique) / 3",
+        "formulaAr": "(2 × نقطة الرياضيات + نقطة الفيزياء) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "technique_math",
+        "priority": 1,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 14.5,
+        "minWeightedAvg": 14.5,
+        "mathMin": 12,
+        "physMin": 12,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(2 × Math + Physique) / 3",
+        "formulaAr": "(2 × نقطة الرياضيات + نقطة الفيزياء) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "sciences_exp",
+        "priority": 2,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 15,
+        "minWeightedAvg": 15,
+        "mathMin": 12,
+        "physMin": 12,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(2 × Math + Physique) / 3",
+        "formulaAr": "(2 × نقطة الرياضيات + نقطة الفيزياء) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      }
+    ],
+    "cutoffsCount": 2,
+    "cutoffs": [
+      {
+        "year": "2025-2026",
+        "institutionId": "inst-enp-alger",
+        "generalCutoff": 16.65,
+        "weightedCutoff": 16.9,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      },
+      {
+        "year": "2024-2025",
+        "institutionId": "inst-enp-alger",
+        "generalCutoff": 16.5,
+        "weightedCutoff": 16.78,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      }
+    ]
+  },
+  {
+    "id": "prog-arch-epau",
+    "code": "083",
+    "nameAr": "هندسة معمارية وعمران (المدرسة الوطنية العليا EPAU)",
+    "nameFr": "Architecture et Urbanisme (EPAU Alger)",
+    "trainingType": "higher_school",
+    "degreeType": "مهندس معمار دولة (Architecte d'État)",
+    "durationYears": 5,
+    "academicYear": "2026-2027",
+    "institutionsCount": 1,
+    "institutions": [
+      {
+        "nameAr": "المدرسة متعددة التقنيات للهندسة المعمارية والعمران (الحراش)",
+        "nameFr": "École Polytechnique d’Architecture et d’Urbanisme (EPAU)",
+        "type": "higher_school",
+        "scope": "national",
+        "eligibleWilayasCount": 0,
+        "eligibleWilayas": []
+      }
+    ],
+    "rulesCount": 3,
+    "rules": [
+      {
+        "stream": "math",
+        "priority": 1,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 13,
+        "minWeightedAvg": 13,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(2 × Math + Physique) / 3",
+        "formulaAr": "(2 × نقطة الرياضيات + نقطة الفيزياء) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "technique_math",
+        "priority": 1,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 13,
+        "minWeightedAvg": 13,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(2 × Math + Physique) / 3",
+        "formulaAr": "(2 × نقطة الرياضيات + نقطة الفيزياء) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "sciences_exp",
+        "priority": 2,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 13.5,
+        "minWeightedAvg": 13.5,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(2 × Math + Physique) / 3",
+        "formulaAr": "(2 × نقطة الرياضيات + نقطة الفيزياء) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      }
+    ],
+    "cutoffsCount": 1,
+    "cutoffs": [
+      {
+        "year": "2025-2026",
+        "institutionId": "inst-epau-alger",
+        "generalCutoff": 15.65,
+        "weightedCutoff": 15.95,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      }
+    ]
+  },
+  {
+    "id": "prog-mi-univ",
+    "code": "041",
+    "nameAr": "رياضيات وإعلام آلي (ليسانس وماستر LMD)",
+    "nameFr": "Mathématiques et Informatique (MI)",
+    "trainingType": "licence",
+    "degreeType": "ليسانس أكاديمي (Licence LMD - 3 ans)",
+    "durationYears": 3,
+    "academicYear": "2026-2027",
+    "institutionsCount": 4,
+    "institutions": [
+      {
+        "nameAr": "جامعة العلوم والتكنولوجيا هواري بومدين (باب الزوار)",
+        "nameFr": "Université des Sciences et de la Technologie Houari Boumediene (USTHB)",
+        "type": "university",
+        "scope": "regional",
+        "eligibleWilayasCount": 4,
+        "eligibleWilayas": [
+          16,
+          9,
+          35,
+          42
+        ]
+      },
+      {
+        "nameAr": "جامعة وهران 1 - أحمد بن بلة (كلية الطب والعلوم)",
+        "nameFr": "Université Oran 1 - Ahmed Ben Bella",
+        "type": "university",
+        "scope": "local",
+        "eligibleWilayasCount": 1,
+        "eligibleWilayas": [
+          31
+        ]
+      },
+      {
+        "nameAr": "جامعة فرحات عباس - سطيف 1 (كلية الطب والعلوم والتكنولوجيا)",
+        "nameFr": "Université Ferhat Abbas - Sétif 1",
+        "type": "university",
+        "scope": "local",
+        "eligibleWilayasCount": 1,
+        "eligibleWilayas": [
+          19
+        ]
+      },
+      {
+        "nameAr": "جامعة قسنطينة 3 - صلاح بوبنيدر (كلية الطب والهندسة المعمارية)",
+        "nameFr": "Université Constantine 3 - Salah Boubnider",
+        "type": "university",
+        "scope": "local",
+        "eligibleWilayasCount": 1,
+        "eligibleWilayas": [
+          25
+        ]
+      }
+    ],
+    "rulesCount": 3,
+    "rules": [
+      {
+        "stream": "math",
+        "priority": 1,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 11,
+        "minWeightedAvg": 11,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(2 × Math + Physique) / 3",
+        "formulaAr": "(2 × نقطة الرياضيات + نقطة الفيزياء) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "technique_math",
+        "priority": 2,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 11,
+        "minWeightedAvg": 11,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(2 × Math + Physique) / 3",
+        "formulaAr": "(2 × نقطة الرياضيات + نقطة الفيزياء) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "sciences_exp",
+        "priority": 2,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 11,
+        "minWeightedAvg": 11,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(2 × Math + Physique) / 3",
+        "formulaAr": "(2 × نقطة الرياضيات + نقطة الفيزياء) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      }
+    ],
+    "cutoffsCount": 2,
+    "cutoffs": [
+      {
+        "year": "2025-2026",
+        "institutionId": "inst-usthb",
+        "generalCutoff": 14.45,
+        "weightedCutoff": 14.72,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      },
+      {
+        "year": "2024-2025",
+        "institutionId": "inst-usthb",
+        "generalCutoff": 14.15,
+        "weightedCutoff": 14.38,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      }
+    ]
+  },
+  {
+    "id": "prog-st-univ",
+    "code": "051",
+    "nameAr": "علوم وتكنولوجيا (ST - ليسانس وماستر LMD)",
+    "nameFr": "Sciences et Technologies (ST)",
+    "trainingType": "licence",
+    "degreeType": "ليسانس أكاديمي (Licence LMD - 3 ans)",
+    "durationYears": 3,
+    "academicYear": "2026-2027",
+    "institutionsCount": 4,
+    "institutions": [
+      {
+        "nameAr": "جامعة العلوم والتكنولوجيا هواري بومدين (باب الزوار)",
+        "nameFr": "Université des Sciences et de la Technologie Houari Boumediene (USTHB)",
+        "type": "university",
+        "scope": "local",
+        "eligibleWilayasCount": 1,
+        "eligibleWilayas": [
+          16
+        ]
+      },
+      {
+        "nameAr": "جامعة سعد دحلب - البليدة 1",
+        "nameFr": "Université Saâd Dahlab - Blida 1",
+        "type": "university",
+        "scope": "local",
+        "eligibleWilayasCount": 1,
+        "eligibleWilayas": [
+          9
+        ]
+      },
+      {
+        "nameAr": "جامعة فرحات عباس - سطيف 1 (كلية الطب والعلوم والتكنولوجيا)",
+        "nameFr": "Université Ferhat Abbas - Sétif 1",
+        "type": "university",
+        "scope": "local",
+        "eligibleWilayasCount": 1,
+        "eligibleWilayas": [
+          19
+        ]
+      },
+      {
+        "nameAr": "جامعة امحمد بوقرة - بومرداس (هندسة النفط والمحروقات والإلكترونيك)",
+        "nameFr": "Université M'hamed Bougara - Boumerdès",
+        "type": "university",
+        "scope": "local",
+        "eligibleWilayasCount": 1,
+        "eligibleWilayas": [
+          35
+        ]
+      }
+    ],
+    "rulesCount": 3,
+    "rules": [
+      {
+        "stream": "math",
+        "priority": 1,
+        "rankingBasis": "general_average",
+        "minGenAvg": 10,
+        "minWeightedAvg": null,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(Math + Physique) / 2",
+        "formulaAr": "(نقطة الرياضيات + نقطة الفيزياء) / 2",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "technique_math",
+        "priority": 1,
+        "rankingBasis": "general_average",
+        "minGenAvg": 10,
+        "minWeightedAvg": null,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(Math + Physique) / 2",
+        "formulaAr": "(نقطة الرياضيات + نقطة الفيزياء) / 2",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "sciences_exp",
+        "priority": 1,
+        "rankingBasis": "general_average",
+        "minGenAvg": 10,
+        "minWeightedAvg": null,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(Math + Physique) / 2",
+        "formulaAr": "(نقطة الرياضيات + نقطة الفيزياء) / 2",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      }
+    ],
+    "cutoffsCount": 2,
+    "cutoffs": [
+      {
+        "year": "2025-2026",
+        "institutionId": "inst-usthb",
+        "generalCutoff": 12.5,
+        "weightedCutoff": null,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      },
+      {
+        "year": "2024-2025",
+        "institutionId": "inst-usthb",
+        "generalCutoff": 12.3,
+        "weightedCutoff": null,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      }
+    ]
+  },
+  {
+    "id": "prog-snv-univ",
+    "code": "061",
+    "nameAr": "علوم الطبيعة والحياة (SNV - ليسانس وماستر LMD)",
+    "nameFr": "Sciences de la Nature et de la Vie (SNV)",
+    "trainingType": "licence",
+    "degreeType": "ليسانس أكاديمي (Licence LMD - 3 ans)",
+    "durationYears": 3,
+    "academicYear": "2026-2027",
+    "institutionsCount": 3,
+    "institutions": [
+      {
+        "nameAr": "جامعة العلوم والتكنولوجيا هواري بومدين (باب الزوار)",
+        "nameFr": "Université des Sciences et de la Technologie Houari Boumediene (USTHB)",
+        "type": "university",
+        "scope": "local",
+        "eligibleWilayasCount": 1,
+        "eligibleWilayas": [
+          16
+        ]
+      },
+      {
+        "nameAr": "جامعة فرحات عباس - سطيف 1 (كلية الطب والعلوم والتكنولوجيا)",
+        "nameFr": "Université Ferhat Abbas - Sétif 1",
+        "type": "university",
+        "scope": "local",
+        "eligibleWilayasCount": 1,
+        "eligibleWilayas": [
+          19
+        ]
+      },
+      {
+        "nameAr": "جامعة وهران 1 - أحمد بن بلة (كلية الطب والعلوم)",
+        "nameFr": "Université Oran 1 - Ahmed Ben Bella",
+        "type": "university",
+        "scope": "local",
+        "eligibleWilayasCount": 1,
+        "eligibleWilayas": [
+          31
+        ]
+      }
+    ],
+    "rulesCount": 2,
+    "rules": [
+      {
+        "stream": "sciences_exp",
+        "priority": 1,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 10,
+        "minWeightedAvg": 10,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(2 × Sciences + Physique) / 3",
+        "formulaAr": "(2 × نقطة علوم الطبيعة والحياة + نقطة الفيزياء) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "math",
+        "priority": 2,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 10,
+        "minWeightedAvg": 10,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "formulaFr": "(2 × Sciences + Physique) / 3",
+        "formulaAr": "(2 × نقطة علوم الطبيعة والحياة + نقطة الفيزياء) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      }
+    ],
+    "cutoffsCount": 1,
+    "cutoffs": [
+      {
+        "year": "2025-2026",
+        "institutionId": "inst-usthb",
+        "generalCutoff": 11.85,
+        "weightedCutoff": 12.1,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      }
+    ]
+  },
+  {
+    "id": "prog-segc-univ",
+    "code": "031",
+    "nameAr": "علوم اقتصادية، التسيير وعلوم تجارية (SEGC)",
+    "nameFr": "Sciences Économiques, de Gestion et Commerciales (SEGC)",
+    "trainingType": "licence",
+    "degreeType": "ليسانس أكاديمي (Licence LMD - 3 ans)",
+    "durationYears": 3,
+    "academicYear": "2026-2027",
+    "institutionsCount": 3,
+    "institutions": [
+      {
+        "nameAr": "جامعة الجزائر 3 - إبراهيم سلطان شيبوط (العلوم الاقتصادية والإعلام)",
+        "nameFr": "Université Alger 3 - Ibrahim Sultan Cheibout",
+        "type": "university",
+        "scope": "local",
+        "eligibleWilayasCount": 1,
+        "eligibleWilayas": [
+          16
+        ]
+      },
+      {
+        "nameAr": "جامعة فرحات عباس - سطيف 1 (كلية الطب والعلوم والتكنولوجيا)",
+        "nameFr": "Université Ferhat Abbas - Sétif 1",
+        "type": "university",
+        "scope": "local",
+        "eligibleWilayasCount": 1,
+        "eligibleWilayas": [
+          19
+        ]
+      },
+      {
+        "nameAr": "جامعة وهران 1 - أحمد بن بلة (كلية الطب والعلوم)",
+        "nameFr": "Université Oran 1 - Ahmed Ben Bella",
+        "type": "university",
+        "scope": "local",
+        "eligibleWilayasCount": 1,
+        "eligibleWilayas": [
+          31
+        ]
+      }
+    ],
+    "rulesCount": 5,
+    "rules": [
+      {
+        "stream": "gestion_eco",
+        "priority": 1,
+        "rankingBasis": "general_average",
+        "minGenAvg": 10,
+        "minWeightedAvg": null,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "math",
+        "priority": 1,
+        "rankingBasis": "general_average",
+        "minGenAvg": 10,
+        "minWeightedAvg": null,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "technique_math",
+        "priority": 1,
+        "rankingBasis": "general_average",
+        "minGenAvg": 10,
+        "minWeightedAvg": null,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "sciences_exp",
+        "priority": 2,
+        "rankingBasis": "general_average",
+        "minGenAvg": 10,
+        "minWeightedAvg": null,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "lettres_philo",
+        "priority": 3,
+        "rankingBasis": "general_average",
+        "minGenAvg": 10,
+        "minWeightedAvg": null,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      }
+    ],
+    "cutoffsCount": 1,
+    "cutoffs": [
+      {
+        "year": "2025-2026",
+        "institutionId": "inst-univ-alger3",
+        "generalCutoff": 10.6,
+        "weightedCutoff": null,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      }
+    ]
+  },
+  {
+    "id": "prog-esc-kolea",
+    "code": "032",
+    "nameAr": "أقسام تحضيرية في العلوم التجارية والتسيير (ESC القليعة)",
+    "nameFr": "Classes Préparatoires en Sciences Commerciales et Financières (ESC Koléa)",
+    "trainingType": "higher_school",
+    "degreeType": "ماستر مدرسة عليا + ديبلوم المدرسة (Diplôme ESC)",
+    "durationYears": 5,
+    "academicYear": "2026-2027",
+    "institutionsCount": 1,
+    "institutions": [
+      {
+        "nameAr": "المدرسة العليا للتجارة (القليعة)",
+        "nameFr": "École Supérieure de Commerce (Koléa)",
+        "type": "higher_school",
+        "scope": "national",
+        "eligibleWilayasCount": 0,
+        "eligibleWilayas": []
+      }
+    ],
+    "rulesCount": 3,
+    "rules": [
+      {
+        "stream": "gestion_eco",
+        "priority": 1,
+        "rankingBasis": "general_average",
+        "minGenAvg": 12,
+        "minWeightedAvg": null,
+        "mathMin": 11,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": "math",
+        "requiredSubjectMin": 11,
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "math",
+        "priority": 1,
+        "rankingBasis": "general_average",
+        "minGenAvg": 12,
+        "minWeightedAvg": null,
+        "mathMin": 11,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": "math",
+        "requiredSubjectMin": 11,
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "sciences_exp",
+        "priority": 2,
+        "rankingBasis": "general_average",
+        "minGenAvg": 12.5,
+        "minWeightedAvg": null,
+        "mathMin": 11,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": "math",
+        "requiredSubjectMin": 11,
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      }
+    ],
+    "cutoffsCount": 2,
+    "cutoffs": [
+      {
+        "year": "2025-2026",
+        "institutionId": "inst-esc-kolea",
+        "generalCutoff": 14.05,
+        "weightedCutoff": null,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      },
+      {
+        "year": "2024-2025",
+        "institutionId": "inst-esc-kolea",
+        "generalCutoff": 13.8,
+        "weightedCutoff": null,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      }
+    ]
+  },
+  {
+    "id": "prog-droit-univ",
+    "code": "021",
+    "nameAr": "حقوق وعلوم قانونية وإدارية (ليسانس LMD)",
+    "nameFr": "Droit et Sciences Juridiques (LMD)",
+    "trainingType": "licence",
+    "degreeType": "ليسانس في الحقوق (Licence LMD - 3 ans)",
+    "durationYears": 3,
+    "academicYear": "2026-2027",
+    "institutionsCount": 3,
+    "institutions": [
+      {
+        "nameAr": "جامعة الجزائر 1 - بن يوسف بن خدة (كلية الطب والعلوم)",
+        "nameFr": "Université Alger 1 - Benyoucef Benkhedda",
+        "type": "university",
+        "scope": "local",
+        "eligibleWilayasCount": 1,
+        "eligibleWilayas": [
+          16
+        ]
+      },
+      {
+        "nameAr": "جامعة فرحات عباس - سطيف 1 (كلية الطب والعلوم والتكنولوجيا)",
+        "nameFr": "Université Ferhat Abbas - Sétif 1",
+        "type": "university",
+        "scope": "local",
+        "eligibleWilayasCount": 1,
+        "eligibleWilayas": [
+          19
+        ]
+      },
+      {
+        "nameAr": "جامعة وهران 1 - أحمد بن بلة (كلية الطب والعلوم)",
+        "nameFr": "Université Oran 1 - Ahmed Ben Bella",
+        "type": "university",
+        "scope": "local",
+        "eligibleWilayasCount": 1,
+        "eligibleWilayas": [
+          31
+        ]
+      }
+    ],
+    "rulesCount": 5,
+    "rules": [
+      {
+        "stream": "lettres_philo",
+        "priority": 1,
+        "rankingBasis": "general_average",
+        "minGenAvg": 10,
+        "minWeightedAvg": null,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "langues_etrangeres",
+        "priority": 1,
+        "rankingBasis": "general_average",
+        "minGenAvg": 10,
+        "minWeightedAvg": null,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "gestion_eco",
+        "priority": 1,
+        "rankingBasis": "general_average",
+        "minGenAvg": 10,
+        "minWeightedAvg": null,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "sciences_exp",
+        "priority": 2,
+        "rankingBasis": "general_average",
+        "minGenAvg": 10,
+        "minWeightedAvg": null,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "math",
+        "priority": 2,
+        "rankingBasis": "general_average",
+        "minGenAvg": 10,
+        "minWeightedAvg": null,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": null,
+        "requiredSubjectMin": null,
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      }
+    ],
+    "cutoffsCount": 1,
+    "cutoffs": [
+      {
+        "year": "2025-2026",
+        "institutionId": "inst-univ-alger1",
+        "generalCutoff": 10.45,
+        "weightedCutoff": null,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      }
+    ]
+  },
+  {
+    "id": "prog-ens-kouba-math",
+    "code": "091",
+    "nameAr": "أستاذ التعليم الثانوي في الرياضيات (PES - مدرسة الأساتذة بالقبة)",
+    "nameFr": "Professeur de l'Enseignement Secondaire en Mathématiques (ENS Kouba)",
+    "trainingType": "teacher_training",
+    "degreeType": "شهادة أستاذ التعليم الثانوي (Diplôme de PES - 5 ans)",
+    "durationYears": 5,
+    "academicYear": "2026-2027",
+    "institutionsCount": 1,
+    "institutions": [
+      {
+        "nameAr": "المدرسة العليا للأساتذة في العلوم الدقيقة (القبة، الجزائر)",
+        "nameFr": "École Normale Supérieure de Kouba (Alger)",
+        "type": "ens",
+        "scope": "regional",
+        "eligibleWilayasCount": 11,
+        "eligibleWilayas": [
+          16,
+          9,
+          35,
+          42,
+          10,
+          26,
+          44,
+          15,
+          6,
+          17,
+          28
+        ]
+      }
+    ],
+    "rulesCount": 3,
+    "rules": [
+      {
+        "stream": "math",
+        "priority": 1,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 14,
+        "minWeightedAvg": 14,
+        "mathMin": 13,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": "math",
+        "requiredSubjectMin": 13,
+        "formulaFr": "(2 × Math + Physique) / 3",
+        "formulaAr": "(2 × نقطة الرياضيات + نقطة الفيزياء) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": [
+          {
+            "type": "medical_interview",
+            "titleAr": "مقابلة شفوية وفحص طبي إلزامي",
+            "descriptionAr": "يخضع المترشح المقبول مبدئياً لمقابلة شفوية أمام لجنة أساتذة + فحص طبي للتأكد من القدرة على التدريس وسلامة الحواس والنطق."
+          },
+          {
+            "type": "age_limit",
+            "titleAr": "شرط السن القانوني",
+            "descriptionAr": "ألا يتجاوز سن المترشح 24 سنة عند تاريخ 31 ديسمبر من سنة البكالوريا."
+          }
+        ]
+      },
+      {
+        "stream": "technique_math",
+        "priority": 2,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 14.5,
+        "minWeightedAvg": 14.5,
+        "mathMin": 13,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": "math",
+        "requiredSubjectMin": 13,
+        "formulaFr": "(2 × Math + Physique) / 3",
+        "formulaAr": "(2 × نقطة الرياضيات + نقطة الفيزياء) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": [
+          {
+            "type": "medical_interview",
+            "titleAr": "مقابلة شفوية وفحص طبي إلزامي",
+            "descriptionAr": "يخضع المترشح لمقابلة شفوية وفحص طبي إلزامي."
+          }
+        ]
+      },
+      {
+        "stream": "sciences_exp",
+        "priority": 2,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 14.5,
+        "minWeightedAvg": 14.5,
+        "mathMin": 13,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": null,
+        "requiredSubject": "math",
+        "requiredSubjectMin": 13,
+        "formulaFr": "(2 × Math + Physique) / 3",
+        "formulaAr": "(2 × نقطة الرياضيات + نقطة الفيزياء) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": [
+          {
+            "type": "medical_interview",
+            "titleAr": "مقابلة شفوية وفحص طبي إلزامي",
+            "descriptionAr": "يخضع المترشح لمقابلة شفوية وفحص طبي إلزامي."
+          }
+        ]
+      }
+    ],
+    "cutoffsCount": 2,
+    "cutoffs": [
+      {
+        "year": "2025-2026",
+        "institutionId": "inst-ens-kouba",
+        "generalCutoff": 15.35,
+        "weightedCutoff": 15.65,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      },
+      {
+        "year": "2024-2025",
+        "institutionId": "inst-ens-kouba",
+        "generalCutoff": 15.1,
+        "weightedCutoff": 15.42,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      }
+    ]
+  },
+  {
+    "id": "prog-anglais-univ",
+    "code": "025",
+    "nameAr": "لغة وأدب إنجليزي (ليسانس وماستر LMD)",
+    "nameFr": "Langue et Littérature Anglaise (LMD)",
+    "trainingType": "licence",
+    "degreeType": "ليسانس أكاديمي (Licence LMD - 3 ans)",
+    "durationYears": 3,
+    "academicYear": "2026-2027",
+    "institutionsCount": 3,
+    "institutions": [
+      {
+        "nameAr": "جامعة الجزائر 2 - أبو القاسم سعد الله (الآداب واللغات والعلوم الإنسانية)",
+        "nameFr": "Université Alger 2 - Abou El Kacem Saâdallah",
+        "type": "university",
+        "scope": "local",
+        "eligibleWilayasCount": 1,
+        "eligibleWilayas": [
+          16
+        ]
+      },
+      {
+        "nameAr": "جامعة وهران 1 - أحمد بن بلة (كلية الطب والعلوم)",
+        "nameFr": "Université Oran 1 - Ahmed Ben Bella",
+        "type": "university",
+        "scope": "local",
+        "eligibleWilayasCount": 1,
+        "eligibleWilayas": [
+          31
+        ]
+      },
+      {
+        "nameAr": "جامعة قسنطينة 3 - صلاح بوبنيدر (كلية الطب والهندسة المعمارية)",
+        "nameFr": "Université Constantine 3 - Salah Boubnider",
+        "type": "university",
+        "scope": "local",
+        "eligibleWilayasCount": 1,
+        "eligibleWilayas": [
+          25
+        ]
+      }
+    ],
+    "rulesCount": 3,
+    "rules": [
+      {
+        "stream": "langues_etrangeres",
+        "priority": 1,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 10.5,
+        "minWeightedAvg": 10.5,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": 11,
+        "requiredSubject": "english",
+        "requiredSubjectMin": 11,
+        "formulaFr": "(Moyenne Générale + 2 × Anglais) / 3",
+        "formulaAr": "(المعدل العام + 2 × علامة الإنجليزية) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "lettres_philo",
+        "priority": 2,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 10.5,
+        "minWeightedAvg": 10.5,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": 11,
+        "requiredSubject": "english",
+        "requiredSubjectMin": 11,
+        "formulaFr": "(Moyenne Générale + 2 × Anglais) / 3",
+        "formulaAr": "(المعدل العام + 2 × علامة الإنجليزية) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      },
+      {
+        "stream": "sciences_exp",
+        "priority": 3,
+        "rankingBasis": "weighted_average",
+        "minGenAvg": 11,
+        "minWeightedAvg": 11,
+        "mathMin": null,
+        "physMin": null,
+        "natSciMin": null,
+        "arabicMin": null,
+        "frenchMin": null,
+        "englishMin": 11,
+        "requiredSubject": "english",
+        "requiredSubjectMin": 11,
+        "formulaFr": "(Moyenne Générale + 2 × Anglais) / 3",
+        "formulaAr": "(المعدل العام + 2 × علامة الإنجليزية) / 3",
+        "dataConfidence": "HIGH",
+        "additionalConditions": []
+      }
+    ],
+    "cutoffsCount": 1,
+    "cutoffs": [
+      {
+        "year": "2025-2026",
+        "institutionId": "inst-univ-alger2",
+        "generalCutoff": 13.4,
+        "weightedCutoff": 14.1,
+        "source": "circulaire.mesrs.dz",
+        "isOfficial": true
+      }
+    ]
+  }
+]

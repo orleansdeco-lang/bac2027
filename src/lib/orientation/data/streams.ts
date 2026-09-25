@@ -1,7 +1,8 @@
 // ==============================================================================
-// Official BAC Streams (MESRS & ONEC Algeria)
+// src/lib/orientation/data/streams.ts
+// Official BAC Streams & Subject Applicability Matrix (MESRS & ONEC Algeria)
 // ==============================================================================
-import { BacStream } from '@/types/orientation';
+import { BacStream, BacStreamCode, BacSubjectCode } from '@/types/orientation';
 
 export const OFFICIAL_BAC_STREAMS: BacStream[] = [
   {
@@ -11,6 +12,17 @@ export const OFFICIAL_BAC_STREAMS: BacStream[] = [
     nameFr: 'Sciences Expérimentales',
     shortName: 'علوم',
     isActive: true,
+    applicableSubjects: [
+      'general_average',
+      'math',
+      'physics',
+      'natural_sciences',
+      'arabic',
+      'french',
+      'english',
+      'philosophy',
+      'history_geo',
+    ],
   },
   {
     id: 'math',
@@ -19,6 +31,17 @@ export const OFFICIAL_BAC_STREAMS: BacStream[] = [
     nameFr: 'Mathématiques',
     shortName: 'رياضيات',
     isActive: true,
+    applicableSubjects: [
+      'general_average',
+      'math',
+      'physics',
+      'natural_sciences',
+      'arabic',
+      'french',
+      'english',
+      'philosophy',
+      'history_geo',
+    ],
   },
   {
     id: 'technique_math',
@@ -27,6 +50,17 @@ export const OFFICIAL_BAC_STREAMS: BacStream[] = [
     nameFr: 'Technique Mathématiques',
     shortName: 'تقني',
     isActive: true,
+    // Note: natural_sciences is NOT studied or tested in 3AS Technique Math
+    applicableSubjects: [
+      'general_average',
+      'math',
+      'physics',
+      'arabic',
+      'french',
+      'english',
+      'philosophy',
+      'history_geo',
+    ],
   },
   {
     id: 'gestion_eco',
@@ -35,6 +69,16 @@ export const OFFICIAL_BAC_STREAMS: BacStream[] = [
     nameFr: 'Gestion et Économie',
     shortName: 'تسيير',
     isActive: true,
+    applicableSubjects: [
+      'general_average',
+      'math',
+      'accounting',
+      'arabic',
+      'french',
+      'english',
+      'philosophy',
+      'history_geo',
+    ],
   },
   {
     id: 'lettres_philo',
@@ -43,6 +87,15 @@ export const OFFICIAL_BAC_STREAMS: BacStream[] = [
     nameFr: 'Lettres et Philosophie',
     shortName: 'فلسفة',
     isActive: true,
+    applicableSubjects: [
+      'general_average',
+      'philosophy',
+      'arabic',
+      'history_geo',
+      'french',
+      'english',
+      'math',
+    ],
   },
   {
     id: 'langues_etrangeres',
@@ -51,5 +104,29 @@ export const OFFICIAL_BAC_STREAMS: BacStream[] = [
     nameFr: 'Langues Étrangères',
     shortName: 'لغات',
     isActive: true,
+    applicableSubjects: [
+      'general_average',
+      'french',
+      'english',
+      'arabic',
+      'philosophy',
+      'history_geo',
+      'math',
+    ],
   },
 ];
+
+const streamMap = new Map(OFFICIAL_BAC_STREAMS.map(s => [s.id, s]));
+
+export function getStream(id: BacStreamCode): BacStream | null {
+  return streamMap.get(id) || null;
+}
+
+/**
+ * Checks whether a subject is applicable to a specific BAC stream
+ */
+export function isSubjectApplicableToStream(streamId: BacStreamCode, subject: BacSubjectCode): boolean {
+  const stream = streamMap.get(streamId);
+  if (!stream) return false;
+  return stream.applicableSubjects.includes(subject);
+}

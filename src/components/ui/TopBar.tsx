@@ -37,6 +37,7 @@ import {
   MessageSquareQuote,
   Zap,
   Users,
+  Landmark,
 } from "lucide-react";
 import { GlobalSearchModal } from "./GlobalSearchModal";
 import { MiniTimer, QuickStartFocusModal } from "@/components/focus";
@@ -92,7 +93,7 @@ export function TopBar() {
 
   const navLinks = [
     { href: "/dashboard", label: isAr ? "لوحة التحكم" : "Tableau de bord", icon: Compass },
-    { href: "/table", label: isAr ? "طاولة المذاكرة 🪑" : "Salle d'étude 🪑", icon: Users },
+    { href: "/diwan", label: isAr ? "ديوان العلم 🏛️" : "Diwan El Ilm 🏛️", icon: Landmark },
     { href: "/curriculum", label: isAr ? "المكتبة الشاملة" : "Bibliothèque", icon: BookOpen },
     { href: "/exams", label: isAr ? "بنك البكالوريات" : "Annales BAC", icon: FileText },
     { href: "/exams/terms", label: isAr ? "فروض واختبارات الفصول" : "Devoirs & Examens", icon: GraduationCap },

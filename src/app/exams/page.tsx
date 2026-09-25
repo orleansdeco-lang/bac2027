@@ -83,7 +83,7 @@ const DECADE_PRESETS = [
   { id: "1990s", label: "1990 — 1999" },
 ];
 
-function ExamsContent() {
+export function ExamsView({ embedded = false }: { embedded?: boolean }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useAuth();
@@ -293,8 +293,8 @@ function ExamsContent() {
     hasSolutionOnly ||
     searchQuery.trim().length > 0;
 
-  return (
-    <AppShell activeNav="exams">
+  const innerContent = (
+    <>
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed bottom-6 start-1/2 -translate-x-1/2 z-50 bg-stone-900 text-white px-5 py-3 rounded-2xl shadow-2xl border border-stone-700 flex items-center gap-2.5 text-xs sm:text-sm font-bold animate-in slide-in-from-bottom-5 duration-200">
@@ -965,8 +965,14 @@ function ExamsContent() {
           </div>
         )}
       </Container>
-    </AppShell>
+    </>
   );
+
+  if (embedded) {
+    return innerContent;
+  }
+
+  return <AppShell activeNav="exams">{innerContent}</AppShell>;
 }
 
 export default function ExamsPage() {
@@ -987,7 +993,7 @@ export default function ExamsPage() {
         </AppShell>
       }
     >
-      <ExamsContent />
+      <ExamsView />
     </Suspense>
   );
 }
