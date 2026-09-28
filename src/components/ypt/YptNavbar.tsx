@@ -67,12 +67,14 @@ export function YptNavbar() {
 
   const getAmbianceLabel = (t: FocusAmbianceType) => {
     switch (t) {
-      case "library":
+      case "brown_noise":
         return { label: "مكتبة هادئة", icon: "📚" };
       case "rain":
         return { label: "مطر خفيف", icon: "🌧️" };
-      case "deep_focus":
+      case "alpha_waves":
         return { label: "تركيز عميق", icon: "🌊" };
+      case "white_noise":
+        return { label: "ضوضاء بيضاء", icon: "📻" };
       default:
         return { label: "بدون صوت", icon: "🔇" };
     }
@@ -242,11 +244,11 @@ export function YptNavbar() {
                   <div className="space-y-1 text-xs">
                     <button
                       onClick={() => {
-                        setAmbiance("library");
+                        setAmbiance("brown_noise");
                         setIsSoundMenuOpen(false);
                       }}
                       className={`w-full flex items-center justify-between p-2 rounded-xl text-right transition-colors ${
-                        ambiance === "library"
+                        ambiance === "brown_noise"
                           ? "bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40"
                           : "hover:bg-white/5 text-white/80"
                       }`}
@@ -254,13 +256,13 @@ export function YptNavbar() {
                       <div className="flex items-center gap-2">
                         <span>📚</span>
                         <div>
-                          <div className="font-bold text-[11px]">مكتبة هادئة</div>
+                          <div className="font-bold text-[11px]">مكتبة هادئة (Brown Noise)</div>
                           <div className="text-[9px] text-white/50">
-                            همس هادئ وتقليب صفحات
+                            همس هادئ وترددات منخفضة لعزل الضجيج
                           </div>
                         </div>
                       </div>
-                      {ambiance === "library" && <span className="text-amber-400">●</span>}
+                      {ambiance === "brown_noise" && <span className="text-amber-400">●</span>}
                     </button>
 
                     <button
@@ -288,11 +290,11 @@ export function YptNavbar() {
 
                     <button
                       onClick={() => {
-                        setAmbiance("deep_focus");
+                        setAmbiance("alpha_waves");
                         setIsSoundMenuOpen(false);
                       }}
                       className={`w-full flex items-center justify-between p-2 rounded-xl text-right transition-colors ${
-                        ambiance === "deep_focus"
+                        ambiance === "alpha_waves"
                           ? "bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/40"
                           : "hover:bg-white/5 text-white/80"
                       }`}
@@ -300,13 +302,13 @@ export function YptNavbar() {
                       <div className="flex items-center gap-2">
                         <span>🌊</span>
                         <div>
-                          <div className="font-bold text-[11px]">تركيز عميق</div>
+                          <div className="font-bold text-[11px]">تركيز عميق (Alpha Waves)</div>
                           <div className="text-[9px] text-white/50">
-                            ضوضاء بنية مهدئة + موجات ألفا
+                            نغمات ثنائية تحفيزية لصفاء الذهن
                           </div>
                         </div>
                       </div>
-                      {ambiance === "deep_focus" && <span className="text-indigo-400">●</span>}
+                      {ambiance === "alpha_waves" && <span className="text-indigo-400">●</span>}
                     </button>
                   </div>
 

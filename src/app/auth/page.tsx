@@ -45,11 +45,14 @@ function AuthContent() {
 
   const searchParams = useSearchParams();
 
-  // Initialize mode from query param if provided
+  // Initialize mode from query param if provided, defaulting to signup if redirectTo is present
   React.useEffect(() => {
     const qMode = searchParams.get("mode");
+    const qRedirect = searchParams.get("redirectTo");
     if (qMode === "signup" || qMode === "login") {
       setMode(qMode);
+    } else if (qRedirect) {
+      setMode("signup");
     }
     const qRef = searchParams.get("ref");
     if (qRef) {
@@ -58,6 +61,58 @@ function AuthContent() {
       } catch {}
     }
   }, [searchParams]);
+
+  const rawRedirectTo = searchParams.get("redirectTo");
+  const redirectFeatureInfo = React.useMemo(() => {
+    if (!rawRedirectTo) return null;
+    if (rawRedirectTo.includes("/diwan")) {
+      return {
+        title: "أنت على بعد خطوة من: ديوان العلم 🏛️",
+        desc: "طاولات المذاكرة الجماعية الصامتة مع زملاء شعبتك لحل التمارين بالكتابة الحقيقية وسلالم التنقيط بدون أي تشتيت.",
+        icon: "🏛️",
+      };
+    }
+    if (rawRedirectTo.includes("/orientation")) {
+      return {
+        title: "أنت على بعد خطوة من: مستكشف التوجيه وحساب المعدل الموزون 🎓",
+        desc: "اكتشف جميع التخصصات والمدارس العليا المتاحة لك بحساب دقيق وفق المنشور الوزاري رقم 01 دورة 2026/2027.",
+        icon: "🧭",
+      };
+    }
+    if (rawRedirectTo.includes("/diagnostic")) {
+      return {
+        title: "أنت على بعد خطوة من: التشخيص البيداغوجي ومعمل الأخطاء 🎯",
+        desc: "رصد ثغراتك ونقاط ضعفك في المواد الأساسية وبناء خطة علاجية مخصصة لشعبتك.",
+        icon: "🧠",
+      };
+    }
+    if (rawRedirectTo.includes("/error-lab")) {
+      return {
+        title: "أنت على بعد خطوة من: معمل الأخطاء والتكرار المتباعد 🔬",
+        desc: "حفظ وتثبيت الأسئلة التي تعثرت فيها وترميمها واختبار توأم لتأكيد التمكن قبل البكالوريا.",
+        icon: "🔬",
+      };
+    }
+    if (rawRedirectTo.includes("/exams")) {
+      return {
+        title: "أنت على بعد خطوة من: بنك امتحانات البكالوريا الرسمية 📑",
+        desc: "مواضيع وحلول البكالوريا الرسمية 2016 - 2026 بسلالم التنقيط الوزارية المعتمدة.",
+        icon: "📑",
+      };
+    }
+    if (rawRedirectTo.includes("/planner")) {
+      return {
+        title: "أنت على بعد خطوة من: المخطط اليومي الذكي 📅",
+        desc: "جدولك اليومي المنظم للمذاكرة خطوة بخطوة حسب أهدافك وتفادي التراكم.",
+        icon: "📅",
+      };
+    }
+    return {
+      title: "مرحباً بك في منصة الشاطر للبكالوريا ✨",
+      desc: "أنشئ حسابك المجاني في دقيقة واحدة للوصول الفوري لجميع أدوات المنصة.",
+      icon: "✨",
+    };
+  }, [rawRedirectTo]);
 
   // If already logged in, redirect to the appropriate step
   React.useEffect(() => {
@@ -276,8 +331,25 @@ function AuthContent() {
                 </p>
               </div>
 
+              {/* Gateway Card for Protected Feature Redirects */}
+              {redirectFeatureInfo && (
+                <div className="p-4 bg-gradient-to-r from-amber-500/15 via-blue-500/10 to-emerald-500/15 border border-amber-500/40 rounded-2xl text-xs space-y-2 text-right shadow-sm" dir="rtl">
+                  <div className="flex items-center gap-2 font-black text-amber-300">
+                    <span className="text-base">{redirectFeatureInfo.icon}</span>
+                    <span>{redirectFeatureInfo.title}</span>
+                  </div>
+                  <p className="text-slate-300 text-[11px] leading-relaxed">
+                    {redirectFeatureInfo.desc}
+                  </p>
+                  <div className="text-[10px] text-emerald-400 font-bold flex items-center gap-1.5 pt-0.5 border-t border-white/10">
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                    <span>أنشئ حسابك المجاني في دقيقة واحدة للوصول الفوري (7 أيام مجاناً، 0 دج)</span>
+                  </div>
+                </div>
+              )}
+
               {/* Free Trial Banner in Signup Mode */}
-              {mode === "signup" && (
+              {mode === "signup" && !redirectFeatureInfo && (
                 <div className="p-3.5 bg-[var(--color-primary-soft)] border border-[var(--color-primary)]/30 rounded-2xl text-xs space-y-1">
                   <div className="flex items-center gap-2 font-bold text-[var(--color-primary)]">
                     <Sparkles className="w-4 h-4 shrink-0 text-[var(--color-primary)]" />

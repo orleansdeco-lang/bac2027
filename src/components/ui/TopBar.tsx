@@ -104,7 +104,6 @@ export function TopBar() {
     { href: "/error-lab", label: isAr ? "مختبر الأخطاء" : "Lab d'erreurs", icon: AlertTriangle },
     { href: "/progress", label: isAr ? "تقدمي" : "Progrès", icon: BarChart3 },
     { href: "/exam", label: isAr ? "وضع الامتحان" : "Mode Examen", icon: Target },
-    { href: "/account", label: isAr ? "حسابي" : "Mon compte", icon: User },
   ];
 
   const hasAccount = Boolean(user || studentProfile || profile || regData);
@@ -371,9 +370,8 @@ export function TopBar() {
             </Link>
           )}
 
-          <div className="hidden sm:block">
-            <LanguageSwitcher />
-          </div>
+          {/* Language Switcher hidden until full translation is ready */}
+          {/* <div className="hidden sm:block"><LanguageSwitcher /></div> */}
         </div>
       </div>
 
@@ -604,13 +602,11 @@ export function TopBar() {
             </Link>
           </div>
 
-          {/* Mobile Drawer Footer: Language Switcher */}
-          <div className="pt-2 border-t border-theme flex items-center justify-between">
-            <span className="text-xs text-theme-muted">
-              {isAr ? "لغة الواجهة:" : "Langue :"}
-            </span>
+          {/* Mobile Drawer Footer: Language Switcher hidden until translation is ready */}
+          {/* <div className="pt-2 border-t border-theme flex items-center justify-between">
+            <span className="text-xs text-theme-muted">{isAr ? "لغة الواجهة:" : "Langue :"}</span>
             <LanguageSwitcher />
-          </div>
+          </div> */}
         </div>
       )}
 

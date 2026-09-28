@@ -539,6 +539,18 @@ export const PlannerStorage = {
   // ============================================================================
   // 2. STUDY SESSIONS
   // ============================================================================
+  getStudySessions(userId: string = "demo-user"): StudySession[] {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem(`${STORAGE_KEYS.SESSIONS}_${userId}`);
+        if (raw) return JSON.parse(raw);
+      } catch (err) {
+        console.warn("Failed to read study sessions from localStorage", err);
+      }
+    }
+    return [];
+  },
+
   async loadStudySessions(userId?: string): Promise<StudySession[]> {
     const effectiveUserId = userId || "demo-user";
 
