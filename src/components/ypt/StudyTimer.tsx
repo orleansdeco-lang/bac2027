@@ -8,8 +8,6 @@ import {
   RotateCcw,
   Maximize2,
   Minimize2,
-  Volume2,
-  VolumeX,
   Sparkles,
   Flame,
   CheckCircle2,
@@ -24,7 +22,6 @@ import {
   BAC_MOTIVATIONAL_QUOTES,
   formatSecondsToTime,
 } from "@/lib/ypt/yptData";
-import { soundEngine, AmbientSoundType } from "@/lib/ypt/soundEngine";
 
 interface StudyTimerProps {
   onSessionComplete?: (session: StudySession) => void;
@@ -51,9 +48,6 @@ export function StudyTimer({
   // Fullscreen Anti-Distraction
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState<number>(0);
-
-  // Ambient sound
-  const [ambientSound, setAmbientSound] = useState<AmbientSoundType>("none");
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const selectedSubject =
@@ -94,7 +88,6 @@ export function StudyTimer({
             // Pomodoro countdown
             if (prev <= 1) {
               // Phase finished
-              soundEngine.playChime();
               handlePomodoroPhaseSwitch();
               return 0;
             }
@@ -125,13 +118,6 @@ export function StudyTimer({
       setPomodoroPhase("work");
       setSeconds(pomodoroWorkMinutes * 60);
     }
-  };
-
-  // Sound handler
-  const handleToggleSound = (sound: AmbientSoundType) => {
-    const newSound = ambientSound === sound ? "none" : sound;
-    setAmbientSound(newSound);
-    soundEngine.setAmbientSound(newSound);
   };
 
   // Switch Mode (Stopwatch <-> Pomodoro)
@@ -219,8 +205,6 @@ export function StudyTimer({
     if (onSessionComplete) {
       onSessionComplete(session);
     }
-
-    soundEngine.playChime();
 
     // Reset stopwatch after recording
     if (mode === "stopwatch") {
@@ -312,51 +296,6 @@ export function StudyTimer({
             </div>
           )}
 
-          {/* Ambient Sound Dropdown / Buttons */}
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => handleToggleSound("rain")}
-              className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1 border transition-all ${
-                ambientSound === "rain"
-                  ? "bg-sky-500/15 border-sky-500 text-sky-600 dark:text-sky-400"
-                  : "bg-surface border-theme text-theme-muted hover:text-theme-text"
-              }`}
-              title="صوت المطر الهادئ للتركيز"
-            >
-              🌧️ مطر
-            </button>
-            <button
-              onClick={() => handleToggleSound("white_noise")}
-              className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1 border transition-all ${
-                ambientSound === "white_noise"
-                  ? "bg-indigo-500/15 border-indigo-500 text-indigo-600 dark:text-indigo-400"
-                  : "bg-surface border-theme text-theme-muted hover:text-theme-text"
-              }`}
-              title="ضوضاء بيضاء للعزل الصوتي"
-            >
-              🌊 ضوضاء
-            </button>
-            <button
-              onClick={() => handleToggleSound("alpha_waves")}
-              className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1 border transition-all ${
-                ambientSound === "alpha_waves"
-                  ? "bg-purple-500/15 border-purple-500 text-purple-600 dark:text-purple-400"
-                  : "bg-surface border-theme text-theme-muted hover:text-theme-text"
-              }`}
-              title="موجات ألفا الذهنية للتركيز العميق"
-            >
-              🧠 ألفا
-            </button>
-            {ambientSound !== "none" && (
-              <button
-                onClick={() => handleToggleSound("none")}
-                className="p-1 rounded-lg text-theme-muted hover:text-rose-500 transition-colors"
-                title="كتم الصوت"
-              >
-                <VolumeX className="w-4 h-4" />
-              </button>
-            )}
-          </div>
         </div>
 
         {/* Dynamic Subject Selector Bar */}
@@ -543,50 +482,14 @@ export function StudyTimer({
                 )}
               </div>
 
-              {/* Sound Controls in Fullscreen */}
-              <div className="flex items-center gap-3">
-                <div className="hidden sm:flex items-center gap-2 bg-white/5 p-1 rounded-xl border border-white/10 text-xs">
-                  <button
-                    onClick={() => handleToggleSound("rain")}
-                    className={`px-3 py-1 rounded-lg transition-all ${
-                      ambientSound === "rain"
-                        ? "bg-sky-500 text-white font-bold"
-                        : "text-white/60 hover:text-white"
-                    }`}
-                  >
-                    🌧️ مطر
-                  </button>
-                  <button
-                    onClick={() => handleToggleSound("white_noise")}
-                    className={`px-3 py-1 rounded-lg transition-all ${
-                      ambientSound === "white_noise"
-                        ? "bg-indigo-500 text-white font-bold"
-                        : "text-white/60 hover:text-white"
-                    }`}
-                  >
-                    🌊 ضوضاء
-                  </button>
-                  <button
-                    onClick={() => handleToggleSound("alpha_waves")}
-                    className={`px-3 py-1 rounded-lg transition-all ${
-                      ambientSound === "alpha_waves"
-                        ? "bg-purple-500 text-white font-bold"
-                        : "text-white/60 hover:text-white"
-                    }`}
-                  >
-                    🧠 ألفا
-                  </button>
-                </div>
-
-                {/* Exit Fullscreen */}
-                <button
-                  onClick={() => setIsFullscreen(false)}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-xs font-bold transition-all text-white/90 hover:text-white"
-                >
-                  <Minimize2 className="w-4 h-4" />
-                  <span className="hidden sm:inline">إنهاء وضع الشاشة الكاملة (Esc)</span>
-                </button>
-              </div>
+              {/* Exit Fullscreen */}
+              <button
+                onClick={() => setIsFullscreen(false)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-xs font-bold transition-all text-white/90 hover:text-white"
+              >
+                <Minimize2 className="w-4 h-4" />
+                <span className="hidden sm:inline">إنهاء وضع الشاشة الكاملة (Esc)</span>
+              </button>
             </div>
 
             {/* Center Area: Super Giant Timer */}

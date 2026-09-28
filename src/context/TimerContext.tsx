@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import { YptSubject, StudySession, StudyTimerMode, PomodoroPhase, MustWinTask } from "@/types/ypt";
 import { YPT_BAC_SUBJECTS, getSubjectById, getCurrentSlotIndex } from "@/lib/ypt/yptData";
-import { soundEngine, FocusAmbianceType } from "@/lib/ypt/soundEngine";
+import { FocusAmbianceType } from "@/lib/ypt/soundEngine";
 
 export interface VirtualDeskSeat {
   seatIndex: number;
@@ -215,9 +215,9 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   const [selectedSubjectId, setSelectedSubjectId] = useState<string>("math");
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
-  // Soundscape
-  const [ambiance, setAmbianceState] = useState<FocusAmbianceType>("none");
-  const [volume, setVolumeState] = useState<number>(0.35);
+  // Soundscape (decommissioned - silent)
+  const [ambiance] = useState<FocusAmbianceType>("none");
+  const [volume] = useState<number>(0);
 
   // Table
   const [activeSeat, setActiveSeat] = useState<number | null>(null);
@@ -276,7 +276,6 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
             return prev + 1;
           } else {
             if (prev <= 1) {
-              soundEngine.playChime();
               handlePomodoroAutoSwitch();
               return 0;
             }
@@ -440,8 +439,6 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
       // Ignore
     }
 
-    soundEngine.playChime();
-
     // Reset stopwatch after recording
     if (mode === "stopwatch") {
       setSeconds(0);
@@ -450,24 +447,10 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Sound controls
-  const setAmbiance = (type: FocusAmbianceType) => {
-    setAmbianceState(type);
-    soundEngine.setAmbiance(type);
-  };
-
-  const setVolume = (v: number) => {
-    setVolumeState(v);
-    soundEngine.setVolume(v);
-  };
-
-  const toggleAmbiance = (preferredType?: FocusAmbianceType) => {
-    if (ambiance !== "none") {
-      setAmbiance("none");
-    } else {
-      setAmbiance(preferredType || "rain");
-    }
-  };
+  // Sound controls (decommissioned - silent stubs)
+  const setAmbiance = (_type: FocusAmbianceType) => {};
+  const setVolume = (_v: number) => {};
+  const toggleAmbiance = (_preferredType?: FocusAmbianceType) => {};
 
   // Virtual Table Seats
   const sitAtSeat = (seatIndex: number, goalNote?: string) => {

@@ -239,31 +239,31 @@ export function HeroInteractiveOrientation() {
   }, [selectedStream, bacAverage]);
 
   return (
-    <div className="w-full rounded-3xl bg-[#0B1222] border border-white/10 p-4 sm:p-6 shadow-2xl backdrop-blur-xl relative overflow-hidden" dir="rtl">
-      {/* Decorative Warm Ambient Glow */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+    <div className="w-full rounded-3xl bg-white border border-[#E4DED2] p-4 sm:p-6 shadow-card relative overflow-hidden" dir="rtl">
+      {/* Decorative Subtle Brand Ambient Glow */}
+      <div className="absolute top-0 right-0 w-64 h-64 bg-[#5F8F86]/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#D7A66A]/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header Bar */}
-      <div className="flex items-center justify-between pb-3.5 border-b border-white/[0.08] relative z-10">
+      <div className="flex items-center justify-between pb-3.5 border-b border-[#E4DED2] relative z-10">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center border border-amber-500/30">
+          <div className="w-9 h-9 rounded-2xl bg-[#DCE9E4] text-[#385853] flex items-center justify-center border border-[#5F8F86]/30">
             <Compass className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-black text-white">معاينة فورية: «واش نقدر نقرا؟»</span>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">
-                بدون حساب
+              <span className="text-xs font-black text-[#0F172A]">معاينة فورية: «واش نقدر نقرا؟»</span>
+              <span className="px-2 py-0.5 rounded-full bg-[#E8F2EB] text-[#245431] text-[10px] font-bold border border-[#6E9B7B]/30">
+                بدون تسجيل
               </span>
             </div>
-            <p className="text-[11px] text-slate-400">مبني على المنشور الوزاري الرسمي 2026/2027</p>
+            <p className="text-[11px] text-[#475569]">مبني على المنشور الوزاري الرسمي 2026/2027</p>
           </div>
         </div>
 
         <Link
           href={`/orientation?stream=${selectedStream}&avg=${bacAverage}`}
-          className="text-[11px] font-bold text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1 shrink-0"
+          className="text-[11px] font-bold text-[#5F8F86] hover:text-[#527D75] transition-colors flex items-center gap-1 shrink-0"
         >
           <span>المستكشف الكامل</span>
           <ArrowLeft className="w-3.5 h-3.5" />
@@ -272,9 +272,9 @@ export function HeroInteractiveOrientation() {
 
       {/* 1. Stream Selector */}
       <div className="pt-3.5 space-y-1.5 relative z-10">
-        <div className="flex items-center justify-between text-xs font-bold text-slate-300">
+        <div className="flex items-center justify-between text-xs font-bold text-[#334155]">
           <span>1. اختر شعبتك:</span>
-          <span className="text-[11px] text-amber-400">{STREAMS_CONFIG[selectedStream].nameAr}</span>
+          <span className="text-[11px] text-[#5F8F86] font-black">{STREAMS_CONFIG[selectedStream].nameAr}</span>
         </div>
 
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
@@ -291,8 +291,8 @@ export function HeroInteractiveOrientation() {
                   }}
                   className={`py-1.5 px-2 rounded-xl text-xs font-bold transition-all text-center border ${
                     isSelected
-                      ? "bg-amber-400 text-slate-950 border-amber-400 shadow-md shadow-amber-400/20 scale-[1.02]"
-                      : "bg-white/[0.04] text-slate-300 border-white/[0.08] hover:bg-white/[0.08] hover:text-white"
+                      ? "bg-[#5F8F86] text-white border-[#5F8F86] shadow-sm scale-[1.02]"
+                      : "bg-[#F7F3EA] text-[#334155] border-[#E4DED2] hover:bg-[#EFE9DC] hover:text-[#0F172A]"
                   }`}
                 >
                   {meta.shortName}
@@ -305,11 +305,11 @@ export function HeroInteractiveOrientation() {
 
       {/* 2. Bac Average Slider & Input */}
       <div className="pt-3.5 space-y-1.5 relative z-10">
-        <div className="flex items-center justify-between text-xs font-bold text-slate-300">
+        <div className="flex items-center justify-between text-xs font-bold text-[#334155]">
           <span>2. أدخل معدل البكالوريا التقديري:</span>
           <div className="flex items-center gap-1.5">
-            <span className="text-base font-black font-mono text-emerald-400">{bacAverage.toFixed(2)}</span>
-            <span className="text-[11px] text-slate-400">/ 20</span>
+            <span className="text-base font-black font-mono text-[#5F8F86]">{bacAverage.toFixed(2)}</span>
+            <span className="text-[11px] text-[#475569]">/ 20</span>
           </div>
         </div>
 
@@ -321,22 +321,22 @@ export function HeroInteractiveOrientation() {
           step="0.1"
           value={bacAverage}
           onChange={(e) => handleAverageChange(parseFloat(e.target.value))}
-          className="w-full accent-emerald-500 h-2 bg-slate-800 rounded-lg cursor-pointer"
+          className="w-full accent-[#5F8F86] h-2 bg-[#EFE9DC] rounded-lg cursor-pointer"
         />
 
         {/* Quick Average Presets */}
         <div className="flex items-center justify-between text-[11px] pt-0.5">
-          <span className="text-slate-400">معدلات سريعة:</span>
+          <span className="text-[#475569]">معدلات سريعة:</span>
           <div className="flex items-center gap-1.5">
             {[12.0, 14.0, 15.5, 17.0].map((preset) => (
               <button
                 key={preset}
                 type="button"
                 onClick={() => handleAverageChange(preset)}
-                className={`px-2 py-0.5 rounded-md font-mono font-bold transition-all ${
+                className={`px-2 py-0.5 rounded-md font-mono font-bold transition-all text-xs border ${
                   Math.abs(bacAverage - preset) < 0.05
-                    ? "bg-emerald-500 text-white"
-                    : "bg-white/[0.05] text-slate-400 hover:text-white"
+                    ? "bg-[#5F8F86] text-white border-[#5F8F86] shadow-sm"
+                    : "bg-[#F7F3EA] text-[#475569] border-[#E4DED2] hover:bg-[#EFE9DC] hover:text-[#0F172A]"
                 }`}
               >
                 {preset.toFixed(1)}
@@ -348,11 +348,11 @@ export function HeroInteractiveOrientation() {
 
       {/* 3. Live 3 Eligible Specialties Cards */}
       <div className="pt-3.5 space-y-1.5 relative z-10">
-        <div className="flex items-center justify-between text-xs font-bold text-slate-300">
+        <div className="flex items-center justify-between text-xs font-bold text-[#334155]">
           <span>3. التخصصات الأبرز بالمعادلة الوزارية:</span>
-          <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1">
-            <Sparkles className="w-3 h-3" />
-            <span>مطابق لـ /orientation</span>
+          <span className="text-[10px] text-[#385853] font-bold flex items-center gap-1 bg-[#DCE9E4] px-2 py-0.5 rounded-full border border-[#5F8F86]/30">
+            <Sparkles className="w-3 h-3 text-[#5F8F86]" />
+            <span>مطابق للمنشور الوزاري</span>
           </span>
         </div>
 
@@ -360,33 +360,33 @@ export function HeroInteractiveOrientation() {
           {specialties.map((spec, idx) => (
             <div
               key={idx}
-              className="p-2.5 rounded-2xl bg-white/[0.03] border border-white/[0.08] hover:border-white/20 transition-all flex items-center justify-between gap-3 text-right"
+              className="p-2.5 rounded-2xl bg-[#FAF7F0] border border-[#E4DED2] hover:border-[#5F8F86] hover:bg-white transition-all flex items-center justify-between gap-3 text-right"
             >
               <div className="flex items-center gap-2.5 min-w-0">
                 <span className="text-xl shrink-0">{spec.icon}</span>
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
-                    <h4 className="text-xs sm:text-sm font-black text-white truncate">{spec.nameAr}</h4>
+                    <h4 className="text-xs sm:text-sm font-black text-[#0F172A] truncate">{spec.nameAr}</h4>
                     {spec.badge === "ELIGIBLE" && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E8F2EB] text-[#245431] border border-[#6E9B7B]/30">
                         مؤهل للتسجيل ✅
                       </span>
                     )}
                     {spec.badge === "COMPETITIVE" && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F9EFE2] text-[#8C5D23] border border-[#D7A66A]/40">
                         تنافسي ⚡
                       </span>
                     )}
                     {spec.badge === "BORDERLINE" && (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-500/20 text-slate-300 border border-slate-500/30">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F1EFEA] text-[#554E45] border border-[#D8D0C3]">
                         يتطلب رفع المعدل 🔒
                       </span>
                     )}
                   </div>
-                  <div className="text-[11px] text-slate-400 flex items-center gap-2 pt-0.5">
+                  <div className="text-[11px] text-[#475569] flex items-center gap-2 pt-0.5">
                     <span>{spec.category}</span>
                     <span>•</span>
-                    <span className="font-mono text-emerald-300 font-bold">
+                    <span className="font-mono text-[#385853] font-bold">
                       المعدل الموزون: {spec.weightedScore.toFixed(2)}
                     </span>
                   </div>
@@ -394,10 +394,10 @@ export function HeroInteractiveOrientation() {
               </div>
 
               <div className="text-left shrink-0">
-                <span className="text-[10px] text-slate-400 font-mono block hidden sm:block">
+                <span className="text-[10px] text-[#475569] font-mono block hidden sm:block">
                   {spec.formulaAr}
                 </span>
-                <span className="text-[10px] font-bold text-amber-300 block">
+                <span className="text-[10px] font-bold text-[#8C5D23] block">
                   {spec.thresholdNote}
                 </span>
               </div>
@@ -407,16 +407,16 @@ export function HeroInteractiveOrientation() {
       </div>
 
       {/* Bottom Actions inside Widget */}
-      <div className="mt-3.5 pt-3.5 border-t border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-2.5 relative z-10">
+      <div className="mt-3.5 pt-3.5 border-t border-[#E4DED2] flex flex-col sm:flex-row items-center justify-between gap-2.5 relative z-10">
         <Link
           href={`/orientation?stream=${selectedStream}&avg=${bacAverage}`}
           className="w-full sm:w-auto"
         >
           <button
             type="button"
-            className="w-full sm:w-auto px-4 py-2 rounded-xl bg-white/[0.06] hover:bg-white/[0.1] text-emerald-300 border border-emerald-500/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+            className="w-full sm:w-auto px-4 py-2 rounded-xl bg-[#F7F3EA] hover:bg-[#EFE9DC] text-[#385853] border border-[#5F8F86]/30 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
           >
-            <GraduationCap className="w-3.5 h-3.5" />
+            <GraduationCap className="w-3.5 h-3.5 text-[#5F8F86]" />
             <span>عرض كل التخصصات في المستكشف الكامل</span>
             <ArrowLeft className="w-3.5 h-3.5" />
           </button>
@@ -425,7 +425,7 @@ export function HeroInteractiveOrientation() {
         <Link href="/auth/register" className="w-full sm:w-auto">
           <button
             type="button"
-            className="w-full sm:w-auto px-5 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20 transition-all cursor-pointer"
+            className="w-full sm:w-auto px-5 py-2 rounded-xl bg-[#5F8F86] hover:bg-[#527D75] text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>ابدأ مجاناً</span>

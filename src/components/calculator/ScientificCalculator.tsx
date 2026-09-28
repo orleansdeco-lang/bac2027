@@ -6,8 +6,6 @@ import {
   History,
   Copy,
   Check,
-  Volume2,
-  VolumeX,
   Sparkles,
   Atom,
   HelpCircle,
@@ -137,7 +135,6 @@ export function ScientificCalculator() {
   const [angleMode, setAngleMode] = useState<"deg" | "rad">("deg");
   const [isShift, setIsShift] = useState<boolean>(false);
   const [isAlpha, setIsAlpha] = useState<boolean>(false);
-  const [soundEnabled, setSoundEnabled] = useState<boolean>(true);
 
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [historyIndex, setHistoryIndex] = useState<number>(-1);
@@ -145,32 +142,8 @@ export function ScientificCalculator() {
   const [copied, setCopied] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Audio Context synthesizer for realistic mechanical click
-  const playClickSound = () => {
-    if (!soundEnabled || typeof window === "undefined") return;
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(420, ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(110, ctx.currentTime + 0.025);
-
-      gain.gain.setValueAtTime(0.06, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.025);
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.start();
-      osc.stop(ctx.currentTime + 0.025);
-    } catch {
-      // Audio playback ignored
-    }
-  };
+  // Click handler (sound decommissioned - silent)
+  const playClickSound = () => {};
 
   // Keyboard navigation & inputs
   useEffect(() => {
@@ -452,14 +425,6 @@ export function ScientificCalculator() {
 
               {/* Realistic Photovoltaic Solar Strip */}
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSoundEnabled((p) => !p)}
-                  className="p-1 rounded text-slate-400 hover:text-white transition-colors"
-                  title={soundEnabled ? "كتم صوت النقر الميكانيكي" : "تفعيل صوت النقر الميكانيكي"}
-                >
-                  {soundEnabled ? <Volume2 className="w-3.5 h-3.5 text-teal-400" /> : <VolumeX className="w-3.5 h-3.5" />}
-                </button>
 
                 <div
                   className="w-16 h-5 rounded bg-gradient-to-b from-[#2b1708] to-[#120803] border border-[#482811] shadow-inner grid grid-cols-4 gap-[1px] p-[1.5px]"

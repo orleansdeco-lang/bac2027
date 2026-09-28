@@ -60,16 +60,10 @@ assert(
   "majlis-config.ts must include build guard for DEMO mode"
 );
 
-// 3. Verify procedural sound engine (no external audio assets)
+// 3. Verify sound engine is decommissioned (no external audio assets and silent)
 const soundEnginePath = path.resolve(process.cwd(), "src/lib/ypt/soundEngine.ts");
 assert(fs.existsSync(soundEnginePath), "soundEngine.ts must exist");
 const soundContent = fs.readFileSync(soundEnginePath, "utf-8");
-assert(
-  soundContent.includes("createBrownNoiseSource") &&
-  soundContent.includes("createRainSource") &&
-  soundContent.includes("startAlphaWaves"),
-  "soundEngine.ts must contain pure procedural Web Audio API generators"
-);
 assert(!soundContent.includes(".mp3") && !soundContent.includes(".wav"), "soundEngine.ts must not reference any external audio files");
 
 // 4. Verify RLS Migration exists

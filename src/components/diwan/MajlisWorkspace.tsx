@@ -22,7 +22,6 @@ import { CozyMajlisDesk, StudentSeat } from "./CozyMajlisDesk";
 import { MajlisInspectorPanel } from "./MajlisInspectorPanel";
 import { MajlisInteractiveGrid } from "./MajlisInteractiveGrid";
 import { CreateMajlisModal } from "./CreateMajlisModal";
-import { MajlisAudioBar } from "./MajlisAudioBar";
 import { formatStudentPrivacyName } from "@/lib/constants/majlis-config";
 import { useAuth } from "@/lib/auth/context";
 import { getStrategicProfile } from "@/lib/onboarding/profile";
@@ -459,9 +458,6 @@ export function MajlisWorkspace() {
         activeStudentsCount={stats.activeStudentsCount}
         completedSessionsToday={stats.completedSessionsToday}
       />
-
-      {/* Audio Ambient Generator Bar (Zero-bundle procedural Web Audio API) */}
-      <MajlisAudioBar />
 
       {/* 2. Main Desktop Showcase: Cozy Majlis Table + Side Inspector Panel */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">

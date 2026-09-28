@@ -21,8 +21,6 @@ import {
 } from "lucide-react";
 import { useTimer } from "@/context/TimerContext";
 import { formatSecondsToTime } from "@/lib/ypt/yptData";
-import { FocusAmbianceType } from "@/lib/ypt/soundEngine";
-
 export function YptNavbar() {
   const pathname = usePathname();
   const {
@@ -30,15 +28,10 @@ export function YptNavbar() {
     isRunning,
     selectedSubject,
     toggleTimer,
-    ambiance,
-    setAmbiance,
-    volume,
-    setVolume,
     streakDays,
     setIsFullscreen,
   } = useTimer();
 
-  const [isSoundMenuOpen, setIsSoundMenuOpen] = useState(false);
   const { formatted } = formatSecondsToTime(seconds);
 
   const navLinks = [
@@ -64,23 +57,6 @@ export function YptNavbar() {
       icon: BarChart3,
     },
   ];
-
-  const getAmbianceLabel = (t: FocusAmbianceType) => {
-    switch (t) {
-      case "brown_noise":
-        return { label: "مكتبة هادئة", icon: "📚" };
-      case "rain":
-        return { label: "مطر خفيف", icon: "🌧️" };
-      case "alpha_waves":
-        return { label: "تركيز عميق", icon: "🌊" };
-      case "white_noise":
-        return { label: "ضوضاء بيضاء", icon: "📻" };
-      default:
-        return { label: "بدون صوت", icon: "🔇" };
-    }
-  };
-
-  const activeAmbiance = getAmbianceLabel(ambiance);
 
   return (
     <header className="sticky top-0 z-40 bg-[#0B0F17]/90 backdrop-blur-md border-b border-white/10 select-none text-white">
@@ -193,144 +169,6 @@ export function YptNavbar() {
             >
               <Maximize2 className="w-3.5 h-3.5" />
             </button>
-          </div>
-
-          {/* Persistent Soundscape Pill with dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setIsSoundMenuOpen(!isSoundMenuOpen)}
-              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all ${
-                ambiance !== "none"
-                  ? "bg-sky-500/15 border-sky-500/40 text-sky-300"
-                  : "bg-white/5 border-white/10 text-white/60 hover:text-white"
-              }`}
-              title="البيئات الصوتية للتركيز"
-            >
-              <span>{activeAmbiance.icon}</span>
-              <span className="hidden xl:inline text-[11px]">{activeAmbiance.label}</span>
-              {/* Equalizer Wave Bars if playing */}
-              {ambiance !== "none" && (
-                <span className="flex items-end gap-[1.5px] h-3 ml-0.5">
-                  <span className="w-0.5 bg-sky-400 animate-pulse h-2" />
-                  <span className="w-0.5 bg-sky-400 animate-pulse h-3 delay-75" />
-                  <span className="w-0.5 bg-sky-400 animate-pulse h-1.5 delay-150" />
-                </span>
-              )}
-              <ChevronDown className="w-3 h-3 opacity-60" />
-            </button>
-
-            {/* Soundscape Dropdown Popover */}
-            <AnimatePresence>
-              {isSoundMenuOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                  className="absolute left-0 mt-2 w-64 p-3 rounded-2xl bg-[#111827] border border-white/15 shadow-2xl z-50 text-white space-y-3"
-                >
-                  <div className="flex items-center justify-between text-xs font-black pb-2 border-b border-white/10">
-                    <span>البيئة الصوتية للتركيز</span>
-                    {ambiance !== "none" && (
-                      <button
-                        onClick={() => setAmbiance("none")}
-                        className="text-[10px] text-rose-400 hover:underline"
-                      >
-                        كتم الصوت
-                      </button>
-                    )}
-                  </div>
-
-                  {/* 3 Selectable Focus Ambiances */}
-                  <div className="space-y-1 text-xs">
-                    <button
-                      onClick={() => {
-                        setAmbiance("brown_noise");
-                        setIsSoundMenuOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between p-2 rounded-xl text-right transition-colors ${
-                        ambiance === "brown_noise"
-                          ? "bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40"
-                          : "hover:bg-white/5 text-white/80"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span>📚</span>
-                        <div>
-                          <div className="font-bold text-[11px]">مكتبة هادئة (Brown Noise)</div>
-                          <div className="text-[9px] text-white/50">
-                            همس هادئ وترددات منخفضة لعزل الضجيج
-                          </div>
-                        </div>
-                      </div>
-                      {ambiance === "brown_noise" && <span className="text-amber-400">●</span>}
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setAmbiance("rain");
-                        setIsSoundMenuOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between p-2 rounded-xl text-right transition-colors ${
-                        ambiance === "rain"
-                          ? "bg-sky-500/20 text-sky-300 font-bold border border-sky-500/40"
-                          : "hover:bg-white/5 text-white/80"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span>🌧️</span>
-                        <div>
-                          <div className="font-bold text-[11px]">مطر خفيف</div>
-                          <div className="text-[9px] text-white/50">
-                            صوت زخات المطر على الزجاج
-                          </div>
-                        </div>
-                      </div>
-                      {ambiance === "rain" && <span className="text-sky-400">●</span>}
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setAmbiance("alpha_waves");
-                        setIsSoundMenuOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between p-2 rounded-xl text-right transition-colors ${
-                        ambiance === "alpha_waves"
-                          ? "bg-indigo-500/20 text-indigo-300 font-bold border border-indigo-500/40"
-                          : "hover:bg-white/5 text-white/80"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span>🌊</span>
-                        <div>
-                          <div className="font-bold text-[11px]">تركيز عميق (Alpha Waves)</div>
-                          <div className="text-[9px] text-white/50">
-                            نغمات ثنائية تحفيزية لصفاء الذهن
-                          </div>
-                        </div>
-                      </div>
-                      {ambiance === "alpha_waves" && <span className="text-indigo-400">●</span>}
-                    </button>
-                  </div>
-
-                  {/* Volume Slider */}
-                  <div className="pt-2 border-t border-white/10 space-y-1">
-                    <div className="flex items-center justify-between text-[10px] text-white/60">
-                      <span>مستوى الصوت:</span>
-                      <span className="font-mono">{Math.round(volume * 100)}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="1"
-                      step="0.05"
-                      value={volume}
-                      onChange={(e) => setVolume(parseFloat(e.target.value))}
-                      className="w-full accent-amber-500 cursor-pointer h-1.5 rounded-lg bg-white/20"
-                    />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
 
           {/* Streak Badge */}

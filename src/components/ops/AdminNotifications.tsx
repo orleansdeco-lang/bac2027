@@ -7,8 +7,6 @@ import {
   UserPlus,
   CreditCard,
   Truck,
-  Volume2,
-  VolumeX,
   Check,
   Clock,
   ExternalLink,
@@ -26,26 +24,6 @@ export interface NotificationItem {
   amount?: number;
   wilaya?: string;
   actionUrl: string;
-}
-
-function playNotificationChime() {
-  try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-    osc.frequency.setValueAtTime(880, ctx.currentTime + 0.08); // A5
-
-    gain.gain.setValueAtTime(0.12, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-
-    osc.start();
-    osc.stop(ctx.currentTime + 0.35);
-  } catch {}
 }
 
 const ALERTED_STORAGE_KEY = "shater_ops_alerted_notif_ids";
@@ -74,7 +52,6 @@ export function AdminNotifications() {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [soundEnabled, setSoundEnabled] = useState(true);
   const [browserNotifEnabled, setBrowserNotifEnabled] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -123,9 +100,6 @@ export function AdminNotifications() {
 
           if (freshNewItems.length > 0) {
             const newest = freshNewItems[0];
-            if (soundEnabled) {
-              playNotificationChime();
-            }
             if (typeof window !== "undefined" && Notification.permission === "granted") {
               new Notification(newest.title, {
                 body: `${newest.description} (${newest.actorName})`,
@@ -149,7 +123,7 @@ export function AdminNotifications() {
     }, 12000);
 
     return () => clearInterval(interval);
-  }, [soundEnabled]);
+  }, []);
 
   // Click outside to close
   useEffect(() => {
@@ -211,18 +185,6 @@ export function AdminNotifications() {
             </div>
 
             <div className="flex items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setSoundEnabled(!soundEnabled)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
-                title={soundEnabled ? "كتم صوت التنبيه" : "تفعيل صوت التنبيه"}
-              >
-                {soundEnabled ? (
-                  <Volume2 className="w-3.5 h-3.5 text-cyan-400" />
-                ) : (
-                  <VolumeX className="w-3.5 h-3.5 text-slate-500" />
-                )}
-              </button>
 
               {!browserNotifEnabled && (
                 <button

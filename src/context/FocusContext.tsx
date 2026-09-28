@@ -23,7 +23,6 @@ import {
 import { PlannerStorage } from "@/lib/planner/storage";
 import { PlannerService } from "@/lib/planner/planner-service";
 import { useAuth } from "@/lib/auth/context";
-import { soundEngine } from "@/lib/ypt/soundEngine";
 
 interface FocusContextType {
   activeSession: ActiveFocusSession | null;
@@ -86,8 +85,7 @@ export function FocusProvider({ children }: { children: React.ReactNode }) {
 
         // Check if countdown completed
         if (remaining <= 0 && currentSession.status === "running") {
-          // Play chime and transition to reflection
-          soundEngine.playChime();
+          // Transition to reflection
           const completedSession: ActiveFocusSession = {
             ...currentSession,
             status: "reflecting",
