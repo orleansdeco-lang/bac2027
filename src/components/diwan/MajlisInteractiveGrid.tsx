@@ -1,44 +1,32 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
-  MessageSquare,
   Gamepad2,
   Trophy,
   Award,
-  Send,
   Sparkles,
-  Heart,
-  MessageCircle,
   Puzzle,
   Zap,
   HelpCircle,
   CheckCircle2,
   XCircle,
-  ChevronLeft,
-  Flame,
   Shield,
   Star,
-  AlertTriangle,
   X,
-  Smile,
   BookOpen,
   Calendar,
+  Clock,
+  ArrowRight,
+  Share2,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 import { CampusService } from "@/lib/campus/campus-service";
 import { SubjectId } from "@/types/education";
-
-interface ChatMessage {
-  id: string;
-  author: string;
-  avatar: string;
-  streamBadge: string;
-  text: string;
-  time: string;
-  isMe: boolean;
-}
+import { PlannerStorage } from "@/lib/planner/storage";
+import { formatStudentPrivacyName } from "@/lib/constants/majlis-config";
 
 interface QuizChallenge {
   id: string;
@@ -104,21 +92,8 @@ const QUIZ_CHALLENGES: Record<string, QuizChallenge> = {
   },
 };
 
-const QUICK_EMOJIS = ["🔥", "💡", "👏", "☕", "✅"];
-const QUICK_PROMPTS = [
-  "سؤال في سلم التنقيط 📝",
-  "استراحة 5 دقائق ☕",
-  "من يراجع معي هذا التمرين؟ 🤔",
-];
-
 export function MajlisInteractiveGrid({ topicTitle = "المتتاليات" }: { topicTitle?: string }) {
   const { user } = useAuth();
-  const chatStorageKey = `shater_majlis_chat_${topicTitle}`;
-
-  // Live Chat State
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [inputMessage, setInputMessage] = useState("");
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Gamification & Quiz Modal State
   const [activeGameKey, setActiveGameKey] = useState<string | null>(null);
@@ -126,92 +101,40 @@ export function MajlisInteractiveGrid({ topicTitle = "المتتاليات" }: {
   const [quizSubmitted, setQuizSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const [isErrorRecorded, setIsErrorRecorded] = useState(false);
-  const [userXp, setUserXp] = useState(750);
 
-  // Initialize or load chat
+  // Genuine XP & Study Sessions
+  const [studyMinutes, setStudyMinutes] = useState(0);
+  const [hasRsvpEvening, setHasRsvpEvening] = useState(false);
+  const [rsvpCount, setRsvpCount] = useState(0);
+
+  // Load genuine RSVP status for the scheduled official room
+  useEffect(() => {
+    fetch("/api/campus/rsvp?roomId=room-sciences-rc")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setRsvpCount(data.count || 0);
+          setHasRsvpEvening(Boolean(data.hasRsvp));
+        }
+      })
+      .catch(() => {});
+  }, [user]);
+
+  // Load genuine study sessions for XP calculation (10 mins = 1 XP)
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
-        const saved = localStorage.getItem(chatStorageKey);
-        if (saved) {
-          setMessages(JSON.parse(saved));
-          return;
-        }
+        const effectiveId = user?.id || "demo-user";
+        PlannerStorage.loadStudySessions(effectiveId).then((sessions) => {
+          const completed = sessions.filter((s: any) => s.status === "COMPLETED");
+          const totalSec = completed.reduce((acc: number, s: any) => acc + (s.actualDurationSeconds || 0), 0);
+          setStudyMinutes(Math.floor(totalSec / 60));
+        }).catch(() => {});
       } catch (e) {
-        console.warn("Failed to read chat messages", e);
+        console.warn("Failed to load study sessions for XP", e);
       }
-
-      // Seed authentic messages
-      const defaultChat: ChatMessage[] = [
-        {
-          id: "msg-1",
-          author: "أمين",
-          avatar: "/illustrations/characters/yassine.jpg",
-          streamBadge: "رياضيات",
-          text: "السلام عليكم زملائي! من وصل للسؤال الثالث في دراسة اتجاه التغير؟",
-          time: "14:20",
-          isMe: false,
-        },
-        {
-          id: "msg-2",
-          author: "سارة",
-          avatar: "/illustrations/characters/sarah.jpg",
-          streamBadge: "علوم تجريبية",
-          text: "أنا درسته بالتراجع أولاً، وخرجت المتتالية متزايدة تماماً ومحدودة بالعدد 2.",
-          time: "14:23",
-          isMe: false,
-        },
-        {
-          id: "msg-3",
-          author: "علي",
-          avatar: "/illustrations/characters/ali.jpg",
-          streamBadge: "فيزياء",
-          text: "ممتاز! لا تنسوا تطبيق نظرية التقارب: كل متتالية متزايدة ومحدودة من الأعلى فهي متقاربة.",
-          time: "14:26",
-          isMe: false,
-        },
-      ];
-      setMessages(defaultChat);
-      localStorage.setItem(chatStorageKey, JSON.stringify(defaultChat));
     }
-  }, [chatStorageKey]);
-
-  // Scroll to bottom on new message
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const handleSendMessage = (textToSend?: string) => {
-    const content = (textToSend || inputMessage).trim();
-    if (!content) return;
-
-    const myName = user?.email?.split("@")[0] || "طالب بكالوريا";
-    const newMsg: ChatMessage = {
-      id: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
-      author: `${myName} (أنت)`,
-      avatar: "/illustrations/characters/ali.jpg",
-      streamBadge: "أنت 🌟",
-      text: content,
-      time: new Date().toLocaleTimeString("ar-DZ", { hour: "2-digit", minute: "2-digit" }),
-      isMe: true,
-    };
-
-    const updated = [...messages, newMsg];
-    setMessages(updated);
-    if (!textToSend) setInputMessage("");
-
-    if (typeof window !== "undefined") {
-      localStorage.setItem(chatStorageKey, JSON.stringify(updated));
-    }
-  };
-
-  const handleSendPrompt = (prompt: string) => {
-    handleSendMessage(prompt);
-  };
-
-  const handleSendEmoji = (emoji: string) => {
-    handleSendMessage(emoji);
-  };
+  }, [user]);
 
   // Open Quiz Modal
   const handleOpenGame = (gameKey: string) => {
@@ -233,7 +156,7 @@ export function MajlisInteractiveGrid({ topicTitle = "المتتاليات" }: {
     setQuizSubmitted(true);
 
     if (correct) {
-      setUserXp((prev) => prev + 50);
+      setStudyMinutes((prev) => prev + 5); // Award equivalent study time
     } else {
       // Direct Integration with Error Lab & Planner Storage!
       const userId = user?.id || "demo-user";
@@ -254,11 +177,75 @@ export function MajlisInteractiveGrid({ topicTitle = "المتتاليات" }: {
     }
   };
 
+  const handleToggleRsvp = async () => {
+    const next = !hasRsvpEvening;
+    setHasRsvpEvening(next);
+    setRsvpCount((c) => (next ? c + 1 : Math.max(0, c - 1)));
+
+    try {
+      const res = await fetch("/api/campus/rsvp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomId: "room-sciences-rc", willAttend: next }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && typeof data.count === "number") {
+          setRsvpCount(data.count);
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to toggle RSVP:", err);
+    }
+  };
+
+  const handleDownloadIcs = () => {
+    const icsData = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//SHATER BAC//Majlis Study//AR
+BEGIN:VEVENT
+SUMMARY:مجلس المساء الرسمي - مراجعة البكالوريا في ديوان العلم
+DESCRIPTION:جلسة مذاكرة متزامنة وحل مواضيع رسمية مع الزملاء على منصة الشاطر
+STATUS:CONFIRMED
+BEGIN:VALARM
+TRIGGER:-PT15M
+ACTION:DISPLAY
+DESCRIPTION:تذكير: يبدأ مجلس المذاكرة بعد 15 دقيقة
+END:VALARM
+END:VEVENT
+END:VCALENDAR`;
+
+    const blob = new Blob([icsData], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "shater-evening-majlis.ics");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // XP calculation
+  const calculatedXp = Math.floor(studyMinutes / 10);
+  const userLevel =
+    calculatedXp >= 100
+      ? { lvl: 4, title: "أسطورة", nextThreshold: 200, badgeColor: "text-purple-400" }
+      : calculatedXp >= 50
+      ? { lvl: 3, title: "متفوق", nextThreshold: 100, badgeColor: "text-rose-400" }
+      : calculatedXp >= 20
+      ? { lvl: 2, title: "قائد", nextThreshold: 50, badgeColor: "text-blue-400" }
+      : { lvl: 1, title: "مجتهد", nextThreshold: 20, badgeColor: "text-amber-400" };
+
+  const progressPercent = Math.min(
+    100,
+    Math.round((calculatedXp / userLevel.nextThreshold) * 100)
+  );
+
   const activeChallenge = activeGameKey ? QUIZ_CHALLENGES[activeGameKey] : null;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5" dir="rtl">
-      {/* ---------------- CARD 1: المنتديات ---------------- */}
+      {/* ---------------- CARD 1: الملخصات والمواضيع التشاركية ---------------- */}
       <div
         className="rounded-3xl p-5 border border-white/[0.08] shadow-xl backdrop-blur-xl flex flex-col justify-between"
         style={{
@@ -268,69 +255,57 @@ export function MajlisInteractiveGrid({ topicTitle = "المتتاليات" }: {
         <div>
           <div className="flex items-center justify-between pb-3 border-b border-white/[0.06] mb-3">
             <div className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-blue-400" />
-              <h3 className="text-sm font-bold text-white">المنتديات</h3>
+              <BookOpen className="w-4 h-4 text-emerald-400" />
+              <h3 className="text-sm font-bold text-white">الملخصات التشاركية</h3>
             </div>
-            <span className="text-[10px] text-slate-400 font-medium">منتديات النقاش</span>
+            <Link
+              href="/diwan?tab=summaries"
+              className="text-[10px] text-emerald-400 hover:underline font-bold flex items-center gap-0.5"
+            >
+              <span>فتح التبويب</span>
+              <ArrowRight className="w-3 h-3 rotate-180" />
+            </Link>
           </div>
 
-          <div className="space-y-2.5">
-            <div className="p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.05] transition-all cursor-pointer group">
-              <div className="flex items-start justify-between gap-2">
-                <span className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-1">
-                  أفضل طريقة لحل المتتاليات؟
-                </span>
-                <span className="text-[10px] text-emerald-400 shrink-0 font-mono">جديد</span>
-              </div>
-              <div className="flex items-center gap-3 text-[10px] text-slate-400 mt-2 font-mono">
-                <span className="flex items-center gap-1">
-                  <MessageCircle className="w-3 h-3 text-slate-500" /> 56 رد
-                </span>
-                <span className="flex items-center gap-1">
-                  <Heart className="w-3 h-3 text-rose-500" /> 190 إعجاب
-                </span>
-              </div>
-            </div>
+          <p className="text-xs text-slate-300 leading-relaxed mb-3">
+            ملخصات مركزة وفخاخ وزارية معتمدة من المتفوقين في البكالوريا، قابلة للحفظ في المخطط اليومي.
+          </p>
 
-            <div className="p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.05] transition-all cursor-pointer group">
-              <div className="flex items-start justify-between gap-2">
-                <span className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-1">
-                  مراجعة مادة الفيزياء (الدارة RC)
-                </span>
-              </div>
-              <div className="flex items-center gap-3 text-[10px] text-slate-400 mt-2 font-mono">
-                <span className="flex items-center gap-1">
-                  <MessageCircle className="w-3 h-3 text-slate-500" /> 124 رد
-                </span>
-                <span className="flex items-center gap-1">
-                  <Heart className="w-3 h-3 text-rose-500" /> 184 إعجاب
-                </span>
-              </div>
-            </div>
+          <div className="space-y-2">
+            <Link
+              href="/diwan?tab=summaries"
+              className="p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.05] transition-all block group"
+            >
+              <span className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors block">
+                خريطة ذهنية: إزالة حالات عدم التعيين
+              </span>
+              <span className="text-[10px] text-slate-400 mt-1 block">
+                شعبة رياضيات وعلوم · مادة الرياضيات
+              </span>
+            </Link>
 
-            <div className="p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.05] transition-all cursor-pointer group">
-              <div className="flex items-start justify-between gap-2">
-                <span className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors line-clamp-1">
-                  نصائح لاجتياز البكالوريا بتفوق
-                </span>
-                <Flame className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              </div>
-              <div className="flex items-center gap-3 text-[10px] text-slate-400 mt-2 font-mono">
-                <span className="flex items-center gap-1">
-                  <MessageCircle className="w-3 h-3 text-slate-500" /> 89 رد
-                </span>
-                <span className="flex items-center gap-1">
-                  <Heart className="w-3 h-3 text-rose-500" /> 299 إعجاب
-                </span>
-              </div>
-            </div>
+            <Link
+              href="/diwan?tab=summaries"
+              className="p-2.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.05] transition-all block group"
+            >
+              <span className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors block">
+                فخ التحليل البعدي لثابت الزمن RC
+              </span>
+              <span className="text-[10px] text-slate-400 mt-1 block">
+                شعبة علوم وتقني رياضي · مادة الفيزياء
+              </span>
+            </Link>
           </div>
         </div>
 
-        <div className="pt-3">
-          <span className="text-[10px] text-slate-400 block text-center">
-            تفاعل مع أكثر من 14,000 طالب بكالوريا 🌟
-          </span>
+        <div className="pt-3 border-t border-white/[0.06] text-center">
+          <Link
+            href="/diwan?tab=summaries"
+            className="text-[11px] text-slate-300 hover:text-white font-bold inline-flex items-center gap-1"
+          >
+            <span>استعراض كافة الملخصات المعتمدة</span>
+            <ArrowRight className="w-3 h-3 rotate-180" />
+          </Link>
         </div>
       </div>
 
@@ -348,12 +323,12 @@ export function MajlisInteractiveGrid({ topicTitle = "المتتاليات" }: {
               <h3 className="text-sm font-bold text-white">الألعاب والتحديات</h3>
             </div>
             <span className="text-[10px] text-purple-400 font-bold bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
-              تفاعلي + معمل الأخطاء
+              مربوط بمعمل الأخطاء
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-2.5">
-            {/* Game 1: كويز سريع */}
+            {/* Game 1 */}
             <button
               type="button"
               onClick={() => handleOpenGame("كويز تفاعلي سريع")}
@@ -365,7 +340,7 @@ export function MajlisInteractiveGrid({ topicTitle = "المتتاليات" }: {
               <span className="text-xs font-bold text-white block">كويز سريع ⚡</span>
             </button>
 
-            {/* Game 2: لغز الرياضيات */}
+            {/* Game 2 */}
             <button
               type="button"
               onClick={() => handleOpenGame("لغز الرياضيات")}
@@ -377,7 +352,7 @@ export function MajlisInteractiveGrid({ topicTitle = "المتتاليات" }: {
               <span className="text-xs font-bold text-white block">لغز الرياضيات 📐</span>
             </button>
 
-            {/* Game 3: تحدي القوانين */}
+            {/* Game 3 */}
             <button
               type="button"
               onClick={() => handleOpenGame("تحدي القوانين")}
@@ -389,14 +364,14 @@ export function MajlisInteractiveGrid({ topicTitle = "المتتاليات" }: {
               <span className="text-xs font-bold text-white block">تحدي القوانين 🏆</span>
             </button>
 
-            {/* Game 4: حلقة الاسترجاع */}
+            {/* Game 4 */}
             <button
               type="button"
               onClick={() => handleOpenGame("حلقة الاسترجاع")}
               className="p-3 rounded-2xl bg-gradient-to-br from-purple-600/30 to-pink-900/40 border border-purple-500/30 hover:border-purple-400 hover:scale-[1.03] transition-all text-center group cursor-pointer"
             >
               <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center mx-auto mb-1.5 group-hover:bg-purple-500 group-hover:text-white transition-colors">
-                <Brain className="w-4 h-4" />
+                <Sparkles className="w-4 h-4" />
               </div>
               <span className="text-xs font-bold text-white block">حلقة الاسترجاع 🧠</span>
             </button>
@@ -405,12 +380,12 @@ export function MajlisInteractiveGrid({ topicTitle = "المتتاليات" }: {
 
         <div className="mt-3 text-center">
           <span className="text-[10px] text-amber-400/90 font-mono">
-            +50 نقطة خبرة لكل تحدٍ مكتمل 🌟 والأخطاء تذهب لمعمل الأخطاء!
+            الأخطاء في التحديات تُرحّل تلقائياً لمعمل الأخطاء لترميمها 🎯
           </span>
         </div>
       </div>
 
-      {/* ---------------- CARD 3: شات المجلس الحي (Functional Live Chat) ---------------- */}
+      {/* ---------------- CARD 3: المجلس الرسمي المجدول اليوم (Genuine Scheduled Table) ---------------- */}
       <div
         className="rounded-3xl p-5 border border-white/[0.08] shadow-xl backdrop-blur-xl flex flex-col justify-between"
         style={{
@@ -418,105 +393,58 @@ export function MajlisInteractiveGrid({ topicTitle = "المتتاليات" }: {
         }}
       >
         <div>
-          <div className="flex items-center justify-between pb-3 border-b border-white/[0.06] mb-2">
+          <div className="flex items-center justify-between pb-3 border-b border-white/[0.06] mb-3">
             <div className="flex items-center gap-2">
-              <MessageCircle className="w-4 h-4 text-emerald-400" />
-              <h3 className="text-sm font-bold text-white">شات المجلس الحي</h3>
+              <Calendar className="w-4 h-4 text-amber-400" />
+              <h3 className="text-sm font-bold text-white">المجلس الرسمي المجدول</h3>
             </div>
-            <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <span>مباشر</span>
+            <span className="text-[10px] text-amber-300 font-bold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+              يبدأ 20:00
             </span>
           </div>
 
-          {/* Quick Prompt Chips */}
-          <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pb-2">
-            {QUICK_PROMPTS.map((prompt, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => handleSendPrompt(prompt)}
-                className="text-[10px] px-2 py-0.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 hover:text-white border border-white/[0.06] whitespace-nowrap cursor-pointer transition-colors shrink-0"
-              >
-                {prompt}
-              </button>
-            ))}
-          </div>
-
-          {/* Messages Feed */}
-          <div className="space-y-2 max-h-[160px] overflow-y-auto no-scrollbar pr-0.5 mt-1">
-            {messages.map((m) => (
-              <div
-                key={m.id}
-                className={`p-2 rounded-2xl text-xs transition-all ${
-                  m.isMe
-                    ? "bg-blue-600/25 border border-blue-500/40 mr-4"
-                    : "bg-white/[0.04] border border-white/[0.06] ml-4"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-1 mb-0.5 text-[10px]">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-slate-200">{m.author}</span>
-                    <span className="text-[9px] px-1.5 py-0.2 rounded bg-white/10 text-slate-300 font-medium">
-                      {m.streamBadge}
-                    </span>
-                  </div>
-                  <span className="font-mono text-slate-400">{m.time}</span>
-                </div>
-                <p className="text-slate-100 text-[11px] leading-relaxed font-normal">
-                  {m.text}
-                </p>
+          <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] space-y-2">
+            <span className="text-xs font-bold text-white block">
+              مجلس المساء: مراجعة الدارة RC وحل مسائل البكالوريا
+            </span>
+            <div className="flex items-center justify-between text-[11px] text-slate-300 font-mono">
+              <div className="flex items-center gap-1">
+                <Clock className="w-3 h-3 text-amber-400" />
+                <span>20:00 – 21:30</span>
               </div>
-            ))}
-            <div ref={messagesEndRef} />
+              <span className="text-emerald-400 font-bold">
+                {rsvpCount} مسجلون للحضور
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Input Bar & Emojis */}
-        <div className="mt-3 space-y-2">
-          {/* Emojis row */}
-          <div className="flex items-center justify-between px-1">
-            <span className="text-[10px] text-slate-400">تفاعل سريع:</span>
-            <div className="flex items-center gap-1.5">
-              {QUICK_EMOJIS.map((emoji) => (
-                <button
-                  key={emoji}
-                  type="button"
-                  onClick={() => handleSendEmoji(emoji)}
-                  className="hover:scale-125 transition-transform text-xs cursor-pointer"
-                >
-                  {emoji}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSendMessage();
-            }}
-            className="flex items-center gap-1.5"
+        <div className="space-y-2 pt-3 border-t border-white/[0.06]">
+          <button
+            type="button"
+            onClick={handleToggleRsvp}
+            className={`w-full py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+              hasRsvpEvening
+                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/20"
+                : "bg-amber-400 hover:bg-amber-300 text-slate-950 shadow-md shadow-amber-400/20"
+            }`}
           >
-            <input
-              type="text"
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              placeholder="اكتب سؤالاً أو فكرة لزملائك..."
-              className="flex-1 py-1.5 px-3 rounded-xl bg-white/[0.05] border border-white/[0.08] text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
-            />
-            <button
-              type="submit"
-              className="p-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition-colors cursor-pointer shrink-0"
-              title="إرسال"
-            >
-              <Send className="w-3.5 h-3.5" />
-            </button>
-          </form>
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>{hasRsvpEvening ? "تم تأكيد حضورك ✋" : "سأحضر هذا المجلس ✋"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleDownloadIcs}
+            className="w-full py-1.5 px-3 rounded-xl bg-white/[0.05] hover:bg-white/10 text-slate-300 text-[11px] font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+          >
+            <Calendar className="w-3 h-3 text-blue-400" />
+            <span>أضف للتقويم (.ics)</span>
+          </button>
         </div>
       </div>
 
-      {/* ---------------- CARD 4: نظام النقاط والمستويات ---------------- */}
+      {/* ---------------- CARD 4: الرتب وساعات التركيز الحقيقية ---------------- */}
       <div
         className="rounded-3xl p-5 border border-white/[0.08] shadow-xl backdrop-blur-xl flex flex-col justify-between"
         style={{
@@ -527,83 +455,93 @@ export function MajlisInteractiveGrid({ topicTitle = "المتتاليات" }: {
           <div className="flex items-center justify-between pb-3 border-b border-white/[0.06] mb-3">
             <div className="flex items-center gap-2">
               <Award className="w-4 h-4 text-amber-400" />
-              <h3 className="text-sm font-bold text-white">نظام النقاط والمستويات</h3>
+              <h3 className="text-sm font-bold text-white">مستوى التركيز</h3>
             </div>
-            <span className="text-[10px] text-amber-400 font-bold">طوّر مستواك</span>
+            <span className="text-[10px] text-slate-400">بيانات حقيقية</span>
           </div>
 
-          <p className="text-[11px] text-slate-400 mb-3">
-            اجمع النقاط وارتقِ في المستويات لتحصل على أوسمة الشرف
-          </p>
-
-          {/* Student Profile Card */}
+          {/* Student Profile Card with Real XP */}
           <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06] mb-3">
             <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2.5">
-                <div className="relative w-9 h-9 rounded-full overflow-hidden border border-amber-400 shrink-0">
-                  <Image
-                    src="/illustrations/characters/ali.jpg"
-                    alt="الملف الشخصي"
-                    fill
-                    sizes="36px"
-                    className="object-cover"
-                  />
-                </div>
-                <div>
-                  <span className="text-xs font-bold text-white block">
-                    {user?.email?.split("@")[0] || "طالب بكالوريا"}
-                  </span>
-                  <span className="text-[10px] text-amber-400 font-mono font-bold">
-                    المستوى 3 · مجتهد
-                  </span>
-                </div>
+              <div>
+                <span className="text-xs font-bold text-white block">
+                  {formatStudentPrivacyName(user?.user_metadata?.full_name || user?.email)}
+                </span>
+                <span className={`text-[10px] font-bold font-mono ${userLevel.badgeColor}`}>
+                  المستوى {userLevel.lvl} · {userLevel.title}
+                </span>
               </div>
-              <span className="text-[11px] font-mono font-bold text-slate-300">
-                {userXp} / 1000 XP
-              </span>
+              <div className="text-left font-mono">
+                <span className="text-xs font-bold text-white">{calculatedXp} XP</span>
+                <span className="text-[10px] text-slate-400 block">{studyMinutes} دقيقة</span>
+              </div>
             </div>
 
             {/* Progress Bar */}
-            <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+            <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-amber-500 to-amber-400 transition-all duration-300"
-                style={{ width: `${Math.min(100, (userXp / 1000) * 100)}%` }}
+                style={{ width: `${progressPercent}%` }}
               />
             </div>
           </div>
 
-          {/* 4 Metallic Badges */}
-          <div className="grid grid-cols-4 gap-1.5 pt-1">
-            <div className="flex flex-col items-center text-center p-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
-              <Shield className="w-5 h-5 text-amber-500 mb-0.5" />
-              <span className="text-[10px] font-bold text-amber-300">مجتهد</span>
+          {/* 4 True Tiers */}
+          <div className="grid grid-cols-4 gap-1.5 pt-1 text-center">
+            <div
+              className={`p-1.5 rounded-xl border text-[10px] font-bold ${
+                userLevel.lvl >= 1
+                  ? "bg-amber-500/10 border-amber-500/30 text-amber-300"
+                  : "bg-white/[0.02] border-white/5 text-slate-500 opacity-40"
+              }`}
+            >
+              <Shield className="w-4 h-4 mx-auto mb-0.5 text-amber-400" />
+              <span>مجتهد</span>
             </div>
 
-            <div className="flex flex-col items-center text-center p-1.5 rounded-xl bg-blue-500/10 border border-blue-500/20">
-              <Star className="w-5 h-5 text-blue-400 mb-0.5" />
-              <span className="text-[10px] font-bold text-blue-300">قائد</span>
+            <div
+              className={`p-1.5 rounded-xl border text-[10px] font-bold ${
+                userLevel.lvl >= 2
+                  ? "bg-blue-500/10 border-blue-500/30 text-blue-300"
+                  : "bg-white/[0.02] border-white/5 text-slate-500 opacity-40"
+              }`}
+            >
+              <Star className="w-4 h-4 mx-auto mb-0.5 text-blue-400" />
+              <span>قائد</span>
             </div>
 
-            <div className="flex flex-col items-center text-center p-1.5 rounded-xl bg-rose-500/10 border border-rose-500/20">
-              <Trophy className="w-5 h-5 text-rose-400 mb-0.5" />
-              <span className="text-[10px] font-bold text-rose-300">متفوق</span>
+            <div
+              className={`p-1.5 rounded-xl border text-[10px] font-bold ${
+                userLevel.lvl >= 3
+                  ? "bg-rose-500/10 border-rose-500/30 text-rose-300"
+                  : "bg-white/[0.02] border-white/5 text-slate-500 opacity-40"
+              }`}
+            >
+              <Trophy className="w-4 h-4 mx-auto mb-0.5 text-rose-400" />
+              <span>متفوق</span>
             </div>
 
-            <div className="flex flex-col items-center text-center p-1.5 rounded-xl bg-purple-500/10 border border-purple-500/20 opacity-60">
-              <Shield className="w-5 h-5 text-purple-400 mb-0.5" />
-              <span className="text-[10px] font-bold text-purple-300">أسطورة</span>
+            <div
+              className={`p-1.5 rounded-xl border text-[10px] font-bold ${
+                userLevel.lvl >= 4
+                  ? "bg-purple-500/10 border-purple-500/30 text-purple-300"
+                  : "bg-white/[0.02] border-white/5 text-slate-500 opacity-40"
+              }`}
+            >
+              <Award className="w-4 h-4 mx-auto mb-0.5 text-purple-400" />
+              <span>أسطورة</span>
             </div>
           </div>
         </div>
 
         <div className="mt-3 text-center">
           <span className="text-[10px] text-slate-400 font-mono">
-            متبقي {Math.max(0, 1000 - userXp)} نقطة للوصول إلى المستوى 4 🚀
+            كل 10 دقائق مذاكرة في الديوان = 1 نقطة خبرة (XP) 🌟
           </span>
         </div>
       </div>
 
-      {/* ---------------- INTERACTIVE GAME / QUIZ MODAL WITH ERROR LAB SYNC ---------------- */}
+      {/* ---------------- INTERACTIVE QUIZ MODAL ---------------- */}
       {activeGameKey && activeChallenge && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
           <div
@@ -690,7 +628,7 @@ export function MajlisInteractiveGrid({ topicTitle = "المتتاليات" }: {
                     <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
                     <div>
                       <span className="font-bold block">إجابة صحيحة وفق المنهاج الوزاري! 🎉</span>
-                      <span className="text-[11px] text-emerald-200">+50 نقطة خبرة لرصيدك على الطاولة.</span>
+                      <span className="text-[11px] text-emerald-200">+5 دقائق خبرة تركيز لرصيدك.</span>
                     </div>
                   </div>
                 ) : (
@@ -703,7 +641,7 @@ export function MajlisInteractiveGrid({ topicTitle = "المتتاليات" }: {
                     </div>
                     {isErrorRecorded && (
                       <p className="text-[11px] text-amber-300 font-medium">
-                        ✅ تم حفظ هذا السؤال تلقائياً في <strong>معمل الأخطاء</strong> وبرمجة جلسة مراجعة متباعدة له في <strong>مخططك الدراسي</strong>!
+                        ✅ تم حفظ هذا السؤال تلقائياً في <strong>معمل الأخطاء</strong> وبرمجته للمراجعة في <strong>مخططك الدراسي</strong>!
                       </p>
                     )}
                   </div>
@@ -748,32 +686,5 @@ export function MajlisInteractiveGrid({ topicTitle = "المتتاليات" }: {
         </div>
       )}
     </div>
-  );
-}
-
-function Brain(props: any) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z" />
-      <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z" />
-      <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4" />
-      <path d="M17.599 6.5a3 3 0 0 0 .399-1.375" />
-      <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5" />
-      <path d="M3.477 10.896a4 4 0 0 1 .585-.396" />
-      <path d="M19.938 10.5a4 4 0 0 1 .585.396" />
-      <path d="M6 18a4 4 0 0 1-1.967-.516" />
-      <path d="M19.967 17.484A4 4 0 0 1 18 18" />
-    </svg>
   );
 }

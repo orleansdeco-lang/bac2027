@@ -22,6 +22,8 @@ import { CozyMajlisDesk, StudentSeat } from "./CozyMajlisDesk";
 import { MajlisInspectorPanel } from "./MajlisInspectorPanel";
 import { MajlisInteractiveGrid } from "./MajlisInteractiveGrid";
 import { CreateMajlisModal } from "./CreateMajlisModal";
+import { MajlisAudioBar } from "./MajlisAudioBar";
+import { formatStudentPrivacyName } from "@/lib/constants/majlis-config";
 import { useAuth } from "@/lib/auth/context";
 import { getStrategicProfile } from "@/lib/onboarding/profile";
 import { PlannerStorage } from "@/lib/planner/storage";
@@ -52,6 +54,19 @@ export function MajlisWorkspace() {
   const [members, setMembers] = useState<MajlisMember[]>([]);
   const [messages, setMessages] = useState<MajlisMessage[]>([]);
 
+  // Campus Authentic Stats & Rooms State
+  const [stats, setStats] = useState({
+    activeRoomsCount: 0,
+    activeStudentsCount: 0,
+    completedSessionsToday: 0,
+  });
+  const [activeRoomsList, setActiveRoomsList] = useState<MajlisRoom[]>([]);
+  const [activeReactionNotification, setActiveReactionNotification] = useState<{
+    fromName: string;
+    emoji: string;
+    message: string;
+  } | null>(null);
+
   // Active Majlis Session State
   const [isUserSeated, setIsUserSeated] = useState(false);
   const [sessionStart, setSessionStart] = useState<number | null>(null);
@@ -78,6 +93,47 @@ export function MajlisWorkspace() {
       }
     }
   }, [user]);
+
+  // Load campus authentic statistics and active rooms
+  useEffect(() => {
+    let isMounted = true;
+    const fetchStats = async () => {
+      try {
+        const res = await fetch("/api/campus/stats");
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted && data.success) {
+            setStats({
+              activeRoomsCount: data.activeRoomsCount || 0,
+              activeStudentsCount: data.activeStudentsCount || 0,
+              completedSessionsToday: data.completedSessionsToday || 0,
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch campus stats", err);
+      }
+    };
+
+    const fetchRooms = async () => {
+      const rooms = await MajlisService.fetchActiveRooms(userStream);
+      if (isMounted) {
+        setActiveRoomsList(rooms);
+      }
+    };
+
+    fetchStats();
+    fetchRooms();
+    const interval = setInterval(() => {
+      fetchStats();
+      fetchRooms();
+    }, 60000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [userStream]);
 
   // Load initial active room and its data
   const loadRoom = useCallback(async (roomId = "room-sciences-rc") => {
@@ -108,7 +164,7 @@ export function MajlisWorkspace() {
     loadRoom();
   }, [loadRoom]);
 
-  // Real-Time Supabase Channel Subscription
+  // Real-Time Supabase Channel Subscription with Presence & Reactions
   useEffect(() => {
     if (!activeRoom) return;
 
@@ -134,12 +190,50 @@ export function MajlisWorkspace() {
       onRoomUpdate: (updatedRoom: Partial<MajlisRoom>) => {
         setActiveRoom((prev) => (prev ? { ...prev, ...updatedRoom } : null));
       },
+      onReaction: (payload) => {
+        if (!payload.toUserId || payload.toUserId === user?.id) {
+          setActiveReactionNotification({
+            fromName: payload.fromName,
+            emoji: payload.reactionEmoji,
+            message: payload.message,
+          });
+          showToast(`${payload.fromName} أرسل ${payload.reactionEmoji} ${payload.message}`);
+          setTimeout(() => setActiveReactionNotification(null), 4000);
+        }
+      },
+      onKick: (payload) => {
+        if (payload.kickedUserId === user?.id) {
+          setIsUserSeated(false);
+          setSessionStart(null);
+          showToast("تم إخراجك من المجلس بواسطة المنظم.");
+        }
+      },
     });
+
+    if (isUserSeated && user?.id) {
+      unsubscribe.trackPresence({
+        userId: user.id,
+        userName: formatStudentPrivacyName(userName),
+        stream: userStream,
+        roomId: activeRoom.id,
+      });
+    }
 
     return () => {
       unsubscribe();
     };
-  }, [activeRoom]);
+  }, [activeRoom, isUserSeated, user?.id, userName, userStream]);
+
+  // Unload presence cleanup
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (isUserSeated && activeRoom && user?.id) {
+        MajlisService.leaveSeat(activeRoom.id, user.id);
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [isUserSeated, activeRoom, user?.id]);
 
   // Live Stopwatch Ticker
   useEffect(() => {
@@ -315,6 +409,29 @@ export function MajlisWorkspace() {
     history_geo: "تاريخ وجغرافيا",
   };
 
+  const handleSendReaction = async (toUserId: string, reactionEmoji: string) => {
+    if (!activeRoom || !user) {
+      showToast("يرجى تسجيل الدخول أولاً لإرسال التشجيع ☕");
+      return;
+    }
+    const emojiToMsg: Record<string, string> = {
+      "☕": "فنجان قهوة ودعم لمواصلة التركيز",
+      "🔥": "عزيمة وإصرار حتى البكالوريا",
+      "👏": "أحسنت وبارك الله في جهدك",
+      "🤲": "دعواتنا لك بالتوفيق والنجاح",
+    };
+    const message = emojiToMsg[reactionEmoji] || "تحية وتشجيع من زميلك";
+    await MajlisService.sendReaction({
+      roomId: activeRoom.id,
+      fromUserId: user.id,
+      fromName: formatStudentPrivacyName(userName),
+      toUserId,
+      reactionEmoji,
+      message,
+    });
+    showToast(`تم إرسال ${reactionEmoji} بنجاح!`);
+  };
+
   const currentUserData = {
     id: user?.id,
     name: userName,
@@ -322,12 +439,6 @@ export function MajlisWorkspace() {
     subject: subjectLabels[activeSubject] || "فيزياء",
     stream: userStream,
   };
-
-  const activeTablesList = [
-    { id: "room-sciences-rc", title: "الدارة RC والفيزياء", time: "نشط الآن", seats: `${members.length}/6`, subject: "فيزياء" },
-    { id: "2", title: "المتتاليات العددية", time: "منذ 45 دقيقة", seats: "4/6", subject: "رياضيات" },
-    { id: "3", title: "تركيب البروتين", time: "منذ 20 دقيقة", seats: "3/6", subject: "علوم طبيعية" },
-  ];
 
   return (
     <div className="space-y-6 sm:space-y-8" dir="rtl">
@@ -339,18 +450,22 @@ export function MajlisWorkspace() {
         </div>
       )}
 
-      {/* 1. Header Banner with Stats & Subject Pills */}
+      {/* 1. Header Banner with Authentic Server Stats & Subject Pills */}
       <MajlisHeroBanner
         activeSubject={activeSubject}
         onSelectSubject={(subj) => setActiveSubject(subj)}
         onOpenCreateModal={() => setIsCreateModalOpen(true)}
-        totalTablesCount={94}
-        activeStudentsCount={members.length > 0 ? members.length + 12 : 12}
+        totalTablesCount={stats.activeRoomsCount}
+        activeStudentsCount={stats.activeStudentsCount}
+        completedSessionsToday={stats.completedSessionsToday}
       />
 
-      {/* 2. Main Desktop Showcase: 3D Cozy Majlis Table + Side Inspector Panel */}
+      {/* Audio Ambient Generator Bar (Zero-bundle procedural Web Audio API) */}
+      <MajlisAudioBar />
+
+      {/* 2. Main Desktop Showcase: Cozy Majlis Table + Side Inspector Panel */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-stretch">
-        {/* Left Column: Cozy 3D Table Centerpiece (8 Cols) */}
+        {/* Left Column: Cozy Table Centerpiece (8 Cols) */}
         <div className="lg:col-span-8 flex flex-col justify-between">
           <CozyMajlisDesk
             topicTitle={activeTableTopic}
@@ -368,6 +483,8 @@ export function MajlisWorkspace() {
                 MajlisService.getMembers(activeRoom.id).then(setMembers);
               }
             }}
+            onSendReaction={handleSendReaction}
+            activeReactionNotification={activeReactionNotification}
           />
         </div>
 
@@ -378,6 +495,8 @@ export function MajlisWorkspace() {
             description={activeRoom?.lesson ? `الموضوع الدراسي: ${activeRoom.lesson}` : "نناقش اليوم: حل التمارين + مراجعة الدرس - مواضيع البكالوريا"}
             tags={[subjectLabels[activeSubject] || "مادة", ALGERIAN_BAC_STREAMS[activeRoom?.stream || userStream]?.name_ar || "الشعبة", "مباشر"]}
             members={members.map((m) => ({
+              id: m.id,
+              userId: m.user_id,
               name: m.user_name,
               avatar: m.user_avatar,
               subject: activeRoom?.subject ? subjectLabels[activeRoom.subject] || activeRoom.subject : "رياضيات",
@@ -390,6 +509,14 @@ export function MajlisWorkspace() {
             currentUser={currentUserData}
             onJoin={handleJoin}
             onLeave={handleLeave}
+            roomId={activeRoom?.id}
+            hostUserId={activeRoom?.host_user_id}
+            onKickMember={async (targetUserId) => {
+              if (activeRoom) {
+                await MajlisService.kickMember({ roomId: activeRoom.id, targetUserId });
+                showToast("تم طرد العضو من المجلس.");
+              }
+            }}
           />
         </div>
       </div>
@@ -399,30 +526,51 @@ export function MajlisWorkspace() {
         <div className="flex items-center justify-between pb-2 border-b border-white/[0.06]">
           <h3 className="text-sm font-bold text-white flex items-center gap-1.5">
             <Activity className="w-4 h-4 text-emerald-400" />
-            <span>المجالس النشطة الآن</span>
+            <span>المجالس المفتوحة لشعبتك</span>
           </h3>
-          <span className="text-[11px] text-slate-400 font-mono">3 مجالس مفتوحة</span>
+          <span className="text-[11px] text-slate-400 font-mono">
+            {activeRoomsList.length > 0 ? `${activeRoomsList.length} مجلس نشط` : "لا توجد مجالس أخرى"}
+          </span>
         </div>
 
         <div className="space-y-2">
-          {activeTablesList.map((t) => (
-            <div
-              key={t.id}
-              onClick={() => setActiveTableTopic(t.title)}
-              className="flex items-center justify-between p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.05] transition-all cursor-pointer"
-            >
-              <div>
-                <span className="text-xs font-bold text-white block">{t.title}</span>
-                <span className="text-[10px] text-slate-400 mt-0.5 block">{t.time}</span>
+          {activeRoomsList.length > 0 ? (
+            activeRoomsList.map((t) => (
+              <div
+                key={t.id}
+                onClick={() => {
+                  loadRoom(t.id);
+                  setActiveTableTopic(t.lesson || t.title);
+                }}
+                className={`flex items-center justify-between p-3 rounded-2xl transition-all cursor-pointer border ${
+                  activeRoom?.id === t.id
+                    ? "bg-blue-600/20 border-blue-500/40 text-white shadow-sm"
+                    : "bg-white/[0.03] hover:bg-white/[0.06] border-white/[0.05]"
+                }`}
+              >
+                <div>
+                  <span className="text-xs font-bold text-white block">{t.title}</span>
+                  <span className="text-[10px] text-slate-400 mt-0.5 block">{t.lesson}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-mono font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-lg border border-blue-500/20">
+                    {t.capacity} مقاعد
+                  </span>
+                  <ChevronLeft className="w-4 h-4 text-slate-400" />
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-mono font-bold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded-lg border border-blue-500/20">
-                  {t.seats}
-                </span>
-                <ChevronLeft className="w-4 h-4 text-slate-400" />
-              </div>
+            ))
+          ) : (
+            <div className="py-4 text-center text-slate-400 text-xs space-y-1">
+              <p>لا توجد مجالس أخرى نشطة حالياً لشعبتك.</p>
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="text-blue-400 underline font-bold mt-1 inline-block hover:text-blue-300"
+              >
+                + افتح طاولة جديدة لزملائك 🏛️
+              </button>
             </div>
-          ))}
+          )}
         </div>
       </div>
 

@@ -127,7 +127,29 @@ export function FocusProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // 2. High-precision reconciliation on window visibility & focus (defeats browser throttling)
+  // Screen WakeLock management to prevent phone screen sleep during study
+  const wakeLockRef = useRef<any>(null);
+
+  const requestWakeLock = useCallback(async () => {
+    if (typeof navigator !== "undefined" && "wakeLock" in navigator) {
+      try {
+        wakeLockRef.current = await (navigator as any).wakeLock.request("screen");
+      } catch {
+        // WakeLock request can fail if battery is low or backgrounded, ignore gracefully
+      }
+    }
+  }, []);
+
+  const releaseWakeLock = useCallback(() => {
+    if (wakeLockRef.current) {
+      try {
+        wakeLockRef.current.release();
+      } catch {}
+      wakeLockRef.current = null;
+    }
+  }, []);
+
+  // 2. High-precision reconciliation on window visibility & focus with interruption counter
   useEffect(() => {
     const handleReconcile = () => {
       reconcileTimer();
@@ -136,6 +158,24 @@ export function FocusProvider({ children }: { children: React.ReactNode }) {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         handleReconcile();
+        // Re-acquire wake lock if session is currently running
+        setActiveSession((curr) => {
+          if (curr && curr.status === "running") {
+            requestWakeLock();
+          }
+          return curr;
+        });
+      } else if (document.visibilityState === "hidden") {
+        // Student switched tabs or minimized window: count interruption
+        setActiveSession((curr) => {
+          if (!curr || curr.status !== "running") return curr;
+          const updated: ActiveFocusSession = {
+            ...curr,
+            interruptionsCount: (curr.interruptionsCount || 0) + 1,
+          };
+          saveActiveSessionLocal(updated);
+          return updated;
+        });
       }
     };
 
@@ -147,8 +187,9 @@ export function FocusProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("focus", handleReconcile);
       window.removeEventListener("pageshow", handleReconcile);
+      releaseWakeLock();
     };
-  }, [reconcileTimer]);
+  }, [reconcileTimer, requestWakeLock, releaseWakeLock]);
 
   // 3. UI heartbeat ticker (1 second UI refresh anchored to timestamps)
   useEffect(() => {
@@ -223,6 +264,7 @@ export function FocusProvider({ children }: { children: React.ReactNode }) {
       setElapsedSeconds(0);
       setRemainingSeconds(targetMinutes * 60);
       saveActiveSessionLocal(newSession);
+      requestWakeLock();
 
       // Asynchronously upsert initial record into public.study_sessions
       PlannerStorage.saveStudySession({
@@ -275,6 +317,7 @@ export function FocusProvider({ children }: { children: React.ReactNode }) {
         setRemainingSeconds(computeRemainingSeconds(pausedSession, newAccumulated));
       }
       saveActiveSessionLocal(pausedSession);
+      releaseWakeLock();
 
       // Update study_sessions record status
       PlannerStorage.saveStudySession({
@@ -293,7 +336,7 @@ export function FocusProvider({ children }: { children: React.ReactNode }) {
 
       return pausedSession;
     });
-  }, [effectiveUserId]);
+  }, [effectiveUserId, releaseWakeLock]);
 
   // Resume paused session
   const resumeSession = useCallback(() => {
@@ -309,9 +352,10 @@ export function FocusProvider({ children }: { children: React.ReactNode }) {
       };
 
       saveActiveSessionLocal(resumedSession);
+      requestWakeLock();
       return resumedSession;
     });
-  }, []);
+  }, [requestWakeLock]);
 
   const togglePauseResume = useCallback(() => {
     if (!activeSession) return;
@@ -324,6 +368,7 @@ export function FocusProvider({ children }: { children: React.ReactNode }) {
 
   // Finish session -> opens reflection modal
   const finishSession = useCallback(() => {
+    releaseWakeLock();
     setActiveSession((curr) => {
       if (!curr) return null;
 
@@ -341,7 +386,7 @@ export function FocusProvider({ children }: { children: React.ReactNode }) {
       setIsReflectionModalOpen(true);
       return finishedSnapshot;
     });
-  }, []);
+  }, [releaseWakeLock]);
 
   // Submit short session reflection & finalize in public.study_sessions
   const submitReflection = useCallback(
@@ -353,7 +398,9 @@ export function FocusProvider({ children }: { children: React.ReactNode }) {
       }
 
       const finalDuration = sessionToFinalize.accumulatedElapsedSeconds;
-      const serializedNotes = serializeSessionNotes(
+      const isPureSession = (sessionToFinalize.interruptionsCount || 0) === 0;
+      const purePrefix = isPureSession ? "[جلسة نقية 🌟 0 انقطاعات] " : "";
+      const serializedNotes = purePrefix + serializeSessionNotes(
         rating,
         reflectionText,
         sessionToFinalize.taskTitle

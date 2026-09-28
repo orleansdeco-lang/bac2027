@@ -18,80 +18,66 @@ import {
   Plus,
   MessageSquare,
   Send,
+  AlertTriangle,
+  UserX,
+  ShieldAlert,
 } from "lucide-react";
 import { PlannerStorage, getTodayDateString } from "@/lib/planner/storage";
 import { useAuth } from "@/lib/auth/context";
 import { formatStopwatch } from "./CozyMajlisDesk";
 import { MajlisMessage } from "@/lib/campus/majlis-service";
 import { StreamId } from "@/types/education";
+import { MAJLIS_CONFIG, formatStudentPrivacyName } from "@/lib/constants/majlis-config";
+
+export interface PanelMember {
+  userId?: string;
+  name: string;
+  avatar: string;
+  subject: string;
+  subjectColor: string;
+}
 
 interface MajlisInspectorPanelProps {
   topic?: string;
   description?: string;
   tags?: string[];
-  members?: {
-    name: string;
-    avatar: string;
-    subject: string;
-    subjectColor: string;
-  }[];
+  members?: PanelMember[];
   messages?: MajlisMessage[];
   onSendMessage?: (content: string) => Promise<void>;
+  onSendReaction?: (reactionEmoji: string, reactionMessage: string) => Promise<void>;
+  onKickMember?: (userId: string) => Promise<void> | void;
   onJoin?: () => void;
   onLeave?: () => void;
   isJoined?: boolean;
   userElapsedSeconds?: number;
   currentUser?: {
+    id?: string;
     name: string;
     avatar: string;
     subject: string;
     stream?: StreamId;
   } | null;
+  hostUserId?: string;
+  isHost?: boolean;
+  roomId?: string;
 }
 
 export function MajlisInspectorPanel({
   topic = "المتتاليات",
   description = "نناقش اليوم: حل التمارين + مراجعة الدرس - مواضيع البكالوريا",
   tags = ["رياضيات", "البكالوريا"],
-  members = [
-    {
-      name: "سارة",
-      avatar: "/illustrations/characters/sarah.jpg",
-      subject: "علوم طبيعية",
-      subjectColor: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-    },
-    {
-      name: "ياسين",
-      avatar: "/illustrations/characters/yassine.jpg",
-      subject: "رياضيات",
-      subjectColor: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-    },
-    {
-      name: "علي",
-      avatar: "/illustrations/characters/ali.jpg",
-      subject: "فيزياء",
-      subjectColor: "bg-cyan-500/15 text-cyan-400 border-cyan-500/30",
-    },
-    {
-      name: "مريم",
-      avatar: "/illustrations/characters/mariam.jpg",
-      subject: "فلسفة",
-      subjectColor: "bg-purple-500/15 text-purple-400 border-purple-500/30",
-    },
-    {
-      name: "أمين",
-      avatar: "/illustrations/characters/yassine.jpg",
-      subject: "تاريخ",
-      subjectColor: "bg-indigo-500/15 text-indigo-400 border-indigo-500/30",
-    },
-  ],
+  members = [],
   messages = [],
   onSendMessage,
+  onSendReaction,
+  onKickMember,
   onJoin,
   onLeave,
   isJoined = false,
   userElapsedSeconds = 0,
   currentUser = null,
+  hostUserId,
+  roomId,
 }: MajlisInspectorPanelProps) {
   const { user } = useAuth();
   const [panelTab, setPanelTab] = useState<"members" | "chat">("members");
@@ -99,11 +85,17 @@ export function MajlisInspectorPanel({
   const [isSending, setIsSending] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
-  const [scheduleTitle, setScheduleTitle] = useState(`مجلس مذاكرة: ${topic} مع الزملاء`);
+  const [scheduleTitle, setScheduleTitle] = useState(`مجلس مذاكرة: ${topic}`);
   const [scheduleDate, setScheduleDate] = useState(getTodayDateString());
-  const [scheduleTime, setScheduleTime] = useState("19:30");
+  const [scheduleTime, setScheduleTime] = useState("20:00");
   const [scheduleDuration, setScheduleDuration] = useState(45);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Reporting State
+  const [reportingMember, setReportingMember] = useState<PanelMember | null>(null);
+  const [reportReason, setReportReason] = useState<string>("INAPPROPRIATE_BEHAVIOR");
+  const [reportDetails, setReportDetails] = useState("");
+  const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -112,9 +104,7 @@ export function MajlisInspectorPanel({
 
   const handleShareTable = () => {
     if (typeof window !== "undefined") {
-      const inviteUrl = `${window.location.origin}/diwan?tab=majlis&tableId=${encodeURIComponent(
-        topic
-      )}&invite=true`;
+      const inviteUrl = `${window.location.origin}/diwan?tab=majlis&invite=true`;
       navigator.clipboard.writeText(inviteUrl);
       setIsCopied(true);
       showToast("تم نسخ رابط المجلس لدعوة زملائك! 🔗");
@@ -131,6 +121,20 @@ export function MajlisInspectorPanel({
       setChatInput("");
     } finally {
       setIsSending(false);
+    }
+  };
+
+  const handleQuickReaction = async (reactionEmoji: string, reactionMessage: string) => {
+    if (!isJoined) {
+      showToast("يرجى حجز مقعد على الطاولة أولاً لإرسال التفاعلات 🪑");
+      return;
+    }
+    if (onSendReaction) {
+      await onSendReaction(reactionEmoji, reactionMessage);
+      showToast(`أرسلت: ${reactionEmoji} ${reactionMessage}`);
+    } else if (onSendMessage) {
+      await onSendMessage(`${reactionEmoji} ${reactionMessage}`);
+      showToast(`أرسلت: ${reactionEmoji}`);
     }
   };
 
@@ -154,8 +158,8 @@ export function MajlisInspectorPanel({
         duration_minutes: scheduleDuration,
         priority: "HIGH",
         status: "TODO",
-        notes: `مجلس مذاكرة تفاعلي في ديوان العلم حول موضوع: ${topic}`,
-        description: `مجلس مذاكرة تفاعلي في ديوان العلم حول موضوع: ${topic}`,
+        notes: `مجلس مذاكرة في ديوان العلم: ${topic}`,
+        description: `مجلس مذاكرة في ديوان العلم: ${topic}`,
         source: "STUDY_MAJLIS",
         createdAt: now,
         created_at: now,
@@ -169,12 +173,46 @@ export function MajlisInspectorPanel({
       }
 
       setIsScheduleModalOpen(false);
-      showToast("تمت برمجة هذا المجلس بنجاح! سيظهر في مخططك اليومي ومركز القيادة 📅");
+      showToast("تمت برمجة هذا المجلس بنجاح في مخططك اليومي 📅");
     } catch (err) {
       console.error("Failed to schedule majlis event:", err);
       showToast("حدث خطأ أثناء حفظ موعد المجلس في المخطط");
     }
   };
+
+  const handleSubmitReport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reportingMember?.userId) return;
+    setIsSubmittingReport(true);
+    try {
+      const res = await fetch("/api/campus/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          reportedUserId: reportingMember.userId,
+          reportedUserName: reportingMember.name,
+          roomId: roomId || undefined,
+          reason: reportReason,
+          details: reportDetails.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast(data.message || "تم استلام البلاغ بنجاح.");
+        setReportingMember(null);
+        setReportDetails("");
+      } else {
+        showToast(data.error || "تعذر إرسال البلاغ.");
+      }
+    } catch (err) {
+      showToast("حدث خطأ أثناء إرسال البلاغ.");
+    } finally {
+      setIsSubmittingReport(false);
+    }
+  };
+
+  const isHost = Boolean(user?.id && hostUserId && user.id === hostUserId);
 
   return (
     <div
@@ -197,8 +235,8 @@ export function MajlisInspectorPanel({
         <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
           <h2 className="text-sm font-bold text-slate-300">معلومات المجلس</h2>
           <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            <span>متصل ومباشر ⚡</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span>متزامن ومباشر</span>
           </span>
         </div>
 
@@ -299,7 +337,7 @@ export function MajlisInspectorPanel({
           </div>
         </div>
 
-        {/* Tab Selector: [أعضاء المجلس] / [محادثة المجلس] */}
+        {/* Tab Selector: [أعضاء المجلس] / [التفاعل والتشجيع] */}
         <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center gap-2">
           <button
             type="button"
@@ -311,7 +349,7 @@ export function MajlisInspectorPanel({
             }`}
           >
             <Users className="w-3.5 h-3.5" />
-            <span>الأعضاء ({members.length + (isJoined ? 1 : 0)})</span>
+            <span>الأعضاء ({members.length + (isJoined && !members.some(m => m.userId === currentUser?.id) ? 1 : 0)})</span>
           </button>
           <button
             type="button"
@@ -322,12 +360,12 @@ export function MajlisInspectorPanel({
                 : "bg-white/[0.04] text-slate-300 border-white/10 hover:bg-white/[0.08]"
             }`}
           >
-            <MessageSquare className="w-3.5 h-3.5 text-amber-300" />
-            <span>الدردشة {messages.length > 0 && `(${messages.length})`}</span>
+            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+            <span>{MAJLIS_CONFIG.textChatEnabled ? "الدردشة" : "التفاعل السريع ☕"}</span>
           </button>
         </div>
 
-        {/* Sub-Section 1: Members List */}
+        {/* Sub-Section 1: Real Members List with Privacy Shield & Report */}
         {panelTab === "members" && (
           <div className="mt-3 space-y-1.5 max-h-[220px] overflow-y-auto no-scrollbar pr-0.5">
             {isJoined && (
@@ -344,7 +382,7 @@ export function MajlisInspectorPanel({
                   </div>
                   <div>
                     <span className="text-xs font-bold text-white block">
-                      {currentUser?.name || "أنت (طالب بكالوريا)"}
+                      {formatStudentPrivacyName(currentUser?.name)}
                     </span>
                     <span className="text-[10px] text-emerald-400 font-mono">
                       {formatStopwatch(userElapsedSeconds)}
@@ -358,90 +396,248 @@ export function MajlisInspectorPanel({
               </div>
             )}
 
-            {members.map((mem, idx) => (
-              <div
-                key={idx}
-                className="flex items-center justify-between p-2 rounded-xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.06] transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <div className="relative w-7 h-7 rounded-full overflow-hidden border border-emerald-400/80 shrink-0">
-                    <Image
-                      src={mem.avatar}
-                      alt={mem.name}
-                      fill
-                      sizes="28px"
-                      className="object-cover"
-                    />
-                  </div>
-                  <span className="text-xs font-bold text-white">
-                    {mem.name}
-                  </span>
-                </div>
-
-                <span
-                  className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${mem.subjectColor}`}
-                >
-                  {mem.subject}
-                </span>
+            {members.length === 0 && !isJoined ? (
+              <div className="text-center py-6 text-slate-400 text-xs">
+                لا يوجد طلاب حاضرون حالياً. احجز أول مقعد! 🪑
               </div>
-            ))}
+            ) : (
+              members
+                .filter((mem) => mem.userId !== currentUser?.id)
+                .map((mem, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between p-2 rounded-xl bg-white/[0.03] border border-white/[0.05] hover:bg-white/[0.06] transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="relative w-7 h-7 rounded-full overflow-hidden border border-emerald-400/80 shrink-0">
+                        <Image
+                          src={mem.avatar}
+                          alt={mem.name}
+                          fill
+                          sizes="28px"
+                          className="object-cover"
+                        />
+                      </div>
+                      <span className="text-xs font-bold text-white">
+                        {formatStudentPrivacyName(mem.name)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${mem.subjectColor}`}
+                      >
+                        {mem.subject}
+                      </span>
+
+                      {/* Report button */}
+                      <button
+                        type="button"
+                        onClick={() => setReportingMember(mem)}
+                        className="p-1 rounded-lg text-slate-400 hover:text-rose-400 transition-colors"
+                        title="إبلاغ عن محتوى أو سلوك غير لائق"
+                      >
+                        <ShieldAlert className="w-3 h-3" />
+                      </button>
+
+                      {/* Host Kick Option */}
+                      {isHost && mem.userId && onKickMember && (
+                        <button
+                          type="button"
+                          onClick={() => onKickMember(mem.userId!)}
+                          className="p-1 rounded-lg text-rose-400/70 hover:text-rose-300 transition-colors"
+                          title="إخراج عضو من المجلس"
+                        >
+                          <UserX className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))
+            )}
           </div>
         )}
 
-        {/* Sub-Section 2: Live In-Room Chat */}
+        {/* Sub-Section 2: Bounded Live Reactions OR Open Chat if Flagged */}
         {panelTab === "chat" && (
           <div className="mt-3 flex flex-col justify-between h-[230px]">
-            {/* Messages Feed */}
-            <div className="flex-1 overflow-y-auto no-scrollbar space-y-2 pr-1">
-              {messages.length === 0 ? (
-                <div className="text-center py-6 text-slate-400 text-xs">
-                  لا توجد رسائل بعد. ابدأ محادثة زملائك في هذا المجلس! 👋
+            {!MAJLIS_CONFIG.textChatEnabled ? (
+              /* Safe Bounded Quick Reactions (Coffee, Fire, Clap, Pray) */
+              <div className="flex flex-col justify-between h-full py-2">
+                <div className="text-center space-y-1 mb-2">
+                  <span className="text-xs font-bold text-slate-200 block">
+                    تفاعلات التشجيع اللحظية ☕
+                  </span>
+                  <p className="text-[11px] text-slate-400">
+                    انقر لبث تشجيع مباشر يصل لجميع زملائك على الطاولة فوراً
+                  </p>
                 </div>
-              ) : (
-                messages.map((m) => {
-                  const isMe = m.user_id === user?.id;
-                  return (
-                    <div
-                      key={m.id}
-                      className={`p-2 rounded-xl text-xs max-w-[85%] ${
-                        isMe
-                          ? "mr-auto bg-blue-600/30 border border-blue-500/40 text-blue-100"
-                          : "ml-auto bg-white/[0.05] border border-white/10 text-slate-200"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-2 text-[10px] text-slate-400 mb-0.5">
-                        <span className="font-bold text-amber-300">{m.user_name}</span>
-                        <span className="font-mono text-[9px]">
-                          {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                        </span>
-                      </div>
-                      <p className="leading-relaxed">{m.content}</p>
-                    </div>
-                  );
-                })
-              )}
-            </div>
 
-            {/* Chat Input */}
-            <form onSubmit={handleSendChat} className="mt-2 flex gap-1.5 pt-2 border-t border-white/[0.06]">
-              <input
-                type="text"
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                placeholder="اكتب رسالة للزملاء..."
-                className="flex-1 py-1.5 px-3 rounded-xl bg-white/[0.05] border border-white/10 text-xs text-white focus:outline-none focus:border-blue-400"
-              />
-              <button
-                type="submit"
-                disabled={isSending || !chatInput.trim()}
-                className="p-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white transition-all cursor-pointer shrink-0"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            </form>
+                <div className="grid grid-cols-2 gap-2.5 my-auto">
+                  {MAJLIS_CONFIG.reactions.map((r) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => handleQuickReaction(r.emoji, r.message)}
+                      className="p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] hover:border-amber-400/50 text-right transition-all flex items-center gap-2.5 cursor-pointer group hover:scale-[1.02]"
+                    >
+                      <span className="text-xl group-hover:scale-125 transition-transform">
+                        {r.emoji}
+                      </span>
+                      <div>
+                        <span className="text-xs font-bold text-white block">
+                          {r.label}
+                        </span>
+                        <span className="text-[10px] text-slate-400">بث مباشر</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="text-center pt-2 border-t border-white/[0.06]">
+                  <span className="text-[10px] text-emerald-400 font-medium">
+                    بيئة هادئة ونقية تركز على الإنجاز الأكاديمي 🎯
+                  </span>
+                </div>
+              </div>
+            ) : (
+              /* Open Chat (Only active when MAJLIS_TEXT_CHAT=true) */
+              <>
+                <div className="flex-1 overflow-y-auto no-scrollbar space-y-2 pr-1">
+                  {messages.length === 0 ? (
+                    <div className="text-center py-6 text-slate-400 text-xs">
+                      لا توجد رسائل بعد. ابدأ محادثة زملائك! 👋
+                    </div>
+                  ) : (
+                    messages.map((m) => {
+                      const isMe = m.user_id === user?.id;
+                      return (
+                        <div
+                          key={m.id}
+                          className={`p-2 rounded-xl text-xs max-w-[85%] ${
+                            isMe
+                              ? "mr-auto bg-blue-600/30 border border-blue-500/40 text-blue-100"
+                              : "ml-auto bg-white/[0.05] border border-white/10 text-slate-200"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2 text-[10px] text-slate-400 mb-0.5">
+                            <span className="font-bold text-amber-300">
+                              {formatStudentPrivacyName(m.user_name)}
+                            </span>
+                            <span className="font-mono text-[9px]">
+                              {new Date(m.created_at).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </div>
+                          <p className="leading-relaxed">{m.content}</p>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                <form onSubmit={handleSendChat} className="mt-2 flex gap-1.5 pt-2 border-t border-white/[0.06]">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="اكتب رسالة للزملاء..."
+                    className="flex-1 py-1.5 px-3 rounded-xl bg-white/[0.05] border border-white/10 text-xs text-white focus:outline-none focus:border-blue-400"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isSending || !chatInput.trim()}
+                    className="p-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white transition-all cursor-pointer shrink-0"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                  </button>
+                </form>
+              </>
+            )}
           </div>
         )}
       </div>
+
+      {/* Safety Report Modal */}
+      {reportingMember && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div
+            className="w-full max-w-md rounded-3xl p-6 border border-rose-500/30 shadow-2xl text-right animate-in zoom-in-95 duration-200"
+            style={{
+              background: "linear-gradient(180deg, #0B1222 0%, #070B14 100%)",
+            }}
+          >
+            <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
+              <div className="flex items-center gap-2 text-rose-400">
+                <AlertTriangle className="w-5 h-5" />
+                <h3 className="text-base font-bold text-white">إبلاغ عن محتوى أو سلوك</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setReportingMember(null)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmitReport} className="mt-4 space-y-4 text-xs">
+              <p className="text-slate-300">
+                الإبلاغ عن العضو: <strong className="text-white">{reportingMember.name}</strong>
+              </p>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  سبب الإبلاغ <span className="text-rose-400">*</span>
+                </label>
+                <select
+                  value={reportReason}
+                  onChange={(e) => setReportReason(e.target.value)}
+                  className="w-full py-2 px-3 rounded-xl bg-[#0F172A] border border-white/10 text-xs text-white"
+                >
+                  {MAJLIS_CONFIG.reportReasons.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {r.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5">
+                  تفاصيل إضافية (اختياري)
+                </label>
+                <textarea
+                  rows={3}
+                  value={reportDetails}
+                  onChange={(e) => setReportDetails(e.target.value)}
+                  placeholder="صف ما حدث لمساعدة فريق الإشراف..."
+                  className="w-full py-2 px-3 rounded-xl bg-white/[0.05] border border-white/10 text-xs text-white"
+                />
+              </div>
+
+              <div className="pt-2 flex items-center gap-2">
+                <button
+                  type="submit"
+                  disabled={isSubmittingReport}
+                  className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold cursor-pointer"
+                >
+                  {isSubmittingReport ? "جاري الإرسال..." : "إرسال البلاغ للإدارة"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setReportingMember(null)}
+                  className="py-2.5 px-4 rounded-xl bg-white/10 text-slate-300"
+                >
+                  إلغاء
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Schedule Majlis Modal */}
       {isScheduleModalOpen && (
@@ -496,7 +692,7 @@ export function MajlisInspectorPanel({
                     required
                     value={scheduleTime}
                     onChange={(e) => setScheduleTime(e.target.value)}
-                    className="w-full py-2 px-3 rounded-xl bg-white/[0.05] border border-white/10 text-xs text-white"
+                    className="w-full py-2 px-3 rounded-xl bg-white/[0.05] border border-white/10 text-xs text-white font-mono"
                   />
                 </div>
               </div>

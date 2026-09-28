@@ -106,6 +106,14 @@ export function middleware(request: NextRequest) {
     const hasSession = hasActiveSession(request);
 
     if (!hasSession) {
+      // Narrow invite exception: allow prospective students to view the invitation preview card
+      if (
+        (pathname === "/diwan" || pathname.startsWith("/diwan/")) &&
+        (request.nextUrl.searchParams.has("invite") || request.nextUrl.searchParams.has("table"))
+      ) {
+        return NextResponse.next();
+      }
+
       // Immediate redirection to /auth with preserved destination
       const redirectUrl = new URL("/auth", request.url);
       const destination = pathname + search;

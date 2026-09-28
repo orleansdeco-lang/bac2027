@@ -173,34 +173,7 @@ const defaultRoom: MajlisRoom = {
   created_at: new Date().toISOString(),
 };
 localRooms.set(DEFAULT_ROOM_ID, defaultRoom);
-localMembers.set(DEFAULT_ROOM_ID, [
-  {
-    id: "mem-1",
-    room_id: DEFAULT_ROOM_ID,
-    user_id: "user-yassine",
-    user_name: "ياسين",
-    user_avatar: "/illustrations/characters/yassine.jpg",
-    user_stream: "sciences_exp",
-    seat_index: 0,
-    status: "SOLVING",
-    score: 0,
-    finished_paper: false,
-    joined_at: new Date().toISOString(),
-  },
-  {
-    id: "mem-2",
-    room_id: DEFAULT_ROOM_ID,
-    user_id: "user-sarah",
-    user_name: "سارة",
-    user_avatar: "/illustrations/characters/sarah.jpg",
-    user_stream: "sciences_exp",
-    seat_index: 1,
-    status: "SOLVING",
-    score: 0,
-    finished_paper: true,
-    joined_at: new Date().toISOString(),
-  },
-]);
+localMembers.set(DEFAULT_ROOM_ID, []);
 
 export const MajlisService = {
   /**
@@ -704,6 +677,103 @@ export const MajlisService = {
   },
 
   /**
+   * Send live cheer / reaction to room or specific student
+   */
+  async sendReaction(params: {
+    roomId: string;
+    fromUserId: string;
+    fromName: string;
+    toUserId?: string;
+    reactionEmoji: string;
+    message: string;
+  }): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const channel = supabase.channel(`majlis-room-${params.roomId}`);
+        await channel.send({
+          type: "broadcast",
+          event: "seat_reaction",
+          payload: {
+            fromUserId: params.fromUserId,
+            fromName: params.fromName,
+            toUserId: params.toUserId,
+            reactionEmoji: params.reactionEmoji,
+            message: params.message,
+            timestamp: Date.now(),
+          },
+        });
+      } catch (err) {
+        console.warn("[MajlisService] sendReaction error:", err);
+      }
+    }
+  },
+
+  /**
+   * Kick member from room (for host / moderation)
+   */
+  async kickMember(params: { roomId: string; targetUserId: string }): Promise<void> {
+    await this.leaveSeat(params.roomId, params.targetUserId);
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const channel = supabase.channel(`majlis-room-${params.roomId}`);
+        await channel.send({
+          type: "broadcast",
+          event: "kick_member",
+          payload: { kickedUserId: params.targetUserId },
+        });
+      } catch (err) {
+        console.warn("[MajlisService] kickMember error:", err);
+      }
+    }
+  },
+
+  /**
+   * Fetch active rooms genuine query from Supabase
+   */
+  async fetchActiveRooms(stream?: StreamId): Promise<MajlisRoom[]> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        let query = supabase
+          .from("majlis_rooms")
+          .select("*")
+          .eq("status", "ACTIVE")
+          .order("created_at", { ascending: false })
+          .limit(20);
+
+        if (stream) {
+          query = query.eq("stream", stream);
+        }
+
+        const { data, error } = await query;
+        if (!error && data && data.length > 0) {
+          return data.map((d: any) => ({
+            id: d.id,
+            title: d.title,
+            stream: d.stream as StreamId,
+            subject: d.subject,
+            lesson: d.lesson,
+            mode: d.mode as MajlisStudyMode,
+            host_user_id: d.host_user_id,
+            capacity: d.capacity,
+            status: d.status,
+            current_step: d.current_step,
+            timer_end: d.timer_end,
+            active_material: d.active_material,
+            created_at: d.created_at,
+            updated_at: d.updated_at,
+          }));
+        }
+      } catch (err) {
+        console.warn("[MajlisService] fetchActiveRooms error:", err);
+      }
+    }
+
+    return Array.from(localRooms.values()).filter(
+      (r) => r.status === "ACTIVE" && (!stream || r.stream === stream)
+    );
+  },
+
+  /**
    * Subscribe to real-time events on `majlis-room-${roomId}`
    */
   subscribeToRoom(
@@ -714,10 +784,23 @@ export const MajlisService = {
       onScoreUpdate?: (payload: any) => void;
       onNewMessage?: (msg: MajlisMessage) => void;
       onRoomUpdate?: (room: Partial<MajlisRoom>) => void;
+      onReaction?: (payload: {
+        fromUserId: string;
+        fromName: string;
+        toUserId?: string;
+        reactionEmoji: string;
+        message: string;
+      }) => void;
+      onKick?: (payload: { kickedUserId: string }) => void;
+      onPresenceSync?: (presenceState: Record<string, any>) => void;
+      onPresenceLeave?: (leftPresences: any[]) => void;
     }
   ) {
     if (!isSupabaseConfigured || !supabase) {
-      return () => {};
+      const noop = () => {};
+      noop.trackPresence = async () => {};
+      noop.untrackPresence = async () => {};
+      return noop;
     }
 
     const channel = supabase.channel(`majlis-room-${roomId}`, {
@@ -743,6 +826,22 @@ export const MajlisService = {
       .on("broadcast", { event: "room_update" }, ({ payload }) => {
         if (callbacks.onRoomUpdate) callbacks.onRoomUpdate(payload);
       })
+      .on("broadcast", { event: "seat_reaction" }, ({ payload }) => {
+        if (callbacks.onReaction) callbacks.onReaction(payload);
+      })
+      .on("broadcast", { event: "kick_member" }, ({ payload }) => {
+        if (callbacks.onKick) callbacks.onKick(payload);
+      })
+      .on("presence", { event: "sync" }, () => {
+        if (callbacks.onPresenceSync) {
+          callbacks.onPresenceSync(channel.presenceState());
+        }
+      })
+      .on("presence", { event: "leave" }, ({ leftPresences }) => {
+        if (callbacks.onPresenceLeave) {
+          callbacks.onPresenceLeave(leftPresences);
+        }
+      })
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "majlis_members", filter: `room_id=eq.${roomId}` },
@@ -761,8 +860,26 @@ export const MajlisService = {
       )
       .subscribe();
 
-    return () => {
+    const unsubscribe = () => {
       channel.unsubscribe();
     };
+
+    unsubscribe.trackPresence = async (data: Record<string, any>) => {
+      try {
+        await channel.track(data);
+      } catch (e) {
+        console.warn("[MajlisService] trackPresence error:", e);
+      }
+    };
+
+    unsubscribe.untrackPresence = async () => {
+      try {
+        await channel.untrack();
+      } catch (e) {
+        console.warn("[MajlisService] untrackPresence error:", e);
+      }
+    };
+
+    return unsubscribe;
   },
 };

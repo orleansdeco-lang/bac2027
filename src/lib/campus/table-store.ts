@@ -83,8 +83,11 @@ const SEED_TABLES: MajlisTable[] = [
   },
 ];
 
-for (const t of SEED_TABLES) {
-  globalTables.set(t.id, t);
+// Only seed default tables if DEMO mode is explicitly enabled
+if (process.env.NEXT_PUBLIC_DEMO_MODE === "true") {
+  for (const t of SEED_TABLES) {
+    globalTables.set(t.id, t);
+  }
 }
 
 export const TableStore = {

@@ -74,7 +74,14 @@ export type PilotAnalyticsEventName =
   | "try_orientation_demo"
   | "click_cta"
   | "start_signup"
-  | "click_whatsapp";
+  | "click_whatsapp"
+  | "majlis_view"
+  | "majlis_join"
+  | "majlis_leave"
+  | "majlis_reaction"
+  | "majlis_rsvp"
+  | "majlis_invite_shared"
+  | "majlis_invite_opened";
 
 export interface PilotAnalyticsProperties {
   userId?: string | null;

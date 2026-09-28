@@ -21,6 +21,9 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { CampusAccessGate } from "@/components/campus/CampusAccessGate";
+import { MAJLIS_CONFIG } from "@/lib/constants/majlis-config";
+
 export type DiwanSubTab = "majlis" | "experiences" | "summaries";
 
 function DiwanContent() {
@@ -57,9 +60,9 @@ function DiwanContent() {
   const tabs: { id: DiwanSubTab; label: string; icon: React.ElementType; badge?: string }[] = [
     {
       id: "majlis",
-      label: "مجالس العلم (3D Study Majlis)",
+      label: "مجالس المذاكرة الحية (Study Majlis)",
       icon: Landmark,
-      badge: "3D تفاعلي",
+      badge: "طاولات متزامنة",
     },
     {
       id: "experiences",
@@ -103,14 +106,14 @@ function DiwanContent() {
 
             <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0">
               <Link
-                href="/auth"
+                href="/auth?redirectTo=/diwan?tab=majlis&invite=true"
                 className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md transition-all text-center flex items-center justify-center gap-1.5"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>تسجيل الدخول</span>
               </Link>
               <Link
-                href="/auth/register"
+                href="/auth/register?redirectTo=/diwan?tab=majlis&invite=true"
                 className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 text-xs font-bold shadow-md transition-all text-center flex items-center justify-center gap-1.5"
               >
                 <UserPlus className="w-3.5 h-3.5" />
@@ -164,8 +167,18 @@ function DiwanContent() {
           </div>
         </div>
 
-        {/* Tab 1: مجالس العلم (3D Study Majlis) */}
-        {activeTab === "majlis" && <MajlisWorkspace />}
+        {/* Tab 1: مجالس المذاكرة الحية */}
+        {activeTab === "majlis" && (
+          <div className="animate-in fade-in duration-200">
+            {MAJLIS_CONFIG.requiresSubscription ? (
+              <CampusAccessGate isTableSession={true}>
+                <MajlisWorkspace />
+              </CampusAccessGate>
+            ) : (
+              <MajlisWorkspace />
+            )}
+          </div>
+        )}
 
         {/* Tab 2: تجارب ونصائح الطلاب */}
         {activeTab === "experiences" && (
