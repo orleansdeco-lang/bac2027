@@ -69,7 +69,12 @@ export type PilotAnalyticsEventName =
   | "orientation_filter_used"
   | "orientation_compare"
   | "orientation_share"
-  | "orientation_shater_cta";
+  | "orientation_shater_cta"
+  | "view_hero"
+  | "try_orientation_demo"
+  | "click_cta"
+  | "start_signup"
+  | "click_whatsapp";
 
 export interface PilotAnalyticsProperties {
   userId?: string | null;
