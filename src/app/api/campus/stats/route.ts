@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
+import { TableStore } from "@/lib/campus/table-store";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -42,6 +43,22 @@ export async function GET() {
         .gte("started_at", startOfToday.toISOString());
 
       completedSessionsToday = sessionsCount || 0;
+    }
+
+    // Incorporate ephemeral memory store for local sessions & dev runtime
+    try {
+      const memoryTables = TableStore.getAll();
+      const memoryActiveRooms = memoryTables.filter((t) => t.status === "ACTIVE").length;
+      let memorySeatedCount = 0;
+      for (const t of memoryTables) {
+        if (t.seats) {
+          memorySeatedCount += t.seats.filter(Boolean).length;
+        }
+      }
+      activeRoomsCount = Math.max(activeRoomsCount, memoryActiveRooms);
+      activeStudentsCount = Math.max(activeStudentsCount, memorySeatedCount);
+    } catch {
+      // Memory store fallback safe
     }
 
     const stats = {
