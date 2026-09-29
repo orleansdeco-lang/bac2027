@@ -59,19 +59,19 @@ export async function GET(req: Request) {
     }
   }
 
-  // Merge with curated experiences
-  const map = new Map<string, BacExperience>();
-  CURATED_BAC_EXPERIENCES.forEach((item) => {
-    map.set(item.id, {
+  // In live production with Supabase configured, strictly serve authentic records from the database
+  let list: BacExperience[] = [];
+  if (isSupabaseConfigured && supabase) {
+    list = remoteList;
+  } else {
+    // Development / offline fallback only when database is unavailable
+    list = CURATED_BAC_EXPERIENCES.map((item) => ({
       ...item,
       status: "approved",
       candidate_type: item.candidate_type || "former_candidate",
       passed_bac: item.passed_bac ?? true,
-    });
-  });
-  remoteList.forEach((item) => map.set(item.id, item));
-
-  let list = Array.from(map.values()).filter((e) => e.status === "approved");
+    }));
+  }
 
   // Stream filter
   if (streamId && streamId !== "all") {

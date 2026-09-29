@@ -92,8 +92,15 @@ const QUIZ_CHALLENGES: Record<string, QuizChallenge> = {
   },
 };
 
-export function MajlisInteractiveGrid({ topicTitle = "المتتاليات" }: { topicTitle?: string }) {
+export function MajlisInteractiveGrid({
+  topicTitle = "المتتاليات",
+  activeRoomId,
+}: {
+  topicTitle?: string;
+  activeRoomId?: string;
+}) {
   const { user } = useAuth();
+  const targetRoomId = activeRoomId || "room-sciences-rc";
 
   // Gamification & Quiz Modal State
   const [activeGameKey, setActiveGameKey] = useState<string | null>(null);
@@ -107,9 +114,9 @@ export function MajlisInteractiveGrid({ topicTitle = "المتتاليات" }: {
   const [hasRsvpEvening, setHasRsvpEvening] = useState(false);
   const [rsvpCount, setRsvpCount] = useState(0);
 
-  // Load genuine RSVP status for the scheduled official room
+  // Load genuine RSVP status for the target majlis room
   useEffect(() => {
-    fetch("/api/campus/rsvp?roomId=room-sciences-rc")
+    fetch(`/api/campus/rsvp?roomId=${encodeURIComponent(targetRoomId)}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -118,7 +125,7 @@ export function MajlisInteractiveGrid({ topicTitle = "المتتاليات" }: {
         }
       })
       .catch(() => {});
-  }, [user]);
+  }, [user, targetRoomId]);
 
   // Load genuine study sessions for XP calculation (10 mins = 1 XP)
   useEffect(() => {
@@ -186,7 +193,7 @@ export function MajlisInteractiveGrid({ topicTitle = "المتتاليات" }: {
       const res = await fetch("/api/campus/rsvp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ roomId: "room-sciences-rc", willAttend: next }),
+        body: JSON.stringify({ roomId: targetRoomId, willAttend: next }),
       });
       if (res.ok) {
         const data = await res.json();

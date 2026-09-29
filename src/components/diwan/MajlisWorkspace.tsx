@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   Compass,
   MessageSquare,
@@ -39,6 +40,8 @@ const STORAGE_SESSION_KEY = "shater_active_majlis_seat_v2";
 
 export function MajlisWorkspace() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const queryRoomId = searchParams?.get("roomId") || searchParams?.get("table");
   const [activeSubject, setActiveSubject] = useState("physics");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeTableTopic, setActiveTableTopic] = useState("الدارة RC (شحن وتفريغ)");
@@ -144,8 +147,20 @@ export function MajlisWorkspace() {
   }, [userStream]);
 
   // Load initial active room and its data
-  const loadRoom = useCallback(async (roomId = "room-sciences-rc") => {
-    const room = await MajlisService.getRoom(roomId);
+  const loadRoom = useCallback(async (targetRoomId?: string) => {
+    let roomIdToLoad = targetRoomId || queryRoomId;
+
+    if (!roomIdToLoad) {
+      // Find first active room matching userStream
+      const activeRooms = await MajlisService.fetchActiveRooms(userStream);
+      if (activeRooms.length > 0) {
+        roomIdToLoad = activeRooms[0].id;
+      } else {
+        roomIdToLoad = "room-sciences-rc";
+      }
+    }
+
+    const room = await MajlisService.getRoom(roomIdToLoad);
     if (room) {
       setActiveRoom(room);
       setActiveTableTopic(room.lesson || room.title);
@@ -165,8 +180,12 @@ export function MajlisWorkspace() {
           setSessionStart(new Date(userSeat.joined_at).getTime());
         }
       }
+    } else {
+      setActiveRoom(null);
+      setMembers([]);
+      setMessages([]);
     }
-  }, [user?.id]);
+  }, [queryRoomId, userStream, user?.id]);
 
   useEffect(() => {
     loadRoom();
@@ -459,10 +478,7 @@ export function MajlisWorkspace() {
     presenceCount,
     isUserSeated ? 1 : 0
   );
-  const effectiveRoomsCount = Math.max(
-    stats.activeRoomsCount,
-    1 // Current table is open and active
-  );
+  const effectiveRoomsCount = stats.activeRoomsCount || (activeRoom ? 1 : 0);
 
   return (
     <div className="space-y-6 sm:space-y-8" dir="rtl">
@@ -499,6 +515,7 @@ export function MajlisWorkspace() {
             members={members}
             onJoinSeat={handleJoin}
             onLeaveSeat={handleLeave}
+            onOpenCreateModal={() => setIsCreateModalOpen(true)}
             onRefreshRoom={() => {
               if (activeRoom) {
                 MajlisService.getMembers(activeRoom.id).then(setMembers);
@@ -596,7 +613,7 @@ export function MajlisWorkspace() {
       </div>
 
       {/* 3. Community Games & Peer Challenge Grid */}
-      <MajlisInteractiveGrid />
+      <MajlisInteractiveGrid activeRoomId={activeRoom?.id} />
 
       {/* Create Modal */}
       <CreateMajlisModal

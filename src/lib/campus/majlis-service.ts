@@ -153,6 +153,7 @@ export function getInitialMaterialForMode(mode: MajlisStudyMode, subject: string
 }
 
 // Client-side rate limiting tracker for in-room chat
+export const CHAT_MIN_INTERVAL_MS = 1500;
 let lastMessageTimestamp = 0;
 
 export const MajlisService = {
@@ -318,7 +319,7 @@ export const MajlisService = {
     member?: MajlisMember;
   }> {
     // 1. STRICT STREAM ACCESS RULE (الشعبة):
-    if (params.user.stream !== params.roomStream && params.roomStream !== "ALL") {
+    if (params.user.stream !== params.roomStream && (params.roomStream as string) !== "ALL") {
       return {
         success: false,
         allowed: false,
@@ -612,7 +613,7 @@ export const MajlisService = {
   }): Promise<MajlisMessage> {
     const now = Date.now();
     // Flood protection: max 1 message per 1.5 seconds per client
-    if (now - lastMessageTimestamp < 1500) {
+    if (now - lastMessageTimestamp < CHAT_MIN_INTERVAL_MS) {
       throw new Error("يرجى الانتظار ثانية قبل إرسال رسالة أخرى.");
     }
     lastMessageTimestamp = now;

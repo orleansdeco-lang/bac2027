@@ -70,6 +70,7 @@ interface CozyMajlisDeskProps {
   onLeaveSeat?: () => void;
   onRefreshRoom?: () => void;
   onSendReaction?: (toUserId: string, reactionEmoji: string) => void;
+  onOpenCreateModal?: () => void;
   activeReactionNotification?: {
     fromName: string;
     emoji: string;
@@ -91,6 +92,7 @@ export function CozyMajlisDesk({
   onLeaveSeat,
   onRefreshRoom,
   onSendReaction,
+  onOpenCreateModal,
   activeReactionNotification = null,
 }: CozyMajlisDeskProps) {
   const [secondsOffset, setSecondsOffset] = useState(0);
@@ -122,7 +124,8 @@ export function CozyMajlisDesk({
 
   const handleWhatsAppInvite = () => {
     if (typeof window !== "undefined") {
-      const inviteUrl = `${window.location.origin}/diwan?tab=majlis&invite=true`;
+      const roomIdParam = room?.id ? `&roomId=${encodeURIComponent(room.id)}` : "";
+      const inviteUrl = `${window.location.origin}/diwan?tab=majlis${roomIdParam}&invite=true`;
       const message = `السلام عليكم! أنا أذاكر الآن في منصة الشاطر على طاولة "${topicTitle}". انضم إليّ ونراجع معاً: ${inviteUrl}`;
       window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
     }
@@ -138,13 +141,53 @@ export function CozyMajlisDesk({
     "bottom-right",
   ];
 
-  // Resolve genuine seats: strictly real members or empty slots
+  // If no room is active, render dignified empty state
+  if (!room) {
+    return (
+      <div
+        className="relative w-full rounded-3xl overflow-hidden border border-white/[0.08] shadow-2xl flex flex-col items-center justify-center p-6 sm:p-12 min-h-[520px] sm:min-h-[600px] select-none text-center"
+        style={{
+          background: "radial-gradient(ellipse at center, #101B33 0%, #070B14 100%)",
+        }}
+        dir="rtl"
+      >
+        <div className="relative z-10 max-w-md mx-auto space-y-4">
+          <div className="w-16 h-16 rounded-3xl bg-blue-500/10 border border-blue-400/30 flex items-center justify-center mx-auto text-blue-400 shadow-xl shadow-blue-500/10">
+            <Users className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl sm:text-2xl font-black text-white">
+            ما كاين حتى مجلس مفتوح حالياً
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
+            كن أول من يفتح طاولة مذاكرة لشعبتك واجمع زملاءك للحل المشترك، المراجعة بالمؤقت، وتثبيت الدروس.
+          </p>
+          <div className="pt-3">
+            <button
+              type="button"
+              onClick={onOpenCreateModal}
+              className="py-3 px-6 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 text-xs sm:text-sm font-black shadow-lg shadow-amber-500/25 transition-all hover:scale-105 active:scale-95 cursor-pointer inline-flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4 stroke-[3]" />
+              <span>أنشئ أول مجلس</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Resolve genuine seats: strictly real members matching seat_index
   const capacity = room?.capacity || maxSeatsCount || 6;
   const resolvedSeats: StudentSeat[] = positions.slice(0, capacity).map((pos, idx) => {
-    const member = members[idx];
-    const isUserIndex = isUserSeated && (member?.user_id === currentUser?.id || (!member && idx === 4));
+    const member =
+      members.find((m) => m.seat_index === idx) ||
+      (members[idx]?.seat_index === undefined ? members[idx] : undefined);
+    const isCurrentUserSeatedHere = Boolean(
+      (isUserSeated && member && currentUser?.id && member.user_id === currentUser.id) ||
+      (isUserSeated && !members.some((m) => m.user_id === currentUser?.id) && idx === 0)
+    );
 
-    if (isUserIndex) {
+    if (isCurrentUserSeatedHere) {
       return {
         id: "seat-user",
         userId: currentUser?.id,

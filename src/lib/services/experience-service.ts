@@ -93,24 +93,30 @@ export const ExperienceService = {
     // Merge and eliminate duplicates by id
     const map = new Map<string, BacExperience>();
 
-    // 1. Curated seed data with Wilaya auto-extraction
-    CURATED_BAC_EXPERIENCES.forEach((item) => {
-      const match = item.author_name.match(/ولاية\s+([^)]+)/);
-      const wilayaFromAuthor = match ? match[1].trim() : null;
-      map.set(item.id, {
-        ...item,
-        wilaya: item.wilaya || wilayaFromAuthor,
-        status: "approved",
-        candidate_type: item.candidate_type || "former_candidate",
-        passed_bac: item.passed_bac ?? true,
+    if (isSupabaseConfigured && supabase) {
+      // 1. Remote Supabase experiences (authentic database records)
+      remoteExperiences.forEach((item) => map.set(item.id, item));
+    } else {
+      // 2. Curated seed data fallback only for development / offline
+      CURATED_BAC_EXPERIENCES.forEach((item) => {
+        const match = item.author_name.match(/ولاية\s+([^)]+)/);
+        const wilayaFromAuthor = match ? match[1].trim() : null;
+        map.set(item.id, {
+          ...item,
+          wilaya: item.wilaya || wilayaFromAuthor,
+          status: "approved",
+          candidate_type: item.candidate_type || "former_candidate",
+          passed_bac: item.passed_bac ?? true,
+        });
       });
+    }
+
+    // 3. User's locally created pending submissions
+    localSubmissions.forEach((item) => {
+      if (!map.has(item.id)) {
+        map.set(item.id, item);
+      }
     });
-
-    // 2. Remote Supabase experiences
-    remoteExperiences.forEach((item) => map.set(item.id, item));
-
-    // 3. User's locally created submissions
-    localSubmissions.forEach((item) => map.set(item.id, item));
 
     let list = Array.from(map.values()).filter((e) => (e.status || "approved") === "approved");
 
@@ -454,13 +460,29 @@ export const ExperienceService = {
   ): Promise<{ upvoted: boolean; count: number }> {
     const upvotedIds = this.getUpvotedIds();
     const isCurrentlyUpvoted = upvotedIds.includes(experienceId);
-    const newUpvoted = !isCurrentlyUpvoted;
-    const newCount = newUpvoted ? currentCount + 1 : Math.max(0, currentCount - 1);
+    let newUpvoted = !isCurrentlyUpvoted;
+    let newCount = newUpvoted ? currentCount + 1 : Math.max(0, currentCount - 1);
 
     if (typeof window !== "undefined") {
       try {
+        const res = await fetch(`/api/experiences/${encodeURIComponent(experienceId)}/upvote`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            newUpvoted = data.upvoted;
+            newCount = data.count;
+          }
+        }
+      } catch (err) {
+        console.warn("API toggle upvote error, falling back locally:", err);
+      }
+
+      try {
         if (newUpvoted) {
-          upvotedIds.push(experienceId);
+          if (!upvotedIds.includes(experienceId)) upvotedIds.push(experienceId);
         } else {
           const idx = upvotedIds.indexOf(experienceId);
           if (idx !== -1) upvotedIds.splice(idx, 1);
@@ -471,38 +493,11 @@ export const ExperienceService = {
       }
     }
 
-    // Sync to Supabase if connected
-    if (isSupabaseConfigured && supabase) {
-      try {
-        if (userId) {
-          if (newUpvoted) {
-            await supabase.from("experience_upvotes").insert({
-              user_id: userId,
-              experience_id: experienceId,
-            });
-          } else {
-            await supabase
-              .from("experience_upvotes")
-              .delete()
-              .eq("user_id", userId)
-              .eq("experience_id", experienceId);
-          }
-        } else {
-          await supabase
-            .from("bac_experiences")
-            .update({ upvotes_count: newCount })
-            .eq("id", experienceId);
-        }
-      } catch (err) {
-        console.warn("Supabase upvote sync skipped:", err);
-      }
-    }
-
     return { upvoted: newUpvoted, count: newCount };
   },
 
   getUpvotedIds(): string[] {
-    if (typeof window !== "undefined") return [];
+    if (typeof window === "undefined") return [];
     try {
       const stored = localStorage.getItem(LOCAL_STORAGE_KEY_UPVOTES);
       return stored ? JSON.parse(stored) : [];

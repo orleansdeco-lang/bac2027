@@ -23,6 +23,7 @@ import {
   ChevronDown,
   X,
 } from "lucide-react";
+import { formatStudentPrivacyName } from "@/lib/constants/majlis-config";
 
 const STREAMS_LIST: { id: string; label: string }[] = [
   { id: "ALL", label: "جميع الشعب" },
@@ -58,17 +59,30 @@ export function DiwanSharedSummariesTab() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  // Load posts
-  useEffect(() => {
+  // Load posts from API with fallback
+  const fetchPosts = async () => {
+    try {
+      const res = await fetch("/api/campus/posts?t=" + Date.now(), {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.posts)) {
+          setPosts(data.posts);
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to fetch campus posts from API:", err);
+    }
+    // Fallback only if offline/network error
     const localPosts = CampusService.getPosts();
     setPosts(localPosts);
+  };
 
-    // Sync remote posts in background
-    CampusService.fetchRemotePosts().then((remote) => {
-      if (remote && remote.length > 0) {
-        setPosts(remote);
-      }
-    });
+  useEffect(() => {
+    fetchPosts();
   }, []);
 
   // Filter posts strictly for summaries and tricky problems
@@ -100,10 +114,34 @@ export function DiwanSharedSummariesTab() {
     });
   }, [posts, selectedType, selectedStream, searchQuery]);
 
-  const handleLike = (postId: string) => {
-    const res = CampusService.toggleLikePost(postId);
+  const handleLike = async (postId: string) => {
+    if (!user) {
+      showToast("يرجى تسجيل الدخول للإعجاب بالملخص 🏛️");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/campus/posts/${encodeURIComponent(postId)}/like`, {
+        method: "POST",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setPosts((prev) =>
+            prev.map((p) =>
+              p.id === postId ? { ...p, likesCount: data.likesCount, isLiked: data.isLiked } : p
+            )
+          );
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn("API like error, falling back locally:", err);
+    }
+
+    const fallbackRes = CampusService.toggleLikePost(postId);
     setPosts((prev) =>
-      prev.map((p) => (p.id === postId ? { ...p, likesCount: res.likesCount, isLiked: res.isLiked } : p))
+      prev.map((p) => (p.id === postId ? { ...p, likesCount: fallbackRes.likesCount, isLiked: fallbackRes.isLiked } : p))
     );
   };
 
@@ -136,8 +174,12 @@ export function DiwanSharedSummariesTab() {
     }
   };
 
-  const handleCreatePost = (e: React.FormEvent) => {
+  const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      showToast("يرجى تسجيل الدخول لمشاركة ملخصك في الديوان 🏛️");
+      return;
+    }
     if (!draftTitle.trim() || !draftContent.trim() || !draftLesson.trim()) {
       showToast("يرجى ملء كافة الحقول الأساسية للملخص");
       return;
@@ -148,9 +190,52 @@ export function DiwanSharedSummariesTab() {
       .map((t) => t.trim())
       .filter((t) => t.length > 0);
 
+    const postPayload = {
+      type: draftType,
+      title: draftTitle.trim(),
+      content: draftContent.trim(),
+      stream: draftStream,
+      subjectId: draftSubject,
+      lesson: draftLesson.trim(),
+      tags: tagsArray.length > 0 ? tagsArray : ["ملخص_تشاركي", "بكالوريا"],
+    };
+
+    try {
+      const res = await fetch("/api/campus/posts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(postPayload),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.post) {
+          setPosts((prev) => [data.post, ...prev]);
+          setIsShareModalOpen(false);
+          setDraftTitle("");
+          setDraftContent("");
+          setDraftLesson("");
+          setDraftTags("");
+          showToast("تم نشر ملخصك بنجاح في ديوان العلم! شكراً لمساهمتك مع زملائك 🌟");
+          return;
+        }
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        showToast(errData.error || "تعذر نشر الملخص، يرجى المحاولة لاحقاً");
+        return;
+      }
+    } catch (err) {
+      console.warn("API create post failed, falling back to local store:", err);
+    }
+
+    // Privacy-safe display name fallback
+    const fallbackAuthorName = formatStudentPrivacyName(
+      user?.user_metadata?.full_name || "طالب بكالوريا"
+    );
+
     const newPost = CampusService.createPost({
       authorId: user?.id || "student-user",
-      authorName: user?.email?.split("@")[0] || "طالب بكالوريا",
+      authorName: fallbackAuthorName,
       authorAvatar: "👨‍🎓",
       authorStream: draftStream,
       authorBadge: "مساهم متميز",

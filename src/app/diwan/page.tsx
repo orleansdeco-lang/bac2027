@@ -23,6 +23,8 @@ import {
 
 import { CampusAccessGate } from "@/components/campus/CampusAccessGate";
 import { MAJLIS_CONFIG } from "@/lib/constants/majlis-config";
+import { MajlisService, MajlisRoom } from "@/lib/campus/majlis-service";
+import { ALGERIAN_BAC_STREAMS } from "@/lib/constants/streams";
 
 export type DiwanSubTab = "majlis" | "experiences" | "summaries";
 
@@ -33,6 +35,9 @@ function DiwanContent() {
 
   const tabParam = searchParams?.get("tab") as DiwanSubTab | null;
   const isInvite = searchParams?.get("invite") === "true";
+  const invitedRoomId = searchParams?.get("roomId") || searchParams?.get("table");
+  const [invitedRoom, setInvitedRoom] = useState<MajlisRoom | null>(null);
+
   const [activeTab, setActiveTab] = useState<DiwanSubTab>(
     tabParam === "experiences" || tabParam === "summaries" || tabParam === "majlis"
       ? tabParam
@@ -51,6 +56,18 @@ function DiwanContent() {
       setShowInviteBanner(true);
     }
   }, [isInvite, user]);
+
+  useEffect(() => {
+    if (isInvite && invitedRoomId) {
+      MajlisService.getRoom(invitedRoomId).then((r) => {
+        if (r) setInvitedRoom(r);
+      });
+    }
+  }, [isInvite, invitedRoomId]);
+
+  const targetRedirect = invitedRoomId
+    ? `/diwan?tab=majlis&roomId=${invitedRoomId}&invite=true`
+    : `/diwan?tab=majlis&invite=true`;
 
   const handleTabChange = (tab: DiwanSubTab) => {
     setActiveTab(tab);
@@ -81,40 +98,48 @@ function DiwanContent() {
   return (
     <AppShell>
       <div className="max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-7 space-y-6" dir="rtl">
-        {/* Friend Invite Authentication Gate Banner */}
+        {/* Friend Invite Authentication Gate Banner with Authentic Room Preview */}
         {showInviteBanner && !user && (
-          <div className="relative rounded-3xl p-5 sm:p-6 bg-gradient-to-r from-blue-900/90 via-indigo-900/90 to-purple-950/90 border border-blue-400/40 shadow-2xl text-white flex flex-col sm:flex-row items-center justify-between gap-4 animate-in slide-in-from-top-4 duration-300">
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-blue-500/20 border border-blue-400/50 flex items-center justify-center shrink-0 text-blue-300">
-                <Landmark className="w-6 h-6" />
+          <div className="relative rounded-3xl p-5 sm:p-6 bg-gradient-to-r from-blue-900/90 via-indigo-900/90 to-purple-950/90 border border-blue-400/40 shadow-2xl text-white flex flex-col md:flex-row items-center justify-between gap-5 animate-in slide-in-from-top-4 duration-300">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-blue-500/20 border border-blue-400/50 flex items-center justify-center shrink-0 text-blue-300 shadow-inner">
+                <Landmark className="w-7 h-7" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold">
                     دعوة دراسة خاصة 💌
                   </span>
-                  <span className="text-xs text-blue-200">مجلس المذاكرة التفاعلي</span>
+                  {invitedRoom && (
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 font-bold">
+                      شعبة {ALGERIAN_BAC_STREAMS[invitedRoom.stream]?.name_ar || invitedRoom.stream}
+                    </span>
+                  )}
                 </div>
-                <h3 className="text-base sm:text-lg font-black mt-1">
-                  يجب تسجيل الدخول للانضمام إلى مجلس المذاكرة مع زميلك 🏛️
+                <h3 className="text-base sm:text-lg font-black mt-1.5">
+                  {invitedRoom
+                    ? `دعوة للانضمام إلى مجلس: ${invitedRoom.title}`
+                    : "يجب تسجيل الدخول للانضمام إلى مجلس المذاكرة مع زميلك 🏛️"}
                 </h3>
-                <p className="text-xs text-slate-300 mt-0.5">
-                  احجز مقعدك على الطاولة، شارك زملاءك حل التمارين، وتنافس في كويزات المنهاج الوزاري.
+                <p className="text-xs text-slate-300 mt-1 max-w-xl">
+                  {invitedRoom
+                    ? `الموضوع: ${invitedRoom.lesson || invitedRoom.title} · السعة: ${invitedRoom.capacity} مقاعد. احجز مقعدك للمذاكرة المشتركة وحل تمارين البكالوريا.`
+                    : "احجز مقعدك على الطاولة، شارك زملاءك حل التمارين، وتنافس في كويزات المنهاج الوزاري."}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5 w-full sm:w-auto shrink-0">
+            <div className="flex items-center gap-2.5 w-full md:w-auto shrink-0">
               <Link
-                href="/auth?redirectTo=/diwan?tab=majlis&invite=true"
-                className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md transition-all text-center flex items-center justify-center gap-1.5"
+                href={`/auth?redirectTo=${encodeURIComponent(targetRedirect)}`}
+                className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-md transition-all text-center flex items-center justify-center gap-1.5"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>تسجيل الدخول</span>
               </Link>
               <Link
-                href="/auth/register?redirectTo=/diwan?tab=majlis&invite=true"
-                className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 text-xs font-bold shadow-md transition-all text-center flex items-center justify-center gap-1.5"
+                href={`/auth/register?redirectTo=${encodeURIComponent(targetRedirect)}`}
+                className="flex-1 md:flex-none px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-amber-500 text-slate-950 text-xs font-bold shadow-md transition-all text-center flex items-center justify-center gap-1.5"
               >
                 <UserPlus className="w-3.5 h-3.5" />
                 <span>إنشاء حساب مجاني</span>
@@ -122,7 +147,7 @@ function DiwanContent() {
               <button
                 type="button"
                 onClick={() => setShowInviteBanner(false)}
-                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 transition-colors"
+                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 transition-colors cursor-pointer"
                 title="إغلاق"
               >
                 <X className="w-4 h-4" />
