@@ -4,8 +4,8 @@
  */
 
 export const MAJLIS_CONFIG = {
-  // Feature flags
-  textChatEnabled: process.env.NEXT_PUBLIC_MAJLIS_TEXT_CHAT === "true", // Default FALSE
+  // Feature flags: Text chat is enabled and monitored authoritatively
+  textChatEnabled: process.env.NEXT_PUBLIC_MAJLIS_TEXT_CHAT !== "false", // Default TRUE
   requiresSubscription: process.env.NEXT_PUBLIC_MAJLIS_REQUIRES_SUBSCRIPTION === "true", // Default FALSE
   demoMode: process.env.NEXT_PUBLIC_DEMO_MODE === "true",
 
@@ -26,7 +26,16 @@ export const MAJLIS_CONFIG = {
     langues: { isReady: false, label: "شعبة لغات أجنبية (قريباً)" },
   },
 
-  // Fixed bounded reactions (replaces open text chat)
+  // Session duration presets (in minutes)
+  durationOptions: [
+    { minutes: 25, label: "25 دقيقة (جلسة بومودورو مركزة ⏱️)" },
+    { minutes: 45, label: "45 دقيقة (حصة نموذجية 🎯)" },
+    { minutes: 60, label: "60 دقيقة (ساعة كاملة ⚡)" },
+    { minutes: 90, label: "90 دقيقة (جلسة تعمّق 🧠)" },
+    { minutes: 120, label: "120 دقيقة (محاكاة بكالوريا 📝)" },
+  ] as const,
+
+  // Fixed bounded reactions
   reactions: [
     { id: "coffee", emoji: "☕", label: "تشجيع ☕", message: "أرسل لك كوب قهوة لصفاء الذهن ☕" },
     { id: "fire", emoji: "🔥", label: "عزيمة 🔥", message: "همّة عالية وعزيمة متقدة 🔥" },
@@ -34,10 +43,10 @@ export const MAJLIS_CONFIG = {
     { id: "pray", emoji: "🤲", label: "بالتوفيق 🤲", message: "وفقك الله وسدد خطاك 🤲" },
   ] as const,
 
-  // Report violation reasons
+  // Report violation reasons (Student, Message, Room)
   reportReasons: [
+    { id: "OFFENSIVE_CHAT", label: "ألفاظ أو رسائل مسيئة في المحادثة" },
     { id: "INAPPROPRIATE_BEHAVIOR", label: "سلوك غير لائق أو تشتيت للزملاء" },
-    { id: "OFFENSIVE_CHAT", label: "ألفاظ أو رسائل مسيئة" },
     { id: "DISTRACTION", label: "عدم الجدية ومغادرة متكررة" },
     { id: "CHEATING", label: "محاولة غش أو تلاعب بالنقاط" },
     { id: "SPAM", label: "تكرار وإزعاج (سبام)" },
@@ -99,6 +108,66 @@ export function formatStudentPrivacyName(
   const lastInitial = parts[parts.length - 1].charAt(0);
   return `${first} ${lastInitial}.`;
 }
+
+/**
+ * Character avatars registered in SHATER BAC
+ */
+export const CHARACTER_AVATARS: Record<string, string> = {
+  boy: "/illustrations/characters/boy.jpg",
+  girl: "/illustrations/characters/girl.jpg",
+  scholar: "/illustrations/characters/scholar.jpg",
+};
+
+/**
+ * Resolves complete student identity (Privacy Name + Wilaya Code + Registered Character Avatar)
+ */
+export function resolveStudentIdentity(params: {
+  user?: any;
+  profile?: any;
+  draft?: any;
+  fallbackWilaya?: string;
+}): {
+  name: string;
+  wilayaCode: string;
+  avatar: string;
+} {
+  const { user, profile, draft, fallbackWilaya = "16" } = params;
+
+  // 1. Resolve character avatar chosen at registration
+  const charId =
+    profile?.characterId ||
+    (profile as any)?.character_id ||
+    draft?.characterId ||
+    user?.user_metadata?.character_id ||
+    "scholar";
+
+  const avatar = CHARACTER_AVATARS[charId] || "/illustrations/characters/scholar.jpg";
+
+  // 2. Resolve Algerian Wilaya Code (01 to 58)
+  const rawWilaya =
+    profile?.wilayaCode ||
+    (profile as any)?.wilaya_code ||
+    draft?.wilayaCode ||
+    user?.user_metadata?.wilaya_code ||
+    fallbackWilaya;
+
+  const wilayaCode = String(rawWilaya).padStart(2, "0");
+
+  // 3. Resolve student privacy name (e.g. "أحمد .ب")
+  const rawName =
+    profile?.fullName ||
+    (profile as any)?.full_name ||
+    draft?.fullName ||
+    (draft?.firstName ? `${draft.firstName} ${draft?.lastName || ""}` : null) ||
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    "طالب شاطر";
+
+  const name = formatStudentPrivacyName(rawName);
+
+  return { name, wilayaCode, avatar };
+}
+
 
 /**
  * Formats time strictly in Africa/Algiers timezone (UTC+1)

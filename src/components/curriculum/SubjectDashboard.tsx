@@ -19,6 +19,7 @@ import {
   ArrowRight,
   Eye,
   Award,
+  Landmark,
 } from "lucide-react";
 
 export interface CurriculumDisplayItem {
@@ -295,23 +296,32 @@ export const SubjectDashboard: React.FC<SubjectDashboardProps> = ({
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => onOpenLesson(item.skillId)}
-                      className="text-xs h-8 px-3 rounded-xl gap-1.5"
+                      className="text-xs h-8 px-2.5 rounded-xl gap-1.5"
                     >
                       <Eye className="w-3.5 h-3.5 text-theme-muted" />
-                      <span>قراءة الدرس</span>
+                      <span>قراءة</span>
                     </Button>
 
                     <Link
                       href={`/mission/${item.skillId}`}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-[var(--color-primary)] text-white hover:opacity-95 transition-all shadow-sm"
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-[var(--color-primary)] text-white hover:opacity-95 transition-all shadow-sm"
                     >
                       <Play className="w-3 h-3 fill-current" />
                       <span>تمرين</span>
+                    </Link>
+
+                    <Link
+                      href={`/diwan?tab=majlis&openCreate=true&subject=${encodeURIComponent(item.subjectId)}&lesson=${encodeURIComponent(item.title_ar)}`}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-500/30 transition-all shadow-sm"
+                      title="افتح مجلس مذاكرة فوري مع زملائك حول هذا الدرس"
+                    >
+                      <Landmark className="w-3 h-3 text-amber-500" />
+                      <span>افتح مجلس 🏛️</span>
                     </Link>
                   </div>
                 </div>

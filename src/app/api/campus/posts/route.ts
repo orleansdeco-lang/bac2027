@@ -5,6 +5,7 @@ import { requireServerAuth } from "@/lib/auth/server-guard";
 import { CampusPostSchema } from "@/lib/validation/campus-schemas";
 import { sanitizeUserContent, sanitizeSingleLine } from "@/lib/security/sanitize";
 import { CampusPost } from "@/types/campus";
+import { CampusService } from "@/lib/campus/campus-service";
 
 export const dynamic = "force-dynamic";
 
@@ -61,7 +62,24 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, posts: [] });
+    // Default authentic seed fallback
+    const allSeed = CampusService.getPosts();
+    let filtered = allSeed;
+    if (stream && stream !== "ALL") {
+      filtered = filtered.filter((p) => p.stream === stream || p.stream === "ALL");
+    }
+    if (subject && subject !== "ALL") {
+      filtered = filtered.filter((p) => p.subjectId === subject || p.subjectId === "ALL");
+    }
+    if (type && type !== "ALL") {
+      filtered = filtered.filter((p) => p.type === type);
+    }
+    if (search && search.trim()) {
+      const s = search.trim().toLowerCase();
+      filtered = filtered.filter((p) => p.title.toLowerCase().includes(s) || p.content.toLowerCase().includes(s));
+    }
+
+    return NextResponse.json({ success: true, posts: filtered });
   } catch (err) {
     console.error("[API Campus Posts GET] Error:", err);
     return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 500 });

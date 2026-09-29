@@ -30,11 +30,20 @@ import { StreamId } from "@/types/education";
 import { MAJLIS_CONFIG, formatStudentPrivacyName } from "@/lib/constants/majlis-config";
 
 export interface PanelMember {
+  id?: string;
   userId?: string;
   name: string;
   avatar: string;
   subject: string;
   subjectColor: string;
+}
+
+export interface ReportingTarget {
+  type: "STUDENT" | "MESSAGE" | "ROOM";
+  userId?: string;
+  userName?: string;
+  messageId?: string;
+  messageContent?: string;
 }
 
 interface MajlisInspectorPanelProps {
@@ -60,6 +69,10 @@ interface MajlisInspectorPanelProps {
   hostUserId?: string;
   isHost?: boolean;
   roomId?: string;
+  extensionRequest?: { requesterName: string; requesterId: string } | null;
+  onApproveExtensionRequest?: () => Promise<void> | void;
+  onDismissExtensionRequest?: () => void;
+  onReportRoom?: () => void;
 }
 
 export function MajlisInspectorPanel({
@@ -78,6 +91,10 @@ export function MajlisInspectorPanel({
   currentUser = null,
   hostUserId,
   roomId,
+  extensionRequest = null,
+  onApproveExtensionRequest,
+  onDismissExtensionRequest,
+  onReportRoom,
 }: MajlisInspectorPanelProps) {
   const { user } = useAuth();
   const [panelTab, setPanelTab] = useState<"members" | "chat">("members");
@@ -91,8 +108,8 @@ export function MajlisInspectorPanel({
   const [scheduleDuration, setScheduleDuration] = useState(45);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Reporting State
-  const [reportingMember, setReportingMember] = useState<PanelMember | null>(null);
+  // Reporting State (supports STUDENT, MESSAGE, or ROOM)
+  const [reportingTarget, setReportingTarget] = useState<ReportingTarget | null>(null);
   const [reportReason, setReportReason] = useState<string>("INAPPROPRIATE_BEHAVIOR");
   const [reportDetails, setReportDetails] = useState("");
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
@@ -190,16 +207,19 @@ export function MajlisInspectorPanel({
 
   const handleSubmitReport = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reportingMember?.userId) return;
+    if (!reportingTarget) return;
     setIsSubmittingReport(true);
     try {
       const res = await fetch("/api/campus/reports", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          reportedUserId: reportingMember.userId,
-          reportedUserName: reportingMember.name,
+          targetType: reportingTarget.type,
+          reportedUserId: reportingTarget.userId || undefined,
+          reportedUserName: reportingTarget.userName || undefined,
           roomId: roomId || undefined,
+          messageId: reportingTarget.messageId || undefined,
+          messageContent: reportingTarget.messageContent || undefined,
           reason: reportReason,
           details: reportDetails.trim(),
         }),
@@ -208,7 +228,7 @@ export function MajlisInspectorPanel({
       const data = await res.json();
       if (res.ok && data.success) {
         showToast(data.message || "تم استلام البلاغ بنجاح.");
-        setReportingMember(null);
+        setReportingTarget(null);
         setReportDetails("");
       } else {
         showToast(data.error || "تعذر إرسال البلاغ.");
@@ -238,14 +258,57 @@ export function MajlisInspectorPanel({
         </div>
       )}
 
+      {/* Host Extension Request Alert Banner */}
+      {isHost && extensionRequest && (
+        <div className="mb-3.5 p-3 rounded-2xl bg-amber-500/20 border border-amber-500/40 animate-pulse space-y-2">
+          <div className="flex items-center justify-between text-xs font-bold text-amber-300">
+            <span className="flex items-center gap-1.5">
+              <Clock className="w-4 h-4" />
+              <span>طلب تمديد الوقت (+15 دقيقة)</span>
+            </span>
+          </div>
+          <p className="text-[11px] text-slate-200">
+            يطلب الزميل <strong className="text-white">{extensionRequest.requesterName}</strong> تمديد الجلسة بـ 15 دقيقة إضافية.
+          </p>
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              type="button"
+              onClick={onApproveExtensionRequest}
+              className="flex-1 py-1.5 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs cursor-pointer shadow-md shadow-emerald-600/30"
+            >
+              قبول التمديد (+15د) ✅
+            </button>
+            <button
+              type="button"
+              onClick={onDismissExtensionRequest}
+              className="py-1.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 text-xs cursor-pointer"
+            >
+              تجاهل ❌
+            </button>
+          </div>
+        </div>
+      )}
+
       <div>
-        {/* Top Header Row with Status */}
+        {/* Top Header Row with Status & Optional Room Report */}
         <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
           <h2 className="text-sm font-bold text-slate-300">معلومات المجلس</h2>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span>متزامن ومباشر</span>
-          </span>
+          <div className="flex items-center gap-1.5">
+            {isJoined && (
+              <button
+                type="button"
+                onClick={() => setReportingTarget({ type: "ROOM" })}
+                className="p-1 rounded-lg text-slate-400 hover:text-rose-400 transition-colors"
+                title="إبلاغ عن المجلس"
+              >
+                <ShieldAlert className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span>متزامن ومباشر</span>
+            </span>
+          </div>
         </div>
 
         {/* Topic Title */}
@@ -457,7 +520,11 @@ export function MajlisInspectorPanel({
                       {/* Report button */}
                       <button
                         type="button"
-                        onClick={() => setReportingMember(mem)}
+                        onClick={() => setReportingTarget({
+                          type: "STUDENT",
+                          userId: mem.userId,
+                          userName: mem.name,
+                        })}
                         className="p-1 rounded-lg text-slate-400 hover:text-rose-400 transition-colors"
                         title="إبلاغ عن محتوى أو سلوك غير لائق"
                       >
@@ -525,8 +592,14 @@ export function MajlisInspectorPanel({
                 </div>
               </div>
             ) : (
-              /* Open Chat (Only active when MAJLIS_TEXT_CHAT=true) */
+              /* Open Chat (Audited & Monitored) */
               <>
+                {/* Monitored & Recorded Chat Banner */}
+                <div className="flex items-center gap-1.5 p-2 mb-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[10px]">
+                  <ShieldAlert className="w-3.5 h-3.5 shrink-0 text-amber-400" />
+                  <span>المحادثة مراقبة ومسجلة لضمان بيئة تعليمية آمنة</span>
+                </div>
+
                 <div className="flex-1 overflow-y-auto no-scrollbar space-y-2 pr-1">
                   {messages.length === 0 ? (
                     <div className="text-center py-6 text-slate-400 text-xs">
@@ -538,7 +611,7 @@ export function MajlisInspectorPanel({
                       return (
                         <div
                           key={m.id}
-                          className={`p-2 rounded-xl text-xs max-w-[85%] ${
+                          className={`group p-2 rounded-xl text-xs max-w-[85%] relative ${
                             isMe
                               ? "mr-auto bg-blue-600/30 border border-blue-500/40 text-blue-100"
                               : "ml-auto bg-white/[0.05] border border-white/10 text-slate-200"
@@ -548,12 +621,30 @@ export function MajlisInspectorPanel({
                             <span className="font-bold text-amber-300">
                               {formatStudentPrivacyName(m.user_name)}
                             </span>
-                            <span className="font-mono text-[9px]">
-                              {new Date(m.created_at).toLocaleTimeString([], {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </span>
+                            <div className="flex items-center gap-1">
+                              <span className="font-mono text-[9px]">
+                                {new Date(m.created_at).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                              {!isMe && (
+                                <button
+                                  type="button"
+                                  onClick={() => setReportingTarget({
+                                    type: "MESSAGE",
+                                    userId: m.user_id,
+                                    userName: m.user_name,
+                                    messageId: m.id,
+                                    messageContent: m.content,
+                                  })}
+                                  title="إبلاغ عن هذه الرسالة"
+                                  className="opacity-40 group-hover:opacity-100 p-0.5 rounded text-slate-400 hover:text-rose-400 transition-all cursor-pointer"
+                                >
+                                  <ShieldAlert className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
                           </div>
                           <p className="leading-relaxed">{m.content}</p>
                         </div>
@@ -584,8 +675,8 @@ export function MajlisInspectorPanel({
         )}
       </div>
 
-      {/* Safety Report Modal */}
-      {reportingMember && (
+      {/* Safety Report Modal (Members, Messages, or Room) */}
+      {reportingTarget && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div
             className="w-full max-w-md rounded-3xl p-6 border border-rose-500/30 shadow-2xl text-right animate-in zoom-in-95 duration-200"
@@ -596,11 +687,15 @@ export function MajlisInspectorPanel({
             <div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
               <div className="flex items-center gap-2 text-rose-400">
                 <AlertTriangle className="w-5 h-5" />
-                <h3 className="text-base font-bold text-white">إبلاغ عن محتوى أو سلوك</h3>
+                <h3 className="text-base font-bold text-white">
+                  {reportingTarget.type === "STUDENT" && "إبلاغ عن عضو"}
+                  {reportingTarget.type === "MESSAGE" && "إبلاغ عن رسالة غير لائقة"}
+                  {reportingTarget.type === "ROOM" && "إبلاغ عن المجلس ككل"}
+                </h3>
               </div>
               <button
                 type="button"
-                onClick={() => setReportingMember(null)}
+                onClick={() => setReportingTarget(null)}
                 className="p-1 rounded-lg text-slate-400 hover:text-white"
               >
                 <X className="w-5 h-5" />
@@ -608,9 +703,28 @@ export function MajlisInspectorPanel({
             </div>
 
             <form onSubmit={handleSubmitReport} className="mt-4 space-y-4 text-xs">
-              <p className="text-slate-300">
-                الإبلاغ عن العضو: <strong className="text-white">{reportingMember.name}</strong>
-              </p>
+              {reportingTarget.type === "STUDENT" && (
+                <p className="text-slate-300">
+                  الإبلاغ عن العضو: <strong className="text-white">{reportingTarget.userName}</strong>
+                </p>
+              )}
+
+              {reportingTarget.type === "MESSAGE" && (
+                <div className="p-2.5 rounded-xl bg-white/[0.04] border border-white/10 text-slate-300 space-y-1">
+                  <span className="text-[10px] text-slate-400 block">
+                    نص الرسالة المُبلغ عنها ({reportingTarget.userName}):
+                  </span>
+                  <p className="font-mono text-white text-[11px] italic bg-black/30 p-2 rounded-lg">
+                    "{reportingTarget.messageContent}"
+                  </p>
+                </div>
+              )}
+
+              {reportingTarget.type === "ROOM" && (
+                <p className="text-slate-300">
+                  الإبلاغ عن المجلس: <strong className="text-white">{topic}</strong>
+                </p>
+              )}
 
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-1.5">
@@ -652,7 +766,7 @@ export function MajlisInspectorPanel({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setReportingMember(null)}
+                  onClick={() => setReportingTarget(null)}
                   className="py-2.5 px-4 rounded-xl bg-white/10 text-slate-300"
                 >
                   إلغاء

@@ -104,6 +104,8 @@ export interface StepValidationResult {
 }
 
 export interface StepByStepSolution {
+  problemDescription_ar?: string;
+  problemDescription_fr?: string;
   steps: MethodologicalStep[];
   finalConclusion_ar: string;
   finalConclusion_fr?: string;

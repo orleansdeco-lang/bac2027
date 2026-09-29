@@ -124,6 +124,7 @@ export interface MajlisTable {
   title: string;
   creatorId: string;
   creatorName: string;
+  avatar?: string;
   stream: StreamId;
   subjectId: SubjectId;
   lesson: string;

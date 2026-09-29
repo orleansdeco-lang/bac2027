@@ -21,6 +21,7 @@ export interface MajlisRoom {
   capacity: number;
   status: "LOBBY" | "ACTIVE" | "COMPLETED";
   current_step: string;
+  duration_minutes?: number;
   timer_end?: string;
   active_material?: any;
   created_at: string;
@@ -34,6 +35,7 @@ export interface MajlisMember {
   user_name: string;
   user_avatar: string;
   user_stream: StreamId;
+  wilaya_code?: string;
   seat_index: number;
   status: "SEATED" | "SOLVING" | "FINISHED" | "SPECTATING";
   score: number;
@@ -167,6 +169,7 @@ export const MajlisService = {
     lesson: string;
     mode: MajlisStudyMode;
     capacity: number;
+    durationMinutes?: number;
     hostUserId?: string;
     hostName?: string;
     hostAvatar?: string;
@@ -174,8 +177,8 @@ export const MajlisService = {
     const roomId = `room-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const now = new Date().toISOString();
     const material = getInitialMaterialForMode(params.mode, params.subject, params.lesson);
-    const durationSec = material.durationSeconds || 900;
-    const timerEnd = new Date(Date.now() + durationSec * 1000).toISOString();
+    const durationMinutes = Math.min(180, Math.max(15, params.durationMinutes || 45));
+    const timerEnd = new Date(Date.now() + durationMinutes * 60 * 1000).toISOString();
 
     const room: MajlisRoom = {
       id: roomId,
@@ -188,6 +191,7 @@ export const MajlisService = {
       capacity: Math.min(8, Math.max(2, params.capacity)),
       status: "ACTIVE",
       current_step: "SOLVING",
+      duration_minutes: durationMinutes,
       timer_end: timerEnd,
       active_material: material,
       created_at: now,
@@ -206,6 +210,7 @@ export const MajlisService = {
         capacity: room.capacity,
         status: room.status,
         current_step: room.current_step,
+        duration_minutes: room.duration_minutes,
         timer_end: room.timer_end,
         active_material: room.active_material,
         created_at: room.created_at,
@@ -247,6 +252,7 @@ export const MajlisService = {
             capacity: data.capacity,
             status: data.status,
             current_step: data.current_step,
+            duration_minutes: data.duration_minutes || 45,
             timer_end: data.timer_end,
             active_material: data.active_material,
             created_at: data.created_at,
@@ -281,8 +287,9 @@ export const MajlisService = {
             room_id: d.room_id,
             user_id: d.user_id,
             user_name: d.user_name,
-            user_avatar: d.user_avatar || "👨‍🎓",
+            user_avatar: d.user_avatar || "/illustrations/characters/scholar.jpg",
             user_stream: d.user_stream as StreamId,
+            wilaya_code: d.wilaya_code || "16",
             seat_index: d.seat_index,
             status: d.status,
             score: d.score || 0,
@@ -309,6 +316,7 @@ export const MajlisService = {
       name: string;
       avatar: string;
       stream: StreamId;
+      wilayaCode?: string;
     };
     preferredSeatIndex?: number;
   }): Promise<{
@@ -337,6 +345,8 @@ export const MajlisService = {
       };
     }
 
+    const wilayaCode = params.user.wilayaCode || "16";
+
     // Try atomic stored procedure first
     try {
       const { data, error } = await supabase.rpc("majlis_take_seat_atomic", {
@@ -346,6 +356,7 @@ export const MajlisService = {
         p_user_avatar: params.user.avatar,
         p_user_stream: params.user.stream,
         p_preferred_seat: params.preferredSeatIndex ?? 0,
+        p_wilaya_code: wilayaCode,
       });
 
       if (!error && data && data.success) {
@@ -408,8 +419,9 @@ export const MajlisService = {
       room_id: params.roomId,
       user_id: params.user.id,
       user_name: params.user.name,
-      user_avatar: params.user.avatar || "👨‍🎓",
+      user_avatar: params.user.avatar || "/illustrations/characters/scholar.jpg",
       user_stream: params.user.stream,
+      wilaya_code: wilayaCode,
       seat_index: targetSeat,
       status: "SOLVING",
       score: 0,
@@ -424,6 +436,7 @@ export const MajlisService = {
       user_name: newMember.user_name,
       user_avatar: newMember.user_avatar,
       user_stream: newMember.user_stream,
+      wilaya_code: newMember.wilaya_code,
       seat_index: newMember.seat_index,
       status: newMember.status,
       score: newMember.score,
@@ -453,7 +466,7 @@ export const MajlisService = {
   },
 
   /**
-   * Leave seat authoritatively
+   * Leave seat authoritatively & auto-close room when empty
    */
   async leaveSeat(roomId: string, userId: string): Promise<void> {
     if (!roomId || !userId) return;
@@ -466,12 +479,35 @@ export const MajlisService = {
           .eq("room_id", roomId)
           .eq("user_id", userId);
 
+        // Check remaining members in the room
+        const { count } = await supabase
+          .from("majlis_members")
+          .select("*", { count: "exact", head: true })
+          .eq("room_id", roomId);
+
+        const isEmpty = (count === 0 || count === null);
+        if (isEmpty) {
+          // Auto-mark room as completed
+          await supabase
+            .from("majlis_rooms")
+            .update({ status: "COMPLETED", updated_at: new Date().toISOString() })
+            .eq("id", roomId);
+        }
+
         const channel = supabase.channel(`majlis-room-${roomId}`);
         channel.send({
           type: "broadcast",
           event: "seat_change",
-          payload: { userId, action: "LEAVE" },
+          payload: { userId, action: "LEAVE", remainingCount: count || 0 },
         });
+
+        if (isEmpty) {
+          channel.send({
+            type: "broadcast",
+            event: "room_update",
+            payload: { status: "COMPLETED" },
+          });
+        }
       } catch (err) {
         console.warn("[MajlisService] Supabase leaveSeat error:", err);
       }
@@ -807,6 +843,106 @@ export const MajlisService = {
   },
 
   /**
+   * Request session time extension from the room host (+15 mins)
+   */
+  async requestExtension(params: {
+    roomId: string;
+    fromUserId: string;
+    fromUserName: string;
+  }): Promise<void> {
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const channel = supabase.channel(`majlis-room-${params.roomId}`);
+        await channel.send({
+          type: "broadcast",
+          event: "extension_request",
+          payload: {
+            fromUserId: params.fromUserId,
+            fromUserName: params.fromUserName,
+            requestedMinutes: 15,
+            timestamp: Date.now(),
+          },
+        });
+      } catch (err) {
+        console.warn("[MajlisService] requestExtension error:", err);
+      }
+    }
+  },
+
+  /**
+   * Extend room duration (+15 mins approved by host or operator)
+   */
+  async extendRoomTime(params: {
+    roomId: string;
+    hostUserId: string;
+    additionalMinutes?: number;
+  }): Promise<{ success: boolean; newTimerEnd?: string; error?: string }> {
+    const minutes = params.additionalMinutes || 15;
+    if (!isSupabaseConfigured || !supabase) {
+      return { success: false, error: "Database disconnected" };
+    }
+
+    try {
+      // 1. Try atomic stored procedure
+      const { data, error } = await supabase.rpc("majlis_extend_room_time", {
+        p_room_id: params.roomId,
+        p_host_user_id: params.hostUserId,
+        p_additional_minutes: minutes,
+      });
+
+      if (!error && data && data.success) {
+        const newTimerEnd = data.new_timer_end;
+        const channel = supabase.channel(`majlis-room-${params.roomId}`);
+        channel.send({
+          type: "broadcast",
+          event: "room_update",
+          payload: { timer_end: newTimerEnd },
+        });
+        channel.send({
+          type: "broadcast",
+          event: "time_extended",
+          payload: { newTimerEnd, additionalMinutes: minutes },
+        });
+        return { success: true, newTimerEnd };
+      }
+
+      // 2. Direct fallback
+      const room = await this.getRoom(params.roomId);
+      if (!room) return { success: false, error: "المجلس غير موجود" };
+
+      const currentEnd = room.timer_end ? new Date(room.timer_end).getTime() : Date.now();
+      const newEndMs = Math.max(Date.now(), currentEnd) + minutes * 60 * 1000;
+      const newTimerEndIso = new Date(newEndMs).toISOString();
+
+      const { error: updateErr } = await supabase
+        .from("majlis_rooms")
+        .update({ timer_end: newTimerEndIso, updated_at: new Date().toISOString() })
+        .eq("id", params.roomId);
+
+      if (updateErr) {
+        return { success: false, error: updateErr.message };
+      }
+
+      const channel = supabase.channel(`majlis-room-${params.roomId}`);
+      channel.send({
+        type: "broadcast",
+        event: "room_update",
+        payload: { timer_end: newTimerEndIso },
+      });
+      channel.send({
+        type: "broadcast",
+        event: "time_extended",
+        payload: { newTimerEnd: newTimerEndIso, additionalMinutes: minutes },
+      });
+
+      return { success: true, newTimerEnd: newTimerEndIso };
+    } catch (err: any) {
+      console.warn("[MajlisService] extendRoomTime error:", err);
+      return { success: false, error: err.message };
+    }
+  },
+
+  /**
    * Fetch active rooms genuine query strictly from Supabase (Zero Mock Fallback)
    */
   async fetchActiveRooms(stream?: StreamId): Promise<MajlisRoom[]> {
@@ -817,7 +953,7 @@ export const MajlisService = {
           .select("*")
           .eq("status", "ACTIVE")
           .order("created_at", { ascending: false })
-          .limit(20);
+          .limit(30);
 
         if (stream) {
           query = query.or(`stream.eq.${stream},stream.eq.ALL`);
@@ -836,6 +972,7 @@ export const MajlisService = {
             capacity: d.capacity,
             status: d.status,
             current_step: d.current_step,
+            duration_minutes: d.duration_minutes || 45,
             timer_end: d.timer_end,
             active_material: d.active_material,
             created_at: d.created_at,
@@ -872,6 +1009,15 @@ export const MajlisService = {
       onKick?: (payload: { kickedUserId: string }) => void;
       onPresenceSync?: (presenceState: Record<string, any>) => void;
       onPresenceLeave?: (leftPresences: any[]) => void;
+      onExtensionRequest?: (payload: {
+        fromUserId: string;
+        fromUserName: string;
+        requestedMinutes: number;
+      }) => void;
+      onTimeExtended?: (payload: {
+        newTimerEnd: string;
+        additionalMinutes: number;
+      }) => void;
     }
   ) {
     if (!isSupabaseConfigured || !supabase || !roomId) {
@@ -909,6 +1055,12 @@ export const MajlisService = {
       })
       .on("broadcast", { event: "kick_member" }, ({ payload }) => {
         if (callbacks.onKick) callbacks.onKick(payload);
+      })
+      .on("broadcast", { event: "extension_request" }, ({ payload }) => {
+        if (callbacks.onExtensionRequest) callbacks.onExtensionRequest(payload);
+      })
+      .on("broadcast", { event: "time_extended" }, ({ payload }) => {
+        if (callbacks.onTimeExtended) callbacks.onTimeExtended(payload);
       })
       .on("presence", { event: "sync" }, () => {
         if (callbacks.onPresenceSync) {

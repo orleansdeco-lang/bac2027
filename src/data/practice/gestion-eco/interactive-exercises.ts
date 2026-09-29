@@ -207,3 +207,164 @@ export const GESTION_ECO_STEPS_QUESTION: PracticeQuestion = {
   version: 1,
   isRetestVariant: false,
 };
+
+// ============================================================================
+// 3. DEGRESSIVE DEPRECIATION JOURNAL (الاهتلاك المتناقص - أستاذ ياسين حجام)
+// ============================================================================
+
+export const DEGRESSIVE_DEPRECIATION_JOURNAL_SOLUTION: JournalEntrySolution = {
+  expectedDate: "31/12/2015",
+  expectedLabel_ar: "تسجيل قسط الاهتلاك المتناقص للمعدات الصناعية لسنة 2015",
+  expectedDebits: [
+    {
+      code: "681",
+      name_ar: "مخصصات الاهتلاكات والمؤونات وخسائر القيمة - أصول غير جارية",
+      amount: 144000,
+      tolerance: 1,
+    },
+  ],
+  expectedCredits: [
+    {
+      code: "2815",
+      alternativeCodes: ["2815", "28150"],
+      name_ar: "اهتلاك المنشآت التقنية والمعدات والأدوات الصناعية",
+      amount: 144000,
+      tolerance: 1,
+    },
+  ],
+  pedagogicalExplanation_ar:
+    "معدل الاهتلاك الخطي t = 100/5 = 20%. المعامل الضريبي لمدة 5 سنوات هو 2. إذن معدل الاهتلاك المتناقص t' = 20% × 2 = 40%. قسط السنة الأولى: A1 = 360,000 × 40% = 144,000 دج. القيد النظامي في 31/12/2015: مدين ح/681 ودائن ح/2815 بمبلغ 144,000 دج.",
+  commonMistakes: [
+    {
+      triggerCodes: ["215"],
+      feedback_ar: "لا تخفض حساب التثبيت مباشرة (215)؛ استخدم حساب الاهتلاك المتراكم ح/2815.",
+    },
+    {
+      triggerCodes: ["685"],
+      feedback_ar: "حساب 685 للأصول الجارية؛ تثبيتات الاستثمار تستخدم دائماً ح/681.",
+    },
+  ],
+};
+
+export const GESTION_ECO_DEGRESSIVE_QUESTION: PracticeQuestion = {
+  id: "pq-acc-degressive-journal-01",
+  educationLevel: "secondary",
+  examType: "bac",
+  streamId: "gestion_eco",
+  subjectId: "accounting_finance",
+  skillId: "acc_depreciation_linear_degressive",
+  dimension: "application",
+  difficulty: 3,
+  type: "journal_entry" as any,
+  exerciseType: "journal_entry",
+  prompt_ar:
+    "بتاريخ 02/01/2015 اقتنت مؤسسة روضة معدات صناعية (ح/215) بمبلغ 360,000 دج، مدتها النفعية 5 سنوات وتُهتلك بطريقة الاهتلاك المتناقص. سجّل في الدفتر اليومي قيد تسوية قسط اهتلاك السنة الأولى بتاريخ 31/12/2015.",
+  prompt_fr: "Enregistrez au journal l'amortissement dégressif de la première année.",
+  options: [
+    {
+      id: "opt-deg-1",
+      text_ar: "مدين ح/681 (144,000 دج) / دائن ح/2815 (144,000 دج)",
+      text_fr: "Débit 681 (144 000 DA) / Crédit 2815 (144 000 DA)",
+    },
+  ],
+  correctAnswerId: "opt-deg-1",
+  interactiveConfig: {
+    exerciseType: "journal_entry",
+    journalSolution: DEGRESSIVE_DEPRECIATION_JOURNAL_SOLUTION,
+  },
+  explanation_ar:
+    "المعدل المتناقص t' = 20% × 2 = 40%. قسط 2015 = 360,000 × 40% = 144,000 دج. القيد: مدين ح/681 ودائن ح/2815.",
+  explanation_fr:
+    "Taux dégressif = 20% x 2 = 40%. Annuité A1 = 360 000 x 40% = 144 000 DA. Débit 681 et Crédit 2815.",
+  repairHint_ar: "المعامل الضريبي لـ 5 سنوات هو 2. احسب A1 = Vo * 40%.",
+  expectedTimeSeconds: 120,
+  tags: ["accounting", "degressive", "journal", "hadjem"],
+  version: 1,
+  isRetestVariant: false,
+};
+
+// ============================================================================
+// 4. FUNCTIONAL BALANCE STEP-BY-STEP (الميزانية الوظيفية - أستاذ عبدالخالق عودة)
+// ============================================================================
+
+export const FUNCTIONAL_BALANCE_STEPS_SOLUTION: StepByStepSolution = {
+  problemDescription_ar:
+    "قدمت لك ميزانية محاسبية ختامية: الموارد الثابتة 3,620,000 دج، الاستخدامات الثابتة 3,500,000 دج، الأصول المتداولة (استغلال 1,210,000 دج + خارج استغلال 210,000 دج + خزينة 300,000 دج)، والخصوم المتداولة (استغلال 550,000 دج + خارج استغلال 850,000 دج + خزينة 200,000 دج). احسب مؤشرات التوازن المالي خطوة بخطوة:",
+  steps: [
+    {
+      stepIndex: 1,
+      title_ar: "المرحلة 1: حساب رأس المال العامل الصافي الإجمالي (FRNG)",
+      prompt_ar: "احسب FRNG بطريقة أعلى الميزانية (الموارد الثابتة - الاستخدامات الثابتة):",
+      expectedInputType: "number",
+      expectedValue: 120000,
+      tolerance: 0,
+      unit_ar: "دج",
+      hint_ar: "FRNG = 3,620,000 - 3,500,000.",
+      pedagogicalTip_ar: "FRNG موجب يعني أن الموارد الثابتة غطت كامل الاستخدامات الثابتة ويوجد فائض أمان.",
+      mistakeFeedback_ar: "تأكد من طرح الاستخدامات الثابتة من الموارد الثابتة (3,620,000 - 3,500,000).",
+    },
+    {
+      stepIndex: 2,
+      title_ar: "المرحلة 2: حساب احتياج رأس المال العامل (BFR)",
+      prompt_ar: "احسب BFR الإجمالي = أصول متداولة (استغلال + خ.استغلال) - خصوم متداولة (استغلال + خ.استغلال):",
+      expectedInputType: "number",
+      expectedValue: 20000,
+      tolerance: 0,
+      unit_ar: "دج",
+      hint_ar: "BFR = (1,210,000 + 210,000) - (550,000 + 850,000) = 1,420,000 - 1,400,000.",
+      pedagogicalTip_ar: "BFR يمثل الاحتياج المالي الناتج عن الفارق الزمني بين التدفقات الداخلة والخارجة للاستغلال.",
+      mistakeFeedback_ar: "تأكد من حساب مجموع الأصول المتداولة وطرح مجموع الخصوم المتداولة بدون الخزينة.",
+    },
+    {
+      stepIndex: 3,
+      title_ar: "المرحلة 3: حساب الخزينة الصافية (TN)",
+      prompt_ar: "احسب الخزينة الصافية TN = FRNG - BFR (أو خزينة الأصول - خزينة الخصوم):",
+      expectedInputType: "number",
+      expectedValue: 100000,
+      tolerance: 0,
+      unit_ar: "دج",
+      hint_ar: "TN = 120,000 - 20,000 = 100,000 دج (أو 300,000 - 200,000).",
+      pedagogicalTip_ar: "بما أن TN موجبة، فإن المؤسسة في أمان مالي وتملك سيولة كافية للوفاء بالتزاماتها.",
+      mistakeFeedback_ar: "تأكد من طرح BFR من FRNG (120,000 - 20,000).",
+    },
+  ],
+  finalConclusion_ar:
+    "أحسنت! النتائج متطابقة بدقة: FRNG = 120,000 دج (فائض أمان)، BFR = 20,000 دج (احتياج تمويلي)، و TN = 100,000 دج (خزينة موجبة ويسر مالي).",
+};
+
+export const GESTION_ECO_FUNCTIONAL_STEPS_QUESTION: PracticeQuestion = {
+  id: "pq-acc-functional-steps-01",
+  educationLevel: "secondary",
+  examType: "bac",
+  streamId: "gestion_eco",
+  subjectId: "accounting_finance",
+  skillId: "acc_functional_balance_sheet_indicators",
+  dimension: "application",
+  difficulty: 2,
+  type: "step_by_step" as any,
+  exerciseType: "step_by_step",
+  prompt_ar:
+    "احسب مؤشرات التوازن المالي للميزانية الوظيفية (FRNG ثم BFR ثم TN) خطوة بخطوة بالاعتماد على معطيات الميزانية الوظيفية لمؤسسة سندس:",
+  prompt_fr: "Calculez les indicateurs de l'équilibre financier (FRNG, BFR, TN) étape par étape.",
+  options: [
+    {
+      id: "opt-fb1",
+      text_ar: "FRNG = 120,000 دج ؛ BFR = 20,000 دج ؛ TN = 100,000 دج",
+      text_fr: "FRNG = 120 000 DA ; BFR = 20 000 DA ; TN = 100 000 DA",
+    },
+  ],
+  correctAnswerId: "opt-fb1",
+  interactiveConfig: {
+    exerciseType: "step_by_step",
+    stepSolution: FUNCTIONAL_BALANCE_STEPS_SOLUTION,
+  },
+  explanation_ar:
+    "FRNG = 3,620,000 - 3,500,000 = 120,000 دج. BFR = 1,420,000 - 1,400,000 = 20,000 دج. TN = 120,000 - 20,000 = 100,000 دج.",
+  explanation_fr:
+    "FRNG = 120 000 DA, BFR = 20 000 DA, TN = 100 000 DA.",
+  repairHint_ar: "تذكر: TN = FRNG - BFR = خزينة الأصول - خزينة الخصوم.",
+  expectedTimeSeconds: 150,
+  tags: ["accounting", "functional_balance", "aouda", "bac"],
+  version: 1,
+  isRetestVariant: false,
+};

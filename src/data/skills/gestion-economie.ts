@@ -293,6 +293,40 @@ export const GESTION_ECO_SKILLS: Record<string, CurriculumSkill> = {
     ],
   },
 
+  acc_cost_accounting_analytical: {
+    id: "acc_cost_accounting_analytical",
+    topicId: "acc_topic_couts",
+    subjectId: "accounting_finance",
+    streamId: "gestion_eco",
+    title_ar: "محاسبة التكاليف: تحميل الأعباء غير المباشرة وحساب التكلفة والنتيجة التحليلية الصافية",
+    title_fr: "Comptabilité analytique : tableau de répartition, coûts et résultat net",
+    description_ar: "توزيع الأعباء غير المباشرة، وحساب تكلفة الشراء وتكلفة الإنتاج وسعر التكلفة والنتيجة التحليلية والنتيجة الصافية (مع العناصر الإضافية والأعباء غير المعتبرة).",
+    description_fr: "Calcul séquentiel : coût d'achat, coût de production, coût de revient et résultat analytique net après charges supplétives et non incorporables.",
+    prerequisites: ["acc_depreciation_linear_degressive"],
+    cognitiveDimensions: ["understanding", "application", "methodology"],
+    dimensions: ["understanding", "application", "methodology"],
+    difficulty: 3,
+    order: 9,
+    isActive: true,
+    repairStrategy_ar: "احترام التسلسل الحسابي الخماسي: تكلفة شراء -> تكلفة إنتاج -> سعر تكلفة -> نتيجة تحليلية -> نتيجة تحليلية صافية، مع حساب التكلفة المتوسطة المرجحة CMUP بإدماج مخزون أول المدة.",
+    repairStrategy_fr: "Respecter la cascade : Achat -> Production -> Revient -> Résultat. Intégrer systématiquement le SI dans le calcul du CMUP.",
+    repairSteps_ar: [
+      "أكمل جدول توزيع الأعباء غير المباشرة واحسب تكلفة وحدة العمل لكل قسم رئيسي.",
+      "احسب تكلفة الشراء لكل مادة أولية = ثمن الشراء + مصاريف الشراء المباشرة + مصاريف التموين غير المباشرة.",
+      "احسب التكلفة الوسطية المرجحة: CMUP = (تكلفة شراء الفترة + تكلفة مخزون 1) / (كمية الشراء + كمية مخزون 1).",
+      "احسب تكلفة الإنتاج لكل منتج تام = تكلفة المواد المستعملة (بـ CMUP) + مصاريف الإنتاج المباشرة وغير المباشرة.",
+      "احسب سعر التكلفة للمنتجات المباعة = تكلفة إنتاج المباعة + مصاريف التوزيع.",
+      "احسب النتيجة التحليلية = رقم الأعمال - سعر التكلفة، ثم النتيجة الصافية = النتيجة الإجمالية + العناصر الإضافية - الأعباء غير المعتبرة.",
+    ],
+    repairSteps_fr: [
+      "Calculer le coût de l'unité d'œuvre du tableau de répartition.",
+      "Établir le coût d'achat des matières premières et le CMUP d'entrée en stock.",
+      "Calculer le coût de production des produits finis.",
+      "Déterminer le coût de revient des produits vendus.",
+      "Calculer le résultat analytique par produit puis le résultat net global.",
+    ],
+  },
+
   // ===========================================================================
   // 2. ÉCONOMIE ET MANAGEMENT (8 Skills - Mode B: Conceptual / Decision)
   // ===========================================================================

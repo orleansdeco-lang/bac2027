@@ -33,6 +33,7 @@ import {
   Clock,
   Layers,
   Award,
+  Landmark,
 } from "lucide-react";
 
 interface UnifiedLessonReaderProps {
@@ -165,7 +166,17 @@ export const UnifiedLessonReader: React.FC<UnifiedLessonReaderProps> = ({
               className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-[var(--color-primary)] text-white hover:opacity-95 shadow-sm"
             >
               <Play className="w-3.5 h-3.5 fill-current" />
-              <span>تمرين في وضع المهمة</span>
+              <span className="hidden sm:inline">تمرين في وضع المهمة</span>
+              <span className="sm:hidden">تمرين</span>
+            </Link>
+
+            <Link
+              href={`/diwan?tab=majlis&openCreate=true&subject=${encodeURIComponent(skill.subjectId)}&lesson=${encodeURIComponent(skill.title_ar)}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 dark:text-amber-400 border border-amber-500/30 transition-all shadow-sm"
+              title="افتح مجلس مذاكرة فوري مع زملائك حول هذا الدرس"
+            >
+              <Landmark className="w-3.5 h-3.5 text-amber-500" />
+              <span className="hidden md:inline">افتح مجلس بالدرس 🏛️</span>
             </Link>
 
             <button

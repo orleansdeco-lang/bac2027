@@ -174,6 +174,75 @@ test("Legacy route /campus/table/[tableId] redirects to unified Diwan route", ()
 });
 
 // ----------------------------------------------------
+// 8. EIGHT EXPANDED PRODUCTION REQUIREMENTS TESTS
+// ----------------------------------------------------
+console.log("\n🚀 8. Monitored Live Chat, Stream Lock, Search & Reporting Tests");
+
+test("Migration 035 exists and contains wilaya_code, duration_minutes, time extension RPC, and report schema", () => {
+  assert(fs.existsSync(path.join(ROOT, "supabase/migrations/035_diwan_monitored_chat_and_extensions.sql")), "Migration 035 is missing");
+  const sql = read("supabase/migrations/035_diwan_monitored_chat_and_extensions.sql");
+  assert(sql.includes("wilaya_code"), "Missing wilaya_code in migration 035");
+  assert(sql.includes("duration_minutes"), "Missing duration_minutes in migration 035");
+  assert(sql.includes("majlis_extend_room_time"), "Missing majlis_extend_room_time RPC in migration 035");
+  assert(sql.includes("target_type"), "Missing target_type in majlis_reports table in migration 035");
+});
+
+test("In-table live chat is monitored, audited, and messages have individual report buttons", () => {
+  const panelCode = read("src/components/diwan/MajlisInspectorPanel.tsx");
+  assert(panelCode.includes("المحادثة مراقبة ومسجلة"), "Missing monitored chat safety banner in MajlisInspectorPanel.tsx");
+  assert(panelCode.includes("type: \"MESSAGE\""), "Missing per-message reporting action in MajlisInspectorPanel.tsx");
+  const serviceCode = read("src/lib/campus/majlis-service.ts");
+  assert(serviceCode.includes("from(\"majlis_messages\")"), "Messages must be inserted into majlis_messages in Supabase");
+});
+
+test("Stream lock: CreateMajlisModal strictly locks table stream to userStream", () => {
+  const modalCode = read("src/components/diwan/CreateMajlisModal.tsx");
+  assert(modalCode.includes("const lockedStream = userStream"), "Table creation stream must strictly equal userStream");
+  assert(modalCode.includes("شعبة حسابك مغلقة رسمياً"), "Missing stream lock UI indicator in CreateMajlisModal.tsx");
+});
+
+test("Search & Filter for Majlis tables is fully integrated in MajlisWorkspace", () => {
+  const workspaceCode = read("src/components/diwan/MajlisWorkspace.tsx");
+  assert(workspaceCode.includes("searchQuery"), "searchQuery state missing in MajlisWorkspace.tsx");
+  assert(workspaceCode.includes("filterSubject"), "filterSubject state missing in MajlisWorkspace.tsx");
+  assert(workspaceCode.includes("filterVacantOnly"), "filterVacantOnly state missing in MajlisWorkspace.tsx");
+  assert(workspaceCode.includes("filteredRooms"), "filteredRooms calculation missing in MajlisWorkspace.tsx");
+});
+
+test("Curriculum integration: SubjectDashboard and UnifiedLessonReader have 'افتح مجلس' direct buttons", () => {
+  const dashCode = read("src/components/curriculum/SubjectDashboard.tsx");
+  assert(dashCode.includes("tab=majlis&openCreate=true"), "SubjectDashboard missing 'افتح مجلس' direct link");
+  const readerCode = read("src/components/curriculum/UnifiedLessonReader.tsx");
+  assert(readerCode.includes("tab=majlis&openCreate=true"), "UnifiedLessonReader missing 'افتح مجلس' direct link");
+});
+
+test("Student identity: resolveStudentIdentity formats privacy name, wilaya number (16), and avatar", () => {
+  const configCode = read("src/lib/constants/majlis-config.ts");
+  assert(configCode.includes("resolveStudentIdentity"), "resolveStudentIdentity missing in majlis-config.ts");
+  assert(configCode.includes("CHARACTER_AVATARS"), "CHARACTER_AVATARS missing in majlis-config.ts");
+  assert(configCode.includes("wilayaCode"), "wilayaCode resolution missing in majlis-config.ts");
+  const deskCode = read("src/components/diwan/CozyMajlisDesk.tsx");
+  assert(deskCode.includes("wilayaCode"), "CozyMajlisDesk must display wilayaCode on seat pills");
+});
+
+test("Room auto-close when empty and host time extension (+15m) are implemented", () => {
+  const serviceCode = read("src/lib/campus/majlis-service.ts");
+  assert(serviceCode.includes("extendRoomTime"), "extendRoomTime missing in majlis-service.ts");
+  assert(serviceCode.includes("requestExtension"), "requestExtension missing in majlis-service.ts");
+  assert(serviceCode.includes("duration_minutes"), "duration_minutes mapping missing in majlis-service.ts");
+  const workspaceCode = read("src/components/diwan/MajlisWorkspace.tsx");
+  assert(workspaceCode.includes("handleRequestExtension"), "handleRequestExtension missing in MajlisWorkspace.tsx");
+  assert(workspaceCode.includes("handleApproveExtension"), "handleApproveExtension missing in MajlisWorkspace.tsx");
+});
+
+test("Comprehensive safety reports API accepts STUDENT, MESSAGE, and ROOM reports", () => {
+  const reportRouteCode = read("src/app/api/campus/reports/route.ts");
+  assert(reportRouteCode.includes("targetType"), "Reports API must accept targetType");
+  assert(reportRouteCode.includes("messageId"), "Reports API must accept messageId");
+  assert(reportRouteCode.includes("messageContent"), "Reports API must accept messageContent");
+});
+
+// ----------------------------------------------------
 // SUMMARY
 // ----------------------------------------------------
 console.log(`\n========================================`);

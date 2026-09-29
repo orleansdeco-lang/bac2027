@@ -21,9 +21,12 @@ import {
   Clock,
   ArrowRight,
   Share2,
+  BarChart,
+  Layers,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 import { CampusService } from "@/lib/campus/campus-service";
+import { MajlisService } from "@/lib/campus/majlis-service";
 import { SubjectId } from "@/types/education";
 import { PlannerStorage } from "@/lib/planner/storage";
 import { formatStudentPrivacyName } from "@/lib/constants/majlis-config";
@@ -89,6 +92,66 @@ const QUIZ_CHALLENGES: Record<string, QuizChallenge> = {
     ],
     correctIndex: 1,
     explanation: "العلاقة بين المشكلة والإشكالية هي علاقة تداخل وتكامل؛ الإشكالية قضية فلسفية كلية تحتوي على مشكلات جزئية.",
+  },
+  "تحدي الاهتلاكات والتسويات": {
+    id: "q-acc-amort-1",
+    title: "تحدي الاهتلاكات والتسويات المحاسبية 📊",
+    subjectId: "accounting_finance",
+    subjectLabel: "تسيير محاسبي ومالي",
+    question: "في الاهتلاك المتناقص لآلة صناعية مدة نفعيتها 5 سنوات اقتنيت في بداية السنة، متى يتم الانتقال وجوباً إلى طريقة الاهتلاك الخطي؟",
+    options: [
+      "عندما يصبح معدل الاهتلاك المتناقص (40%) أصغر من أو يساوي المعدل الخطي المتبقي (100 / عدد السنوات المتبقية)",
+      "في بداية السنة الثانية مباشرة دون حساب",
+      "عندما تصبح القيمة الصافية VNC مساوية للصفر",
+      "لا يتم الانتقال إلى الخطي إطلاقاً في النظام المحاسبي المالي",
+    ],
+    correctIndex: 0,
+    explanation: "وفق معايير SCF: عندما يصبح المعدل المتناقص t' أصغر من أو يساوي (100 / السنوات المتبقية)، ننتقل فوراً لتطبيق الاهتلاك الخطي وتقسيم VNC المتبقية بالتساوي على باقي السنوات (في حالة 5 سنوات يتم الانتقال في السنتين 4 و 5 لأن 100/2 = 50% > 40%).",
+  },
+  "لغز الميزانية الوظيفية": {
+    id: "q-acc-balance-1",
+    title: "لغز الميزانية الوظيفية ومؤشرات التوازن 📐",
+    subjectId: "accounting_finance",
+    subjectLabel: "تسيير محاسبي ومالي",
+    question: "إذا بلغت الموارد الثابتة 3,620,000 دج والاستخدامات الثابتة 3,500,000 دج واحتياج رأس المال العامل BFR 20,000 دج، فما هي قيمة الخزينة الصافية TN ودلالتها المالية؟",
+    options: [
+      "TN = +100,000 دج (المؤسسة في أمان مالي وتملك فائض سيولة نقدية)",
+      "TN = -100,000 دج (المؤسسة في عجز مالي حاد وتعتمد على السحب المكشوف)",
+      "TN = +140,000 دج (حالة استدانة مفرطة غير متوازنة)",
+      "TN = 0 دج (توازن صفري دون أي سيولة)",
+    ],
+    correctIndex: 0,
+    explanation: "رأس المال العامل الصافي الإجمالي FRNG = الموارد الثابتة - الاستخدامات الثابتة = 3,620,000 - 3,500,000 = 120,000 دج. الخزينة الصافية TN = FRNG - BFR = 120,000 - 20,000 = +100,000 دج (موجبة تعني يسر مالي وسيولة آمنة).",
+  },
+  "كويز الزبائن و الرسم TVA": {
+    id: "q-acc-clients-1",
+    title: "كويز الزبائن المشكوك فيهم وفخ الـ TVA 💼",
+    subjectId: "accounting_finance",
+    subjectLabel: "تسيير محاسبي ومالي",
+    question: "زبون مشكوك فيه رصيده TTC هو 238,000 دج (معدل TVA 19%). سدد مبلغ 119,000 دج وقدرت خسارة القيمة على الباقي بـ 40%. كم تبلغ خسارة القيمة الواجب تكوينها؟",
+    options: [
+      "40,000 دج (تحسب حصراً على الرصيد المتبقي خارج الرسم HT)",
+      "47,600 دج (تحسب خطأً على الرصيد المتضمن للرسم TTC)",
+      "80,000 دج (تحسب على كامل الدين الأصلي قبل التسديد)",
+      "95,200 دج (تحسب بتجاهل التسديد تماماً)",
+    ],
+    correctIndex: 0,
+    explanation: "الرصيد المتبقي TTC = 238,000 - 119,000 = 119,000 دج. الرصيد خارج الرسم HT = 119,000 / 1.19 = 100,000 دج. خسارة القيمة = 100,000 × 40% = 40,000 دج (خسارة القيمة لا تحسب إطلاقاً على الرسم TVA).",
+  },
+  "تحدي محاسبة التكاليف": {
+    id: "q-acc-cost-1",
+    title: "تحدي محاسبة التكاليف والنتيجة الصافية 🏭",
+    subjectId: "accounting_finance",
+    subjectLabel: "تسيير محاسبي ومالي",
+    question: "إذا بلغت النتيجة التحليلية لمنتجين 450,000 دج، والعناصر الإضافية 50,000 دج، والأعباء غير المعتبرة 20,000 دج، فما هي النتيجة التحليلية الصافية للمؤسسة؟",
+    options: [
+      "480,000 دج (ربح تحليلي صافٍ)",
+      "420,000 دج (خسارة غير متوقعة)",
+      "380,000 دج (حساب دون عناصر إضافية)",
+      "520,000 دج (إضافة الأعباء غير المعتبرة خطأً)",
+    ],
+    correctIndex: 0,
+    explanation: "النتيجة التحليلية الصافية = النتيجة التحليلية الإجمالية + العناصر الإضافية - الأعباء غير المعتبرة = 450,000 + 50,000 - 20,000 = 480,000 دج.",
   },
 };
 
@@ -181,6 +244,24 @@ export function MajlisInteractiveGrid({
       } catch (err) {
         console.error("Failed to record mistake to error vault:", err);
       }
+    }
+  };
+
+  const [encouragementSent, setEncouragementSent] = useState<string | null>(null);
+
+  const handleBroadcastEncouragement = async (emoji: string, message: string) => {
+    try {
+      await MajlisService.sendReaction({
+        roomId: targetRoomId,
+        fromUserId: user?.id || "demo-user",
+        fromName: formatStudentPrivacyName(user?.user_metadata?.full_name || user?.user_metadata?.name || "زميل"),
+        reactionEmoji: emoji,
+        message,
+      });
+      setEncouragementSent(`${emoji} ${message}`);
+      setTimeout(() => setEncouragementSent(null), 3000);
+    } catch (e) {
+      console.warn("Failed to broadcast reaction", e);
     }
   };
 
@@ -381,6 +462,30 @@ END:VCALENDAR`;
                 <Sparkles className="w-4 h-4" />
               </div>
               <span className="text-xs font-bold text-white block">حلقة الاسترجاع 🧠</span>
+            </button>
+
+            {/* Game 5: Accounting & Settlements */}
+            <button
+              type="button"
+              onClick={() => handleOpenGame("تحدي الاهتلاكات والتسويات")}
+              className="p-3 rounded-2xl bg-gradient-to-br from-teal-600/30 to-cyan-900/40 border border-teal-500/30 hover:border-teal-400 hover:scale-[1.03] transition-all text-center group cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center mx-auto mb-1.5 group-hover:bg-teal-500 group-hover:text-white transition-colors">
+                <BarChart className="w-4 h-4" />
+              </div>
+              <span className="text-xs font-bold text-white block">تحدي التسويات 📊</span>
+            </button>
+
+            {/* Game 6: Functional Balance */}
+            <button
+              type="button"
+              onClick={() => handleOpenGame("لغز الميزانية الوظيفية")}
+              className="p-3 rounded-2xl bg-gradient-to-br from-rose-600/30 to-amber-900/40 border border-rose-500/30 hover:border-rose-400 hover:scale-[1.03] transition-all text-center group cursor-pointer"
+            >
+              <div className="w-8 h-8 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center mx-auto mb-1.5 group-hover:bg-rose-500 group-hover:text-white transition-colors">
+                <Layers className="w-4 h-4" />
+              </div>
+              <span className="text-xs font-bold text-white block">لغز الميزانية 📐</span>
             </button>
           </div>
         </div>
@@ -660,6 +765,39 @@ END:VCALENDAR`;
                   <p className="text-slate-300 text-[11px] leading-relaxed">
                     {activeChallenge.explanation}
                   </p>
+                </div>
+
+                {/* Live Peer Interaction & Encouragement Bar */}
+                <div className="p-3 rounded-2xl bg-white/[0.04] border border-white/[0.08] space-y-2">
+                  <div className="flex items-center justify-between text-[11px] text-slate-300 font-bold">
+                    <span className="flex items-center gap-1.5 text-amber-300">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>بث تفاعل فوري لزملائك في المجلس:</span>
+                    </span>
+                    {encouragementSent && (
+                      <span className="text-emerald-400 text-[10px] animate-in fade-in">
+                        تم البث: {encouragementSent} ✓
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {[
+                      { emoji: "🎉", label: "أحسنت!" },
+                      { emoji: "🔥", label: "منافس قوي!" },
+                      { emoji: "💪", label: "واصل!" },
+                      { emoji: "☕", label: "استراحة" },
+                    ].map((item) => (
+                      <button
+                        key={item.label}
+                        type="button"
+                        onClick={() => handleBroadcastEncouragement(item.emoji, item.label)}
+                        className="py-1.5 px-1 rounded-xl bg-white/[0.05] hover:bg-white/10 border border-white/10 hover:border-amber-400/40 text-[11px] font-bold text-white transition-all flex flex-col items-center gap-0.5 cursor-pointer active:scale-95"
+                      >
+                        <span className="text-sm">{item.emoji}</span>
+                        <span className="text-[9px] text-slate-300 truncate w-full text-center">{item.label}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
