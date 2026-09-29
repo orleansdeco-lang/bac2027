@@ -34,6 +34,22 @@ export function formatStopwatch(totalSeconds: number): string {
     .padStart(2, "0")}`;
 }
 
+const PEER_SAFE_AVATARS = [
+  "/illustrations/characters/sarah.jpg",
+  "/illustrations/characters/ali.jpg",
+  "/illustrations/characters/mariam.jpg",
+  "/illustrations/characters/yassine.jpg",
+];
+
+export function getSafePeerAvatar(avatarUrl?: string | null, userId?: string, isSelf?: boolean): string {
+  if (isSelf && avatarUrl) return avatarUrl;
+  if (avatarUrl && avatarUrl.startsWith("/illustrations/characters/")) {
+    return avatarUrl;
+  }
+  const code = (userId || "student").split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  return PEER_SAFE_AVATARS[code % PEER_SAFE_AVATARS.length];
+}
+
 interface CozyMajlisDeskProps {
   topicTitle?: string;
   occupiedSeatsCount?: number;
@@ -133,7 +149,7 @@ export function CozyMajlisDesk({
         id: "seat-user",
         userId: currentUser?.id,
         name: formatStudentPrivacyName(currentUser?.name),
-        avatar: currentUser?.avatar || "/illustrations/characters/ali.jpg",
+        avatar: getSafePeerAvatar(currentUser?.avatar, currentUser?.id, true),
         subject: currentUser?.subject || room?.subject || "رياضيات",
         subjectColor: "text-emerald-400",
         subjectBg: "bg-emerald-500/20 border-emerald-500/40",
@@ -154,7 +170,7 @@ export function CozyMajlisDesk({
         id: member.id,
         userId: member.user_id,
         name: formatStudentPrivacyName(member.user_name),
-        avatar: member.user_avatar || "/illustrations/characters/sarah.jpg",
+        avatar: getSafePeerAvatar(member.user_avatar, member.user_id, false),
         subject: room?.subject || "رياضيات",
         subjectColor: "text-blue-400",
         subjectBg: "bg-blue-500/20 border-blue-500/40",
@@ -247,6 +263,30 @@ export function CozyMajlisDesk({
             >
               <Share2 className="w-3 h-3" />
               <span>ادعُ زميلاً عبر واتساب</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Alone on Table Banner (when user is seated alone) */}
+      {isUserSeated && members.length <= 1 && (
+        <div className="relative z-30 mb-4 px-4 py-2.5 rounded-2xl bg-emerald-950/70 border border-emerald-500/30 text-white max-w-lg text-center shadow-xl animate-in fade-in duration-300">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2.5">
+            <div className="text-right">
+              <span className="text-xs font-bold text-emerald-300 block">
+                أنت جالس على الطاولة بمفردك الآن 🪑
+              </span>
+              <span className="text-[11px] text-slate-300">
+                شارك الرابط ليتحدى زميل معك في هذا التمرين بتوقيت الجزائر
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleWhatsAppInvite}
+              className="py-1.5 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-600/30 flex items-center gap-1.5 whitespace-nowrap cursor-pointer hover:scale-105 active:scale-95 transition-all"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              <span>ادعُ زميلاً عبر واتساب 💬</span>
             </button>
           </div>
         </div>

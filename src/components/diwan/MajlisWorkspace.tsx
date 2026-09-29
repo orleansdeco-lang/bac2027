@@ -59,6 +59,7 @@ export function MajlisWorkspace() {
     activeStudentsCount: 0,
     completedSessionsToday: 0,
   });
+  const [presenceCount, setPresenceCount] = useState(0);
   const [activeRoomsList, setActiveRoomsList] = useState<MajlisRoom[]>([]);
   const [activeReactionNotification, setActiveReactionNotification] = useState<{
     fromName: string;
@@ -77,14 +78,18 @@ export function MajlisWorkspace() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Load user details
+  // Load user details with privacy protection: Never derive name from raw email prefix (e.g. azinox27)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const profile = getStrategicProfile(user?.id);
-      if (profile?.fullName) {
-        setUserName(profile.fullName);
-      } else if (user?.email) {
-        setUserName(user.email.split("@")[0]);
+      if (profile?.fullName && profile.fullName.trim()) {
+        setUserName(formatStudentPrivacyName(profile.fullName));
+      } else if (user?.user_metadata?.full_name && String(user.user_metadata.full_name).trim()) {
+        setUserName(formatStudentPrivacyName(user.user_metadata.full_name));
+      } else if (user?.user_metadata?.name && String(user.user_metadata.name).trim()) {
+        setUserName(formatStudentPrivacyName(user.user_metadata.name));
+      } else {
+        setUserName("طالب بكالوريا");
       }
 
       if (profile?.streamId) {
@@ -93,19 +98,23 @@ export function MajlisWorkspace() {
     }
   }, [user]);
 
-  // Load campus authentic statistics and active rooms
+  // Load campus authentic statistics and active rooms with live ≤ 10s polling
   useEffect(() => {
     let isMounted = true;
     const fetchStats = async () => {
       try {
-        const res = await fetch("/api/campus/stats");
+        const res = await fetch("/api/campus/stats?t=" + Date.now(), {
+          cache: "no-store",
+          headers: { "Cache-Control": "no-cache" },
+        });
         if (res.ok) {
           const data = await res.json();
           if (isMounted && data.success) {
+            const raw = data.stats || data;
             setStats({
-              activeRoomsCount: data.activeRoomsCount || 0,
-              activeStudentsCount: data.activeStudentsCount || 0,
-              completedSessionsToday: data.completedSessionsToday || 0,
+              activeRoomsCount: Number(raw.activeRoomsCount) || 0,
+              activeStudentsCount: Number(raw.activeStudentsCount) || 0,
+              completedSessionsToday: Number(raw.completedSessionsToday) || 0,
             });
           }
         }
@@ -126,7 +135,7 @@ export function MajlisWorkspace() {
     const interval = setInterval(() => {
       fetchStats();
       fetchRooms();
-    }, 60000);
+    }, 8000); // Live sync ≤ 10 seconds
 
     return () => {
       isMounted = false;
@@ -207,6 +216,10 @@ export function MajlisWorkspace() {
           showToast("تم إخراجك من المجلس بواسطة المنظم.");
         }
       },
+      onPresenceSync: (presenceState: Record<string, any>) => {
+        const count = Object.values(presenceState).flat().length;
+        setPresenceCount(count);
+      },
     });
 
     if (isUserSeated && user?.id) {
@@ -276,8 +289,8 @@ export function MajlisWorkspace() {
       roomStream: activeRoom.stream,
       user: {
         id: user.id,
-        name: userName,
-        avatar: user.user_metadata?.avatar_url || "/illustrations/characters/ali.jpg",
+        name: formatStudentPrivacyName(userName),
+        avatar: "/illustrations/characters/ali.jpg", // Safe platform character illustration, strictly protects user photo
         stream: userStream,
       },
     });
@@ -306,7 +319,7 @@ export function MajlisWorkspace() {
 
     const updatedMems = await MajlisService.getMembers(activeRoom.id);
     setMembers(updatedMems);
-    showToast(`مرحباً بك يا ${userName}! تم حجز مقعدك على طاولة ${activeRoom.title} بنجاح 🪑`);
+    showToast(`مرحباً بك يا ${formatStudentPrivacyName(userName)}! تم حجز مقعدك على طاولة ${activeRoom.title} بنجاح 🪑`);
   };
 
   // Handle Leave Seat & Log Study Duration
@@ -363,7 +376,7 @@ export function MajlisWorkspace() {
     const msg = await MajlisService.sendMessage({
       roomId: activeRoom.id,
       userId: user.id,
-      userName,
+      userName: formatStudentPrivacyName(userName),
       userStream: ALGERIAN_BAC_STREAMS[userStream]?.name_ar || userStream,
       content,
     });
@@ -386,8 +399,8 @@ export function MajlisWorkspace() {
         roomStream: room.stream,
         user: {
           id: user.id,
-          name: userName,
-          avatar: user.user_metadata?.avatar_url || "/illustrations/characters/ali.jpg",
+          name: formatStudentPrivacyName(userName),
+          avatar: "/illustrations/characters/ali.jpg",
           stream: userStream,
         },
       }).then((res) => {
@@ -433,11 +446,23 @@ export function MajlisWorkspace() {
 
   const currentUserData = {
     id: user?.id,
-    name: userName,
+    name: formatStudentPrivacyName(userName),
     avatar: "/illustrations/characters/ali.jpg",
     subject: subjectLabels[activeSubject] || "فيزياء",
     stream: userStream,
   };
+
+  // Compute live presence metrics: includes currently seated user and presence count
+  const effectiveStudentsCount = Math.max(
+    stats.activeStudentsCount,
+    members.length,
+    presenceCount,
+    isUserSeated ? 1 : 0
+  );
+  const effectiveRoomsCount = Math.max(
+    stats.activeRoomsCount,
+    1 // Current table is open and active
+  );
 
   return (
     <div className="space-y-6 sm:space-y-8" dir="rtl">
@@ -454,8 +479,8 @@ export function MajlisWorkspace() {
         activeSubject={activeSubject}
         onSelectSubject={(subj) => setActiveSubject(subj)}
         onOpenCreateModal={() => setIsCreateModalOpen(true)}
-        totalTablesCount={stats.activeRoomsCount}
-        activeStudentsCount={stats.activeStudentsCount}
+        totalTablesCount={effectiveRoomsCount}
+        activeStudentsCount={effectiveStudentsCount}
         completedSessionsToday={stats.completedSessionsToday}
       />
 

@@ -1,6 +1,7 @@
 import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
 import { StreamId } from "@/types/education";
 import { CampusService } from "./campus-service";
+import { sanitizeSingleLine } from "@/lib/security/sanitize";
 
 export type MajlisStudyMode =
   | "PAPER_PRACTICE"
@@ -50,7 +51,7 @@ export interface MajlisMessage {
   created_at: string;
 }
 
-// Built-in Curated Material Generator for Instant Sync
+// Built-in Curated Material Generator for Instant Room Practice
 export function getInitialMaterialForMode(mode: MajlisStudyMode, subject: string, lesson: string) {
   if (mode === "PAPER_PRACTICE") {
     return {
@@ -151,33 +152,12 @@ export function getInitialMaterialForMode(mode: MajlisStudyMode, subject: string
   };
 }
 
-// In-Memory Fallback Cache for local resilience
-const localRooms = new Map<string, MajlisRoom>();
-const localMembers = new Map<string, MajlisMember[]>();
-const localMessages = new Map<string, MajlisMessage[]>();
-
-// Seed default room
-const DEFAULT_ROOM_ID = "room-sciences-rc";
-const defaultRoom: MajlisRoom = {
-  id: DEFAULT_ROOM_ID,
-  title: "حل تمرين الدارة RC — بكالوريا 2022 بالتوقيت الصارم",
-  stream: "sciences_exp",
-  subject: "physics",
-  lesson: "ثنائي القطب RC (شحن وتفريغ مكثفة)",
-  mode: "PAPER_PRACTICE",
-  capacity: 6,
-  status: "ACTIVE",
-  current_step: "SOLVING",
-  timer_end: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
-  active_material: getInitialMaterialForMode("PAPER_PRACTICE", "physics", "ثنائي القطب RC"),
-  created_at: new Date().toISOString(),
-};
-localRooms.set(DEFAULT_ROOM_ID, defaultRoom);
-localMembers.set(DEFAULT_ROOM_ID, []);
+// Client-side rate limiting tracker for in-room chat
+let lastMessageTimestamp = 0;
 
 export const MajlisService = {
   /**
-   * Create a new Majlis room and persist to Supabase & local cache
+   * Create a new Majlis room and persist authoritatively to Supabase
    */
   async createRoom(params: {
     title: string;
@@ -198,10 +178,10 @@ export const MajlisService = {
 
     const room: MajlisRoom = {
       id: roomId,
-      title: params.title.trim(),
+      title: sanitizeSingleLine(params.title, 150),
       stream: params.stream,
       subject: params.subject,
-      lesson: params.lesson.trim(),
+      lesson: sanitizeSingleLine(params.lesson, 100),
       mode: params.mode,
       host_user_id: params.hostUserId,
       capacity: Math.min(8, Math.max(2, params.capacity)),
@@ -213,51 +193,27 @@ export const MajlisService = {
       updated_at: now,
     };
 
-    localRooms.set(roomId, room);
-    localMembers.set(roomId, []);
-    localMessages.set(roomId, []);
-
-    // Persist to Supabase if available
     if (isSupabaseConfigured && supabase) {
-      try {
-        await supabase.from("majlis_rooms").insert({
-          id: room.id,
-          title: room.title,
-          stream: room.stream,
-          subject: room.subject,
-          lesson: room.lesson,
-          mode: room.mode,
-          host_user_id: room.host_user_id,
-          capacity: room.capacity,
-          status: room.status,
-          current_step: room.current_step,
-          timer_end: room.timer_end,
-          active_material: room.active_material,
-          created_at: room.created_at,
-          updated_at: room.updated_at,
-        });
+      const { error } = await supabase.from("majlis_rooms").insert({
+        id: room.id,
+        title: room.title,
+        stream: room.stream,
+        subject: room.subject,
+        lesson: room.lesson,
+        mode: room.mode,
+        host_user_id: room.host_user_id,
+        capacity: room.capacity,
+        status: room.status,
+        current_step: room.current_step,
+        timer_end: room.timer_end,
+        active_material: room.active_material,
+        created_at: room.created_at,
+        updated_at: room.updated_at,
+      });
 
-        // Also sync to legacy majlis_tables for total consistency
-        await supabase.from("majlis_tables").insert({
-          id: room.id,
-          title: room.title,
-          creator_id: room.host_user_id,
-          creator_name: params.hostName || "طالب شاطر",
-          stream: room.stream,
-          subject_id: room.subject,
-          lesson: room.lesson,
-          mode: room.mode === "SPEED_BATTLE" ? "DIGITAL_QUIZ" : room.mode === "GROUP_MEMORIZATION" ? "GROUP_MEMORIZATION" : "PAPER_PRACTICE",
-          capacity: room.capacity,
-          seats: [],
-          status: "ACTIVE",
-          current_phase: "READING_SOLVING",
-          time_remaining_seconds: durationSec,
-          duration_minutes: Math.ceil(durationSec / 60),
-          active_material: room.active_material,
-          created_at: room.created_at,
-        });
-      } catch (err) {
-        console.warn("[MajlisService] Supabase room creation fallback to local:", err);
+      if (error) {
+        console.error("[MajlisService] Supabase room creation error:", error);
+        throw new Error(error.message || "Failed to create room in database");
       }
     }
 
@@ -265,19 +221,21 @@ export const MajlisService = {
   },
 
   /**
-   * Fetch room details by ID
+   * Fetch room details authoritatively by ID
    */
   async getRoom(roomId: string): Promise<MajlisRoom | null> {
+    if (!roomId) return null;
+
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase
           .from("majlis_rooms")
           .select("*")
           .eq("id", roomId)
-          .single();
+          .maybeSingle();
 
         if (!error && data) {
-          const room: MajlisRoom = {
+          return {
             id: data.id,
             title: data.title,
             stream: data.stream as StreamId,
@@ -293,21 +251,21 @@ export const MajlisService = {
             created_at: data.created_at,
             updated_at: data.updated_at,
           };
-          localRooms.set(roomId, room);
-          return room;
         }
       } catch (err) {
         console.warn("[MajlisService] Supabase getRoom error:", err);
       }
     }
 
-    return localRooms.get(roomId) || null;
+    return null;
   },
 
   /**
    * Fetch members for a given room
    */
   async getMembers(roomId: string): Promise<MajlisMember[]> {
+    if (!roomId) return [];
+
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase
@@ -317,32 +275,30 @@ export const MajlisService = {
           .order("seat_index", { ascending: true });
 
         if (!error && data) {
-          const members: MajlisMember[] = data.map((d: any) => ({
+          return data.map((d: any) => ({
             id: d.id,
             room_id: d.room_id,
             user_id: d.user_id,
             user_name: d.user_name,
-            user_avatar: d.user_avatar,
+            user_avatar: d.user_avatar || "👨‍🎓",
             user_stream: d.user_stream as StreamId,
             seat_index: d.seat_index,
             status: d.status,
-            score: d.score,
-            finished_paper: d.finished_paper,
+            score: d.score || 0,
+            finished_paper: Boolean(d.finished_paper),
             joined_at: d.joined_at,
           }));
-          localMembers.set(roomId, members);
-          return members;
         }
       } catch (err) {
         console.warn("[MajlisService] Supabase getMembers error:", err);
       }
     }
 
-    return localMembers.get(roomId) || [];
+    return [];
   },
 
   /**
-   * Strictly take a seat with branch/stream check enforcement
+   * Strictly take a seat with stream enforcement and atomic reservation
    */
   async takeSeat(params: {
     roomId: string;
@@ -358,30 +314,87 @@ export const MajlisService = {
     success: boolean;
     allowed: boolean;
     reason?: string;
+    message?: string;
     member?: MajlisMember;
   }> {
     // 1. STRICT STREAM ACCESS RULE (الشعبة):
-    if (params.user.stream !== params.roomStream) {
+    if (params.user.stream !== params.roomStream && params.roomStream !== "ALL") {
       return {
         success: false,
         allowed: false,
         reason: "STREAM_MISMATCH",
+        message: "هذا المجلس مخصص لشعبة أخرى. يمكنك المشاهدة فقط.",
       };
     }
 
-    const currentMembers = await this.getMembers(params.roomId);
+    if (!isSupabaseConfigured || !supabase) {
+      return {
+        success: false,
+        allowed: false,
+        reason: "DATABASE_DISCONNECTED",
+        message: "الاتصال بقاعدة البيانات غير متاح حالياً.",
+      };
+    }
 
-    // If user is already seated, return their current membership
+    // Try atomic stored procedure first
+    try {
+      const { data, error } = await supabase.rpc("majlis_take_seat_atomic", {
+        p_room_id: params.roomId,
+        p_user_id: params.user.id,
+        p_user_name: params.user.name,
+        p_user_avatar: params.user.avatar,
+        p_user_stream: params.user.stream,
+        p_preferred_seat: params.preferredSeatIndex ?? 0,
+      });
+
+      if (!error && data && data.success) {
+        const member = data.member as MajlisMember;
+        // Broadcast presence/seat change
+        const channel = supabase.channel(`majlis-room-${params.roomId}`);
+        channel.send({
+          type: "broadcast",
+          event: "seat_change",
+          payload: { member, action: "JOIN" },
+        });
+
+        return { success: true, allowed: true, member };
+      }
+
+      if (data && !data.success) {
+        return {
+          success: false,
+          allowed: false,
+          reason: data.error,
+          message: data.message,
+        };
+      }
+    } catch (rpcErr) {
+      console.warn("[MajlisService] take_seat_atomic RPC fallback to direct insert:", rpcErr);
+    }
+
+    // Fallback direct check & insert
+    const currentMembers = await this.getMembers(params.roomId);
     const existing = currentMembers.find((m) => m.user_id === params.user.id);
     if (existing) {
       return { success: true, allowed: true, member: existing };
     }
 
-    // Find first available seat
+    // Check capacity
+    const room = await this.getRoom(params.roomId);
+    const capacity = room?.capacity || 6;
+    if (currentMembers.length >= capacity) {
+      return {
+        success: false,
+        allowed: false,
+        reason: "ROOM_FULL",
+        message: "المجلس ممتلئ بالكامل (اكتملت المقاعد).",
+      };
+    }
+
     const occupiedSeats = new Set(currentMembers.map((m) => m.seat_index));
     let targetSeat = params.preferredSeatIndex ?? 0;
-    if (occupiedSeats.has(targetSeat) || targetSeat >= 8) {
-      for (let i = 0; i < 8; i++) {
+    if (occupiedSeats.has(targetSeat) || targetSeat >= capacity) {
+      for (let i = 0; i < capacity; i++) {
         if (!occupiedSeats.has(i)) {
           targetSeat = i;
           break;
@@ -390,7 +403,7 @@ export const MajlisService = {
     }
 
     const newMember: MajlisMember = {
-      id: `mem-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: crypto.randomUUID(),
       room_id: params.roomId,
       user_id: params.user.id,
       user_name: params.user.name,
@@ -403,50 +416,46 @@ export const MajlisService = {
       joined_at: new Date().toISOString(),
     };
 
-    // Update local cache
-    const updated = [...currentMembers.filter((m) => m.user_id !== params.user.id), newMember];
-    localMembers.set(params.roomId, updated);
+    const { error: insertErr } = await supabase.from("majlis_members").insert({
+      id: newMember.id,
+      room_id: newMember.room_id,
+      user_id: newMember.user_id,
+      user_name: newMember.user_name,
+      user_avatar: newMember.user_avatar,
+      user_stream: newMember.user_stream,
+      seat_index: newMember.seat_index,
+      status: newMember.status,
+      score: newMember.score,
+      finished_paper: newMember.finished_paper,
+      joined_at: newMember.joined_at,
+    });
 
-    // Persist to Supabase
-    if (isSupabaseConfigured && supabase) {
-      try {
-        await supabase.from("majlis_members").upsert(
-          {
-            room_id: newMember.room_id,
-            user_id: newMember.user_id,
-            user_name: newMember.user_name,
-            user_avatar: newMember.user_avatar,
-            user_stream: newMember.user_stream,
-            seat_index: newMember.seat_index,
-            status: newMember.status,
-            score: newMember.score,
-            finished_paper: newMember.finished_paper,
-            joined_at: newMember.joined_at,
-          },
-          { onConflict: "room_id,user_id" }
-        );
-
-        // Broadcast presence/seat change
-        const channel = supabase.channel(`majlis-room-${params.roomId}`);
-        channel.send({
-          type: "broadcast",
-          event: "seat_change",
-          payload: { member: newMember, action: "JOIN" },
-        });
-      } catch (err) {
-        console.warn("[MajlisService] Supabase takeSeat error:", err);
-      }
+    if (insertErr) {
+      console.error("[MajlisService] Supabase takeSeat error:", insertErr);
+      return {
+        success: false,
+        allowed: false,
+        reason: insertErr.code === "23505" ? "SEAT_TAKEN" : "INSERT_FAILED",
+        message: "تعذر حجز المقعد، قد يكون تم حجزه من طرف زميل آخر.",
+      };
     }
+
+    // Broadcast seat change
+    const channel = supabase.channel(`majlis-room-${params.roomId}`);
+    channel.send({
+      type: "broadcast",
+      event: "seat_change",
+      payload: { member: newMember, action: "JOIN" },
+    });
 
     return { success: true, allowed: true, member: newMember };
   },
 
   /**
-   * Leave seat
+   * Leave seat authoritatively
    */
   async leaveSeat(roomId: string, userId: string): Promise<void> {
-    const current = localMembers.get(roomId) || [];
-    localMembers.set(roomId, current.filter((m) => m.user_id !== userId));
+    if (!roomId || !userId) return;
 
     if (isSupabaseConfigured && supabase) {
       try {
@@ -472,12 +481,7 @@ export const MajlisService = {
    * Mark Paper Problem Finished (✍️ أنهيت الحل على الكراس)
    */
   async markPaperFinished(roomId: string, userId: string): Promise<boolean> {
-    const members = localMembers.get(roomId) || [];
-    const target = members.find((m) => m.user_id === userId);
-    if (target) {
-      target.finished_paper = true;
-      target.status = "FINISHED";
-    }
+    if (!roomId || !userId) return false;
 
     if (isSupabaseConfigured && supabase) {
       try {
@@ -543,14 +547,6 @@ export const MajlisService = {
     explanation: string;
   }): Promise<{ newScore: number }> {
     const pointsAwarded = params.isCorrect ? 100 + Math.max(0, params.secondsRemaining * 10) : 0;
-    const members = localMembers.get(params.roomId) || [];
-    const target = members.find((m) => m.user_id === params.userId);
-
-    let updatedScore = 0;
-    if (target) {
-      target.score = (target.score || 0) + pointsAwarded;
-      updatedScore = target.score;
-    }
 
     // If incorrect, automatically persist to Error Lab and schedule review in Planner
     if (!params.isCorrect) {
@@ -565,12 +561,22 @@ export const MajlisService = {
       });
     }
 
+    let updatedScore = pointsAwarded;
+
     if (isSupabaseConfigured && supabase) {
       try {
-        if (target) {
+        const { data: member } = await supabase
+          .from("majlis_members")
+          .select("score")
+          .eq("room_id", params.roomId)
+          .eq("user_id", params.userId)
+          .maybeSingle();
+
+        if (member) {
+          updatedScore = (member.score || 0) + pointsAwarded;
           await supabase
             .from("majlis_members")
-            .update({ score: target.score })
+            .update({ score: updatedScore })
             .eq("room_id", params.roomId)
             .eq("user_id", params.userId);
         }
@@ -595,7 +601,7 @@ export const MajlisService = {
   },
 
   /**
-   * In-Room Chat: Send Message
+   * In-Room Chat: Send Message with Rate Limiting and Sanitization
    */
   async sendMessage(params: {
     roomId: string;
@@ -604,22 +610,37 @@ export const MajlisService = {
     userStream: string;
     content: string;
   }): Promise<MajlisMessage> {
+    const now = Date.now();
+    // Flood protection: max 1 message per 1.5 seconds per client
+    if (now - lastMessageTimestamp < 1500) {
+      throw new Error("يرجى الانتظار ثانية قبل إرسال رسالة أخرى.");
+    }
+    lastMessageTimestamp = now;
+
+    const trimmed = params.content.trim();
+    if (!trimmed) {
+      throw new Error("لا يمكن إرسال رسالة فارغة.");
+    }
+    if (trimmed.length > 300) {
+      throw new Error("الرسالة طويلة جداً (الحد الأقصى 300 حرف).");
+    }
+
+    const cleanContent = sanitizeSingleLine(trimmed, 300);
+
     const msg: MajlisMessage = {
-      id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: crypto.randomUUID(),
       room_id: params.roomId,
       user_id: params.userId,
-      user_name: params.userName,
-      user_stream: params.userStream,
-      content: params.content.trim(),
+      user_name: sanitizeSingleLine(params.userName, 80),
+      user_stream: sanitizeSingleLine(params.userStream, 50),
+      content: cleanContent,
       created_at: new Date().toISOString(),
     };
 
-    const current = localMessages.get(params.roomId) || [];
-    localMessages.set(params.roomId, [...current, msg]);
-
     if (isSupabaseConfigured && supabase) {
       try {
-        await supabase.from("majlis_messages").insert({
+        const { error } = await supabase.from("majlis_messages").insert({
+          id: msg.id,
           room_id: msg.room_id,
           user_id: msg.user_id,
           user_name: msg.user_name,
@@ -628,14 +649,20 @@ export const MajlisService = {
           created_at: msg.created_at,
         });
 
+        if (error) {
+          console.error("[MajlisService] sendMessage DB insert error:", error);
+          throw new Error("فشل إرسال الرسالة.");
+        }
+
         const channel = supabase.channel(`majlis-room-${params.roomId}`);
         channel.send({
           type: "broadcast",
           event: "new_message",
           payload: msg,
         });
-      } catch (err) {
+      } catch (err: any) {
         console.warn("[MajlisService] sendMessage error:", err);
+        throw err;
       }
     }
 
@@ -643,9 +670,11 @@ export const MajlisService = {
   },
 
   /**
-   * Fetch in-room chat messages
+   * Fetch in-room chat messages from database
    */
   async getMessages(roomId: string): Promise<MajlisMessage[]> {
+    if (!roomId) return [];
+
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase
@@ -656,7 +685,7 @@ export const MajlisService = {
           .limit(50);
 
         if (!error && data) {
-          const msgs: MajlisMessage[] = data.map((d: any) => ({
+          return data.map((d: any) => ({
             id: d.id,
             room_id: d.room_id,
             user_id: d.user_id,
@@ -665,15 +694,13 @@ export const MajlisService = {
             content: d.content,
             created_at: d.created_at,
           }));
-          localMessages.set(roomId, msgs);
-          return msgs;
         }
       } catch (err) {
         console.warn("[MajlisService] getMessages error:", err);
       }
     }
 
-    return localMessages.get(roomId) || [];
+    return [];
   },
 
   /**
@@ -728,7 +755,58 @@ export const MajlisService = {
   },
 
   /**
-   * Fetch active rooms genuine query from Supabase
+   * Anti-harassment: Block disruptive user
+   */
+  async blockUser(params: { userId: string; blockedUserId: string; reason?: string }): Promise<boolean> {
+    if (!isSupabaseConfigured || !supabase) return false;
+    try {
+      const { error } = await supabase.from("majlis_blocks").insert({
+        user_id: params.userId,
+        blocked_user_id: params.blockedUserId,
+        reason: params.reason ? sanitizeSingleLine(params.reason, 100) : null,
+      });
+      return !error;
+    } catch {
+      return false;
+    }
+  },
+
+  /**
+   * Anti-harassment: Fetch blocked users list for current user
+   */
+  async getBlockedUserIds(userId: string): Promise<string[]> {
+    if (!userId || !isSupabaseConfigured || !supabase) return [];
+    try {
+      const { data, error } = await supabase
+        .from("majlis_blocks")
+        .select("blocked_user_id")
+        .eq("user_id", userId);
+      if (!error && data) {
+        return data.map((d: any) => d.blocked_user_id);
+      }
+    } catch {}
+    return [];
+  },
+
+  /**
+   * Anti-harassment: Unblock user
+   */
+  async unblockUser(params: { userId: string; blockedUserId: string }): Promise<boolean> {
+    if (!isSupabaseConfigured || !supabase) return false;
+    try {
+      const { error } = await supabase
+        .from("majlis_blocks")
+        .delete()
+        .eq("user_id", params.userId)
+        .eq("blocked_user_id", params.blockedUserId);
+      return !error;
+    } catch {
+      return false;
+    }
+  },
+
+  /**
+   * Fetch active rooms genuine query strictly from Supabase (Zero Mock Fallback)
    */
   async fetchActiveRooms(stream?: StreamId): Promise<MajlisRoom[]> {
     if (isSupabaseConfigured && supabase) {
@@ -741,7 +819,7 @@ export const MajlisService = {
           .limit(20);
 
         if (stream) {
-          query = query.eq("stream", stream);
+          query = query.or(`stream.eq.${stream},stream.eq.ALL`);
         }
 
         const { data, error } = await query;
@@ -768,9 +846,8 @@ export const MajlisService = {
       }
     }
 
-    return Array.from(localRooms.values()).filter(
-      (r) => r.status === "ACTIVE" && (!stream || r.stream === stream)
-    );
+    // Zero fake fallback: return honest empty array
+    return [];
   },
 
   /**
@@ -796,7 +873,7 @@ export const MajlisService = {
       onPresenceLeave?: (leftPresences: any[]) => void;
     }
   ) {
-    if (!isSupabaseConfigured || !supabase) {
+    if (!isSupabaseConfigured || !supabase || !roomId) {
       const noop = () => {};
       noop.trackPresence = async () => {};
       noop.untrackPresence = async () => {};

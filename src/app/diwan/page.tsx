@@ -68,13 +68,13 @@ function DiwanContent() {
       id: "experiences",
       label: "تجارب ونصائح الطلاب",
       icon: MessageSquareQuote,
-      badge: "تجارب متفوقين",
+      badge: "نصائح وتجارب طلابية",
     },
     {
       id: "summaries",
       label: "المواضيع والملخصات التشاركية",
       icon: FileText,
-      badge: "مساهمات حصرية",
+      badge: "ملخصات تشاركية",
     },
   ];
 

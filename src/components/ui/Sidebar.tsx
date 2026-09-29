@@ -198,9 +198,6 @@ export function Sidebar({ className }: SidebarProps) {
             p.startsWith("/campus") ||
             p.startsWith("/table") ||
             p.startsWith("/ypt"),
-          badge: isAr ? "3D مجلس" : "3D",
-          badgeColor: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
-          highlight: true,
         },
         {
           href: "/curriculum",

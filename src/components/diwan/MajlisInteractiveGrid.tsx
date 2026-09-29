@@ -268,7 +268,7 @@ END:VCALENDAR`;
           </div>
 
           <p className="text-xs text-slate-300 leading-relaxed mb-3">
-            ملخصات مركزة وفخاخ وزارية معتمدة من المتفوقين في البكالوريا، قابلة للحفظ في المخطط اليومي.
+            ملخصات مركّزة وفخاخ وزارية شائعة، قابلة للحفظ في المخطط اليومي.
           </p>
 
           <div className="space-y-2">
@@ -303,7 +303,7 @@ END:VCALENDAR`;
             href="/diwan?tab=summaries"
             className="text-[11px] text-slate-300 hover:text-white font-bold inline-flex items-center gap-1"
           >
-            <span>استعراض كافة الملخصات المعتمدة</span>
+            <span>استعراض كافة الملخصات المركزة</span>
             <ArrowRight className="w-3 h-3 rotate-180" />
           </Link>
         </div>
@@ -399,7 +399,7 @@ END:VCALENDAR`;
               <h3 className="text-sm font-bold text-white">المجلس الرسمي المجدول</h3>
             </div>
             <span className="text-[10px] text-amber-300 font-bold bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
-              يبدأ 20:00
+              يبدأ 20:00 (توقيت الجزائر)
             </span>
           </div>
 
@@ -410,7 +410,7 @@ END:VCALENDAR`;
             <div className="flex items-center justify-between text-[11px] text-slate-300 font-mono">
               <div className="flex items-center gap-1">
                 <Clock className="w-3 h-3 text-amber-400" />
-                <span>20:00 – 21:30</span>
+                <span>20:00 – 21:30 (توقيت الجزائر)</span>
               </div>
               <span className="text-emerald-400 font-bold">
                 {rsvpCount} مسجلون للحضور

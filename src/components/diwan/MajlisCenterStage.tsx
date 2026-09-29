@@ -282,10 +282,11 @@ export function MajlisCenterStage({
             </span>
           </div>
 
-          {/* Shared Realtime Timer */}
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white/[0.05] border border-white/10 text-xs font-mono font-bold text-amber-300">
-            <Clock className="w-3.5 h-3.5" />
-            <span>{formatTime(secondsRemaining)}</span>
+          {/* Shared Realtime Timer - وقت التمرين */}
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-xs font-bold text-amber-300 shadow-sm">
+            <Clock className="w-3.5 h-3.5 text-amber-400" />
+            <span className="text-[11px] text-amber-200/90 whitespace-nowrap">وقت التمرين:</span>
+            <span className="font-mono tracking-wider">{formatTime(secondsRemaining)}</span>
           </div>
         </div>
 
@@ -295,19 +296,21 @@ export function MajlisCenterStage({
         {room.mode === "PAPER_PRACTICE" && (
           <div className="mt-3.5 space-y-3.5">
             {/* Exercise Card */}
-            <div className="p-3.5 rounded-2xl bg-white/[0.03] border border-white/[0.07]">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-bold text-amber-400">
+            <div className="p-3.5 sm:p-4 rounded-2xl bg-white/[0.03] border border-white/[0.07]">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs sm:text-sm font-bold text-amber-400">
                   {room.active_material?.exercise?.title || `تمرين نموذجي في ${room.lesson}`}
                 </span>
                 <span className="text-[10px] text-slate-400 font-mono">
                   {finishedStudentsCount}/{members.length || 1} أنهوا الحل
                 </span>
               </div>
-              <p className="text-xs text-slate-200 leading-relaxed whitespace-pre-line font-medium">
-                {room.active_material?.exercise?.text ||
-                  "حل التمرين المرفق على كراسك بتركيز، ودون خطوات البرهان كاملة."}
-              </p>
+              <div className="p-3 sm:p-4 rounded-xl bg-black/30 border border-white/[0.06] my-2">
+                <p className="text-base sm:text-[17px] text-slate-100 leading-relaxed sm:leading-loose whitespace-pre-line font-medium select-text font-sans">
+                  {room.active_material?.exercise?.text ||
+                    "حل التمرين المرفق على كراسك بتركيز، ودون خطوات البرهان كاملة."}
+                </p>
+              </div>
               <div className="mt-2 text-[11px] text-slate-400">
                 💡 {room.active_material?.exercise?.instructions || "عند الانتهاء اضغط على الزر أدناه لمعاينة سلم التنقيط."}
               </div>

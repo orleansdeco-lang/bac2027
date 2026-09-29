@@ -49,7 +49,7 @@ export const MAJLIS_CONFIG = {
  * Format student name for strict privacy:
  * Example: "سارة بن علي" -> "سارة ب."
  * Example: "ياسين" -> "ياسين"
- * Never shows email address or part of email.
+ * Never shows email address, email prefix (e.g. azinox27), or raw IDs.
  */
 export function formatStudentPrivacyName(
   fullName?: string | null,
@@ -57,23 +57,87 @@ export function formatStudentPrivacyName(
   fallback = "طالب شاطر"
 ): string {
   if (nickname && nickname.trim()) {
-    return nickname.trim();
+    const cleanNick = nickname.trim();
+    if (
+      !cleanNick.includes("@") &&
+      !/^[a-zA-Z0-9._-]{3,}\d+$/.test(cleanNick) &&
+      !/^user[-_]/i.test(cleanNick) &&
+      !/^mem[-_]/i.test(cleanNick)
+    ) {
+      return cleanNick;
+    }
   }
+
   if (!fullName || !fullName.trim()) {
     return fallback;
   }
+
   const clean = fullName.trim();
-  // Strip email if mistakenly passed as full name
-  if (clean.includes("@")) {
+
+  // Strictly reject email addresses, email prefixes with digits/underscores, or raw system IDs
+  if (
+    clean.includes("@") ||
+    /^[a-zA-Z0-9._-]+@[a-zA-Z0-9._-]+$/.test(clean) ||
+    /^[a-zA-Z0-9._-]{3,}\d+$/.test(clean) ||
+    /^user[-_]/i.test(clean) ||
+    /^mem[-_]/i.test(clean) ||
+    /^[0-9a-f]{8}-[0-9a-f]{4}/i.test(clean)
+  ) {
     return fallback;
   }
+
   const parts = clean.split(/\s+/).filter(Boolean);
   if (parts.length === 1) {
+    // If it's a single word containing Latin letters and numbers (like azinox27), reject
+    if (/^[a-zA-Z0-9_-]+$/.test(parts[0]) && /\d/.test(parts[0])) {
+      return fallback;
+    }
     return parts[0];
   }
+
   const first = parts[0];
   const lastInitial = parts[parts.length - 1].charAt(0);
   return `${first} ${lastInitial}.`;
+}
+
+/**
+ * Formats time strictly in Africa/Algiers timezone (UTC+1)
+ * regardless of the client machine's local timezone.
+ */
+export function formatAlgiersTime(dateOrIso: string | Date | number, includeLabel = true): string {
+  try {
+    const d = typeof dateOrIso === "string" || typeof dateOrIso === "number" ? new Date(dateOrIso) : dateOrIso;
+    if (isNaN(d.getTime())) {
+      return includeLabel ? "20:00 (توقيت الجزائر)" : "20:00";
+    }
+    const timeStr = new Intl.DateTimeFormat("fr-DZ", {
+      timeZone: "Africa/Algiers",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(d);
+    return includeLabel ? `${timeStr} (توقيت الجزائر)` : timeStr;
+  } catch {
+    return includeLabel ? "20:00 (توقيت الجزائر)" : "20:00";
+  }
+}
+
+/**
+ * Formats date strictly in Africa/Algiers timezone
+ */
+export function formatAlgiersDate(dateOrIso: string | Date | number): string {
+  try {
+    const d = typeof dateOrIso === "string" || typeof dateOrIso === "number" ? new Date(dateOrIso) : dateOrIso;
+    if (isNaN(d.getTime())) return "";
+    return new Intl.DateTimeFormat("ar-DZ", {
+      timeZone: "Africa/Algiers",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    }).format(d);
+  } catch {
+    return "";
+  }
 }
 
 /**

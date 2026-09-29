@@ -44,7 +44,7 @@ export const THEMES: Record<Theme, ThemeInfo> = {
     label_ar: "الهوية الموحدة (الشاطر | SHATER)",
     label_fr: "Identité Unifiée (SHATER)",
     icon: "🌿",
-    tagline_ar: "تصميم دافئ، هادئ ومريح للعين مع شخصيات 3D موحدة",
+    tagline_ar: "تصميم دافئ، هادئ ومريح للعين مع شخصيات توضيحية موحدة",
     tagline_fr: "Design calme, chaleureux et moderne",
     colorScheme: "light",
     accentColor: "#5F8F86",

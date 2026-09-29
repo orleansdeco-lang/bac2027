@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 export async function GET() {
   try {
@@ -10,18 +12,24 @@ export async function GET() {
     let completedSessionsToday = 0;
 
     if (isSupabaseConfigured && supabase) {
-      // 1. Active rooms
-      const { count: roomsCount } = await supabase
+      // 1. Query Active rooms
+      const { count: roomsCount, error: roomsErr } = await supabase
         .from("majlis_rooms")
         .select("*", { count: "exact", head: true })
         .eq("status", "ACTIVE");
-      activeRoomsCount = roomsCount || 0;
 
-      // 2. Active students currently seated
-      const { count: membersCount } = await supabase
+      if (!roomsErr && typeof roomsCount === "number") {
+        activeRoomsCount = roomsCount;
+      }
+
+      // 2. Query Active students currently seated
+      const { count: membersCount, error: membersErr } = await supabase
         .from("majlis_members")
         .select("*", { count: "exact", head: true });
-      activeStudentsCount = membersCount || 0;
+
+      if (!membersErr && typeof membersCount === "number") {
+        activeStudentsCount = membersCount;
+      }
 
       // 3. Completed study sessions today
       const startOfToday = new Date();
@@ -32,26 +40,52 @@ export async function GET() {
         .select("*", { count: "exact", head: true })
         .eq("status", "COMPLETED")
         .gte("started_at", startOfToday.toISOString());
+
       completedSessionsToday = sessionsCount || 0;
     }
 
-    return NextResponse.json({
-      success: true,
-      stats: {
+    const stats = {
+      activeRoomsCount,
+      activeStudentsCount,
+      completedSessionsToday,
+    };
+
+    return NextResponse.json(
+      {
+        success: true,
+        stats,
+        // Flat aliases for backwards compatibility with any client reading root keys
         activeRoomsCount,
         activeStudentsCount,
         completedSessionsToday,
       },
-    });
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+      }
+    );
   } catch (err) {
     console.error("[API Campus Stats] Error:", err);
-    return NextResponse.json({
-      success: true,
-      stats: {
+    return NextResponse.json(
+      {
+        success: true,
+        stats: {
+          activeRoomsCount: 0,
+          activeStudentsCount: 0,
+          completedSessionsToday: 0,
+        },
         activeRoomsCount: 0,
         activeStudentsCount: 0,
         completedSessionsToday: 0,
       },
-    });
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
   }
 }
