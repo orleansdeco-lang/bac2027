@@ -21,6 +21,8 @@ import {
   Lock,
   FileCheck,
   BrainCircuit,
+  Package,
+  Sparkles,
 } from "lucide-react";
 import { useAdminSession } from "@/lib/admin/client";
 import { AdminPermission } from "@/lib/admin/permissions";
@@ -45,6 +47,13 @@ const NAV_ITEMS: NavItem[] = [
     href: "/admin/students",
     icon: Users,
     permission: "students.read",
+  },
+  {
+    name: "إدارة الطلبات",
+    href: "/admin/orders",
+    icon: Package,
+    permission: "orders.read",
+    badge: "COD",
   },
   {
     name: "المحتوى",
@@ -77,6 +86,13 @@ const NAV_ITEMS: NavItem[] = [
     href: "/admin/learning",
     icon: GraduationCap,
     permission: "learning.read",
+  },
+  {
+    name: "ذكاء التعلم",
+    href: "/admin/learning/intelligence",
+    icon: Sparkles,
+    permission: "learning.read",
+    badge: "مستكشف AI",
   },
   {
     name: "التوجيه",

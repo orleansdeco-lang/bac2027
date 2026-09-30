@@ -54,13 +54,19 @@ export type AdminPermission =
   | "ai.execute"
 
   // Governance & Audit Logs
-  | "audit.read";
+  | "audit.read"
+
+  // Orders & COD Logistics Management
+  | "orders.read"
+  | "orders.manage";
 
 export const ALL_ADMIN_PERMISSIONS: readonly AdminPermission[] = [
   "platform.read",
   "platform.manage",
   "students.read",
   "students.manage",
+  "orders.read",
+  "orders.manage",
   "content.read",
   "content.manage",
   "exercises.read",
@@ -89,6 +95,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, ReadonlySet<AdminPermission>> = 
     "platform.read",
     "students.read",
     "students.manage",
+    "orders.read",
+    "orders.manage",
     "content.read",
     "content.manage",
     "exercises.read",
@@ -185,4 +193,6 @@ export const PERMISSION_LABELS_AR: Record<AdminPermission, string> = {
   "ai.use": "استخدام مساعد SHATER الإداري",
   "ai.execute": "اعتماد وتنفيذ مقترحات الذكاء الاصطناعي",
   "audit.read": "الاطلاع على سجل التدقيق والعمليات",
+  "orders.read": "الاطلاع على طلبات التوصيل (COD)",
+  "orders.manage": "معالجة وإدارة طلبات التوصيل وتفعيل الاشتراكات",
 };

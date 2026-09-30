@@ -127,6 +127,29 @@ export async function extractAdminContext(req: Request): Promise<AdminContext | 
 }
 
 /**
+ * Direct token verification helper for callers passing raw Bearer token string
+ */
+export async function verifyAdminToken(token: string): Promise<AdminContext | null> {
+  if (!token || !isSupabaseConfigured || !supabase) return null;
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    if (error || !user?.id) return null;
+    const role = await resolveServerRole(user.id, token);
+    if (!role) return null;
+    return {
+      userId: user.id,
+      email: user.email || null,
+      role,
+      isOwner: role === "OWNER",
+      permissions: getPermissionsForRole(role),
+      token,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Authoritative Guard: Requires ANY administrative role (OWNER, OPERATOR, CONTENT_REVIEWER, TEACHER_ADMIN).
  * Rejects unauthenticated callers with 401, non-admins with 403.
  */
