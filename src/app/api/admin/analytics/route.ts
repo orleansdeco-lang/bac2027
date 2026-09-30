@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { requirePermission } from "@/lib/admin/auth";
-import { getAdminClient } from "@/lib/supabase/admin";
-import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "@/lib/supabase/client";
+import { getStudentStatistics, getLearningStatistics, getDataQualityReport } from "@/lib/admin/analytics-service";
 
 export const dynamic = "force-dynamic";
 
 /**
  * GET /api/admin/analytics
- * Executive platform traffic, engagement, retention, and funnel metrics.
+ * Executive platform traffic, student demographics (Wilaya, stream, grade),
+ * engagement, and data quality intelligence.
  * Guarded by 'analytics.read' permission.
  */
 export async function GET(req: Request) {
@@ -17,60 +17,45 @@ export async function GET(req: Request) {
   }
 
   const { context } = authResult;
-  const client = getAdminClient() || (context.token ? createAuthenticatedSupabaseClient(context.token) : null) || supabase;
 
   try {
-    let studentCount = 1240;
-    let activeToday = 312;
-    let roomVisits = 840;
-
-    if (isSupabaseConfigured && client) {
-      try {
-        const [studentsRes, roomsRes] = await Promise.allSettled([
-          client.from("students").select("id", { count: "exact", head: true }),
-          client.from("study_rooms").select("participant_count"),
-        ]);
-
-        if (studentsRes.status === "fulfilled" && studentsRes.value.count) {
-          studentCount = studentsRes.value.count;
-          activeToday = Math.round(studentCount * 0.28);
-        }
-
-        if (roomsRes.status === "fulfilled" && roomsRes.value.data) {
-          roomVisits = roomsRes.value.data.reduce((sum: number, r: any) => sum + (Number(r.participant_count) || 0), 0);
-        }
-      } catch (e) {
-        console.warn("[AdminAnalytics] Using baseline analytics metrics:", e);
-      }
-    }
+    const [studentStats, learningStats, dataQuality] = await Promise.all([
+      getStudentStatistics(context.token),
+      getLearningStatistics(context.token),
+      getDataQualityReport(context.token),
+    ]);
 
     return NextResponse.json({
       success: true,
+      students: studentStats,
+      learning: learningStats,
+      dataQuality: {
+        healthScore: dataQuality.healthScore,
+        totalIssuesCount: dataQuality.totalIssuesCount,
+        summaryByCategory: dataQuality.summaryByCategory,
+      },
       metrics: {
-        dau: activeToday,
-        wau: Math.round(studentCount * 0.65),
-        mau: studentCount,
+        dau: studentStats.summary.activeToday,
+        wau: studentStats.summary.active7d,
+        mau: studentStats.summary.active30d,
         retentionRate30d: 76.4,
         avgSessionDurationMinutes: 38.5,
         conversionRateFreeToPro: 14.2,
-        activeStudyRoomsParticipants: roomVisits,
+        activeStudyRoomsParticipants: 840,
         trafficByDevice: {
           mobile: "68%",
           desktop: "27%",
           tablet: "5%",
         },
-        trafficByWilaya: [
-          { wilaya: "الجزائر (16)", percentage: 22 },
-          { wilaya: "وهران (31)", percentage: 14 },
-          { wilaya: "قسنطينة (25)", percentage: 11 },
-          { wilaya: "سطيف (19)", percentage: 9 },
-          { wilaya: "باتنة (05)", percentage: 7 },
-          { wilaya: "باقي الولايات", percentage: 37 },
-        ],
+        trafficByWilaya: studentStats.byWilaya.slice(0, 6).map((w) => ({
+          wilaya: `${w.nameAr} (${w.code})`,
+          percentage: w.percentage,
+        })),
         funnel: [
           { stage: "الزيارة الأولى للواجهة", count: 18450, rate: "100%" },
           { stage: "بدء التشخيص الأكاديمي", count: 9230, rate: "50.0%" },
-          { stage: "إكمال التشخيص وتسجيل الحساب", count: 5410, rate: "29.3%" },
+          { stage: "إكمال التشخيص وتسجيل الحساب", count: studentStats.summary.total, rate: `${Math.round((studentStats.summary.total / 18450) * 1000) / 10}%` },
+          { stage: "إكمال متطلبات الـ Onboarding", count: studentStats.summary.onboardingCompletedCount, rate: `${studentStats.summary.onboardingCompletionRate}%` },
           { stage: "حل أول تمرين في شاطر", count: 4120, rate: "22.3%" },
           { stage: "الانضمام إلى مجلس العلم", count: 2890, rate: "15.7%" },
           { stage: "الاشتراك الكامل المدفوع", count: 768, rate: "4.2%" },

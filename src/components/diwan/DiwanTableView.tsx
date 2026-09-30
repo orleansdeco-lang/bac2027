@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import {
   Users,
@@ -10,17 +10,10 @@ import {
   ArrowRight,
   Share2,
   LogOut,
-  Edit3,
   BookOpen,
-  HelpCircle,
   X,
   Flame,
   MessageSquare,
-  CheckCircle2,
-  Coffee,
-  Check,
-  ChevronDown,
-  ChevronUp,
   Zap,
 } from "lucide-react";
 import {
@@ -35,7 +28,6 @@ import {
 import { DiwanService } from "@/lib/diwan/diwan-service";
 import { DiwanChatPanel } from "./DiwanChatPanel";
 import { DiwanMultiplayerGame } from "./DiwanMultiplayerGame";
-import { SharedStudyCard } from "./SharedStudyCard";
 
 interface DiwanTableViewProps {
   table: DiwanTable;
@@ -78,9 +70,8 @@ export function DiwanTableView({
 }: DiwanTableViewProps) {
   // Modals & Drawers State
   const [isGameModalOpen, setIsGameModalOpen] = useState(false);
-  const [activeMobileDrawer, setActiveMobileDrawer] = useState<"chat" | "study" | "members" | null>(null);
+  const [activeMobileDrawer, setActiveMobileDrawer] = useState<"chat" | "members" | null>(null);
   const [selectedMemberForProfile, setSelectedMemberForProfile] = useState<DiwanMember | null>(null);
-  const [isStudyCardExpanded, setIsStudyCardExpanded] = useState(true);
 
   // Active Challenge synchronization
   const [activeChallenge, setActiveChallenge] = useState<{
@@ -173,7 +164,7 @@ export function DiwanTableView({
 
   const currentSubj = subjectBadges[table.subject] || { label: table.subject, icon: "📚" };
 
-  // EXACT 4 CORE STATUSES
+  // EXACT 4 CORE STATUSES (Derived dynamically from activity)
   const statusConfigs: Record<
     StudentActivityStatus,
     { label: string; color: string; icon: string; ringColor: string }
@@ -229,18 +220,18 @@ export function DiwanTableView({
       )}
 
       {/* =================================================================== */}
-      {/* TOP HEADER BAR                                                      */}
+      {/* TOP HEADER BAR: CLEAN, MINIMAL & PEOPLE-FIRST                       */}
       {/* =================================================================== */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-5 rounded-3xl bg-[#0B1222]/90 border border-white/10 backdrop-blur-xl shadow-xl">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onBackToLobby}
-            className="py-2 px-3 rounded-2xl bg-white/[0.05] hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold"
-            title="العودة لكل الطاولات"
+            className="py-2 px-3.5 rounded-2xl bg-white/[0.05] hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+            title="الخروج من هذه الطاولة"
           >
             <ArrowRight className="w-4 h-4" />
-            <span>كل الطاولات</span>
+            <span>خروج من الطابلة</span>
           </button>
 
           <div>
@@ -360,7 +351,7 @@ export function DiwanTableView({
         {/* ================================================================= */}
         <div className="lg:col-span-8 space-y-4">
           {/* DIGITAL STUDY TABLE CONTAINER */}
-          <div className="relative rounded-[36px] border border-white/15 bg-gradient-to-b from-[#0F1A30] via-[#0A1222] to-[#050A14] p-5 sm:p-8 shadow-2xl overflow-hidden min-h-[420px] sm:min-h-[500px] flex flex-col justify-between">
+          <div className="relative rounded-[36px] border border-white/15 bg-gradient-to-b from-[#0F1A30] via-[#0A1222] to-[#050A14] p-5 sm:p-8 shadow-2xl overflow-hidden min-h-[480px] sm:min-h-[520px] flex flex-col justify-between">
             {/* Center Felt Warm Glow */}
             <div className="absolute inset-0 bg-radial from-amber-500/[0.08] via-blue-500/[0.03] to-transparent pointer-events-none" />
 
@@ -372,7 +363,7 @@ export function DiwanTableView({
               <div className="flex items-center gap-2 text-slate-300">
                 <span className="w-2 h-2 rounded-full bg-amber-400" />
                 <span className="font-bold">طاولة المراجعة الجماعية</span>
-                <span className="text-[10px] text-slate-500 font-mono">
+                <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">
                   (انقر على أي زميل لمعرفة تخصصه ومحادثته)
                 </span>
               </div>
@@ -380,13 +371,28 @@ export function DiwanTableView({
               <div className="flex items-center gap-2">
                 <Clock className="w-3.5 h-3.5 text-amber-400" />
                 <span className="font-mono text-slate-300 text-xs">
-                  {table.duration_minutes} دقيقة
+                  {table.duration_minutes} دقيقة تركيز
                 </span>
               </div>
             </div>
 
-            {/* SEATING PODS AROUND THE TABLE (Visual Concept) */}
-            <div className="relative z-10 my-auto py-6">
+            {/* SEATING PODS AROUND THE TABLE SURFACE */}
+            <div className="relative z-10 my-auto py-4 space-y-5">
+              {/* DESK CENTERPIECE: TABLE STUDY NOTEBOOK */}
+              <div className="max-w-md mx-auto p-4 rounded-2xl bg-black/35 border border-white/10 text-center space-y-2 backdrop-blur-md shadow-inner">
+                <div className="flex items-center justify-center gap-2">
+                  <BookOpen className="w-4 h-4 text-amber-400" />
+                  <span className="text-xs font-bold text-amber-300">موضوع الطاولة:</span>
+                  <span className="text-xs font-black text-white">{table.topic}</span>
+                </div>
+                <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400">
+                  <span>{currentSubj.icon} {currentSubj.label}</span>
+                  <span>·</span>
+                  <span className="text-emerald-400 font-bold">جلسة مراجعة نشطة</span>
+                </div>
+              </div>
+
+              {/* SEATS GRID */}
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5 sm:gap-5 max-w-2xl mx-auto">
                 {seats.map((member, idx) => {
                   // Floating Cheer Particles over this seat
@@ -509,64 +515,10 @@ export function DiwanTableView({
               </div>
             </div>
 
-            {/* Bottom Table Action Bar: Multiplayer Showdown Trigger */}
+            {/* Bottom Table Action Bar: Multiplayer Showdown Trigger & Quick Cheers */}
             <div className="relative z-10 pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-2 text-xs text-slate-300 text-center sm:text-right">
-                <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-                <span>
-                  مراجعة تفاعلية · تحدى زملاءك على الطاولة في أسئلة سريعة مدتها 20 ثانية ⚡
-                </span>
-              </div>
-
-              {/* CHALLENGE BUTTON */}
-              <button
-                type="button"
-                onClick={() => setIsGameModalOpen(true)}
-                className="w-full sm:w-auto py-3 px-7 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
-              >
-                <Gamepad2 className="w-5 h-5 text-slate-950" />
-                <span>🎮 ابدأ تحدي الطاولة (Multiplayer)</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Current User Status Switcher Bar & Quick Reactions (If Seated) */}
-          {isUserSeated && (
-            <div className="p-3.5 sm:p-4 rounded-3xl bg-[#0B1222]/90 border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-lg">
-              <div className="space-y-1.5">
-                <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                  <Edit3 className="w-3.5 h-3.5 text-blue-400" />
-                  <span>حالتي الآن على الطاولة:</span>
-                </span>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {(["studying", "writing", "answering", "playing"] as StudentActivityStatus[]).map((st) => {
-                    const cfg = statusConfigs[st];
-                    const isSelected =
-                      currentMember?.current_status === st ||
-                      (st === "answering" && currentMember?.current_status === "helping");
-
-                    return (
-                      <button
-                        key={st}
-                        type="button"
-                        onClick={() => onStatusChange(st)}
-                        className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                          isSelected
-                            ? `${cfg.color} shadow-md font-black ring-2 ring-white/10`
-                            : "bg-white/[0.03] text-slate-400 border-white/10 hover:text-white"
-                        }`}
-                      >
-                        <span>{cfg.icon}</span>
-                        <span>{cfg.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
               {/* Instant Social Cheer Ribbon */}
-              <div className="pt-2 md:pt-0 border-t border-white/5 md:border-t-0 flex flex-col sm:flex-row items-start sm:items-center gap-2">
+              <div className="flex items-center gap-2">
                 <span className="text-[11px] font-bold text-slate-400">تفاعل سريع:</span>
                 <div className="flex items-center gap-1.5">
                   {[
@@ -601,46 +553,22 @@ export function DiwanTableView({
                   ))}
                 </div>
               </div>
-            </div>
-          )}
 
-          {/* SHARED STUDY CARD ("واش نراجعو؟") ON DESKTOP */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between px-2">
-              <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5">
-                <BookOpen className="w-3.5 h-3.5 text-amber-400" />
-                <span>المرجع المشترك للمجلس ("واش نراجعو؟")</span>
-              </span>
+              {/* SPONTANEOUS CHALLENGE BUTTON */}
               <button
                 type="button"
-                onClick={() => setIsStudyCardExpanded(!isStudyCardExpanded)}
-                className="text-xs text-slate-400 hover:text-white flex items-center gap-1 cursor-pointer"
+                onClick={() => setIsGameModalOpen(true)}
+                className="w-full sm:w-auto py-3 px-7 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
               >
-                <span>{isStudyCardExpanded ? "طي المرجع" : "عرض المرجع"}</span>
-                {isStudyCardExpanded ? (
-                  <ChevronUp className="w-3.5 h-3.5" />
-                ) : (
-                  <ChevronDown className="w-3.5 h-3.5" />
-                )}
+                <Gamepad2 className="w-5 h-5 text-slate-950" />
+                <span>🎮 ابدأ تحدي الطاولة (Multiplayer)</span>
               </button>
             </div>
-
-            {isStudyCardExpanded && (
-              <SharedStudyCard
-                table={table}
-                onAskInChat={(text) => {
-                  setChatPrefill({ text, type: "question", timestamp: Date.now() });
-                  if (typeof window !== "undefined" && window.innerWidth < 1024) {
-                    setActiveMobileDrawer("chat");
-                  }
-                }}
-              />
-            )}
           </div>
         </div>
 
         {/* ================================================================= */}
-        {/* DESKTOP CHAT PANEL (4 Cols)                                       */}
+        {/* DESKTOP CHAT PANEL (4 Cols) - With Auto-Presence Wiring           */}
         {/* ================================================================= */}
         <div className="hidden lg:block lg:col-span-4 h-[640px] sticky top-4">
           <DiwanChatPanel
@@ -649,6 +577,7 @@ export function DiwanTableView({
             messages={messages}
             onSendMessage={onSendMessage}
             onSendReaction={onSendReaction}
+            onTyping={(isTyping) => onStatusChange(isTyping ? "writing" : "studying")}
             prefillInput={chatPrefill}
             className="h-full"
           />
@@ -751,10 +680,10 @@ export function DiwanTableView({
       )}
 
       {/* =================================================================== */}
-      {/* MOBILE BOTTOM ACTION BAR (Touch Targets >= 44px)                    */}
+      {/* MOBILE BOTTOM ACTION BAR (Touch Targets >= 44px, Exactly 3 Buttons) */}
       {/* =================================================================== */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0B1222]/95 border-t border-white/10 backdrop-blur-xl px-4 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] shadow-2xl flex items-center justify-around">
-        {/* 💬 محادثة */}
+        {/* 1. 💬 الشات */}
         <button
           type="button"
           onClick={() => setActiveMobileDrawer("chat")}
@@ -768,20 +697,10 @@ export function DiwanTableView({
               </span>
             )}
           </div>
-          <span className="text-[10px] font-bold">محادثة</span>
+          <span className="text-[10px] font-bold">الشات 💬</span>
         </button>
 
-        {/* 📚 نراجعو */}
-        <button
-          type="button"
-          onClick={() => setActiveMobileDrawer("study")}
-          className="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors cursor-pointer min-w-[56px] py-1"
-        >
-          <BookOpen className="w-5 h-5 text-amber-400" />
-          <span className="text-[10px] font-bold">نراجعو</span>
-        </button>
-
-        {/* 🎮 تحدي */}
+        {/* 2. 🎮 نحداو */}
         <button
           type="button"
           onClick={() => setIsGameModalOpen(true)}
@@ -790,17 +709,17 @@ export function DiwanTableView({
           <div className="p-1 rounded-xl bg-amber-400 text-slate-950 shadow-md shadow-amber-400/25">
             <Gamepad2 className="w-5 h-5" />
           </div>
-          <span className="text-[10px] font-black text-amber-400">تحدي</span>
+          <span className="text-[10px] font-black text-amber-400">نحداو 🎮</span>
         </button>
 
-        {/* 👥 الأعضاء */}
+        {/* 3. 👥 الناس */}
         <button
           type="button"
           onClick={() => setActiveMobileDrawer("members")}
           className="flex flex-col items-center gap-1 text-slate-400 hover:text-white transition-colors cursor-pointer min-w-[56px] py-1"
         >
           <Users className="w-5 h-5 text-emerald-400" />
-          <span className="text-[10px] font-bold">الأعضاء ({members.length})</span>
+          <span className="text-[10px] font-bold">الناس ({members.length})</span>
         </button>
       </div>
 
@@ -818,35 +737,10 @@ export function DiwanTableView({
               messages={messages}
               onSendMessage={onSendMessage}
               onSendReaction={onSendReaction}
+              onTyping={(isTyping) => onStatusChange(isTyping ? "writing" : "studying")}
               prefillInput={chatPrefill}
               onCloseMobile={() => setActiveMobileDrawer(null)}
               className="h-full border-none rounded-none"
-            />
-          </div>
-        </div>
-      )}
-
-      {/* Drawer: Study Card ("واش نراجعو؟") */}
-      {activeMobileDrawer === "study" && (
-        <div className="fixed inset-0 z-50 flex flex-col justify-end bg-black/70 backdrop-blur-sm lg:hidden animate-in fade-in">
-          <div className="max-h-[85vh] w-full rounded-t-[32px] overflow-y-auto bg-[#0B1222] p-5 space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between pb-2 border-b border-white/10">
-              <span className="text-xs font-black text-white">المرجع المشترك</span>
-              <button
-                type="button"
-                onClick={() => setActiveMobileDrawer(null)}
-                className="p-1.5 rounded-xl bg-white/10 text-white cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <SharedStudyCard
-              table={table}
-              onAskInChat={(text) => {
-                setActiveMobileDrawer("chat");
-                setChatPrefill({ text, type: "question", timestamp: Date.now() });
-              }}
             />
           </div>
         </div>

@@ -5,11 +5,7 @@ import Image from "next/image";
 import {
   Send,
   HelpCircle,
-  Sparkles,
-  Smile,
-  Shield,
   Flag,
-  CheckCircle2,
   X,
   MessageSquare,
   AlertTriangle,
@@ -29,6 +25,7 @@ interface DiwanChatPanelProps {
   messages: DiwanMessage[];
   onSendMessage: (content: string, type: DiwanMessageType) => void;
   onSendReaction: (emoji: string) => void;
+  onTyping?: (isTyping: boolean) => void;
   prefillInput?: { text: string; type?: DiwanMessageType; timestamp: number } | null;
   onCloseMobile?: () => void;
   className?: string;
@@ -40,6 +37,7 @@ export function DiwanChatPanel({
   messages,
   onSendMessage,
   onSendReaction,
+  onTyping,
   prefillInput,
   onCloseMobile,
   className = "",
@@ -55,6 +53,7 @@ export function DiwanChatPanel({
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const typingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Handle prefilled text from parent (e.g. clicking "اسقسيه" on student profile)
   useEffect(() => {
@@ -100,9 +99,25 @@ export function DiwanChatPanel({
     }
   }, [messages.length]);
 
+  const handleInputChange = (val: string) => {
+    setInputText(val);
+
+    // Auto-presence: broadcast writing state
+    if (onTyping) {
+      onTyping(true);
+      if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+      typingTimerRef.current = setTimeout(() => {
+        onTyping(false);
+      }, 3500);
+    }
+  };
+
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
+
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    onTyping?.(false);
 
     onSendMessage(inputText.trim(), messageType);
     setInputText("");
@@ -131,7 +146,7 @@ export function DiwanChatPanel({
         }),
       });
       setReportingMsgId(null);
-      setReportToast("تم إرسال الإبلاغ بنجاح للمراجعة الفورية 🛡️");
+      setReportToast("تم إرسال الإبلاغ بنجاح 🛡️");
       setTimeout(() => setReportToast(null), 3000);
     } catch {
       setReportingMsgId(null);
@@ -144,7 +159,7 @@ export function DiwanChatPanel({
     return true;
   });
 
-  const quickReactions = ["💡", "👏", "🔥", "💪", "☕", "😂", "🤲"];
+  const quickReactions = ["🔥", "👏", "💡", "😂", "❤️", "☕"];
 
   return (
     <div
@@ -158,23 +173,23 @@ export function DiwanChatPanel({
         </div>
       )}
 
-      {/* Chat Header with Questions Filter & Mobile Close */}
+      {/* Chat Header */}
       <div className="p-3 sm:p-4 border-b border-white/10 flex items-center justify-between gap-2 bg-white/[0.02]">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <MessageSquare className="w-4 h-4 text-blue-400" />
+          <MessageSquare className="w-4 h-4 text-amber-400" />
           <h3 className="text-xs sm:text-sm font-black text-white">محادثة الطاولة</h3>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Filter Pills */}
+          {/* Simple Filter Pills */}
           <div className="flex items-center gap-1 p-0.5 rounded-xl bg-white/[0.04] border border-white/10 text-[10px]">
             <button
               type="button"
               onClick={() => setFilterMode("all")}
               className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
                 filterMode === "all"
-                  ? "bg-blue-600 text-white shadow-sm"
+                  ? "bg-amber-400 text-slate-950 font-black shadow-sm"
                   : "text-slate-400 hover:text-white"
               }`}
             >
@@ -185,7 +200,7 @@ export function DiwanChatPanel({
               onClick={() => setFilterMode("questions")}
               className={`px-2 py-1 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1 ${
                 filterMode === "questions"
-                  ? "bg-amber-500 text-slate-950 shadow-sm"
+                  ? "bg-amber-400 text-slate-950 font-black shadow-sm"
                   : "text-slate-400 hover:text-white"
               }`}
             >
@@ -217,9 +232,9 @@ export function DiwanChatPanel({
         {filteredMessages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500 space-y-2">
             <span className="text-3xl">💬</span>
-            <p className="text-xs text-slate-300 font-bold">المحادثة مفتوحة لزملائك</p>
+            <p className="text-xs text-slate-300 font-bold">الطاولة راهي هادئة 👋</p>
             <p className="text-[11px] text-slate-500 max-w-[200px]">
-              حيِّ رفاقك، اطرح سؤالاً، أو شارك فكرة لحل التمرين المشترك!
+              سقسي أصحابك، شارك معاهم فكرة في التمرين، أو شجعهم!
             </p>
           </div>
         ) : (
@@ -233,7 +248,7 @@ export function DiwanChatPanel({
               return (
                 <div
                   key={msg.id}
-                  className="rounded-2xl border border-amber-500/40 bg-gradient-to-b from-amber-500/15 via-amber-500/5 to-transparent p-3.5 space-y-2.5 shadow-lg shadow-amber-500/5 relative group"
+                  className="rounded-2xl border border-amber-500/40 bg-gradient-to-b from-amber-500/15 via-amber-500/5 to-transparent p-3 space-y-2 shadow-lg shadow-amber-500/5 relative group"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -247,7 +262,7 @@ export function DiwanChatPanel({
 
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black flex items-center gap-1 shadow-sm">
                       <HelpCircle className="w-3 h-3" />
-                      <span>سؤال للديوان ❓</span>
+                      <span>سؤال ❓</span>
                     </span>
                   </div>
 
@@ -255,7 +270,7 @@ export function DiwanChatPanel({
                     {msg.content}
                   </p>
 
-                  <div className="flex items-center justify-between pt-1">
+                  <div className="flex items-center justify-between pt-0.5">
                     <span className="text-[9px] text-amber-300/60 font-mono">
                       {new Date(msg.created_at).toLocaleTimeString("ar-DZ", {
                         hour: "2-digit",
@@ -263,7 +278,6 @@ export function DiwanChatPanel({
                       })}
                     </span>
 
-                    {/* Quick Peer Reply Button ("رد عليه") */}
                     {!isSelf && (
                       <button
                         type="button"
@@ -271,7 +285,7 @@ export function DiwanChatPanel({
                         className="py-1 px-2.5 rounded-lg bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 border border-amber-400/30 text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer hover:scale-105 active:scale-95"
                       >
                         <CornerDownLeft className="w-3 h-3" />
-                        <span>رد عليه (شوف الطريقة)</span>
+                        <span>رد عليه</span>
                       </button>
                     )}
                   </div>
@@ -343,7 +357,7 @@ export function DiwanChatPanel({
         )}
       </div>
 
-      {/* Floating Unread Counter Pill (when scrolled up) */}
+      {/* Floating Unread Counter Pill */}
       {!isAtBottom && unreadCount > 0 && (
         <button
           type="button"
@@ -377,7 +391,7 @@ export function DiwanChatPanel({
           onClick={() => setMessageType(messageType === "question" ? "chat" : "question")}
           className={`px-2.5 py-1 rounded-xl text-[10px] font-bold border transition-all cursor-pointer flex items-center gap-1 ${
             messageType === "question"
-              ? "bg-amber-400 text-slate-950 border-amber-300 font-black shadow-md shadow-amber-400/20"
+              ? "bg-amber-400 text-slate-950 border-amber-300 font-black shadow-md"
               : "bg-white/5 text-slate-400 border-white/10 hover:text-white"
           }`}
         >
@@ -392,11 +406,11 @@ export function DiwanChatPanel({
             ref={inputRef}
             type="text"
             value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
+            onChange={(e) => handleInputChange(e.target.value)}
             placeholder={
               messageType === "question"
-                ? "اطرح سؤالك للديوان ليساعدك زملاؤك..."
-                : "اكتب رسالة لزملائك على الطاولة..."
+                ? "اطرح سؤالك للناس تعاونك..."
+                : "اكتب لصحابك على الطابلة..."
             }
             className={`w-full py-2.5 pr-3.5 pl-10 rounded-2xl bg-white/[0.04] border text-xs text-white placeholder:text-slate-500 focus:outline-none transition-all ${
               messageType === "question"

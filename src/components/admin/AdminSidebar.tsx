@@ -19,6 +19,7 @@ import {
   LogOut,
   ChevronLeft,
   Lock,
+  FileCheck,
 } from "lucide-react";
 import { useAdminSession } from "@/lib/admin/client";
 import { AdminPermission } from "@/lib/admin/permissions";
@@ -85,6 +86,12 @@ const NAV_ITEMS: NavItem[] = [
     href: "/admin/analytics",
     icon: BarChart3,
     permission: "analytics.read",
+  },
+  {
+    name: "جودة البيانات",
+    href: "/admin/data-quality",
+    icon: FileCheck,
+    permission: "platform.read",
   },
   {
     name: "مساعد SHATER",

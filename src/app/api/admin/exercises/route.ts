@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import { requirePermission } from "@/lib/admin/auth";
 import { CustomExamService } from "@/lib/services/custom-exam-service";
 import { recordAdminAudit } from "@/lib/admin/audit";
+import { getExerciseStatistics } from "@/lib/admin/analytics-service";
 
 export const dynamic = "force-dynamic";
 
 /**
  * GET /api/admin/exercises
  * Lists exams and exercises from the official bank.
+ * Optionally includes aggregated statistics when stats=true.
  * Authoritative Guard: Requires 'exercises.read'.
  */
 export async function GET(req: Request) {
@@ -16,24 +18,33 @@ export async function GET(req: Request) {
     return authResult.response;
   }
 
+  const { context } = authResult;
   const { searchParams } = new URL(req.url);
   const stream_id = searchParams.get("stream_id") || undefined;
   const subject_id = searchParams.get("subject_id") || undefined;
   const exam_type = searchParams.get("exam_type") || undefined;
   const year = searchParams.get("year") ? parseInt(searchParams.get("year")!) : undefined;
   const term = searchParams.get("term") ? parseInt(searchParams.get("term")!) : undefined;
+  const includeStats = searchParams.get("stats") === "true";
 
   try {
-    const exams = await CustomExamService.getCustomExams({
-      stream_id,
-      subject_id,
-      exam_type,
-      year,
-      term,
-      includeDrafts: true,
-    });
+    const [exams, stats] = await Promise.all([
+      CustomExamService.getCustomExams({
+        stream_id,
+        subject_id,
+        exam_type,
+        year,
+        term,
+        includeDrafts: true,
+      }),
+      includeStats ? getExerciseStatistics(context.token) : Promise.resolve(null),
+    ]);
 
-    return NextResponse.json({ success: true, exams });
+    return NextResponse.json({
+      success: true,
+      exams,
+      ...(stats ? { stats } : {}),
+    });
   } catch (err: any) {
     return NextResponse.json(
       { success: false, error: err?.message || "فشل جلب قائمة التمارين" },

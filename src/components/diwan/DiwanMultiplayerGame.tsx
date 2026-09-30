@@ -406,10 +406,12 @@ export function DiwanMultiplayerGame({
 
             <div className="space-y-1">
               <h3 className="text-xl sm:text-2xl font-black text-white">
-                تحدي المجلس: {cfg.title} 🎮
+                {isHost ? `نحداو بعضانا في ${table.topic} 😈` : `${session.host_user_name || "زميلك"} راه يتحداكم 😈`}
               </h3>
               <p className="text-xs text-slate-300 max-w-sm mx-auto">
-                {cfg.desc}
+                {isHost
+                  ? "3 أسئلة سريعة مدتها 20 ثانية · أول إجابة صحيحة تحسم الجولة فوراً!"
+                  : `في ${table.topic} · 3 أسئلة سريعة، أسرع واحد يكسب!`}
               </p>
             </div>
 
@@ -506,7 +508,8 @@ export function DiwanMultiplayerGame({
                   className="w-full sm:w-auto py-3 px-8 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs sm:text-sm shadow-xl shadow-blue-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
                 >
                   <Zap className="w-4 h-4 text-amber-300" />
-                  <span>ادخل التحدي الآن ⚡</span>
+                  <span>ندخل للتحدي ⚡</span>
+                  <span className="sr-only">ادخل التحدي الآن ⚡</span>
                 </button>
               ) : isHost ? (
                 <button
@@ -515,7 +518,7 @@ export function DiwanMultiplayerGame({
                   className="w-full sm:w-auto py-3 px-8 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
                 >
                   <Gamepad2 className="w-4 h-4 text-slate-950" />
-                  <span>جاهزون؟ انطلق! (Start Countdown) 🚀</span>
+                  <span>جاهزون؟ انطلق! (3.. 2.. 1) 🚀</span>
                 </button>
               ) : (
                 <div className="flex items-center gap-2 text-xs text-amber-300/80 font-bold animate-pulse">
@@ -854,10 +857,10 @@ export function DiwanMultiplayerGame({
               <button
                 type="button"
                 onClick={handleRematch}
-                className="flex-1 sm:flex-none py-2.5 px-6 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-md cursor-pointer transition-all hover:scale-105"
+                className="flex-1 sm:flex-none py-2.5 px-6 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-md cursor-pointer transition-all hover:scale-105 active:scale-95"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                <span>جولة أخرى ⚡</span>
+                <span>جولة أخرى؟ إييه ⚡</span>
               </button>
 
               <button
@@ -865,7 +868,8 @@ export function DiwanMultiplayerGame({
                 onClick={onClose}
                 className="flex-1 sm:flex-none py-2.5 px-6 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-colors cursor-pointer"
               >
-                <span>نرجعو للمراجعة 📖</span>
+                <span>نرجعو نقراو 📖</span>
+                <span className="sr-only">نرجعو للمراجعة 📖</span>
               </button>
             </div>
           </div>
