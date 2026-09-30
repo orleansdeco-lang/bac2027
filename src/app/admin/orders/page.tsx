@@ -63,6 +63,12 @@ export default function AdminOrdersPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionMessage, setActionMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
+  // Dedicated Secure Workflow Modals
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isActivationModalOpen, setIsActivationModalOpen] = useState(false);
+  const [settlementNote, setSettlementNote] = useState("");
+  const [activationReason, setActivationReason] = useState("");
+
   // Action Inputs inside modal
   const [carrierInput, setCarrierInput] = useState("YALIDINE");
   const [trackingInput, setTrackingInput] = useState("");
@@ -862,28 +868,52 @@ export default function AdminOrdersPage() {
                     <span>تم التوصيل (Mark Delivered)</span>
                   </button>
 
-                  {/* Action 5: Mark COD Paid */}
-                  <button
-                    type="button"
-                    disabled={actionLoading || selectedOrder.payment.status === "PAID"}
-                    onClick={() => handleAction("MARK_COD_PAID")}
-                    className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
-                  >
-                    <CreditCard className="w-3.5 h-3.5" />
-                    <span>تأكيد استلام كاش (Mark COD Paid)</span>
-                  </button>
+                  {/* Action 5: Mark COD Paid (Opens Confirmation Modal) */}
+                  {selectedOrder.payment.status === "PAID" ? (
+                    <div className="px-3.5 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-1.5 select-none">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <span>تم تأكيد الدفع ✓ (PAID)</span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={actionLoading}
+                      onClick={() => {
+                        setSettlementNote("");
+                        setIsPaymentModalOpen(true);
+                      }}
+                      className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-lg hover:scale-102"
+                    >
+                      <CreditCard className="w-3.5 h-3.5" />
+                      <span>تأكيد استلام الدفع</span>
+                    </button>
+                  )}
 
-                  {/* Action 6: Activate Subscription (Requires Payment = PAID) */}
-                  <button
-                    type="button"
-                    disabled={actionLoading || selectedOrder.payment.status !== "PAID" || selectedOrder.subscription.status === "ACTIVE"}
-                    onClick={() => handleAction("ACTIVATE_SUBSCRIPTION")}
-                    className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-40 text-white text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
-                    title={selectedOrder.payment.status !== "PAID" ? "يتطلب دفع المبلغ كاش أولاً (PAID)" : "تفعيل اشتراك الطالب"}
-                  >
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>تفعيل الاشتراك (Activate Subscription)</span>
-                  </button>
+                  {/* Action 6: Activate Subscription (Gated behind Payment = PAID) */}
+                  {selectedOrder.subscription.status === "ACTIVE" ? (
+                    <div className="px-3.5 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-1.5 select-none">
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>الاشتراك مفعّل ومتاح للطالب ✓ (ACTIVE)</span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={actionLoading || selectedOrder.payment.status !== "PAID"}
+                      onClick={() => {
+                        setActivationReason("");
+                        setIsActivationModalOpen(true);
+                      }}
+                      className={`px-4 py-2 rounded-xl text-white text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-lg ${
+                        selectedOrder.payment.status === "PAID"
+                          ? "bg-amber-600 hover:bg-amber-500 hover:scale-102 ring-2 ring-amber-400/40"
+                          : "bg-slate-700/60 opacity-50 cursor-not-allowed"
+                      }`}
+                      title={selectedOrder.payment.status !== "PAID" ? "يتطلب تأكيد استلام الدفع أولاً (PAID)" : "تفعيل اشتراك الطالب"}
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>تفعيل الاشتراك</span>
+                    </button>
+                  )}
 
                   {/* Action 7: Mark Returned */}
                   <button
@@ -921,6 +951,164 @@ export default function AdminOrdersPage() {
                 className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold transition-colors cursor-pointer"
               >
                 إغلاق
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================= */}
+      {/* 6. CONFIRMATION MODAL: MARK COD PAID (تأكيد استلام الدفع)      */}
+      {/* ============================================================= */}
+      {isPaymentModalOpen && selectedOrder && (
+        <div className="fixed inset-0 z-60 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
+          <div
+            className="bg-[#0B132B] border-2 border-emerald-500/40 rounded-3xl w-full max-w-md p-6 space-y-5 shadow-2xl animate-in fade-in zoom-in-95 text-slate-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-700/80 pb-3">
+              <h3 className="text-base font-black text-white flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-emerald-400" />
+                <span>تأكيد استلام الدفع</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsPaymentModalOpen(false)}
+                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Exact Required Order / Amount / Method Display */}
+            <div className="p-4 rounded-2xl bg-[#091122] border border-slate-700/80 space-y-3 font-mono text-xs">
+              <div className="flex justify-between items-center text-slate-300">
+                <span className="text-slate-400 font-sans">Order:</span>
+                <span className="font-bold text-amber-300 text-sm tracking-wider">{selectedOrder.order_number}</span>
+              </div>
+              <div className="flex justify-between items-center text-slate-300">
+                <span className="text-slate-400 font-sans">Amount:</span>
+                <span className="font-bold text-emerald-400 text-base">{selectedOrder.amount.toLocaleString()} DA</span>
+              </div>
+              <div className="flex justify-between items-center text-slate-300">
+                <span className="text-slate-400 font-sans">Payment method:</span>
+                <span className="font-bold text-white uppercase">{selectedOrder.payment.method || "COD"}</span>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs text-slate-400 block font-sans">
+                ملاحظات التسوية البنكية أو رقم الحوالة من شركة الشحن (اختياري):
+              </label>
+              <input
+                type="text"
+                value={settlementNote}
+                onChange={(e) => setSettlementNote(e.target.value)}
+                placeholder="مثال: تم تأكيد استلام الحوالة من شركة التوصيل ياليدين"
+                className="w-full bg-[#091122] border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+
+            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 leading-relaxed font-sans">
+              ⚠️ تنبيه: لن يتم تفعيل الاشتراك تلقائياً؛ يمكنك مراجعة وتفعيل الاشتراك لاحقاً عبر زر "تفعيل الاشتراك".
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsPaymentModalOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold cursor-pointer"
+              >
+                إلغاء
+              </button>
+              <button
+                type="button"
+                disabled={actionLoading}
+                onClick={async () => {
+                  await handleAction("MARK_COD_PAID", { notes: settlementNote });
+                  setIsPaymentModalOpen(false);
+                }}
+                className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black shadow-lg flex items-center gap-1.5 cursor-pointer"
+              >
+                {actionLoading ? <RotateCcw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                <span>تأكيد الدفع</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================= */}
+      {/* 7. CONFIRMATION MODAL: ACTIVATE SUBSCRIPTION (تفعيل الاشتراك) */}
+      {/* ============================================================= */}
+      {isActivationModalOpen && selectedOrder && (
+        <div className="fixed inset-0 z-60 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
+          <div
+            className="bg-[#0B132B] border-2 border-amber-500/40 rounded-3xl w-full max-w-md p-6 space-y-5 shadow-2xl animate-in fade-in zoom-in-95 text-slate-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-700/80 pb-3">
+              <h3 className="text-base font-black text-white flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-amber-400" />
+                <span>تفعيل الاشتراك</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsActivationModalOpen(false)}
+                className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-[#091122] border border-slate-700/80 space-y-2.5 text-xs font-sans">
+              <div className="flex justify-between items-center text-slate-300">
+                <span className="text-slate-400">Order:</span>
+                <span className="font-bold text-amber-300 font-mono">{selectedOrder.order_number}</span>
+              </div>
+              <div className="flex justify-between items-center text-slate-300">
+                <span className="text-slate-400">Student:</span>
+                <span className="font-bold text-white">{selectedOrder.student.full_name}</span>
+              </div>
+              <div className="flex justify-between items-center text-slate-300">
+                <span className="text-slate-400">Plan:</span>
+                <span className="font-bold text-indigo-300">{selectedOrder.plan.name}</span>
+              </div>
+              <div className="flex justify-between items-center text-slate-300">
+                <span className="text-slate-400">Starts at:</span>
+                <span className="font-mono text-emerald-400 font-bold">الآن (Server Time)</span>
+              </div>
+              <div className="flex justify-between items-center text-slate-300">
+                <span className="text-slate-400">Expires at:</span>
+                <span className="font-mono text-emerald-400 font-bold">
+                  بعد {selectedOrder.plan.duration_months} أشهر (حتى البكالوريا)
+                </span>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-[11px] text-emerald-300 leading-relaxed font-sans">
+              ✓ تم التحقق: حالة الدفع مسجلة كـ PAID. عند التأكيد، ستتم ترقية حساب الطالب وتفعيل كافة ميزات المنصة فورياً.
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsActivationModalOpen(false)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold cursor-pointer"
+              >
+                إلغاء
+              </button>
+              <button
+                type="button"
+                disabled={actionLoading}
+                onClick={async () => {
+                  await handleAction("ACTIVATE_SUBSCRIPTION", { reason: activationReason });
+                  setIsActivationModalOpen(false);
+                }}
+                className="px-6 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-black shadow-lg flex items-center gap-1.5 cursor-pointer"
+              >
+                {actionLoading ? <RotateCcw className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                <span>تفعيل الاشتراك</span>
               </button>
             </div>
           </div>

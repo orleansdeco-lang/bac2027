@@ -599,47 +599,64 @@ export async function executeAdminOrderAction(
 
     case "MARK_COD_PAID": {
       // 7. Admin Confirms COD Cash Received (Payment = PAID)
-      // Call RPC if available, or execute atomic updates
-      try {
-        const { data: rpcRes, error: rpcErr } = await client.rpc("admin_verify_cod_payment_settled", {
-          p_order_id: orderId,
-          p_notes: params.notes || "تم استلام وتسوية المبلغ نقداً في حساب شاطر",
-        });
+      // Guard 1: Anti-double payment confirmation
+      const { data: existingPay } = await client
+        .from("payments")
+        .select("status, amount")
+        .eq("order_id", orderId)
+        .maybeSingle();
 
-        if (rpcErr) {
-          throw rpcErr;
-        }
-      } catch (rpcFallbackErr) {
-        // Direct transactional fallback
-        await client
-          .from("payments")
-          .update({
-            status: "PAID",
-            settled_at: now,
-            verified_by: actor.userId,
-            settlement_notes: params.notes || "تم استلام وتسوية المبلغ نقداً في حساب شاطر",
-            updated_at: now,
-          })
-          .eq("order_id", orderId);
-
-        await client
-          .from("orders")
-          .update({
-            status: "COMPLETED",
-            updated_at: now,
-          })
-          .eq("id", orderId);
-
-        await client
-          .from("payment_orders")
-          .update({
-            status: "APPROVED",
-            reviewed_at: now,
-            reviewed_by: actor.userId,
-            updated_at: now,
-          })
-          .eq("id", orderId);
+      if (existingPay?.status === "PAID") {
+        throw new Error("تم تأكيد دفع هذا الطلب مسبقاً (PAID). لا يمكن تأكيد الدفع مرة ثانية لمنع التكرار (Double Confirmation Prevented).");
       }
+
+      // Check legacy payment_orders status too
+      const { data: legacyPay } = await client
+        .from("payment_orders")
+        .select("status")
+        .eq("id", orderId)
+        .maybeSingle();
+
+      if (legacyPay?.status === "APPROVED") {
+        throw new Error("تم تأكيد دفع هذا الطلب مسبقاً في النظام. تم منع إعادة التأكيد.");
+      }
+
+      const settledNotes = params.notes?.trim() || "تم استلام وتسوية المبلغ نقداً في حساب شاطر بعد التحويل من شركة التوصيل";
+
+      // Execute update atomically: update payments to PAID
+      await client
+        .from("payments")
+        .update({
+          status: "PAID",
+          settled_at: now,
+          verified_by: actor.userId,
+          settlement_notes: settledNotes,
+          updated_at: now,
+        })
+        .eq("order_id", orderId);
+
+      // Update canonical orders to COMPLETED
+      await client
+        .from("orders")
+        .update({
+          status: "COMPLETED",
+          updated_at: now,
+        })
+        .eq("id", orderId);
+
+      // Sync legacy payment_orders (status = APPROVED)
+      await client
+        .from("payment_orders")
+        .update({
+          status: "APPROVED",
+          reviewed_at: now,
+          reviewed_by: actor.userId,
+          updated_at: now,
+        })
+        .eq("id", orderId);
+
+      // STRICT INVARIANT: DO NOT activate subscription here!
+      // Subscription remains PENDING until explicit admin activation.
 
       await recordAuditLog({
         actorUserId: actor.userId,
@@ -647,61 +664,100 @@ export async function executeAdminOrderAction(
         action: "COD_PAYMENT_SETTLED" as any,
         targetType: "payment" as any,
         targetId: orderId,
-        reason: params.notes || "تأكيد استلام وتسوية أموال الـ COD",
-        afterState: { payment_status: "PAID", order_status: "COMPLETED" },
+        reason: settledNotes,
+        beforeState: { payment_status: existingPay?.status || "COD" },
+        afterState: { payment_status: "PAID", settled_at: now, verified_by: actor.userId },
       });
 
       return {
         success: true,
-        message: "تم تأكيد استلام وتسوية المبلغ كاش (Payment = PAID). يمكنك الآن تفعيل الاشتراك للطالب.",
+        message: "تم تأكيد استلام الدفع بنجاح (Payment = PAID). تم تسجيل العملية في سجل التدقيق. يمكنك الآن تفعيل الاشتراك.",
       };
     }
 
     case "ACTIVATE_SUBSCRIPTION": {
       // 8. Admin Confirms & Activates Subscription
-      // Rule: Prerequisite payment = PAID must be satisfied!
-      try {
-        const { data: rpcRes, error: rpcErr } = await client.rpc("admin_activate_cod_subscription", {
-          p_order_id: orderId,
-          p_reason: params.reason || "تفعيل الاشتراك بعد تأكيد تسوية الدفع",
-        });
+      // Guard 1: Prerequisite payment = PAID must be satisfied!
+      const { data: payRow } = await client
+        .from("payments")
+        .select("status")
+        .eq("order_id", orderId)
+        .maybeSingle();
 
-        if (rpcErr) {
-          throw rpcErr;
-        }
-      } catch (rpcFallbackErr: any) {
-        // Check prerequisite: payment must be PAID
-        const { data: payRow } = await client.from("payments").select("status").eq("order_id", orderId).maybeSingle();
-        if (payRow && payRow.status !== "PAID") {
-          throw new Error("لا يمكن تفعيل الاشتراك: يجب أن تكون حالة الدفع (PAID) أولاً!");
-        }
+      const { data: legRow } = await client
+        .from("payment_orders")
+        .select("status")
+        .eq("id", orderId)
+        .maybeSingle();
 
-        const expiresDate = new Date();
-        expiresDate.setMonth(expiresDate.getMonth() + 10);
+      const isPaid = payRow?.status === "PAID" || legRow?.status === "APPROVED";
+      if (!isPaid) {
+        throw new Error("لا يمكن تفعيل الاشتراك: يجب أن يتم تأكيد استلام الدفع أولاً (يجب أن تكون حالة الدفع PAID)!");
+      }
 
+      // Guard 2: Anti-double subscription activation
+      const { data: existingSub } = await client
+        .from("subscriptions")
+        .select("id, status")
+        .eq("order_id", orderId)
+        .maybeSingle();
+
+      if (existingSub?.status === "ACTIVE") {
+        throw new Error("الاشتراك مفعّل بالفعل مسبقاً (ACTIVE) وهو ساري المفعول. تم منع التفعيل المزدوج.");
+      }
+
+      // Authoritative plan duration from server
+      const planMeta = resolvePlanMetadata(currentOrder?.plan_id);
+      const durationMonths = planMeta.duration_months || 10;
+
+      const startsAtDate = new Date();
+      const expiresDate = new Date(startsAtDate.getTime());
+      expiresDate.setMonth(expiresDate.getMonth() + durationMonths);
+
+      const startsAtIso = startsAtDate.toISOString();
+      const expiresAtIso = expiresDate.toISOString();
+
+      // Guard 3: Anti-duplicate subscription (UPDATE existing row, or insert exactly ONE)
+      if (existingSub?.id) {
         await client
           .from("subscriptions")
           .update({
             status: "ACTIVE",
-            starts_at: now,
-            expires_at: expiresDate.toISOString(),
-            notes: "تم تفعيل الاشتراك رسمياً من طرف الإدارة",
+            starts_at: startsAtIso,
+            expires_at: expiresAtIso,
+            notes: `تم تفعيل الاشتراك رسمياً من طرف الإدارة بعد تسوية الدفع (${planMeta.name})`,
             updated_at: now,
           })
-          .eq("order_id", orderId);
+          .eq("id", existingSub.id);
+      } else {
+        await client
+          .from("subscriptions")
+          .insert({
+            order_id: orderId,
+            user_id: currentOrder?.user_id || null,
+            student_id: currentOrder?.user_id || null,
+            plan_id: planMeta.id,
+            status: "ACTIVE",
+            starts_at: startsAtIso,
+            expires_at: expiresAtIso,
+            notes: `تم تفعيل الاشتراك رسمياً من طرف الإدارة بعد تسوية الدفع (${planMeta.name})`,
+            created_at: now,
+            updated_at: now,
+          });
+      }
 
-        if (currentOrder?.user_id) {
-          await client
-            .from("student_profiles")
-            .update({
-              access_status: "PAID",
-              plan: currentOrder.plan_id || "season",
-              subscription_started_at: now,
-              subscription_expires_at: expiresDate.toISOString(),
-              updated_at: now,
-            })
-            .eq("id", currentOrder.user_id);
-        }
+      // Elevate student profile access_status to PAID
+      if (currentOrder?.user_id) {
+        await client
+          .from("student_profiles")
+          .update({
+            access_status: "PAID",
+            plan: planMeta.id,
+            subscription_started_at: startsAtIso,
+            subscription_expires_at: expiresAtIso,
+            updated_at: now,
+          })
+          .eq("id", currentOrder.user_id);
       }
 
       await recordAuditLog({
@@ -710,13 +766,19 @@ export async function executeAdminOrderAction(
         action: "SUBSCRIPTION_ACTIVATED" as any,
         targetType: "subscription" as any,
         targetId: orderId,
-        reason: params.reason || "تفعيل اشتراك الطالب بعد تسوية الدفع",
-        afterState: { subscription_status: "ACTIVE" },
+        reason: params.reason || `تفعيل اشتراك الطالب في خطة ${planMeta.name} حتى ${expiresAtIso}`,
+        beforeState: { subscription_status: existingSub?.status || "PENDING" },
+        afterState: {
+          subscription_status: "ACTIVE",
+          starts_at: startsAtIso,
+          expires_at: expiresAtIso,
+          plan: planMeta.id,
+        },
       });
 
       return {
         success: true,
-        message: "تم تفعيل الاشتراك بنجاح! أصبح حساب التلميذ مفعل بالكامل (ACTIVE).",
+        message: `تم تفعيل الاشتراك بنجاح! صالح لمدة ${durationMonths} أشهر حتى ${expiresDate.toLocaleDateString("ar-DZ")}.`,
       };
     }
 
