@@ -343,45 +343,45 @@ function DiwanMainContent() {
           />
         ) : (
           <div className="space-y-6">
-            {/* Top Navigation Tabs: Tables | Summaries & Methodologies | Peer Experiences */}
-            <div className="flex items-center justify-center gap-2 p-1.5 rounded-3xl bg-[#0B1222]/90 border border-white/10 backdrop-blur-xl max-w-xl mx-auto shadow-xl">
+            {/* Top Navigation Tabs: High Contrast, Unified SHATER Design System */}
+            <div className="flex items-center justify-center gap-1.5 sm:gap-2 p-1.5 rounded-2xl bg-white border-2 border-slate-200/90 shadow-sm max-w-2xl mx-auto">
               <button
                 type="button"
                 onClick={() => setActiveTab("tables")}
-                className={`flex-1 py-3 px-3 sm:px-4 rounded-2xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                className={`flex-1 py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   activeTab === "tables"
-                    ? "bg-amber-400 text-slate-950 shadow-lg shadow-amber-400/20 scale-[1.02]"
-                    : "text-slate-300 hover:text-white hover:bg-white/[0.05]"
+                    ? "bg-amber-400 text-slate-950 shadow-sm scale-[1.01]"
+                    : "text-slate-700 hover:text-slate-950 hover:bg-slate-100"
                 }`}
               >
                 <span>🪑</span>
-                <span>طاولات المراجعة</span>
+                <span className="truncate">طاولات المراجعة</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveTab("summaries")}
-                className={`flex-1 py-3 px-3 sm:px-4 rounded-2xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                className={`flex-1 py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   activeTab === "summaries"
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25 scale-[1.02]"
-                    : "text-slate-300 hover:text-white hover:bg-white/[0.05]"
+                    ? "bg-[#2C5E54] text-white shadow-sm scale-[1.01]"
+                    : "text-slate-700 hover:text-slate-950 hover:bg-slate-100"
                 }`}
               >
                 <span>📑</span>
-                <span>الملخصات والمنهجية</span>
+                <span className="truncate">الملخصات والمنهجية</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveTab("experiences")}
-                className={`flex-1 py-3 px-3 sm:px-4 rounded-2xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                className={`flex-1 py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   activeTab === "experiences"
-                    ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/25 scale-[1.02]"
-                    : "text-slate-300 hover:text-white hover:bg-white/[0.05]"
+                    ? "bg-blue-600 text-white shadow-sm scale-[1.01]"
+                    : "text-slate-700 hover:text-slate-950 hover:bg-slate-100"
                 }`}
               >
                 <span>🌟</span>
-                <span>تجارب المتفوقين</span>
+                <span className="truncate">تجارب المتفوقين</span>
               </button>
             </div>
 
@@ -429,8 +429,8 @@ export default function DiwanPage() {
       fallback={
         <AppShell>
           <div className="flex flex-col items-center justify-center min-h-[500px]" dir="rtl">
-            <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3" />
-            <p className="text-xs text-slate-300 font-bold">جاري تحميل طاولة المراجعة...</p>
+            <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin mb-3" />
+            <p className="text-xs sm:text-sm text-slate-800 font-black">جاري تحضير طاولة المراجعة...</p>
           </div>
         </AppShell>
       }
