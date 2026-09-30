@@ -455,70 +455,82 @@ export function CozyMajlisDesk({
       <div className="hidden sm:block absolute inset-0 z-20 pointer-events-none">
         <div className="relative w-full h-full max-w-5xl mx-auto p-2 sm:p-5 pointer-events-auto">
           {/* Top-Right */}
-          <div className="absolute top-[4%] right-[3%] sm:top-[6%] sm:right-[10%]">
-            <SeatPill
-              seat={resolvedSeats[0]}
-              elapsed={resolvedSeats[0].initialSeconds + secondsOffset}
-              isCheered={cheeredStudent?.id === resolvedSeats[0].id}
-              cheeredEmoji={cheeredStudent?.emoji}
-              onEncourage={(e) => handleEncourage(resolvedSeats[0], e)}
-            />
-          </div>
+          {resolvedSeats[0] && (
+            <div className="absolute top-[4%] right-[3%] sm:top-[6%] sm:right-[10%]">
+              <SeatPill
+                seat={resolvedSeats[0]}
+                elapsed={resolvedSeats[0].isCurrentUser ? userElapsedSeconds : resolvedSeats[0].initialSeconds + secondsOffset}
+                isCheered={cheeredStudent?.id === resolvedSeats[0].id}
+                cheeredEmoji={cheeredStudent?.emoji}
+                onEncourage={(e) => handleEncourage(resolvedSeats[0], e)}
+              />
+            </div>
+          )}
 
           {/* Top-Left */}
-          <div className="absolute top-[4%] left-[3%] sm:top-[6%] sm:left-[10%]">
-            <SeatPill
-              seat={resolvedSeats[1]}
-              elapsed={resolvedSeats[1].initialSeconds + secondsOffset}
-              isCheered={cheeredStudent?.id === resolvedSeats[1].id}
-              cheeredEmoji={cheeredStudent?.emoji}
-              onEncourage={(e) => handleEncourage(resolvedSeats[1], e)}
-            />
-          </div>
+          {resolvedSeats[1] && (
+            <div className="absolute top-[4%] left-[3%] sm:top-[6%] sm:left-[10%]">
+              <SeatPill
+                seat={resolvedSeats[1]}
+                elapsed={resolvedSeats[1].isCurrentUser ? userElapsedSeconds : resolvedSeats[1].initialSeconds + secondsOffset}
+                isCheered={cheeredStudent?.id === resolvedSeats[1].id}
+                cheeredEmoji={cheeredStudent?.emoji}
+                onEncourage={(e) => handleEncourage(resolvedSeats[1], e)}
+              />
+            </div>
+          )}
 
           {/* Left */}
-          <div className="absolute top-[50%] -translate-y-1/2 left-[1%] sm:left-[3%]">
-            <SeatPill
-              seat={resolvedSeats[2]}
-              elapsed={resolvedSeats[2].initialSeconds + secondsOffset}
-              isCheered={cheeredStudent?.id === resolvedSeats[2].id}
-              cheeredEmoji={cheeredStudent?.emoji}
-              onEncourage={(e) => handleEncourage(resolvedSeats[2], e)}
-            />
-          </div>
+          {resolvedSeats[2] && (
+            <div className="absolute top-[50%] -translate-y-1/2 left-[1%] sm:left-[3%]">
+              <SeatPill
+                seat={resolvedSeats[2]}
+                elapsed={resolvedSeats[2].isCurrentUser ? userElapsedSeconds : resolvedSeats[2].initialSeconds + secondsOffset}
+                isCheered={cheeredStudent?.id === resolvedSeats[2].id}
+                cheeredEmoji={cheeredStudent?.emoji}
+                onEncourage={(e) => handleEncourage(resolvedSeats[2], e)}
+              />
+            </div>
+          )}
 
           {/* Right */}
-          <div className="absolute top-[50%] -translate-y-1/2 right-[1%] sm:right-[3%]">
-            <SeatPill
-              seat={resolvedSeats[3]}
-              elapsed={resolvedSeats[3].initialSeconds + secondsOffset}
-              isCheered={cheeredStudent?.id === resolvedSeats[3].id}
-              cheeredEmoji={cheeredStudent?.emoji}
-              onEncourage={(e) => handleEncourage(resolvedSeats[3], e)}
-            />
-          </div>
+          {resolvedSeats[3] && (
+            <div className="absolute top-[50%] -translate-y-1/2 right-[1%] sm:right-[3%]">
+              <SeatPill
+                seat={resolvedSeats[3]}
+                elapsed={resolvedSeats[3].isCurrentUser ? userElapsedSeconds : resolvedSeats[3].initialSeconds + secondsOffset}
+                isCheered={cheeredStudent?.id === resolvedSeats[3].id}
+                cheeredEmoji={cheeredStudent?.emoji}
+                onEncourage={(e) => handleEncourage(resolvedSeats[3], e)}
+              />
+            </div>
+          )}
 
           {/* Bottom-Left */}
-          <div className="absolute bottom-[4%] left-[3%] sm:bottom-[6%] sm:left-[10%]">
-            <SeatPill
-              seat={resolvedSeats[4]}
-              elapsed={isUserSeated ? userElapsedSeconds : resolvedSeats[4].initialSeconds + secondsOffset}
-              isCheered={cheeredStudent?.id === resolvedSeats[4].id}
-              cheeredEmoji={cheeredStudent?.emoji}
-              onEncourage={(e) => handleEncourage(resolvedSeats[4], e)}
-            />
-          </div>
+          {resolvedSeats[4] && (
+            <div className="absolute bottom-[4%] left-[3%] sm:bottom-[6%] sm:left-[10%]">
+              <SeatPill
+                seat={resolvedSeats[4]}
+                elapsed={resolvedSeats[4].isCurrentUser ? userElapsedSeconds : resolvedSeats[4].initialSeconds + secondsOffset}
+                isCheered={cheeredStudent?.id === resolvedSeats[4].id}
+                cheeredEmoji={cheeredStudent?.emoji}
+                onEncourage={(e) => handleEncourage(resolvedSeats[4], e)}
+              />
+            </div>
+          )}
 
           {/* Bottom-Right */}
-          <div className="absolute bottom-[4%] right-[3%] sm:bottom-[6%] sm:right-[10%]">
-            <SeatPill
-              seat={resolvedSeats[5]}
-              elapsed={resolvedSeats[5].initialSeconds + secondsOffset}
-              isCheered={cheeredStudent?.id === resolvedSeats[5].id}
-              cheeredEmoji={cheeredStudent?.emoji}
-              onEncourage={(e) => handleEncourage(resolvedSeats[5], e)}
-            />
-          </div>
+          {resolvedSeats[5] && (
+            <div className="absolute bottom-[4%] right-[3%] sm:bottom-[6%] sm:right-[10%]">
+              <SeatPill
+                seat={resolvedSeats[5]}
+                elapsed={resolvedSeats[5].isCurrentUser ? userElapsedSeconds : resolvedSeats[5].initialSeconds + secondsOffset}
+                isCheered={cheeredStudent?.id === resolvedSeats[5].id}
+                cheeredEmoji={cheeredStudent?.emoji}
+                onEncourage={(e) => handleEncourage(resolvedSeats[5], e)}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -552,12 +564,13 @@ function SeatPill({
   cheeredEmoji = "☕",
   onEncourage,
 }: {
-  seat: StudentSeat;
+  seat?: StudentSeat | null;
   elapsed: number;
   isCheered: boolean;
   cheeredEmoji?: string;
   onEncourage: (e: React.MouseEvent) => void;
 }) {
+  if (!seat) return null;
   if (seat.isEmpty) {
     return (
       <div

@@ -176,10 +176,10 @@ export function DiwanSharedSummariesTab() {
       // Filter by search query
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
-        const matchTitle = post.title.toLowerCase().includes(q);
-        const matchContent = post.content.toLowerCase().includes(q);
-        const matchLesson = post.lesson.toLowerCase().includes(q);
-        const matchTags = post.tags?.some((t) => t.toLowerCase().includes(q));
+        const matchTitle = (post.title || "").toLowerCase().includes(q);
+        const matchContent = (post.content || "").toLowerCase().includes(q);
+        const matchLesson = (post.lesson || "").toLowerCase().includes(q);
+        const matchTags = Array.isArray(post.tags) && post.tags.some((t) => (t || "").toLowerCase().includes(q));
         if (!matchTitle && !matchContent && !matchLesson && !matchTags) return false;
       }
 

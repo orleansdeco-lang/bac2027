@@ -5,6 +5,7 @@
 // ==============================================================================
 import { Program } from '@/types/orientation';
 import { OFFICIAL_INSTITUTIONS } from './institutions';
+import { ADDITIONAL_OFFICIAL_PROGRAMS } from './additional-programs';
 
 const instMap = new Map(OFFICIAL_INSTITUTIONS.map(i => [i.id, i]));
 const getInst = (id: string) => {
@@ -13,7 +14,7 @@ const getInst = (id: string) => {
   return inst;
 };
 
-export const OFFICIAL_PROGRAMS: Program[] = [
+const CORE_PROGRAMS: Program[] = [
   // 1. DOCTORAT EN MÉDECINE (طب بشري)
   {
     id: 'prog-med-01',
@@ -2343,4 +2344,10 @@ export const OFFICIAL_PROGRAMS: Program[] = [
   },
 ];
 
+export const OFFICIAL_PROGRAMS: Program[] = [
+  ...CORE_PROGRAMS,
+  ...ADDITIONAL_OFFICIAL_PROGRAMS,
+];
+
 export const VERIFIED_PROGRAMS = OFFICIAL_PROGRAMS;
+

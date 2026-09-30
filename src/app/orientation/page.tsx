@@ -4,7 +4,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { AppShell } from '@/components/ui/AppShell';
 import { OrientationHeroModern } from '@/components/orientation/OrientationHeroModern';
 import { SmartGradeCalculator } from '@/components/orientation/SmartGradeCalculator';
+import { OrientationTableView } from '@/components/orientation/OrientationTableView';
 import { OrientationExploreView } from '@/components/orientation/OrientationExploreView';
+import { StudyAbroadView } from '@/components/orientation/StudyAbroadView';
 import { ProgramComparisonModal } from '@/components/orientation/ProgramComparisonModal';
 import { ProgramDetailModal } from '@/components/orientation/ProgramDetailModal';
 import { ShareResultModal } from '@/components/orientation/ShareResultModal';
@@ -16,9 +18,11 @@ import {
   StudentBacProfile 
 } from '@/types/orientation';
 import { trackEvent } from '@/lib/analytics';
-import { Scale, ArrowRight, Sparkles } from 'lucide-react';
+import { Scale, ArrowRight, Sparkles, Globe, Building2, LayoutList, LayoutGrid } from 'lucide-react';
 
 export default function OrientationPage() {
+  const [activeTab, setActiveTab] = useState<'NATIONAL' | 'ABROAD'>('NATIONAL');
+  const [viewMode, setViewMode] = useState<'TABLE' | 'CARDS'>('TABLE');
   const [report, setReport] = useState<OrientationReport | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [comparedPrograms, setComparedPrograms] = useState<Program[]>([]);
@@ -85,17 +89,23 @@ export default function OrientationPage() {
   }, []);
 
   const handleScrollToCalculator = () => {
-    const el = document.getElementById('calculator');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+    if (activeTab !== 'NATIONAL') {
+      setActiveTab('NATIONAL');
     }
+    setTimeout(() => {
+      const el = document.getElementById('calculator');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
 
   const handleScrollToExplore = () => {
-    const el = document.getElementById('results');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
+    if (activeTab !== 'NATIONAL') {
+      setActiveTab('NATIONAL');
     }
+    setTimeout(() => {
+      const el = document.getElementById('results');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
   };
 
   // Toggle program in comparison tray
@@ -137,31 +147,121 @@ export default function OrientationPage() {
           }}
         />
 
-        {/* Step 1 & 2: Smart Grade Calculator */}
-        <div ref={calculatorRef}>
-          <SmartGradeCalculator
-            onEvaluate={async (profile) => {
-              await evaluateProfile(profile);
-            }}
-            isLoading={isLoading}
-          />
+        {/* Section Navigation Tabs: Algerian Universities vs Study Abroad */}
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 mb-6">
+          <div className="bg-white p-1.5 rounded-2xl border border-[#E4DED2] shadow-xs flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveTab('NATIONAL')}
+              className={`flex-1 py-3 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                activeTab === 'NATIONAL'
+                  ? 'bg-[#1E3A34] text-white shadow-xs'
+                  : 'text-[#64748B] hover:text-[#1E3A34] hover:bg-[#FAF8F5]'
+              }`}
+            >
+              <Building2 className="w-4 h-4 text-[#5F8F86]" />
+              <span>الجامعات والتخصصات الجزائرية (التوجيه الوطني)</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab('ABROAD');
+                trackEvent('orientation_started', { mode: 'abroad' });
+              }}
+              className={`flex-1 py-3 px-3 sm:px-4 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                activeTab === 'ABROAD'
+                  ? 'bg-[#1E3A34] text-white shadow-xs'
+                  : 'text-[#64748B] hover:text-[#1E3A34] hover:bg-[#FAF8F5]'
+              }`}
+            >
+              <Globe className="w-4 h-4 text-[#D7A66A]" />
+              <span>الدراسة في الخارج للطلبة الجزائريين ($ USD)</span>
+            </button>
+          </div>
         </div>
 
-        {/* Explore Results Section */}
-        <div ref={exploreRef}>
-          {report && (
-            <OrientationExploreView
-              report={report}
-              onToggleCompare={handleToggleCompare}
-              comparedProgramIds={comparedPrograms.map(p => p.id)}
-              onViewDetails={(program) => {
-                setSelectedProgramForModal(program);
-                trackEvent('orientation_program_clicked', { programId: program.id });
-              }}
-              onOpenShareModal={() => setIsShareModalOpen(true)}
-            />
-          )}
-        </div>
+        {activeTab === 'NATIONAL' ? (
+          <>
+            {/* Step 1 & 2: Smart Grade Calculator */}
+            <div ref={calculatorRef}>
+              <SmartGradeCalculator
+                onEvaluate={async (profile) => {
+                  await evaluateProfile(profile);
+                }}
+                isLoading={isLoading}
+              />
+            </div>
+
+            {/* View Mode Switcher: Interactive Table (Default) vs Grid Cards */}
+            {report && (
+              <div className="max-w-5xl mx-auto px-4 sm:px-6 mb-2 flex items-center justify-between">
+                <span className="text-xs font-bold text-[#64748B]">
+                  نمط عرض التخصصات:
+                </span>
+                <div className="bg-white border border-[#E4DED2] p-1 rounded-xl flex items-center gap-1 text-xs shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('TABLE')}
+                    className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      viewMode === 'TABLE'
+                        ? 'bg-[#2C5E54] text-white shadow-2xs'
+                        : 'text-[#64748B] hover:text-[#1E3A34]'
+                    }`}
+                  >
+                    <LayoutList className="w-3.5 h-3.5" />
+                    <span>جدول تفاعلي (موسع)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('CARDS')}
+                    className={`px-3 py-1.5 rounded-lg font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      viewMode === 'CARDS'
+                        ? 'bg-[#2C5E54] text-white shadow-2xs'
+                        : 'text-[#64748B] hover:text-[#1E3A34]'
+                    }`}
+                  >
+                    <LayoutGrid className="w-3.5 h-3.5" />
+                    <span>بطاقات شبكية</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Results Section */}
+            <div ref={exploreRef}>
+              {report && (
+                viewMode === 'TABLE' ? (
+                  <OrientationTableView
+                    report={report}
+                    onToggleCompare={handleToggleCompare}
+                    comparedProgramIds={comparedPrograms.map(p => p.id)}
+                    onViewDetails={(program) => {
+                      setSelectedProgramForModal(program);
+                      trackEvent('orientation_program_clicked', { programId: program.id });
+                    }}
+                    onOpenShareModal={() => setIsShareModalOpen(true)}
+                  />
+                ) : (
+                  <OrientationExploreView
+                    report={report}
+                    onToggleCompare={handleToggleCompare}
+                    comparedProgramIds={comparedPrograms.map(p => p.id)}
+                    onViewDetails={(program) => {
+                      setSelectedProgramForModal(program);
+                      trackEvent('orientation_program_clicked', { programId: program.id });
+                    }}
+                    onOpenShareModal={() => setIsShareModalOpen(true)}
+                  />
+                )
+              )}
+            </div>
+          </>
+        ) : (
+          /* Study Abroad Section */
+          <div className="pt-2 animate-in fade-in duration-300">
+            <StudyAbroadView />
+          </div>
+        )}
 
         {/* Soft Shater Conversion Section */}
         <SoftShaterCta />

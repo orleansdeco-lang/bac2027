@@ -114,7 +114,7 @@ export function MajlisCenterStage({
   // ---------------------------------------------------------------------------
   // MODE B: SPEED BATTLE STATE & ACTIONS
   // ---------------------------------------------------------------------------
-  const speedQuestions = room.active_material?.questions || [
+  const DEFAULT_SPEED_QUESTIONS = [
     {
       id: "q-default",
       question: "ما هو تاريخ انعقاد مؤتمر الصومام التاريخي؟",
@@ -124,13 +124,18 @@ export function MajlisCenterStage({
     },
   ];
 
+  const speedQuestions =
+    Array.isArray(room.active_material?.questions) && room.active_material.questions.length > 0
+      ? room.active_material.questions
+      : DEFAULT_SPEED_QUESTIONS;
+
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [qTimer, setQTimer] = useState(15);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [hasAnsweredCurrentQ, setHasAnsweredCurrentQ] = useState(false);
   const [battleFeedback, setBattleFeedback] = useState<string | null>(null);
 
-  const activeQuestion = speedQuestions[currentQIndex % speedQuestions.length];
+  const activeQuestion = speedQuestions[currentQIndex % speedQuestions.length] || speedQuestions[0];
 
   // 15s per-question timer
   useEffect(() => {
