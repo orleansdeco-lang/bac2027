@@ -48,14 +48,29 @@ export async function updateOrderShipment(
     throw new Error(`الطلب برقم المعرّف (${orderId}) غير موجود في النظام.`);
   }
 
+  // Guard: Cannot modify shipment of a CANCELLED order
+  if (existingOrder?.status === "CANCELLED") {
+    throw new Error("لا يمكن تعديل بيانات الشحن لطلب ملغى (CANCELLED).");
+  }
+
   // Resolve carrier metadata
   const resolvedCarrier = carrierInput
     ? resolveCarrierInfo(carrierInput).name
     : existingShipment?.carrier || "Yalidine Express";
 
-  const resolvedTracking = trackingNumber !== undefined
-    ? (trackingNumber ? trackingNumber.trim() : null)
-    : existingShipment?.tracking_number;
+  // Validate tracking number format to prevent injection attacks
+  let resolvedTracking = existingShipment?.tracking_number;
+  if (trackingNumber !== undefined) {
+    if (trackingNumber && trackingNumber.trim() !== "") {
+      const cleanTrack = trackingNumber.trim();
+      if (!/^[A-Za-z0-9\-_./# ]{3,60}$/.test(cleanTrack)) {
+        throw new Error("رقم التتبع غير صالح. يجب أن يتكون من 3 إلى 60 حرفاً أو رقماً بدون رموز خاصة خطرة.");
+      }
+      resolvedTracking = cleanTrack;
+    } else {
+      resolvedTracking = null;
+    }
+  }
 
   const resolvedStatus: ShipmentStatus = statusInput
     ? normalizeShipmentStatus(statusInput)

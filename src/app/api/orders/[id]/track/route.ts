@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "@/lib/supabase/client";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { extractAuthenticatedUserId } from "@/lib/operations/auth";
+import { extractAdminContext } from "@/lib/admin/auth";
 import { buildOrderTrackingTimeline } from "@/lib/orders/tracking";
 
 export const dynamic = "force-dynamic";
@@ -83,12 +84,32 @@ export async function GET(req: Request, { params }: RouteParams) {
       const { data, error } = await query.maybeSingle();
 
       if (!error && data) {
-        // Authorization check: If logged in, ensure caller owns this order (or is admin)
-        if (userId && data.user_id && data.user_id !== userId) {
-          return NextResponse.json(
-            { success: false, error: "غير مصرح لك بعرض بيانات هذا الطلب." },
-            { status: 403 }
-          );
+        // Strict Authorization check:
+        // If order belongs to a registered student, caller MUST be that student or a verified admin
+        if (data.user_id) {
+          if (!userId) {
+            return NextResponse.json(
+              { success: false, error: "يجب تسجيل الدخول لعرض تفاصيل هذا الطلب." },
+              { status: 401 }
+            );
+          }
+          if (data.user_id !== userId) {
+            const adminCtx = await extractAdminContext(req);
+            if (!adminCtx) {
+              return NextResponse.json(
+                { success: false, error: "غير مصرح لك بعرض بيانات هذا الطلب." },
+                { status: 403 }
+              );
+            }
+          }
+        } else {
+          // Guest order: reject UUID enumeration. Must provide exact human-readable order_number
+          if (isUuid) {
+            return NextResponse.json(
+              { success: false, error: "الرجاء استخدام رقم الطلب المرجعي (مثل SH-2026-XXXXXX) لتتبع الطلب." },
+              { status: 400 }
+            );
+          }
         }
 
         canonicalOrder = data;
@@ -135,11 +156,29 @@ export async function GET(req: Request, { params }: RouteParams) {
         const { data: legData, error: legErr } = await legQuery.maybeSingle();
 
         if (!legErr && legData) {
-          if (userId && legData.user_id && legData.user_id !== userId) {
-            return NextResponse.json(
-              { success: false, error: "غير مصرح لك بعرض بيانات هذا الطلب." },
-              { status: 403 }
-            );
+          if (legData.user_id) {
+            if (!userId) {
+              return NextResponse.json(
+                { success: false, error: "يجب تسجيل الدخول لعرض تفاصيل هذا الطلب." },
+                { status: 401 }
+              );
+            }
+            if (legData.user_id !== userId) {
+              const adminCtx = await extractAdminContext(req);
+              if (!adminCtx) {
+                return NextResponse.json(
+                  { success: false, error: "غير مصرح لك بعرض بيانات هذا الطلب." },
+                  { status: 403 }
+                );
+              }
+            }
+          } else {
+            if (isUuid) {
+              return NextResponse.json(
+                { success: false, error: "الرجاء استخدام رقم الطلب المرجعي (مثل SH-2026-XXXXXX) لتتبع الطلب." },
+                { status: 400 }
+              );
+            }
           }
 
           canonicalOrder = {

@@ -431,6 +431,9 @@ export async function executeAdminOrderAction(
 
   switch (action) {
     case "CONFIRM_ORDER": {
+      if (currentOrder?.status === "CANCELLED") {
+        throw new Error("لا يمكن تأكيد طلب ملغى (CANCELLED).");
+      }
       // 1. Confirm order
       await client.from("orders").update({ status: "CONFIRMED", updated_at: now }).eq("id", orderId);
       await client.from("payment_orders").update({ status: "PENDING", updated_at: now }).eq("id", orderId);
@@ -450,6 +453,9 @@ export async function executeAdminOrderAction(
     }
 
     case "MARK_PROCESSING": {
+      if (currentOrder?.status === "CANCELLED") {
+        throw new Error("لا يمكن تجهيز طلب ملغى (CANCELLED).");
+      }
       // 2. Mark processing (kit preparation)
       await client.from("orders").update({ status: "PROCESSING", updated_at: now }).eq("id", orderId);
       await client.from("payment_orders").update({ status: "PROCESSING", updated_at: now }).eq("id", orderId);
@@ -570,6 +576,21 @@ export async function executeAdminOrderAction(
     }
 
     case "MARK_COD_PAID": {
+      // Guard 0: Cancelled and Returned orders check
+      if (currentOrder?.status === "CANCELLED") {
+        throw new Error("لا يمكن تأكيد الدفع لطلب ملغى (CANCELLED).");
+      }
+
+      const { data: payShipment } = await client
+        .from("shipments")
+        .select("status")
+        .eq("order_id", orderId)
+        .maybeSingle();
+
+      if (payShipment?.status === "RETURNED" || payShipment?.status === "FAILED") {
+        throw new Error("لا يمكن تأكيد دفع طرد مرتجع أو فاشل (RETURNED/FAILED).");
+      }
+
       // 7. Admin Confirms COD Cash Received (Payment = PAID)
       // Guard 1: Anti-double payment confirmation
       const { data: existingPay } = await client
@@ -648,6 +669,21 @@ export async function executeAdminOrderAction(
     }
 
     case "ACTIVATE_SUBSCRIPTION": {
+      // Guard 0: Cancelled and Returned orders check
+      if (currentOrder?.status === "CANCELLED") {
+        throw new Error("لا يمكن تفعيل الاشتراك لطلب ملغى (CANCELLED).");
+      }
+
+      const { data: actShipment } = await client
+        .from("shipments")
+        .select("status")
+        .eq("order_id", orderId)
+        .maybeSingle();
+
+      if (actShipment?.status === "RETURNED" || actShipment?.status === "FAILED") {
+        throw new Error("لا يمكن تفعيل الاشتراك لشحنة مرتجعة أو فاشلة (RETURNED/FAILED).");
+      }
+
       // 8. Admin Confirms & Activates Subscription
       // Guard 1: Prerequisite payment = PAID must be satisfied!
       const { data: payRow } = await client

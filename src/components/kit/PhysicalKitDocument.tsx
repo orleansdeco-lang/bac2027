@@ -187,7 +187,7 @@ export function PhysicalKitDocument({ data, className = "" }: PhysicalKitDocumen
             <div>
               <strong className="text-slate-900 block font-bold">سجل الدخول:</strong>
               <span className="text-slate-600 text-[11px] leading-relaxed">
-                اضغط على زر "تسجيل الدخول" وأدخل رقم هاتفك أو بريدك الإلكتروني المسجل في الطلب.
+                اضغط على زر &quot;تسجيل الدخول&quot; وأدخل رقم هاتفك أو بريدك الإلكتروني المسجل في الطلب.
               </span>
             </div>
           </div>

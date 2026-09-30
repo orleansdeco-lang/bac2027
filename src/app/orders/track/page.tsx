@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AppShell } from "@/components/ui/AppShell";
@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "@/lib/i18n/context";
 
-export default function OrderTrackingLookupPage() {
+function OrderTrackingLookupContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialOrder = searchParams.get("order") || "";
@@ -119,5 +119,23 @@ export default function OrderTrackingLookupPage() {
         </div>
       </Container>
     </AppShell>
+  );
+}
+
+export default function OrderTrackingLookupPage() {
+  return (
+    <Suspense
+      fallback={
+        <AppShell activeNav="orders">
+          <Container size="md" className="py-8 sm:py-12" dir="rtl">
+            <div className="py-16 text-center text-theme-muted text-sm font-bold">
+              جاري تحميل صفحة تتبع الطلبات...
+            </div>
+          </Container>
+        </AppShell>
+      }
+    >
+      <OrderTrackingLookupContent />
+    </Suspense>
   );
 }

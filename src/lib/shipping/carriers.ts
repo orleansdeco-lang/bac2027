@@ -101,9 +101,14 @@ export function resolveCarrierInfo(carrierInput?: string | null): CarrierInfo {
  */
 export function getCarrierTrackingUrl(carrierInput?: string | null, trackingNumber?: string | null): string | null {
   if (!trackingNumber?.trim()) return null;
+  const cleanTracking = trackingNumber.trim();
+  // Security guard: Only allow safe alphanumeric and standard punctuation tracking numbers (prevent injections)
+  if (!/^[A-Za-z0-9\-_./# ]{3,60}$/.test(cleanTracking)) {
+    return null;
+  }
   const carrier = resolveCarrierInfo(carrierInput);
   if (!carrier.trackingUrlPattern) return null;
-  return carrier.trackingUrlPattern.replace("{tracking}", encodeURIComponent(trackingNumber.trim()));
+  return carrier.trackingUrlPattern.replace("{tracking}", encodeURIComponent(cleanTracking));
 }
 
 /**

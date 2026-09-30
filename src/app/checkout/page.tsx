@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/ui/AppShell";
@@ -41,7 +41,7 @@ interface PlanItem {
   active: boolean;
 }
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const searchParams = useSearchParams();
   const initialPlan = searchParams.get("plan") || "season";
   const { user } = useAuth();
@@ -662,5 +662,23 @@ export default function CheckoutPage() {
         )}
       </Container>
     </AppShell>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <AppShell activeNav="orders">
+          <Container size="md" className="py-12 text-center" dir="rtl">
+            <div className="py-20 text-theme-muted text-sm font-bold">
+              جاري تجهيز صفحة إتمام الطلب...
+            </div>
+          </Container>
+        </AppShell>
+      }
+    >
+      <CheckoutContent />
+    </Suspense>
   );
 }
