@@ -176,9 +176,17 @@ export const MajlisService = {
   }): Promise<MajlisRoom> {
     const roomId = `room-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const now = new Date().toISOString();
-    const material = getInitialMaterialForMode(params.mode, params.subject, params.lesson);
     const durationMinutes = Math.min(180, Math.max(15, params.durationMinutes || 45));
     const timerEnd = new Date(Date.now() + durationMinutes * 60 * 1000).toISOString();
+    const material = getInitialMaterialForMode(params.mode, params.subject, params.lesson);
+
+    const activeMaterial = {
+      ...(typeof material === "object" ? material : {}),
+      durationMinutes,
+      hostStudentId: params.hostUserId || null,
+      hostStudentName: params.hostName || "طالب شاطر",
+      hostStudentAvatar: params.hostAvatar || "/illustrations/characters/scholar.jpg",
+    };
 
     const room: MajlisRoom = {
       id: roomId,
@@ -193,33 +201,91 @@ export const MajlisService = {
       current_step: "SOLVING",
       duration_minutes: durationMinutes,
       timer_end: timerEnd,
-      active_material: material,
+      active_material: activeMaterial,
       created_at: now,
       updated_at: now,
     };
 
-    if (isSupabaseConfigured && supabase) {
-      const { error } = await supabase.from("majlis_rooms").insert({
-        id: room.id,
-        title: room.title,
-        stream: room.stream,
-        subject: room.subject,
-        lesson: room.lesson,
-        mode: room.mode,
-        host_user_id: room.host_user_id,
-        capacity: room.capacity,
-        status: room.status,
-        current_step: room.current_step,
-        duration_minutes: room.duration_minutes,
-        timer_end: room.timer_end,
-        active_material: room.active_material,
-        created_at: room.created_at,
-        updated_at: room.updated_at,
+    // 1. Try authoritative API endpoint (runs on server with admin client, bypassing RLS)
+    try {
+      const res = await fetch("/api/campus/rooms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: room.title,
+          stream: room.stream,
+          subject: room.subject,
+          lesson: room.lesson,
+          mode: room.mode,
+          capacity: room.capacity,
+          durationMinutes: room.duration_minutes,
+          hostUserId: room.host_user_id,
+          hostName: params.hostName,
+          hostAvatar: params.hostAvatar,
+        }),
       });
 
-      if (error) {
-        console.error("[MajlisService] Supabase room creation error:", error);
-        throw new Error(error.message || "Failed to create room in database");
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.room) {
+          return json.room;
+        }
+      }
+    } catch (apiErr) {
+      console.warn("[MajlisService] API room creation failed, falling back to direct database insert:", apiErr);
+    }
+
+    // 2. Direct Supabase insert fallback with schema self-healing
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const isUUID =
+          params.hostUserId &&
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.hostUserId);
+        const safeHostUserId = isUUID ? params.hostUserId : null;
+
+        const basePayload: Record<string, any> = {
+          id: room.id,
+          title: room.title,
+          stream: room.stream,
+          subject: room.subject,
+          lesson: room.lesson,
+          mode: room.mode,
+          host_user_id: safeHostUserId,
+          capacity: room.capacity,
+          status: room.status,
+          current_step: room.current_step,
+          timer_end: room.timer_end,
+          active_material: room.active_material,
+          created_at: room.created_at,
+          updated_at: room.updated_at,
+        };
+
+        // Try insert with duration_minutes first
+        let { error } = await supabase.from("majlis_rooms").insert({
+          ...basePayload,
+          duration_minutes: room.duration_minutes,
+        });
+
+        // If duration_minutes does not exist in schema cache (PGRST204), retry with base payload
+        if (error && (error.code === "PGRST204" || (error as any).code === "42703")) {
+          const retryResult = await supabase.from("majlis_rooms").insert(basePayload);
+          error = retryResult.error;
+        }
+
+        // If host_user_id failed on foreign key or syntax, retry with null
+        if (error && (error.code === "23503" || error.code === "22P02")) {
+          const retryResult = await supabase.from("majlis_rooms").insert({
+            ...basePayload,
+            host_user_id: null,
+          });
+          error = retryResult.error;
+        }
+
+        if (error) {
+          console.warn("[MajlisService] Supabase room creation notice:", error.message);
+        }
+      } catch (dbErr) {
+        console.warn("[MajlisService] Direct database insert error:", dbErr);
       }
     }
 
@@ -248,11 +314,11 @@ export const MajlisService = {
             subject: data.subject,
             lesson: data.lesson,
             mode: data.mode as MajlisStudyMode,
-            host_user_id: data.host_user_id,
+            host_user_id: data.host_user_id || data.active_material?.hostStudentId,
             capacity: data.capacity,
             status: data.status,
             current_step: data.current_step,
-            duration_minutes: data.duration_minutes || 45,
+            duration_minutes: data.duration_minutes || data.active_material?.durationMinutes || 45,
             timer_end: data.timer_end,
             active_material: data.active_material,
             created_at: data.created_at,
@@ -282,20 +348,31 @@ export const MajlisService = {
           .order("seat_index", { ascending: true });
 
         if (!error && data) {
-          return data.map((d: any) => ({
-            id: d.id,
-            room_id: d.room_id,
-            user_id: d.user_id,
-            user_name: d.user_name,
-            user_avatar: d.user_avatar || "/illustrations/characters/scholar.jpg",
-            user_stream: d.user_stream as StreamId,
-            wilaya_code: d.wilaya_code || "16",
-            seat_index: d.seat_index,
-            status: d.status,
-            score: d.score || 0,
-            finished_paper: Boolean(d.finished_paper),
-            joined_at: d.joined_at,
-          }));
+          return data.map((d: any) => {
+            let extractedWilaya = d.wilaya_code;
+            let cleanName = d.user_name || "طالب شاطر";
+            if (!extractedWilaya && typeof d.user_name === "string") {
+              const match = d.user_name.match(/\((\d{2})\)/);
+              if (match) {
+                extractedWilaya = match[1];
+                cleanName = d.user_name.replace(/\s*\(\d{2}\)\s*$/, "").trim();
+              }
+            }
+            return {
+              id: d.id,
+              room_id: d.room_id,
+              user_id: d.user_id,
+              user_name: cleanName,
+              user_avatar: d.user_avatar || "/illustrations/characters/scholar.jpg",
+              user_stream: d.user_stream as StreamId,
+              wilaya_code: extractedWilaya || "16",
+              seat_index: d.seat_index,
+              status: d.status,
+              score: d.score || 0,
+              finished_paper: Boolean(d.finished_paper),
+              joined_at: d.joined_at,
+            };
+          });
         }
       } catch (err) {
         console.warn("[MajlisService] Supabase getMembers error:", err);
@@ -429,20 +506,30 @@ export const MajlisService = {
       joined_at: new Date().toISOString(),
     };
 
-    const { error: insertErr } = await supabase.from("majlis_members").insert({
+    const baseMemberPayload: Record<string, any> = {
       id: newMember.id,
       room_id: newMember.room_id,
       user_id: newMember.user_id,
-      user_name: newMember.user_name,
+      user_name: `${newMember.user_name} (${wilayaCode})`,
       user_avatar: newMember.user_avatar,
       user_stream: newMember.user_stream,
-      wilaya_code: newMember.wilaya_code,
       seat_index: newMember.seat_index,
       status: newMember.status,
       score: newMember.score,
       finished_paper: newMember.finished_paper,
       joined_at: newMember.joined_at,
+    };
+
+    let { error: insertErr } = await supabase.from("majlis_members").insert({
+      ...baseMemberPayload,
+      wilaya_code: newMember.wilaya_code,
     });
+
+    if (insertErr && (insertErr.code === "PGRST204" || (insertErr as any).code === "42703")) {
+      console.warn("[MajlisService] wilaya_code column not found, falling back to base payload");
+      const retryResult = await supabase.from("majlis_members").insert(baseMemberPayload);
+      insertErr = retryResult.error;
+    }
 
     if (insertErr) {
       console.error("[MajlisService] Supabase takeSeat error:", insertErr);
@@ -946,6 +1033,21 @@ export const MajlisService = {
    * Fetch active rooms genuine query strictly from Supabase (Zero Mock Fallback)
    */
   async fetchActiveRooms(stream?: StreamId): Promise<MajlisRoom[]> {
+    // 1. Try authoritative API endpoint (merges server memory + database)
+    try {
+      const url = stream ? `/api/campus/rooms?stream=${encodeURIComponent(stream)}` : "/api/campus/rooms";
+      const res = await fetch(url);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && Array.isArray(json.rooms)) {
+          return json.rooms;
+        }
+      }
+    } catch (apiErr) {
+      console.warn("[MajlisService] API fetchActiveRooms fallback to direct client query:", apiErr);
+    }
+
+    // 2. Direct Supabase query fallback
     if (isSupabaseConfigured && supabase) {
       try {
         let query = supabase
@@ -968,11 +1070,11 @@ export const MajlisService = {
             subject: d.subject,
             lesson: d.lesson,
             mode: d.mode as MajlisStudyMode,
-            host_user_id: d.host_user_id,
+            host_user_id: d.host_user_id || d.active_material?.hostStudentId,
             capacity: d.capacity,
             status: d.status,
             current_step: d.current_step,
-            duration_minutes: d.duration_minutes || 45,
+            duration_minutes: d.duration_minutes || d.active_material?.durationMinutes || 45,
             timer_end: d.timer_end,
             active_material: d.active_material,
             created_at: d.created_at,

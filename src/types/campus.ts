@@ -14,6 +14,9 @@ export interface CampusPostAttachment {
   type: "image" | "pdf" | "link";
   url: string;
   label: string;
+  size?: string;
+  fileName?: string;
+  pageCount?: number;
 }
 
 export interface CampusPost {

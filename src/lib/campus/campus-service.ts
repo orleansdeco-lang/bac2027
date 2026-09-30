@@ -196,9 +196,19 @@ const SEED_POSTS: CampusPost[] = [
     stream: "gestion_eco",
     subjectId: "accounting_finance",
     lesson: "أعمال نهاية السنة والتسويات",
-    tags: ["محاسبة", "قيود_التسوية", "أعمال_نهاية_السنة", "SCF", "يوسي_قادة"],
+    tags: ["محاسبة", "قيود_التسوية", "أعمال_نهاية_السنة", "SCF", "يوسي_قادة", "ملف_PDF"],
     likesCount: 312,
     bookmarksCount: 245,
+    attachments: [
+      {
+        type: "pdf",
+        url: "/documents/gestion-eco/melakhas-quyoud-taswiya-youssi-kada.pdf",
+        label: "معاينة وتحميل ملخص قيود التسوية الأصلي (PDF)",
+        fileName: "ملخص قيود التسوية - الأستاذ يوسي قادة.pdf",
+        size: "1.46 MB",
+        pageCount: 6,
+      },
+    ],
     createdAt: new Date(Date.now() - 3600000 * 12).toISOString(),
   },
   {
@@ -251,9 +261,19 @@ const SEED_POSTS: CampusPost[] = [
     stream: "gestion_eco",
     subjectId: "accounting_finance",
     lesson: "الميزانية الوظيفية والتحليل المالي",
-    tags: ["ميزانية_وظيفية", "FRNG", "BFR", "TN", "نسب_الدوران", "عبدالخالق_عودة"],
+    tags: ["ميزانية_وظيفية", "FRNG", "BFR", "TN", "نسب_الدوران", "عبدالخالق_عودة", "ملف_PDF"],
     likesCount: 289,
     bookmarksCount: 220,
+    attachments: [
+      {
+        type: "pdf",
+        url: "/documents/gestion-eco/mizaniya-wadhifiya-bac2019-abdelkhalek-aouda.pdf",
+        label: "معاينة وتحميل كراس الميزانية الوظيفية وبكالوريا 2019 الأصلي (PDF)",
+        fileName: "الميزانية الوظيفية وبكالوريا 2019 - الأستاذ عبدالخالق عودة.pdf",
+        size: "331 KB",
+        pageCount: 10,
+      },
+    ],
     createdAt: new Date(Date.now() - 3600000 * 16).toISOString(),
   },
   {
@@ -287,10 +307,88 @@ const SEED_POSTS: CampusPost[] = [
     stream: "gestion_eco",
     subjectId: "accounting_finance",
     lesson: "محاسبة التكاليف والنتيجة التحليلية",
-    tags: ["محاسبة_التكاليف", "تكلفة_الشراء", "سعر_التكلفة", "النتيجة_التحليلية", "CMUP"],
+    tags: ["محاسبة_التكاليف", "تكلفة_الشراء", "سعر_التكلفة", "النتيجة_التحليلية", "CMUP", "ملف_PDF"],
     likesCount: 195,
     bookmarksCount: 178,
+    attachments: [
+      {
+        type: "pdf",
+        url: "/documents/gestion-eco/tahalil-takalif-natija-tahliliya-hakmi.pdf",
+        label: "معاينة وتحميل جدول تحميل التكاليف والنتيجة الصافية الأصلي (PDF)",
+        fileName: "تحميل التكاليف والنتيجة التحليلية - الأستاذ حاكمي.pdf",
+        size: "167 KB",
+        pageCount: 1,
+      },
+    ],
     createdAt: new Date(Date.now() - 3600000 * 20).toISOString(),
+  },
+  {
+    id: "post-ge-hadjem-depreciation-exercises",
+    authorId: "prof-yassine-hadjem",
+    authorName: "الأستاذ ياسين حجام",
+    authorAvatar: "👨‍🏫",
+    authorStream: "gestion_eco",
+    authorBadge: "مؤلف سلسلة تمارين الاهتلاكات بكالوريا 2021",
+    type: "SUMMARY",
+    title: "الوحدة 02: الاهتلاكات ونقص قيمة التثبيتات + سلسلة 6 تمارين بكالوريا محلولة (النسخة الأصلية PDF)",
+    content: `ملخص شامل لطرق الاهتلاك الثلاث (الخطي، المتناقص، والمتزايد) مع سلسلة 6 تمارين نموذجية شاملة من إعداد الأستاذ ياسين حجام:
+- جداول الاهتلاك الكاملة لمعدات الإنتاج ونقل وشاحنات مع الحلول التفصيلية.
+- حل تفصيلي للتسجيل المحاسبي في دفتر اليومية للسنة الأولى.
+- حالات خاصة في الحيازة خلال السنة (قسط مكمل وقسط أخير شهري).
+- تمارين تدريبية تحضيرية للبكالوريا مع أمثلة تطبيقية محددة.`,
+    stream: "gestion_eco",
+    subjectId: "accounting_finance",
+    lesson: "الاهتلاكات ونقص قيمة التثبيتات وطرق الاهتلاك",
+    tags: ["اهتلاك_خطي", "اهتلاك_متناقص", "اهتلاك_متزايد", "ياسين_حجام", "تمارين_بكالوريا", "ملف_PDF"],
+    likesCount: 260,
+    bookmarksCount: 210,
+    attachments: [
+      {
+        type: "pdf",
+        url: "/documents/gestion-eco/ihtilakat-tamarin-bac2021-yassine-hadjem.pdf",
+        label: "معاينة وتحميل سلسلة الأستاذ ياسين حجام الكاملة (PDF)",
+        fileName: "سلسلة الاهتلاكات بكالوريا 2021 - الأستاذ ياسين حجام.pdf",
+        size: "627 KB",
+        pageCount: 5,
+      },
+    ],
+    createdAt: new Date(Date.now() - 3600000 * 24).toISOString(),
+  },
+  {
+    id: "post-ge-touam-degressive-progressive-guide",
+    authorId: "prof-touam-abdessamed",
+    authorName: "الأستاذ توام عبدالصمد",
+    authorAvatar: "📘",
+    authorStream: "gestion_eco",
+    authorBadge: "مؤلف دليل الاهتلاك المتناقص والمتزايد",
+    type: "SUMMARY",
+    title: "الدليل الشامل لإعداد مخطط الاهتلاك المتناقص والمتزايد خطوة بخطوة مع تطبيقات بكالوريا 2021 (النسخة الأصلية PDF)",
+    content: `دليل مفصل في كيفية حساب وتبرير أقساط الاهتلاك المتناقص والمتزايد مع أمثلة محلولة بالتفصيل وتطبيقات للمحاولة:
+1. **الاهتلاك المتناقص:**
+   - حساب المعدل: $t' = t \\times \\text{المعامل الضريبي}$.
+   - شرط الانتقال الخطي: $t' \\le \\frac{100}{\\text{السنوات المتبقية}}$.
+   - تبرير كل العمليات الحسابية للأقساط والقيم الصافية VNC.
+2. **الاهتلاك المتزايد:**
+   - حساب المقام: $\\sum N = \\frac{N(N+1)}{2}$.
+   - حساب أقساط الاهتلاك السنوية المتزايدة.
+3. **تطبيقات عن بعد للمحاولة:** تمارين غير محلولة لاختبار المكتسبات مع جداول جاهزة للتعبئة.`,
+    stream: "gestion_eco",
+    subjectId: "accounting_finance",
+    lesson: "الاهتلاك المتناقص والمتزايد",
+    tags: ["اهتلاك_متناقص", "اهتلاك_متزايد", "توام_عبدالصمد", "تطبيقات_بكالوريا", "ملف_PDF"],
+    likesCount: 235,
+    bookmarksCount: 195,
+    attachments: [
+      {
+        type: "pdf",
+        url: "/documents/gestion-eco/ihtilak-motanaqis-motazayed-touam-abdessamed.pdf",
+        label: "معاينة وتحميل دليل الأستاذ توام عبدالصمد الأصلي (PDF)",
+        fileName: "الاهتلاك المتناقص والمتزايد - الأستاذ توام عبدالصمد.pdf",
+        size: "368 KB",
+        pageCount: 5,
+      },
+    ],
+    createdAt: new Date(Date.now() - 3600000 * 28).toISOString(),
   },
   {
     id: "post-ge-tricky-traps",
@@ -835,6 +933,7 @@ export const CampusService = {
           subjectId: post.subjectId,
           lesson: post.lesson,
           tags: post.tags || [],
+          attachments: post.attachments || [],
         }),
       })
         .then(async (res) => {

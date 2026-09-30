@@ -8,12 +8,25 @@ export const CampusPostSchema = z.object({
     .max(200, "عنوان المنشور يجب ألا يتجاوز 200 حرف"),
   content: z
     .string()
-    .min(10, "محتوى المنشور يجب أن يتكون من 10 أحرف على الأقل")
+    .min(2, "محتوى المنشور يجب أن يتكون من حرفين على الأقل")
     .max(10000, "محتوى المنشور طويل جداً"),
   stream: z.string().default("ALL"),
   subjectId: z.string().default("ALL"),
   lesson: z.string().min(2, "اسم الدرس يجب أن يتكون من حرفين على الأقل").max(100),
   tags: z.array(z.string().max(40)).default([]),
+  attachments: z
+    .array(
+      z.object({
+        type: z.enum(["image", "pdf", "link"]),
+        url: z.string().min(1),
+        label: z.string().min(1),
+        size: z.string().optional(),
+        fileName: z.string().optional(),
+        pageCount: z.number().optional(),
+      })
+    )
+    .optional()
+    .default([]),
 });
 
 export const CreateTableSchema = z.object({

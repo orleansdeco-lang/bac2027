@@ -48,18 +48,46 @@ export async function POST(req: NextRequest) {
 
     const client = getAdminClient() || supabase;
     if (client && isSupabaseConfigured) {
-      const { error } = await client.from("majlis_reports").insert({
+      const enrichedDetails = [
+        `[نوع البلاغ: ${cleanTargetType}]`,
+        cleanMessageContent ? `[نص الرسالة: ${cleanMessageContent}]` : null,
+        messageId ? `[معرّف الرسالة: ${messageId}]` : null,
+        cleanDetails || null,
+      ]
+        .filter(Boolean)
+        .join("\n");
+
+      // Full payload if migration 035 was run
+      const fullPayload = {
         reporter_user_id: authResult.userId,
         reported_user_id: reportedUserId || null,
         reported_user_name: cleanReportedName || null,
         room_id: roomId || null,
         reason: cleanReason,
-        details: cleanDetails,
+        details: enrichedDetails,
         target_type: cleanTargetType,
         message_id: messageId || null,
         message_content: cleanMessageContent,
         status: "PENDING",
-      });
+      };
+
+      let { error } = await client.from("majlis_reports").insert(fullPayload);
+
+      // If columns do not exist in live schema, retry with base columns
+      if (error && ((error as any).code === "42703" || error.code === "PGRST204")) {
+        console.warn("[API Majlis Report] Advanced columns missing, falling back to base columns");
+        const basePayload = {
+          reporter_user_id: authResult.userId,
+          reported_user_id: reportedUserId || null,
+          reported_user_name: cleanReportedName || null,
+          room_id: roomId || null,
+          reason: cleanReason,
+          details: enrichedDetails,
+          status: "PENDING",
+        };
+        const retryResult = await client.from("majlis_reports").insert(basePayload);
+        error = retryResult.error;
+      }
 
       if (error) {
         console.error("[API Majlis Report] Error inserting:", error);

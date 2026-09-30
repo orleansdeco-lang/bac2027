@@ -110,13 +110,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { type, title, content, stream, subjectId, lesson, tags } = parseResult.data;
+    const { type, title, content, stream, subjectId, lesson, tags, attachments } = parseResult.data;
 
     // 3. Sanitize Content against Stored XSS
     const cleanTitle = sanitizeSingleLine(title, 200);
     const cleanContent = sanitizeUserContent(content);
     const cleanLesson = sanitizeSingleLine(lesson, 100);
     const cleanTags = tags.map((t) => sanitizeSingleLine(t, 40));
+    const cleanAttachments = (attachments || []).map((att) => ({
+      type: att.type,
+      url: sanitizeSingleLine(att.url, 2000),
+      label: sanitizeSingleLine(att.label, 120),
+      size: att.size ? sanitizeSingleLine(att.size, 40) : undefined,
+      fileName: att.fileName ? sanitizeSingleLine(att.fileName, 120) : undefined,
+      pageCount: att.pageCount ? Number(att.pageCount) : undefined,
+    }));
 
     const authorName =
       authResult.profile?.firstName ||
@@ -142,6 +150,7 @@ export async function POST(req: NextRequest) {
       subject_id: subjectId,
       lesson: cleanLesson,
       tags: cleanTags,
+      attachments: cleanAttachments,
       likes_count: 0,
       bookmarks_count: 0,
       created_at: now,
@@ -172,6 +181,7 @@ export async function POST(req: NextRequest) {
       subjectId: subjectId as any,
       lesson: cleanLesson,
       tags: cleanTags,
+      attachments: cleanAttachments,
       likesCount: 0,
       bookmarksCount: 0,
       createdAt: now,
