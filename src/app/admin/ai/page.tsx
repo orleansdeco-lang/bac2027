@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { AdminActionProposal } from "@/lib/admin/ai-actions";
+import { DailyIntelligenceReportView } from "@/components/admin/DailyIntelligenceReportView";
+import { DailyReportItem } from "@/lib/admin/daily-report-service";
 
 interface ToolExecution {
   name: string;
@@ -44,6 +46,7 @@ interface ChatMessage {
 }
 
 const STARTER_PROMPTS = [
+  "حلللي SHATER اليوم.",
   "شحال من تلميذ نشط هذا الأسبوع؟",
   "أعطيني التلاميذ حسب الولاية.",
   "واش أكثر مادة فيها أخطاء؟",
@@ -311,6 +314,21 @@ export default function AdminAIPage() {
 
         <div className="flex items-center gap-2">
           <button
+            onClick={() => handleSendMessage("حلللي SHATER اليوم.")}
+            disabled={loading}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 shadow-md shadow-indigo-600/20 transition-all cursor-pointer disabled:opacity-50"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>حلل SHATER الآن</span>
+          </button>
+          <Link
+            href="/admin/ai/daily-report"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-indigo-300 bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors"
+          >
+            <FileCheck className="w-3.5 h-3.5" />
+            <span>تقرير اليوم الكامل</span>
+          </Link>
+          <button
             onClick={clearSession}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 bg-[#080D1A] hover:bg-[#131E36] border border-[#1E293B] transition-colors cursor-pointer"
             title="مسح سجل المحادثة الحالي"
@@ -373,6 +391,46 @@ export default function AdminAIPage() {
                   <div className="whitespace-pre-line font-sans space-y-1">
                     {msg.content}
                   </div>
+
+                  {/* SHATER DAILY INTELLIGENCE REPORT EMBEDDED VIEW */}
+                  {msg.structuredData?.type === "DAILY_INTELLIGENCE_REPORT" && msg.structuredData.report && (
+                    <div className="mt-4 pt-4 border-t border-slate-700/60">
+                      <DailyIntelligenceReportView
+                        report={msg.structuredData.report}
+                        onPrepareAction={async (item: DailyReportItem) => {
+                          if (!item.actionPayload) return;
+                          try {
+                            const res = await adminFetch("/api/admin/ai/actions", {
+                              method: "POST",
+                              body: JSON.stringify({
+                                actionName: item.actionPayload.actionName,
+                                resourceType: item.actionPayload.resourceType,
+                                resourceId: item.actionPayload.resourceId,
+                                params: item.actionPayload.params,
+                              }),
+                            });
+                            const data = await res.json();
+                            if (data.success && data.proposal) {
+                              setMessages((prev) => [
+                                ...prev,
+                                {
+                                  id: `msg-prop-${Date.now()}`,
+                                  role: "assistant",
+                                  content: `تم تحضير الإجراء المقترح بنجاح: **${data.proposal.titleAr}**.\n\nيرجى معاينة الفروقات الصريحة والموافقة أو الإلغاء أدناه وفق بروتوكول الأمان الصارم:`,
+                                  actionProposal: data.proposal,
+                                  timestamp: new Date().toLocaleTimeString("ar-DZ", { hour: "2-digit", minute: "2-digit" }),
+                                },
+                              ]);
+                            } else {
+                              alert(data.error || "تعذر تحضير العملية");
+                            }
+                          } catch (err: any) {
+                            alert("خطأ أثناء تحضير العملية: " + (err?.message || "فشل الاتصال"));
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
 
                   {/* ACTION PROPOSAL PREVIEW CARD (STAGE: PREVIEW & HUMAN CONFIRMATION) */}
                   {proposal && (

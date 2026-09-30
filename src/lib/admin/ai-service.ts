@@ -72,6 +72,21 @@ function resolveToolsForQuery(query: string): string[] {
     return [];
   }
 
+  // 0. Daily Intelligence Report ("حلللي SHATER اليوم", "تقرير اليوم", "حالة المنصة اليوم")
+  if (
+    q.includes("حلللي") ||
+    q.includes("حلل") ||
+    q.includes("تقرير اليوم") ||
+    q.includes("تقرير الذكاء") ||
+    q.includes("تحليل اليوم") ||
+    q.includes("daily report") ||
+    q.includes("كيفاش راهي") ||
+    q.includes("تقرير المنصة")
+  ) {
+    toolsToRun.add("get_daily_intelligence_report");
+    return Array.from(toolsToRun);
+  }
+
   // 1. Wilayas / Geographic distribution
   if (q.includes("ولاية") || q.includes("ولايات") || q.includes("جغرافي") || q.includes("أين") || q.includes("وين راهم") || q.includes("توزيع الطلاب")) {
     toolsToRun.add("get_wilaya_statistics");
@@ -169,6 +184,61 @@ function synthesizeFactualResponse(
 - "أعطيني توزيع الطلاب حسب الولاية."
 - "هل كاين تمارين بدون حلول؟"`,
       warnings: ["تم حجب محاولة تنفيذ استعلام SQL مباشر."],
+    };
+  }
+
+  // 0. Daily Intelligence Report ("حلللي SHATER اليوم", "تقرير اليوم")
+  const dailyRepResult = toolResults.find((r) => r.toolName === "get_daily_intelligence_report");
+  if (dailyRepResult && dailyRepResult.data) {
+    const rep = dailyRepResult.data;
+    const stableLines = rep.stableItems.map(
+      (s: any) => `• **✓ ${s.titleAr}**\n  - *السبب:* ${s.whyAr}\n  - *الدليل:* ${s.evidenceAr}`
+    ).join("\n\n");
+
+    const attentionLines = rep.attentionItems.map(
+      (a: any) => `• **⚠ ${a.titleAr}**\n  - *السبب:* ${a.whyAr}\n  - *الدليل:* ${a.evidenceAr}\n  - *الإجراء المقترح:* ${a.recommendedActionAr}`
+    ).join("\n\n");
+
+    const criticalLines = rep.criticalIssues.map(
+      (c: any) => `• **🔴 ${c.titleAr}**\n  - *السبب:* ${c.whyAr}\n  - *الدليل:* ${c.evidenceAr}\n  - *الإجراء المقترح:* ${c.recommendedActionAr}`
+    ).join("\n\n");
+
+    const actionLines = rep.proposedActions.map(
+      (p: any) => `• **→ [مقترح] ${p.titleAr}**\n  - *الهدف:* ${p.whyAr}\n  - *الدليل:* ${p.evidenceAr}\n  - *التنفيذ:* ${p.recommendedActionAr}`
+    ).join("\n\n");
+
+    return {
+      reply: `### 📊 تقرير الذكاء اليومي لـ SHATER (Daily Intelligence Report)
+*تاريخ التوليد: ${new Date(rep.generatedAt).toLocaleString("ar-DZ")} | فحص عملياتي موثق*
+
+${rep.summaryAr}
+
+---
+
+### ✓ الأمور المستقرة (Stable & Healthy)
+${stableLines}
+
+---
+
+### ⚠ تحتاج انتباه (Needs Attention)
+${attentionLines}
+
+---
+
+### 🔴 مشاكل حرجة (Critical Issues)
+${criticalLines}
+
+---
+
+### → اقتراحات العمل (Proposed Actions)
+${actionLines}
+
+> 📌 **تذكير أمني صارم:** التوصيات المعروضة هي مقترحات تشغيلية فقط؛ لا يتم تنفيذ أي تعديل صامت تلقائياً. يمكنك الضغط على **[حضّر العملية]** لمعاينة وتأكيد أي إجراء بأمان.`,
+      structuredData: {
+        type: "DAILY_INTELLIGENCE_REPORT",
+        report: rep,
+      },
+      warnings: allWarnings,
     };
   }
 

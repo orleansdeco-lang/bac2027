@@ -532,7 +532,31 @@ const searchStudyRoomsTool: AdminToolDefinition<SearchStudyRoomsInput> = {
 };
 
 /**
- * Master Registry of all 13 approved administrative tools
+ * 12. Tool: get_daily_intelligence_report
+ */
+const getDailyIntelligenceReportTool: AdminToolDefinition = {
+  name: "get_daily_intelligence_report",
+  nameAr: "تقرير الذكاء اليومي لـ SHATER",
+  description: "فحص البيانات التشغيلية المعتمدة وتوليد التقرير اليومي الشامل (المستقرة، انتباه، حرجة، واقتراحات العمل).",
+  requiredPermission: "platform.read",
+  execute: async (_input, ctx) => {
+    const { generateDailyIntelligenceReport } = await import("./daily-report-service");
+    const report = await generateDailyIntelligenceReport(ctx.token);
+    return {
+      success: true,
+      toolName: "get_daily_intelligence_report",
+      data: report,
+      summary: report.summaryAr,
+      citation: {
+        source: "تقرير الذكاء اليومي / SHATER Operational Intelligence",
+        timestamp: report.generatedAt,
+      },
+    };
+  },
+};
+
+/**
+ * Master Registry of all 14 approved administrative tools
  */
 export const ADMIN_AI_TOOLS_REGISTRY: Record<string, AdminToolDefinition<any, any>> = {
   get_platform_overview: getPlatformOverviewTool,
@@ -544,6 +568,7 @@ export const ADMIN_AI_TOOLS_REGISTRY: Record<string, AdminToolDefinition<any, an
   get_learning_statistics: getLearningStatisticsTool,
   get_error_statistics: getErrorStatisticsTool,
   get_data_quality_report: getDataQualityReportTool,
+  get_daily_intelligence_report: getDailyIntelligenceReportTool,
   search_content: searchContentTool,
   search_exercises: searchExercisesTool,
   search_orientation_data: searchOrientationTool,

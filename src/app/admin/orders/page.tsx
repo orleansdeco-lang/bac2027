@@ -32,9 +32,11 @@ import {
   Send,
   Ban,
   CheckSquare,
+  Printer,
 } from "lucide-react";
 import { CARRIER_OPTIONS, getCarrierTrackingUrl } from "@/lib/shipping/carriers";
 import { ShipmentStatus } from "@/lib/shipping/types";
+import { PhysicalKitModal } from "@/components/kit/PhysicalKitModal";
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<AdminOrderRecord[]>([]);
@@ -68,6 +70,7 @@ export default function AdminOrdersPage() {
   // Dedicated Secure Workflow Modals
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isActivationModalOpen, setIsActivationModalOpen] = useState(false);
+  const [isKitModalOpen, setIsKitModalOpen] = useState(false);
   const [settlementNote, setSettlementNote] = useState("");
   const [activationReason, setActivationReason] = useState("");
 
@@ -614,16 +617,32 @@ export default function AdminOrdersPage() {
 
                     {/* Actions button */}
                     <td className="py-3 px-4 text-center whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openOrderModal(ord);
-                        }}
-                        className="px-2.5 py-1 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold transition-all"
-                      >
-                        معاينة وإدارة
-                      </button>
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openOrderModal(ord);
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-bold transition-all"
+                        >
+                          معاينة وإدارة
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openOrderModal(ord);
+                            setIsKitModalOpen(true);
+                          }}
+                          className="px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                          title="طباعة وثيقة الـ Kit (A4 Print Slip)"
+                        >
+                          <Printer className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">طباعة Kit</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -672,13 +691,25 @@ export default function AdminOrdersPage() {
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => setSelectedOrder(null)}
-                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsKitModalOpen(true)}
+                  className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  title="معاينة وطباعة وثيقة العلبة المادية A4"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>طباعة Kit</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedOrder(null)}
+                  className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Modal Body */}
@@ -1286,6 +1317,17 @@ export default function AdminOrdersPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ============================================================= */}
+      {/* 8. PHYSICAL SUBSCRIPTION KIT PRINT & PDF MODAL                */}
+      {/* ============================================================= */}
+      {isKitModalOpen && selectedOrder && (
+        <PhysicalKitModal
+          order={selectedOrder}
+          isOpen={isKitModalOpen}
+          onClose={() => setIsKitModalOpen(false)}
+        />
       )}
     </div>
   );

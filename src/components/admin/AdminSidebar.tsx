@@ -132,6 +132,13 @@ const NAV_ITEMS: NavItem[] = [
     badge: "وضع المراقبة",
   },
   {
+    name: "تقرير الذكاء اليومي",
+    href: "/admin/ai/daily-report",
+    icon: Sparkles,
+    permission: "platform.read",
+    badge: "يومي",
+  },
+  {
     name: "سجل العمليات",
     href: "/admin/audit",
     icon: History,
