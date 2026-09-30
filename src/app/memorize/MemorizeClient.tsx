@@ -36,17 +36,19 @@ import {
   BAC_HISTORICAL_DATES,
   BAC_PERSONALITIES,
   BAC_TERMS,
+  BAC_METHODOLOGY_CARDS,
   BacDateItem,
   BacPersonalityItem,
   BacTermItem,
+  BacMethodologyCard,
 } from "@/data/memorization/bac-memorization-data";
 
 type TabMode = "flashcards" | "quiz" | "sudden";
-type CategoryFilter = "all" | "dates" | "personalities" | "terms";
+type CategoryFilter = "all" | "dates" | "revolution" | "methodologies" | "personalities" | "terms";
 
 interface FlashcardItem {
   id: string;
-  type: "date" | "personality" | "term";
+  type: "date" | "personality" | "term" | "methodology";
   titleFront: string;
   subtitleFront: string;
   badge: string;
@@ -113,6 +115,15 @@ export function MemorizeClient() {
         setActiveTab("sudden");
         triggerNewSuddenQuestion();
       }
+
+      const requestedFilter = searchParams.get("filter");
+      if (requestedFilter === "revolution") {
+        setCategoryFilter("revolution");
+      } else if (requestedFilter === "methodologies") {
+        setCategoryFilter("methodologies");
+      } else if (requestedFilter === "dates") {
+        setCategoryFilter("dates");
+      }
     }
   }, [searchParams]);
 
@@ -138,16 +149,34 @@ export function MemorizeClient() {
 
     // Dates
     BAC_HISTORICAL_DATES.forEach((d) => {
+      const isRev = d.id.includes("rev") || d.unit === "unit2_algeria";
       cards.push({
         id: `date_${d.id}`,
         type: "date",
         titleFront: d.dateStr,
         subtitleFront: d.unitNameAr,
-        badge: "تاريخ وحدث",
-        badgeColor: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
+        badge: isRev ? "تاريخ الثورة التحريرية" : "تاريخ وحدث",
+        badgeColor: isRev
+          ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30"
+          : "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
         contentBack: d.event,
         extraBack: d.context,
         hintBack: d.mnemonic,
+      });
+    });
+
+    // Methodologies & Ministerial Guides (سلم التنقيط والتوجيهات)
+    BAC_METHODOLOGY_CARDS.forEach((m) => {
+      cards.push({
+        id: `meth_${m.id}`,
+        type: "methodology",
+        titleFront: m.title,
+        subtitleFront: `${m.categoryNameAr} • ${m.subtitle}`,
+        badge: "منهجية رسمية",
+        badgeColor: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
+        contentBack: m.coreRule,
+        extraBack: m.keyPoints.join("\n• "),
+        hintBack: `${m.advice} ${m.officialRubricPoints ? `[${m.officialRubricPoints}]` : ""}`,
       });
     });
 
@@ -168,13 +197,16 @@ export function MemorizeClient() {
 
     // Terms
     BAC_TERMS.forEach((t) => {
+      const isMethodologyTerm = t.category === "official_methodology";
       cards.push({
         id: `term_${t.id}`,
         type: "term",
         titleFront: t.term,
         subtitleFront: t.categoryNameAr,
-        badge: "مصطلح ومفهوم",
-        badgeColor: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+        badge: isMethodologyTerm ? "منهجية رسمية" : "مصطلح ومفهوم",
+        badgeColor: isMethodologyTerm
+          ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30"
+          : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
         contentBack: t.definition,
         hintBack: `الكلمات المفتاحية في التصحيح: ${t.keyWords.join(" • ")}`,
       });
@@ -187,6 +219,12 @@ export function MemorizeClient() {
   const filteredCards = useMemo(() => {
     return allCards.filter((card) => {
       if (categoryFilter === "dates" && card.type !== "date") return false;
+      if (
+        categoryFilter === "revolution" &&
+        (card.type !== "date" || (!card.id.includes("rev") && !card.subtitleFront.includes("الثورة")))
+      )
+        return false;
+      if (categoryFilter === "methodologies" && card.type !== "methodology") return false;
       if (categoryFilter === "personalities" && card.type !== "personality") return false;
       if (categoryFilter === "terms" && card.type !== "term") return false;
       return true;
@@ -213,10 +251,9 @@ export function MemorizeClient() {
     // Helper: shuffle array
     const shuffle = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5);
 
-    // Pick 5 random dates
-    const shuffledDates = shuffle(BAC_HISTORICAL_DATES).slice(0, 5);
+    // Pick 4 random dates (favoring Algerian revolution dates)
+    const shuffledDates = shuffle(BAC_HISTORICAL_DATES).slice(0, 4);
     shuffledDates.forEach((d) => {
-      // Pick 3 wrong date options from other dates
       const wrongOpts = shuffle(
         BAC_HISTORICAL_DATES.filter((other) => other.id !== d.id).map((other) => other.dateStr)
       ).slice(0, 3);
@@ -228,12 +265,12 @@ export function MemorizeClient() {
         correctAnswer: d.dateStr,
         options: allOpts,
         explanation: `${d.event} حدث بتاريخ ${d.dateStr}. السياق: ${d.context}`,
-        categoryName: "تواريخ البكالوريا",
+        categoryName: "تواريخ البكالوريا الرسمية",
       });
     });
 
-    // Pick 5 random personalities
-    const shuffledPersons = shuffle(BAC_PERSONALITIES).slice(0, 5);
+    // Pick 3 random personalities
+    const shuffledPersons = shuffle(BAC_PERSONALITIES).slice(0, 3);
     shuffledPersons.forEach((p) => {
       const wrongOpts = shuffle(
         BAC_PERSONALITIES.filter((other) => other.id !== p.id).map((other) => other.name)
@@ -249,6 +286,73 @@ export function MemorizeClient() {
         categoryName: "شخصيات البكالوريا",
       });
     });
+
+    // Pick 3 high-yield official methodology questions
+    const curatedMethodologyPool: QuizQuestion[] = [
+      {
+        id: "q_meth_1",
+        prompt: "كم عدد المطات الإلزامية لكل سؤال في عرض المقال التاريخي حسب سلم التصحيح الوزاري؟",
+        correctAnswer: "6 مطات كاملة المعنى مع الشرح والتبرير",
+        options: [
+          "6 مطات كاملة المعنى مع الشرح والتبرير",
+          "4 مطات فقط بدون شرح",
+          "فقرة استرسالية واحدة بدون مطات",
+          "8 مطات مجردة من التبرير",
+        ],
+        explanation: "يشترط سلم تصحيح البكالوريا الرسمي 6 مطات واضحة ومنقطة لكل سؤال في العرض، وتمنع الفقرة الاسترسالية.",
+        categoryName: "المنهجية الرسمية • التاريخ",
+      },
+      {
+        id: "q_meth_2",
+        prompt: "ما هي القاعدة الذهبية المعتمدة لاختيار موضوع العلوم الطبيعية في البكالوريا لتفادي فخ التمرين الثالث؟",
+        correctAnswer: "المقارنة الأفقية (تمرين بتمرين) وحساب النقاط المضمونة",
+        options: [
+          "المقارنة الأفقية (تمرين بتمرين) وحساب النقاط المضمونة",
+          "المقارنة العمودية بقراءة الموضوع كاملاً",
+          "اختيار الموضوع ذو التمرين الأول الأسهل مباشرة",
+          "تغيير الموضوع بعد كتابة المسودة",
+        ],
+        explanation: "المقارنة الأفقية تمرين بتمرين تمنع الانخداع بسهولة التمرين الأول واكتشاف صعوبة التمرين الثالث (8 نقاط) متأخراً.",
+        categoryName: "المنهجية الرسمية • العلوم الطبيعية",
+      },
+      {
+        id: "q_meth_3",
+        prompt: "ما هي المرحلة الأولى الإلزامية في التعليق على الجداول والرسومات البيانية في الجغرافيا؟",
+        correctAnswer: "تقديم الوثيقة (طبيعة، مصدر، تاريخ، عنوان)",
+        options: [
+          "تقديم الوثيقة (طبيعة، مصدر، تاريخ، عنوان)",
+          "سرد الأرقام كما هي دون تغيير",
+          "الاستنتاج المباشر دون تفسير",
+          "حساب النسب المئوية للدول",
+        ],
+        explanation: "المرحلة الأولى المخصصة لها (0.5 ن) هي تقديم الوثيقة من حيث طبيعتها ومصدرها وسنتها وعنوانها.",
+        categoryName: "المنهجية الرسمية • الجغرافيا",
+      },
+      {
+        id: "q_meth_4",
+        prompt: "ما هو الوقت الرسمي الموصى به للتواجد داخل مركز الإجراء في كل أيام البكالوريا؟",
+        correctAnswer: "الساعة 07:30 صباحاً",
+        options: ["الساعة 07:30 صباحاً", "الساعة 08:20 صباحاً", "الساعة 08:45 صباحاً", "في أي وقت قبل فتح الأظرفة"],
+        explanation: "التواجد في تمام 07:30 صباحاً ضروري لاكتشاف القاعة، التحقق من الملصقة والجلوس بهدوء وثقة.",
+        categoryName: "ضوابط يوم الامتحان",
+      },
+      {
+        id: "q_meth_5",
+        prompt: "ما هو الإجراء التنظيمي الحاسم الواجب التأكد منه فور استلام ورقة إجابة البكالوريا؟",
+        correctAnswer: "تطابق لون ورقة الإجابة مع لون ملصقة الطاولة (L'étiquette)",
+        options: [
+          "تطابق لون ورقة الإجابة مع لون ملصقة الطاولة (L'étiquette)",
+          "استبدال ورقة الإجابة بأي لون مفضل",
+          "تغيير الطاولة إذا لم تعجبك",
+          "كتابة الاسم في كل الصفحات الداخلية",
+        ],
+        explanation: "تطابق لون ورقة الإجابة مع لون ملصقة الطاولة شرط رسمي وزاري قطعي لتنظيم التصحيح وحفظ الحقوق.",
+        categoryName: "ضوابط يوم الامتحان",
+      },
+    ];
+
+    const sampledMethodology = shuffle(curatedMethodologyPool).slice(0, 3);
+    sampledMethodology.forEach((m) => questions.push(m));
 
     const finalQuestions = shuffle(questions);
     setQuizQuestions(finalQuestions);
@@ -492,6 +596,38 @@ export function MemorizeClient() {
               <button
                 type="button"
                 onClick={() => {
+                  setCategoryFilter("revolution");
+                  setCurrentCardIndex(0);
+                  setIsFlipped(false);
+                }}
+                className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all border ${
+                  categoryFilter === "revolution"
+                    ? "bg-rose-600 text-white border-rose-600 shadow-xs"
+                    : "bg-card text-theme-muted hover:text-theme-text border-theme"
+                }`}
+              >
+                🇩🇿 تواريخ الثورة (42 تاريخاً)
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setCategoryFilter("methodologies");
+                  setCurrentCardIndex(0);
+                  setIsFlipped(false);
+                }}
+                className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all border ${
+                  categoryFilter === "methodologies"
+                    ? "bg-amber-600 text-white border-amber-600 shadow-xs"
+                    : "bg-card text-theme-muted hover:text-theme-text border-theme"
+                }`}
+              >
+                📌 المنهجيات وسلم التنقيط ({BAC_METHODOLOGY_CARDS.length})
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
                   setCategoryFilter("dates");
                   setCurrentCardIndex(0);
                   setIsFlipped(false);
@@ -609,7 +745,7 @@ export function MemorizeClient() {
                           </h3>
 
                           {currentCard.extraBack && (
-                            <p className="text-xs sm:text-sm text-theme-secondary leading-relaxed bg-card-muted p-3.5 rounded-2xl border border-theme">
+                            <p className="text-xs sm:text-sm text-theme-secondary leading-relaxed bg-card-muted p-3.5 rounded-2xl border border-theme whitespace-pre-line">
                               {currentCard.extraBack}
                             </p>
                           )}
