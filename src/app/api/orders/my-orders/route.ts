@@ -3,6 +3,7 @@ import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } fro
 import { getAdminClient } from "@/lib/supabase/admin";
 import { extractAuthenticatedUserId } from "@/lib/operations/auth";
 import { AUTHORITATIVE_PLANS } from "@/lib/operations/payments";
+import { getCarrierTrackingUrl } from "@/lib/shipping/carriers";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,9 @@ export interface StudentOrderResponse {
       badge_variant: "default" | "success" | "warning" | "error" | "info";
       carrier?: string;
       tracking_number?: string;
+      shipped_at?: string;
+      formatted_shipped_at?: string;
+      tracking_url?: string | null;
     };
     payment: {
       key: string;
@@ -192,7 +196,10 @@ function mapOrderStatuses(order: any, shipment?: any, payment?: any, subscriptio
       label: deliveryLabel,
       badge_variant: deliveryVariant,
       carrier: shipment?.carrier || "Yalidine Express",
-      tracking_number: shipment?.tracking_number || undefined,
+      tracking_number: shipment?.tracking_number || order?.tracking_number || undefined,
+      shipped_at: shipment?.shipped_at || undefined,
+      formatted_shipped_at: shipment?.shipped_at ? formatArabicDate(shipment.shipped_at) : undefined,
+      tracking_url: getCarrierTrackingUrl(shipment?.carrier, shipment?.tracking_number || order?.tracking_number),
     },
     payment: { key: rawPaymentStatus, label: paymentLabel, badge_variant: paymentVariant },
     subscription: { key: rawSubStatus, label: subLabel, badge_variant: subVariant },

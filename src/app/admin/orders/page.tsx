@@ -33,6 +33,8 @@ import {
   Ban,
   CheckSquare,
 } from "lucide-react";
+import { CARRIER_OPTIONS, getCarrierTrackingUrl } from "@/lib/shipping/carriers";
+import { ShipmentStatus } from "@/lib/shipping/types";
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<AdminOrderRecord[]>([]);
@@ -69,9 +71,13 @@ export default function AdminOrdersPage() {
   const [settlementNote, setSettlementNote] = useState("");
   const [activationReason, setActivationReason] = useState("");
 
-  // Action Inputs inside modal
-  const [carrierInput, setCarrierInput] = useState("YALIDINE");
+  // Shipping Management State
+  const [carrierInput, setCarrierInput] = useState("Yalidine Express");
+  const [customCarrierInput, setCustomCarrierInput] = useState("");
   const [trackingInput, setTrackingInput] = useState("");
+  const [shippingDateInput, setShippingDateInput] = useState("");
+  const [shippingStatusInput, setShippingStatusInput] = useState<ShipmentStatus>("PENDING");
+  const [shippingNotesInput, setShippingNotesInput] = useState("");
   const [actionNotes, setActionNotes] = useState("");
   const [copiedOrderNumber, setCopiedOrderNumber] = useState<string | null>(null);
 
@@ -162,10 +168,51 @@ export default function AdminOrdersPage() {
 
   const openOrderModal = (ord: AdminOrderRecord) => {
     setSelectedOrder(ord);
-    setCarrierInput(ord.shipment.carrier || "YALIDINE");
+
+    // Match carrier to CARRIER_OPTIONS
+    const matched = CARRIER_OPTIONS.find(
+      (c) =>
+        c.name.toLowerCase() === (ord.shipment.carrier || "").toLowerCase() ||
+        c.name_ar === ord.shipment.carrier ||
+        c.id === ord.shipment.carrier
+    );
+
+    if (matched && matched.id !== "OTHER") {
+      setCarrierInput(matched.name);
+      setCustomCarrierInput("");
+    } else if (ord.shipment.carrier) {
+      setCarrierInput("Manual Delivery / Other");
+      setCustomCarrierInput(ord.shipment.carrier);
+    } else {
+      setCarrierInput("Yalidine Express");
+      setCustomCarrierInput("");
+    }
+
     setTrackingInput(ord.shipment.tracking_number || "");
+    setShippingStatusInput((ord.shipment.status || "PENDING") as ShipmentStatus);
+    setShippingDateInput(
+      ord.shipment.shipped_at
+        ? new Date(ord.shipment.shipped_at).toISOString().slice(0, 10)
+        : new Date().toISOString().slice(0, 10)
+    );
+    setShippingNotesInput(ord.shipment.status_notes || "");
     setActionNotes("");
     setActionMessage(null);
+  };
+
+  const handleUpdateShipping = async () => {
+    const finalCarrier =
+      carrierInput === "Manual Delivery / Other"
+        ? (customCarrierInput.trim() || "Manual Delivery")
+        : carrierInput;
+
+    await handleAction("UPDATE_SHIPPING", {
+      carrier: finalCarrier,
+      trackingNumber: trackingInput.trim() || null,
+      shippingDate: shippingDateInput || null,
+      status: shippingStatusInput,
+      notes: shippingNotesInput.trim() || null,
+    });
   };
 
   const resetFilters = () => {
@@ -201,16 +248,17 @@ export default function AdminOrdersPage() {
   const getDeliveryStatusBadge = (st: string) => {
     switch (st) {
       case "PENDING":
-        return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">قيد الانتظار</span>;
+        return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">في انتظار الشحن</span>;
       case "SHIPPED":
         return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/30">تم الشحن</span>;
       case "OUT_FOR_DELIVERY":
-        return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">في الطريق</span>;
+        return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">في الطريق للتسليم</span>;
       case "DELIVERED":
         return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">تم التوصيل</span>;
-      case "RETURNED":
       case "FAILED":
-        return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">مرتجع / فشل</span>;
+        return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-600/15 text-amber-300 border border-amber-600/30">فشل التسليم</span>;
+      case "RETURNED":
+        return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">مرتجع (Retour)</span>;
       default:
         return <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-500/10 text-slate-400 border border-slate-500/30">{st}</span>;
     }
@@ -768,49 +816,152 @@ export default function AdminOrdersPage() {
                 </div>
               </div>
 
-              {/* Action Inputs: Carrier & Tracking */}
-              <div className="p-4 rounded-2xl bg-[#091122] border border-slate-700/80 space-y-3">
-                <h4 className="text-xs font-bold text-purple-400 flex items-center gap-1.5">
-                  <Truck className="w-3.5 h-3.5" />
-                  <span>تحديث بيانات الشحن والتتبع</span>
-                </h4>
+              {/* Shipping Management Section (Manual Admin Input + Extensible for Webhook/API) */}
+              <div className="p-5 rounded-2xl bg-[#091122] border-2 border-indigo-500/30 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center border border-purple-500/30">
+                      <Truck className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-black text-white flex items-center gap-2">
+                        <span>إدارة الشحن والتوصيل (Shipping Management)</span>
+                      </h4>
+                      <p className="text-[11px] text-slate-400">
+                        إدخال يدوي مباشر لشركة التوصيل، رقم التتبع، تاريخ الشحن، وتحديث حالة الطرد
+                      </p>
+                    </div>
+                  </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {selectedOrder.shipment.tracking_url && (
+                    <a
+                      href={selectedOrder.shipment.tracking_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 text-xs font-bold flex items-center gap-1.5 transition-colors"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>تتبع بموقع شركة الشحن ↗</span>
+                    </a>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+                  {/* 1. Carrier Selector */}
                   <div>
-                    <label className="text-[11px] text-slate-400 block mb-1">شركة الشحن:</label>
+                    <label className="text-xs text-slate-300 font-bold block mb-1.5">
+                      شركة التوصيل:
+                    </label>
                     <select
                       value={carrierInput}
                       onChange={(e) => setCarrierInput(e.target.value)}
-                      className="w-full bg-[#0D182E] border border-slate-700 text-white text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500"
+                      className="w-full bg-[#0D182E] border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-500"
                     >
-                      <option value="YALIDINE">Yalidine Express</option>
-                      <option value="ZR_EXPRESS">ZR Express</option>
-                      <option value="KAZI_TOUR">Kazi Tour</option>
-                      <option value="EMS">EMS الجزائر</option>
+                      {CARRIER_OPTIONS.map((c) => (
+                        <option key={c.id} value={c.name}>
+                          {c.name_ar} ({c.name})
+                        </option>
+                      ))}
                     </select>
+
+                    {carrierInput === "Manual Delivery / Other" && (
+                      <input
+                        type="text"
+                        value={customCarrierInput}
+                        onChange={(e) => setCustomCarrierInput(e.target.value)}
+                        placeholder="أدخل اسم شركة التوصيل..."
+                        className="w-full mt-2 bg-[#0D182E] border border-slate-700 text-white text-xs rounded-xl px-3 py-2 focus:outline-none focus:border-indigo-500"
+                      />
+                    )}
                   </div>
 
+                  {/* 2. Tracking Number Input */}
                   <div>
-                    <label className="text-[11px] text-slate-400 block mb-1">رقم التتبع (Tracking Number):</label>
+                    <label className="text-xs text-slate-300 font-bold block mb-1.5">
+                      رقم التتبع (Tracking Number):
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={trackingInput}
+                        onChange={(e) => setTrackingInput(e.target.value)}
+                        placeholder="مثال: YAL-9840124"
+                        className="w-full bg-[#0D182E] border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5 font-mono focus:outline-none focus:border-indigo-500 pl-8"
+                      />
+                      {trackingInput && (
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(trackingInput)}
+                          className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                          title="نسخ رقم التتبع"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 3. Shipping Date Input */}
+                  <div>
+                    <label className="text-xs text-slate-300 font-bold block mb-1.5">
+                      تاريخ الشحن (Shipping Date):
+                    </label>
                     <input
-                      type="text"
-                      value={trackingInput}
-                      onChange={(e) => setTrackingInput(e.target.value)}
-                      placeholder="مثال: YAL-9840124"
-                      className="w-full bg-[#0D182E] border border-slate-700 text-white text-xs rounded-xl px-3 py-2 font-mono focus:outline-none focus:border-indigo-500"
+                      type="date"
+                      value={shippingDateInput}
+                      onChange={(e) => setShippingDateInput(e.target.value)}
+                      className="w-full bg-[#0D182E] border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-500"
                     />
                   </div>
 
-                  <div className="flex items-end">
-                    <button
-                      type="button"
-                      disabled={actionLoading || !trackingInput.trim()}
-                      onClick={() => handleAction("ADD_TRACKING_NUMBER")}
-                      className="w-full px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-xs font-bold transition-all cursor-pointer"
+                  {/* 4. Shipment Status Selector */}
+                  <div>
+                    <label className="text-xs text-slate-300 font-bold block mb-1.5">
+                      حالة الشحنة (Status):
+                    </label>
+                    <select
+                      value={shippingStatusInput}
+                      onChange={(e) => setShippingStatusInput(e.target.value as ShipmentStatus)}
+                      className="w-full bg-[#0D182E] border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5 font-bold focus:outline-none focus:border-indigo-500"
                     >
-                      حفظ رقم التتبع
-                    </button>
+                      <option value="PENDING">في انتظار الشحن (PENDING)</option>
+                      <option value="SHIPPED">تم الشحن (SHIPPED)</option>
+                      <option value="OUT_FOR_DELIVERY">في الطريق للتسليم (OUT_FOR_DELIVERY)</option>
+                      <option value="DELIVERED">تم التوصيل (DELIVERED)</option>
+                      <option value="FAILED">تعذر أو فشل التسليم (FAILED)</option>
+                      <option value="RETURNED">مرتجع (RETURNED)</option>
+                    </select>
                   </div>
+                </div>
+
+                {/* Notes Input */}
+                <div>
+                  <label className="text-xs text-slate-400 block mb-1">
+                    ملاحظات شركة التوصيل / مركز التوزيع (اختياري):
+                  </label>
+                  <input
+                    type="text"
+                    value={shippingNotesInput}
+                    onChange={(e) => setShippingNotesInput(e.target.value)}
+                    placeholder="مثال: تم إرسال الطرد مع الموزع - الزبون طلب الاستلام بعد الساعة 16:00"
+                    className="w-full bg-[#0D182E] border border-slate-700 text-white text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-indigo-500"
+                  />
+                </div>
+
+                {/* Save Shipping Details Button */}
+                <div className="flex items-center justify-between pt-1">
+                  <div className="text-[11px] text-slate-400">
+                    💡 يتم تحديث رقم التتبع في الطلب فورياً ومزامنته مع لوحة تحكم الطالب وسجل التدقيق.
+                  </div>
+                  <button
+                    type="button"
+                    disabled={actionLoading}
+                    onClick={handleUpdateShipping}
+                    className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-xs font-black shadow-lg flex items-center gap-2 cursor-pointer transition-all"
+                  >
+                    {actionLoading ? <RotateCcw className="w-3.5 h-3.5 animate-spin" /> : <Truck className="w-3.5 h-3.5" />}
+                    <span>حفظ وتحديث بيانات الشحن والتتبع</span>
+                  </button>
                 </div>
               </div>
 
@@ -857,15 +1008,37 @@ export default function AdminOrdersPage() {
                     <span>تم الشحن (Mark Shipped)</span>
                   </button>
 
-                  {/* Action 4: Mark Delivered (DELIVERED != PAID) */}
+                  {/* Action 4: Mark Out for Delivery */}
+                  <button
+                    type="button"
+                    disabled={actionLoading || selectedOrder.shipment.status === "OUT_FOR_DELIVERY"}
+                    onClick={() => handleAction("MARK_OUT_FOR_DELIVERY")}
+                    className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Truck className="w-3.5 h-3.5" />
+                    <span>في الطريق (Out for Delivery)</span>
+                  </button>
+
+                  {/* Action 5: Mark Delivered (DELIVERED != PAID) */}
                   <button
                     type="button"
                     disabled={actionLoading || selectedOrder.shipment.status === "DELIVERED"}
                     onClick={() => handleAction("MARK_DELIVERED")}
                     className="px-3.5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 disabled:opacity-40 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                   >
-                    <Truck className="w-3.5 h-3.5" />
+                    <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>تم التوصيل (Mark Delivered)</span>
+                  </button>
+
+                  {/* Action 6: Mark Failed */}
+                  <button
+                    type="button"
+                    disabled={actionLoading || selectedOrder.shipment.status === "FAILED"}
+                    onClick={() => handleAction("MARK_FAILED")}
+                    className="px-3.5 py-2 rounded-xl bg-amber-700 hover:bg-amber-600 disabled:opacity-40 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    <span>فشل التسليم (Mark Failed)</span>
                   </button>
 
                   {/* Action 5: Mark COD Paid (Opens Confirmation Modal) */}

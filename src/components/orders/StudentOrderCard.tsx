@@ -163,13 +163,42 @@ export function StudentOrderCard({ order }: StudentOrderCardProps) {
           </span>
         </div>
 
-        {/* Tracking link if carrier provided */}
-        {order.statuses.delivery.tracking_number && (
-          <div className="flex items-center gap-2 self-start sm:self-auto font-mono text-[11px] bg-card-muted px-2.5 py-1 rounded-xl border border-theme">
-            <span>التتبع:</span>
-            <strong className="text-theme-text font-bold">
-              {order.statuses.delivery.tracking_number}
-            </strong>
+        {/* Carrier & Tracking details if dispatched */}
+        {(order.statuses.delivery.carrier || order.statuses.delivery.tracking_number) && (
+          <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto text-[11px]">
+            {order.statuses.delivery.carrier && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-card-muted border border-theme text-theme-muted">
+                <Truck className="w-3 h-3 text-indigo-500" />
+                <span>{order.statuses.delivery.carrier}</span>
+              </span>
+            )}
+
+            {order.statuses.delivery.formatted_shipped_at && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-card-muted border border-theme text-theme-muted">
+                <Calendar className="w-3 h-3 text-slate-400" />
+                <span>شُحنت: {order.statuses.delivery.formatted_shipped_at}</span>
+              </span>
+            )}
+
+            {order.statuses.delivery.tracking_number && (
+              <div className="flex items-center gap-1.5 font-mono bg-card-muted px-2.5 py-1 rounded-xl border border-theme">
+                <span>التتبع:</span>
+                <strong className="text-theme-text font-bold">
+                  {order.statuses.delivery.tracking_number}
+                </strong>
+                {order.statuses.delivery.tracking_url && (
+                  <a
+                    href={order.statuses.delivery.tracking_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1 hover:text-[var(--color-primary)] transition-colors text-indigo-400"
+                    title="تتبع الشحنة بموقع شركة التوصيل"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>

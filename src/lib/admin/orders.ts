@@ -14,6 +14,9 @@ import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } fro
 import { getAdminClient } from "@/lib/supabase/admin";
 import { recordAuditLog } from "@/lib/operations/audit";
 import { AUTHORITATIVE_PLANS } from "@/lib/operations/payments";
+import { updateOrderShipment } from "@/lib/shipping/service";
+import { getCarrierTrackingUrl } from "@/lib/shipping/carriers";
+import { ShipmentStatus } from "@/lib/shipping/types";
 
 export interface AdminOrderSummary {
   totalOrders: number;
@@ -58,10 +61,14 @@ export interface AdminOrderRecord {
   shipment: {
     carrier: string;
     tracking_number: string | null;
-    status: "PENDING" | "SHIPPED" | "OUT_FOR_DELIVERY" | "DELIVERED" | "FAILED" | "RETURNED";
+    status: ShipmentStatus;
     shipped_at: string | null;
     delivered_at: string | null;
     returned_at: string | null;
+    out_for_delivery_at?: string | null;
+    failed_at?: string | null;
+    status_notes?: string | null;
+    tracking_url?: string | null;
   };
   payment: {
     method: string;
@@ -147,7 +154,7 @@ export async function getAdminOrders(filters: AdminOrdersFilter = {}, token?: st
         created_at,
         updated_at,
         shipping_addresses (full_name, phone, wilaya, commune, address, delivery_notes),
-        shipments (carrier, tracking_number, status, shipped_at, delivered_at, returned_at),
+        shipments (carrier, tracking_number, status, shipped_at, delivered_at, returned_at, out_for_delivery_at, failed_at, status_notes),
         payments (method, status, amount, settled_at, verified_by, settlement_notes),
         subscriptions (id, status, starts_at, expires_at, notes)
       `)
@@ -161,6 +168,8 @@ export async function getAdminOrders(filters: AdminOrdersFilter = {}, token?: st
         const subscription = Array.isArray(row.subscriptions) ? row.subscriptions[0] : row.subscriptions;
 
         const planMeta = resolvePlanMetadata(row.plan_id, Number(row.amount));
+        const resolvedTracking = shipment?.tracking_number || (row as any).tracking_number || null;
+        const resolvedCarrier = shipment?.carrier || "Yalidine Express";
 
         const record: AdminOrderRecord = {
           id: row.id,
@@ -185,12 +194,16 @@ export async function getAdminOrders(filters: AdminOrdersFilter = {}, token?: st
           currency: row.currency || "DZD",
           status: row.status as any,
           shipment: {
-            carrier: shipment?.carrier || "Yalidine Express",
-            tracking_number: shipment?.tracking_number || null,
+            carrier: resolvedCarrier,
+            tracking_number: resolvedTracking,
             status: (shipment?.status || "PENDING") as any,
             shipped_at: shipment?.shipped_at || null,
             delivered_at: shipment?.delivered_at || null,
             returned_at: shipment?.returned_at || null,
+            out_for_delivery_at: shipment?.out_for_delivery_at || null,
+            failed_at: shipment?.failed_at || null,
+            status_notes: shipment?.status_notes || null,
+            tracking_url: getCarrierTrackingUrl(resolvedCarrier, resolvedTracking),
           },
           payment: {
             method: payment?.method || "COD",
@@ -455,146 +468,105 @@ export async function executeAdminOrderAction(
       return { success: true, message: "تم تغيير حالة الطلب إلى: قيد التجهيز (تحضير العلبة)." };
     }
 
+    case "UPDATE_SHIPPING": {
+      return await updateOrderShipment(
+        {
+          orderId,
+          carrier: params.carrier,
+          trackingNumber: params.trackingNumber,
+          shippingDate: params.shippingDate,
+          status: params.status,
+          notes: params.notes,
+          source: "ADMIN_MANUAL",
+          actor,
+        },
+        token
+      );
+    }
+
     case "MARK_SHIPPED": {
-      // 3. Mark shipped + add carrier and tracking
-      const carrier = params.carrier || "YALIDINE";
-      const trackingNumber = params.trackingNumber?.trim() || null;
-
-      // Update shipment
-      await client
-        .from("shipments")
-        .update({
-          carrier,
-          tracking_number: trackingNumber,
+      return await updateOrderShipment(
+        {
+          orderId,
+          carrier: params.carrier,
+          trackingNumber: params.trackingNumber,
+          shippingDate: params.shippingDate || now,
           status: "SHIPPED",
-          shipped_at: now,
-          updated_at: now,
-        })
-        .eq("order_id", orderId);
-
-      // Update order
-      await client.from("orders").update({ status: "SHIPPED", updated_at: now }).eq("id", orderId);
-      await client
-        .from("payment_orders")
-        .update({
-          status: "SHIPPED",
-          delivery_status: "SHIPPED",
-          updated_at: now,
-        })
-        .eq("id", orderId);
-
-      await recordAuditLog({
-        actorUserId: actor.userId,
-        actorRole: actor.role as any,
-        action: "SHIPMENT_DISPATCHED" as any,
-        targetType: "shipment" as any,
-        targetId: orderId,
-        reason: params.reason || `تم تسليم الطرد لشركة الشحن (${carrier})`,
-        afterState: { status: "SHIPPED", carrier, trackingNumber },
-      });
-
-      return { success: true, message: "تم تسجيل شحن الطرد بنجاح." };
+          notes: params.reason || params.notes || "تم تسليم الطرد لشركة الشحن",
+          source: "ADMIN_MANUAL",
+          actor,
+        },
+        token
+      );
     }
 
     case "ADD_TRACKING_NUMBER": {
-      // 4. Add or update tracking number
-      const carrier = params.carrier || "YALIDINE";
-      const trackingNumber = params.trackingNumber?.trim();
-      if (!trackingNumber) {
+      if (!params.trackingNumber?.trim()) {
         throw new Error("يرجى إدخال رقم التتبع.");
       }
+      return await updateOrderShipment(
+        {
+          orderId,
+          carrier: params.carrier,
+          trackingNumber: params.trackingNumber,
+          notes: `تحديث رقم التتبع: ${params.trackingNumber.trim()}`,
+          source: "ADMIN_MANUAL",
+          actor,
+        },
+        token
+      );
+    }
 
-      await client
-        .from("shipments")
-        .update({
-          carrier,
-          tracking_number: trackingNumber,
-          updated_at: now,
-        })
-        .eq("order_id", orderId);
-
-      await recordAuditLog({
-        actorUserId: actor.userId,
-        actorRole: actor.role as any,
-        action: "SHIPMENT_DISPATCHED" as any,
-        targetType: "shipment" as any,
-        targetId: orderId,
-        reason: `تحديث رقم التتبع: ${trackingNumber}`,
-        afterState: { carrier, trackingNumber },
-      });
-
-      return { success: true, message: `تم تحديث رقم التتبع: ${trackingNumber}` };
+    case "MARK_OUT_FOR_DELIVERY": {
+      return await updateOrderShipment(
+        {
+          orderId,
+          status: "OUT_FOR_DELIVERY",
+          notes: params.notes || "الطرد في الطريق للتسليم مع الموزع",
+          source: "ADMIN_MANUAL",
+          actor,
+        },
+        token
+      );
     }
 
     case "MARK_DELIVERED": {
-      // 5. Mark Delivered (Invariant: DELIVERED != PAID. Sets payment to DELIVERED_PENDING_SETTLEMENT)
-      await client
-        .from("shipments")
-        .update({
+      return await updateOrderShipment(
+        {
+          orderId,
           status: "DELIVERED",
-          delivered_at: now,
-          updated_at: now,
-        })
-        .eq("order_id", orderId);
+          notes: params.notes || "تم تسليم العلبة المادية للطالب (بانتظار تسوية أموال الـ COD)",
+          source: "ADMIN_MANUAL",
+          actor,
+        },
+        token
+      );
+    }
 
-      await client
-        .from("payments")
-        .update({
-          status: "DELIVERED_PENDING_SETTLEMENT",
-          updated_at: now,
-        })
-        .eq("order_id", orderId);
-
-      await client
-        .from("payment_orders")
-        .update({
-          delivery_status: "DELIVERED",
-          updated_at: now,
-        })
-        .eq("id", orderId);
-
-      await recordAuditLog({
-        actorUserId: actor.userId,
-        actorRole: actor.role as any,
-        action: "SHIPMENT_DELIVERED" as any,
-        targetType: "shipment" as any,
-        targetId: orderId,
-        reason: "تم تسليم العلبة المادية للطالب (بانتظار تسوية أموال الـ COD مع شركة التوصيل)",
-        afterState: { shipment_status: "DELIVERED", payment_status: "DELIVERED_PENDING_SETTLEMENT" },
-      });
-
-      return {
-        success: true,
-        message: "تم تسجيل تسليم الطرد. تم تحديث الدفع تلقائياً إلى 'بانتظار تسوية الأموال'. لا يتم تفعيل الاشتراك حتى يتم تأكيد الدفع.",
-      };
+    case "MARK_FAILED": {
+      return await updateOrderShipment(
+        {
+          orderId,
+          status: "FAILED",
+          notes: params.notes || params.reason || "تعذر أو فشل تسليم الطرد للطالب",
+          source: "ADMIN_MANUAL",
+          actor,
+        },
+        token
+      );
     }
 
     case "MARK_RETURNED": {
-      // 6. Mark Returned
-      await client
-        .from("shipments")
-        .update({
+      return await updateOrderShipment(
+        {
+          orderId,
           status: "RETURNED",
-          returned_at: now,
-          updated_at: now,
-        })
-        .eq("order_id", orderId);
-
-      await client.from("orders").update({ status: "CANCELLED", updated_at: now }).eq("id", orderId);
-      await client.from("payments").update({ status: "FAILED", updated_at: now }).eq("id", orderId);
-      await client.from("payment_orders").update({ status: "CANCELLED", delivery_status: "RETURNED", updated_at: now }).eq("id", orderId);
-
-      await recordAuditLog({
-        actorUserId: actor.userId,
-        actorRole: actor.role as any,
-        action: "SHIPMENT_RETURNED" as any,
-        targetType: "shipment" as any,
-        targetId: orderId,
-        reason: params.reason || "طرد مرتجع من شركة التوصيل",
-        afterState: { shipment_status: "RETURNED", order_status: "CANCELLED" },
-      });
-
-      return { success: true, message: "تم تسجيل الطرد كمرتجع وإلغاء الطلب." };
+          notes: params.notes || params.reason || "طرد مرتجع من شركة التوصيل (Retour)",
+          source: "ADMIN_MANUAL",
+          actor,
+        },
+        token
+      );
     }
 
     case "MARK_COD_PAID": {
