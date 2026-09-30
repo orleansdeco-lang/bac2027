@@ -31,6 +31,12 @@ export type DiwanGameStatus =
   | "IN_ROUND"        // DB compatible alias
   | "ROUND_SUMMARY";  // DB compatible alias
 
+export interface DiwanTableMemberPreview {
+  name: string;
+  avatar: string;
+  status: StudentActivityStatus;
+}
+
 export interface DiwanTable {
   id: string;
   title: string;
@@ -42,6 +48,7 @@ export interface DiwanTable {
   host_user_id?: string;
   duration_minutes: number;
   member_count?: number;
+  membersPreview?: DiwanTableMemberPreview[];
   created_at: string;
   updated_at: string;
 }

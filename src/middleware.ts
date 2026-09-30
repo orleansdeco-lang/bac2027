@@ -17,7 +17,6 @@ export const PROTECTED_STUDENT_PREFIXES = [
   "/curriculum",
   "/mind",
   "/campus",
-  "/diwan",
   "/tutor",
 ];
 

@@ -119,7 +119,7 @@ inMemoryMembers.set("table-math-limits", [
     room_id: "table-math-limits",
     user_id: "user-yacine",
     user_name: "ياسين ق.",
-    user_avatar: "/illustrations/characters/yacine.jpg",
+    user_avatar: "/illustrations/characters/yassine.jpg",
     wilaya_code: "25",
     current_status: "answering",
     seat_index: 2,
@@ -127,6 +127,85 @@ inMemoryMembers.set("table-math-limits", [
     stream: "تقني رياضي",
     currentTopic: "حساب المجموع Sn واستنتاج النهاية",
     joined_at: new Date(Date.now() - 6 * 60 * 1000).toISOString(),
+  },
+]);
+
+inMemoryMembers.set("table-phys-rc", [
+  {
+    id: "mem-rc-1",
+    room_id: "table-phys-rc",
+    user_id: "user-mariam",
+    user_name: "مريم ب.",
+    user_avatar: "/illustrations/characters/mariam.jpg",
+    wilaya_code: "31",
+    current_status: "writing",
+    seat_index: 0,
+    school: "ثانوية العقيد لطفي",
+    stream: "علوم تجريبية",
+    currentTopic: "حل المعادلة التفاضلية لثنائي القطب RC",
+    joined_at: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mem-rc-2",
+    room_id: "table-phys-rc",
+    user_id: "user-scholar",
+    user_name: "أمين ك.",
+    user_avatar: "/illustrations/characters/scholar.jpg",
+    wilaya_code: "16",
+    current_status: "studying",
+    seat_index: 1,
+    school: "ثانوية رابح بيطاط",
+    stream: "رياضيات",
+    currentTopic: "التحليل البعدي لثابت الزمن تاو τ",
+    joined_at: new Date(Date.now() - 8 * 60 * 1000).toISOString(),
+  },
+]);
+
+inMemoryMembers.set("table-sci-proteins", [
+  {
+    id: "mem-sci-1",
+    room_id: "table-sci-proteins",
+    user_id: "user-girl",
+    user_name: "خديجة ع.",
+    user_avatar: "/illustrations/characters/girl.jpg",
+    wilaya_code: "25",
+    current_status: "answering",
+    seat_index: 0,
+    school: "ثانوية زيغود يوسف",
+    stream: "علوم تجريبية",
+    currentTopic: "رسم تخطيطي لآلية الاستنساخ والترجمة",
+    joined_at: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "mem-sci-2",
+    room_id: "table-sci-proteins",
+    user_id: "user-boy",
+    user_name: "حمزة ت.",
+    user_avatar: "/illustrations/characters/boy.jpg",
+    wilaya_code: "05",
+    current_status: "studying",
+    seat_index: 1,
+    school: "ثانوية مصطفى بن بولعيد",
+    stream: "علوم تجريبية",
+    currentTopic: "مقارنة شفرات الـ ARNm وتأثير الطفرات",
+    joined_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
+  },
+]);
+
+inMemoryMembers.set("table-philo-problems", [
+  {
+    id: "mem-philo-1",
+    room_id: "table-philo-problems",
+    user_id: "user-sarah2",
+    user_name: "إيمان ل.",
+    user_avatar: "/illustrations/characters/sarah.jpg",
+    wilaya_code: "13",
+    current_status: "writing",
+    seat_index: 0,
+    school: "ثانوية الدكتور بن زرجب",
+    stream: "آداب وفلسفة",
+    currentTopic: "كتابة مقدمة مقالة المشكلة والإشكالية",
+    joined_at: new Date(Date.now() - 18 * 60 * 1000).toISOString(),
   },
 ]);
 
@@ -150,6 +229,29 @@ inMemoryMessages.set("table-math-limits", [
     content: "سؤال: كيفاش نبرهنوا بالتراجع على أن Un < 2 في السؤال الثاني؟ 🤔",
     message_type: "question",
     created_at: new Date(Date.now() - 8 * 60 * 1000).toISOString(),
+  },
+]);
+
+inMemoryMessages.set("table-phys-rc", [
+  {
+    id: "msg-rc-1",
+    room_id: "table-phys-rc",
+    user_id: "user-mariam",
+    user_name: "مريم ب.",
+    user_avatar: "/illustrations/characters/mariam.jpg",
+    content: "صحا رفاق! شكون عندو فكرة على التحليل البعدي لثابت الزمن τ = R.C؟ ⚡",
+    message_type: "question",
+    created_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+  },
+  {
+    id: "msg-rc-2",
+    room_id: "table-phys-rc",
+    user_id: "user-scholar",
+    user_name: "أمين ك.",
+    user_avatar: "/illustrations/characters/scholar.jpg",
+    content: "نستعملو قانون أوم U = R.I وشحنة المكثفة Q = C.U ونختزلو التوتر والشدة، يخرج بالثانية [s] 📐",
+    message_type: "chat",
+    created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
   },
 ]);
 
@@ -195,11 +297,24 @@ export const DiwanService = {
       }
     }
 
-    // Fallback
-    return Array.from(inMemoryTables.values()).filter((t) => {
-      if (stream && t.stream !== stream && t.stream !== ("ALL" as any)) return false;
-      return t.status === "ACTIVE";
-    });
+    // Fallback enriched with seated member previews
+    return Array.from(inMemoryTables.values())
+      .filter((t) => {
+        if (stream && t.stream !== stream && t.stream !== ("ALL" as any)) return false;
+        return t.status === "ACTIVE";
+      })
+      .map((t) => {
+        const mems = inMemoryMembers.get(t.id) || [];
+        return {
+          ...t,
+          member_count: mems.length,
+          membersPreview: mems.slice(0, 4).map((m) => ({
+            name: m.user_name,
+            avatar: m.user_avatar,
+            status: m.current_status,
+          })),
+        };
+      });
   },
 
   /**

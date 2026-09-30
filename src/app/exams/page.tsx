@@ -1,7 +1,5 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import React, { Suspense } from "react";
 import { AppShell } from "@/components/ui/AppShell";
 import { FileText } from "lucide-react";

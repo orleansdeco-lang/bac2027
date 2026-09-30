@@ -66,6 +66,7 @@ export function DiwanMultiplayerGame({
   const [memoryTimeLeft, setMemoryTimeLeft] = useState(6);
   const [showMemoryPhase, setShowMemoryPhase] = useState(false);
   const [countdown, setCountdown] = useState(3);
+  const [resultAutoAdvanceTimer, setResultAutoAdvanceTimer] = useState(8);
   const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
   const [socialReactions, setSocialReactions] = useState<{ id: string; emoji: string }[]>([]);
 
@@ -255,6 +256,30 @@ export function DiwanMultiplayerGame({
 
     return () => clearInterval(timer);
   }, [session?.status, session?.current_round, showMemoryPhase]);
+
+  // Auto-advance to next round after 8s of RESULT state so game flows dynamically
+  useEffect(() => {
+    if (session?.status !== "RESULT") {
+      setResultAutoAdvanceTimer(8);
+      return;
+    }
+
+    setResultAutoAdvanceTimer(8);
+    const interval = setInterval(() => {
+      setResultAutoAdvanceTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          if (session.host_user_id === currentUser.id) {
+            handleNextRound();
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [session?.status, session?.current_round, session?.host_user_id, currentUser.id]);
 
   if (!isOpen || !session) return null;
 
@@ -724,7 +749,12 @@ export function DiwanMultiplayerGame({
             </div>
 
             {/* Next Round Action */}
-            <div className="flex justify-end pt-1">
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-[11px] font-mono text-amber-300 font-bold flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5 text-amber-400" />
+                <span>تبدأ الجولة القادمة خلال {resultAutoAdvanceTimer}s</span>
+              </span>
+
               {isHost ? (
                 <button
                   type="button"
@@ -733,12 +763,18 @@ export function DiwanMultiplayerGame({
                 >
                   <span>
                     {session.current_round < session.total_rounds
-                      ? "الجولة الموالية ➡️"
+                      ? `الجولة الموالية (${resultAutoAdvanceTimer}s) ➡️`
                       : "عرض التتويج النهائي 🏆"}
                   </span>
                 </button>
               ) : (
-                <span className="text-xs text-slate-400">في انتظار انتقال المضيف للجولة القادمة...</span>
+                <button
+                  type="button"
+                  onClick={handleNextRound}
+                  className="py-2 px-4 rounded-xl bg-white/[0.06] hover:bg-white/10 text-slate-300 hover:text-white text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+                >
+                  <span>تخطي الانتظار ⏩</span>
+                </button>
               )}
             </div>
           </div>

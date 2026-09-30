@@ -1,7 +1,5 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { AppShell } from "@/components/ui/AppShell";
@@ -131,9 +129,28 @@ function DiwanMainContent() {
   }, [activeTable, isUserSeated, user?.id]);
 
   // Actions
-  const handleSelectTable = (tableId: string) => {
+  const handleSelectTable = async (tableId: string, autoJoin = false) => {
     router.replace(`/diwan?table=${tableId}`, { scroll: false });
-    loadTable(tableId);
+    await loadTable(tableId);
+
+    if (autoJoin) {
+      const currentUserId = user?.id || `anon-${Date.now()}`;
+      const res = await DiwanService.takeSeat({
+        tableId,
+        user: {
+          id: currentUserId,
+          name: studentIdentity.name,
+          avatar: studentIdentity.avatar,
+          wilayaCode: studentIdentity.wilayaCode,
+        },
+      });
+
+      if (res.allowed && res.member) {
+        setIsUserSeated(true);
+        const updated = await DiwanService.getMembers(tableId);
+        setMembers(updated);
+      }
+    }
   };
 
   const handleBackToLobby = () => {

@@ -236,10 +236,11 @@ export function DiwanTableView({
           <button
             type="button"
             onClick={onBackToLobby}
-            className="p-2.5 rounded-2xl bg-white/[0.05] hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer"
+            className="py-2 px-3 rounded-2xl bg-white/[0.05] hover:bg-white/10 text-slate-300 hover:text-white transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold"
             title="العودة لكل الطاولات"
           >
             <ArrowRight className="w-4 h-4" />
+            <span>كل الطاولات</span>
           </button>
 
           <div>
@@ -359,7 +360,7 @@ export function DiwanTableView({
         {/* ================================================================= */}
         <div className="lg:col-span-8 space-y-4">
           {/* DIGITAL STUDY TABLE CONTAINER */}
-          <div className="relative rounded-[36px] border border-white/15 bg-gradient-to-b from-[#0F1A30] via-[#0A1222] to-[#050A14] p-5 sm:p-8 shadow-2xl overflow-hidden min-h-[500px] flex flex-col justify-between">
+          <div className="relative rounded-[36px] border border-white/15 bg-gradient-to-b from-[#0F1A30] via-[#0A1222] to-[#050A14] p-5 sm:p-8 shadow-2xl overflow-hidden min-h-[420px] sm:min-h-[500px] flex flex-col justify-between">
             {/* Center Felt Warm Glow */}
             <div className="absolute inset-0 bg-radial from-amber-500/[0.08] via-blue-500/[0.03] to-transparent pointer-events-none" />
 
@@ -529,37 +530,76 @@ export function DiwanTableView({
             </div>
           </div>
 
-          {/* Current User Status Switcher Bar (If Seated) */}
+          {/* Current User Status Switcher Bar & Quick Reactions (If Seated) */}
           {isUserSeated && (
-            <div className="p-3.5 sm:p-4 rounded-3xl bg-[#0B1222]/90 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-lg">
-              <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                <Edit3 className="w-3.5 h-3.5 text-blue-400" />
-                <span>حالتي الآن على الطاولة:</span>
-              </span>
+            <div className="p-3.5 sm:p-4 rounded-3xl bg-[#0B1222]/90 border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-lg">
+              <div className="space-y-1.5">
+                <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                  <Edit3 className="w-3.5 h-3.5 text-blue-400" />
+                  <span>حالتي الآن على الطاولة:</span>
+                </span>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {(["studying", "writing", "answering", "playing"] as StudentActivityStatus[]).map((st) => {
-                  const cfg = statusConfigs[st];
-                  const isSelected =
-                    currentMember?.current_status === st ||
-                    (st === "answering" && currentMember?.current_status === "helping");
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {(["studying", "writing", "answering", "playing"] as StudentActivityStatus[]).map((st) => {
+                    const cfg = statusConfigs[st];
+                    const isSelected =
+                      currentMember?.current_status === st ||
+                      (st === "answering" && currentMember?.current_status === "helping");
 
-                  return (
+                    return (
+                      <button
+                        key={st}
+                        type="button"
+                        onClick={() => onStatusChange(st)}
+                        className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                          isSelected
+                            ? `${cfg.color} shadow-md font-black ring-2 ring-white/10`
+                            : "bg-white/[0.03] text-slate-400 border-white/10 hover:text-white"
+                        }`}
+                      >
+                        <span>{cfg.icon}</span>
+                        <span>{cfg.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Instant Social Cheer Ribbon */}
+              <div className="pt-2 md:pt-0 border-t border-white/5 md:border-t-0 flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                <span className="text-[11px] font-bold text-slate-400">تفاعل سريع:</span>
+                <div className="flex items-center gap-1.5">
+                  {[
+                    { emoji: "🔥", label: "شجع" },
+                    { emoji: "👏", label: "برافو" },
+                    { emoji: "💡", label: "فكرة" },
+                    { emoji: "☕", label: "قهوة" },
+                  ].map((item) => (
                     <button
-                      key={st}
+                      key={item.emoji}
                       type="button"
-                      onClick={() => onStatusChange(st)}
-                      className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
-                        isSelected
-                          ? `${cfg.color} shadow-md font-black ring-2 ring-white/10`
-                          : "bg-white/[0.03] text-slate-400 border-white/10 hover:text-white"
-                      }`}
+                      onClick={() => {
+                        onSendReaction(item.emoji);
+                        if (currentMember) {
+                          const particleId = `${Date.now()}-${Math.random()}`;
+                          setFloatingParticles((prev) => [
+                            ...prev,
+                            { id: particleId, emoji: item.emoji, seatIndex: currentMember.seat_index },
+                          ]);
+                          setTimeout(() => {
+                            setFloatingParticles((prev) => prev.filter((p) => p.id !== particleId));
+                          }, 1800);
+                        }
+                        showToast(`أرسلت ${item.emoji} ${item.label} للطاولة!`);
+                      }}
+                      className="px-2.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.1] border border-white/10 text-xs flex items-center gap-1 transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+                      title={item.label}
                     >
-                      <span>{cfg.icon}</span>
-                      <span>{cfg.label}</span>
+                      <span>{item.emoji}</span>
+                      <span className="text-[10px] text-slate-300 font-bold">{item.label}</span>
                     </button>
-                  );
-                })}
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -713,7 +753,7 @@ export function DiwanTableView({
       {/* =================================================================== */}
       {/* MOBILE BOTTOM ACTION BAR (Touch Targets >= 44px)                    */}
       {/* =================================================================== */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0B1222]/95 border-t border-white/10 backdrop-blur-xl px-4 py-2.5 shadow-2xl flex items-center justify-around">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0B1222]/95 border-t border-white/10 backdrop-blur-xl px-4 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))] shadow-2xl flex items-center justify-around">
         {/* 💬 محادثة */}
         <button
           type="button"

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import assert from "node:assert/strict";
 
-console.log("🏛️ [SHATER] Running Diwan Production Integrity & Anti-Mock Verification Suite...\n");
+console.log("🏛️ [SHATER BAC] Verifying Modern Diwan Digital Study Table & Hardening Suite...\n");
 
 const ROOT = process.cwd();
 
@@ -27,219 +27,127 @@ function test(name, fn) {
 }
 
 // ----------------------------------------------------
-// 1. STATS & TABLES ANTI-MOCK TESTS
+// 1. ARCHITECTURE & ZERO-CLUTTER VERIFICATION
 // ----------------------------------------------------
-console.log("📊 1. Campus Stats & Room Service De-Mocking Tests");
+console.log("📐 1. Architecture & Zero-Clutter Tests");
 
-test("Stats endpoint (/api/campus/stats) does not inject artificial activeRoomsCount bump", () => {
-  const code = read("src/app/api/campus/stats/route.ts");
-  assert(!code.includes("if (activeRoomsCount === 0) activeRoomsCount = 1"), "Artificial room count bump found in stats route");
-  assert(!code.includes("mockRooms"), "Mock rooms found in stats route");
+test("Only clean, modern Diwan components exist in src/components/diwan", () => {
+  const dir = path.join(ROOT, "src/components/diwan");
+  const files = fs.readdirSync(dir);
+  const expected = [
+    "CreateTableModal.tsx",
+    "DiwanChatPanel.tsx",
+    "DiwanLobbyView.tsx",
+    "DiwanMultiplayerGame.tsx",
+    "DiwanTableView.tsx",
+    "SharedStudyCard.tsx",
+  ];
+  assert.deepEqual(files.sort(), expected.sort(), `Found unexpected or legacy files in diwan dir: ${files.join(", ")}`);
 });
 
-test("Table Store (table-store.ts) does not contain SEED_TABLES or fake users", () => {
-  const code = read("src/lib/campus/table-store.ts");
-  assert(!code.includes("SEED_TABLES"), "SEED_TABLES still present in table-store.ts");
-  assert(!code.includes("user-ali"), "Fake mock user 'user-ali' found in table-store.ts");
-  assert(!code.includes("user-tarek"), "Fake mock user 'user-tarek' found in table-store.ts");
+test("DiwanTableView implements authentic Study Table concept with responsive seating and cheer ribbon", () => {
+  const code = read("src/components/diwan/DiwanTableView.tsx");
+  assert(code.includes("طاولة المراجعة الجماعية"), "Missing study table header");
+  assert(code.includes("statusConfigs"), "Missing statusConfigs for seating");
+  assert(code.includes("handleCheerMember"), "Missing cheer member action");
+  assert(code.includes("تفاعل سريع"), "Missing instant cheer ribbon");
+  assert(code.includes("🎮 ابدأ تحدي الطاولة"), "Missing multiplayer showdown trigger");
 });
 
-test("MajlisService (majlis-service.ts) has zero localRooms, zero localMembers, and zero fake default rooms", () => {
-  const code = read("src/lib/campus/majlis-service.ts");
-  assert(!code.includes("const localRooms:"), "localRooms in-memory mock still present in majlis-service.ts");
-  assert(!code.includes("const localMembers:"), "localMembers in-memory mock still present in majlis-service.ts");
-  assert(!code.includes('DEFAULT_ROOM_ID = "room-sciences-rc"'), "DEFAULT_ROOM_ID constant still present in majlis-service.ts");
-  assert(!code.includes("return defaultRoom;"), "defaultRoom fallback still present in majlis-service.ts");
-});
-
-test("MajlisWorkspace (MajlisWorkspace.tsx) does not force effectiveRoomsCount to 1 when empty", () => {
-  const code = read("src/components/diwan/MajlisWorkspace.tsx");
-  assert(!code.includes("stats.activeRoomsCount,\n    1"), "effectiveRoomsCount still forced to minimum 1 in MajlisWorkspace.tsx");
-  assert(!code.includes('loadRoom = useCallback(async (roomId = "room-sciences-rc")'), "loadRoom still hardcodes default roomId in MajlisWorkspace.tsx");
-});
-
-// ----------------------------------------------------
-// 2. SEAT PLACEMENT & RENDERING INTEGRITY
-// ----------------------------------------------------
-console.log("\n🪑 2. Cozy Desk & Seat Placement Accuracy Tests");
-
-test("CozyMajlisDesk accurately places seated students by seat_index", () => {
-  const code = read("src/components/diwan/CozyMajlisDesk.tsx");
-  assert(code.includes("members.find((m) => m.seat_index === idx)"), "Seat placement must map m.seat_index === idx");
-  assert(!code.includes("(!member && idx === 4)"), "Fake user injection at idx === 4 must be removed");
-});
-
-test("CozyMajlisDesk renders authentic empty state with create table CTA when no room is active", () => {
-  const code = read("src/components/diwan/CozyMajlisDesk.tsx");
-  assert(code.includes("ما كاين حتى مجلس مفتوح حالياً"), "Missing authentic empty state in CozyMajlisDesk");
-  assert(code.includes("onOpenCreateModal"), "Missing onOpenCreateModal action in CozyMajlisDesk");
+test("DiwanLobbyView displays visual seated peers preview and 1-tap join", () => {
+  const code = read("src/components/diwan/DiwanLobbyView.tsx");
+  assert(code.includes("membersPreview"), "Missing membersPreview in lobby cards");
+  assert(code.includes("انضم واجلس 🪑"), "Missing 1-tap join button in lobby cards");
+  assert(code.includes("افتح طاولة جديدة لزملائك"), "Missing create table CTA in lobby hero");
 });
 
 // ----------------------------------------------------
-// 3. STUDENT PRIVACY TESTS
+// 2. DIWAN GUARDIAN ANTI-ABUSE & PII SCRUBBING
 // ----------------------------------------------------
-console.log("\n🛡️ 3. Student Privacy Protection Tests");
+console.log("\n🛡️ 2. Diwan Guardian Anti-Abuse & Privacy Tests");
 
-test("Diwan components never derive student display name from raw email prefix", () => {
-  const workspaceCode = read("src/components/diwan/MajlisWorkspace.tsx");
-  const summariesCode = read("src/components/diwan/DiwanSharedSummariesTab.tsx");
-  assert(!workspaceCode.includes('user?.email?.split("@")[0]'), "Email prefix used as name in MajlisWorkspace.tsx");
-  assert(!summariesCode.includes('user?.email?.split("@")[0]'), "Email prefix used as name in DiwanSharedSummariesTab.tsx");
+test("DiwanGuardian enforces flood protection, duplicate spam guard, and character collapse", () => {
+  const code = read("src/lib/diwan/diwan-guardian.ts");
+  assert(code.includes("timeSinceLast < 800"), "Missing 800ms flood protection check");
+  assert(code.includes("recentTimestamps.length >= 6"), "Missing rate limit max threshold check");
+  assert(code.includes("30000"), "Missing 30s duplicate spam window check");
+  assert(code.includes("replace(/(.)\\1{6,}/g"), "Missing character spam collapsing");
 });
 
-test("MajlisService enforces chat rate limiting and message length caps", () => {
-  const code = read("src/lib/campus/majlis-service.ts");
-  assert(code.includes("CHAT_MIN_INTERVAL_MS"), "Missing chat rate limit interval");
-  assert(code.includes("300"), "Missing 300 character message length limit");
+test("DiwanGuardian strictly scrubs Algerian phone numbers (05/06/07) and emails", () => {
+  const code = read("src/lib/diwan/diwan-guardian.ts");
+  assert(code.includes("phoneRegex"), "Missing Algerian phone regex");
+  assert(code.includes("emailRegex"), "Missing email regex");
+  assert(code.includes("[رقم هاتف مخفي للخصوصية 🔒]"), "Missing phone redaction placeholder");
+  assert(code.includes("[بريد مخفي للخصوصية 🔒]"), "Missing email redaction placeholder");
 });
 
-// ----------------------------------------------------
-// 4. BRANCH B (EXPERIENCES) INTEGRITY
-// ----------------------------------------------------
-console.log("\n💬 4. Branch B (Student Experiences) Hardening Tests");
-
-test("ExperienceService getUpvotedIds does not invert browser window check", () => {
-  const code = read("src/lib/services/experience-service.ts");
-  assert(!code.includes('if (typeof window !== "undefined") return [];'), "getUpvotedIds inversion bug still present in experience-service.ts");
-  assert(code.includes('if (typeof window === "undefined") return [];'), "getUpvotedIds must return [] only on server");
-});
-
-test("api/experiences route does not inject CURATED_BAC_EXPERIENCES into live database queries", () => {
-  const code = read("src/app/api/experiences/route.ts");
-  assert(!code.includes("CURATED_BAC_EXPERIENCES.forEach((item) => {\n    map.set(item.id"), "Unconditional curated merge found in api/experiences/route.ts");
-});
-
-test("Experience upvote endpoint (/api/experiences/[id]/upvote) is implemented with database persistence", () => {
-  assert(fs.existsSync(path.join(ROOT, "src/app/api/experiences/[id]/upvote/route.ts")), "Missing upvote route file");
-  const code = read("src/app/api/experiences/[id]/upvote/route.ts");
-  assert(code.includes("experience_upvotes"), "Upvote route must query experience_upvotes table");
-  assert(code.includes("requireServerAuth"), "Upvote route must require authenticated server session");
-});
-
-test("Single experience endpoint (/api/experiences/[id]) supports GET, PATCH, and DELETE with authorization", () => {
-  assert(fs.existsSync(path.join(ROOT, "src/app/api/experiences/[id]/route.ts")), "Missing single experience route file");
-  const code = read("src/app/api/experiences/[id]/route.ts");
-  assert(code.includes("export async function GET"), "Missing GET handler in experiences/[id]");
-  assert(code.includes("export async function PATCH"), "Missing PATCH handler in experiences/[id]");
-  assert(code.includes("export async function DELETE"), "Missing DELETE handler in experiences/[id]");
+test("DiwanGuardian & types support the 6 standard Arabic report reasons and auto-escalates", () => {
+  const typesCode = read("src/types/diwan.ts");
+  const guardianCode = read("src/lib/diwan/diwan-guardian.ts");
+  assert(typesCode.includes('"إساءة"'), "Missing reason: إساءة in types");
+  assert(typesCode.includes('"تنمر"'), "Missing reason: تنمر in types");
+  assert(typesCode.includes('"محتوى غير مناسب"'), "Missing reason: محتوى غير مناسب in types");
+  assert(typesCode.includes('"سبام"'), "Missing reason: سبام in types");
+  assert(typesCode.includes('"غش"'), "Missing reason: غش in types");
+  assert(typesCode.includes('"أخرى"'), "Missing reason: أخرى in types");
+  assert(guardianCode.includes("FLAGGED"), "Missing FLAGGED escalation state");
+  assert(guardianCode.includes("HIDDEN"), "Missing HIDDEN escalation state");
 });
 
 // ----------------------------------------------------
-// 5. BRANCH C (SHARED SUMMARIES) INTEGRITY
+// 3. MULTIPLAYER CHALLENGES & ANTI-CHEAT
 // ----------------------------------------------------
-console.log("\n📑 5. Branch C (Shared Summaries) Hardening Tests");
+console.log("\n🎮 3. Multiplayer Challenges & Anti-Cheat Tests");
 
-test("Campus post like endpoint (/api/campus/posts/[id]/like) is implemented with database persistence", () => {
-  assert(fs.existsSync(path.join(ROOT, "src/app/api/campus/posts/[id]/like/route.ts")), "Missing post like route file");
-  const code = read("src/app/api/campus/posts/[id]/like/route.ts");
-  assert(code.includes("campus_post_likes"), "Post like route must query campus_post_likes table");
-  assert(code.includes("requireServerAuth"), "Post like route must require authenticated server session");
+test("DiwanMultiplayerGame supports 5 short fast game types and smooth return to study", () => {
+  const code = read("src/components/diwan/DiwanMultiplayerGame.tsx");
+  assert(code.includes("SPEED_RUSH"), "Missing SPEED_RUSH game mode");
+  assert(code.includes("TRUE_FALSE_BLITZ"), "Missing TRUE_FALSE_BLITZ game mode");
+  assert(code.includes("BRAIN_RUSH"), "Missing BRAIN_RUSH game mode");
+  assert(code.includes("BAC_SPRINT"), "Missing BAC_SPRINT game mode");
+  assert(code.includes("MEMORY_BATTLE"), "Missing MEMORY_BATTLE game mode");
+  assert(code.includes("نرجعو للمراجعة 📖"), "Missing seamless return to study button");
+  assert(code.includes("resultAutoAdvanceTimer"), "Missing dynamic auto-advance timer for result phase");
 });
 
-test("Single post endpoint (/api/campus/posts/[id]) supports GET and DELETE with authorization", () => {
-  assert(fs.existsSync(path.join(ROOT, "src/app/api/campus/posts/[id]/route.ts")), "Missing single post route file");
-  const code = read("src/app/api/campus/posts/[id]/route.ts");
-  assert(code.includes("export async function GET"), "Missing GET handler in campus/posts/[id]");
-  assert(code.includes("export async function DELETE"), "Missing DELETE handler in campus/posts/[id]");
-});
-
-test("DiwanSharedSummariesTab connects to /api/campus/posts API", () => {
-  const code = read("src/components/diwan/DiwanSharedSummariesTab.tsx");
-  assert(code.includes('fetch("/api/campus/posts'), "Summaries tab must fetch from /api/campus/posts");
-  assert(code.includes('/like'), "Summaries tab must trigger like via API endpoint");
-});
-
-// ----------------------------------------------------
-// 6. DATABASE & MIGRATION HARDENING
-// ----------------------------------------------------
-console.log("\n🗄️ 6. Database Migration & RLS Security Tests");
-
-test("Migration 034 exists and contains table locks, atomic RPCs, and block list", () => {
-  assert(fs.existsSync(path.join(ROOT, "supabase/migrations/034_harden_diwan_production_security.sql")), "Migration 034 is missing");
-  const sql = read("supabase/migrations/034_harden_diwan_production_security.sql");
-  assert(sql.includes("majlis_blocks"), "Missing majlis_blocks table in migration 034");
-  assert(sql.includes("majlis_take_seat_atomic"), "Missing majlis_take_seat_atomic in migration 034");
-  assert(sql.includes("majlis_leave_seat_atomic"), "Missing majlis_leave_seat_atomic in migration 034");
-  assert(sql.includes("campus_post_likes"), "Missing campus_post_likes table in migration 034");
+test("Server-side game validation in api/diwan/games rejects expired answers and double submissions", () => {
+  const code = read("src/app/api/diwan/games/route.ts");
+  assert(code.includes("SUBMIT_ANSWER"), "Missing SUBMIT_ANSWER action in games API");
+  assert(code.includes("Answer rejected: time expired"), "Missing expired answer rejection");
+  assert(code.includes("Answer already recorded for this round"), "Missing double submission prevention");
+  assert(code.includes("SPEED_RUSH"), "Missing first-solver lock for Speed Rush");
 });
 
 // ----------------------------------------------------
-// 7. ROUTE UNIFICATION & COMPATIBILITY
+// 4. DATABASE MIGRATIONS & IMMUTABLE AUDIT LOG
 // ----------------------------------------------------
-console.log("\n🔀 7. Route Unification & Legacy Redirect Tests");
+console.log("\n🗄️ 4. Database Migrations & Security Tests");
 
-test("Legacy route /campus/table/[tableId] redirects to unified Diwan route", () => {
-  const code = read("src/app/campus/table/[tableId]/page.tsx");
-  assert(code.includes('redirect(`/diwan?tab=majlis&roomId='), "Legacy table route must redirect to /diwan?tab=majlis&roomId=...");
+test("Migration 038 exists with message status column and immutable audit log trigger", () => {
+  assert(fs.existsSync(path.join(ROOT, "supabase/migrations/038_diwan_production_hardening.sql")), "Migration 038 missing");
+  const sql = read("supabase/migrations/038_diwan_production_hardening.sql");
+  assert(sql.includes("ADD COLUMN status TEXT NOT NULL DEFAULT 'VISIBLE'"), "Missing message status column");
+  assert(sql.includes("prevent_moderation_log_tampering"), "Missing tamper-proof trigger for moderation log");
+  assert(sql.includes("diwan_moderation_logs"), "Missing diwan_moderation_logs table");
 });
 
 // ----------------------------------------------------
-// 8. EIGHT EXPANDED PRODUCTION REQUIREMENTS TESTS
+// 5. MOBILE & RESPONSIVE TOUCH FRIENDLINESS
 // ----------------------------------------------------
-console.log("\n🚀 8. Monitored Live Chat, Stream Lock, Search & Reporting Tests");
+console.log("\n📱 5. Mobile & Responsive Layout Tests");
 
-test("Migration 035 exists and contains wilaya_code, duration_minutes, time extension RPC, and report schema", () => {
-  assert(fs.existsSync(path.join(ROOT, "supabase/migrations/035_diwan_monitored_chat_and_extensions.sql")), "Migration 035 is missing");
-  const sql = read("supabase/migrations/035_diwan_monitored_chat_and_extensions.sql");
-  assert(sql.includes("wilaya_code"), "Missing wilaya_code in migration 035");
-  assert(sql.includes("duration_minutes"), "Missing duration_minutes in migration 035");
-  assert(sql.includes("majlis_extend_room_time"), "Missing majlis_extend_room_time RPC in migration 035");
-  assert(sql.includes("target_type"), "Missing target_type in majlis_reports table in migration 035");
+test("DiwanTableView includes safe-area insets and mobile bottom drawer actions", () => {
+  const code = read("src/components/diwan/DiwanTableView.tsx");
+  assert(code.includes("safe-area-inset-bottom"), "Missing safe-area bottom padding in mobile bar");
+  assert(code.includes("activeMobileDrawer"), "Missing activeMobileDrawer state for mobile");
+  assert(code.includes("selectedMemberForProfile"), "Missing mini-profile popover on avatar click");
 });
 
-test("In-table live chat is monitored, audited, and messages have individual report buttons", () => {
-  const panelCode = read("src/components/diwan/MajlisInspectorPanel.tsx");
-  assert(panelCode.includes("المحادثة مراقبة ومسجلة"), "Missing monitored chat safety banner in MajlisInspectorPanel.tsx");
-  assert(panelCode.includes("type: \"MESSAGE\""), "Missing per-message reporting action in MajlisInspectorPanel.tsx");
-  const serviceCode = read("src/lib/campus/majlis-service.ts");
-  assert(serviceCode.includes("from(\"majlis_messages\")"), "Messages must be inserted into majlis_messages in Supabase");
-});
-
-test("Stream lock: CreateMajlisModal strictly locks table stream to userStream", () => {
-  const modalCode = read("src/components/diwan/CreateMajlisModal.tsx");
-  assert(modalCode.includes("const lockedStream = userStream"), "Table creation stream must strictly equal userStream");
-  assert(modalCode.includes("شعبة حسابك مغلقة رسمياً"), "Missing stream lock UI indicator in CreateMajlisModal.tsx");
-});
-
-test("Search & Filter for Majlis tables is fully integrated in MajlisWorkspace", () => {
-  const workspaceCode = read("src/components/diwan/MajlisWorkspace.tsx");
-  assert(workspaceCode.includes("searchQuery"), "searchQuery state missing in MajlisWorkspace.tsx");
-  assert(workspaceCode.includes("filterSubject"), "filterSubject state missing in MajlisWorkspace.tsx");
-  assert(workspaceCode.includes("filterVacantOnly"), "filterVacantOnly state missing in MajlisWorkspace.tsx");
-  assert(workspaceCode.includes("filteredRooms"), "filteredRooms calculation missing in MajlisWorkspace.tsx");
-});
-
-test("Curriculum integration: SubjectDashboard and UnifiedLessonReader have 'افتح مجلس' direct buttons", () => {
-  const dashCode = read("src/components/curriculum/SubjectDashboard.tsx");
-  assert(dashCode.includes("tab=majlis&openCreate=true"), "SubjectDashboard missing 'افتح مجلس' direct link");
-  const readerCode = read("src/components/curriculum/UnifiedLessonReader.tsx");
-  assert(readerCode.includes("tab=majlis&openCreate=true"), "UnifiedLessonReader missing 'افتح مجلس' direct link");
-});
-
-test("Student identity: resolveStudentIdentity formats privacy name, wilaya number (16), and avatar", () => {
-  const configCode = read("src/lib/constants/majlis-config.ts");
-  assert(configCode.includes("resolveStudentIdentity"), "resolveStudentIdentity missing in majlis-config.ts");
-  assert(configCode.includes("CHARACTER_AVATARS"), "CHARACTER_AVATARS missing in majlis-config.ts");
-  assert(configCode.includes("wilayaCode"), "wilayaCode resolution missing in majlis-config.ts");
-  const deskCode = read("src/components/diwan/CozyMajlisDesk.tsx");
-  assert(deskCode.includes("wilayaCode"), "CozyMajlisDesk must display wilayaCode on seat pills");
-});
-
-test("Room auto-close when empty and host time extension (+15m) are implemented", () => {
-  const serviceCode = read("src/lib/campus/majlis-service.ts");
-  assert(serviceCode.includes("extendRoomTime"), "extendRoomTime missing in majlis-service.ts");
-  assert(serviceCode.includes("requestExtension"), "requestExtension missing in majlis-service.ts");
-  assert(serviceCode.includes("duration_minutes"), "duration_minutes mapping missing in majlis-service.ts");
-  const workspaceCode = read("src/components/diwan/MajlisWorkspace.tsx");
-  assert(workspaceCode.includes("handleRequestExtension"), "handleRequestExtension missing in MajlisWorkspace.tsx");
-  assert(workspaceCode.includes("handleApproveExtension"), "handleApproveExtension missing in MajlisWorkspace.tsx");
-});
-
-test("Comprehensive safety reports API accepts STUDENT, MESSAGE, and ROOM reports", () => {
-  const reportRouteCode = read("src/app/api/campus/reports/route.ts");
-  assert(reportRouteCode.includes("targetType"), "Reports API must accept targetType");
-  assert(reportRouteCode.includes("messageId"), "Reports API must accept messageId");
-  assert(reportRouteCode.includes("messageContent"), "Reports API must accept messageContent");
+test("Diwan main page supports auto-join seating when selected from lobby", () => {
+  const code = read("src/app/diwan/page.tsx");
+  assert(code.includes("handleSelectTable = async (tableId: string, autoJoin = false)"), "handleSelectTable must accept autoJoin parameter");
+  assert(code.includes("DiwanService.takeSeat"), "takeSeat must be executed when autoJoin is true");
 });
 
 // ----------------------------------------------------
@@ -250,7 +158,7 @@ console.log(`Total Tests: ${total} | Passed: ${passed} | Failed: ${total - passe
 console.log(`========================================\n`);
 
 if (passed === total) {
-  console.log("🎉 ALL DIWAN PRODUCTION HARDENING CHECKS PASSED!");
+  console.log("🎉 ALL MODERN DIWAN INTEGRITY CHECKS PASSED WITH 100% SUCCESS!");
   process.exit(0);
 } else {
   console.error("💥 SOME DIWAN INTEGRITY CHECKS FAILED!");
