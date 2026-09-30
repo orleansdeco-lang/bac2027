@@ -1,10 +1,19 @@
 import { NextResponse } from "next/server";
 import { uploadDocument, sanitizeFileName } from "@/lib/services/document-storage-service";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
+import { extractAndVerifyOperator } from "@/lib/operations/auth";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  const operator = await extractAndVerifyOperator(req);
+  if (!operator) {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized: Operator privileges required to upload exam documents." },
+      { status: 403 }
+    );
+  }
+
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;

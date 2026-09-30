@@ -77,15 +77,16 @@ export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
   // ---------------------------------------------------------------------------
-  // 1. OPERATIONS CENTER GUARD (/ops/*)
   // ---------------------------------------------------------------------------
-  if (pathname.startsWith("/ops")) {
+  // 1. OPERATIONS & SHATER CONTROL CENTER GUARD (/admin/* and /ops/*)
+  // ---------------------------------------------------------------------------
+  if (pathname.startsWith("/admin") || pathname.startsWith("/ops")) {
     // Exempt /ops/login from interception
-    if (pathname === "/ops/login") {
+    if (pathname === "/ops/login" || pathname === "/admin/login") {
       return NextResponse.next();
     }
 
-    // Check for operator session
+    // Check for operator/admin session
     const hasSession = hasActiveSession(request);
     if (!hasSession) {
       const loginUrl = new URL("/ops/login", request.url);
@@ -96,6 +97,7 @@ export function middleware(request: NextRequest) {
 
     const response = NextResponse.next();
     response.headers.set("x-operations-route", "true");
+    response.headers.set("x-admin-route", "true");
     return response;
   }
 
@@ -132,6 +134,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/admin/:path*",
     "/ops/:path*",
     "/dashboard/:path*",
     "/mission/:path*",

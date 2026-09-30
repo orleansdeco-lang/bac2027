@@ -1,46 +1,59 @@
 import { NextResponse } from "next/server";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
+import { requirePermission } from "@/lib/admin/auth";
 import { CustomExamService } from "@/lib/services/custom-exam-service";
-import { extractAndVerifyOperator } from "@/lib/operations/auth";
+import { recordAdminAudit } from "@/lib/admin/audit";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * GET /api/admin/exercises
+ * Lists exams and exercises from the official bank.
+ * Authoritative Guard: Requires 'exercises.read'.
+ */
 export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const stream_id = searchParams.get("stream_id") || undefined;
-    const subject_id = searchParams.get("subject_id") || undefined;
-    const exam_type = searchParams.get("exam_type") || undefined;
-    const year = searchParams.get("year") ? parseInt(searchParams.get("year")!) : undefined;
-    const term = searchParams.get("term") ? parseInt(searchParams.get("term")!) : undefined;
-    const includeDrafts = searchParams.get("includeDrafts") === "true";
+  const authResult = await requirePermission("exercises.read", req);
+  if (!authResult.success) {
+    return authResult.response;
+  }
 
+  const { searchParams } = new URL(req.url);
+  const stream_id = searchParams.get("stream_id") || undefined;
+  const subject_id = searchParams.get("subject_id") || undefined;
+  const exam_type = searchParams.get("exam_type") || undefined;
+  const year = searchParams.get("year") ? parseInt(searchParams.get("year")!) : undefined;
+  const term = searchParams.get("term") ? parseInt(searchParams.get("term")!) : undefined;
+
+  try {
     const exams = await CustomExamService.getCustomExams({
       stream_id,
       subject_id,
       exam_type,
       year,
       term,
-      includeDrafts,
+      includeDrafts: true,
     });
 
     return NextResponse.json({ success: true, exams });
   } catch (err: any) {
     return NextResponse.json(
-      { success: false, error: err?.message || "فشل جلب المواضيع" },
+      { success: false, error: err?.message || "فشل جلب قائمة التمارين" },
       { status: 500 }
     );
   }
 }
 
+/**
+ * POST /api/admin/exercises
+ * Publishes a new exam/exercise into the bank.
+ * Authoritative Guard: Requires 'exercises.manage'.
+ */
 export async function POST(req: Request) {
-  const operator = await extractAndVerifyOperator(req);
-  if (!operator) {
-    return NextResponse.json(
-      { success: false, error: "Unauthorized: Operator privileges required" },
-      { status: 403 }
-    );
+  const authResult = await requirePermission("exercises.manage", req);
+  if (!authResult.success) {
+    return authResult.response;
   }
+
+  const { context } = authResult;
 
   try {
     const body = await req.json();
@@ -75,6 +88,19 @@ export async function POST(req: Request) {
       );
     }
 
+    // Record audit log
+    await recordAdminAudit(
+      {
+        actorUserId: context.userId,
+        actorRole: context.role,
+        action: "EXERCISE_CREATED",
+        resourceType: "custom_exam",
+        resourceId: result.data?.id || "unknown",
+        afterState: { title: body.title, stream_id: body.stream_id, subject_id: body.subject_id },
+      },
+      context.token
+    );
+
     return NextResponse.json({ success: true, exam: result.data });
   } catch (err: any) {
     return NextResponse.json(
@@ -84,24 +110,42 @@ export async function POST(req: Request) {
   }
 }
 
+/**
+ * DELETE /api/admin/exercises
+ * Removes an exam from the bank.
+ * Authoritative Guard: Requires 'exercises.manage'.
+ */
 export async function DELETE(req: Request) {
-  const operator = await extractAndVerifyOperator(req);
-  if (!operator) {
-    return NextResponse.json(
-      { success: false, error: "Unauthorized: Operator privileges required" },
-      { status: 403 }
-    );
+  const authResult = await requirePermission("exercises.manage", req);
+  if (!authResult.success) {
+    return authResult.response;
   }
+
+  const { context } = authResult;
 
   try {
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
 
     if (!id) {
-      return NextResponse.json({ success: false, error: "معرف الموضوع مفقود" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "معرف الموضوع مطلوب" }, { status: 400 });
     }
 
     const ok = await CustomExamService.deleteCustomExam(id);
+
+    if (ok) {
+      await recordAdminAudit(
+        {
+          actorUserId: context.userId,
+          actorRole: context.role,
+          action: "EXERCISE_DELETED",
+          resourceType: "custom_exam",
+          resourceId: id,
+        },
+        context.token
+      );
+    }
+
     return NextResponse.json({ success: ok });
   } catch (err: any) {
     return NextResponse.json(

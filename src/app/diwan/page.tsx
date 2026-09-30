@@ -118,6 +118,18 @@ function DiwanMainContent() {
     };
   }, [activeTable, user?.id]);
 
+  // Periodic presence heartbeat while seated
+  useEffect(() => {
+    if (!activeTable || !isUserSeated) return;
+    const currentUserId = user?.id || "student-user";
+
+    const interval = setInterval(() => {
+      DiwanService.heartbeat(activeTable.id, currentUserId);
+    }, 25000);
+
+    return () => clearInterval(interval);
+  }, [activeTable, isUserSeated, user?.id]);
+
   // Actions
   const handleSelectTable = (tableId: string) => {
     router.replace(`/diwan?table=${tableId}`, { scroll: false });

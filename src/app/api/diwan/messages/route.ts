@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sanitizeSingleLine } from "@/lib/security/sanitize";
 import { DiwanService } from "@/lib/diwan/diwan-service";
+import { DiwanGuardian } from "@/lib/diwan/diwan-guardian";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +14,13 @@ export async function GET(req: NextRequest) {
     }
 
     const messages = await DiwanService.getMessages(tableId);
-    return NextResponse.json({ success: true, messages });
+
+    // Privacy & moderation filtering: only return visible messages
+    const visibleMessages = messages.filter(
+      (m) => !m.is_deleted && m.status !== "HIDDEN" && m.status !== "DELETED"
+    );
+
+    return NextResponse.json({ success: true, messages: visibleMessages });
   } catch (err: any) {
     console.error("[API Diwan Messages GET] Error:", err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
@@ -26,18 +32,33 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { tableId, userId, userName, userAvatar, content, messageType, replyToId } = body;
 
-    if (!tableId || !userId || !content || !content.trim()) {
-      return NextResponse.json({ success: false, error: "الرسالة لا يمكن أن تكون فارغة" }, { status: 400 });
+    if (!tableId || !userId || !content) {
+      return NextResponse.json(
+        { success: false, error: "الرسالة ومعرف المستخدم مطلوبان." },
+        { status: 400 }
+      );
     }
 
-    const cleanContent = sanitizeSingleLine(content, 500);
+    // Server-Side Hardening & Anti-Abuse via DiwanGuardian
+    const validation = DiwanGuardian.validateMessage({
+      userId,
+      content,
+      isReaction: messageType === "reaction",
+    });
+
+    if (!validation.valid) {
+      return NextResponse.json(
+        { success: false, error: validation.errorAr || "تم رفض الرسالة لمخالفتها ميثاق الأمان." },
+        { status: 429 }
+      );
+    }
 
     const message = await DiwanService.sendMessage({
       tableId,
       userId,
       userName: userName || "طالب شاطر",
       userAvatar: userAvatar || "/illustrations/characters/scholar.jpg",
-      content: cleanContent,
+      content: validation.sanitizedContent,
       messageType: messageType || "chat",
       replyToId: replyToId || null,
     });

@@ -62,6 +62,10 @@ export interface DiwanMember {
   last_seen_at?: string;
 }
 
+export type DiwanMessageStatus = "VISIBLE" | "HIDDEN" | "DELETED" | "FLAGGED";
+
+export type DiwanReportReason = "إساءة" | "تنمر" | "محتوى غير مناسب" | "سبام" | "غش" | "أخرى";
+
 export interface DiwanMessage {
   id: string;
   room_id: string;
@@ -70,6 +74,7 @@ export interface DiwanMessage {
   user_avatar: string;
   content: string;
   message_type: DiwanMessageType;
+  status?: DiwanMessageStatus;
   reply_to_id?: string | null;
   attachment_url?: string | null;
   is_deleted?: boolean;

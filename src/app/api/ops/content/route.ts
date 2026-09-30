@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isServerOperator, isServerContentReviewer, isServerOwner } from "@/lib/operations/auth";
+import { isServerOperator, isServerContentReviewer, isServerOwner, extractAndVerifyOperator } from "@/lib/operations/auth";
+import { extractAdminContext } from "@/lib/admin/auth";
 import { getContentOperationsReport } from "@/lib/operations/content";
 import { ContentVerificationStatus, ContentProvenanceSource } from "@/lib/operations/types";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  const userId = request.headers.get("x-user-id");
+  // First verify operator or admin session cryptographically via token
+  const adminContext = await extractAdminContext(request);
+  const operator = adminContext ? null : await extractAndVerifyOperator(request);
+
   const isAuthorized = Boolean(
-    userId &&
-      ((await isServerOperator(userId)) ||
-        (await isServerContentReviewer(userId)) ||
-        (await isServerOwner(userId)))
+    (adminContext && (adminContext.permissions.includes("content.read") || adminContext.role === "OWNER" || adminContext.role === "OPERATOR" || adminContext.role === "CONTENT_REVIEWER")) ||
+    operator
   );
 
   if (!isAuthorized) {

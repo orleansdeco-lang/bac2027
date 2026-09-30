@@ -48,7 +48,7 @@ export function DiwanChatPanel({
   const [messageType, setMessageType] = useState<DiwanMessageType>("chat");
   const [filterMode, setFilterMode] = useState<"all" | "questions">("all");
   const [reportingMsgId, setReportingMsgId] = useState<string | null>(null);
-  const [reportReason, setReportReason] = useState("ألفاظ غير لائقة");
+  const [reportReason, setReportReason] = useState("إساءة");
   const [reportToast, setReportToast] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isAtBottom, setIsAtBottom] = useState(true);
@@ -139,7 +139,7 @@ export function DiwanChatPanel({
   };
 
   const filteredMessages = messages.filter((m) => {
-    if (m.is_deleted) return false;
+    if (m.is_deleted || m.status === "HIDDEN" || m.status === "DELETED") return false;
     if (filterMode === "questions") return m.message_type === "question";
     return true;
   });
@@ -441,10 +441,12 @@ export function DiwanChatPanel({
                 onChange={(e) => setReportReason(e.target.value)}
                 className="w-full py-2 px-3 rounded-xl bg-[#0F172A] border border-white/10 text-xs text-white focus:outline-none"
               >
-                <option value="ألفاظ غير لائقة">ألفاظ غير لائقة أو مسيئة</option>
-                <option value="تشتيت وإزعاج">تشتيت الزملاء والخروج عن الدراسة</option>
-                <option value="سبام">تكرار ورسائل عشوائية (سبام)</option>
+                <option value="إساءة">إساءة أو شتائم</option>
+                <option value="تنمر">تنمر ومضايقة</option>
+                <option value="محتوى غير مناسب">محتوى غير مناسب للطلاب</option>
+                <option value="سبام">سبام وتكرار عشوائي</option>
                 <option value="غش">محاولة غش وتضليل</option>
+                <option value="أخرى">أسباب أخرى</option>
               </select>
             </div>
 

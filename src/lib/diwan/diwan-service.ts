@@ -349,6 +349,21 @@ export const DiwanService = {
       return { allowed: true, member: alreadySeated };
     }
 
+    // Prevent seat index collisions
+    const occupiedSeats = new Set(existing.map((m) => m.seat_index));
+    let assignedSeat = params.preferredSeat;
+    if (assignedSeat === undefined || occupiedSeats.has(assignedSeat)) {
+      for (let i = 0; i < (table?.capacity || 6); i++) {
+        if (!occupiedSeats.has(i)) {
+          assignedSeat = i;
+          break;
+        }
+      }
+    }
+    if (assignedSeat === undefined) {
+      return { allowed: false, reason: "لا توجد مقاعد شاغرة حالياً." };
+    }
+
     const member: DiwanMember = {
       id: `mem-${Date.now()}`,
       room_id: params.tableId,
@@ -357,7 +372,7 @@ export const DiwanService = {
       user_avatar: params.user.avatar,
       wilaya_code: params.user.wilayaCode || "16",
       current_status: "studying",
-      seat_index: params.preferredSeat ?? existing.length,
+      seat_index: assignedSeat,
       joined_at: new Date().toISOString(),
       last_seen_at: new Date().toISOString(),
     };
@@ -384,6 +399,26 @@ export const DiwanService = {
     }
 
     return { allowed: true, member };
+  },
+
+  /**
+   * Periodic presence heartbeat to prevent stale seats and impersonation
+   */
+  async heartbeat(tableId: string, userId: string): Promise<void> {
+    const existing = inMemoryMembers.get(tableId) || [];
+    const member = existing.find((m) => m.user_id === userId);
+    if (member) {
+      member.last_seen_at = new Date().toISOString();
+      if (isSupabaseConfigured && supabase) {
+        try {
+          await supabase
+            .from("diwan_room_members")
+            .update({ last_seen_at: member.last_seen_at })
+            .eq("room_id", tableId)
+            .eq("user_id", userId);
+        } catch {}
+      }
+    }
   },
 
   /**
