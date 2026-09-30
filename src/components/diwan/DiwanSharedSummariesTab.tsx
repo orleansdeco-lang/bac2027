@@ -432,27 +432,22 @@ export function DiwanSharedSummariesTab() {
       )}
 
       {/* Top Hero Banner */}
-      <div
-        className="rounded-3xl p-5 sm:p-7 border border-white/[0.08] shadow-2xl relative overflow-hidden backdrop-blur-xl"
-        style={{
-          background: "linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(10, 16, 31, 0.98) 100%)",
-        }}
-      >
+      <div className="rounded-3xl p-5 sm:p-7 border-2 border-slate-200/90 bg-white shadow-sm relative overflow-hidden">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-1">
-                <FileText className="w-3.5 h-3.5" />
-                بنك الملخصات والمواضيع التشاركية
+              <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-bold flex items-center gap-1.5">
+                <FileText className="w-3.5 h-3.5 text-emerald-700" />
+                <span>بنك الملخصات والمواضيع التشاركية</span>
               </span>
-              <span className="text-xs text-slate-400 font-mono">
+              <span className="text-xs text-slate-600 font-mono font-bold">
                 {filteredPosts.length} وثيقة وموضوع
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-black text-white">
-              الملخصات والمواضيع الرسمية والتشاركية
+            <h2 className="text-xl sm:text-2xl font-black text-slate-900">
+              الملخصات والمواضيع الرسمية والتشاركية 📑
             </h2>
-            <p className="text-xs sm:text-sm text-slate-300/80 mt-1 max-w-2xl leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-700 mt-1 max-w-2xl leading-relaxed font-medium">
               بنك معرفي متكامل يجمع سلاسل الأساتذة الأصلية بصيغة PDF كاملة دون أي نقصان، إلى جانب ملخصات الطلاب والخرائط الذهنية بصيغ متنوعة (PDF أصلي، صور عالية الدقة، وكتابة تفاعلية).
             </p>
           </div>
@@ -460,9 +455,9 @@ export function DiwanSharedSummariesTab() {
           <button
             type="button"
             onClick={() => setIsShareModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs sm:text-sm shadow-lg shadow-blue-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer whitespace-nowrap self-start md:self-auto"
+            className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 text-slate-950 font-black text-xs sm:text-sm shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer whitespace-nowrap self-start md:self-auto"
           >
-            <PlusCircle className="w-4 h-4" />
+            <PlusCircle className="w-4 h-4 text-slate-950" />
             <span>رفع موضوع أو ملخص (PDF / صور / نص) 🚀</span>
           </button>
         </div>

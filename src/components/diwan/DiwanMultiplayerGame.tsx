@@ -418,7 +418,7 @@ export function DiwanMultiplayerGame({
             {/* Game Type Picker (if host and game hasn't started) */}
             {isHost && (
               <div className="w-full space-y-2 pt-1 text-right">
-                <span className="text-[11px] font-bold text-slate-400 block px-1">
+                <span className="text-xs font-black text-slate-200 block px-1">
                   اختر نوع التحدي لهذه الجلسة:
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -444,15 +444,15 @@ export function DiwanMultiplayerGame({
                         }}
                         className={`p-2.5 rounded-2xl border text-right transition-all cursor-pointer ${
                           isSel
-                            ? "bg-amber-500/20 border-amber-400 text-amber-200 font-bold shadow-md"
-                            : "bg-white/[0.02] border-white/10 text-slate-400 hover:text-white"
+                            ? "bg-amber-400/20 border-amber-400 text-amber-200 font-bold shadow-md"
+                            : "bg-white/[0.04] border-white/15 text-slate-200 hover:text-white"
                         }`}
                       >
                         <div className="flex items-center gap-1.5 text-xs font-bold">
                           <span>{c.icon}</span>
                           <span className="truncate">{c.title}</span>
                         </div>
-                        <span className="text-[9px] text-slate-500 block truncate mt-0.5">
+                        <span className="text-[10px] text-slate-300 block truncate mt-0.5 font-bold">
                           {c.badge}
                         </span>
                       </button>
@@ -463,13 +463,13 @@ export function DiwanMultiplayerGame({
             )}
 
             {/* Competitors List */}
-            <div className="w-full p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2.5">
-              <div className="flex items-center justify-between text-xs text-slate-400">
+            <div className="w-full p-4 rounded-2xl bg-white/[0.04] border border-white/10 space-y-2.5">
+              <div className="flex items-center justify-between text-xs text-slate-200 font-bold">
                 <span className="flex items-center gap-1.5">
                   <Users className="w-3.5 h-3.5 text-amber-400" />
                   <span>المتسابقون الجاهزون ({players.length}):</span>
                 </span>
-                <span className="text-[10px] text-emerald-400 font-bold">
+                <span className="text-xs text-emerald-400 font-black">
                   {players.length >= 2 ? "جاهزون للبدء ✅" : "في انتظار لاعب إضافي..."}
                 </span>
               </div>
@@ -484,15 +484,15 @@ export function DiwanMultiplayerGame({
                       key={p.user_id}
                       className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-2 ${
                         isSelf
-                          ? "bg-blue-600/30 border-blue-500 text-blue-200"
-                          : "bg-white/[0.04] border-white/10 text-slate-300"
+                          ? "bg-blue-600/40 border-blue-400 text-white font-black"
+                          : "bg-white/[0.06] border-white/15 text-slate-100"
                       }`}
                     >
-                      <div className="relative w-5 h-5 rounded-full overflow-hidden border border-white/20">
+                      <div className="relative w-5 h-5 rounded-full overflow-hidden border border-white/30">
                         <Image src={p.user_avatar} alt={p.user_name} fill className="object-cover" />
                       </div>
                       <span>{p.user_name}</span>
-                      {isRoomHost && <span className="text-[9px] text-amber-400">👑 المضيف</span>}
+                      {isRoomHost && <span className="text-[10px] text-amber-300 font-black">👑 المضيف</span>}
                     </div>
                   );
                 })}
