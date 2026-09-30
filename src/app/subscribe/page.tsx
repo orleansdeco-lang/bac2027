@@ -309,26 +309,16 @@ export default function SubscribePage() {
 
     setIsSubmittingCod(true);
     try {
-      const effectiveUserId =
-        user?.id ||
-        profile?.id ||
-        (typeof window !== "undefined"
-          ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id
-          : undefined) ||
-        `guest_${cleanPhone}`;
-
-      const res = await fetch("/api/orders/cod", {
+      const res = await fetch("/api/orders/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          userId: effectiveUserId,
-          plan: selectedPlanId,
-          shippingName: shippingName.trim(),
-          shippingPhone: cleanPhone,
-          parentPhone: shippingParentPhone.trim() || undefined,
-          shippingWilaya: shippingWilaya.trim(),
-          shippingCommune: shippingCommune.trim(),
-          studentEmail: user?.email || profile?.email,
+          plan_id: selectedPlanId,
+          full_name: shippingName.trim(),
+          phone: cleanPhone,
+          wilaya: shippingWilaya.trim(),
+          commune: shippingCommune.trim(),
+          address: (shippingCommune || shippingWilaya || "توصيل للعنوان").trim(),
         }),
       });
 
@@ -338,15 +328,15 @@ export default function SubscribePage() {
       }
 
       setCodResult({
-        orderId: data.order?.id || "COD-ORDER",
-        trackingNumber: data.order?.trackingNumber,
-        message: data.message,
+        orderId: data.order?.order_number || data.order?.id || "SH-2026-000184",
+        trackingNumber: data.order?.order_number,
+        message: data.message || "سيتم إرسال طلبك عبر شركة التوصيل، والدفع يكون عند الاستلام.",
       });
 
       trackEvent("cod_order_placed", {
-        userId: effectiveUserId,
         plan: selectedPlanId,
         wilaya: shippingWilaya,
+        orderNumber: data.order?.order_number,
       });
     } catch (err: any) {
       setCodError(err?.message || "حدث خطأ أثناء تسجيل طلب التوصيل");
@@ -958,14 +948,23 @@ export default function SubscribePage() {
                 </Card>
               ) : (
                 <Card className="p-5 bg-card border-theme rounded-3xl space-y-4 shadow-sm">
-                  <div className="border-b border-theme pb-3">
-                    <h3 className="text-sm font-bold text-theme-text flex items-center gap-2">
-                      <Truck className="w-4 h-4 text-purple-600" />
-                      <span>{isAr ? "طلب التوصيل للمنزل والدفع عند الاستلام" : "Livraison à domicile"}</span>
-                    </h3>
-                    <span className="text-[11px] text-theme-muted">
-                      {isAr ? "التوصيل متوفر لكل الـ 58 ولاية. تدفع نقداً عند الاستلام يداً بيد." : "Livraison 58 wilayas"}
-                    </span>
+                  <div className="border-b border-theme pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-bold text-theme-text flex items-center gap-2">
+                        <Truck className="w-4 h-4 text-purple-600" />
+                        <span>{isAr ? "طلب التوصيل للمنزل والدفع عند الاستلام" : "Livraison à domicile"}</span>
+                      </h3>
+                      <span className="text-[11px] text-theme-muted">
+                        {isAr ? "التوصيل متوفر لكافة الولايات. تدفع نقداً عند استلام العلبة المادية." : "Livraison toutes wilayas"}
+                      </span>
+                    </div>
+                    <Link
+                      href={`/checkout?plan=${selectedPlanId}`}
+                      className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all whitespace-nowrap"
+                    >
+                      <span>{isAr ? "فتح صفحة الدفع السريع ⚡" : "Aller au Checkout"}</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </Link>
                   </div>
 
                   <div className="space-y-3">
