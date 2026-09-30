@@ -7,7 +7,7 @@
 
 import { StreamId } from "./education";
 
-export type StudentActivityStatus = "studying" | "writing" | "helping" | "playing";
+export type StudentActivityStatus = "studying" | "writing" | "answering" | "playing" | "helping";
 
 export type DiwanMessageType = "chat" | "question" | "help" | "reaction" | "system";
 
@@ -48,6 +48,9 @@ export interface DiwanMember {
   wilaya_code: string;
   current_status: StudentActivityStatus;
   seat_index: number;
+  school?: string;
+  stream?: StreamId | string;
+  currentTopic?: string;
   joined_at: string;
   last_seen_at?: string;
 }

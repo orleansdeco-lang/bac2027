@@ -13,9 +13,10 @@ import {
   X,
   MessageSquare,
   AlertTriangle,
+  ArrowDown,
+  CornerDownLeft,
 } from "lucide-react";
 import { DiwanMessage, DiwanMessageType } from "@/types/diwan";
-import { DiwanService } from "@/lib/diwan/diwan-service";
 
 interface DiwanChatPanelProps {
   tableId: string;
@@ -28,6 +29,8 @@ interface DiwanChatPanelProps {
   messages: DiwanMessage[];
   onSendMessage: (content: string, type: DiwanMessageType) => void;
   onSendReaction: (emoji: string) => void;
+  prefillInput?: { text: string; type?: DiwanMessageType; timestamp: number } | null;
+  onCloseMobile?: () => void;
   className?: string;
 }
 
@@ -37,6 +40,8 @@ export function DiwanChatPanel({
   messages,
   onSendMessage,
   onSendReaction,
+  prefillInput,
+  onCloseMobile,
   className = "",
 }: DiwanChatPanelProps) {
   const [inputText, setInputText] = useState("");
@@ -45,14 +50,55 @@ export function DiwanChatPanel({
   const [reportingMsgId, setReportingMsgId] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState("ألفاظ غير لائقة");
   const [reportToast, setReportToast] = useState<string | null>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isAtBottom, setIsAtBottom] = useState(true);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Handle prefilled text from parent (e.g. clicking "اسقسيه" on student profile)
+  useEffect(() => {
+    if (prefillInput?.text) {
+      setInputText(prefillInput.text);
+      if (prefillInput.type) {
+        setMessageType(prefillInput.type);
+      }
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    }
+  }, [prefillInput]);
+
+  // Handle scroll detection and unread counter
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current;
+    const distanceToBottom = scrollHeight - (scrollTop + clientHeight);
+    const atBottom = distanceToBottom < 60;
+    setIsAtBottom(atBottom);
+    if (atBottom) {
+      setUnreadCount(0);
+    }
+  };
+
+  const scrollToBottom = (smooth = true) => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: smooth ? "smooth" : "auto",
+      });
+      setUnreadCount(0);
+      setIsAtBottom(true);
+    }
+  };
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    if (isAtBottom) {
+      scrollToBottom(false);
+    } else {
+      setUnreadCount((prev) => prev + 1);
     }
-  }, [messages]);
+  }, [messages.length]);
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +107,13 @@ export function DiwanChatPanel({
     onSendMessage(inputText.trim(), messageType);
     setInputText("");
     setMessageType("chat"); // Reset to standard chat after sending
+    setTimeout(() => scrollToBottom(true), 50);
+  };
+
+  const handleQuickPeerReply = (studentName: string) => {
+    setInputText(`رد على @${studentName}: `);
+    setMessageType("chat");
+    inputRef.current?.focus();
   };
 
   const handleReportSubmit = async () => {
@@ -91,11 +144,11 @@ export function DiwanChatPanel({
     return true;
   });
 
-  const quickReactions = ["💡", "👏", "🔥", "☕", "😂", "🤲"];
+  const quickReactions = ["💡", "👏", "🔥", "💪", "☕", "😂", "🤲"];
 
   return (
     <div
-      className={`flex flex-col h-full rounded-3xl border border-white/10 bg-[#0B1222]/95 backdrop-blur-xl overflow-hidden shadow-xl ${className}`}
+      className={`relative flex flex-col h-full rounded-3xl border border-white/10 bg-[#0B1222]/95 backdrop-blur-xl overflow-hidden shadow-2xl ${className}`}
       dir="rtl"
     >
       {/* Toast Notification */}
@@ -105,111 +158,179 @@ export function DiwanChatPanel({
         </div>
       )}
 
-      {/* Chat Header with Questions Filter */}
-      <div className="p-3.5 sm:p-4 border-b border-white/10 flex items-center justify-between gap-2 bg-white/[0.02]">
+      {/* Chat Header with Questions Filter & Mobile Close */}
+      <div className="p-3 sm:p-4 border-b border-white/10 flex items-center justify-between gap-2 bg-white/[0.02]">
         <div className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
           <MessageSquare className="w-4 h-4 text-blue-400" />
-          <h3 className="text-xs sm:text-sm font-bold text-white">محادثة الطاولة الحية</h3>
+          <h3 className="text-xs sm:text-sm font-black text-white">محادثة الطاولة</h3>
         </div>
 
-        {/* Filter Pills */}
-        <div className="flex items-center gap-1 p-0.5 rounded-xl bg-white/[0.04] border border-white/10 text-[10px]">
-          <button
-            type="button"
-            onClick={() => setFilterMode("all")}
-            className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
-              filterMode === "all" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-white"
-            }`}
-          >
-            الكل
-          </button>
-          <button
-            type="button"
-            onClick={() => setFilterMode("questions")}
-            className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1 ${
-              filterMode === "questions" ? "bg-amber-500 text-slate-950 shadow-sm" : "text-slate-400 hover:text-white"
-            }`}
-          >
-            <span>أسئلة</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-          </button>
+        <div className="flex items-center gap-2">
+          {/* Filter Pills */}
+          <div className="flex items-center gap-1 p-0.5 rounded-xl bg-white/[0.04] border border-white/10 text-[10px]">
+            <button
+              type="button"
+              onClick={() => setFilterMode("all")}
+              className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                filterMode === "all"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              الكل
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilterMode("questions")}
+              className={`px-2 py-1 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                filterMode === "questions"
+                  ? "bg-amber-500 text-slate-950 shadow-sm"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <span>أسئلة</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+            </button>
+          </div>
+
+          {/* Close button for mobile drawer */}
+          {onCloseMobile && (
+            <button
+              type="button"
+              onClick={onCloseMobile}
+              className="p-1.5 rounded-xl bg-white/[0.05] hover:bg-white/10 text-slate-400 hover:text-white cursor-pointer lg:hidden"
+              title="إغلاق المحادثة"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Messages Scroll Area */}
       <div
         ref={scrollRef}
-        className="flex-1 p-3 sm:p-4 space-y-3 overflow-y-auto no-scrollbar text-right"
+        onScroll={handleScroll}
+        className="flex-1 p-3 sm:p-4 space-y-3 overflow-y-auto no-scrollbar text-right relative"
       >
         {filteredMessages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500 space-y-2">
-            <span className="text-2xl">💬</span>
-            <p className="text-xs text-slate-400 font-bold">لا توجد رسائل بعد</p>
-            <p className="text-[11px] text-slate-500">
-              حيِّ زملاءك على الطاولة، اطرح سؤالاً أو شارك معهم فكرة الدرس!
+            <span className="text-3xl">💬</span>
+            <p className="text-xs text-slate-300 font-bold">المحادثة مفتوحة لزملائك</p>
+            <p className="text-[11px] text-slate-500 max-w-[200px]">
+              حيِّ رفاقك، اطرح سؤالاً، أو شارك فكرة لحل التمرين المشترك!
             </p>
           </div>
         ) : (
           filteredMessages.map((msg) => {
             const isSelf = msg.user_id === currentUser.id;
             const isQuestion = msg.message_type === "question";
-            const isHelp = msg.message_type === "help";
+            const isReaction = msg.message_type === "reaction";
 
+            // SPECIAL QUESTION CARD ("سؤال للديوان")
+            if (isQuestion) {
+              return (
+                <div
+                  key={msg.id}
+                  className="rounded-2xl border border-amber-500/40 bg-gradient-to-b from-amber-500/15 via-amber-500/5 to-transparent p-3.5 space-y-2.5 shadow-lg shadow-amber-500/5 relative group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="relative w-6 h-6 rounded-lg overflow-hidden border border-amber-400/40">
+                        <Image src={msg.user_avatar} alt={msg.user_name} fill className="object-cover" />
+                      </div>
+                      <span className="text-xs font-bold text-amber-200">
+                        {isSelf ? "أنت" : msg.user_name}
+                      </span>
+                    </div>
+
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black flex items-center gap-1 shadow-sm">
+                      <HelpCircle className="w-3 h-3" />
+                      <span>سؤال للديوان ❓</span>
+                    </span>
+                  </div>
+
+                  <p className="text-xs font-medium text-amber-100/90 leading-relaxed whitespace-pre-line bg-black/20 p-2.5 rounded-xl border border-amber-500/20">
+                    {msg.content}
+                  </p>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-[9px] text-amber-300/60 font-mono">
+                      {new Date(msg.created_at).toLocaleTimeString("ar-DZ", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+
+                    {/* Quick Peer Reply Button ("رد عليه") */}
+                    {!isSelf && (
+                      <button
+                        type="button"
+                        onClick={() => handleQuickPeerReply(msg.user_name)}
+                        className="py-1 px-2.5 rounded-lg bg-amber-400/20 hover:bg-amber-400/30 text-amber-200 border border-amber-400/30 text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer hover:scale-105 active:scale-95"
+                      >
+                        <CornerDownLeft className="w-3 h-3" />
+                        <span>رد عليه (شوف الطريقة)</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+
+            // Quick Reaction message
+            if (isReaction) {
+              return (
+                <div
+                  key={msg.id}
+                  className={`flex items-center gap-2 ${isSelf ? "justify-end" : "justify-start"}`}
+                >
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/5 text-xs text-slate-300">
+                    <span className="text-base">{msg.content}</span>
+                    <span className="text-[10px] text-slate-400">{isSelf ? "أنت" : msg.user_name}</span>
+                  </div>
+                </div>
+              );
+            }
+
+            // Standard Lightweight Bubble
             return (
               <div
                 key={msg.id}
-                className={`group flex items-start gap-2.5 ${isSelf ? "flex-row-reverse" : "flex-row"}`}
+                className={`group flex items-start gap-2 ${isSelf ? "flex-row-reverse" : "flex-row"}`}
               >
-                {/* Avatar */}
-                <div className="relative w-7 h-7 rounded-xl overflow-hidden bg-white/10 shrink-0 border border-white/10 mt-0.5">
+                <div className="relative w-6 h-6 rounded-lg overflow-hidden bg-white/10 shrink-0 border border-white/10 mt-0.5">
                   <Image src={msg.user_avatar} alt={msg.user_name} fill className="object-cover" />
                 </div>
 
-                {/* Bubble Container */}
-                <div className={`max-w-[80%] space-y-1 ${isSelf ? "items-end text-left" : "items-start text-right"}`}>
-                  {/* Sender Name + Type Tag */}
+                <div className={`max-w-[82%] space-y-0.5 ${isSelf ? "items-end text-left" : "items-start text-right"}`}>
                   <div className={`flex items-center gap-1.5 text-[10px] ${isSelf ? "justify-end" : "justify-start"}`}>
                     <span className="font-bold text-slate-400">{isSelf ? "أنت" : msg.user_name}</span>
-                    {isQuestion && (
-                      <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
-                        سؤال ❓
-                      </span>
-                    )}
-                    {isHelp && (
-                      <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/30">
-                        مساعدة 💡
-                      </span>
-                    )}
                   </div>
 
-                  {/* Bubble Content */}
                   <div
-                    className={`p-3 rounded-2xl text-xs leading-relaxed transition-all break-words relative ${
+                    className={`p-2.5 sm:p-3 rounded-2xl text-xs leading-relaxed break-words relative shadow-sm ${
                       isSelf
-                        ? "bg-blue-600 text-white rounded-tr-none shadow-md shadow-blue-500/10"
-                        : isQuestion
-                        ? "bg-amber-500/15 border border-amber-500/30 text-amber-100 rounded-tl-none shadow-sm"
-                        : isHelp
-                        ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-100 rounded-tl-none shadow-sm"
-                        : "bg-white/[0.05] border border-white/10 text-slate-200 rounded-tl-none"
+                        ? "bg-blue-600 text-white rounded-tr-none shadow-blue-500/10"
+                        : "bg-white/[0.06] border border-white/10 text-slate-200 rounded-tl-none"
                     }`}
                   >
                     <p>{msg.content}</p>
 
-                    {/* Report action for others' messages */}
                     {!isSelf && (
                       <button
                         type="button"
                         onClick={() => setReportingMsgId(msg.id)}
                         className="opacity-0 group-hover:opacity-100 transition-opacity absolute -left-6 top-1 text-slate-500 hover:text-rose-400 p-1 cursor-pointer"
-                        title="إبلاغ عن هذه الرسالة"
+                        title="إبلاغ"
                       >
                         <Flag className="w-3 h-3" />
                       </button>
                     )}
                   </div>
 
-                  <span className="text-[9px] text-slate-500 block px-1">
+                  <span className="text-[9px] text-slate-500 block px-1 font-mono">
                     {new Date(msg.created_at).toLocaleTimeString("ar-DZ", {
                       hour: "2-digit",
                       minute: "2-digit",
@@ -222,8 +343,20 @@ export function DiwanChatPanel({
         )}
       </div>
 
+      {/* Floating Unread Counter Pill (when scrolled up) */}
+      {!isAtBottom && unreadCount > 0 && (
+        <button
+          type="button"
+          onClick={() => scrollToBottom(true)}
+          className="absolute bottom-28 left-1/2 -translate-x-1/2 z-20 py-1.5 px-3.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold shadow-xl border border-blue-400/40 flex items-center gap-1.5 animate-bounce cursor-pointer transition-all"
+        >
+          <ArrowDown className="w-3.5 h-3.5" />
+          <span>رسائل جديدة ({unreadCount})</span>
+        </button>
+      )}
+
       {/* Quick Reaction Bar */}
-      <div className="px-3 py-1.5 bg-black/20 border-t border-white/5 flex items-center justify-between gap-1 overflow-x-auto no-scrollbar">
+      <div className="px-3 py-1.5 bg-black/25 border-t border-white/5 flex items-center justify-between gap-1 overflow-x-auto no-scrollbar">
         <div className="flex items-center gap-1.5">
           {quickReactions.map((emoji) => (
             <button
@@ -231,6 +364,7 @@ export function DiwanChatPanel({
               type="button"
               onClick={() => onSendReaction(emoji)}
               className="w-7 h-7 rounded-lg bg-white/[0.03] hover:bg-white/[0.08] text-xs flex items-center justify-center transition-transform hover:scale-125 active:scale-95 cursor-pointer"
+              title={`إرسال ${emoji}`}
             >
               {emoji}
             </button>
@@ -241,13 +375,13 @@ export function DiwanChatPanel({
         <button
           type="button"
           onClick={() => setMessageType(messageType === "question" ? "chat" : "question")}
-          className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border transition-all cursor-pointer flex items-center gap-1 ${
+          className={`px-2.5 py-1 rounded-xl text-[10px] font-bold border transition-all cursor-pointer flex items-center gap-1 ${
             messageType === "question"
-              ? "bg-amber-500 text-slate-950 border-amber-400 font-bold"
+              ? "bg-amber-400 text-slate-950 border-amber-300 font-black shadow-md shadow-amber-400/20"
               : "bg-white/5 text-slate-400 border-white/10 hover:text-white"
           }`}
         >
-          <span>❓ سؤال دراسي</span>
+          <span>❓ سؤال للديوان</span>
         </button>
       </div>
 
@@ -255,17 +389,18 @@ export function DiwanChatPanel({
       <form onSubmit={handleSend} className="p-2.5 sm:p-3 border-t border-white/10 bg-white/[0.02]">
         <div className="relative flex items-center gap-2">
           <input
+            ref={inputRef}
             type="text"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             placeholder={
               messageType === "question"
-                ? "اطرح سؤالك الدراسي هنا ليجيبك زملاؤك على الطاولة..."
-                : "اكتب رسالة لزملائك..."
+                ? "اطرح سؤالك للديوان ليساعدك زملاؤك..."
+                : "اكتب رسالة لزملائك على الطاولة..."
             }
             className={`w-full py-2.5 pr-3.5 pl-10 rounded-2xl bg-white/[0.04] border text-xs text-white placeholder:text-slate-500 focus:outline-none transition-all ${
               messageType === "question"
-                ? "border-amber-500/50 focus:border-amber-400"
+                ? "border-amber-400/60 focus:border-amber-400 shadow-sm shadow-amber-400/10"
                 : "border-white/10 focus:border-blue-500"
             }`}
           />
@@ -274,6 +409,7 @@ export function DiwanChatPanel({
             type="submit"
             disabled={!inputText.trim()}
             className="absolute left-1.5 p-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-30 disabled:hover:bg-blue-600 text-white transition-all cursor-pointer"
+            title="إرسال"
           >
             <Send className="w-3.5 h-3.5 rotate-180" />
           </button>
@@ -292,7 +428,7 @@ export function DiwanChatPanel({
               <button
                 type="button"
                 onClick={() => setReportingMsgId(null)}
-                className="text-slate-400 hover:text-white"
+                className="text-slate-400 hover:text-white cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -316,14 +452,14 @@ export function DiwanChatPanel({
               <button
                 type="button"
                 onClick={() => setReportingMsgId(null)}
-                className="py-1.5 px-3 rounded-xl bg-white/10 text-white text-xs font-bold"
+                className="py-1.5 px-3 rounded-xl bg-white/10 text-white text-xs font-bold cursor-pointer"
               >
                 إلغاء
               </button>
               <button
                 type="button"
                 onClick={handleReportSubmit}
-                className="py-1.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold"
+                className="py-1.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold cursor-pointer"
               >
                 تأكيد الإبلاغ
               </button>
