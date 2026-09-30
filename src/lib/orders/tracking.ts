@@ -331,20 +331,16 @@ export function buildOrderTrackingTimeline(
     step6State = "failed";
   } else if (isStep6Completed) {
     step6State = "completed";
-  } else if (deliveryStatus === "OUT_FOR_DELIVERY") {
-    step6State = "current";
   }
 
   const step6: TrackingTimelineStep = {
     id: "delivered",
     step_number: 6,
     title: "تم التسليم",
-    symbol: step6State === "completed" ? "✓" : step6State === "current" ? "●" : step6State === "failed" ? "✕" : "○",
+    symbol: step6State === "completed" ? "✓" : step6State === "failed" ? "✕" : "○",
     description:
       step6State === "completed"
         ? "تم استلام العلبة المادية بنجاح من الموزع."
-        : step6State === "current"
-        ? "الموزع في طريقه إليك اليوم، يرجى البقاء على اتصال بهاتفك."
         : step6State === "failed"
         ? "تعذر تسليم الطرد، يرجى التواصل مع الدعم الفني."
         : "التسليم والدفع نقداً (كاش) عند باب منزلك أو بمكتب التوصيل.",
