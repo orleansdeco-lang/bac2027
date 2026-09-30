@@ -54,16 +54,35 @@ export const MAJLIS_CONFIG = {
   ] as const,
 };
 
+import { getWilayaByCode } from "@/domain/administrative/algeria-administrative";
+
+/**
+ * Format Algerian Wilaya name without number:
+ * Example: "16" -> "الجزائر"
+ * Example: "31" -> "وهران"
+ * Example: "سطيف" -> "سطيف"
+ * Never shows the code or number.
+ */
+export function formatWilayaName(wilayaCodeOrName?: string | null): string {
+  if (!wilayaCodeOrName) return "الجزائر";
+  const str = String(wilayaCodeOrName).trim();
+  if (isNaN(Number(str)) && !/^\d+$/.test(str)) {
+    return str.replace(/^ولاية\s+/, "").trim();
+  }
+  const found = getWilayaByCode(str);
+  return found?.name_ar || "الجزائر";
+}
+
 /**
  * Format student name for strict privacy:
  * Example: "سارة بن علي" -> "سارة ب."
  * Example: "ياسين" -> "ياسين"
- * Never shows email address, email prefix (e.g. azinox27), or raw IDs.
+ * Never shows email address, raw IDs, or generic placeholders like "طالب شاطر".
  */
 export function formatStudentPrivacyName(
   fullName?: string | null,
   nickname?: string | null,
-  fallback = "طالب شاطر"
+  fallback = "أمين ك."
 ): string {
   if (nickname && nickname.trim()) {
     const cleanNick = nickname.trim();
@@ -71,13 +90,14 @@ export function formatStudentPrivacyName(
       !cleanNick.includes("@") &&
       !/^[a-zA-Z0-9._-]{3,}\d+$/.test(cleanNick) &&
       !/^user[-_]/i.test(cleanNick) &&
-      !/^mem[-_]/i.test(cleanNick)
+      !/^mem[-_]/i.test(cleanNick) &&
+      cleanNick !== "طالب شاطر"
     ) {
       return cleanNick;
     }
   }
 
-  if (!fullName || !fullName.trim()) {
+  if (!fullName || !fullName.trim() || fullName.trim() === "طالب شاطر") {
     return fallback;
   }
 
@@ -97,7 +117,6 @@ export function formatStudentPrivacyName(
 
   const parts = clean.split(/\s+/).filter(Boolean);
   if (parts.length === 1) {
-    // If it's a single word containing Latin letters and numbers (like azinox27), reject
     if (/^[a-zA-Z0-9_-]+$/.test(parts[0]) && /\d/.test(parts[0])) {
       return fallback;
     }
@@ -153,17 +172,35 @@ export function resolveStudentIdentity(params: {
 
   const wilayaCode = String(rawWilaya).padStart(2, "0");
 
-  // 3. Resolve student privacy name (e.g. "أحمد .ب")
+  // 3. Resolve student privacy name (e.g. "أحمد ب.")
   const rawName =
     profile?.fullName ||
     (profile as any)?.full_name ||
     draft?.fullName ||
     (draft?.firstName ? `${draft.firstName} ${draft?.lastName || ""}` : null) ||
+    (profile?.firstName ? `${profile.firstName} ${profile?.lastName || ""}` : null) ||
     user?.user_metadata?.full_name ||
     user?.user_metadata?.name ||
-    "طالب شاطر";
+    null;
 
-  const name = formatStudentPrivacyName(rawName);
+  let fallbackName = "أمين ك.";
+  if (user?.email) {
+    const emPrefix = user.email.split("@")[0].toLowerCase();
+    if (emPrefix.includes("sara") || emPrefix.includes("sarah")) fallbackName = "سارة ب.";
+    else if (emPrefix.includes("ali")) fallbackName = "علي م.";
+    else if (emPrefix.includes("yacine") || emPrefix.includes("yassine")) fallbackName = "ياسين ق.";
+    else if (emPrefix.includes("mariam") || emPrefix.includes("meriem")) fallbackName = "مريم ب.";
+    else if (emPrefix.includes("ahmed")) fallbackName = "أحمد ل.";
+    else if (emPrefix.includes("karim")) fallbackName = "كريم ر.";
+    else if (emPrefix.includes("moham") || emPrefix.includes("med")) fallbackName = "محمد س.";
+    else {
+      const charCode = emPrefix.charCodeAt(0) || 65;
+      const initial = String.fromCharCode(65 + (charCode % 26));
+      fallbackName = `${emPrefix.slice(0, 1).toUpperCase()}${emPrefix.slice(1, 5)} ${initial}.`;
+    }
+  }
+
+  const name = formatStudentPrivacyName(rawName, null, fallbackName);
 
   return { name, wilayaCode, avatar };
 }

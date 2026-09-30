@@ -11,6 +11,8 @@ import { DiwanTable, DiwanMember, DiwanMessage, StudentActivityStatus, DiwanMess
 import { DiwanService } from "@/lib/diwan/diwan-service";
 import { DiwanLobbyView } from "@/components/diwan/DiwanLobbyView";
 import { DiwanTableView } from "@/components/diwan/DiwanTableView";
+import { DiwanSharedSummariesTab } from "@/components/diwan/DiwanSharedSummariesTab";
+import { ExperiencesView } from "@/components/experiences/ExperiencesView";
 import { CreateTableModal } from "@/components/diwan/CreateTableModal";
 
 function DiwanMainContent() {
@@ -20,7 +22,24 @@ function DiwanMainContent() {
 
   const queryTableId = searchParams?.get("table") || searchParams?.get("roomId");
 
-  // State
+  // Multi-tab isolation: unique persistent ID per browser session/tab
+  const [clientId, setClientId] = useState<string>("");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      let cid = sessionStorage.getItem("diwan_session_client_id");
+      if (!cid) {
+        cid = `student_${Math.random().toString(36).substring(2, 9)}_${Date.now().toString(36)}`;
+        sessionStorage.setItem("diwan_session_client_id", cid);
+      }
+      setClientId(cid);
+    }
+  }, []);
+
+  // Top Lobby Tab State: Tables vs Summaries vs Experiences
+  const [activeTab, setActiveTab] = useState<"tables" | "summaries" | "experiences">("tables");
+
+  // Core Room State
   const [tables, setTables] = useState<DiwanTable[]>([]);
   const [activeTable, setActiveTable] = useState<DiwanTable | null>(null);
   const [members, setMembers] = useState<DiwanMember[]>([]);
@@ -30,24 +49,55 @@ function DiwanMainContent() {
   const [userStream, setUserStream] = useState<StreamId>("sciences_exp");
 
   const [studentIdentity, setStudentIdentity] = useState({
-    name: "طالب شاطر",
+    name: "أمين ك.",
     wilayaCode: "16",
     avatar: "/illustrations/characters/scholar.jpg",
   });
 
-  // Load student profile & identity
+  // Effective authenticated or tab-isolated user ID
+  const currentUserId = user?.id || clientId || "student-guest";
+
+  // Load student profile & identity (Distinct Algerian persona per client session if unauthenticated)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const profile = getStrategicProfile(user?.id);
       const draft = getRegistrationDraft();
-      const identity = resolveStudentIdentity({ user, profile, draft });
+
+      let fallbackWilaya = "16";
+      let fallbackName = "أمين ك.";
+
+      if (!user && clientId) {
+        const guestPersonas = [
+          { name: "أمين ك.", wilaya: "16" }, // الجزائر
+          { name: "سارة ب.", wilaya: "31" }, // وهران
+          { name: "ياسين ق.", wilaya: "19" }, // سطيف
+          { name: "مريم ع.", wilaya: "25" }, // قسنطينة
+          { name: "كريم ر.", wilaya: "23" }, // عنابة
+          { name: "هدى م.", wilaya: "15" }, // تيزي وزو
+          { name: "حمزة ل.", wilaya: "13" }, // تلمسان
+          { name: "نور الدين ش.", wilaya: "09" }, // البليدة
+        ];
+        let hash = 0;
+        for (let i = 0; i < clientId.length; i++) {
+          hash = (hash << 5) - hash + clientId.charCodeAt(i);
+          hash |= 0;
+        }
+        const picked = guestPersonas[Math.abs(hash) % guestPersonas.length];
+        fallbackName = picked.name;
+        fallbackWilaya = picked.wilaya;
+      }
+
+      const identity = resolveStudentIdentity({ user, profile, draft, fallbackWilaya });
+      if (!identity.name || identity.name === "طالب شاطر" || identity.name === "طالب") {
+        identity.name = fallbackName;
+      }
       setStudentIdentity(identity);
 
       if (profile?.streamId) {
         setUserStream(profile.streamId as StreamId);
       }
     }
-  }, [user]);
+  }, [user, clientId]);
 
   // Load active tables list
   const refreshTables = useCallback(async () => {
@@ -62,26 +112,30 @@ function DiwanMainContent() {
   }, [refreshTables]);
 
   // Load active table details if queryTableId is present
-  const loadTable = useCallback(async (targetId: string) => {
-    const table = await DiwanService.getTable(targetId);
-    if (table) {
-      setActiveTable(table);
-      const mems = await DiwanService.getMembers(table.id);
-      setMembers(mems);
-      const msgs = await DiwanService.getMessages(table.id);
-      setMessages(msgs);
+  const loadTable = useCallback(
+    async (targetId: string) => {
+      const table = await DiwanService.getTable(targetId);
+      if (table) {
+        setActiveTable(table);
+        const mems = await DiwanService.getMembers(table.id);
+        setMembers(mems);
+        const msgs = await DiwanService.getMessages(table.id);
+        setMessages(msgs);
 
-      if (user?.id) {
-        const isSeated = mems.some((m) => m.user_id === user.id);
-        setIsUserSeated(isSeated);
+        const effectiveId = user?.id || clientId;
+        if (effectiveId) {
+          const isSeated = mems.some((m) => m.user_id === effectiveId);
+          setIsUserSeated(isSeated);
+        }
+      } else {
+        setActiveTable(null);
+        setMembers([]);
+        setMessages([]);
+        setIsUserSeated(false);
       }
-    } else {
-      setActiveTable(null);
-      setMembers([]);
-      setMessages([]);
-      setIsUserSeated(false);
-    }
-  }, [user?.id]);
+    },
+    [user?.id, clientId]
+  );
 
   useEffect(() => {
     if (queryTableId) {
@@ -91,7 +145,7 @@ function DiwanMainContent() {
     }
   }, [queryTableId, loadTable]);
 
-  // Real-time subscription to active table
+  // Real-time subscription to active table (Supabase Broadcast + Local BroadcastChannel)
   useEffect(() => {
     if (!activeTable) return;
 
@@ -99,8 +153,9 @@ function DiwanMainContent() {
       onMemberChange: async () => {
         const mems = await DiwanService.getMembers(activeTable.id);
         setMembers(mems);
-        if (user?.id) {
-          setIsUserSeated(mems.some((m) => m.user_id === user.id));
+        const effectiveId = user?.id || clientId;
+        if (effectiveId) {
+          setIsUserSeated(mems.some((m) => m.user_id === effectiveId));
         }
       },
       onNewMessage: (msg) => {
@@ -114,19 +169,42 @@ function DiwanMainContent() {
     return () => {
       sub.unsubscribe();
     };
-  }, [activeTable, user?.id]);
+  }, [activeTable, user?.id, clientId]);
+
+  // Active polling safety net (every 1.5s) while inside an active table
+  useEffect(() => {
+    if (!activeTable) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const [latestMembers, latestMessages] = await Promise.all([
+          DiwanService.getMembers(activeTable.id),
+          DiwanService.getMessages(activeTable.id),
+        ]);
+        setMembers(latestMembers);
+        setMessages(latestMessages);
+        const effectiveId = user?.id || clientId;
+        if (effectiveId) {
+          setIsUserSeated(latestMembers.some((m) => m.user_id === effectiveId));
+        }
+      } catch (err) {
+        console.warn("[Diwan] Active table polling sync error:", err);
+      }
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [activeTable, user?.id, clientId]);
 
   // Periodic presence heartbeat while seated
   useEffect(() => {
     if (!activeTable || !isUserSeated) return;
-    const currentUserId = user?.id || "student-user";
 
     const interval = setInterval(() => {
       DiwanService.heartbeat(activeTable.id, currentUserId);
     }, 25000);
 
     return () => clearInterval(interval);
-  }, [activeTable, isUserSeated, user?.id]);
+  }, [activeTable, isUserSeated, currentUserId]);
 
   // Actions
   const handleSelectTable = async (tableId: string, autoJoin = false) => {
@@ -134,7 +212,6 @@ function DiwanMainContent() {
     await loadTable(tableId);
 
     if (autoJoin) {
-      const currentUserId = user?.id || `anon-${Date.now()}`;
       const res = await DiwanService.takeSeat({
         tableId,
         user: {
@@ -161,7 +238,6 @@ function DiwanMainContent() {
 
   const handleJoinTable = async () => {
     if (!activeTable) return;
-    const currentUserId = user?.id || `anon-${Date.now()}`;
     const res = await DiwanService.takeSeat({
       tableId: activeTable.id,
       user: {
@@ -181,7 +257,6 @@ function DiwanMainContent() {
 
   const handleLeaveTable = async () => {
     if (!activeTable) return;
-    const currentUserId = user?.id || `anon-${Date.now()}`;
     await DiwanService.leaveSeat(activeTable.id, currentUserId);
     setIsUserSeated(false);
     const updated = await DiwanService.getMembers(activeTable.id);
@@ -190,7 +265,6 @@ function DiwanMainContent() {
 
   const handleStatusChange = async (status: StudentActivityStatus) => {
     if (!activeTable) return;
-    const currentUserId = user?.id || `anon-${Date.now()}`;
     await DiwanService.updateActivityStatus(activeTable.id, currentUserId, status);
     const updated = await DiwanService.getMembers(activeTable.id);
     setMembers(updated);
@@ -198,7 +272,6 @@ function DiwanMainContent() {
 
   const handleSendMessage = async (content: string, type: DiwanMessageType) => {
     if (!activeTable) return;
-    const currentUserId = user?.id || `anon-${Date.now()}`;
     const newMsg = await DiwanService.sendMessage({
       tableId: activeTable.id,
       userId: currentUserId,
@@ -207,7 +280,10 @@ function DiwanMainContent() {
       content,
       messageType: type,
     });
-    setMessages((prev) => [...prev, newMsg]);
+    setMessages((prev) => {
+      if (prev.some((m) => m.id === newMsg.id)) return prev;
+      return [...prev, newMsg];
+    });
   };
 
   const handleSendReaction = (emoji: string) => {
@@ -224,11 +300,10 @@ function DiwanMainContent() {
   }) => {
     const created = await DiwanService.createTable({
       ...tableConfig,
-      hostUserId: user?.id,
+      hostUserId: user?.id || currentUserId,
     });
 
     // Auto join host
-    const currentUserId = user?.id || `anon-${Date.now()}`;
     await DiwanService.takeSeat({
       tableId: created.id,
       user: {
@@ -243,7 +318,7 @@ function DiwanMainContent() {
   };
 
   const currentUserData = {
-    id: user?.id || "student-user",
+    id: currentUserId,
     name: studentIdentity.name,
     avatar: studentIdentity.avatar,
     wilayaCode: studentIdentity.wilayaCode,
@@ -267,12 +342,73 @@ function DiwanMainContent() {
             onBackToLobby={handleBackToLobby}
           />
         ) : (
-          <DiwanLobbyView
-            tables={tables}
-            userStream={userStream}
-            onSelectTable={handleSelectTable}
-            onOpenCreateTable={() => setIsCreateModalOpen(true)}
-          />
+          <div className="space-y-6">
+            {/* Top Navigation Tabs: Tables | Summaries & Methodologies | Peer Experiences */}
+            <div className="flex items-center justify-center gap-2 p-1.5 rounded-3xl bg-[#0B1222]/90 border border-white/10 backdrop-blur-xl max-w-xl mx-auto shadow-xl">
+              <button
+                type="button"
+                onClick={() => setActiveTab("tables")}
+                className={`flex-1 py-3 px-3 sm:px-4 rounded-2xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  activeTab === "tables"
+                    ? "bg-amber-400 text-slate-950 shadow-lg shadow-amber-400/20 scale-[1.02]"
+                    : "text-slate-300 hover:text-white hover:bg-white/[0.05]"
+                }`}
+              >
+                <span>🪑</span>
+                <span>طاولات المراجعة</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("summaries")}
+                className={`flex-1 py-3 px-3 sm:px-4 rounded-2xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  activeTab === "summaries"
+                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/25 scale-[1.02]"
+                    : "text-slate-300 hover:text-white hover:bg-white/[0.05]"
+                }`}
+              >
+                <span>📑</span>
+                <span>الملخصات والمنهجية</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("experiences")}
+                className={`flex-1 py-3 px-3 sm:px-4 rounded-2xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  activeTab === "experiences"
+                    ? "bg-emerald-600 text-white shadow-lg shadow-emerald-500/25 scale-[1.02]"
+                    : "text-slate-300 hover:text-white hover:bg-white/[0.05]"
+                }`}
+              >
+                <span>🌟</span>
+                <span>تجارب المتفوقين</span>
+              </button>
+            </div>
+
+            {/* Tab 1: Digital Study Tables */}
+            {activeTab === "tables" && (
+              <DiwanLobbyView
+                tables={tables}
+                userStream={userStream}
+                onSelectTable={handleSelectTable}
+                onOpenCreateTable={() => setIsCreateModalOpen(true)}
+              />
+            )}
+
+            {/* Tab 2: Summaries & Ministerial Methodologies */}
+            {activeTab === "summaries" && (
+              <div className="animate-in fade-in duration-200">
+                <DiwanSharedSummariesTab />
+              </div>
+            )}
+
+            {/* Tab 3: Peer Experiences & Challenges */}
+            {activeTab === "experiences" && (
+              <div className="animate-in fade-in duration-200">
+                <ExperiencesView embedded={true} />
+              </div>
+            )}
+          </div>
         )}
 
         {/* Create Table Modal */}
@@ -294,7 +430,7 @@ export default function DiwanPage() {
         <AppShell>
           <div className="flex flex-col items-center justify-center min-h-[500px]" dir="rtl">
             <div className="w-10 h-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3" />
-            <p className="text-xs text-slate-400 font-bold">جاري تحميل طاولة المراجعة...</p>
+            <p className="text-xs text-slate-300 font-bold">جاري تحميل طاولة المراجعة...</p>
           </div>
         </AppShell>
       }

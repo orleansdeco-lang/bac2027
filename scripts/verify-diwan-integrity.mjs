@@ -39,6 +39,7 @@ test("Only clean, modern Diwan components exist in src/components/diwan", () => 
     "DiwanChatPanel.tsx",
     "DiwanLobbyView.tsx",
     "DiwanMultiplayerGame.tsx",
+    "DiwanSharedSummariesTab.tsx",
     "DiwanTableView.tsx",
     "SharedStudyCard.tsx",
   ];

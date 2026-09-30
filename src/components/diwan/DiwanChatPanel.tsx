@@ -230,10 +230,10 @@ export function DiwanChatPanel({
         className="flex-1 p-3 sm:p-4 space-y-3 overflow-y-auto no-scrollbar text-right relative"
       >
         {filteredMessages.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500 space-y-2">
+          <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-300 space-y-2">
             <span className="text-3xl">💬</span>
-            <p className="text-xs text-slate-300 font-bold">الطاولة راهي هادئة 👋</p>
-            <p className="text-[11px] text-slate-500 max-w-[200px]">
+            <p className="text-xs text-slate-200 font-bold">الطاولة راهي هادئة 👋</p>
+            <p className="text-[11px] text-slate-300 max-w-[200px]">
               سقسي أصحابك، شارك معاهم فكرة في التمرين، أو شجعهم!
             </p>
           </div>
@@ -266,12 +266,12 @@ export function DiwanChatPanel({
                     </span>
                   </div>
 
-                  <p className="text-xs font-medium text-amber-100/90 leading-relaxed whitespace-pre-line bg-black/20 p-2.5 rounded-xl border border-amber-500/20">
+                  <p className="text-xs font-medium text-amber-100 leading-relaxed whitespace-pre-line bg-black/30 p-2.5 rounded-xl border border-amber-500/20">
                     {msg.content}
                   </p>
 
                   <div className="flex items-center justify-between pt-0.5">
-                    <span className="text-[9px] text-amber-300/60 font-mono">
+                    <span className="text-[9px] text-amber-200/80 font-mono font-bold">
                       {new Date(msg.created_at).toLocaleTimeString("ar-DZ", {
                         hour: "2-digit",
                         minute: "2-digit",
@@ -300,9 +300,9 @@ export function DiwanChatPanel({
                   key={msg.id}
                   className={`flex items-center gap-2 ${isSelf ? "justify-end" : "justify-start"}`}
                 >
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.04] border border-white/5 text-xs text-slate-300">
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.06] border border-white/10 text-xs text-white">
                     <span className="text-base">{msg.content}</span>
-                    <span className="text-[10px] text-slate-400">{isSelf ? "أنت" : msg.user_name}</span>
+                    <span className="text-[10px] text-slate-200 font-bold">{isSelf ? "أنت" : msg.user_name}</span>
                   </div>
                 </div>
               );
@@ -320,14 +320,14 @@ export function DiwanChatPanel({
 
                 <div className={`max-w-[82%] space-y-0.5 ${isSelf ? "items-end text-left" : "items-start text-right"}`}>
                   <div className={`flex items-center gap-1.5 text-[10px] ${isSelf ? "justify-end" : "justify-start"}`}>
-                    <span className="font-bold text-slate-400">{isSelf ? "أنت" : msg.user_name}</span>
+                    <span className="font-bold text-slate-200">{isSelf ? "أنت" : msg.user_name}</span>
                   </div>
 
                   <div
                     className={`p-2.5 sm:p-3 rounded-2xl text-xs leading-relaxed break-words relative shadow-sm ${
                       isSelf
-                        ? "bg-blue-600 text-white rounded-tr-none shadow-blue-500/10"
-                        : "bg-white/[0.06] border border-white/10 text-slate-200 rounded-tl-none"
+                        ? "bg-blue-600 text-white rounded-tr-none shadow-blue-500/10 font-medium"
+                        : "bg-white/[0.08] border border-white/15 text-white rounded-tl-none font-medium"
                     }`}
                   >
                     <p>{msg.content}</p>
@@ -336,7 +336,7 @@ export function DiwanChatPanel({
                       <button
                         type="button"
                         onClick={() => setReportingMsgId(msg.id)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity absolute -left-6 top-1 text-slate-500 hover:text-rose-400 p-1 cursor-pointer"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity absolute -left-6 top-1 text-slate-400 hover:text-rose-400 p-1 cursor-pointer"
                         title="إبلاغ"
                       >
                         <Flag className="w-3 h-3" />
@@ -344,7 +344,7 @@ export function DiwanChatPanel({
                     )}
                   </div>
 
-                  <span className="text-[9px] text-slate-500 block px-1 font-mono">
+                  <span className="text-[10px] text-slate-300 block px-1 font-mono font-medium">
                     {new Date(msg.created_at).toLocaleTimeString("ar-DZ", {
                       hour: "2-digit",
                       minute: "2-digit",

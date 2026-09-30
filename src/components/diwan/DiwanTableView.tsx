@@ -26,6 +26,7 @@ import {
   DiwanGamePlayer,
 } from "@/types/diwan";
 import { DiwanService } from "@/lib/diwan/diwan-service";
+import { formatWilayaName } from "@/lib/constants/majlis-config";
 import { DiwanChatPanel } from "./DiwanChatPanel";
 import { DiwanMultiplayerGame } from "./DiwanMultiplayerGame";
 
@@ -244,10 +245,10 @@ export function DiwanTableView({
               {/* Discreet LIVE indicator */}
               <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1.5 shadow-sm">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                <span>طاولة مباشرة LIVE</span>
+                <span>طاولة مباشرة 🔴</span>
               </span>
 
-              <span className="text-[10px] text-slate-400 font-mono">
+              <span className="text-[10px] text-slate-300 font-mono font-bold">
                 {members.length} من {totalSeats} مقاعد
               </span>
             </div>
@@ -255,8 +256,8 @@ export function DiwanTableView({
             <h2 className="text-base sm:text-lg font-black text-white mt-1">
               {table.title}
             </h2>
-            <p className="text-xs text-slate-400">
-              الموضوع: <span className="text-slate-200 font-semibold">{table.topic}</span>
+            <p className="text-xs text-slate-300">
+              الموضوع: <span className="text-white font-bold">{table.topic}</span>
             </p>
           </div>
         </div>
@@ -316,10 +317,10 @@ export function DiwanTableView({
                       : activeChallenge.session.game_type === "TRUE_FALSE_BLITZ"
                       ? "صح ولا خطأ ⏱️"
                       : activeChallenge.session.game_type === "BRAIN_RUSH"
-                      ? "Brain Rush 🧠"
+                      ? "معركة الذكاء 🧠"
                       : activeChallenge.session.game_type === "MEMORY_BATTLE"
                       ? "معركة الذاكرة 👁️"
-                      : "BAC Sprint 🏆"}
+                      : "سباق المنهاج 🏆"}
                   </span>
                 </div>
                 <p className="text-xs text-slate-200">
@@ -468,8 +469,8 @@ export function DiwanTableView({
                               </span>
                             )}
                           </div>
-                          <span className="text-[10px] text-slate-400 block font-mono">
-                            ولاية {member.wilaya_code}
+                          <span className="text-[10px] text-slate-300 block font-bold">
+                            {formatWilayaName(member.wilaya_code)}
                           </span>
                         </div>
 
@@ -561,7 +562,7 @@ export function DiwanTableView({
                 className="w-full sm:w-auto py-3 px-7 rounded-2xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
               >
                 <Gamepad2 className="w-5 h-5 text-slate-950" />
-                <span>🎮 ابدأ تحدي الطاولة (Multiplayer)</span>
+                <span>🎮 ابدأ تحدي الطاولة الجماعي</span>
               </button>
             </div>
           </div>
@@ -621,8 +622,8 @@ export function DiwanTableView({
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-bold border border-blue-500/30">
                     {selectedMemberForProfile.stream || "علوم تجريبية"}
                   </span>
-                  <span className="text-[10px] text-slate-400 font-mono">
-                    ولاية {selectedMemberForProfile.wilaya_code}
+                  <span className="text-[10px] text-slate-200 font-bold">
+                    {formatWilayaName(selectedMemberForProfile.wilaya_code)}
                   </span>
                 </div>
               </div>
@@ -779,8 +780,8 @@ export function DiwanTableView({
                     </div>
                     <div>
                       <span className="text-xs font-bold text-white block">{m.user_name}</span>
-                      <span className="text-[10px] text-slate-400">
-                        {m.stream || "علوم تجريبية"} · ولاية {m.wilaya_code}
+                      <span className="text-[10px] text-slate-300 font-medium">
+                        {m.stream || "علوم تجريبية"} · {formatWilayaName(m.wilaya_code)}
                       </span>
                     </div>
                   </div>

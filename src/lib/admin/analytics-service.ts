@@ -12,6 +12,7 @@
 import { getAdminClient } from "@/lib/supabase/admin";
 import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "@/lib/supabase/client";
 import { OFFICIAL_WILAYAS } from "@/lib/orientation/data/wilayas";
+export { OFFICIAL_WILAYAS };
 import { OFFICIAL_PROGRAMS } from "@/lib/orientation/data/programs";
 import { OFFICIAL_INSTITUTIONS } from "@/lib/orientation/data/institutions";
 import { getSkillById } from "@/data/skills";

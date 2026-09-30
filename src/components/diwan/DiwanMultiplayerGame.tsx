@@ -99,14 +99,14 @@ export function DiwanMultiplayerGame({
       color: "from-blue-600 to-indigo-500 text-white",
     },
     BRAIN_RUSH: {
-      title: "Brain Rush",
+      title: "معركة الذكاء",
       badge: "منطق واستنتاج",
       icon: "🧠",
       desc: "أسئلة ذكاء وسرعة بديهة في الوحدات والرسوم البيانية والتحليل الرياضي.",
       color: "from-purple-600 to-pink-500 text-white",
     },
     BAC_SPRINT: {
-      title: "BAC Sprint",
+      title: "سباق المنهاج",
       badge: "سباق المنهاج",
       icon: "🏆",
       desc: "أسئلة نموذجية مستوحاة من امتحانات البكالوريا؛ الجميع يتنافس في نفس اللحظة.",
@@ -127,7 +127,7 @@ export function DiwanMultiplayerGame({
       color: "from-blue-500 to-cyan-400 text-white",
     },
     LOGIC_SPRINT: {
-      title: "Brain Rush",
+      title: "معركة الذكاء",
       badge: "منطق وسرعة",
       icon: "💡",
       desc: "تحدي المنطق والاستنتاج.",
@@ -595,8 +595,8 @@ export function DiwanMultiplayerGame({
                     <Eye className="w-4 h-4 text-rose-400" />
                     <span>احفظ هذه العناصر الآن! تختفي بعد:</span>
                   </span>
-                  <span className="text-lg font-mono font-black text-rose-400 animate-pulse">
-                    {memoryTimeLeft}s
+                  <span className="text-lg font-mono font-black text-rose-300 animate-pulse">
+                    {memoryTimeLeft} ثوانٍ
                   </span>
                 </div>
 
@@ -755,7 +755,7 @@ export function DiwanMultiplayerGame({
             <div className="flex items-center justify-between pt-1">
               <span className="text-[11px] font-mono text-amber-300 font-bold flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5 text-amber-400" />
-                <span>تبدأ الجولة القادمة خلال {resultAutoAdvanceTimer}s</span>
+                <span>تبدأ الجولة القادمة خلال {resultAutoAdvanceTimer} ثوانٍ</span>
               </span>
 
               {isHost ? (
@@ -766,7 +766,7 @@ export function DiwanMultiplayerGame({
                 >
                   <span>
                     {session.current_round < session.total_rounds
-                      ? `الجولة الموالية (${resultAutoAdvanceTimer}s) ➡️`
+                      ? `الجولة الموالية (${resultAutoAdvanceTimer} ثوانٍ) ➡️`
                       : "عرض التتويج النهائي 🏆"}
                   </span>
                 </button>

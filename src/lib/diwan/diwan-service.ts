@@ -80,180 +80,11 @@ const inMemoryTables = new Map<string, DiwanTable>(
   DEFAULT_MEMORY_TABLES.map((t) => [t.id, t])
 );
 
+// Clean, authentic in-memory storage (Zero fake users or mock messages)
 const inMemoryMembers = new Map<string, DiwanMember[]>();
 const inMemoryMessages = new Map<string, DiwanMessage[]>();
 const inMemoryGameSessions = new Map<string, DiwanGameSession>();
-
-// Seed default members for authentic active presence
-inMemoryMembers.set("table-math-limits", [
-  {
-    id: "mem-1",
-    room_id: "table-math-limits",
-    user_id: "user-sarah",
-    user_name: "سارة ب.",
-    user_avatar: "/illustrations/characters/sarah.jpg",
-    wilaya_code: "16",
-    current_status: "writing",
-    seat_index: 0,
-    school: "ثانوية الأمير عبد القادر",
-    stream: "علوم تجريبية",
-    currentTopic: "حل تمرين النهايات والمتتاليات التراجعية",
-    joined_at: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "mem-2",
-    room_id: "table-math-limits",
-    user_id: "user-ali",
-    user_name: "علي م.",
-    user_avatar: "/illustrations/characters/ali.jpg",
-    wilaya_code: "31",
-    current_status: "studying",
-    seat_index: 1,
-    school: "ثانوية العقيد لطفي",
-    stream: "رياضيات",
-    currentTopic: "البرهان بالتراجع وتعيين اتجاه التغير",
-    joined_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "mem-3",
-    room_id: "table-math-limits",
-    user_id: "user-yacine",
-    user_name: "ياسين ق.",
-    user_avatar: "/illustrations/characters/yassine.jpg",
-    wilaya_code: "25",
-    current_status: "answering",
-    seat_index: 2,
-    school: "ثانوية ابن باديس",
-    stream: "تقني رياضي",
-    currentTopic: "حساب المجموع Sn واستنتاج النهاية",
-    joined_at: new Date(Date.now() - 6 * 60 * 1000).toISOString(),
-  },
-]);
-
-inMemoryMembers.set("table-phys-rc", [
-  {
-    id: "mem-rc-1",
-    room_id: "table-phys-rc",
-    user_id: "user-mariam",
-    user_name: "مريم ب.",
-    user_avatar: "/illustrations/characters/mariam.jpg",
-    wilaya_code: "31",
-    current_status: "writing",
-    seat_index: 0,
-    school: "ثانوية العقيد لطفي",
-    stream: "علوم تجريبية",
-    currentTopic: "حل المعادلة التفاضلية لثنائي القطب RC",
-    joined_at: new Date(Date.now() - 12 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "mem-rc-2",
-    room_id: "table-phys-rc",
-    user_id: "user-scholar",
-    user_name: "أمين ك.",
-    user_avatar: "/illustrations/characters/scholar.jpg",
-    wilaya_code: "16",
-    current_status: "studying",
-    seat_index: 1,
-    school: "ثانوية رابح بيطاط",
-    stream: "رياضيات",
-    currentTopic: "التحليل البعدي لثابت الزمن تاو τ",
-    joined_at: new Date(Date.now() - 8 * 60 * 1000).toISOString(),
-  },
-]);
-
-inMemoryMembers.set("table-sci-proteins", [
-  {
-    id: "mem-sci-1",
-    room_id: "table-sci-proteins",
-    user_id: "user-girl",
-    user_name: "خديجة ع.",
-    user_avatar: "/illustrations/characters/girl.jpg",
-    wilaya_code: "25",
-    current_status: "answering",
-    seat_index: 0,
-    school: "ثانوية زيغود يوسف",
-    stream: "علوم تجريبية",
-    currentTopic: "رسم تخطيطي لآلية الاستنساخ والترجمة",
-    joined_at: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "mem-sci-2",
-    room_id: "table-sci-proteins",
-    user_id: "user-boy",
-    user_name: "حمزة ت.",
-    user_avatar: "/illustrations/characters/boy.jpg",
-    wilaya_code: "05",
-    current_status: "studying",
-    seat_index: 1,
-    school: "ثانوية مصطفى بن بولعيد",
-    stream: "علوم تجريبية",
-    currentTopic: "مقارنة شفرات الـ ARNm وتأثير الطفرات",
-    joined_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-  },
-]);
-
-inMemoryMembers.set("table-philo-problems", [
-  {
-    id: "mem-philo-1",
-    room_id: "table-philo-problems",
-    user_id: "user-sarah2",
-    user_name: "إيمان ل.",
-    user_avatar: "/illustrations/characters/sarah.jpg",
-    wilaya_code: "13",
-    current_status: "writing",
-    seat_index: 0,
-    school: "ثانوية الدكتور بن زرجب",
-    stream: "آداب وفلسفة",
-    currentTopic: "كتابة مقدمة مقالة المشكلة والإشكالية",
-    joined_at: new Date(Date.now() - 18 * 60 * 1000).toISOString(),
-  },
-]);
-
-inMemoryMessages.set("table-math-limits", [
-  {
-    id: "msg-1",
-    room_id: "table-math-limits",
-    user_id: "user-sarah",
-    user_name: "سارة ب.",
-    user_avatar: "/illustrations/characters/sarah.jpg",
-    content: "سلام عليكم جميعاً! رانا نحلوا في تمرين المتتاليات التراجعية صفحة 32 👋",
-    message_type: "chat",
-    created_at: new Date(Date.now() - 14 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "msg-2",
-    room_id: "table-math-limits",
-    user_id: "user-ali",
-    user_name: "علي م.",
-    user_avatar: "/illustrations/characters/ali.jpg",
-    content: "سؤال: كيفاش نبرهنوا بالتراجع على أن Un < 2 في السؤال الثاني؟ 🤔",
-    message_type: "question",
-    created_at: new Date(Date.now() - 8 * 60 * 1000).toISOString(),
-  },
-]);
-
-inMemoryMessages.set("table-phys-rc", [
-  {
-    id: "msg-rc-1",
-    room_id: "table-phys-rc",
-    user_id: "user-mariam",
-    user_name: "مريم ب.",
-    user_avatar: "/illustrations/characters/mariam.jpg",
-    content: "صحا رفاق! شكون عندو فكرة على التحليل البعدي لثابت الزمن τ = R.C؟ ⚡",
-    message_type: "question",
-    created_at: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-  },
-  {
-    id: "msg-rc-2",
-    room_id: "table-phys-rc",
-    user_id: "user-scholar",
-    user_name: "أمين ك.",
-    user_avatar: "/illustrations/characters/scholar.jpg",
-    content: "نستعملو قانون أوم U = R.I وشحنة المكثفة Q = C.U ونختزلو التوتر والشدة، يخرج بالثانية [s] 📐",
-    message_type: "chat",
-    created_at: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-  },
-]);
+const activeChannels = new Map<string, any>();
 
 // ============================================================================
 // SERVICE IMPLEMENTATION
@@ -508,9 +339,25 @@ export const DiwanService = {
           joined_at: member.joined_at,
           last_seen_at: member.last_seen_at,
         });
+
+        const ch = activeChannels.get(params.tableId) || supabase.channel(`diwan-table-${params.tableId}`);
+        ch.send({
+          type: "broadcast",
+          event: "member_change",
+          payload: { action: "join", member },
+        });
       } catch (err) {
         console.warn("[DiwanService] Supabase takeSeat error", err);
       }
+    }
+
+    // Local cross-tab broadcast for instant multi-account / multi-tab reflection
+    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+      try {
+        const bc = new BroadcastChannel(`diwan-local-${params.tableId}`);
+        bc.postMessage({ type: "member_change", action: "join", member });
+        bc.close();
+      } catch {}
     }
 
     return { allowed: true, member };
@@ -549,9 +396,24 @@ export const DiwanService = {
           .from("diwan_room_members")
           .delete()
           .match({ room_id: tableId, user_id: userId });
+
+        const ch = activeChannels.get(tableId) || supabase.channel(`diwan-table-${tableId}`);
+        ch.send({
+          type: "broadcast",
+          event: "member_change",
+          payload: { action: "leave", userId },
+        });
       } catch (err) {
         console.warn("[DiwanService] Supabase leaveSeat error", err);
       }
+    }
+
+    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+      try {
+        const bc = new BroadcastChannel(`diwan-local-${tableId}`);
+        bc.postMessage({ type: "member_change", action: "leave", userId });
+        bc.close();
+      } catch {}
     }
   },
 
@@ -576,9 +438,24 @@ export const DiwanService = {
           .from("diwan_room_members")
           .update({ current_status: status, last_seen_at: new Date().toISOString() })
           .match({ room_id: tableId, user_id: userId });
+
+        const ch = activeChannels.get(tableId) || supabase.channel(`diwan-table-${tableId}`);
+        ch.send({
+          type: "broadcast",
+          event: "member_change",
+          payload: { action: "status", userId, status },
+        });
       } catch (err) {
         console.warn("[DiwanService] Supabase updateActivityStatus error", err);
       }
+    }
+
+    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+      try {
+        const bc = new BroadcastChannel(`diwan-local-${tableId}`);
+        bc.postMessage({ type: "member_change", action: "status", userId, status });
+        bc.close();
+      } catch {}
     }
   },
 
@@ -658,9 +535,24 @@ export const DiwanService = {
           message_type: newMsg.message_type,
           reply_to_id: newMsg.reply_to_id,
         });
+
+        const ch = activeChannels.get(params.tableId) || supabase.channel(`diwan-table-${params.tableId}`);
+        ch.send({
+          type: "broadcast",
+          event: "new_message",
+          payload: newMsg,
+        });
       } catch (err) {
         console.warn("[DiwanService] Supabase sendMessage error", err);
       }
+    }
+
+    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+      try {
+        const bc = new BroadcastChannel(`diwan-local-${params.tableId}`);
+        bc.postMessage({ type: "new_message", message: newMsg });
+        bc.close();
+      } catch {}
     }
 
     return newMsg;
@@ -940,9 +832,25 @@ export const DiwanService = {
       onReaction?: (payload: { fromName: string; emoji: string }) => void;
     }
   ): { unsubscribe: () => void; sendBroadcastReaction: (fromName: string, emoji: string) => void } {
+    let localBc: BroadcastChannel | null = null;
+    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+      try {
+        localBc = new BroadcastChannel(`diwan-local-${tableId}`);
+        localBc.onmessage = (event) => {
+          if (event.data?.type === "new_message" && callbacks.onNewMessage) {
+            callbacks.onNewMessage(event.data.message);
+          } else if (event.data?.type === "member_change" && callbacks.onMemberChange) {
+            callbacks.onMemberChange();
+          }
+        };
+      } catch {}
+    }
+
     if (!isSupabaseConfigured || !supabase) {
       return {
-        unsubscribe: () => {},
+        unsubscribe: () => {
+          if (localBc) localBc.close();
+        },
         sendBroadcastReaction: () => {},
       };
     }
@@ -950,6 +858,8 @@ export const DiwanService = {
     const channel = supabase.channel(`diwan-table-${tableId}`, {
       config: { broadcast: { self: false } },
     });
+
+    activeChannels.set(tableId, channel);
 
     channel
       .on(
@@ -968,6 +878,16 @@ export const DiwanService = {
           }
         }
       )
+      .on("broadcast", { event: "new_message" }, ({ payload }) => {
+        if (callbacks.onNewMessage && payload) {
+          callbacks.onNewMessage(payload as DiwanMessage);
+        }
+      })
+      .on("broadcast", { event: "member_change" }, () => {
+        if (callbacks.onMemberChange) {
+          callbacks.onMemberChange();
+        }
+      })
       .on("broadcast", { event: "reaction" }, ({ payload }) => {
         if (callbacks.onReaction) callbacks.onReaction(payload);
       })
@@ -978,6 +898,10 @@ export const DiwanService = {
 
     return {
       unsubscribe: () => {
+        activeChannels.delete(tableId);
+        if (localBc) {
+          localBc.close();
+        }
         if (supabase) {
           supabase.removeChannel(channel);
         }
