@@ -573,34 +573,209 @@ export const DiwanService = {
   },
 
   /**
-   * Start a real-time multiplayer challenge inside the table
+   * Fetch active multiplayer challenge for a room
    */
-  startMultiplayerGame(params: {
-    tableId: string;
-    hostUserId: string;
-    subject: string;
-    gameType?: DiwanGameType;
-  }): DiwanGameSession {
-    const questions = getMultiplayerRoundQuestions(params.subject, 4);
+  async getActiveGame(roomId: string): Promise<{ session: DiwanGameSession | null; players: DiwanGamePlayer[] }> {
+    try {
+      const res = await fetch(`/api/diwan/games?roomId=${roomId}`, { cache: "no-store" });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.warn("[DiwanService] getActiveGame error:", e);
+    }
+    return { session: null, players: [] };
+  },
 
-    const session: DiwanGameSession = {
+  /**
+   * Create a new multiplayer challenge session
+   */
+  async createChallenge(params: {
+    roomId: string;
+    gameType: DiwanGameType;
+    subject: string;
+    topic?: string;
+    hostUser: { id: string; name: string; avatar: string };
+    totalRounds?: number;
+  }): Promise<{ session: DiwanGameSession; players: DiwanGamePlayer[] }> {
+    try {
+      const res = await fetch("/api/diwan/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "CREATE_CHALLENGE",
+          ...params,
+        }),
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.warn("[DiwanService] createChallenge error:", e);
+    }
+
+    // Resilient fallback
+    const fallbackSession: DiwanGameSession = {
       id: `game-${Date.now()}`,
-      room_id: params.tableId,
-      game_type: params.gameType || "SPEED_RUSH",
+      room_id: params.roomId,
+      game_type: params.gameType,
       subject: params.subject,
-      status: "COUNTDOWN",
+      topic: params.topic || "مراجعة شاملة",
+      status: "WAITING",
       current_round: 1,
-      total_rounds: questions.length,
-      round_duration_seconds: questions[0]?.timeLimitSeconds || 25,
-      active_question: questions[0] || null,
-      host_user_id: params.hostUserId,
-      round_end_time: new Date(Date.now() + 28 * 1000).toISOString(),
-      players: [],
+      total_rounds: params.totalRounds || 3,
+      round_duration_seconds: 20,
+      host_user_id: params.hostUser.id,
+      host_user_name: params.hostUser.name,
       created_at: new Date().toISOString(),
     };
+    const fallbackPlayer: DiwanGamePlayer = {
+      id: `p-${Date.now()}`,
+      session_id: fallbackSession.id,
+      user_id: params.hostUser.id,
+      user_name: params.hostUser.name,
+      user_avatar: params.hostUser.avatar,
+      score: 0,
+      streak: 0,
+    };
+    return { session: fallbackSession, players: [fallbackPlayer] };
+  },
 
-    inMemoryGameSessions.set(session.id, session);
-    return session;
+  /**
+   * Join an existing multiplayer challenge
+   */
+  async joinChallenge(sessionId: string, user: { id: string; name: string; avatar: string }) {
+    try {
+      const res = await fetch("/api/diwan/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "JOIN_CHALLENGE",
+          sessionId,
+          user,
+        }),
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.warn("[DiwanService] joinChallenge error:", e);
+    }
+    return null;
+  },
+
+  /**
+   * Start countdown: WAITING -> STARTING
+   */
+  async startCountdown(sessionId: string, userId: string) {
+    try {
+      const res = await fetch("/api/diwan/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "START_COUNTDOWN",
+          sessionId,
+          userId,
+        }),
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.warn("[DiwanService] startCountdown error:", e);
+    }
+    return null;
+  },
+
+  /**
+   * Start round: STARTING -> PLAYING
+   */
+  async startRound(sessionId: string) {
+    try {
+      const res = await fetch("/api/diwan/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "START_ROUND",
+          sessionId,
+        }),
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.warn("[DiwanService] startRound error:", e);
+    }
+    return null;
+  },
+
+  /**
+   * Submit answer with server-side validation
+   */
+  async submitAnswer(params: {
+    sessionId: string;
+    userId: string;
+    roundNumber: number;
+    selectedIndex: number;
+  }) {
+    try {
+      const res = await fetch("/api/diwan/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "SUBMIT_ANSWER",
+          ...params,
+          clientTimestamp: Date.now(),
+        }),
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.warn("[DiwanService] submitAnswer error:", e);
+    }
+    return null;
+  },
+
+  /**
+   * Advance to next round or finish
+   */
+  async nextRound(sessionId: string, userId: string) {
+    try {
+      const res = await fetch("/api/diwan/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "NEXT_ROUND",
+          sessionId,
+          userId,
+        }),
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (e) {
+      console.warn("[DiwanService] nextRound error:", e);
+    }
+    return null;
+  },
+
+  /**
+   * Finish game session
+   */
+  async finishGame(sessionId: string) {
+    try {
+      await fetch("/api/diwan/games", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "FINISH_GAME",
+          sessionId,
+        }),
+      });
+    } catch (e) {
+      console.warn("[DiwanService] finishGame error:", e);
+    }
   },
 
   /**

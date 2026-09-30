@@ -12,17 +12,24 @@ export type StudentActivityStatus = "studying" | "writing" | "answering" | "play
 export type DiwanMessageType = "chat" | "question" | "help" | "reaction" | "system";
 
 export type DiwanGameType =
-  | "SPEED_RUSH"       // سرعة البديهة والمنهج
-  | "TRUE_FALSE_BLITZ" // صح أم خطأ في 10 ثوانٍ
-  | "FORMULA_SHOWDOWN" // تحدي القوانين والوحدات
-  | "LOGIC_SPRINT";    // تحدي الذكاء والمنطق الوزاري
+  | "SPEED_RUSH"       // أسرع واحد: أول إجابة صحيحة تكسب
+  | "TRUE_FALSE_BLITZ" // صح ولا خطأ في 10 ثوانٍ
+  | "BRAIN_RUSH"       // Brain Rush: أسئلة منطق وتفكير سريع
+  | "BAC_SPRINT"       // BAC Sprint: سؤال وزاري من الدروس
+  | "MEMORY_BATTLE"    // Memory Battle: تذكر عناصر لثوانٍ ثم الإجابة
+  | "FORMULA_SHOWDOWN" // (تحدي القوانين والوحدات)
+  | "LOGIC_SPRINT";    // (تحدي الذكاء الوزاري)
 
 export type DiwanGameStatus =
   | "WAITING"
-  | "COUNTDOWN"
-  | "IN_ROUND"
-  | "ROUND_SUMMARY"
-  | "FINISHED";
+  | "READY"
+  | "STARTING"
+  | "PLAYING"
+  | "RESULT"
+  | "FINISHED"
+  | "COUNTDOWN"       // DB compatible alias
+  | "IN_ROUND"        // DB compatible alias
+  | "ROUND_SUMMARY";  // DB compatible alias
 
 export interface DiwanTable {
   id: string;
@@ -78,6 +85,9 @@ export interface DiwanGameQuestion {
   timeLimitSeconds: number;
   subject: string;
   stream?: string;
+  gameType?: DiwanGameType;
+  memoryItems?: string[]; // Used for MEMORY_BATTLE showcase before answering
+  memoryDurationSeconds?: number;
 }
 
 export interface DiwanGamePlayer {
@@ -89,6 +99,7 @@ export interface DiwanGamePlayer {
   score: number;
   streak: number;
   last_answer_correct?: boolean;
+  has_answered?: boolean;
 }
 
 export interface DiwanGameSession {
@@ -96,13 +107,17 @@ export interface DiwanGameSession {
   room_id: string;
   game_type: DiwanGameType;
   subject: string;
+  topic?: string;
   status: DiwanGameStatus;
   current_round: number;
   total_rounds: number;
   round_duration_seconds: number;
   active_question?: DiwanGameQuestion | null;
   host_user_id: string;
+  host_user_name?: string;
   round_end_time?: string | null;
+  first_solver_id?: string | null;
+  first_solver_name?: string | null;
   players?: DiwanGamePlayer[];
   created_at: string;
 }

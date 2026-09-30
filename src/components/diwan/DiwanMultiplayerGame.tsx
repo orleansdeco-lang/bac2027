@@ -16,9 +16,23 @@ import {
   Award,
   Crown,
   Users,
+  Eye,
+  Check,
+  Brain,
+  Timer,
+  ChevronRight,
+  BookOpen,
 } from "lucide-react";
-import { DiwanTable, DiwanMember } from "@/types/diwan";
-import { DIWAN_MULTIPLAYER_QUESTIONS, getMultiplayerRoundQuestions } from "@/data/diwan/diwan-games";
+import {
+  DiwanTable,
+  DiwanMember,
+  DiwanGameSession,
+  DiwanGamePlayer,
+  DiwanGameType,
+  DiwanGameStatus,
+  DiwanGameQuestion,
+} from "@/types/diwan";
+import { DiwanService } from "@/lib/diwan/diwan-service";
 import { MathRenderer } from "@/components/ui/MathRenderer";
 
 interface DiwanMultiplayerGameProps {
@@ -31,6 +45,7 @@ interface DiwanMultiplayerGameProps {
     name: string;
     avatar: string;
   };
+  initialGameType?: DiwanGameType;
 }
 
 export function DiwanMultiplayerGame({
@@ -39,64 +54,199 @@ export function DiwanMultiplayerGame({
   table,
   members,
   currentUser,
+  initialGameType = "SPEED_RUSH",
 }: DiwanMultiplayerGameProps) {
-  const [phase, setPhase] = useState<"countdown" | "playing" | "round_reveal" | "podium">("countdown");
-  const [countdown, setCountdown] = useState(3);
-  const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
+  // Session & Player State
+  const [session, setSession] = useState<DiwanGameSession | null>(null);
+  const [players, setPlayers] = useState<DiwanGamePlayer[]>([]);
+  const [selectedGameType, setSelectedGameType] = useState<DiwanGameType>(initialGameType);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [hasAnswered, setHasAnswered] = useState(false);
   const [roundTimeLeft, setRoundTimeLeft] = useState(20);
-  const [playerScores, setPlayerScores] = useState<Record<string, { score: number; streak: number }>>({});
+  const [memoryTimeLeft, setMemoryTimeLeft] = useState(6);
+  const [showMemoryPhase, setShowMemoryPhase] = useState(false);
+  const [countdown, setCountdown] = useState(3);
+  const [feedbackToast, setFeedbackToast] = useState<string | null>(null);
+  const [socialReactions, setSocialReactions] = useState<{ id: string; emoji: string }[]>([]);
 
-  // 4 random questions for this table session
-  const [questions, setQuestions] = useState(() => getMultiplayerRoundQuestions(table.subject, 4));
+  // Sound/Animation helpers
+  const triggerReaction = (emoji: string) => {
+    const id = `${Date.now()}-${Math.random()}`;
+    setSocialReactions((prev) => [...prev, { id, emoji }]);
+    setTimeout(() => {
+      setSocialReactions((prev) => prev.filter((r) => r.id !== id));
+    }, 1500);
+  };
 
-  // Init scores for all members
+  // Game Type Metadata
+  const GAME_TYPE_CONFIG: Record<
+    DiwanGameType,
+    { title: string; badge: string; icon: string; desc: string; color: string }
+  > = {
+    SPEED_RUSH: {
+      title: "أسرع واحد",
+      badge: "أول إجابة صحيحة تكسب",
+      icon: "⚡",
+      desc: "سؤال واحد سريع؛ أول تلميذ يجاوب إجابة صحيحة يحسم الجولة فوراً!",
+      color: "from-amber-500 to-yellow-400 text-slate-950",
+    },
+    TRUE_FALSE_BLITZ: {
+      title: "صح ولا خطأ",
+      badge: "خاطفة 10 ثوانٍ",
+      icon: "⏱️",
+      desc: "عبارات سريعة ومباشرة من المنهاج؛ أجب بـ (صح) أو (خطأ) قبل انتهاء المؤقت!",
+      color: "from-blue-600 to-indigo-500 text-white",
+    },
+    BRAIN_RUSH: {
+      title: "Brain Rush",
+      badge: "منطق واستنتاج",
+      icon: "🧠",
+      desc: "أسئلة ذكاء وسرعة بديهة في الوحدات والرسوم البيانية والتحليل الرياضي.",
+      color: "from-purple-600 to-pink-500 text-white",
+    },
+    BAC_SPRINT: {
+      title: "BAC Sprint",
+      badge: "سباق المنهاج",
+      icon: "🏆",
+      desc: "أسئلة نموذجية مستوحاة من امتحانات البكالوريا؛ الجميع يتنافس في نفس اللحظة.",
+      color: "from-emerald-500 to-teal-400 text-slate-950",
+    },
+    MEMORY_BATTLE: {
+      title: "معركة الذاكرة",
+      badge: "احفظ ثم أجب",
+      icon: "👁️",
+      desc: "تظهر 4 عناصر وقوانين لـ 6 ثوانٍ فقط، ثم تُختبر في تفاصيل ما تذكرته!",
+      color: "from-rose-500 to-orange-400 text-white",
+    },
+    FORMULA_SHOWDOWN: {
+      title: "سباق المنهاج",
+      badge: "تحدي القوانين",
+      icon: "📐",
+      desc: "سباق في القوانين والعلاقات.",
+      color: "from-blue-500 to-cyan-400 text-white",
+    },
+    LOGIC_SPRINT: {
+      title: "Brain Rush",
+      badge: "منطق وسرعة",
+      icon: "💡",
+      desc: "تحدي المنطق والاستنتاج.",
+      color: "from-amber-500 to-orange-400 text-slate-950",
+    },
+  };
+
+  // Initialize or load active challenge
   useEffect(() => {
-    if (isOpen) {
-      setPhase("countdown");
-      setCountdown(3);
-      setCurrentRoundIndex(0);
-      setSelectedOption(null);
-      setHasAnswered(false);
-      setQuestions(getMultiplayerRoundQuestions(table.subject, 4));
+    if (!isOpen) return;
 
-      const initialScores: Record<string, { score: number; streak: number }> = {};
-      members.forEach((m) => {
-        initialScores[m.user_id] = { score: 0, streak: 0 };
-      });
-      if (currentUser.id && !initialScores[currentUser.id]) {
-        initialScores[currentUser.id] = { score: 0, streak: 0 };
+    let isMounted = true;
+    async function initChallenge() {
+      // Check if room already has active session
+      const active = await DiwanService.getActiveGame(table.id);
+      if (active.session && active.session.status !== "FINISHED" && isMounted) {
+        setSession(active.session);
+        setPlayers(active.players || []);
+        setSelectedGameType(active.session.game_type);
+      } else if (isMounted) {
+        // Create new session
+        const created = await DiwanService.createChallenge({
+          roomId: table.id,
+          gameType: selectedGameType,
+          subject: table.subject,
+          topic: table.topic,
+          hostUser: currentUser,
+          totalRounds: 3,
+        });
+        setSession(created.session);
+        setPlayers(created.players);
       }
-      setPlayerScores(initialScores);
     }
-  }, [isOpen, table.subject, members, currentUser.id]);
 
-  // Phase 1: Countdown 3... 2... 1...
+    initChallenge();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, table.id, table.subject, table.topic, selectedGameType, currentUser]);
+
+  // Sync state transitions & polling
   useEffect(() => {
-    if (!isOpen || phase !== "countdown") return;
+    if (!isOpen || !session?.id) return;
 
-    if (countdown > 1) {
-      const timer = setTimeout(() => setCountdown((c) => c - 1), 1000);
-      return () => clearTimeout(timer);
-    } else {
-      const timer = setTimeout(() => {
-        setPhase("playing");
-        setRoundTimeLeft(questions[0]?.timeLimitSeconds || 20);
+    const interval = setInterval(async () => {
+      const res = await DiwanService.getActiveGame(table.id);
+      if (res.session) {
+        setSession(res.session);
+        if (res.players) setPlayers(res.players);
+      }
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [isOpen, session?.id, table.id]);
+
+  // Handle Countdown (STARTING state)
+  useEffect(() => {
+    if (session?.status !== "STARTING") return;
+
+    setCountdown(3);
+    setSelectedOption(null);
+    setHasAnswered(false);
+
+    const timer = setInterval(() => {
+      setCountdown((c) => {
+        if (c <= 1) {
+          clearInterval(timer);
+          // Transition to PLAYING
+          handleStartRound();
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [session?.status, session?.current_round]);
+
+  // Handle Memory Battle Preview Phase
+  useEffect(() => {
+    if (session?.status !== "PLAYING") {
+      setShowMemoryPhase(false);
+      return;
+    }
+
+    if (session.game_type === "MEMORY_BATTLE" && session.active_question?.memoryItems?.length) {
+      setShowMemoryPhase(true);
+      setMemoryTimeLeft(session.active_question.memoryDurationSeconds || 6);
+
+      const memTimer = setInterval(() => {
+        setMemoryTimeLeft((prev) => {
+          if (prev <= 1) {
+            clearInterval(memTimer);
+            setShowMemoryPhase(false);
+            return 0;
+          }
+          return prev - 1;
+        });
       }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen, phase, countdown, questions]);
 
-  // Phase 2: In-Round Timer (20 seconds)
+      return () => clearInterval(memTimer);
+    } else {
+      setShowMemoryPhase(false);
+    }
+  }, [session?.status, session?.current_round, session?.game_type]);
+
+  // Handle In-Round Timer (PLAYING state)
   useEffect(() => {
-    if (!isOpen || phase !== "playing") return;
+    if (session?.status !== "PLAYING" || showMemoryPhase) return;
+
+    const duration = session.round_duration_seconds || 20;
+    setRoundTimeLeft(duration);
 
     const timer = setInterval(() => {
       setRoundTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          setPhase("round_reveal");
+          // Time expired -> trigger round reveal
+          setSession((s) => (s ? { ...s, status: "RESULT" } : null));
           return 0;
         }
         return prev - 1;
@@ -104,296 +254,525 @@ export function DiwanMultiplayerGame({
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isOpen, phase]);
+  }, [session?.status, session?.current_round, showMemoryPhase]);
 
-  if (!isOpen) return null;
+  if (!isOpen || !session) return null;
 
-  const currentQ = questions[currentRoundIndex] || questions[0];
+  const currentQ = session.active_question;
+  const isHost = session.host_user_id === currentUser.id;
+  const isPlayerJoined = players.some((p) => p.user_id === currentUser.id);
+  const cfg = GAME_TYPE_CONFIG[session.game_type] || GAME_TYPE_CONFIG.SPEED_RUSH;
 
-  // Handle Current User selecting an answer
-  const handleSelectOption = (idx: number) => {
-    if (hasAnswered || phase !== "playing") return;
-    setSelectedOption(idx);
-    setHasAnswered(true);
+  // --------------------------------------------------------------------------
+  // ACTIONS
+  // --------------------------------------------------------------------------
 
-    const isCorrect = idx === currentQ.correctIndex;
-    const speedBonus = Math.max(10, roundTimeLeft * 5);
-    const pointsAwarded = isCorrect ? 100 + speedBonus : 0;
-
-    // Update user score
-    setPlayerScores((prev) => {
-      const current = prev[currentUser.id] || { score: 0, streak: 0 };
-      const newStreak = isCorrect ? current.streak + 1 : 0;
-      return {
-        ...prev,
-        [currentUser.id]: {
-          score: current.score + pointsAwarded,
-          streak: newStreak,
-        },
-      };
-    });
-
-    // Simulate concurrent peer responses to create realistic multiplayer excitement
-    members.forEach((m) => {
-      if (m.user_id !== currentUser.id) {
-        const peerCorrect = Math.random() > 0.35; // 65% peer accuracy
-        const peerPoints = peerCorrect ? Math.floor(80 + Math.random() * 40) : 0;
-        setPlayerScores((prev) => {
-          const peer = prev[m.user_id] || { score: 0, streak: 0 };
-          return {
-            ...prev,
-            [m.user_id]: {
-              score: peer.score + peerPoints,
-              streak: peerCorrect ? peer.streak + 1 : 0,
-            },
-          };
-        });
-      }
-    });
-
-    // Short delay before reveal
-    setTimeout(() => {
-      setPhase("round_reveal");
-    }, 1200);
-  };
-
-  // Next round or podium
-  const handleNextRound = () => {
-    if (currentRoundIndex + 1 < questions.length) {
-      setCurrentRoundIndex((r) => r + 1);
-      setSelectedOption(null);
-      setHasAnswered(false);
-      setRoundTimeLeft(questions[currentRoundIndex + 1]?.timeLimitSeconds || 20);
-      setPhase("playing");
-    } else {
-      setPhase("podium");
+  const handleJoinChallenge = async () => {
+    const res = await DiwanService.joinChallenge(session.id, currentUser);
+    if (res?.players) {
+      setPlayers(res.players);
+      setSession(res.session);
+      setFeedbackToast("انضممت إلى التحدي بنجاح ⚡");
+      setTimeout(() => setFeedbackToast(null), 2500);
     }
   };
 
-  const handleRematch = () => {
-    setQuestions(getMultiplayerRoundQuestions(table.subject, 4));
-    setCurrentRoundIndex(0);
-    setSelectedOption(null);
-    setHasAnswered(false);
-    setPhase("countdown");
-    setCountdown(3);
+  const handleHostStartCountdown = async () => {
+    await DiwanService.startCountdown(session.id, currentUser.id);
+    setSession((prev) => (prev ? { ...prev, status: "STARTING" } : null));
   };
 
-  // Rank players for leaderboard
-  const rankedPlayers = Object.entries(playerScores)
-    .map(([uid, data]) => {
-      const member = members.find((m) => m.user_id === uid);
-      const isSelf = uid === currentUser.id;
-      return {
-        userId: uid,
-        name: isSelf ? "أنت" : member?.user_name || "زميل",
-        avatar: isSelf ? currentUser.avatar : member?.user_avatar || "/illustrations/characters/ali.jpg",
-        score: data.score,
-        streak: data.streak,
-        isSelf,
-      };
-    })
-    .sort((a, b) => b.score - a.score);
+  const handleStartRound = async () => {
+    const res = await DiwanService.startRound(session.id);
+    if (res?.session) {
+      setSession(res.session);
+    }
+  };
+
+  const handleSelectAnswer = async (idx: number) => {
+    if (hasAnswered || session.status !== "PLAYING" || showMemoryPhase) return;
+    setSelectedOption(idx);
+    setHasAnswered(true);
+
+    const res = await DiwanService.submitAnswer({
+      sessionId: session.id,
+      userId: currentUser.id,
+      roundNumber: session.current_round,
+      selectedIndex: idx,
+    });
+
+    if (res?.sessionStatus === "RESULT") {
+      setSession((prev) => (prev ? { ...prev, status: "RESULT" } : null));
+    }
+    if (res?.players) {
+      setPlayers(res.players);
+    }
+  };
+
+  const handleNextRound = async () => {
+    const res = await DiwanService.nextRound(session.id, currentUser.id);
+    if (res?.session) {
+      setSession(res.session);
+      if (res.players) setPlayers(res.players);
+    }
+  };
+
+  const handleRematch = async () => {
+    const created = await DiwanService.createChallenge({
+      roomId: table.id,
+      gameType: selectedGameType,
+      subject: table.subject,
+      topic: table.topic,
+      hostUser: currentUser,
+      totalRounds: 3,
+    });
+    setSession(created.session);
+    setPlayers(created.players);
+  };
+
+  // Rank players for podium / leaderboard
+  const rankedPlayers = [...players].sort((a, b) => b.score - a.score);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
       <div
-        className="w-full max-w-xl rounded-3xl border border-amber-500/30 bg-[#0B1222] shadow-2xl overflow-hidden flex flex-col relative"
+        className="w-full max-w-xl rounded-[32px] border border-amber-500/30 bg-[#0B1222] shadow-2xl overflow-hidden flex flex-col relative text-right"
         dir="rtl"
       >
+        {/* Floating social reaction particles */}
+        {socialReactions.map((r) => (
+          <div
+            key={r.id}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl z-50 pointer-events-none animate-in zoom-in slide-out-to-top-12 duration-1000"
+          >
+            {r.emoji}
+          </div>
+        ))}
+
+        {/* Feedback Toast */}
+        {feedbackToast && (
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 px-3.5 py-1.5 rounded-full bg-blue-600 text-white text-xs font-bold shadow-xl border border-blue-400 animate-in fade-in">
+            {feedbackToast}
+          </div>
+        )}
+
         {/* Modal Close Button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 left-4 z-20 p-2 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 transition-colors cursor-pointer"
+          className="absolute top-4 left-4 z-20 p-2 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-colors cursor-pointer"
+          title="إغلاق التحدي"
         >
           <X className="w-4 h-4" />
         </button>
 
-        {/* ---------------- PHASE 1: COUNTDOWN ---------------- */}
-        {phase === "countdown" && (
-          <div className="p-8 sm:p-12 text-center space-y-6 flex flex-col items-center justify-center min-h-[420px]">
-            <div className="w-16 h-16 rounded-3xl bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center justify-center font-bold shadow-xl animate-bounce">
-              <Zap className="w-8 h-8" />
+        {/* ================================================================= */}
+        {/* STATE 1: WAITING & READY LOBBY                                    */}
+        {/* ================================================================= */}
+        {(session.status === "WAITING" || session.status === "READY") && (
+          <div className="p-6 sm:p-8 space-y-6 text-center flex flex-col items-center">
+            {/* Game Badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-black">
+              <span>{cfg.icon}</span>
+              <span>{cfg.title}</span>
+              <span>·</span>
+              <span className="font-normal">{cfg.badge}</span>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <h3 className="text-xl sm:text-2xl font-black text-white">
-                تحدي الطاولة: سرعة البديهة والمنهج ⚡
+                تحدي المجلس: {cfg.title} 🎮
               </h3>
-              <p className="text-xs text-slate-300 max-w-sm">
-                4 جولات سريعة · 20 ثانية لكل سؤال · أسرع إجابة صحيحة تكسب نقاطاً مضاعفة!
+              <p className="text-xs text-slate-300 max-w-sm mx-auto">
+                {cfg.desc}
               </p>
             </div>
 
-            {/* Countdown Big Digit */}
-            <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-500 to-amber-300 text-slate-950 font-black text-5xl flex items-center justify-center shadow-2xl shadow-amber-500/30 animate-pulse">
-              {countdown}
+            {/* Game Type Picker (if host and game hasn't started) */}
+            {isHost && (
+              <div className="w-full space-y-2 pt-1 text-right">
+                <span className="text-[11px] font-bold text-slate-400 block px-1">
+                  اختر نوع التحدي لهذه الجلسة:
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {(["SPEED_RUSH", "TRUE_FALSE_BLITZ", "BRAIN_RUSH", "BAC_SPRINT", "MEMORY_BATTLE"] as DiwanGameType[]).map((gt) => {
+                    const c = GAME_TYPE_CONFIG[gt];
+                    const isSel = session.game_type === gt;
+
+                    return (
+                      <button
+                        key={gt}
+                        type="button"
+                        onClick={async () => {
+                          setSelectedGameType(gt);
+                          const created = await DiwanService.createChallenge({
+                            roomId: table.id,
+                            gameType: gt,
+                            subject: table.subject,
+                            topic: table.topic,
+                            hostUser: currentUser,
+                            totalRounds: 3,
+                          });
+                          setSession(created.session);
+                        }}
+                        className={`p-2.5 rounded-2xl border text-right transition-all cursor-pointer ${
+                          isSel
+                            ? "bg-amber-500/20 border-amber-400 text-amber-200 font-bold shadow-md"
+                            : "bg-white/[0.02] border-white/10 text-slate-400 hover:text-white"
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5 text-xs font-bold">
+                          <span>{c.icon}</span>
+                          <span className="truncate">{c.title}</span>
+                        </div>
+                        <span className="text-[9px] text-slate-500 block truncate mt-0.5">
+                          {c.badge}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Competitors List */}
+            <div className="w-full p-4 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2.5">
+              <div className="flex items-center justify-between text-xs text-slate-400">
+                <span className="flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-amber-400" />
+                  <span>المتسابقون الجاهزون ({players.length}):</span>
+                </span>
+                <span className="text-[10px] text-emerald-400 font-bold">
+                  {players.length >= 2 ? "جاهزون للبدء ✅" : "في انتظار لاعب إضافي..."}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap gap-2 justify-center">
+                {players.map((p) => {
+                  const isSelf = p.user_id === currentUser.id;
+                  const isRoomHost = p.user_id === session.host_user_id;
+
+                  return (
+                    <div
+                      key={p.user_id}
+                      className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-2 ${
+                        isSelf
+                          ? "bg-blue-600/30 border-blue-500 text-blue-200"
+                          : "bg-white/[0.04] border-white/10 text-slate-300"
+                      }`}
+                    >
+                      <div className="relative w-5 h-5 rounded-full overflow-hidden border border-white/20">
+                        <Image src={p.user_avatar} alt={p.user_name} fill className="object-cover" />
+                      </div>
+                      <span>{p.user_name}</span>
+                      {isRoomHost && <span className="text-[9px] text-amber-400">👑 المضيف</span>}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Competitors Avatars */}
-            <div className="flex items-center gap-2 pt-2">
-              <span className="text-[11px] text-slate-400 font-bold ml-2">المتحدون:</span>
-              <div className="flex -space-x-2 space-x-reverse">
-                {members.slice(0, 5).map((m) => (
-                  <div
-                    key={m.id}
-                    className="relative w-8 h-8 rounded-full overflow-hidden border-2 border-[#0B1222] bg-white/10"
-                    title={m.user_name}
-                  >
-                    <Image src={m.user_avatar} alt={m.user_name} fill className="object-cover" />
-                  </div>
-                ))}
-              </div>
+            {/* Lobby Action Buttons */}
+            <div className="w-full flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              {!isPlayerJoined ? (
+                <button
+                  type="button"
+                  onClick={handleJoinChallenge}
+                  className="w-full sm:w-auto py-3 px-8 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs sm:text-sm shadow-xl shadow-blue-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
+                >
+                  <Zap className="w-4 h-4 text-amber-300" />
+                  <span>ادخل التحدي الآن ⚡</span>
+                </button>
+              ) : isHost ? (
+                <button
+                  type="button"
+                  onClick={handleHostStartCountdown}
+                  className="w-full sm:w-auto py-3 px-8 rounded-2xl bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-amber-500/25 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
+                >
+                  <Gamepad2 className="w-4 h-4 text-slate-950" />
+                  <span>جاهزون؟ انطلق! (Start Countdown) 🚀</span>
+                </button>
+              ) : (
+                <div className="flex items-center gap-2 text-xs text-amber-300/80 font-bold animate-pulse">
+                  <Clock className="w-4 h-4 text-amber-400" />
+                  <span>أنت مسجل! في انتظار إشارة البدء من المضيف...</span>
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {/* ---------------- PHASE 2 & 3: PLAYING & ROUND REVEAL ---------------- */}
-        {(phase === "playing" || phase === "round_reveal") && (
+        {/* ================================================================= */}
+        {/* STATE 2: COUNTDOWN (3 .. 2 .. 1)                                  */}
+        {/* ================================================================= */}
+        {session.status === "STARTING" && (
+          <div className="p-8 sm:p-12 text-center space-y-6 flex flex-col items-center justify-center min-h-[400px]">
+            <span className="text-xs font-bold text-amber-400 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30">
+              الجولة {session.current_round} من {session.total_rounds}
+            </span>
+
+            <h3 className="text-xl sm:text-2xl font-black text-white">
+              جاهزون؟ ركز جيداً ⚡
+            </h3>
+
+            {/* Huge digit */}
+            <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-amber-500 to-amber-300 text-slate-950 font-black text-6xl flex items-center justify-center shadow-2xl shadow-amber-500/40 animate-pulse">
+              {countdown}
+            </div>
+
+            <p className="text-xs text-slate-400 font-mono">
+              يبدأ السؤال في جميع الشاشات في نفس اللحظة
+            </p>
+          </div>
+        )}
+
+        {/* ================================================================= */}
+        {/* STATE 3: PLAYING (Center Question, Big Timer, Big Choices)        */}
+        {/* ================================================================= */}
+        {session.status === "PLAYING" && currentQ && (
           <div className="p-5 sm:p-7 space-y-5">
-            {/* Top Match HUD */}
-            <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/10">
+            {/* Header HUD */}
+            <div className="flex items-center justify-between pb-3 border-b border-white/10">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-amber-400 font-mono">
-                  الجولة {currentRoundIndex + 1} / {questions.length}
+                <span className="text-xs font-black text-amber-400 font-mono">
+                  الجولة {session.current_round} / {session.total_rounds}
                 </span>
-                <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
-                  {table.topic}
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 font-bold border border-blue-500/30">
+                  {cfg.title}
                 </span>
               </div>
 
-              {/* Countdown Progress */}
+              {/* Big Timer */}
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-amber-400" />
-                <span className="text-sm font-mono font-black text-white">
+                <Clock
+                  className={`w-4 h-4 ${
+                    roundTimeLeft <= 5 ? "text-rose-400 animate-spin" : "text-amber-400"
+                  }`}
+                />
+                <span
+                  className={`text-base font-mono font-black ${
+                    roundTimeLeft <= 5 ? "text-rose-400 animate-pulse text-lg" : "text-white"
+                  }`}
+                >
                   {roundTimeLeft} ثانية
                 </span>
               </div>
             </div>
 
-            {/* Mini Live Scoreboard of Table Peers */}
-            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-              {rankedPlayers.map((p) => (
+            {/* Special Mode 1: MEMORY BATTLE SHOWCASE (6 Seconds) */}
+            {showMemoryPhase && currentQ.memoryItems && (
+              <div className="p-4 sm:p-6 rounded-3xl bg-gradient-to-b from-rose-950/40 to-slate-900 border-2 border-rose-500/50 space-y-3 text-center animate-in zoom-in">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-rose-300 flex items-center gap-1.5">
+                    <Eye className="w-4 h-4 text-rose-400" />
+                    <span>احفظ هذه العناصر الآن! تختفي بعد:</span>
+                  </span>
+                  <span className="text-lg font-mono font-black text-rose-400 animate-pulse">
+                    {memoryTimeLeft}s
+                  </span>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-black/40 border border-white/10 space-y-2 text-right">
+                  {currentQ.memoryItems.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="text-xs sm:text-sm font-bold text-white leading-relaxed font-mono"
+                    >
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Special Mode 2: SPEED RUSH CALLOUT */}
+            {!showMemoryPhase && session.game_type === "SPEED_RUSH" && (
+              <div className="p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm">
+                <Zap className="w-4 h-4 text-amber-400" />
+                <span>أسرع إجابة صحيحة تحسم الجولة فوراً للجميع!</span>
+              </div>
+            )}
+
+            {/* Question Statement (Only visible if not in memory preview) */}
+            {!showMemoryPhase && (
+              <>
+                <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.04] border border-white/10 space-y-2">
+                  <span className="text-[10px] font-bold text-amber-400 block">
+                    نص السؤال الوزاري
+                  </span>
+                  <div className="text-sm sm:text-base font-bold text-white leading-relaxed">
+                    <MathRenderer content={currentQ.prompt_ar} />
+                  </div>
+                </div>
+
+                {/* Big Thumb-Friendly Options */}
                 <div
-                  key={p.userId}
-                  className={`px-2.5 py-1 rounded-xl border text-[11px] font-bold flex items-center gap-1.5 shrink-0 ${
-                    p.isSelf
-                      ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
-                      : "bg-white/[0.03] text-slate-300 border-white/10"
+                  className={`grid gap-2.5 ${
+                    currentQ.options.length === 2 ? "grid-cols-2" : "grid-cols-1 sm:grid-cols-2"
                   }`}
                 >
-                  <div className="relative w-4 h-4 rounded-full overflow-hidden shrink-0">
-                    <Image src={p.avatar} alt={p.name} fill className="object-cover" />
+                  {currentQ.options.map((opt, idx) => {
+                    const isSelected = selectedOption === idx;
+
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => handleSelectAnswer(idx)}
+                        disabled={hasAnswered}
+                        className={`p-4 rounded-2xl border text-right transition-all flex items-center justify-between gap-3 cursor-pointer disabled:cursor-default min-h-[58px] ${
+                          isSelected
+                            ? "bg-blue-600 border-blue-400 text-white font-black shadow-lg shadow-blue-500/30 scale-[1.02]"
+                            : "bg-white/[0.03] hover:bg-white/[0.08] border-white/10 text-slate-100 hover:border-white/30"
+                        }`}
+                      >
+                        <span className="text-xs sm:text-sm font-bold leading-snug">
+                          <MathRenderer content={opt} />
+                        </span>
+
+                        {isSelected && (
+                          <CheckCircle2 className="w-5 h-5 text-white shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {hasAnswered && (
+                  <div className="text-center text-xs text-amber-300 font-bold animate-pulse pt-1">
+                    تم تسجيل إجابتك! في انتظار باقي الزملاء أو انتهاء المؤقت... ⏳
                   </div>
-                  <span className="truncate max-w-[70px]">{p.name}</span>
-                  <span className="font-mono text-white">{p.score}</span>
-                  {p.streak > 1 && <span className="text-amber-400 text-[10px]">🔥{p.streak}</span>}
-                </div>
-              ))}
-            </div>
-
-            {/* Question Statement */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.04] border border-white/10 space-y-2">
-              <span className="text-[10px] font-bold text-amber-400 block">السؤال السريع</span>
-              <div className="text-sm sm:text-base font-bold text-white leading-relaxed">
-                <MathRenderer content={currentQ.prompt_ar} />
-              </div>
-            </div>
-
-            {/* Options Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {currentQ.options.map((opt, idx) => {
-                const isSelected = selectedOption === idx;
-                const isCorrect = idx === currentQ.correctIndex;
-
-                let btnStyle = "bg-white/[0.03] hover:bg-white/[0.07] border-white/10 text-white";
-
-                if (phase === "round_reveal") {
-                  if (isCorrect) {
-                    btnStyle = "bg-emerald-500/20 border-emerald-500 text-emerald-200 shadow-lg shadow-emerald-500/20";
-                  } else if (isSelected && !isCorrect) {
-                    btnStyle = "bg-rose-500/20 border-rose-500 text-rose-200";
-                  } else {
-                    btnStyle = "bg-white/[0.01] border-white/5 text-slate-500 opacity-50";
-                  }
-                } else if (isSelected) {
-                  btnStyle = "bg-blue-600 border-blue-400 text-white";
-                }
-
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleSelectOption(idx)}
-                    disabled={hasAnswered || phase !== "playing"}
-                    className={`p-3.5 rounded-2xl border text-right transition-all flex items-center justify-between gap-3 cursor-pointer disabled:cursor-default ${btnStyle}`}
-                  >
-                    <span className="text-xs sm:text-sm font-medium leading-snug">
-                      <MathRenderer content={opt} />
-                    </span>
-
-                    {phase === "round_reveal" && isCorrect && (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    )}
-                    {phase === "round_reveal" && isSelected && !isCorrect && (
-                      <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Round Reveal Explanation & Next Button */}
-            {phase === "round_reveal" && (
-              <div className="p-4 rounded-2xl bg-blue-950/40 border border-blue-500/30 space-y-3 animate-in fade-in">
-                <div className="flex items-start gap-2 text-xs text-slate-200">
-                  <Sparkles className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" />
-                  <p className="leading-relaxed">
-                    <strong className="text-white block mb-0.5">التوضيح المنهجي:</strong>
-                    {currentQ.explanation_ar}
-                  </p>
-                </div>
-
-                <div className="flex justify-end pt-1">
-                  <button
-                    type="button"
-                    onClick={handleNextRound}
-                    className="py-2 px-5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5"
-                  >
-                    <span>{currentRoundIndex + 1 < questions.length ? "الجولة الموالية ➡️" : "عرض منصة التتويج 🏆"}</span>
-                  </button>
-                </div>
-              </div>
+                )}
+              </>
             )}
           </div>
         )}
 
-        {/* ---------------- PHASE 4: PODIUM ---------------- */}
-        {phase === "podium" && (
+        {/* ================================================================= */}
+        {/* STATE 4: ROUND RESULT & SYSTEMATIC EXPLANATION                    */}
+        {/* ================================================================= */}
+        {session.status === "RESULT" && currentQ && (
+          <div className="p-5 sm:p-7 space-y-5">
+            <div className="flex items-center justify-between pb-2 border-b border-white/10">
+              <span className="text-xs font-black text-white">
+                نتائج الجولة {session.current_round}
+              </span>
+              <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>الإجابة الصحيحة: {currentQ.options[currentQ.correctIndex]}</span>
+              </span>
+            </div>
+
+            {/* Callout if SPEED RUSH winner */}
+            {session.game_type === "SPEED_RUSH" && session.first_solver_name && (
+              <div className="p-3 rounded-2xl bg-amber-500/20 border border-amber-500/40 text-amber-200 text-xs font-black flex items-center justify-center gap-2">
+                <Trophy className="w-4 h-4 text-amber-300" />
+                <span>أسرع واحد حسم الجولة: {session.first_solver_name}! ⚡</span>
+              </div>
+            )}
+
+            {/* Systematic Explanation */}
+            <div className="p-4 rounded-2xl bg-blue-950/40 border border-blue-500/30 space-y-1.5 text-xs">
+              <span className="text-[10px] font-black text-amber-300 block">
+                التوضيح المنهجي الوزاري:
+              </span>
+              <p className="text-slate-200 leading-relaxed">
+                {currentQ.explanation_ar}
+              </p>
+            </div>
+
+            {/* Round Mini Leaderboard */}
+            <div className="space-y-1.5">
+              <span className="text-[11px] font-bold text-slate-400 block px-1">
+                الترتيب الحالي للجولة:
+              </span>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {rankedPlayers.slice(0, 6).map((p, idx) => (
+                  <div
+                    key={p.user_id}
+                    className={`p-2.5 rounded-xl border flex items-center justify-between text-xs ${
+                      p.user_id === currentUser.id
+                        ? "bg-amber-500/20 border-amber-500/40 text-amber-200 font-black"
+                        : "bg-white/[0.02] border-white/5 text-slate-300"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 truncate">
+                      <span className="font-mono text-slate-400 text-[10px]">#{idx + 1}</span>
+                      <span className="truncate">{p.user_name}</span>
+                    </div>
+                    <span className="font-mono font-bold">{p.score}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick Social Cheering Bar */}
+            <div className="flex items-center justify-between gap-1 p-2 rounded-xl bg-black/20 border border-white/5">
+              <span className="text-[10px] text-slate-400 font-bold ml-1">تفاعل سريع:</span>
+              <div className="flex items-center gap-2">
+                {["🔥", "👏", "😂", "💪", "☕"].map((em) => (
+                  <button
+                    key={em}
+                    type="button"
+                    onClick={() => triggerReaction(em)}
+                    className="w-8 h-8 rounded-lg bg-white/[0.04] hover:bg-white/[0.1] text-sm flex items-center justify-center transition-transform hover:scale-125 active:scale-95 cursor-pointer"
+                  >
+                    {em}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Next Round Action */}
+            <div className="flex justify-end pt-1">
+              {isHost ? (
+                <button
+                  type="button"
+                  onClick={handleNextRound}
+                  className="py-2.5 px-6 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <span>
+                    {session.current_round < session.total_rounds
+                      ? "الجولة الموالية ➡️"
+                      : "عرض التتويج النهائي 🏆"}
+                  </span>
+                </button>
+              ) : (
+                <span className="text-xs text-slate-400">في انتظار انتقال المضيف للجولة القادمة...</span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ================================================================= */}
+        {/* STATE 5: FINISHED & PODIUM                                        */}
+        {/* ================================================================= */}
+        {session.status === "FINISHED" && (
           <div className="p-6 sm:p-8 text-center space-y-6 flex flex-col items-center">
             <div className="w-16 h-16 rounded-3xl bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center justify-center font-bold text-2xl shadow-xl shadow-amber-500/20">
               <Trophy className="w-8 h-8" />
             </div>
 
             <div className="space-y-1">
-              <h3 className="text-xl sm:text-2xl font-black text-white">منصة التتويج النهائية 🏆</h3>
+              <h3 className="text-xl sm:text-2xl font-black text-white">
+                منصة التتويج النهائية 🏆
+              </h3>
               <p className="text-xs text-slate-300">
-                أحسنتم جميعاً! منافسة رائعة تثبت جاهزيتكم للبكالوريا
+                أحسنتم جميعاً! مراجعة تنافسية ممتعة تثبت جاهزيتكم للبكالوريا
               </p>
             </div>
 
-            {/* Podium Top 3 Cards */}
+            {/* Podium Top 3 */}
             <div className="w-full grid grid-cols-3 gap-2.5 pt-2 items-end">
               {/* 2nd Place */}
               {rankedPlayers[1] && (
                 <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col items-center gap-1.5">
                   <span className="text-lg">🥈</span>
                   <div className="relative w-9 h-9 rounded-full overflow-hidden border border-white/20">
-                    <Image src={rankedPlayers[1].avatar} alt={rankedPlayers[1].name} fill className="object-cover" />
+                    <Image src={rankedPlayers[1].user_avatar} alt={rankedPlayers[1].user_name} fill className="object-cover" />
                   </div>
                   <span className="text-xs font-bold text-white truncate max-w-[80px]">
-                    {rankedPlayers[1].name}
+                    {rankedPlayers[1].user_name}
                   </span>
                   <span className="text-[11px] font-mono text-slate-400">
                     {rankedPlayers[1].score} نقطة
@@ -401,15 +780,15 @@ export function DiwanMultiplayerGame({
                 </div>
               )}
 
-              {/* 1st Place (Champion) */}
+              {/* 1st Place */}
               {rankedPlayers[0] && (
                 <div className="p-4 rounded-2xl bg-gradient-to-t from-amber-500/20 to-amber-500/5 border border-amber-500/50 flex flex-col items-center gap-1.5 -translate-y-2 shadow-lg shadow-amber-500/10">
                   <span className="text-2xl">🥇</span>
                   <div className="relative w-12 h-12 rounded-full overflow-hidden border-2 border-amber-400 shadow-md">
-                    <Image src={rankedPlayers[0].avatar} alt={rankedPlayers[0].name} fill className="object-cover" />
+                    <Image src={rankedPlayers[0].user_avatar} alt={rankedPlayers[0].user_name} fill className="object-cover" />
                   </div>
                   <span className="text-xs sm:text-sm font-black text-amber-300 truncate max-w-[100px]">
-                    {rankedPlayers[0].name}
+                    {rankedPlayers[0].user_name}
                   </span>
                   <span className="text-xs font-mono font-bold text-white">
                     {rankedPlayers[0].score} نقطة
@@ -422,10 +801,10 @@ export function DiwanMultiplayerGame({
                 <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/10 flex flex-col items-center gap-1.5">
                   <span className="text-lg">🥉</span>
                   <div className="relative w-9 h-9 rounded-full overflow-hidden border border-white/20">
-                    <Image src={rankedPlayers[2].avatar} alt={rankedPlayers[2].name} fill className="object-cover" />
+                    <Image src={rankedPlayers[2].user_avatar} alt={rankedPlayers[2].user_name} fill className="object-cover" />
                   </div>
                   <span className="text-xs font-bold text-white truncate max-w-[80px]">
-                    {rankedPlayers[2].name}
+                    {rankedPlayers[2].user_name}
                   </span>
                   <span className="text-[11px] font-mono text-slate-400">
                     {rankedPlayers[2].score} نقطة
@@ -434,23 +813,23 @@ export function DiwanMultiplayerGame({
               )}
             </div>
 
-            {/* Actions */}
+            {/* Exactly 2 Options */}
             <div className="flex items-center gap-3 pt-3 w-full sm:w-auto">
               <button
                 type="button"
                 onClick={handleRematch}
-                className="flex-1 sm:flex-none py-2.5 px-5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 shadow-md cursor-pointer transition-all"
+                className="flex-1 sm:flex-none py-2.5 px-6 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-md cursor-pointer transition-all hover:scale-105"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                <span>مباراة رد الاعتبار ⚡</span>
+                <span>جولة أخرى ⚡</span>
               </button>
 
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 sm:flex-none py-2.5 px-5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-colors cursor-pointer"
+                className="flex-1 sm:flex-none py-2.5 px-6 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition-colors cursor-pointer"
               >
-                العودة إلى الطاولة 📖
+                <span>نرجعو للمراجعة 📖</span>
               </button>
             </div>
           </div>

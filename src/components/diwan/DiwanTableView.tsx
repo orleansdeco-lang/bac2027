@@ -21,6 +21,7 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  Zap,
 } from "lucide-react";
 import {
   DiwanTable,
@@ -28,7 +29,10 @@ import {
   DiwanMessage,
   StudentActivityStatus,
   DiwanMessageType,
+  DiwanGameSession,
+  DiwanGamePlayer,
 } from "@/types/diwan";
+import { DiwanService } from "@/lib/diwan/diwan-service";
 import { DiwanChatPanel } from "./DiwanChatPanel";
 import { DiwanMultiplayerGame } from "./DiwanMultiplayerGame";
 import { SharedStudyCard } from "./SharedStudyCard";
@@ -77,6 +81,28 @@ export function DiwanTableView({
   const [activeMobileDrawer, setActiveMobileDrawer] = useState<"chat" | "study" | "members" | null>(null);
   const [selectedMemberForProfile, setSelectedMemberForProfile] = useState<DiwanMember | null>(null);
   const [isStudyCardExpanded, setIsStudyCardExpanded] = useState(true);
+
+  // Active Challenge synchronization
+  const [activeChallenge, setActiveChallenge] = useState<{
+    session: DiwanGameSession | null;
+    players: DiwanGamePlayer[];
+  }>({ session: null, players: [] });
+
+  useEffect(() => {
+    let isMounted = true;
+    async function checkChallenge() {
+      const active = await DiwanService.getActiveGame(table.id);
+      if (isMounted) {
+        setActiveChallenge(active);
+      }
+    }
+    checkChallenge();
+    const interval = setInterval(checkChallenge, 3000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [table.id]);
 
   // Chat Prefill state (when clicking "اسقسيه")
   const [chatPrefill, setChatPrefill] = useState<{
@@ -274,6 +300,55 @@ export function DiwanTableView({
           )}
         </div>
       </div>
+
+      {/* =================================================================== */}
+      {/* LIVE ACTIVE CHALLENGE INVITATION BANNER (For Everyone in the Room)  */}
+      {/* =================================================================== */}
+      {activeChallenge.session &&
+        (activeChallenge.session.status === "WAITING" ||
+          activeChallenge.session.status === "READY" ||
+          activeChallenge.session.status === "STARTING") && (
+          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/20 via-amber-500/10 to-blue-500/10 border-2 border-amber-500/50 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xl animate-in fade-in">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center font-bold text-xl shadow-lg shadow-amber-400/30 shrink-0 animate-bounce">
+                🎮
+              </div>
+              <div className="space-y-0.5 text-center sm:text-right">
+                <div className="flex items-center gap-2 justify-center sm:justify-start">
+                  <span className="text-xs sm:text-sm font-black text-amber-300">
+                    دعوة لتحدي جماعي مباشر!
+                  </span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 font-black shadow-sm">
+                    {activeChallenge.session.game_type === "SPEED_RUSH"
+                      ? "أسرع واحد ⚡"
+                      : activeChallenge.session.game_type === "TRUE_FALSE_BLITZ"
+                      ? "صح ولا خطأ ⏱️"
+                      : activeChallenge.session.game_type === "BRAIN_RUSH"
+                      ? "Brain Rush 🧠"
+                      : activeChallenge.session.game_type === "MEMORY_BATTLE"
+                      ? "معركة الذاكرة 👁️"
+                      : "BAC Sprint 🏆"}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-200">
+                  أطلق <strong className="text-white font-bold">{activeChallenge.session.host_user_name || "زميل"}</strong> تحدياً في {table.topic} ·{" "}
+                  <span className="text-amber-300 font-mono font-bold">
+                    {activeChallenge.players.length} مشاركين انضموا حتى الآن
+                  </span>
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsGameModalOpen(true)}
+              className="w-full sm:w-auto py-3 px-7 rounded-2xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-amber-400/30 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-105 active:scale-95"
+            >
+              <Zap className="w-4 h-4 text-slate-950" />
+              <span>ادخل التحدي الآن ⚡</span>
+            </button>
+          </div>
+        )}
 
       {/* =================================================================== */}
       {/* MAIN VIEW: STUDY TABLE (Center 8 Cols) + CHAT (4 Cols Desktop)      */}
