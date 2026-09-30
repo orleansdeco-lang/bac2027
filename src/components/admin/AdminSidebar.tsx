@@ -52,6 +52,13 @@ const NAV_ITEMS: NavItem[] = [
     permission: "content.read",
   },
   {
+    name: "مراجعة الوكيل",
+    href: "/admin/content/review",
+    icon: FileCheck,
+    permission: "content.read",
+    badge: "وكيل AI",
+  },
+  {
     name: "التمارين",
     href: "/admin/exercises",
     icon: HelpCircle,
