@@ -87,6 +87,24 @@ function resolveToolsForQuery(query: string): string[] {
     return Array.from(toolsToRun);
   }
 
+  // 0. Advertising System Queries ("أعطيني الحملات النشطة", "أريني إعلانات وهران", "كم عدد النقرات على واتساب", "ما هي الحملات المنتهية", "حضّر حملة")
+  if (
+    q.includes("حملة") ||
+    q.includes("حملات") ||
+    q.includes("إعلان") ||
+    q.includes("إعلانات") ||
+    q.includes("واتساب") ||
+    q.includes("whatsapp") ||
+    q.includes("نقرات واتساب")
+  ) {
+    if (q.includes("حضّر") || q.includes("أنشئ") || q.includes("دير حملة") || q.includes("اكتب حملة")) {
+      toolsToRun.add("draft_ad_campaign");
+      return Array.from(toolsToRun);
+    }
+    toolsToRun.add("get_ads_data");
+    return Array.from(toolsToRun);
+  }
+
   // 1. Wilayas / Geographic distribution
   if (q.includes("ولاية") || q.includes("ولايات") || q.includes("جغرافي") || q.includes("أين") || q.includes("وين راهم") || q.includes("توزيع الطلاب")) {
     toolsToRun.add("get_wilaya_statistics");
@@ -239,6 +257,114 @@ ${actionLines}
         report: rep,
       },
       warnings: allWarnings,
+    };
+  }
+
+  // 0.5. Advertising System Queries & Draft Campaign
+  const adsDataResult = toolResults.find((r) => r.toolName === "get_ads_data");
+  if (adsDataResult && adsDataResult.data) {
+    const data = adsDataResult.data;
+
+    // Active campaigns
+    if (data.activeList) {
+      const listStr = data.activeList
+        .map(
+          (c: any) =>
+            `• **[${c.placement}] ${c.title}:**\n  - *المعلن:* ${c.advertiserId} | *المرات المستهدفة:* ${c.analytics.impressionsCount} ظهور | *النقرات:* ${c.analytics.clicksCount} (${c.analytics.ctrPercentage}% CTR)\n  - *الرابط/واتساب:* ${c.creative.ctaType === "whatsapp" ? "واتساب (" + c.creative.ctaDestination + ")" : c.creative.ctaDestination}`
+        )
+        .join("\n\n");
+
+      return {
+        reply: `### 📢 الحملات الإعلانية النشطة حالياً (${data.count} حملات)
+
+${listStr || "لا توجد حملات إعلانية نشطة حالياً."}
+
+> 📌 جميع الإعلانات تحمل الشارة الإلزامية **«إعلان»** وتلتزم بحدود التكرار (Frequency Capping).`,
+        structuredData: { type: "ADS_ACTIVE_CAMPAIGNS", campaigns: data.activeList },
+        warnings: allWarnings,
+      };
+    }
+
+    // Wilaya-specific campaigns (e.g. Oran)
+    if (data.wilayaList) {
+      const listStr = data.wilayaList
+        .map(
+          (c: any) =>
+            `• **${c.title} (${c.status === "active" ? "نشطة" : c.status}):**\n  - *الشعبة المستهدفة:* ${c.targeting.streams?.join(", ") || "جميع الشعب"}\n  - *البلديات:* ${c.targeting.communes?.join(", ") || "كامل الولاية"}\n  - *الظهور:* ${c.analytics.impressionsCount} | *النقرات:* ${c.analytics.clicksCount} (واتساب: ${c.analytics.whatsappClicksCount})`
+        )
+        .join("\n\n");
+
+      return {
+        reply: `### 📍 الإعلانات الموجهة لولاية ${data.wilayaCode === 31 ? "وهران (31)" : `الولاية ${data.wilayaCode}`} (${data.count} حملات)
+
+${listStr || "لا توجد إعلانات موجهة لهذه الولاية حالياً."}
+
+> 📌 الاستهداف الجغرافي يعتمد على ولاية الطالب المعتمدة وموقعه في ديوان شاطر.`,
+        structuredData: { type: "ADS_WILAYA_CAMPAIGNS", wilayaCode: data.wilayaCode, campaigns: data.wilayaList },
+        warnings: allWarnings,
+      };
+    }
+
+    // WhatsApp clicks total
+    if (data.totalWhatsAppClicks !== undefined) {
+      const campBreakdown = data.campaignsWithWhatsApp
+        .map((c: any) => `• **${c.title}:** ${c.whatsappClicks} نقرة واتساب (رقم الهاتف: \`${c.phone}\`)`)
+        .join("\n");
+
+      return {
+        reply: `### 💬 إحصائيات النقرات المباشرة على واتساب (WhatsApp CTA Telemetry)
+
+- **إجمالي نقرات واتساب المسجلة:** **${data.totalWhatsAppClicks.toLocaleString("ar-DZ")} نقرة**
+- **عدد الحملات التي تفعل زر واتساب:** ${data.campaignsWithWhatsApp.length} حملات
+
+#### 📊 التوزيع حسب الحملات:
+${campBreakdown || "لا توجد حملات مفعلة لزر واتساب."}
+
+> 📌 يتم احتساب نقرات واتساب بدقة عند نقر الطالب لزر المراسلة المباشرة مع النص المسبق.`,
+        structuredData: { type: "ADS_WHATSAPP_CLICKS", total: data.totalWhatsAppClicks, breakdown: data.campaignsWithWhatsApp },
+        warnings: allWarnings,
+      };
+    }
+
+    // Ended campaigns
+    if (data.endedList) {
+      const listStr = data.endedList
+        .map(
+          (c: any) =>
+            `• **${c.title} (منتهية):**\n  - *تاريخ الانتهاء:* ${new Date(c.schedule.endDate || c.updatedAt).toLocaleDateString("ar-DZ")}\n  - *الظهور الإجمالي:* ${c.analytics.impressionsCount} | *النقرات الكلية:* ${c.analytics.clicksCount} (${c.analytics.ctrPercentage}% CTR)`
+        )
+        .join("\n\n");
+
+      return {
+        reply: `### 🏁 الحملات الإعلانية المنتهية (${data.count} حملات)
+
+${listStr || "لا توجد حملات منتهية مسجلة في الأرشيف."}`,
+        structuredData: { type: "ADS_ENDED_CAMPAIGNS", campaigns: data.endedList },
+        warnings: allWarnings,
+      };
+    }
+  }
+
+  // Draft Ad Campaign created
+  const draftAdResult = toolResults.find((r) => r.toolName === "draft_ad_campaign");
+  if (draftAdResult && draftAdResult.data) {
+    const draft = draftAdResult.data;
+    return {
+      reply: `### 📝 تم تحضير مسودة الحملة الإعلانية بنجاح
+- **عنوان الحملة:** ${draft.title}
+- **الحالة الحالية:** **مسودة (draft)**
+- **المستهدفون:** طلاب ${draft.targeting.grades?.join(", ") || "3AS"} شعبة ${draft.targeting.streams?.join(", ") || "العلوم التجريبية"} في ولاية ${draft.targeting.wilayas?.join(", ") || "31 (وهران)"}.
+- **الموضع الإعلاني:** ${draft.placement}
+- **نوع زر الإجراء (CTA):** ${draft.creative.ctaType === "whatsapp" ? `واتساب (${draft.creative.ctaDestination})` : draft.creative.ctaDestination}
+- **شارة الإعلان الإلزامية:** مفعّلة تلقائياً («إعلان»).
+
+---
+
+🛡️ **بروتوكول السلامة الإعلانية الصارم (Safety Protocol):**
+- **الحملة لم تُنشر تلقائياً.** تم حفظها كمسودة فقط في المنظومة الإعلانية.
+- تتطلب الحملة انتقالاً إلى مرحلة التدقيق والمراجعة (\`pending_review\`) ثم المصادقة اليدوية من المشرف البشري (\`approved\`) قبل جدولتها أو تفعيلها.`,
+      structuredData: { type: "AD_DRAFT_CREATED", campaign: draft },
+      warnings: ["تم حفظ الحملة كمسودة فقط وفق بروتوكول الأمان الصارم. لا يتم النشر التلقائي أبداً."],
     };
   }
 
@@ -690,7 +816,32 @@ ${diffAr}
 
   // Execute resolved tools sequentially with permission checks
   for (const toolName of toolsToRun) {
-    const res = await executeAdminTool(toolName, {}, ctx);
+    let inputArgs: any = {};
+    const qLower = query.toLowerCase();
+
+    if (toolName === "get_ads_data") {
+      if (qLower.includes("نشط") || qLower.includes("الحملات النشطة")) {
+        inputArgs = { queryType: "active" };
+      } else if (qLower.includes("وهران") || qLower.includes("oran") || qLower.includes("31")) {
+        inputArgs = { queryType: "wilaya", wilayaCode: 31 };
+      } else if (qLower.includes("واتساب") || qLower.includes("whatsapp") || qLower.includes("نقرات واتساب")) {
+        inputArgs = { queryType: "whatsapp_clicks" };
+      } else if (qLower.includes("منتهية") || qLower.includes("منتهيين")) {
+        inputArgs = { queryType: "ended" };
+      } else {
+        inputArgs = { queryType: "overview" };
+      }
+    } else if (toolName === "draft_ad_campaign") {
+      inputArgs = {
+        title: "حملة مراجعة العلوم التجريبية لطلبة 3AS في وهران",
+        wilayaCode: 31,
+        streamId: "sciences_exp",
+        grade: "3AS",
+        ctaType: "whatsapp",
+      };
+    }
+
+    const res = await executeAdminTool(toolName, inputArgs, ctx);
     toolResults.push(res);
     const def = ADMIN_AI_TOOLS_REGISTRY[toolName];
     toolsExecuted.push({

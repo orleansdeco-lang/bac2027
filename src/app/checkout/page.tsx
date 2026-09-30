@@ -323,14 +323,20 @@ export default function CheckoutPage() {
 
               {/* Navigation Back */}
               <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
-                <Link href="/dashboard" className="w-full sm:w-auto">
-                  <Button variant="primary" size="md" className="w-full sm:w-auto font-bold rounded-xl px-8 shadow-lg">
-                    <span>العودة إلى لوحة الدراسة</span>
+                <Link href={`/orders/track/${encodeURIComponent(confirmedOrder.order_number)}`} className="w-full sm:w-auto">
+                  <Button variant="primary" size="md" className="w-full sm:w-auto font-black rounded-xl px-8 shadow-clay flex items-center justify-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    <span>تتبع مسار طلبك الآن (Timeline)</span>
                   </Button>
                 </Link>
-                <Link href="/account" className="w-full sm:w-auto">
+                <Link href="/dashboard/orders" className="w-full sm:w-auto">
                   <Button variant="outline" size="md" className="w-full sm:w-auto font-bold rounded-xl px-6 border-slate-700 text-slate-300 hover:text-white">
-                    <span>عرض ملفي الشخصي</span>
+                    <span>قائمة طلباتي</span>
+                  </Button>
+                </Link>
+                <Link href="/dashboard" className="w-full sm:w-auto">
+                  <Button variant="outline" size="md" className="w-full sm:w-auto font-bold rounded-xl px-6 border-slate-700 text-slate-300 hover:text-white">
+                    <span>العودة للمنصة</span>
                   </Button>
                 </Link>
               </div>

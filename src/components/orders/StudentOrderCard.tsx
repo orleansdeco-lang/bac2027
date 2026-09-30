@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import {
@@ -16,6 +17,8 @@ import {
   ShieldCheck,
   Clock,
   CheckCircle2,
+  ArrowLeft,
+  ArrowRight,
 } from "lucide-react";
 import { StudentOrderResponse } from "@/app/api/orders/my-orders/route";
 
@@ -201,6 +204,20 @@ export function StudentOrderCard({ order }: StudentOrderCardProps) {
             )}
           </div>
         )}
+      </div>
+
+      {/* Action: Track Order Timeline (8 Stages) */}
+      <div className="pt-3 border-t border-theme/70 flex items-center justify-between gap-3">
+        <span className="text-[11px] text-theme-muted">
+          متابعة مراحل الشحن، التوصيل، والدفع وتفعيل الاشتراك:
+        </span>
+        <Link href={`/dashboard/orders/${encodeURIComponent(order.id || order.order_number)}`}>
+          <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white font-bold text-xs shadow-sm transition-all hover:scale-[1.02]">
+            <Clock className="w-3.5 h-3.5" />
+            <span>تتبع مسار الطلب (Timeline)</span>
+            <ArrowLeft className="w-3.5 h-3.5" />
+          </span>
+        </Link>
       </div>
     </Card>
   );

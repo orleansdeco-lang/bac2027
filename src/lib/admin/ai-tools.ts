@@ -556,7 +556,154 @@ const getDailyIntelligenceReportTool: AdminToolDefinition = {
 };
 
 /**
- * Master Registry of all 14 approved administrative tools
+ * 13. Tool: get_ads_data
+ */
+const getAdsDataTool: AdminToolDefinition = {
+  name: "get_ads_data",
+  nameAr: "استعلام المنظومة الإعلانية",
+  description: "جلب معلومات الحملات الإعلانية: الحملات النشطة، إعلانات الولايات المحددة (مثل وهران)، نقرات واتساب، والحملات المنتهية.",
+  requiredPermission: "ads.read",
+  execute: async (input: { queryType?: string; wilayaCode?: number }, _ctx) => {
+    const {
+      getActiveCampaignsList,
+      getCampaignsByWilayaList,
+      getTotalWhatsAppClicks,
+      getEndedCampaignsList,
+      getAdsOverviewStats,
+    } = await import("@/lib/ads/ad-service");
+
+    const qType = input?.queryType || "overview";
+
+    if (qType === "active") {
+      const activeList = await getActiveCampaignsList();
+      return {
+        success: true,
+        toolName: "get_ads_data",
+        data: { activeList, count: activeList.length },
+        summary: `يوجد حالياً ${activeList.length} حملات إعلانية نشطة في المنصة.`,
+        citation: { source: "المنظومة الإعلانية / ad_campaigns", timestamp: new Date().toISOString() },
+      };
+    }
+
+    if (qType === "wilaya" && input.wilayaCode) {
+      const wilayaList = await getCampaignsByWilayaList(input.wilayaCode);
+      return {
+        success: true,
+        toolName: "get_ads_data",
+        data: { wilayaList, wilayaCode: input.wilayaCode, count: wilayaList.length },
+        summary: `تم العثور على ${wilayaList.length} حملات إعلانية موجهة للولاية رقم ${input.wilayaCode}.`,
+        citation: { source: "المنظومة الإعلانية / targeting.wilayas", timestamp: new Date().toISOString() },
+      };
+    }
+
+    if (qType === "whatsapp_clicks") {
+      const waStats = await getTotalWhatsAppClicks();
+      return {
+        success: true,
+        toolName: "get_ads_data",
+        data: waStats,
+        summary: `إجمالي النقرات المباشرة على واتساب يبلغ ${waStats.totalWhatsAppClicks.toLocaleString("ar-DZ")} نقرة عبر ${waStats.campaignsWithWhatsApp.length} حملات.`,
+        citation: { source: "المنظومة الإعلانية / analytics.whatsappClicksCount", timestamp: new Date().toISOString() },
+      };
+    }
+
+    if (qType === "ended") {
+      const endedList = await getEndedCampaignsList();
+      return {
+        success: true,
+        toolName: "get_ads_data",
+        data: { endedList, count: endedList.length },
+        summary: `يوجد ${endedList.length} حملات إعلانية منتهية الصلاحية.`,
+        citation: { source: "المنظومة الإعلانية / status=ended", timestamp: new Date().toISOString() },
+      };
+    }
+
+    const overview = await getAdsOverviewStats();
+    return {
+      success: true,
+      toolName: "get_ads_data",
+      data: overview,
+      summary: `تضم المنظومة الإعلانية ${overview.campaigns.total} حملات (${overview.campaigns.active} نشطة) بإجمالي ${overview.performance.totalImpressions.toLocaleString("ar-DZ")} ظهور و ${overview.performance.totalWhatsAppClicks.toLocaleString("ar-DZ")} نقرة واتساب.`,
+      citation: { source: "المنظومة الإعلانية / overview", timestamp: new Date().toISOString() },
+    };
+  },
+};
+
+/**
+ * 14. Tool: draft_ad_campaign
+ */
+const draftAdCampaignTool: AdminToolDefinition = {
+  name: "draft_ad_campaign",
+  nameAr: "تحضير مسودة حملة إعلانية (مسودة فقط)",
+  description: "تحضير مسودة حملة إعلانية جديدة. لا يتم النشر تلقائياً أبداً؛ يتم حفظها كمسودة بحاجة لمراجعة المشرف ومصادقته.",
+  requiredPermission: "ads.manage",
+  execute: async (
+    input: {
+      title?: string;
+      wilayaCode?: number;
+      streamId?: string;
+      grade?: string;
+      subjectId?: string;
+      advertiserId?: string;
+      ctaType?: "external_link" | "whatsapp";
+      whatsappPhone?: string;
+    },
+    _ctx
+  ) => {
+    const { createAdCampaign } = await import("@/lib/ads/ad-service");
+
+    const title = input.title || `حملة مراجعة لتلاميذ ${input.grade || "3AS"} ${input.streamId === "sciences_exp" ? "علوم تجريبية" : "علوم"} في وهران`;
+    const wilayaCode = input.wilayaCode || 31;
+    const streamId = input.streamId || "sciences_exp";
+    const grade = input.grade || "3AS";
+
+    const draft = await createAdCampaign({
+      title,
+      advertiserId: input.advertiserId || "adv_oran_academy",
+      placement: "sidebar",
+      targeting: {
+        wilayas: [wilayaCode],
+        streams: [streamId],
+        grades: [grade],
+        subjects: input.subjectId ? [input.subjectId] : undefined,
+        pages: ["practice", "diwan"],
+        placements: ["sidebar", "between_exercises"],
+      },
+      schedule: {
+        startDate: new Date().toISOString(),
+        frequencyCap: { maxImpressionsPerUserPerDay: 3 },
+      },
+      creative: {
+        advertiserId: input.advertiserId || "adv_oran_academy",
+        format: "native",
+        titleAr: title,
+        bodyAr: `دورة تحضيرية مكثفة موجهة خصيصاً لتلاميذ ${grade} شعبة العلوم التجريبية في ولاية وهران.`,
+        assetUrl: "https://shater.dz/images/ads/targeted_revision_banner.webp",
+        ctaType: input.ctaType || "whatsapp",
+        ctaDestination: input.whatsappPhone || "+213550123456",
+        ctaLabelAr: "تواصل عبر واتساب 💬",
+        whatsappPrefillText: `مرحباً، أود الاستفسار عن ${title}`,
+        isEducationalClaim: false,
+        claimVerificationStatus: "verified",
+      },
+      budgetDzd: 25000,
+      createdBy: "ai_assistant",
+      initialStatus: "draft", // STRICT INVARIANT: Always draft, never published!
+    });
+
+    return {
+      success: true,
+      toolName: "draft_ad_campaign",
+      data: draft,
+      summary: `تم إنشاء مسودة الحملة الإعلانية بنجاح برمز [${draft.id}] والحالة: [مسودة draft]. الحملة غير منشورة وتتطلب مراجعة ومصادقة المشرف البشري.`,
+      warnings: ["تم حفظ الحملة كمسودة فقط وفق بروتوكول الأمان الصارم. لا يتم النشر التلقائي أبداً."],
+      citation: { source: "المنظومة الإعلانية / draft-creator", timestamp: new Date().toISOString() },
+    };
+  },
+};
+
+/**
+ * Master Registry of all approved administrative tools
  */
 export const ADMIN_AI_TOOLS_REGISTRY: Record<string, AdminToolDefinition<any, any>> = {
   get_platform_overview: getPlatformOverviewTool,
@@ -569,6 +716,8 @@ export const ADMIN_AI_TOOLS_REGISTRY: Record<string, AdminToolDefinition<any, an
   get_error_statistics: getErrorStatisticsTool,
   get_data_quality_report: getDataQualityReportTool,
   get_daily_intelligence_report: getDailyIntelligenceReportTool,
+  get_ads_data: getAdsDataTool,
+  draft_ad_campaign: draftAdCampaignTool,
   search_content: searchContentTool,
   search_exercises: searchExercisesTool,
   search_orientation_data: searchOrientationTool,
