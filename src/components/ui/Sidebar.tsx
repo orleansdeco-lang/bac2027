@@ -43,6 +43,7 @@ import {
   Users,
   Bot,
   Landmark,
+  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -317,6 +318,13 @@ export function Sidebar({ className }: SidebarProps) {
           matches: (p: string) => p.startsWith("/referral"),
           badge: "-10%",
           badgeColor: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
+        },
+        {
+          href: "/dashboard/orders",
+          label_ar: "طلباتي (My Orders)",
+          label_fr: "Mes Commandes",
+          icon: Package,
+          matches: (p: string) => p.startsWith("/dashboard/orders") || p.startsWith("/orders"),
         },
         {
           href: "/account",

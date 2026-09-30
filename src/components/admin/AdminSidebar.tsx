@@ -20,6 +20,7 @@ import {
   ChevronLeft,
   Lock,
   FileCheck,
+  BrainCircuit,
 } from "lucide-react";
 import { useAdminSession } from "@/lib/admin/client";
 import { AdminPermission } from "@/lib/admin/permissions";
@@ -63,6 +64,13 @@ const NAV_ITEMS: NavItem[] = [
     href: "/admin/exercises",
     icon: HelpCircle,
     permission: "exercises.read",
+  },
+  {
+    name: "ذكاء التمارين",
+    href: "/admin/exercises/intelligence",
+    icon: BrainCircuit,
+    permission: "exercises.read",
+    badge: "وكيل AI",
   },
   {
     name: "التعلم",

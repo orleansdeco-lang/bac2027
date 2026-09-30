@@ -50,6 +50,7 @@ import {
   MessageCircle,
   QrCode,
   Zap,
+  Package,
 } from "lucide-react";
 import QRCode from "qrcode";
 import { exportAnonymizedPilotData } from "@/lib/analytics";
@@ -880,6 +881,15 @@ export default function AccountPage() {
                   </Button>
                 </Link>
               )}
+
+              {/* Quick access to My Orders */}
+              <Link href="/dashboard/orders" className="block pt-1">
+                <Button variant="outline" size="sm" className="w-full font-bold rounded-xl border-theme text-theme-text flex items-center justify-center gap-2 py-3 hover:bg-card-muted transition-colors">
+                  <Package className="w-4 h-4 text-[var(--color-primary)]" />
+                  <span>{isAr ? "متابعة طلباتي (My Orders)" : "Mes commandes"}</span>
+                  <NextArrow className="w-3.5 h-3.5 text-theme-muted" />
+                </Button>
+              </Link>
             </Card>
 
             {/* 7. PWA, DAILY NOTIFICATIONS & SUDDEN QUIZ BRAIN PING */}
