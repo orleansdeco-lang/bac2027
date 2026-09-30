@@ -3,7 +3,7 @@ import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { requireServerAuth } from "@/lib/auth/server-guard";
 import { CampusPostSchema } from "@/lib/validation/campus-schemas";
-import { sanitizeUserContent, sanitizeSingleLine } from "@/lib/security/sanitize";
+import { sanitizeUserContent, sanitizeSingleLine, sanitizeAttachmentUrl } from "@/lib/security/sanitize";
 import { CampusPost } from "@/types/campus";
 import { CampusService } from "@/lib/campus/campus-service";
 
@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
     const cleanTags = tags.map((t) => sanitizeSingleLine(t, 40));
     const cleanAttachments = (attachments || []).map((att) => ({
       type: att.type,
-      url: sanitizeSingleLine(att.url, 2000),
+      url: sanitizeAttachmentUrl(att.url),
       label: sanitizeSingleLine(att.label, 120),
       size: att.size ? sanitizeSingleLine(att.size, 40) : undefined,
       fileName: att.fileName ? sanitizeSingleLine(att.fileName, 120) : undefined,

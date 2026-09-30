@@ -103,6 +103,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, ReadonlySet<AdminPermission>> = 
     "ads.manage",
     "analytics.read",
     "ai.use",
+    "ai.execute",
     "audit.read",
   ]),
 

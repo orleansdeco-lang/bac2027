@@ -26,7 +26,6 @@ import {
   FileUp,
   Image as ImageIcon,
   PenTool,
-  Download,
   Eye,
   Maximize2,
   Trash2,
@@ -120,26 +119,16 @@ export function DiwanSharedSummariesTab() {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Load posts from API with fallback
+  // Load posts from API with automatic local merge & like enrichment
   const fetchPosts = async () => {
     try {
-      const res = await fetch("/api/campus/posts?t=" + Date.now(), {
-        cache: "no-store",
-        headers: { "Cache-Control": "no-cache" },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && Array.isArray(data.posts)) {
-          setPosts(data.posts);
-          return;
-        }
-      }
+      const allPosts = await CampusService.fetchRemotePosts();
+      setPosts(allPosts);
     } catch (err) {
       console.warn("Failed to fetch campus posts from API:", err);
+      const localPosts = CampusService.getPosts();
+      setPosts(localPosts);
     }
-    // Fallback only if offline/network error
-    const localPosts = CampusService.getPosts();
-    setPosts(localPosts);
   };
 
   useEffect(() => {
@@ -187,35 +176,23 @@ export function DiwanSharedSummariesTab() {
     });
   }, [posts, selectedType, selectedStream, selectedFormat, searchQuery]);
 
-  const handleLike = async (postId: string) => {
-    if (!user) {
-      showToast("يرجى تسجيل الدخول للإعجاب بالملخص 🏛️");
-      return;
-    }
-
-    try {
-      const res = await fetch(`/api/campus/posts/${encodeURIComponent(postId)}/like`, {
-        method: "POST",
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success) {
-          setPosts((prev) =>
-            prev.map((p) =>
-              p.id === postId ? { ...p, likesCount: data.likesCount, isLiked: data.isLiked } : p
-            )
-          );
-          return;
-        }
-      }
-    } catch (err) {
-      console.warn("API like error, falling back locally:", err);
-    }
-
-    const fallbackRes = CampusService.toggleLikePost(postId);
+  const handleLike = (postId: string) => {
+    // 1. Immediately toggle in localStorage and update counts
+    const res = CampusService.toggleLikePost(postId);
     setPosts((prev) =>
-      prev.map((p) => (p.id === postId ? { ...p, likesCount: fallbackRes.likesCount, isLiked: fallbackRes.isLiked } : p))
+      prev.map((p) =>
+        p.id === postId
+          ? { ...p, likesCount: res.likesCount, isLiked: res.isLiked }
+          : p
+      )
     );
+
+    // 2. Background server sync if user is logged in
+    if (user) {
+      fetch(`/api/campus/posts/${encodeURIComponent(postId)}/like`, {
+        method: "POST",
+      }).catch(() => {});
+    }
   };
 
   const handleBookmark = async (post: CampusPost) => {
@@ -270,32 +247,78 @@ export function DiwanSharedSummariesTab() {
     reader.readAsDataURL(file);
   };
 
-  // Image Upload Handler
-  const handleImageFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    Array.from(files).forEach((file) => {
-      if (file.size > 15 * 1024 * 1024) {
-        showToast(`الصورة ${file.name} تتجاوز 15 ميغابايت ⚠️`);
-        return;
-      }
+  // Fast client-side image compression & optimization (Canvas-based)
+  const compressImageFile = (
+    file: File,
+    maxDimension = 1280,
+    quality = 0.8
+  ): Promise<{ name: string; url: string }> => {
+    return new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onload = (event) => {
-        const dataUrl = event.target?.result as string;
-        setDraftImages((prev) => [...prev, { name: file.name, url: dataUrl }]);
+      reader.onload = (e) => {
+        const img = document.createElement("img");
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            } else {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+          }
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            resolve({ name: file.name, url: (e.target?.result as string) || "" });
+            return;
+          }
+          ctx.imageSmoothingEnabled = true;
+          ctx.imageSmoothingQuality = "high";
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL("image/jpeg", quality);
+          resolve({ name: file.name, url: compressedDataUrl });
+        };
+        img.onerror = () => {
+          resolve({ name: file.name, url: (e.target?.result as string) || "" });
+        };
+        img.src = (e.target?.result as string) || "";
+      };
+      reader.onerror = () => {
+        resolve({ name: file.name, url: "" });
       };
       reader.readAsDataURL(file);
     });
-    showToast(`تمت إضافة ${files.length} صورة بنجاح 🖼️`);
   };
 
-  const handleCreatePost = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) {
-      showToast("يرجى تسجيل الدخول لمشاركة ملخصك في الديوان 🏛️");
-      return;
+  // Image Upload Handler with automatic compression
+  const handleImageFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    showToast("جاري معالجة الصور وضبط دقتها... ⏳");
+    const processed: { name: string; url: string }[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      if (file.size > 20 * 1024 * 1024) {
+        showToast(`الصورة ${file.name} تتجاوز 20 ميغابايت ⚠️`);
+        continue;
+      }
+      const compressed = await compressImageFile(file, 1280, 0.8);
+      if (compressed.url) {
+        processed.push(compressed);
+      }
     }
+    setDraftImages((prev) => [...prev, ...processed]);
+    showToast(`تمت إضافة ${processed.length} صورة بنجاح 🖼️`);
+  };
+
+  const handleCreatePost = (e: React.FormEvent) => {
+    e.preventDefault();
     if (!draftTitle.trim() || !draftLesson.trim()) {
       showToast("يرجى إدخال عنوان الملخص/الموضوع واسم الدرس المعني");
       return;
@@ -348,58 +371,18 @@ export function DiwanSharedSummariesTab() {
       .map((t) => t.trim())
       .filter((t) => t.length > 0);
 
-    const postPayload = {
-      type: draftType,
-      title: draftTitle.trim(),
-      content: finalContent,
-      stream: draftStream,
-      subjectId: draftSubject,
-      lesson: draftLesson.trim(),
-      tags: tagsArray.length > 0 ? tagsArray : ["ملخص_تشاركي", "بكالوريا"],
-      attachments: compiledAttachments,
-    };
-
-    try {
-      const res = await fetch("/api/campus/posts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(postPayload),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.post) {
-          setPosts((prev) => [data.post, ...prev]);
-          setIsShareModalOpen(false);
-          setDraftTitle("");
-          setDraftContent("");
-          setDraftLesson("");
-          setDraftTags("");
-          setDraftPdf(null);
-          setDraftImages([]);
-          showToast("تم نشر ملخصك ومرفقاته بنجاح في ديوان العلم! 🌟");
-          return;
-        }
-      } else {
-        const errData = await res.json().catch(() => ({}));
-        showToast(errData.error || "تعذر نشر الملخص، يرجى المحاولة لاحقاً");
-        return;
-      }
-    } catch (err) {
-      console.warn("API create post failed, falling back to local store:", err);
-    }
-
     // Privacy-safe display name fallback
     const fallbackAuthorName = formatStudentPrivacyName(
       user?.user_metadata?.full_name || "طالب بكالوريا"
     );
 
+    // Save to CampusService immediately (ensures persistence in localStorage & background sync)
     const newPost = CampusService.createPost({
       authorId: user?.id || "student-user",
       authorName: fallbackAuthorName,
       authorAvatar: "👨‍🎓",
       authorStream: draftStream,
-      authorBadge: "مساهم متميز",
+      authorBadge: "مساهم بالديوان",
       type: draftType,
       title: draftTitle.trim(),
       content: finalContent,
@@ -859,21 +842,11 @@ export function DiwanSharedSummariesTab() {
                               fileName: pdfAtt.fileName || pdfAtt.label,
                             })
                           }
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer"
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md transition-all cursor-pointer hover:scale-105 active:scale-95"
                         >
                           <Eye className="w-3.5 h-3.5" />
-                          <span>معاينة الـ PDF 👁️</span>
+                          <span>معاينة وقراءة المستند 📖</span>
                         </button>
-                        <a
-                          href={pdfAtt.url}
-                          download={pdfAtt.fileName || `${post.title}.pdf`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-200 font-bold text-xs border border-white/[0.1] transition-all"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          <span>تحميل 📥</span>
-                        </a>
                       </div>
                     </div>
                   ))}
@@ -1007,18 +980,10 @@ export function DiwanSharedSummariesTab() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-3 py-1.5 rounded-xl bg-white/[0.06] hover:bg-white/[0.12] text-slate-300 hover:text-white text-xs font-bold flex items-center gap-1.5 transition-colors"
-                  title="فتح في نافذة جديدة"
+                  title="فتح في نافذة كاملة"
                 >
                   <Maximize2 className="w-4 h-4" />
                   <span className="hidden sm:inline">نافذة كاملة</span>
-                </a>
-                <a
-                  href={activeViewingPdf.url}
-                  download={activeViewingPdf.fileName || "document.pdf"}
-                  className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md transition-colors"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>تحميل PDF</span>
                 </a>
                 <button
                   type="button"
@@ -1064,18 +1029,13 @@ export function DiwanSharedSummariesTab() {
               alt={activeViewingImage.label}
               className="max-w-full max-h-[80vh] rounded-2xl object-contain shadow-2xl border border-white/10"
             />
-            <div className="mt-3 flex items-center gap-3">
-              <span className="text-xs text-slate-300 font-bold">
+            <div className="mt-3 flex items-center justify-between w-full px-2">
+              <span className="text-xs text-slate-300 font-bold truncate">
                 {activeViewingImage.label}
               </span>
-              <a
-                href={activeViewingImage.url}
-                download="note-image.png"
-                className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>حفظ الصورة</span>
-              </a>
+              <span className="text-[11px] text-amber-400 font-bold">
+                مراجعة ودراسة مباشرة داخل المنصة 📖
+              </span>
             </div>
           </div>
         </div>

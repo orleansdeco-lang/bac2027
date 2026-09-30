@@ -86,6 +86,7 @@ export async function POST(req: Request) {
       reply: result.reply,
       toolsExecuted: result.toolsExecuted,
       structuredData: result.structuredData,
+      actionProposal: result.actionProposal,
       warnings: result.warnings,
     });
   } catch (err: any) {

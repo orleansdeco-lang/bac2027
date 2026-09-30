@@ -12,6 +12,14 @@
 import { UserRole } from "@/lib/operations/types";
 import { executeAdminTool, ADMIN_AI_TOOLS_REGISTRY, AdminToolResult, ToolExecutionContext } from "./ai-tools";
 import { GoogleGenAI } from "@google/genai";
+import {
+  proposeAction,
+  AdminActionProposal,
+  SupportedActionName,
+  ACTION_METADATA,
+} from "./ai-actions";
+import { AdminContext } from "./auth";
+import { getPermissionsForRole } from "./permissions";
 
 export interface ChatMessage {
   id: string;
@@ -24,6 +32,7 @@ export interface ChatMessage {
   }>;
   structuredData?: any;
   warnings?: string[];
+  actionProposal?: AdminActionProposal;
   timestamp: string;
 }
 
@@ -38,6 +47,7 @@ export interface AdminAIQueryResponse {
   }>;
   structuredData?: any;
   warnings?: string[];
+  actionProposal?: AdminActionProposal;
 }
 
 /**
@@ -356,6 +366,176 @@ ${toolResults.map((tr) => `• **${tr.toolName}:** ${tr.summary}`).join("\n\n")}
 }
 
 /**
+ * Detects whether the administrator is requesting an authoritative data mutation.
+ * Invariant: Never mutates immediately — generates a typed action proposal for human confirmation.
+ */
+function detectMutationIntent(
+  query: string,
+  adminContext: AdminContext
+): { actionName: SupportedActionName; params: Record<string, unknown> } | null {
+  const q = query.toLowerCase().trim();
+
+  // 1. Update Exercise / Change Difficulty
+  if (
+    q.includes("بدل صعوبة") ||
+    q.includes("غير صعوبة") ||
+    q.includes("عدل صعوبة") ||
+    q.includes("بدل درجة صعوبة") ||
+    q.includes("غير مستوى الصعوبة") ||
+    (q.includes("صعوبة") && (q.includes("بدل") || q.includes("غير") || q.includes("عدل") || q.includes("إلى")))
+  ) {
+    let targetDifficulty = "advanced";
+    if (q.includes("صعب") || q.includes("advanced")) {
+      targetDifficulty = "advanced";
+    } else if (q.includes("تحدي") || q.includes("challenge")) {
+      targetDifficulty = "challenge";
+    } else if (q.includes("متوسط") || q.includes("عادي") || q.includes("standard")) {
+      targetDifficulty = "standard";
+    }
+
+    const examMatch = query.match(/(?:التمرين|تمرين)\s+([a-zA-Z0-9_\-]+)/);
+    const resourceId = examMatch ? examMatch[1] : "exam-bac-2024-math-01";
+
+    return {
+      actionName: "updateExercise",
+      params: {
+        resourceId,
+        resourceType: "custom_exams",
+        difficulty: targetDifficulty,
+      },
+    };
+  }
+
+  // 2. Assign Exercise to Lesson
+  if (
+    q.includes("عين التمرين") ||
+    q.includes("عيّن التمرين") ||
+    q.includes("اربط التمرين") ||
+    q.includes("خصص التمرين") ||
+    q.includes("عين لدرس") ||
+    q.includes("اربط بدرس")
+  ) {
+    const examMatch = query.match(/(?:التمرين|تمرين)\s+([a-zA-Z0-9_\-]+)/);
+    const resourceId = examMatch ? examMatch[1] : "exam-bac-2024-math-01";
+
+    let topic = "الدوال العددية واللوغاريتمية";
+    const topicMatch = query.match(/(?:درس|لوحدة|وحدة)\s+([^.]+)/);
+    if (topicMatch) {
+      topic = topicMatch[1].trim();
+    }
+
+    return {
+      actionName: "assignExercise",
+      params: {
+        resourceId,
+        resourceType: "custom_exams",
+        topic_name: topic,
+      },
+    };
+  }
+
+  // 3. Create Draft Exercise
+  if (
+    q.includes("أنشئ تمرين") ||
+    q.includes("انشئ تمرين") ||
+    q.includes("أنشئ مسودة تمرين") ||
+    q.includes("انشئ مسودة") ||
+    q.includes("أضف تمرين") ||
+    q.includes("اصنع تمرين")
+  ) {
+    let subject = "mathematics";
+    if (q.includes("فيزياء")) subject = "physics";
+    if (q.includes("علوم")) subject = "natural_sciences";
+
+    return {
+      actionName: "createExercise",
+      params: {
+        title: "مسودة تمرين مقترح في " + (subject === "mathematics" ? "الرياضيات" : subject === "physics" ? "الفيزياء" : "العلوم الطبيعية"),
+        stream: "sciences_exp",
+        subject,
+        difficulty: "standard",
+        topic: "الوحدة الأولى",
+      },
+    };
+  }
+
+  // 4. Archive Content / Delete Protection (Soft Archive)
+  if (
+    q.includes("أرشف") ||
+    q.includes("ارشف") ||
+    q.includes("أرشفة") ||
+    q.includes("تجميد المحتوى") ||
+    q.includes("احذف التمرين") ||
+    q.includes("حذف التمرين") ||
+    q.includes("احذف الملخص") ||
+    q.includes("حذف الملخص")
+  ) {
+    const match = query.match(/(?:التمرين|الملخص|المحتوى|الموضوع)\s+([a-zA-Z0-9_\-]+)/);
+    const resourceId = match ? match[1] : "exam-bac-2024-math-01";
+
+    return {
+      actionName: "archiveContent",
+      params: {
+        resourceId,
+        resourceType: q.includes("ملخص") ? "campus_posts" : "custom_exams",
+        reason: "أرشفة وتجميد آمن بطلب من المشرف الإداري",
+      },
+    };
+  }
+
+  // 5. Publish Content
+  if (
+    q.includes("انشر التمرين") ||
+    q.includes("انشر الملخص") ||
+    q.includes("نشر الموضوع") ||
+    q.includes("اعتماد النشر") ||
+    q.includes("انشر المحتوى")
+  ) {
+    const match = query.match(/(?:التمرين|الملخص|المحتوى|الموضوع)\s+([a-zA-Z0-9_\-]+)/);
+    const resourceId = match ? match[1] : "post-sciences-methodology-01";
+
+    return {
+      actionName: "publishContent",
+      params: {
+        resourceId,
+        resourceType: q.includes("ملخص") ? "campus_posts" : "custom_exams",
+      },
+    };
+  }
+
+  // 6. Restore Content
+  if (q.includes("استرجع المحتوى") || q.includes("فك الأرشفة") || q.includes("استعادة التمرين") || q.includes("استرجع التمرين")) {
+    const match = query.match(/(?:التمرين|الملخص|المحتوى|الموضوع)\s+([a-zA-Z0-9_\-]+)/);
+    const resourceId = match ? match[1] : "exam-bac-2024-math-01";
+
+    return {
+      actionName: "restoreContent",
+      params: {
+        resourceId,
+        resourceType: "custom_exams",
+      },
+    };
+  }
+
+  // 7. Update Metadata
+  if (q.includes("حدث البيانات الوصفية") || q.includes("عدل وسوم") || q.includes("غير الوسوم")) {
+    return {
+      actionName: "updateMetadata",
+      params: {
+        resourceId: "exam-bac-2024-math-01",
+        metadata: {
+          category: "تمارين نموذجية معتمدة",
+          reviewedBy: adminContext.userId,
+          status: "VERIFIED",
+        },
+      },
+    };
+  }
+
+  return null;
+}
+
+/**
  * Main Entry Point for executing an Administrative AI Command
  */
 export async function executeAdminAIQuery(
@@ -363,6 +543,77 @@ export async function executeAdminAIQuery(
   query: string,
   history: Array<{ role: "user" | "assistant"; content: string }> = []
 ): Promise<AdminAIQueryResponse> {
+  const adminContext: AdminContext = {
+    userId: ctx.userId,
+    email: null,
+    role: ctx.role,
+    isOwner: ctx.role === "OWNER",
+    permissions: getPermissionsForRole(ctx.role),
+    token: ctx.token || null,
+  };
+
+  // CHECK 1: Detect Mutation Intent (Never execute silently — propose for human confirmation)
+  const mutation = detectMutationIntent(query, adminContext);
+  if (mutation) {
+    try {
+      const proposal = await proposeAction(mutation.actionName, mutation.params, adminContext);
+
+      const resourceName = proposal.beforeState.title
+        ? String(proposal.beforeState.title)
+        : proposal.resourceId;
+
+      const diffAr = proposal.diffSummary
+        .map((d) => `• **${d.labelAr}:**\n  - الحالية: \`${d.before}\`\n  - المقترحة: \`${d.after}\``)
+        .join("\n");
+
+      const previewReply = `### 📋 العملية المقترحة (تحت المعاينة البشرية)
+
+لقد أعددت مقترح العملية التالي بناءً على طلبك، وفق بروتوكول السلامة الإداري الصارم:
+
+- **نوع العملية:** ${proposal.titleAr} (${proposal.actionClass === "CLASS_C_HIGH_RISK" ? "Class C — عالية الخطورة" : "Class B — منخفضة المخاطر"})
+- **المورد المستهدف:** ${resourceName} (\`${proposal.resourceId}\`)
+
+#### 🔄 تفاصيل التغيير المقترح (Before / After):
+${diffAr}
+
+---
+
+⚠️ **تنبيه بروتوكول الأمان (Safety Invariant):**
+النظام **لم يقم بأي تعديل صامت** في قاعدة البيانات. يتطلب تطبيق التعديل مصادقتك الصريحة بالضغط على زر **[ تنفيذ العملية بأمان ✅ ]** أدناه أو زر **[ إلغاء ❌ ]** للإلغاء.`;
+
+      return {
+        success: true,
+        reply: previewReply,
+        toolsExecuted: [
+          {
+            name: "proposeAction",
+            nameAr: "إعداد مقترح العملية (Action Preview)",
+            summary: `تم إعداد مقترح [${proposal.titleAr}] بانتظار التأكيد البشري الصريح.`,
+            source: "ai-actions-engine",
+          },
+        ],
+        structuredData: {
+          type: "ACTION_PROPOSAL",
+          proposal,
+        },
+        actionProposal: proposal,
+        warnings: [
+          proposal.actionClass === "CLASS_C_HIGH_RISK"
+            ? "عملية عالية الخطورة: تتطلب فحصاً بشرياً صريحاً وتوثيقاً إلزامياً."
+            : "العملية في حالة مسودة تحت المعاينة البشرية (لم تُطبق في قاعدة البيانات بعد).",
+        ],
+      };
+    } catch (propErr: any) {
+      return {
+        success: false,
+        reply: `⚠️ **تعذر إعداد مقترح العملية:** ${propErr.message || "حدث خطأ في التحقق من صحة المعطيات."}`,
+        toolsExecuted: [],
+        warnings: [propErr.message],
+      };
+    }
+  }
+
+  // CHECK 2: Read-Only Query Resolution
   const toolsToRun = resolveToolsForQuery(query);
   const toolsExecuted: AdminAIQueryResponse["toolsExecuted"] = [];
   const toolResults: AdminToolResult[] = [];

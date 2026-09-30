@@ -46,3 +46,32 @@ export function sanitizeSingleLine(input: string, maxLength: number = 200): stri
   const cleaned = sanitizeUserContent(input).replace(/[\r\n\t]+/g, " ");
   return cleaned.slice(0, maxLength).trim();
 }
+
+/**
+ * Safely sanitizes an attachment URL (supporting secure data:image, data:application/pdf, or http(s) URLs)
+ */
+export function sanitizeAttachmentUrl(input: string): string {
+  if (!input || typeof input !== "string") return "";
+  const trimmed = input.trim();
+
+  // Safe image base64 data URLs
+  if (/^data:image\/(png|jpeg|jpg|webp|gif);base64,[A-Za-z0-9+/=\s]+$/i.test(trimmed)) {
+    // Limit to 10MB
+    if (trimmed.length > 10 * 1024 * 1024) return "";
+    return trimmed.replace(/\s+/g, "");
+  }
+
+  // Safe PDF base64 data URLs
+  if (/^data:application\/pdf;base64,[A-Za-z0-9+/=\s]+$/i.test(trimmed)) {
+    if (trimmed.length > 15 * 1024 * 1024) return "";
+    return trimmed.replace(/\s+/g, "");
+  }
+
+  // Safe web URLs or local paths (e.g. /documents/...)
+  if (/^(\/|https?:\/\/)[^\s<>"']+$/i.test(trimmed)) {
+    if (/^(javascript|vbscript):/i.test(trimmed)) return "";
+    return trimmed.slice(0, 2000);
+  }
+
+  return "";
+}

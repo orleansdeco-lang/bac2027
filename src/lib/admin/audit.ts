@@ -201,7 +201,7 @@ export async function getAdminAuditLogs(
 
       const { data, error, count } = await query;
 
-      if (!error && data) {
+      if (!error && data && data.length > 0) {
         const logs: AdminAuditEntry[] = data.map((d: any) => ({
           id: d.id,
           actorUserId: d.actor_user_id,

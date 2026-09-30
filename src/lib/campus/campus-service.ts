@@ -363,7 +363,7 @@ const SEED_POSTS: CampusPost[] = [
       {
         type: "pdf",
         url: "/documents/gestion-eco/melakhas-quyoud-taswiya-youssi-kada.pdf",
-        label: "معاينة وتحميل ملخص قيود التسوية الأصلي (PDF)",
+        label: "معاينة وقراءة ملخص قيود التسوية الأصلي (PDF)",
         fileName: "ملخص قيود التسوية - الأستاذ يوسي قادة.pdf",
         size: "1.46 MB",
         pageCount: 6,
@@ -428,7 +428,7 @@ const SEED_POSTS: CampusPost[] = [
       {
         type: "pdf",
         url: "/documents/gestion-eco/mizaniya-wadhifiya-bac2019-abdelkhalek-aouda.pdf",
-        label: "معاينة وتحميل كراس الميزانية الوظيفية وبكالوريا 2019 الأصلي (PDF)",
+        label: "معاينة وقراءة كراس الميزانية الوظيفية وبكالوريا 2019 الأصلي (PDF)",
         fileName: "الميزانية الوظيفية وبكالوريا 2019 - الأستاذ عبدالخالق عودة.pdf",
         size: "331 KB",
         pageCount: 10,
@@ -474,7 +474,7 @@ const SEED_POSTS: CampusPost[] = [
       {
         type: "pdf",
         url: "/documents/gestion-eco/tahalil-takalif-natija-tahliliya-hakmi.pdf",
-        label: "معاينة وتحميل جدول تحميل التكاليف والنتيجة الصافية الأصلي (PDF)",
+        label: "معاينة وقراءة جدول تحميل التكاليف والنتيجة الصافية الأصلي (PDF)",
         fileName: "تحميل التكاليف والنتيجة التحليلية - الأستاذ حاكمي.pdf",
         size: "167 KB",
         pageCount: 1,
@@ -506,7 +506,7 @@ const SEED_POSTS: CampusPost[] = [
       {
         type: "pdf",
         url: "/documents/gestion-eco/ihtilakat-tamarin-bac2021-yassine-hadjem.pdf",
-        label: "معاينة وتحميل سلسلة الأستاذ ياسين حجام الكاملة (PDF)",
+        label: "معاينة وقراءة سلسلة الأستاذ ياسين حجام الكاملة (PDF)",
         fileName: "سلسلة الاهتلاكات بكالوريا 2021 - الأستاذ ياسين حجام.pdf",
         size: "627 KB",
         pageCount: 5,
@@ -542,7 +542,7 @@ const SEED_POSTS: CampusPost[] = [
       {
         type: "pdf",
         url: "/documents/gestion-eco/ihtilak-motanaqis-motazayed-touam-abdessamed.pdf",
-        label: "معاينة وتحميل دليل الأستاذ توام عبدالصمد الأصلي (PDF)",
+        label: "معاينة وقراءة دليل الأستاذ توام عبدالصمد الأصلي (PDF)",
         fileName: "الاهتلاك المتناقص والمتزايد - الأستاذ توام عبدالصمد.pdf",
         size: "368 KB",
         pageCount: 5,
@@ -1007,17 +1007,33 @@ export const CampusService = {
   // ---------------------------------------------------------------------------
   // 1. KNOWLEDGE BANK / POSTS
   // ---------------------------------------------------------------------------
+  enrichWithLikes(posts: CampusPost[]): CampusPost[] {
+    if (typeof window === "undefined") return posts;
+    try {
+      const likesRaw = localStorage.getItem(STORAGE_KEYS.LIKES) || "[]";
+      const likedIds: string[] = JSON.parse(likesRaw);
+      const likedSet = new Set(likedIds);
+      return posts.map((p) => ({
+        ...p,
+        isLiked: likedSet.has(p.id),
+      }));
+    } catch {
+      return posts;
+    }
+  },
+
   getPosts(): CampusPost[] {
     if (typeof window === "undefined") return SEED_POSTS;
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.POSTS);
       if (!raw) {
         localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(SEED_POSTS));
-        return SEED_POSTS;
+        return this.enrichWithLikes(SEED_POSTS);
       }
-      return JSON.parse(raw);
+      const parsed: CampusPost[] = JSON.parse(raw);
+      return this.enrichWithLikes(parsed);
     } catch {
-      return SEED_POSTS;
+      return this.enrichWithLikes(SEED_POSTS);
     }
   },
 
@@ -1026,7 +1042,24 @@ export const CampusService = {
     try {
       localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(posts));
     } catch (e) {
-      console.warn("Failed to persist campus posts:", e);
+      console.warn("Storage quota warning, trimming attachments cache:", e);
+      try {
+        // Fallback: prune huge image data URLs from older posts to guarantee storage doesn't throw
+        const trimmed = posts.map((p, idx) => {
+          if (idx < 5) return p; // Keep latest 5 completely intact
+          return {
+            ...p,
+            attachments: (p.attachments || []).map((att) =>
+              att.url.startsWith("data:image/") && att.url.length > 50000
+                ? { ...att, url: "" }
+                : att
+            ),
+          };
+        });
+        localStorage.setItem(STORAGE_KEYS.POSTS, JSON.stringify(trimmed));
+      } catch (innerErr) {
+        console.warn("Failed to persist campus posts even after trim:", innerErr);
+      }
     }
   },
 
@@ -1044,17 +1077,19 @@ export const CampusService = {
       if (filters?.type && filters.type !== "ALL") query.set("type", filters.type);
       if (filters?.search) query.set("search", filters.search);
 
+      const seedIds = new Set(SEED_POSTS.map((p) => p.id));
       const res = await fetch(`/api/campus/posts?${query.toString()}`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.posts) && data.posts.length > 0) {
           const local = this.getPosts();
           const remoteIds = new Set(data.posts.map((p: CampusPost) => p.id));
-          // Preserve local drafts or offline posts
-          const localOnly = local.filter((p) => !remoteIds.has(p.id) && !p.id.startsWith("post-"));
-          const merged = [...data.posts, ...localOnly];
-          this.savePosts(merged);
-          return merged;
+          // Always preserve local posts created by student (exclude only static seeds)
+          const localUserPosts = local.filter((p) => !remoteIds.has(p.id) && !seedIds.has(p.id));
+          const merged = [...localUserPosts, ...data.posts];
+          const enriched = this.enrichWithLikes(merged);
+          this.savePosts(enriched);
+          return enriched;
         }
       }
       return this.getPosts();
@@ -1068,7 +1103,7 @@ export const CampusService = {
     const all = this.getPosts();
     const newPostId = typeof crypto !== "undefined" && crypto.randomUUID
       ? crypto.randomUUID()
-      : `post-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+      : `post-user-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
 
     const newPost: CampusPost = {
       ...post,
@@ -1076,6 +1111,7 @@ export const CampusService = {
       likesCount: 0,
       bookmarksCount: 0,
       createdAt: new Date().toISOString(),
+      isLiked: false,
     };
     const updated = [newPost, ...all];
     this.savePosts(updated);
@@ -1101,7 +1137,7 @@ export const CampusService = {
             const data = await res.json();
             if (data.post && data.post.id) {
               const current = this.getPosts().map((p) =>
-                p.id === newPostId ? { ...data.post, isBookmarked: false } : p
+                p.id === newPostId ? { ...data.post, isBookmarked: false, isLiked: false } : p
               );
               this.savePosts(current);
             }
