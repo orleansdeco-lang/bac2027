@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { recordVisitorHit, getLiveVisitorsCount } from "@/lib/operations/visitors";
+import { recordVisitorHit as recordAnalyticsHit } from "@/lib/operations/analytics-store";
 
 export const dynamic = "force-dynamic";
 
@@ -59,6 +60,18 @@ export async function POST(req: Request) {
       deviceType,
       browser,
       os,
+    });
+
+    recordAnalyticsHit({
+      sessionId,
+      anonymousId,
+      userId,
+      path,
+      referrer,
+      utmSource,
+      utmCampaign,
+      deviceType,
+      browser,
     });
 
     const liveCount = getLiveVisitorsCount(5);

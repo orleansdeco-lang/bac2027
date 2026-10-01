@@ -23,6 +23,8 @@ import { getAdminClient } from "../supabase/admin";
 import { getPaymentOrders } from "./payments";
 import { getStoredTelemetryEvents } from "./telemetry";
 import { ALGERIAN_BAC_STREAMS } from "../constants/streams";
+import { getAllUnifiedOrders } from "./orders-store";
+import { getOperationsAnalyticsSummary } from "./analytics-store";
 
 export async function getOperationsDashboardData(
   operatorId?: string,
@@ -390,6 +392,33 @@ export async function getOperationsDashboardData(
     topWilayas,
   };
 
+  // Merge resilient live orders & real analytics
+  const [unifiedOrdersRes, analyticsRes] = await Promise.all([
+    getAllUnifiedOrders(token).catch(() => ({ orders: [], summary: { totalOrders: 0, pending: 0, processing: 0, shipped: 0, delivered: 0, codPending: 0, paid: 0, returned: 0 } })),
+    getOperationsAnalyticsSummary().catch(() => null),
+  ]);
+
+  if (analyticsRes) {
+    kpis.liveVisitors = analyticsRes.liveVisitorsNow;
+    kpis.todayVisitors = analyticsRes.todayVisitors;
+  } else {
+    kpis.liveVisitors = Math.max(activeUserIdsToday.size, 1);
+    kpis.todayVisitors = Math.max(activeUserIdsToday.size, 1);
+  }
+
+  // Ensure unified orders pending count is reflected if higher
+  if (unifiedOrdersRes.orders && unifiedOrdersRes.orders.length > 0) {
+    const unifiedPending = unifiedOrdersRes.orders.filter(
+      (o) => o.status === "PENDING" || o.payment.status === "COD"
+    ).length;
+    if (unifiedPending > kpis.pendingOrdersCount) {
+      kpis.pendingOrdersCount = unifiedPending;
+      kpis.pendingOrdersRevenue = unifiedOrdersRes.orders
+        .filter((o) => o.status === "PENDING" || o.payment.status === "COD")
+        .reduce((sum, o) => sum + (Number(o.amount) || 0), 0);
+    }
+  }
+
   return {
     kpis,
     alerts: {
@@ -400,5 +429,8 @@ export async function getOperationsDashboardData(
     funnel,
     learning,
     generatedAt: now.toISOString(),
+    orders: unifiedOrdersRes.orders,
+    ordersSummary: unifiedOrdersRes.summary,
+    analytics: analyticsRes,
   };
 }

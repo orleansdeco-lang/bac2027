@@ -246,13 +246,50 @@ export async function getPaymentOrders(
   }
 
   const { data, error } = await query;
-  if (error || !data) {
-    console.error("[getPaymentOrders] Database query error:", error);
-    return [];
+
+  let ordersList: any[] = [];
+  if (!error && data) {
+    ordersList = data;
   }
 
+  // Merge resilient store orders
+  try {
+    const { getAllUnifiedOrders } = await import("@/lib/operations/orders-store");
+    const { orders: uOrders } = await getAllUnifiedOrders(token);
+    const existingIds = new Set(ordersList.map((o) => o.id));
+
+    for (const u of uOrders) {
+      if (!existingIds.has(u.id)) {
+        ordersList.push({
+          id: u.id,
+          user_id: u.user_id,
+          plan: u.plan.id,
+          amount: u.amount,
+          currency: u.currency,
+          payment_method: u.payment.method === "COD" ? "cash" : u.payment.method,
+          order_type: "COD",
+          status: u.status === "COMPLETED" ? "APPROVED" : u.status,
+          delivery_status: u.shipment.status,
+          notes: u.shipping_address.delivery_notes || u.payment.settlement_notes || null,
+          submitted_at: u.created_at,
+          created_at: u.created_at,
+          updated_at: u.updated_at,
+          shipping_name: u.shipping_address.full_name,
+          shipping_phone: u.shipping_address.phone,
+          shipping_wilaya: u.shipping_address.wilaya,
+          shipping_commune: u.shipping_address.commune,
+          shipping_address: u.shipping_address.address,
+        });
+      }
+    }
+  } catch (storeErr) {
+    console.warn("[getPaymentOrders] Store merge warning:", storeErr);
+  }
+
+  const dataToProcess = ordersList;
+
   // Look up matching student profiles cleanly without PostgREST relationship schema errors
-  const userIds = Array.from(new Set(data.map((d: any) => d.user_id).filter(Boolean)));
+  const userIds = Array.from(new Set(dataToProcess.map((d: any) => d.user_id).filter(Boolean)));
   const profileMap = new Map<string, any>();
 
   if (userIds.length > 0) {
@@ -270,7 +307,7 @@ export async function getPaymentOrders(
     } catch {}
   }
 
-  return data.map((d: any) => {
+  return dataToProcess.map((d: any) => {
     const profile = profileMap.get(d.user_id);
     const email = profile?.raw_draft?.student_email || profile?.raw_draft?.email;
     return {

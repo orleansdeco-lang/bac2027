@@ -12,7 +12,7 @@ import { StreamId, SubjectId } from "@/types/education";
 import { useAuth } from "@/lib/auth/context";
 import { StudentService } from "@/lib/services";
 import { BacContentService } from "@/lib/services/bac-content-service";
-import { BacMasterItem } from "@/lib/content/bac-inventory";
+import { supabase } from "@/lib/supabase/client";
 import {
   FileText,
   CheckCircle2,
@@ -40,7 +40,7 @@ import {
   Check,
 } from "lucide-react";
 
-// Streams
+// Streams List
 const STREAMS_LIST = [
   { id: "all", name_ar: "كل الشعب", code: "ALL" },
   { id: "sciences_exp", name_ar: "علوم تجريبية", code: "SE" },
@@ -60,13 +60,122 @@ const TERMS_CONFIG = [
   { id: "bac_blanc", label: "بكالوريا تجريبية", badge: "Bac Blanc", icon: "🏆", desc: "امتحانات شاملة مطابقة لمواصفات البكالوريا الرسمية" },
 ];
 
+export interface UnifiedResourceExamItem {
+  id: string;
+  year: number;
+  kind: "term_exam" | "term_quiz" | "bac_blanc" | "summary" | "exercise" | "official_bac";
+  category: string;
+  term: 1 | 2 | 3 | null;
+  schoolName: string;
+  streamId: string;
+  stream_name: string;
+  subjectId: string;
+  subject_name: string;
+  title_ar: string;
+  subjectPdfUrl: string;
+  solutionPdfUrl: string;
+  pdf_links: string[];
+  has_solution: boolean;
+  source_name: string;
+  source_url: string;
+}
+
+function mapSupabaseResourceToExamItem(row: any): UnifiedResourceExamItem {
+  const title = row.title || "موضوع تعليمي";
+  const yearMatch = title.match(/20\d\d/);
+  const year = yearMatch ? parseInt(yearMatch[0], 10) : 2024;
+  const pdfLinks: string[] = Array.isArray(row.pdf_links) ? row.pdf_links : [];
+  const category = row.category || "اختبارات";
+
+  let kind: "term_exam" | "term_quiz" | "bac_blanc" | "summary" | "exercise" = "term_exam";
+  if (category === "فروض" || title.includes("فرض")) kind = "term_quiz";
+  else if (category === "بكالوريا" || title.includes("بكالوريا") || title.includes("تجريبية")) kind = "bac_blanc";
+  else if (category === "ملخصات" || title.includes("ملخص")) kind = "summary";
+  else if (category === "تمارين" || title.includes("سلسلة") || title.includes("تمرين")) kind = "exercise";
+
+  const hasSolution = Boolean(
+    title.includes("تصحيح") ||
+    title.includes("حل") ||
+    title.includes("الحل") ||
+    pdfLinks.length > 1
+  );
+
+  return {
+    id: row.id,
+    year,
+    kind,
+    category,
+    term: row.term ? (Number(row.term) as 1 | 2 | 3) : null,
+    schoolName: "ثانوية جزائرية",
+    streamId: "all",
+    stream_name: row.stream || "عام / جميع الشعب",
+    subjectId: row.subject || "الرياضيات",
+    subject_name: row.subject || "الرياضيات",
+    title_ar: title,
+    subjectPdfUrl: pdfLinks[0] || "",
+    solutionPdfUrl: pdfLinks[1] || (hasSolution ? pdfLinks[0] : ""),
+    pdf_links: pdfLinks,
+    has_solution: hasSolution,
+    source_name: "موقع الدراسة الجزائري",
+    source_url: row.source_url || "",
+  };
+}
+
+function matchesStream(item: UnifiedResourceExamItem, streamId: string): boolean {
+  if (streamId === "all") return true;
+  const text = (item.stream_name + " " + item.title_ar + " " + item.streamId).toLowerCase();
+
+  if (streamId === "sciences_exp") {
+    return text.includes("علمي") || text.includes("علوم تجريبية") || text.includes("شعب علمية") || text.includes("sciences_exp");
+  }
+  if (streamId === "math") {
+    return (text.includes("شعبة رياضيات") || text.includes("شعبة الرياضيات") || (text.includes("رياضيات") && !text.includes("تقني"))) || item.streamId === "math";
+  }
+  if (streamId === "technique_math") {
+    return text.includes("تقني") || text.includes("هندسة") || item.streamId === "technique_math";
+  }
+  if (streamId === "gestion_eco") {
+    return text.includes("تسيير") || text.includes("اقتصاد") || text.includes("محاسب") || item.streamId === "gestion_eco";
+  }
+  if (streamId === "lettres_philo") {
+    return text.includes("آداب") || text.includes("اداب") || text.includes("فلسفة") || text.includes("أدبي") || item.streamId === "lettres_philo";
+  }
+  if (streamId === "langues_etrangeres") {
+    return text.includes("لغات") || text.includes("ألماني") || text.includes("إسباني") || text.includes("إيطالي") || item.streamId === "langues_etrangeres";
+  }
+  if (streamId === "arts") {
+    return text.includes("فنون") || item.streamId === "arts";
+  }
+  return true;
+}
+
+function matchesKind(item: UnifiedResourceExamItem, kind: string): boolean {
+  if (kind === "all") return true;
+  if (kind === "term_exam" || kind === "اختبارات") {
+    return item.category === "اختبارات" || item.kind === "term_exam" || item.title_ar.includes("اختبار");
+  }
+  if (kind === "term_quiz" || kind === "فروض") {
+    return item.category === "فروض" || item.kind === "term_quiz" || item.title_ar.includes("فرض");
+  }
+  if (kind === "summaries" || kind === "ملخصات") {
+    return item.category === "ملخصات" || item.kind === "summary" || item.title_ar.includes("ملخص");
+  }
+  if (kind === "exercises" || kind === "تمارين") {
+    return item.category === "تمارين" || item.kind === "exercise" || item.title_ar.includes("سلسلة") || item.title_ar.includes("تمرين");
+  }
+  if (kind === "bac_blanc" || kind === "بكالوريا") {
+    return item.category === "بكالوريا" || item.kind === "bac_blanc" || item.title_ar.includes("بكالوريا") || item.title_ar.includes("تجريبية");
+  }
+  return true;
+}
+
 function TermExamsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user } = useAuth();
 
   // Inventory State
-  const [allItems, setAllItems] = useState<BacMasterItem[]>([]);
+  const [allItems, setAllItems] = useState<UnifiedResourceExamItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
@@ -86,15 +195,61 @@ function TermExamsContent() {
   const [modalTab, setModalTab] = useState<"subject" | "solution">("subject");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Initial Load
+  // Fetch real data directly from Supabase resources table with fallback
   useEffect(() => {
     let isMounted = true;
-    BacContentService.loadAllInventory().then((res) => {
-      if (isMounted) {
-        setAllItems(res.items);
-        setIsLoading(false);
+
+    async function loadResources() {
+      setIsLoading(true);
+      try {
+        if (supabase) {
+          const { data, error } = await supabase
+            .from("resources")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .limit(3000);
+
+          if (isMounted && data && data.length > 0) {
+            const mapped = data.map(mapSupabaseResourceToExamItem);
+            setAllItems(mapped);
+            setIsLoading(false);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn("Direct Supabase fetch encountered error, attempting fallback:", err);
       }
-    });
+
+      // Local inventory fallback if offline or table empty
+      BacContentService.loadAllInventory().then((res) => {
+        if (isMounted) {
+          const fallbackMapped: UnifiedResourceExamItem[] = (res.items || []).map((i) => ({
+            id: i.id,
+            year: i.year || 2024,
+            kind: i.kind || "term_exam",
+            category: i.content_type === "term_quiz" ? "فروض" : i.content_type === "bac_blanc" ? "بكالوريا" : "اختبارات",
+            term: (i.term as any) || null,
+            schoolName: i.source_name || "ثانوية جزائرية",
+            streamId: i.streamId || "all",
+            stream_name: i.stream_name || ALGERIAN_BAC_STREAMS[i.streamId as StreamId]?.name_ar || "عام / جميع الشعب",
+            subjectId: i.subjectId || "all",
+            subject_name: i.subject_name || ALL_SUBJECTS[i.subjectId as SubjectId]?.name_ar || "الرياضيات",
+            title_ar: i.title_ar,
+            subjectPdfUrl: i.subjectPdfUrl || "",
+            solutionPdfUrl: i.solutionPdfUrl || "",
+            pdf_links: i.subjectPdfUrl ? [i.subjectPdfUrl] : [],
+            has_solution: Boolean(i.has_solution),
+            source_name: i.source_name || "ثانوية جزائرية",
+            source_url: i.source_url || "",
+          }));
+          setAllItems(fallbackMapped);
+          setIsLoading(false);
+        }
+      });
+    }
+
+    loadResources();
+
     return () => {
       isMounted = false;
     };
@@ -133,98 +288,93 @@ function TermExamsContent() {
     if (urlExamId && allItems.length > 0) {
       const foundExam = allItems.find((e) => e.id === urlExamId);
       if (foundExam) {
-        setActiveModalExam(foundExam);
-        if (urlTab === "solution" || urlTab === "subject") setModalTab(urlTab);
+        handleOpenModal(foundExam, urlTab === "solution" ? "solution" : "subject");
       }
     }
   }, [searchParams, allItems]);
 
-  // Online Sync Handler
+  // Online Sync Handler directly querying Supabase resources table
   const handleOnlineSync = async () => {
     setIsSyncing(true);
     try {
-      const res = await BacContentService.triggerOnlineSync();
-      if (res.success) {
-        const refreshed = await BacContentService.loadAllInventory(true);
-        setAllItems(refreshed.items);
-        triggerToast(`✅ ${res.message} (${refreshed.items.length} موضوع موثق)`);
-      } else {
-        triggerToast(`⚠️ ${res.message}`);
+      if (!supabase) {
+        throw new Error("Supabase is not configured");
       }
-    } catch (e) {
-      triggerToast("تعذر التحديث أونلاين حالياً، تحقق من الشبكة");
+      const { data, error } = await supabase
+        .from("resources")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(3000);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const mapped = data.map(mapSupabaseResourceToExamItem);
+        setAllItems(mapped);
+        triggerToast(`✅ تم تحديث ${mapped.length} موضوع من قاعدة البيانات مباشرة`);
+      } else {
+        triggerToast("لم يتم العثور على سجلات في قاعدة البيانات");
+      }
+    } catch (e: any) {
+      triggerToast("تعذر التحديث أونلاين حالياً، تحقق من الاتصال");
     } finally {
       setIsSyncing(false);
     }
   };
 
-  // Only consider term exams, devoirs, and bac blanc for this page
-  const schoolInventory = useMemo(() => {
-    return allItems.filter(
-      (item) =>
-        item.content_type === "term_exam" ||
-        item.content_type === "term_quiz" ||
-        item.content_type === "bac_blanc" ||
-        item.kind === "term_exam" ||
-        item.kind === "term_quiz" ||
-        item.kind === "bac_blanc"
-    );
-  }, [allItems]);
-
-  // Dynamic Subjects based on stream
+  // Dynamic Subjects based on stream from live resources
   const availableSubjects = useMemo(() => {
-    let pool = schoolInventory;
+    let pool = allItems;
     if (selectedStream !== "all") {
-      pool = pool.filter((item) => item.streamId === selectedStream);
+      pool = pool.filter((item) => matchesStream(item, selectedStream));
     }
     const counts: Record<string, number> = {};
     for (const item of pool) {
-      counts[item.subjectId] = (counts[item.subjectId] || 0) + 1;
+      const sName = item.subject_name || "الرياضيات";
+      counts[sName] = (counts[sName] || 0) + 1;
     }
-    return Object.keys(counts).map((id) => {
-      const sampleItem = pool.find((it) => it.subjectId === id);
-      const meta = ALL_SUBJECTS[id as SubjectId];
-      return {
-        id,
-        name: sampleItem?.subject_name || meta?.name_ar || id,
-        count: counts[id],
-      };
-    });
-  }, [schoolInventory, selectedStream]);
+    return Object.keys(counts).map((name) => ({
+      id: name,
+      name,
+      count: counts[name],
+    }));
+  }, [allItems, selectedStream]);
 
   // Available Years
   const availableYears = useMemo(() => {
     const set = new Set<number>();
-    for (const item of schoolInventory) {
+    for (const item of allItems) {
       if (item.year) set.add(item.year);
     }
     return Array.from(set).sort((a, b) => b - a);
-  }, [schoolInventory]);
+  }, [allItems]);
 
   // Filtered Items
   const filteredExams = useMemo(() => {
-    let result = schoolInventory;
+    let result = allItems;
 
     // Term filter
     if (selectedTerm === "bac_blanc") {
-      result = result.filter((i) => i.content_type === "bac_blanc" || i.kind === "bac_blanc");
+      result = result.filter(
+        (i) => i.category === "بكالوريا" || i.kind === "bac_blanc" || i.title_ar.includes("بكالوريا") || i.title_ar.includes("تجريبية")
+      );
     } else if (selectedTerm !== "all") {
       result = result.filter((i) => i.term === selectedTerm);
     }
 
-    // Kind filter
+    // Kind / Category filter
     if (selectedKind !== "all") {
-      result = result.filter((i) => i.content_type === selectedKind || i.kind === selectedKind);
+      result = result.filter((i) => matchesKind(i, selectedKind));
     }
 
     // Stream
     if (selectedStream !== "all") {
-      result = result.filter((i) => i.streamId === selectedStream);
+      result = result.filter((i) => matchesStream(i, selectedStream));
     }
 
     // Subject
     if (selectedSubject !== "all") {
-      result = result.filter((i) => i.subjectId === selectedSubject);
+      result = result.filter((i) => i.subject_name === selectedSubject || i.subjectId === selectedSubject);
     }
 
     // Year
@@ -245,16 +395,15 @@ function TermExamsContent() {
           i.title_ar.toLowerCase().includes(q) ||
           i.subject_name.toLowerCase().includes(q) ||
           i.stream_name.toLowerCase().includes(q) ||
-          String(i.year).includes(q) ||
-          (i.source_name && i.source_name.toLowerCase().includes(q)) ||
-          (i.keywords && i.keywords.some((k) => k.toLowerCase().includes(q)))
+          i.category.toLowerCase().includes(q) ||
+          String(i.year).includes(q)
         );
       });
     }
 
     return result;
   }, [
-    schoolInventory,
+    allItems,
     selectedTerm,
     selectedKind,
     selectedStream,
@@ -273,9 +422,9 @@ function TermExamsContent() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const handleShareExam = async (exam: BacExamItem, tab: "subject" | "solution" = "subject") => {
+  const handleShareExam = async (exam: UnifiedResourceExamItem) => {
     try {
-      const url = `${window.location.origin}/exams/terms?stream=${exam.streamId}&subject=${exam.subjectId}&term=${exam.term || "all"}&examId=${encodeURIComponent(exam.id)}&tab=${tab}`;
+      const url = `${window.location.origin}/exams/terms?term=${exam.term || "all"}&examId=${encodeURIComponent(exam.id)}`;
       await navigator.clipboard.writeText(url);
       triggerToast("✅ تم نسخ رابط الموضوع بنجاح!");
     } catch (err) {
@@ -283,8 +432,20 @@ function TermExamsContent() {
     }
   };
 
-  const handleOpenModal = (exam: BacExamItem, tab: "subject" | "solution") => {
-    setActiveModalExam(exam);
+  const handleOpenModal = (exam: UnifiedResourceExamItem, tab: "subject" | "solution") => {
+    const adapted: BacExamItem = {
+      id: exam.id,
+      year: exam.year || 2024,
+      kind: exam.kind === "term_quiz" ? "term_quiz" : exam.kind === "bac_blanc" ? "bac_blanc" : "term_exam",
+      term: (exam.term as any) || 1,
+      streamId: "sciences_exp",
+      subjectId: "math",
+      title_ar: exam.title_ar,
+      topicsCount: 1,
+      subjectPdfUrl: exam.subjectPdfUrl || exam.pdf_links[0] || "",
+      solutionPdfUrl: exam.solutionPdfUrl || exam.pdf_links[1] || exam.pdf_links[0] || "",
+    };
+    setActiveModalExam(adapted);
     setModalTab(tab);
   };
 
@@ -346,7 +507,7 @@ function TermExamsContent() {
             </Link>
             <span className="text-theme-muted">/</span>
             <span className="px-3.5 py-2 rounded-2xl bg-emerald-600 text-white shadow-md shadow-emerald-600/20">
-              فروض واختبارات الفصول وبكالوريا تجريبية ({schoolInventory.length})
+              بنك الفروض والاختبارات المدرسية ({allItems.length})
             </span>
           </div>
 
@@ -361,7 +522,7 @@ function TermExamsContent() {
             }`}
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? "animate-spin" : ""}`} />
-            <span>{isSyncing ? "جاري التحديث أونلاين..." : "تحديث أونلاين 🔄"}</span>
+            <span>{isSyncing ? "جاري التحديث من Supabase..." : "تحديث أونلاين 🔄"}</span>
           </button>
         </div>
 
@@ -370,7 +531,7 @@ function TermExamsContent() {
           <div className="relative z-10 max-w-3xl space-y-3.5">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-bold">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>أرشيف الفروض والاختبارات المدرسية المعتمدة</span>
+              <span>أرشيف الفروض والاختبارات المدرسية المعتمدة (Supabase Live)</span>
             </div>
 
             <h1 className="text-2xl sm:text-4xl font-black tracking-tight leading-tight">
@@ -378,7 +539,7 @@ function TermExamsContent() {
             </h1>
 
             <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-2xl font-sans">
-              تدرب على مئات الفروض المحروسة واختبارات الفصول الثلاثة والبكالوريا التجريبية (Bac Blanc) لأشهر ثانويات الوطن مع حلولها النموذجية المفصلة.
+              تدرب على مئات الفروض المحروسة واختبارات الفصول الثلاثة والبكالوريا التجريبية لثانويات الوطن مع روابط التحميل المباشرة لملفات الـ PDF.
             </p>
 
             <div className="flex items-center gap-4 sm:gap-6 pt-2 flex-wrap text-xs text-slate-300">
@@ -388,7 +549,7 @@ function TermExamsContent() {
               </div>
               <div className="flex items-center gap-1.5 font-bold">
                 <Layers className="w-4 h-4 text-cyan-400" />
-                <span>{schoolInventory.length} موضوع مدرسي وتحضيري</span>
+                <span>{allItems.length} موضوع مسجل وموثق بالـ PDF</span>
               </div>
             </div>
           </div>
@@ -431,7 +592,7 @@ function TermExamsContent() {
           {/* Instant Search */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-theme-secondary">
-              البحث بالكلمات المفتاحية والمفاهيم:
+              البحث السريع بالعنوان والمفاهيم:
             </label>
             <div className="relative">
               <Search className="w-4 h-4 text-theme-muted absolute top-3 end-3.5 pointer-events-none" />
@@ -439,7 +600,7 @@ function TermExamsContent() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="ابحث عن فرض، اختبار، مادة، ثانوية، سنة..."
+                placeholder="ابحث عن فرض، اختبار، مادة، شعبة، سنة..."
                 className="w-full py-2.5 pe-10 ps-4 text-xs sm:text-sm rounded-2xl bg-card border border-theme text-theme-text placeholder:text-theme-muted focus:outline-hidden focus:ring-2 focus:ring-emerald-500 transition-all"
               />
             </div>
@@ -474,10 +635,10 @@ function TermExamsContent() {
             </div>
           </div>
 
-          {/* Dynamic Subject Chips */}
+          {/* Dynamic Subject Chips from Real DB */}
           <div className="space-y-1.5">
             <label className="block text-xs font-bold text-theme-secondary">
-              المادة:
+              المادة الأكاديمية:
             </label>
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
               <button
@@ -489,7 +650,7 @@ function TermExamsContent() {
                     : "bg-surface text-theme-secondary border border-theme"
                 }`}
               >
-                جميع المواد ({schoolInventory.length})
+                جميع المواد ({allItems.length})
               </button>
               {availableSubjects.map((sub) => (
                 <button
@@ -512,9 +673,9 @@ function TermExamsContent() {
           {/* Filters Row */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-3 pt-2 border-t border-theme/60">
             {/* Kind Filter */}
-            <div className="md:col-span-4 space-y-1">
+            <div className="md:col-span-5 space-y-1">
               <label className="block text-xs font-bold text-theme-secondary">نوع التقييم:</label>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 flex-wrap">
                 <button
                   type="button"
                   onClick={() => setSelectedKind("all")}
@@ -526,27 +687,45 @@ function TermExamsContent() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSelectedKind("term_exam")}
+                  onClick={() => setSelectedKind("اختبارات")}
                   className={`px-2.5 py-1 rounded-xl text-xs font-semibold ${
-                    selectedKind === "term_exam" ? "bg-emerald-600 text-white" : "bg-card border border-theme text-theme-secondary"
+                    selectedKind === "اختبارات" ? "bg-emerald-600 text-white" : "bg-card border border-theme text-theme-secondary"
                   }`}
                 >
                   اختبارات
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSelectedKind("term_quiz")}
+                  onClick={() => setSelectedKind("فروض")}
                   className={`px-2.5 py-1 rounded-xl text-xs font-semibold ${
-                    selectedKind === "term_quiz" ? "bg-emerald-600 text-white" : "bg-card border border-theme text-theme-secondary"
+                    selectedKind === "فروض" ? "bg-emerald-600 text-white" : "bg-card border border-theme text-theme-secondary"
                   }`}
                 >
                   فروض
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedKind("ملخصات")}
+                  className={`px-2.5 py-1 rounded-xl text-xs font-semibold ${
+                    selectedKind === "ملخصات" ? "bg-emerald-600 text-white" : "bg-card border border-theme text-theme-secondary"
+                  }`}
+                >
+                  ملخصات
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedKind("تمارين")}
+                  className={`px-2.5 py-1 rounded-xl text-xs font-semibold ${
+                    selectedKind === "تمارين" ? "bg-emerald-600 text-white" : "bg-card border border-theme text-theme-secondary"
+                  }`}
+                >
+                  تمارين
                 </button>
               </div>
             </div>
 
             {/* Year Selector */}
-            <div className="md:col-span-4 space-y-1">
+            <div className="md:col-span-3 space-y-1">
               <label className="block text-xs font-bold text-theme-secondary">السنة:</label>
               <select
                 value={selectedYear}
@@ -619,11 +798,11 @@ function TermExamsContent() {
             <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-500 flex items-center justify-center mx-auto mb-3 animate-spin">
               <RefreshCw className="w-5 h-5" />
             </div>
-            <p className="text-xs text-theme-muted">جاري تحميل مواضيع الفصول والاختبارات...</p>
+            <p className="text-xs text-theme-muted">جاري تحميل مواضيع الفصول والاختبارات من قاعدة البيانات...</p>
           </div>
         ) : filteredExams.length === 0 ? (
           <div className="p-12 text-center rounded-3xl bg-surface border border-theme shadow-clay space-y-3">
-            <h3 className="text-sm font-bold text-theme-text">لم يتم العثور على نتائج</h3>
+            <h3 className="text-sm font-bold text-theme-text">لم يتم العثور على نتائج مطابقة للبحث</h3>
             <button
               type="button"
               onClick={handleResetFilters}
@@ -635,8 +814,9 @@ function TermExamsContent() {
         ) : viewMode === "grid" ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
             {displayedExams.map((exam) => {
-              const isQuiz = exam.content_type === "term_quiz" || exam.kind === "term_quiz";
-              const isBlanc = exam.content_type === "bac_blanc" || exam.kind === "bac_blanc";
+              const isQuiz = exam.kind === "term_quiz" || exam.category === "فروض";
+              const isBlanc = exam.kind === "bac_blanc" || exam.category === "بكالوريا";
+              const directPdfUrl = exam.pdf_links && exam.pdf_links.length > 0 ? exam.pdf_links[0] : "";
 
               return (
                 <div
@@ -650,12 +830,18 @@ function TermExamsContent() {
                           {exam.year}
                         </span>
                         <span className="px-2 py-0.5 rounded-full bg-stone-500/10 text-stone-600 dark:text-stone-300 text-[10px] font-bold">
-                          {isBlanc ? "بكالوريا تجريبية" : isQuiz ? "فرض محروس" : `اختبار ف${exam.term || 1}`}
+                          {isBlanc
+                            ? "بكالوريا تجريبية"
+                            : isQuiz
+                            ? "فرض محروس"
+                            : exam.term
+                            ? `اختبار ف${exam.term}`
+                            : exam.category}
                         </span>
                       </div>
                       <button
                         type="button"
-                        onClick={() => handleShareExam(exam, "subject")}
+                        onClick={() => handleShareExam(exam)}
                         className="p-1.5 rounded-xl border border-theme bg-card hover:bg-card-hover text-theme-secondary hover:text-theme-text"
                       >
                         <Share2 className="w-3.5 h-3.5" />
@@ -667,7 +853,7 @@ function TermExamsContent() {
                         {exam.title_ar}
                       </h3>
                       <p className="text-[11px] text-theme-secondary mt-1">
-                        {exam.stream_name || ALGERIAN_BAC_STREAMS[exam.streamId as StreamId]?.name_ar} • {exam.subject_name || ALL_SUBJECTS[exam.subjectId as SubjectId]?.name_ar}
+                        {exam.stream_name} • {exam.subject_name}
                       </p>
                     </div>
 
@@ -683,27 +869,54 @@ function TermExamsContent() {
                         </span>
                       )}
                       <span className="px-2 py-0.5 rounded-md bg-card border border-theme truncate max-w-[120px]">
-                        {exam.source_name || "ثانوية جزائرية"}
+                        {exam.source_name}
                       </span>
                     </div>
                   </div>
 
+                  {/* Actions: Direct PDF Download & Preview */}
                   <div className="pt-4 mt-4 border-t border-theme/60 space-y-2">
                     <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenModal(exam, "subject")}
-                        className="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all"
-                      >
-                        الموضوع
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleOpenModal(exam, "solution")}
-                        className="py-2 px-3 rounded-xl bg-card border border-theme hover:bg-card-hover text-theme-text text-xs font-bold transition-all"
-                      >
-                        التصحيح
-                      </button>
+                      {directPdfUrl ? (
+                        <a
+                          href={directPdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download
+                          className="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>تحميل PDF</span>
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenModal(exam, "subject")}
+                          className="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all"
+                        >
+                          الموضوع
+                        </button>
+                      )}
+
+                      {directPdfUrl ? (
+                        <a
+                          href={directPdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="py-2 px-3 rounded-xl bg-card border border-theme hover:bg-card-hover text-theme-text text-xs font-bold transition-all flex items-center justify-center gap-1.5"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>معاينة</span>
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenModal(exam, "solution")}
+                          className="py-2 px-3 rounded-xl bg-card border border-theme hover:bg-card-hover text-theme-text text-xs font-bold transition-all"
+                        >
+                          التصحيح
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -713,44 +926,69 @@ function TermExamsContent() {
         ) : (
           /* Table View */
           <div className="rounded-3xl bg-surface border border-theme shadow-clay overflow-hidden">
-            <table className="w-full text-xs text-start">
-              <thead className="bg-card border-b border-theme text-theme-secondary font-bold">
-                <tr>
-                  <th className="py-3 px-4 text-start">السنة</th>
-                  <th className="py-3 px-4 text-start">الشعبة</th>
-                  <th className="py-3 px-4 text-start">المادة</th>
-                  <th className="py-3 px-4 text-start">العنوان</th>
-                  <th className="py-3 px-4 text-start">النوع</th>
-                  <th className="py-3 px-4 text-start">الحل</th>
-                  <th className="py-3 px-4 text-center">الإجراء</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-theme/60">
-                {displayedExams.map((exam) => (
-                  <tr key={exam.id} className="hover:bg-card/50">
-                    <td className="py-2.5 px-4 font-mono font-bold text-theme-text">{exam.year}</td>
-                    <td className="py-2.5 px-4 text-theme-secondary">{exam.stream_name || ALGERIAN_BAC_STREAMS[exam.streamId as StreamId]?.name_ar}</td>
-                    <td className="py-2.5 px-4 font-bold text-theme-text">{exam.subject_name || ALL_SUBJECTS[exam.subjectId as SubjectId]?.name_ar}</td>
-                    <td className="py-2.5 px-4 text-theme-text max-w-xs truncate">{exam.title_ar}</td>
-                    <td className="py-2.5 px-4">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-500">
-                        {exam.content_type === "bac_blanc" ? "بكالوريا تجريبية" : exam.content_type === "term_quiz" ? "فرض" : "اختبار فصلي"}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-4">{exam.has_solution ? "✅ متوفر" : "—"}</td>
-                    <td className="py-2.5 px-4 text-center">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenModal(exam, "subject")}
-                        className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-bold text-[11px]"
-                      >
-                        معاينة
-                      </button>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-start">
+                <thead className="bg-card border-b border-theme text-theme-secondary font-bold">
+                  <tr>
+                    <th className="py-3 px-4 text-start">السنة</th>
+                    <th className="py-3 px-4 text-start">الشعبة</th>
+                    <th className="py-3 px-4 text-start">المادة</th>
+                    <th className="py-3 px-4 text-start">العنوان</th>
+                    <th className="py-3 px-4 text-start">النوع</th>
+                    <th className="py-3 px-4 text-start">الفصل</th>
+                    <th className="py-3 px-4 text-start">الحل</th>
+                    <th className="py-3 px-4 text-center">التحميل والمعاينة</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-theme/60">
+                  {displayedExams.map((exam) => {
+                    const directPdf = exam.pdf_links?.[0] || "";
+                    return (
+                      <tr key={exam.id} className="hover:bg-card/50">
+                        <td className="py-2.5 px-4 font-mono font-bold text-theme-text">{exam.year}</td>
+                        <td className="py-2.5 px-4 text-theme-secondary">{exam.stream_name}</td>
+                        <td className="py-2.5 px-4 font-bold text-theme-text">{exam.subject_name}</td>
+                        <td className="py-2.5 px-4 text-theme-text max-w-xs truncate">{exam.title_ar}</td>
+                        <td className="py-2.5 px-4">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-500">
+                            {exam.category}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-4 text-theme-secondary">
+                          {exam.term ? `فصل ${exam.term}` : "—"}
+                        </td>
+                        <td className="py-2.5 px-4">{exam.has_solution ? "✅ متوفر" : "—"}</td>
+                        <td className="py-2.5 px-4 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            {directPdf ? (
+                              <a
+                                href={directPdf}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                download
+                                title="تحميل ملف الـ PDF مباشرة"
+                                className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all"
+                              >
+                                <Download className="w-3.5 h-3.5" />
+                              </a>
+                            ) : null}
+                            <a
+                              href={directPdf || exam.source_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="معاينة الملف"
+                              className="p-1.5 rounded-lg bg-card border border-theme hover:bg-card-hover text-theme-secondary hover:text-theme-text transition-all"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
 
@@ -783,7 +1021,7 @@ export default function TermExamsPage() {
                 <FileText className="w-6 h-6 animate-spin" />
               </div>
               <p className="text-xs text-theme-muted font-sans">
-                جاري تحميل فروض واختبارات الفصول...
+                جاري تحميل فروض واختبارات الفصول من قاعدة البيانات...
               </p>
             </div>
           </div>

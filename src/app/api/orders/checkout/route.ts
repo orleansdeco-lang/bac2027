@@ -5,6 +5,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { getSubscriptionPlanById } from "@/lib/operations/subscriptions";
 import { extractAuthenticatedUserId, extractTokenFromCookies } from "@/lib/operations/auth";
 import { recordAuditLog } from "@/lib/operations/audit";
+import { registerOrderInStore, normalizeToAdminOrder } from "@/lib/operations/orders-store";
 
 export const dynamic = "force-dynamic";
 
@@ -279,12 +280,9 @@ export async function POST(req: Request) {
       console.warn("[Checkout] Non-fatal legacy payment_orders sync warning:", legacyErr);
     }
 
-    // Register in server in-memory backup registry
+    // Register in server in-memory backup registry and authoritative orders store
     try {
-      if (!(globalThis as any).__BAC_ORDERS_REGISTRY__) {
-        (globalThis as any).__BAC_ORDERS_REGISTRY__ = new Map<string, any>();
-      }
-      (globalThis as any).__BAC_ORDERS_REGISTRY__.set(orderId, {
+      const orderRecord = normalizeToAdminOrder({
         id: orderId,
         order_number: orderNumber,
         user_id: callerId || null,
@@ -292,17 +290,22 @@ export async function POST(req: Request) {
         amount: totalAmount,
         currency: "DZD",
         status: "PENDING",
-        recipient: {
-          full_name: cleanFullName,
-          phone: cleanPhone,
-          wilaya: cleanWilaya,
-          commune: cleanCommune,
-          address: cleanAddress,
-          delivery_notes: cleanNotes,
-        },
+        shipping_name: cleanFullName,
+        shipping_phone: cleanPhone,
+        shipping_wilaya: cleanWilaya,
+        shipping_commune: cleanCommune,
+        shipping_address: cleanAddress,
+        delivery_notes: cleanNotes,
         created_at: now,
         updated_at: now,
       });
+
+      registerOrderInStore(orderRecord);
+
+      if (!(globalThis as any).__BAC_ORDERS_REGISTRY__) {
+        (globalThis as any).__BAC_ORDERS_REGISTRY__ = new Map<string, any>();
+      }
+      (globalThis as any).__BAC_ORDERS_REGISTRY__.set(orderId, orderRecord);
     } catch {}
 
     // 12. Record Audit Log

@@ -139,6 +139,17 @@ export async function getAdminOrders(filters: AdminOrdersFilter = {}, token?: st
 
   const allOrdersMap = new Map<string, AdminOrderRecord>();
 
+  // 0. Load resilient orders from in-memory / persistent registry
+  try {
+    const { getAllUnifiedOrders } = await import("@/lib/operations/orders-store");
+    const { orders: unifiedOrders } = await getAllUnifiedOrders(token);
+    for (const u of unifiedOrders) {
+      allOrdersMap.set(u.id, u);
+    }
+  } catch (err) {
+    console.warn("[AdminOrders] Resilient orders store load warning:", err);
+  }
+
   // 1. Fetch from canonical tables: orders + shipping_addresses + shipments + payments + subscriptions
   try {
     const { data: canonicalList, error: canErr } = await client

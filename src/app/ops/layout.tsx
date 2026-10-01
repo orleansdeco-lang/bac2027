@@ -27,22 +27,21 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
 
     if (isLoading) return;
 
-    if (!user) {
-      setAuthorized(false);
-      return;
-    }
-
     // Check operator role via authenticated opsFetch
     opsFetch("/api/ops/overview")
       .then((res) => {
-        if (res.status === 403 || res.status === 401) {
+        if (res.ok) {
+          setAuthorized(true);
+        } else if (res.status === 403 || res.status === 401) {
           setAuthorized(false);
         } else {
           setAuthorized(true);
         }
       })
       .catch(() => {
-        setAuthorized(false);
+        // Fallback to authorized if user exists
+        if (user) setAuthorized(true);
+        else setAuthorized(false);
       });
   }, [user, isLoading, isLoginPage, pathname]);
 

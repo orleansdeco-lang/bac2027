@@ -1,26 +1,40 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Eddirasa Scraper & Supabase Synchronizer (BAC 3AS)
-Extracts educational topics, categorizes by subject/stream/category/term,
-and extracts verified PDF / Google Drive download links into Supabase.
+Eddirasa Scraper & Supabase Synchronizer (Full Run)
+Comprehensive, multi-subject scraper for BAC 3AS educational resources.
+Extracts: title, subject, stream, category, term, source_url, pdf_links.
+Features:
+ - Full subject iteration
+ - High-performance async concurrent fetching (Semaphore)
+ - Incremental batch upserts to Supabase (50 items/batch)
+ - Resumable backup to data/eddirasa_full_backup.json
+ - Continuous progress logging to data/sync_progress.log
+ - Final statistical breakdown by Subject, Category, and Stream
 """
 
 import os
 import re
+import sys
 import json
 import time
+import asyncio
+import logging
 import argparse
 import urllib.parse
-from typing import List, Dict, Any, Optional
+from datetime import datetime
+from typing import List, Dict, Any, Optional, Set
 
 import httpx
 from bs4 import BeautifulSoup
 from supabase import create_client, Client
 
-# Base Configuration
+# Base Paths and URLs
 BASE_URL = "https://eddirasa.com"
 MAIN_3AS_URL = "https://eddirasa.com/ens-sec/3as/"
+DATA_DIR = "data"
+BACKUP_FILE = os.path.join(DATA_DIR, "eddirasa_full_backup.json")
+LOG_FILE = os.path.join(DATA_DIR, "sync_progress.log")
 
 DEFAULT_SUPABASE_URL = "https://erbvmpnxufgeinqnshzu.supabase.co"
 DEFAULT_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVyYnZtcG54dWZnZWlucW5zaHp1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkxMjkzMzEsImV4cCI6MjEwNDcwNTMzMX0.STGUNuth4J2-TXqvH_BNwRJEsxH5RjSmhjUPttLN998"
@@ -34,6 +48,21 @@ HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
     "Accept-Language": "ar,fr;q=0.9,en;q=0.8",
 }
+
+# Setup Logging to both file and console
+os.makedirs(DATA_DIR, exist_ok=True)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler(LOG_FILE, encoding="utf-8", mode="a"),
+        logging.StreamHandler(sys.stdout),
+    ],
+)
+logger = logging.getLogger("EddirasaSync")
+
+# Subject mapping & filter (excluding non-academic calculators or videos)
+EXCLUDED_SUBJECT_SLUGS = ["average", "sport", "videos", "calculator"]
 
 def get_supabase_client() -> Client:
     url = os.environ.get("NEXT_PUBLIC_SUPABASE_URL", DEFAULT_SUPABASE_URL)
@@ -55,11 +84,11 @@ def infer_stream(text: str, url: str) -> str:
         return "تسيير واقتصاد"
     elif any(k in combined for k in ["آداب وفلسفة", "اداب وفلسفة", "أدبي", "فلسفة", "philo", "literary"]):
         return "آداب وفلسفة"
-    elif any(k in combined for k in ["لغات أجنبية", "لغات اجنبية", "ألماني", "إسباني", "إيطالي"]):
+    elif any(k in combined for k in ["لغات أجنبية", "لغات اجنبية", "ألماني", "إسباني", "إيطالي", "deutsch", "espanol", "italian"]):
         return "لغات أجنبية"
     elif any(k in combined for k in ["علوم تجريبية", "علمي", "شعب علمية", "science", "sciences"]):
         return "شعب علمية"
-    elif "رياضيات" in combined and ("شعبة" in combined or "math" in url):
+    elif "رياضيات" in combined and ("شعبة" in combined or "maths-term" in url):
         return "رياضيات"
     
     return "عام / جميع الشعب"
@@ -96,18 +125,6 @@ def infer_term(text: str, url: str) -> Optional[int]:
     
     return None
 
-def fetch_page(client: httpx.Client, url: str) -> Optional[BeautifulSoup]:
-    try:
-        resp = client.get(url, headers=HEADERS, timeout=20.0, follow_redirects=True)
-        if resp.status_code == 200:
-            return BeautifulSoup(resp.text, "html.parser")
-        else:
-            print(f"[-] HTTP {resp.status_code} for URL: {url}")
-            return None
-    except Exception as e:
-        print(f"[-] Error fetching {url}: {e}")
-        return None
-
 def extract_pdf_links(soup: BeautifulSoup, page_url: str) -> List[str]:
     pdfs = []
     
@@ -125,7 +142,7 @@ def extract_pdf_links(soup: BeautifulSoup, page_url: str) -> List[str]:
             if decoded_url not in pdfs:
                 pdfs.append(decoded_url)
 
-    # 2. Search direct anchor tags (PDF files or Google Drive)
+    # 2. Search direct anchor tags (PDF files or Google Drive or Mediafire)
     for a in soup.find_all("a"):
         href = a.get("href") or ""
         if not href or href.startswith("#"):
@@ -151,199 +168,314 @@ def extract_pdf_links(soup: BeautifulSoup, page_url: str) -> List[str]:
 
     return pdfs
 
-def get_subjects(client: httpx.Client) -> List[Dict[str, str]]:
-    soup = fetch_page(client, MAIN_3AS_URL)
-    if not soup:
-        return []
+class EddirasaCrawler:
+    def __init__(self, concurrency: int = 12, timeout: float = 20.0):
+        self.concurrency = concurrency
+        self.semaphore = asyncio.Semaphore(concurrency)
+        self.timeout = timeout
+        self.supabase = get_supabase_client()
+        self.seen_urls: Set[str] = set()
+        self.all_records: List[Dict[str, Any]] = []
+        self.has_stream_column: Optional[bool] = None
+        self.load_existing_backup()
 
-    subjects = []
-    seen_urls = set()
-    
-    # Extract subjects listed on 3as landing page
-    for a in soup.find_all("a"):
-        href = a.get("href") or ""
-        if not href or href in seen_urls:
-            continue
-            
-        full_url = urllib.parse.urljoin(BASE_URL, href)
-        if "/ens-sec/3as/" in full_url and full_url != MAIN_3AS_URL:
-            # Clean title
-            title = clean_text(a.text)
-            # Remove line breaks and numbers
-            title = re.sub(r'[\d,]+', '', title).strip()
-            
-            if title and len(title) > 2 and full_url not in seen_urls:
-                seen_urls.add(full_url)
-                subjects.append({"name": title, "url": full_url})
+    def load_existing_backup(self):
+        if os.path.exists(BACKUP_FILE):
+            try:
+                with open(BACKUP_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if isinstance(data, list):
+                        self.all_records = data
+                        for item in data:
+                            if "source_url" in item:
+                                self.seen_urls.add(item["source_url"])
+                logger.info(f"Loaded {len(self.all_records)} existing records from local backup: {BACKUP_FILE}")
+            except Exception as e:
+                logger.warning(f"Could not load backup file: {e}")
 
-    return subjects
+    def save_backup(self):
+        try:
+            with open(BACKUP_FILE, "w", encoding="utf-8") as f:
+                json.dump(self.all_records, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            logger.error(f"Error saving backup file: {e}")
 
-def scrape_topic_details(client: httpx.Client, topic_url: str, subject_name: str, fallback_section_url: str) -> Optional[Dict[str, Any]]:
-    soup = fetch_page(client, topic_url)
-    if not soup:
-        return None
+    def upsert_batch_to_supabase(self, batch: List[Dict[str, Any]]) -> bool:
+        if not batch:
+            return True
 
-    # Title extraction
-    h1 = soup.find("h1")
-    title = clean_text(h1.text) if h1 else ""
-    if not title and soup.title:
-        title = clean_text(soup.title.string)
-    if not title:
-        title = "موضوع تعليمي"
+        # Check if stream column is supported or test it
+        if self.has_stream_column is not False:
+            try:
+                self.supabase.table("resources").upsert(batch, on_conflict="source_url").execute()
+                self.has_stream_column = True
+                return True
+            except Exception as e:
+                err_str = str(e)
+                if "stream" in err_str or "PGRST204" in err_str:
+                    self.has_stream_column = False
+                else:
+                    logger.error(f"Supabase upsert error: {e}")
+                    return False
 
-    # Category, Term, Stream inference
-    category = infer_category(title, fallback_section_url)
-    term = infer_term(title, fallback_section_url)
-    stream = infer_stream(title, fallback_section_url)
+        # Fallback without stream column
+        db_records = [
+            {
+                "subject": r["subject"],
+                "category": r["category"],
+                "term": r["term"],
+                "title": r["title"],
+                "source_url": r["source_url"],
+                "pdf_links": r["pdf_links"],
+            }
+            for r in batch
+        ]
+        try:
+            self.supabase.table("resources").upsert(db_records, on_conflict="source_url").execute()
+            return True
+        except Exception as e:
+            logger.error(f"Supabase fallback upsert error: {e}")
+            return False
 
-    # Extract PDFs
-    pdf_links = extract_pdf_links(soup, topic_url)
+    async def fetch_html(self, client: httpx.AsyncClient, url: str) -> Optional[str]:
+        async with self.semaphore:
+            for attempt in range(3):
+                try:
+                    resp = await client.get(url, headers=HEADERS, timeout=self.timeout, follow_redirects=True)
+                    if resp.status_code == 200:
+                        return resp.text
+                    elif resp.status_code == 429:
+                        await asyncio.sleep(2.0 * (attempt + 1))
+                    else:
+                        break
+                except Exception:
+                    await asyncio.sleep(1.0 * (attempt + 1))
+            return None
 
-    return {
-        "title": title,
-        "subject": subject_name,
-        "stream": stream,
-        "category": category,
-        "term": term,
-        "source_url": topic_url,
-        "pdf_links": pdf_links,
-    }
+    async def scrape_topic(self, client: httpx.AsyncClient, topic_url: str, subject_name: str, section_url: str) -> Optional[Dict[str, Any]]:
+        html = await self.fetch_html(client, topic_url)
+        if not html:
+            return None
 
-def scrape_sample_maths(limit: int = 5) -> List[Dict[str, Any]]:
-    with httpx.Client(headers=HEADERS, timeout=20.0, follow_redirects=True) as http_client:
-        print("[1/4] Scanning Eddirasa 3AS subjects...")
-        subjects = get_subjects(http_client)
-        print(f"      Found {len(subjects)} subjects on 3AS page.")
-        
-        # Pick Mathematics
-        math_subject = next((s for s in subjects if "رياضيات" in s["name"] or "math" in s["url"]), None)
-        if not math_subject:
-            math_subject = {"name": "الرياضيات", "url": "https://eddirasa.com/ens-sec/3as/maths/"}
-            
-        print(f"[2/4] Selected Subject: '{math_subject['name']}' ({math_subject['url']})")
-        
-        # Open Maths page to find sub-sections
-        math_soup = fetch_page(http_client, math_subject["url"])
-        if not math_soup:
-            print("[-] Could not load maths index page.")
+        soup = BeautifulSoup(html, "html.parser")
+        h1 = soup.find("h1")
+        title = clean_text(h1.text) if h1 else ""
+        if not title and soup.title:
+            title = clean_text(soup.title.string)
+        if not title:
+            title = "موضوع تعليمي"
+
+        category = infer_category(title, section_url)
+        term = infer_term(title, section_url)
+        stream = infer_stream(title, section_url)
+        pdf_links = extract_pdf_links(soup, topic_url)
+
+        return {
+            "title": title,
+            "subject": subject_name,
+            "stream": stream,
+            "category": category,
+            "term": term,
+            "source_url": topic_url,
+            "pdf_links": pdf_links,
+        }
+
+    async def get_subjects(self, client: httpx.AsyncClient) -> List[Dict[str, str]]:
+        html = await self.fetch_html(client, MAIN_3AS_URL)
+        if not html:
             return []
 
-        # Find section URLs like exams-science-term-1
-        section_urls = []
-        for a in math_soup.find_all("a"):
+        soup = BeautifulSoup(html, "html.parser")
+        subjects = []
+        seen = set()
+
+        for a in soup.find_all("a"):
             href = a.get("href") or ""
             full_url = urllib.parse.urljoin(BASE_URL, href)
-            if "/ens-sec/3as/maths/" in full_url and full_url != math_subject["url"]:
-                if full_url not in section_urls:
-                    section_urls.append(full_url)
-
-        print(f"      Found {len(section_urls)} sub-sections in Mathematics.")
-        
-        # Prioritize exams section: exams-science-term-1
-        target_section = next((s for s in section_urls if "exams-science-term-1" in s), section_urls[0] if section_urls else None)
-        if not target_section:
-            target_section = "https://eddirasa.com/ens-sec/3as/maths/exams-science-term-1/"
             
-        print(f"[3/4] Scanning section for topics: {target_section}")
-        sec_soup = fetch_page(http_client, target_section)
-        if not sec_soup:
+            if "/ens-sec/3as/" in full_url and full_url != MAIN_3AS_URL:
+                # Check for excluded slugs
+                if any(ex in full_url for ex in EXCLUDED_SUBJECT_SLUGS):
+                    continue
+                    
+                title = clean_text(a.text)
+                title = re.sub(r'[\d,]+', '', title).strip()
+                
+                if title and len(title) > 2 and full_url not in seen:
+                    seen.add(full_url)
+                    subjects.append({"name": title, "url": full_url})
+
+        return subjects
+
+    async def get_sections_for_subject(self, client: httpx.AsyncClient, subject_url: str) -> List[Dict[str, str]]:
+        html = await self.fetch_html(client, subject_url)
+        if not html:
             return []
 
-        # Extract topic article URLs
-        topic_urls = []
-        for a in sec_soup.find_all("a"):
+        soup = BeautifulSoup(html, "html.parser")
+        sections = []
+        seen = set()
+
+        for a in soup.find_all("a"):
+            href = a.get("href") or ""
+            full_url = urllib.parse.urljoin(BASE_URL, href)
+            
+            # Avoid video-only sections or parent links
+            if subject_url in full_url and full_url != subject_url and "video" not in full_url:
+                title = clean_text(a.text)
+                title = re.sub(r'[\d,]+', '', title).strip()
+                if full_url not in seen:
+                    seen.add(full_url)
+                    sections.append({"name": title or "قسم", "url": full_url})
+
+        return sections
+
+    async def get_topics_for_section(self, client: httpx.AsyncClient, section_url: str) -> List[str]:
+        html = await self.fetch_html(client, section_url)
+        if not html:
+            return []
+
+        soup = BeautifulSoup(html, "html.parser")
+        topics = []
+        seen = set()
+
+        for a in soup.find_all("a"):
             href = a.get("href") or ""
             text = a.text.strip()
-            # Topic links usually have 'اختبار' or 'فرض' or numeric ID
-            if (any(k in text for k in ["اختبار", "فرض", "رقم"]) or re.search(r'-\d+/?$', href)) and len(text) > 8:
+            
+            # Identify educational articles
+            is_topic = (
+                any(k in text for k in ["اختبار", "فرض", "رقم", "ملخص", "سلسلة", "تمرين", "حلول", "بكالوريا", "موضوع"])
+                or re.search(r'-\d+/?$', href)
+            )
+            
+            if is_topic and len(text) > 6:
                 full_url = urllib.parse.urljoin(BASE_URL, href)
-                if full_url not in topic_urls and full_url != target_section:
-                    topic_urls.append(full_url)
-                    if len(topic_urls) >= limit:
+                if full_url not in seen and full_url != section_url and "/ens-sec/" not in href:
+                    seen.add(full_url)
+                    topics.append(full_url)
+
+        return topics
+
+    async def run(self, max_topics_per_subject: Optional[int] = None):
+        start_time = time.time()
+        logger.info("=" * 70)
+        logger.info("🚀 STARTING COMPREHENSIVE EDDIRASA 3AS SCRAPING RUN")
+        logger.info(f"Target: {MAIN_3AS_URL} | Concurrency: {self.concurrency}")
+        logger.info("=" * 70)
+
+        limits = httpx.Limits(max_keepalive_connections=20, max_connections=30)
+        async with httpx.AsyncClient(headers=HEADERS, limits=limits, timeout=self.timeout) as client:
+            subjects = await self.get_subjects(client)
+            logger.info(f"📚 Discovered {len(subjects)} Academic Subjects for 3AS.")
+
+            total_new_topics = 0
+
+            for s_idx, subj in enumerate(subjects, 1):
+                logger.info("-" * 70)
+                logger.info(f"[{s_idx}/{len(subjects)}] Processing Subject: {subj['name']} ({subj['url']})")
+                sections = await self.get_sections_for_subject(client, subj["url"])
+                logger.info(f"   -> Found {len(sections)} sections in {subj['name']}.")
+
+                subj_topics_count = 0
+
+                for sec_idx, sec in enumerate(sections, 1):
+                    sec_topics = await self.get_topics_for_section(client, sec["url"])
+                    
+                    # Filter out already scraped topics
+                    new_topics = [t for t in sec_topics if t not in self.seen_urls]
+                    if not new_topics:
+                        continue
+
+                    logger.info(f"   [{sec_idx}/{len(sections)}] Section '{sec['name']}': {len(new_topics)} new topics to fetch.")
+
+                    # Scrape topics in concurrent chunks
+                    chunk_size = 15
+                    for c_start in range(0, len(new_topics), chunk_size):
+                        chunk = new_topics[c_start:c_start + chunk_size]
+                        tasks = [
+                            self.scrape_topic(client, t_url, subj["name"], sec["url"])
+                            for t_url in chunk
+                        ]
+                        results = await asyncio.gather(*tasks)
+
+                        # Filter valid results
+                        valid_records = [r for r in results if r and r.get("title")]
+
+                        if valid_records:
+                            # Upsert to Supabase
+                            self.upsert_batch_to_supabase(valid_records)
+                            
+                            # Update local memory and backup
+                            for rec in valid_records:
+                                self.seen_urls.add(rec["source_url"])
+                                self.all_records.append(rec)
+                                
+                            total_new_topics += len(valid_records)
+                            subj_topics_count += len(valid_records)
+                            
+                            # Incremental local disk flush
+                            self.save_backup()
+                            logger.info(f"      ✔ Saved batch ({len(valid_records)} topics) | Total DB: {len(self.all_records)}")
+
+                        if max_topics_per_subject and subj_topics_count >= max_topics_per_subject:
+                            logger.info(f"   Reached limit of {max_topics_per_subject} for {subj['name']}.")
+                            break
+
+                    if max_topics_per_subject and subj_topics_count >= max_topics_per_subject:
                         break
 
-        print(f"      Selected {len(topic_urls)} topic URLs for extraction.")
+                logger.info(f"✔ Completed Subject: {subj['name']} | Added: {subj_topics_count} records.")
 
-        # Extract details for each topic
-        print("[4/4] Extracting topic details and PDF files...")
-        results = []
-        for idx, t_url in enumerate(topic_urls, 1):
-            print(f"      ({idx}/{len(topic_urls)}) Fetching: {t_url}")
-            details = scrape_topic_details(http_client, t_url, math_subject["name"], target_section)
-            if details:
-                results.append(details)
-                print(f"          + Title: {details['title']}")
-                print(f"          + Category: {details['category']} | Stream: {details['stream']} | Term: {details['term']}")
-                print(f"          + PDFs ({len(details['pdf_links'])}): {details['pdf_links']}")
-            time.sleep(0.5)
+        elapsed = round(time.time() - start_time, 2)
+        logger.info("=" * 70)
+        logger.info(f"🎉 SCRAPING RUN FINISHED IN {elapsed}s | Total New: {total_new_topics} | Grand Total: {len(self.all_records)}")
+        logger.info("=" * 70)
+        self.generate_report()
 
-        return results
+    def generate_report(self):
+        report = {}
+        by_subject = {}
+        by_category = {}
+        by_stream = {}
+        total_pdfs = 0
 
-def save_and_sync(records: List[Dict[str, Any]]):
-    # 1. Save locally to data/eddirasa_sample.json
-    os.makedirs("data", exist_ok=True)
-    sample_path = os.path.join("data", "eddirasa_sample.json")
-    with open(sample_path, "w", encoding="utf-8") as f:
-        json.dump(records, f, ensure_ascii=False, indent=2)
-    print(f"\n[+] Saved {len(records)} records locally to: {sample_path}")
+        for r in self.all_records:
+            s = r.get("subject", "غير محدد")
+            c = r.get("category", "غير محدد")
+            st = r.get("stream", "غير محدد")
+            pdfs = r.get("pdf_links", [])
 
-    # 2. Sync / Upsert to Supabase
-    print("[+] Connecting to Supabase for database upsert...")
-    supabase = get_supabase_client()
-    
-    # Try inserting with stream first
-    try:
-        res = supabase.table("resources").upsert(records, on_conflict="source_url").execute()
-        print(f"✅ Successfully upserted {len(res.data)} records into 'resources' table (with stream)!")
-    except Exception as e:
-        err_msg = str(e)
-        if "stream" in err_msg or "PGRST204" in err_msg:
-            print("[-] 'stream' column not found in Supabase table 'resources'. Upserting schema-compatible fields...")
-            # Prepare records without 'stream' for DB compatibility
-            db_records = [
-                {
-                    "subject": r["subject"],
-                    "category": r["category"],
-                    "term": r["term"],
-                    "title": r["title"],
-                    "source_url": r["source_url"],
-                    "pdf_links": r["pdf_links"]
-                }
-                for r in records
-            ]
-            res = supabase.table("resources").upsert(db_records, on_conflict="source_url").execute()
-            print(f"✅ Successfully upserted {len(res.data)} records into 'resources' table!")
-            print("💡 Tip: To store 'stream' in the database, execute migration 044: ALTER TABLE public.resources ADD COLUMN stream TEXT;")
-        else:
-            print(f"[-] Supabase upsert error: {e}")
+            by_subject[s] = by_subject.get(s, 0) + 1
+            by_category[c] = by_category.get(c, 0) + 1
+            by_stream[st] = by_stream.get(st, 0) + 1
+            total_pdfs += len(pdfs)
+
+        logger.info("\n📊 FINAL SYSTEM REPORT (Database & Backup Statistics):")
+        logger.info(f"Total Resources: {len(self.all_records)} topics")
+        logger.info(f"Total Extracted PDFs: {total_pdfs} files\n")
+
+        logger.info("--- Breakdown by Subject (المواد) ---")
+        for s, count in sorted(by_subject.items(), key=lambda x: x[1], reverse=True):
+            logger.info(f"  • {s}: {count} موضوع")
+
+        logger.info("\n--- Breakdown by Category (الفئات) ---")
+        for c, count in sorted(by_category.items(), key=lambda x: x[1], reverse=True):
+            logger.info(f"  • {c}: {count} موضوع")
+
+        logger.info("\n--- Breakdown by Stream (الشعب) ---")
+        for st, count in sorted(by_stream.items(), key=lambda x: x[1], reverse=True):
+            logger.info(f"  • {st}: {count} موضوع")
+        logger.info("=" * 70)
 
 def main():
-    parser = argparse.ArgumentParser(description="Eddirasa Scraper & Supabase Synchronizer")
-    parser.add_argument("--limit", type=int, default=5, help="Number of sample records to scrape")
+    parser = argparse.ArgumentParser(description="Eddirasa Comprehensive Scraper")
+    parser.add_argument("--concurrency", type=int, default=12, help="Concurrent async workers")
+    parser.add_argument("--limit-per-subject", type=int, default=None, help="Optional limit per subject")
     args = parser.parse_args()
 
-    print("=" * 65)
-    print("  EDDIRASA 3AS SCRAPER & SUPABASE SYNC (SAMPLE RUN)")
-    print("=" * 65)
-
-    records = scrape_sample_maths(limit=args.limit)
-    if not records:
-        print("[-] No records extracted.")
-        return
-
-    save_and_sync(records)
-
-    print("\n" + "=" * 65)
-    print("  VERIFIED EXTRACTED SAMPLE:")
-    print("=" * 65)
-    for idx, r in enumerate(records, 1):
-        print(f"{idx}. [{r['category']} - فصل {r['term']}] {r['title']}")
-        print(f"   المادة: {r['subject']} | الشعبة: {r['stream']}")
-        print(f"   المصدر: {r['source_url']}")
-        print(f"   الروابط ({len(r['pdf_links'])}):")
-        for p in r['pdf_links']:
-            print(f"     -> {p}")
-        print("-" * 65)
+    crawler = EddirasaCrawler(concurrency=args.concurrency)
+    asyncio.run(crawler.run(max_topics_per_subject=args.limit_per_subject))
 
 if __name__ == "__main__":
     main()

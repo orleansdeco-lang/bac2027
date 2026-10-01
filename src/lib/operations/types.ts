@@ -386,6 +386,8 @@ export interface DashboardKPIs {
   lessonsViewedToday: number;
   exercisesCompletedToday: number;
   estimatedStudyHoursToday: number;
+  liveVisitors?: number;
+  todayVisitors?: number;
 }
 
 export interface ExpiringSoonAlert {
@@ -450,6 +452,9 @@ export interface OperationsDashboardData {
   funnel: ConversionFunnelStep[];
   learning: LearningIntelligenceMetrics;
   generatedAt: string;
+  orders?: any[];
+  ordersSummary?: any;
+  analytics?: any;
 }
 
 
