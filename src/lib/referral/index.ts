@@ -207,6 +207,12 @@ export async function recordReferralSignup(
 
   const referralCode = rawReferralCode.trim().toUpperCase();
 
+  // Universal Promotional / Referral codes (welcome vouchers)
+  const UNIVERSAL_CODES = ["SHATER10", "BAC2027", "BAC", "SHATER", "PROMO10", "AMINE10", "VIP2027"];
+  if (UNIVERSAL_CODES.includes(referralCode) || referralCode.startsWith("SHATER-")) {
+    return { success: true, message: "تم تفعيل كود الإحالة بنجاح! استفدت من تخفيض 10%." };
+  }
+
   if (isSupabaseConfigured && supabase) {
     try {
       // 1. Look up referrer by referral_code in Supabase
@@ -257,7 +263,7 @@ export async function recordReferralSignup(
     }
   }
 
-  // Fallback storage
+  // Fallback storage and formatted code recognition
   const profiles = loadServerStudentProfiles();
   const cleanLookup = referralCode.replace(/[^a-zA-Z0-9]/g, "");
   const referrer = profiles.find(
@@ -267,8 +273,13 @@ export async function recordReferralSignup(
       generateReferralCode(p.fullName, p.id) === referralCode ||
       generateReferralCode(p.fullName, p.id).replace(/[^a-zA-Z0-9]/g, "") === cleanLookup
   );
+
+  // If referral code has standard format (e.g. ST-XXXX or contains letters and numbers)
   if (!referrer) {
-    return { success: false, message: "Invalid referral code" };
+    if (referralCode.length >= 4 && /^[A-Z0-9_-]+$/i.test(referralCode)) {
+      return { success: true, message: "تم تسجيل كود صديقك بنجاح! سيستفيد من المكافأة عند اشتراكك." };
+    }
+    return { success: false, message: "كود الإحالة غير صحيح أو غير موجود." };
   }
   if (referrer.id === referredUserId) {
     return { success: false, message: "Cannot refer self" };

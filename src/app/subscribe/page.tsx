@@ -309,9 +309,16 @@ export default function SubscribePage() {
 
     setIsSubmittingCod(true);
     try {
+      const token = await getAuthToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const res = await fetch("/api/orders/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
+        credentials: "include",
         body: JSON.stringify({
           plan_id: selectedPlanId,
           full_name: shippingName.trim(),
@@ -457,7 +464,7 @@ export default function SubscribePage() {
 
   return (
     <AppShell activeNav="home">
-      <div className="min-h-screen py-6 sm:py-10 bg-theme-base">
+      <div className="min-h-screen py-6 sm:py-10 bg-canvas">
         <Container size="md" className="space-y-6 sm:space-y-8 max-w-3xl mx-auto px-4 sm:px-6">
           {/* Active Subscription Banner if Already Paid */}
           {access.status === "PAID_ACTIVE" && (
@@ -529,7 +536,7 @@ export default function SubscribePage() {
               className={`relative p-5 rounded-3xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
                 selectedPlanId === "season"
                   ? "border-[var(--color-primary)] bg-card shadow-md ring-2 ring-[var(--color-primary)]/20"
-                  : "border-theme bg-surface/70 hover:border-[var(--color-primary)]/40 hover:bg-card"
+                  : "border-theme-border bg-surface/70 hover:border-[var(--color-primary)]/40 hover:bg-card"
               }`}
             >
               <div className="absolute -top-3 right-5 px-3 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-extrabold shadow-sm">
@@ -550,7 +557,7 @@ export default function SubscribePage() {
                     className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
                       selectedPlanId === "season"
                         ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
-                        : "border-theme bg-surface"
+                        : "border-theme-border bg-surface"
                     }`}
                   >
                     {selectedPlanId === "season" && <Check className="w-3 h-3 stroke-[3]" />}
@@ -564,7 +571,7 @@ export default function SubscribePage() {
                   <span className="text-xs font-bold text-theme-secondary">دج / الموسم كاملاً</span>
                 </div>
 
-                <p className="text-xs text-theme-secondary leading-relaxed pt-1 border-t border-theme/60">
+                <p className="text-xs text-theme-secondary leading-relaxed pt-1 border-t border-theme-border/60">
                   {isAr
                     ? "فتح كامل وشامل لكل المنصة وجميع المواد ومعمل الأخطاء وبنك المواضيع حتى يوم البكالوريا."
                     : "Accès complet à toutes les fonctionnalités et matières jusqu'au BAC."}
@@ -578,7 +585,7 @@ export default function SubscribePage() {
               className={`p-5 rounded-3xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
                 selectedPlanId === "monthly"
                   ? "border-[var(--color-primary)] bg-card shadow-md ring-2 ring-[var(--color-primary)]/20"
-                  : "border-theme bg-surface/70 hover:border-[var(--color-primary)]/40 hover:bg-card"
+                  : "border-theme-border bg-surface/70 hover:border-[var(--color-primary)]/40 hover:bg-card"
               }`}
             >
               <div className="space-y-3">
@@ -595,7 +602,7 @@ export default function SubscribePage() {
                     className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
                       selectedPlanId === "monthly"
                         ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white"
-                        : "border-theme bg-surface"
+                        : "border-theme-border bg-surface"
                     }`}
                   >
                     {selectedPlanId === "monthly" && <Check className="w-3 h-3 stroke-[3]" />}
@@ -609,7 +616,7 @@ export default function SubscribePage() {
                   <span className="text-xs font-bold text-theme-secondary">دج / شهرياً</span>
                 </div>
 
-                <p className="text-xs text-theme-secondary leading-relaxed pt-1 border-t border-theme/60">
+                <p className="text-xs text-theme-secondary leading-relaxed pt-1 border-t border-theme-border/60">
                   {isAr
                     ? "فتح كامل وشامل لجميع المواد وميزات المنصة لمدة 30 يوماً كاملة قابلة للتجديد."
                     : "Accès complet à toute la plateforme pendant 30 jours."}
@@ -655,7 +662,7 @@ export default function SubscribePage() {
                 value={voucherCodeInput}
                 onChange={(e) => setVoucherCodeInput(e.target.value.toUpperCase())}
                 placeholder={isAr ? "مثال: SHATER-XXXX-XXXX أو كود زميلك" : "Code parrain ou carte"}
-                className="w-full sm:flex-1 px-3.5 py-2.5 rounded-xl bg-card border border-theme text-xs font-mono font-bold text-theme-text uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="w-full sm:flex-1 px-3.5 py-2.5 rounded-xl bg-card border border-theme-border text-xs font-mono font-bold text-theme-text uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-purple-500"
               />
               <button
                 type="button"
@@ -706,7 +713,7 @@ export default function SubscribePage() {
                 className={`p-3.5 rounded-2xl border-2 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
                   paymentMode === "ONLINE"
                     ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)]/25 shadow-sm"
-                    : "border-theme bg-surface hover:bg-card"
+                    : "border-theme-border bg-surface hover:bg-card"
                 }`}
               >
                 <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-amber-600 flex items-center justify-center shrink-0">
@@ -724,7 +731,7 @@ export default function SubscribePage() {
                 className={`p-3.5 rounded-2xl border-2 text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
                   paymentMode === "COD"
                     ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)]/25 shadow-sm"
-                    : "border-theme bg-surface hover:bg-card"
+                    : "border-theme-border bg-surface hover:bg-card"
                 }`}
               >
                 <div className="w-8 h-8 rounded-xl bg-purple-500/15 text-purple-600 flex items-center justify-center shrink-0">
@@ -741,9 +748,9 @@ export default function SubscribePage() {
           {paymentMode === "ONLINE" ? (
             <div className="space-y-4">
               {/* Online Coordinates Card: Clean RIP & CCP with Copy */}
-              <Card className="p-5 bg-card border-theme rounded-3xl space-y-4 shadow-sm">
+              <Card className="p-5 bg-card border-theme-border rounded-3xl space-y-4 shadow-sm">
                 {/* RIP Box */}
-                <div className="p-3.5 rounded-2xl bg-surface border border-theme flex items-center justify-between gap-3">
+                <div className="p-3.5 rounded-2xl bg-surface border border-theme-border flex items-center justify-between gap-3">
                   <div>
                     <span className="text-[10px] text-theme-muted font-mono uppercase block">
                       {isAr ? "رقم الـ RIP:" : "Numéro RIP :"}
@@ -776,7 +783,7 @@ export default function SubscribePage() {
                 </div>
 
                 {/* CCP Box */}
-                <div className="p-3.5 rounded-2xl bg-surface border border-theme flex items-center justify-between gap-3">
+                <div className="p-3.5 rounded-2xl bg-surface border border-theme-border flex items-center justify-between gap-3">
                   <div>
                     <span className="text-[10px] text-theme-muted font-mono uppercase block">
                       {isAr ? "رقم الحساب:" : "Numéro de compte :"}
@@ -823,7 +830,7 @@ export default function SubscribePage() {
                   {!receiptFile ? (
                     <div
                       onClick={() => fileInputRef.current?.click()}
-                      className="p-6 border-2 border-dashed border-theme hover:border-[var(--color-primary)] bg-surface/50 hover:bg-surface rounded-2xl text-center cursor-pointer transition-all space-y-2"
+                      className="p-6 border-2 border-dashed border-theme-border hover:border-[var(--color-primary)] bg-surface/50 hover:bg-surface rounded-2xl text-center cursor-pointer transition-all space-y-2"
                     >
                       <div className="w-10 h-10 rounded-xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center mx-auto">
                         <UploadCloud className="w-5 h-5" />
@@ -833,7 +840,7 @@ export default function SubscribePage() {
                       </p>
                     </div>
                   ) : (
-                    <div className="p-3.5 rounded-2xl bg-surface border border-theme space-y-2">
+                    <div className="p-3.5 rounded-2xl bg-surface border border-theme-border space-y-2">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 truncate">
                           <FileCheck className="w-4 h-4 text-emerald-500 shrink-0" />
@@ -855,7 +862,7 @@ export default function SubscribePage() {
                           <img
                             src={receiptDataUrl}
                             alt="وصل الدفع"
-                            className="max-h-44 mx-auto rounded-xl border border-theme object-contain"
+                            className="max-h-44 mx-auto rounded-xl border border-theme-border object-contain"
                           />
                         </div>
                       )}
@@ -925,7 +932,7 @@ export default function SubscribePage() {
             /* Cash On Delivery Option */
             <div className="space-y-4">
               {codResult ? (
-                <Card className="p-6 bg-card border-theme rounded-3xl text-center space-y-4 shadow-sm">
+                <Card className="p-6 bg-card border-theme-border rounded-3xl text-center space-y-4 shadow-sm">
                   <div className="w-14 h-14 rounded-full bg-emerald-500/15 text-emerald-600 flex items-center justify-center mx-auto">
                     <CheckCircle2 className="w-8 h-8" />
                   </div>
@@ -947,8 +954,8 @@ export default function SubscribePage() {
                   </Link>
                 </Card>
               ) : (
-                <Card className="p-5 bg-card border-theme rounded-3xl space-y-4 shadow-sm">
-                  <div className="border-b border-theme pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <Card className="p-5 bg-card border-theme-border rounded-3xl space-y-4 shadow-sm">
+                  <div className="border-b border-theme-border pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
                       <h3 className="text-sm font-bold text-theme-text flex items-center gap-2">
                         <Truck className="w-4 h-4 text-purple-600" />
@@ -979,7 +986,7 @@ export default function SubscribePage() {
                         value={shippingName}
                         onChange={(e) => setShippingName(e.target.value)}
                         placeholder={isAr ? "الاسم واللقب" : "Nom et prénom"}
-                        className="w-full px-3 py-2 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                        className="w-full px-3 py-2 rounded-xl bg-surface border border-theme-border text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                       />
                     </div>
 
@@ -996,7 +1003,7 @@ export default function SubscribePage() {
                           value={shippingPhone}
                           onChange={(e) => setShippingPhone(e.target.value)}
                           placeholder="05 / 06 / 07..."
-                          className="w-full px-3 py-2 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono"
+                          className="w-full px-3 py-2 rounded-xl bg-surface border border-theme-border text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono"
                         />
                       </div>
 
@@ -1011,7 +1018,7 @@ export default function SubscribePage() {
                           value={shippingParentPhone}
                           onChange={(e) => setShippingParentPhone(e.target.value)}
                           placeholder="05 / 06 / 07..."
-                          className="w-full px-3 py-2 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono"
+                          className="w-full px-3 py-2 rounded-xl bg-surface border border-theme-border text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono"
                         />
                       </div>
                     </div>
@@ -1028,7 +1035,7 @@ export default function SubscribePage() {
                           value={shippingWilaya}
                           onChange={(e) => setShippingWilaya(e.target.value)}
                           placeholder={isAr ? "مثال: الجزائر، سطيف، وهران..." : "Wilaya"}
-                          className="w-full px-3 py-2 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="w-full px-3 py-2 rounded-xl bg-surface border border-theme-border text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         />
                       </div>
 
@@ -1041,7 +1048,7 @@ export default function SubscribePage() {
                           value={shippingCommune}
                           onChange={(e) => setShippingCommune(e.target.value)}
                           placeholder={isAr ? "مثال: باب الزوار، العلمة..." : "Commune"}
-                          className="w-full px-3 py-2 rounded-xl bg-surface border border-theme text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="w-full px-3 py-2 rounded-xl bg-surface border border-theme-border text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
                         />
                       </div>
                     </div>
@@ -1054,7 +1061,7 @@ export default function SubscribePage() {
                     )}
 
                     {/* Total & Submit */}
-                    <div className="pt-2 border-t border-theme space-y-3">
+                    <div className="pt-2 border-t border-theme-border space-y-3">
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-bold text-theme-text">
                           {isAr ? "المبلغ عند الاستلام:" : "Total à la livraison :"}
@@ -1094,7 +1101,7 @@ export default function SubscribePage() {
           )}
 
           {/* 5. INTERACTIVE FAQ ACCORDION: Show question, click to show answer */}
-          <div className="space-y-3 pt-2 border-t border-theme">
+          <div className="space-y-3 pt-2 border-t border-theme-border">
             <div className="flex items-center gap-2">
               <HelpCircle className="w-4 h-4 text-[var(--color-primary)]" />
               <h3 className="text-sm font-bold text-theme-text">
@@ -1108,7 +1115,7 @@ export default function SubscribePage() {
                 return (
                   <div
                     key={idx}
-                    className="rounded-2xl bg-card border border-theme overflow-hidden transition-all"
+                    className="rounded-2xl bg-card border border-theme-border overflow-hidden transition-all"
                   >
                     <button
                       type="button"
@@ -1129,7 +1136,7 @@ export default function SubscribePage() {
                     </button>
 
                     {isOpen && (
-                      <div className="px-4 pb-3.5 pt-1 text-xs text-theme-secondary leading-relaxed border-t border-theme/40">
+                      <div className="px-4 pb-3.5 pt-1 text-xs text-theme-secondary leading-relaxed border-t border-theme-border/40">
                         <p>{faq.a}</p>
                       </div>
                     )}
@@ -1140,7 +1147,7 @@ export default function SubscribePage() {
           </div>
 
           {/* Technical Support Box */}
-          <div className="p-4 rounded-2xl bg-surface border border-theme flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-start">
+          <div className="p-4 rounded-2xl bg-surface border border-theme-border flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-start">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center shrink-0">
                 <Headphones className="w-4 h-4" />

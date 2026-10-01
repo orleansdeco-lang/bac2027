@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { useAuth } from "@/lib/auth/context";
 import { useTranslation } from "@/lib/i18n/context";
 import { StudentService } from "@/lib/services";
+import { getAuthToken } from "@/lib/operations/client-api";
 import { ALGERIAN_WILAYAS } from "@/domain/administrative/algeria-administrative";
 import {
   Package,
@@ -167,9 +168,16 @@ function CheckoutContent() {
 
     try {
       // Send ONLY plan_id and shipping info. The server calculates price & duration!
+      const token = await getAuthToken();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const res = await fetch("/api/orders/checkout", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
+        credentials: "include",
         body: JSON.stringify({
           plan_id: currentPlan.id,
           full_name: fullName.trim(),

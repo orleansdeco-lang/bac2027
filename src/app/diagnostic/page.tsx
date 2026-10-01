@@ -303,7 +303,7 @@ export default function DiagnosticPage() {
     return (
       <AppShell activeNav="roadmap">
         <div className="py-6 sm:py-10">
-          <Container size="sm" className="w-full">
+          <Container size="lg" className="w-full">
             <Card className="p-6 sm:p-8 bg-[#111827] border-slate-800 shadow-xl text-center space-y-6">
               <div className="h-16 w-16 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
                 <Compass className="h-8 w-8" />
@@ -344,18 +344,18 @@ export default function DiagnosticPage() {
   return (
     <AppShell activeNav="roadmap">
       <div className="py-6 sm:py-10">
-        <Container size="sm" className="w-full">
+        <Container size="lg" className="w-full">
           {!session || session.status === "completed" ? (
             /* Intro / Subject Diagnostic Selector Hub */
-            <div className="space-y-6">
-              <div className="text-center space-y-3">
+            <div className="space-y-8 max-w-5xl mx-auto">
+              <div className="text-center space-y-3 max-w-2xl mx-auto">
                 <Badge variant="primary" size="md">
                   {locale === "ar" ? "الوضع الموجه بالمواد" : "Diagnostic par matière"}
                 </Badge>
-                <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-theme-text tracking-tight">
                   {locale === "ar" ? "اختر المادة لتحديد مستواك وبناء مسارك" : "Choisissez une matière pour votre diagnostic"}
                 </h1>
-                <p className="text-sm sm:text-base text-slate-400 max-w-lg mx-auto">
+                <p className="text-sm sm:text-base text-theme-secondary leading-relaxed">
                   {locale === "ar"
                     ? "يمكنك تقييم كل مادة دراسية بشكل مستقل دون التقيّد بمسار خطي إجباري، أو الانتقال للمكتبة الحرة وتصفح كامل المنهاج."
                     : "Évaluez chaque discipline individuellement ou explorez la bibliothèque de cours en accès libre."}
@@ -364,14 +364,14 @@ export default function DiagnosticPage() {
 
               {/* Subject Diagnostic Cards Grid */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between px-1 text-xs font-bold text-slate-300">
+                <div className="flex items-center justify-between px-1 text-xs font-bold text-theme-text">
                   <span>{locale === "ar" ? "مواد شعبتك الرسمية" : "Matières de votre filière"}</span>
-                  <span className="text-slate-400 font-mono text-[11px]">
+                  <span className="text-theme-muted font-mono text-[11px]">
                     {getStreamSubjects(streamId, specialty).length} {locale === "ar" ? "مواد" : "matières"}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {getStreamSubjects(streamId, specialty).map((rule) => {
                     const subj = ALL_SUBJECTS[rule.subjectId];
                     const name = subj ? (locale === "ar" ? subj.name_ar : subj.name_fr) : rule.subjectId;
@@ -380,19 +380,19 @@ export default function DiagnosticPage() {
                     return (
                       <div
                         key={rule.subjectId}
-                        className="p-4 rounded-2xl bg-[#111827] border border-slate-800 hover:border-slate-700 transition-all flex flex-col justify-between gap-4 shadow-sm"
+                        className="p-5 rounded-2xl bg-card border border-theme-border hover:border-[var(--color-primary)] transition-all flex flex-col justify-between gap-4 shadow-sm"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-white text-sm sm:text-base">{name}</span>
+                              <span className="font-bold text-theme-text text-base">{name}</span>
                               {rule.isCoreSubject && (
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 border border-blue-500/20">
                                   {locale === "ar" ? "أساسية" : "Majeure"}
                                 </span>
                               )}
                             </div>
-                            <span className="text-xs text-slate-400 block font-mono">
+                            <span className="text-xs text-theme-muted block font-mono">
                               {locale === "ar" ? `المعامل ${rule.coefficient}` : `Coefficient ${rule.coefficient}`}
                             </span>
                           </div>
@@ -443,24 +443,24 @@ export default function DiagnosticPage() {
               </div>
 
               {/* Secondary Actions Card: Comprehensive diagnostic & Free roam library */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-[#111827] border border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-start shadow-sm">
-                <div className="space-y-0.5">
-                  <span className="font-bold text-white text-xs sm:text-sm block">
+              <div className="p-5 sm:p-6 rounded-2xl bg-card border border-theme-border flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-start shadow-sm">
+                <div className="space-y-1">
+                  <span className="font-bold text-theme-text text-sm sm:text-base block">
                     {locale === "ar" ? "هل تفضل التقييم الشامل لكل المواد معاً؟" : "Diagnostic global complet ?"}
                   </span>
-                  <span className="text-slate-400 text-xs">
+                  <span className="text-theme-muted text-xs block">
                     {locale === "ar"
                       ? `${questions.length} أسئلة استراتيجية لتوليد الخريطة الموحدة لشعبتك.`
                       : `${questions.length} questions pour générer votre feuille de route globale.`}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2 w-full sm:w-auto">
+                <div className="flex items-center gap-2.5 w-full sm:w-auto">
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={handleStartSession}
-                    className="flex-1 sm:flex-initial text-xs font-bold rounded-xl px-4 py-2"
+                    className="flex-1 sm:flex-initial text-xs font-bold rounded-xl px-4 py-2.5"
                   >
                     <span>{locale === "ar" ? "تقييم شامل (كل المواد)" : "Évaluation globale"}</span>
                   </Button>
@@ -469,7 +469,7 @@ export default function DiagnosticPage() {
                     <Button
                       size="sm"
                       variant="primary"
-                      className="w-full text-xs font-bold rounded-xl px-4 py-2"
+                      className="w-full text-xs font-bold rounded-xl px-4 py-2.5"
                     >
                       <BookOpen className="w-3.5 h-3.5 me-1" />
                       <span>{locale === "ar" ? "المكتبة الشاملة" : "Bibliothèque"}</span>
@@ -479,8 +479,8 @@ export default function DiagnosticPage() {
               </div>
             </div>
           ) : (
-            /* Active Question Screen */
-            <div className="space-y-6">
+            /* Active Question Screen — Centered for Desktop */
+            <div className="max-w-3xl mx-auto space-y-6">
               {/* Progress & Header info */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
@@ -513,7 +513,7 @@ export default function DiagnosticPage() {
               </div>
 
               {/* Question Card */}
-              <Card className="p-5 sm:p-7 bg-[#111827] border-slate-800 shadow-xl space-y-6">
+              <Card className="p-6 sm:p-8 bg-card border-theme-border shadow-sm space-y-6 rounded-3xl text-theme-text">
                 {/* Topic & Dimension Badges */}
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="primary" size="sm">
@@ -525,7 +525,7 @@ export default function DiagnosticPage() {
                 </div>
 
                 {/* Question Prompt */}
-                <div className="text-base sm:text-lg font-bold text-white leading-relaxed">
+                <div className="text-lg sm:text-xl font-black text-theme-text leading-relaxed">
                   {locale === "ar" ? currentQuestion.prompt_ar : currentQuestion.prompt_fr}
                 </div>
 
@@ -539,10 +539,10 @@ export default function DiagnosticPage() {
                         data-testid="diagnostic-option"
                         type="button"
                         onClick={() => handleSelectOption(option.id)}
-                        className={`w-full min-h-[50px] text-start p-4 rounded-xl border transition-all text-sm leading-relaxed flex items-start gap-3 active:scale-[0.99] ${
+                        className={`w-full min-h-[54px] text-start p-4 sm:p-5 rounded-2xl border-2 transition-all text-sm sm:text-base leading-relaxed flex items-start gap-3.5 cursor-pointer active:scale-[0.99] ${
                           isSelected
-                            ? "border-blue-500 bg-[#162238] text-white font-medium shadow-md shadow-blue-500/10"
-                            : "border-slate-800 bg-[#162032]/60 hover:border-slate-700 hover:bg-[#162032] text-slate-300"
+                            ? "border-[var(--color-primary)] bg-[var(--color-primary-soft)]/20 text-theme-text font-bold shadow-sm"
+                            : "border-theme-border bg-surface hover:border-[var(--color-primary)]/40 hover:bg-card text-theme-text"
                         }`}
                       >
                         <div
@@ -564,7 +564,7 @@ export default function DiagnosticPage() {
 
                 {/* Inline Confidence Rating — shown once an option is selected */}
                 {selectedOptionId && (
-                  <div className="p-4 rounded-xl bg-[#162032] border border-slate-800 space-y-3 animate-fade-in">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-surface border border-theme-border space-y-3 animate-fade-in">
                     <div className="text-xs sm:text-sm font-semibold text-slate-300 flex items-center gap-1.5">
                       <HelpCircle className="h-4 w-4 text-blue-400 shrink-0" />
                       <span>{t.diagnostic.confidencePrompt}</span>

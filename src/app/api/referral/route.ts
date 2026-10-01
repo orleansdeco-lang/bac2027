@@ -89,7 +89,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      message: "تم تسجيل رمز الإحالة بنجاح",
+      message: result.message || "تم تسجيل رمز الإحالة بنجاح",
     });
   } catch (err: any) {
     console.error("[API] Error recording referral:", err);
