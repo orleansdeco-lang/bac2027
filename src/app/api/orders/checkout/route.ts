@@ -99,15 +99,15 @@ export async function POST(req: Request) {
     const shippingFee = 0.0; // Free shipping for physical VIP kit
     const totalAmount = authoritativePrice + shippingFee;
 
-    // 4. Resolve authenticated user if present (guest checkout allowed)
     const callerId = await extractAuthenticatedUserId(req);
     const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
     const cookieHeader = req.headers.get("cookie") || req.headers.get("Cookie");
     const token = (authHeader?.startsWith("Bearer ") ? authHeader.replace(/^Bearer\s+/i, "").trim() : null) || extractTokenFromCookies(cookieHeader);
 
-    const client = (token ? createAuthenticatedSupabaseClient(token) : null) || getAdminClient() || supabase;
-    const isPrivileged = Boolean(getAdminClient() || token);
-    const effectiveUserId = isPrivileged ? (callerId || null) : null;
+    // Prioritize privileged Admin Client (service_role) to bypass RLS for server-side checkout
+    const adminClient = getAdminClient();
+    const client = adminClient || (token ? createAuthenticatedSupabaseClient(token) : null) || supabase;
+    const effectiveUserId = callerId || null;
     if (!isSupabaseConfigured || !client) {
       return NextResponse.json(
         { success: false, error: "خدمة قاعدة البيانات غير متاحة حالياً." },

@@ -21,7 +21,7 @@ import {
   BookOpen,
   Layers,
   Sparkles,
-  ExternalLink,
+  RefreshCw,
 } from "lucide-react";
 
 interface ExamPdfViewerModalProps {
@@ -43,17 +43,47 @@ export function ExamPdfViewerModal({
   // Selected topic: 1 (الموضوع الأول) | 2 (الموضوع الثاني)
   const [selectedTopicNum, setSelectedTopicNum] = useState<1 | 2>(1);
 
-  // Pagination state: page 1 to 4 (like authentic 4-page BAC exam paper)
+  // Pagination state: page 1 to 4 (for interactive A4 mode)
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [continuousScroll, setContinuousScroll] = useState<boolean>(false);
-  const [viewMode, setViewMode] = useState<"interactive" | "original_pdf">("interactive");
+  const [viewMode, setViewMode] = useState<"interactive" | "original_pdf">("original_pdf");
+  const [iframeLoaded, setIframeLoaded] = useState(false);
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const sheetRef = useRef<HTMLDivElement>(null);
   const details: ExamFullDetails = getExamFullDetails(exam);
+
+  // Active Authentic PDF Resolution (from inventory or storage)
+  const rawSubjectPdf =
+    exam.subjectPdfUrl || (exam as any).file_url || (exam as any).source_url || "";
+  const rawSolutionPdf =
+    exam.solutionPdfUrl || (exam as any).solution_url || rawSubjectPdf;
+  const hasSolution = Boolean(
+    exam.solutionPdfUrl ||
+    (exam as any).solution_url ||
+    (exam as any).has_solution ||
+    (exam as any).hasSolution
+  );
+
+  const activeRawPdf = activeTab === "solution" && hasSolution ? rawSolutionPdf : rawSubjectPdf;
+
+  const proxyEmbedUrl = activeRawPdf
+    ? `/api/pdf/proxy?url=${encodeURIComponent(activeRawPdf)}`
+    : "";
+
+  const directDownloadUrl = activeRawPdf
+    ? `/api/pdf/proxy?url=${encodeURIComponent(activeRawPdf)}&download=1&filename=${encodeURIComponent(
+        `${details.subjectName || "BAC"}_${exam.title_ar || "شهادة_البكالوريا"}_${activeTab === "solution" ? "التصحيح_النموذجي" : "الموضوع"}.pdf`
+      )}`
+    : "";
+
+  // Reset loading spinner on document switch
+  useEffect(() => {
+    setIframeLoaded(false);
+  }, [activeTab, activeRawPdf]);
 
   // Handle ESC key to close modal
   useEffect(() => {
@@ -122,61 +152,70 @@ export function ExamPdfViewerModal({
         {/* 1. TOP PDF TOOLBAR (Identical to Mozilla PDF.js in Image 2)        */}
         {/* ================================================================= */}
         <div className="print:hidden bg-[#2b2d30] border-b border-stone-700/80 px-3 sm:px-5 py-2 flex flex-wrap items-center justify-between gap-2 shrink-0 select-none">
-          {/* Left: Document Info & Page Navigator */}
+          {/* Left: Document Info & Navigation */}
           <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-            <div className="flex items-center gap-1.5 bg-[#1f2023] px-2.5 py-1 rounded-lg border border-stone-700 text-xs font-mono">
-              <span className="text-stone-300 font-sans text-[11px] hidden sm:inline">صفحة</span>
-              <span className="font-bold text-white">{currentPage}</span>
-              <span className="text-stone-400">/</span>
-              <span className="text-stone-400">{totalPages}</span>
-            </div>
+            {viewMode === "interactive" ? (
+              <>
+                <div className="flex items-center gap-1.5 bg-[#1f2023] px-2.5 py-1 rounded-lg border border-stone-700 text-xs font-mono">
+                  <span className="text-stone-300 font-sans text-[11px] hidden sm:inline">صفحة</span>
+                  <span className="font-bold text-white">{currentPage}</span>
+                  <span className="text-stone-400">/</span>
+                  <span className="text-stone-400">{totalPages}</span>
+                </div>
 
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                title="الصفحة السابقة"
-                disabled={currentPage <= 1}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 disabled:opacity-30 disabled:cursor-not-allowed text-stone-200 transition-colors cursor-pointer"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    title="الصفحة السابقة"
+                    disabled={currentPage <= 1}
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 disabled:opacity-30 disabled:cursor-not-allowed text-stone-200 transition-colors cursor-pointer"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
 
-              <button
-                type="button"
-                title="الصفحة التالية"
-                disabled={currentPage >= totalPages}
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 disabled:opacity-30 disabled:cursor-not-allowed text-stone-200 transition-colors cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-            </div>
+                  <button
+                    type="button"
+                    title="الصفحة التالية"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    className="p-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 disabled:opacity-30 disabled:cursor-not-allowed text-stone-200 transition-colors cursor-pointer"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                </div>
 
-            {/* Quick Page Jump Pills */}
-            <div className="hidden md:flex items-center gap-1 border-s border-stone-700 ps-3">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
-                <button
-                  key={pg}
-                  type="button"
-                  onClick={() => setCurrentPage(pg)}
-                  className={`w-6 h-6 rounded-md text-[11px] font-mono font-bold transition-all cursor-pointer flex items-center justify-center ${
-                    currentPage === pg
-                      ? "bg-emerald-600 text-white shadow-sm font-black"
-                      : "bg-stone-800 text-stone-400 hover:bg-stone-700 hover:text-white"
-                  }`}
-                >
-                  {pg}
-                </button>
-              ))}
-            </div>
-
-            <div className="hidden lg:block truncate text-xs text-stone-300 font-sans border-s border-stone-700 ps-3">
-              <span className="font-bold text-white">{exam.title_ar}</span>
-              <span className="text-stone-400 text-[11px] ms-1.5">
-                ({details.streamName} • المعامل: {details.coefficient} • المدة: {details.durationLabel})
-              </span>
-            </div>
+                {/* Quick Page Jump Pills */}
+                <div className="hidden md:flex items-center gap-1 border-s border-stone-700 ps-3">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pg) => (
+                    <button
+                      key={pg}
+                      type="button"
+                      onClick={() => setCurrentPage(pg)}
+                      className={`w-6 h-6 rounded-md text-[11px] font-mono font-bold transition-all cursor-pointer flex items-center justify-center ${
+                        currentPage === pg
+                          ? "bg-emerald-600 text-white shadow-sm font-black"
+                          : "bg-stone-800 text-stone-400 hover:bg-stone-700 hover:text-white"
+                      }`}
+                    >
+                      {pg}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/30 text-xs">
+                  وثيقة PDF رسمية
+                </span>
+                <div className="hidden sm:block truncate text-xs text-stone-300 font-sans">
+                  <span className="font-bold text-white">{exam.title_ar}</span>
+                  <span className="text-stone-400 text-[11px] ms-1.5">
+                    ({details.streamName} • دورة {exam.year})
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Center: Zoom Controls */}
@@ -213,8 +252,21 @@ export function ExamPdfViewerModal({
             </button>
           </div>
 
-          {/* Right: Actions (Print, Fullscreen, Close) */}
+          {/* Right: Actions (Download, Print, Fullscreen, Close) */}
           <div className="flex items-center gap-1.5">
+            {/* Direct Download Button */}
+            {directDownloadUrl && (
+              <a
+                href={directDownloadUrl}
+                download
+                title="تحميل ملف الـ PDF مباشرة"
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span className="text-[11px]">تحميل PDF</span>
+              </a>
+            )}
+
             <button
               type="button"
               onClick={handleCopyLink}
@@ -238,10 +290,10 @@ export function ExamPdfViewerModal({
               type="button"
               onClick={handlePrint}
               title="طباعة وحفظ كـ PDF رسمي"
-              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white text-xs font-semibold transition-colors cursor-pointer hidden sm:inline-flex"
             >
               <Printer className="w-3.5 h-3.5" />
-              <span className="text-[11px]">طباعة A4</span>
+              <span className="text-[11px]">طباعة</span>
             </button>
 
             <button
@@ -364,7 +416,7 @@ export function ExamPdfViewerModal({
         </div>
 
         {/* ================================================================= */}
-        {/* 3. DOCUMENT CANVAS (Interactive A4 Sheet OR Original PDF Viewer)  */}
+        {/* 3. DOCUMENT CANVAS (Original Official PDF Viewer OR A4 Sheet)    */}
         {/* ================================================================= */}
         {viewMode === "original_pdf" ? (
           <div className="flex-1 flex flex-col bg-[#181a1d] overflow-hidden">
@@ -374,47 +426,53 @@ export function ExamPdfViewerModal({
                   مستند أصلي معتمد
                 </span>
                 <span className="text-stone-300 font-sans text-xs">
-                  المصدر: {(exam as any).source_name || "الأرشيف الرسمي لشهادة البكالوريا"}
+                  المصدر: {(exam as any).source_name || "الأرشيف الوطني لشهادة البكالوريا"}
                 </span>
+                <span className="text-stone-500 text-xs font-mono">• دورة {exam.year}</span>
               </div>
               <div className="flex items-center gap-2">
-                <a
-                  href={
-                    activeTab === "solution"
-                      ? exam.solutionPdfUrl || (exam as any).solution_url
-                      : exam.subjectPdfUrl || (exam as any).file_url
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs inline-flex items-center gap-1.5 transition-all shadow-xs"
+                {directDownloadUrl && (
+                  <a
+                    href={directDownloadUrl}
+                    download
+                    className="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs inline-flex items-center gap-1.5 transition-all shadow-xs"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>تحميل مباشر PDF</span>
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsFullscreen(!isFullscreen)}
+                  className="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 font-semibold text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer"
                 >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>فتح في نافذة جديدة</span>
-                </a>
-                <a
-                  href={
-                    activeTab === "solution"
-                      ? exam.solutionPdfUrl || (exam as any).solution_url
-                      : exam.subjectPdfUrl || (exam as any).file_url
-                  }
-                  download
-                  className="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-200 font-semibold text-xs inline-flex items-center gap-1.5 transition-all"
-                >
-                  <Download className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>تحميل الوثيقة</span>
-                </a>
+                  {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                  <span>{isFullscreen ? "نافذة عادية" : "ملء الشاشة"}</span>
+                </button>
               </div>
             </div>
             <div className="flex-1 w-full h-full relative bg-[#131416]">
-              <iframe
-                src={
-                  activeTab === "solution"
-                    ? exam.solutionPdfUrl || (exam as any).solution_url
-                    : exam.subjectPdfUrl || (exam as any).file_url
-                }
-                className="w-full h-full border-0"
-                title={exam.title_ar}
-              />
+              {!proxyEmbedUrl ? (
+                <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-3">
+                  <FileText className="w-10 h-10 text-stone-500 mx-auto" />
+                  <p className="text-sm font-bold text-stone-300">الملف قيد المزامنة والأرشفة في هذا الموضوع</p>
+                </div>
+              ) : (
+                <>
+                  {!iframeLoaded && (
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#131416]/90 text-stone-300">
+                      <RefreshCw className="w-7 h-7 text-emerald-400 animate-spin mb-3" />
+                      <span className="text-xs font-bold">جاري تحميل وثيقة الامتحان الرسمية داخل العارض المدمج...</span>
+                    </div>
+                  )}
+                  <iframe
+                    src={proxyEmbedUrl}
+                    className="w-full h-full border-0 block"
+                    title={exam.title_ar}
+                    onLoad={() => setIframeLoaded(true)}
+                  />
+                </>
+              )}
             </div>
           </div>
         ) : (
@@ -459,18 +517,29 @@ export function ExamPdfViewerModal({
         )}
 
         {/* ================================================================= */}
-        {/* 4. BOTTOM DOCKED TOOLBAR (Matching DzExams style in Image 2)       */}
+        {/* 4. BOTTOM DOCKED TOOLBAR                                          */}
         {/* ================================================================= */}
         <div className="print:hidden bg-[#24272b] border-t border-stone-700/80 px-4 py-2 flex items-center justify-between text-xs text-stone-300 shrink-0">
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-white font-bold transition-all cursor-pointer"
-            >
-              <Download className="w-3.5 h-3.5 text-emerald-400" />
-              <span>تحميل وطباعة الوثيقة</span>
-            </button>
+            {directDownloadUrl ? (
+              <a
+                href={directDownloadUrl}
+                download
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-all shadow-xs"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>تحميل PDF مباشر</span>
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-white font-bold transition-all cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5 text-emerald-400" />
+                <span>طباعة الوثيقة</span>
+              </button>
+            )}
 
             <button
               type="button"

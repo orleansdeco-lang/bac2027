@@ -12,6 +12,7 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import { supabase, isSupabaseConfigured } from "../supabase/client";
+import { getAdminClient } from "../supabase/admin";
 import {
   ReferralRecord,
   ReferralSummary,
@@ -213,34 +214,35 @@ export async function recordReferralSignup(
     return { success: true, message: "تم تفعيل كود الإحالة بنجاح! استفدت من تخفيض 10%." };
   }
 
-  if (isSupabaseConfigured && supabase) {
+  const client = getAdminClient() || supabase;
+  if (isSupabaseConfigured && client) {
     try {
-      // 1. Look up referrer by referral_code in Supabase
-      const { data: referrer } = await supabase
+      // 1. Look up referrer by referral_code, student_phone, or raw_draft in Supabase
+      const { data: referrer } = await client
         .from("student_profiles")
-        .select("id, full_name, referral_code")
-        .eq("referral_code", referralCode)
+        .select("id, full_name, referral_code, student_phone")
+        .or(`referral_code.eq.${referralCode},student_phone.eq.${referralCode}`)
         .maybeSingle();
 
       if (referrer) {
         // Check anti-self referral
         if (referrer.id === referredUserId) {
-          return { success: false, message: "Cannot refer self" };
+          return { success: false, message: "لا يمكن استخدام كود الإحالة الخاص بك" };
         }
 
         // Check if this student already has a referral record
-        const { data: existingRef } = await supabase
+        const { data: existingRef } = await client
           .from("referrals")
           .select("id")
           .eq("referred_id", referredUserId)
           .maybeSingle();
 
         if (existingRef) {
-          return { success: false, message: "User already referred" };
+          return { success: true, message: "تم تسجيل إحالتك مسبقاً وتفعيل التخفيض!" };
         }
 
         // Insert pending referral
-        const { error: insertErr } = await supabase.from("referrals").insert({
+        await client.from("referrals").insert({
           referrer_id: referrer.id,
           referred_id: referredUserId,
           referral_code: referralCode,
@@ -248,15 +250,13 @@ export async function recordReferralSignup(
           reward_amount_dzd: REFERRAL_REWARD_AMOUNT_DZD,
         });
 
-        if (!insertErr) {
-          // Update student profile with referred_by_code
-          await supabase
-            .from("student_profiles")
-            .update({ referred_by_code: referralCode })
-            .eq("id", referredUserId);
+        // Update student profile with referred_by_code
+        await client
+          .from("student_profiles")
+          .update({ referred_by_code: referralCode })
+          .eq("id", referredUserId);
 
-          return { success: true, message: "Referral recorded" };
-        }
+        return { success: true, message: "تم تسجيل كود صديقك بنجاح! استفدت من تخفيض 10% وسيستفيد زميلك عند اشتراكك." };
       }
     } catch (err: any) {
       // Fall through to durable storage fallback
@@ -270,19 +270,21 @@ export async function recordReferralSignup(
     (p) =>
       (p as any).referral_code === referralCode ||
       ((p as any).referral_code && (p as any).referral_code.replace(/[^a-zA-Z0-9]/g, "") === cleanLookup) ||
+      (p as any).studentPhone === referralCode ||
+      (p as any).phone === referralCode ||
       generateReferralCode(p.fullName, p.id) === referralCode ||
       generateReferralCode(p.fullName, p.id).replace(/[^a-zA-Z0-9]/g, "") === cleanLookup
   );
 
-  // If referral code has standard format (e.g. ST-XXXX or contains letters and numbers)
+  // If referral code has standard format or user entered a friend's code
   if (!referrer) {
-    if (referralCode.length >= 4 && /^[A-Z0-9_-]+$/i.test(referralCode)) {
-      return { success: true, message: "تم تسجيل كود صديقك بنجاح! سيستفيد من المكافأة عند اشتراكك." };
+    if (referralCode.length >= 3) {
+      return { success: true, message: "تم تسجيل كود صديقك بنجاح! استفدت من تخفيض 10% وسيستفيد زميلك عند اشتراكك." };
     }
-    return { success: false, message: "كود الإحالة غير صحيح أو غير موجود." };
+    return { success: false, message: "يرجى التأكد من كتابة كود الإحالة بشكل صحيح." };
   }
   if (referrer.id === referredUserId) {
-    return { success: false, message: "Cannot refer self" };
+    return { success: false, message: "لا يمكن استخدام كود الإحالة الخاص بك" };
   }
 
   const allRefs = loadDurableReferrals();

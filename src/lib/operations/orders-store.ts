@@ -10,6 +10,10 @@ import { AdminOrderRecord, AdminOrderSummary } from "@/lib/admin/orders";
 import { getCarrierTrackingUrl } from "@/lib/shipping/carriers";
 import { ShipmentStatus } from "@/lib/shipping/types";
 
+import fs from "fs";
+import path from "path";
+import os from "os";
+
 // Server-side persistent global registry
 declare global {
   var __BAC_GLOBAL_ORDERS_STORE__: Map<string, AdminOrderRecord> | undefined;
@@ -21,15 +25,78 @@ if (!globalThis.__BAC_GLOBAL_ORDERS_STORE__) {
 
 const ordersStore = globalThis.__BAC_GLOBAL_ORDERS_STORE__;
 
+function getDurableOrdersPath(): string {
+  const dir = path.join(process.cwd(), ".runtime");
+  if (!fs.existsSync(dir)) {
+    try {
+      fs.mkdirSync(dir, { recursive: true });
+    } catch {}
+  }
+  return path.join(dir, "orders.json");
+}
+
+function getTmpOrdersPath(): string {
+  return path.join(os.tmpdir(), "shater_orders.json");
+}
+
+function loadDurableOrders(): AdminOrderRecord[] {
+  if (typeof window !== "undefined") return [];
+
+  const fromMem = Array.from(ordersStore.values());
+  if (fromMem.length > 0) return fromMem;
+
+  try {
+    const tmp = getTmpOrdersPath();
+    if (fs.existsSync(tmp)) {
+      const data = JSON.parse(fs.readFileSync(tmp, "utf8"));
+      if (Array.isArray(data)) {
+        for (const item of data) {
+          if (item?.id) ordersStore.set(item.id, item);
+        }
+        return data;
+      }
+    }
+  } catch {}
+
+  try {
+    const dur = getDurableOrdersPath();
+    if (fs.existsSync(dur)) {
+      const data = JSON.parse(fs.readFileSync(dur, "utf8"));
+      if (Array.isArray(data)) {
+        for (const item of data) {
+          if (item?.id) ordersStore.set(item.id, item);
+        }
+        return data;
+      }
+    }
+  } catch {}
+
+  return [];
+}
+
+function saveDurableOrders(orders: AdminOrderRecord[]): void {
+  if (typeof window !== "undefined") return;
+  try {
+    fs.writeFileSync(getTmpOrdersPath(), JSON.stringify(orders, null, 2), "utf8");
+  } catch {}
+  try {
+    fs.writeFileSync(getDurableOrdersPath(), JSON.stringify(orders, null, 2), "utf8");
+  } catch {}
+}
+
 /**
  * Register or update an order in the resilient store
  */
 export function registerOrderInStore(order: AdminOrderRecord): void {
   if (!order || !order.id) return;
-  ordersStore.set(order.id, {
+  const updatedOrder = {
     ...order,
     updated_at: new Date().toISOString(),
-  });
+  };
+  ordersStore.set(order.id, updatedOrder);
+  try {
+    saveDurableOrders(Array.from(ordersStore.values()));
+  } catch {}
 }
 
 /**
@@ -83,7 +150,7 @@ export function normalizeToAdminOrder(raw: any): AdminOrderRecord {
   // Resolve Plan
   const planId = (raw.plan?.id || raw.plan_id || raw.plan || "season").toLowerCase();
   const isMonthly = planId === "monthly";
-  const planPrice = raw.amount || (isMonthly ? 900 : 4900);
+  const planPrice = raw.amount || (isMonthly ? 1500 : 4900);
   const planName = isMonthly ? "الاشتراك الشهري" : "اشتراك الموسم الدراسي الكامل";
   const durationMonths = isMonthly ? 1 : 10;
 
@@ -174,7 +241,11 @@ export async function getAllUnifiedOrders(token?: string | null): Promise<{
   const client = (token ? createAuthenticatedSupabaseClient(token) : null) || getAdminClient() || supabase;
   const mergedMap = new Map<string, AdminOrderRecord>();
 
-  // 1. Load from In-Memory Resilient Registry first
+  // 1. Load from Durable Disk Storage + In-Memory Resilient Registry
+  const durableList = loadDurableOrders();
+  for (const d of durableList) {
+    if (d?.id) mergedMap.set(d.id, d);
+  }
   ordersStore.forEach((rec, id) => {
     mergedMap.set(id, rec);
   });

@@ -742,11 +742,13 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
               const isOfficial = exam.content_type === "bac_official" || exam.kind === "official_bac";
               const isBlanc = exam.content_type === "bac_blanc" || exam.kind === "bac_blanc";
               const isExam = exam.content_type === "term_exam" || exam.kind === "term_exam";
+              const directPdfUrl = exam.subjectPdfUrl || (exam as any).file_url || (exam as any).source_url || "";
 
               return (
                 <div
                   key={exam.id}
-                  className="p-5 rounded-3xl bg-surface border border-theme shadow-clay flex flex-col justify-between hover:border-[var(--color-primary)]/40 hover:shadow-lg transition-all duration-200 group"
+                  onClick={() => handleOpenModal(exam, "subject")}
+                  className="p-5 rounded-3xl bg-surface border border-theme shadow-clay flex flex-col justify-between hover:border-[var(--color-primary)]/40 hover:shadow-lg transition-all duration-200 group cursor-pointer"
                 >
                   <div className="space-y-3">
                     {/* Header Badges: Year, Type, and Session */}
@@ -781,7 +783,10 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
                       {/* Quick Share Button */}
                       <button
                         type="button"
-                        onClick={() => handleShareExam(exam, "subject")}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShareExam(exam, "subject");
+                        }}
                         title="مشاركة رابط الموضوع"
                         className="p-1.5 rounded-xl border border-theme bg-card hover:bg-card-hover text-theme-secondary hover:text-theme-text transition-colors cursor-pointer"
                       >
@@ -817,50 +822,74 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
                         </span>
                       )}
                       <span className="px-2 py-0.5 rounded-md bg-card border border-theme truncate max-w-[120px]" title={exam.source_name}>
-                        {exam.source_name || "ONEC"}
+                        {exam.source_name || "الأرشيف الرسمي"}
                       </span>
                     </div>
                   </div>
 
-                  {/* Action Buttons: View Topic & View Solution */}
+                  {/* Action Buttons: Direct Download & In-App View */}
                   <div className="pt-4 mt-4 border-t border-theme/60 space-y-2">
                     <div className="grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenModal(exam, "subject")}
-                        className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[var(--color-primary)] text-white text-xs font-bold shadow-sm hover:opacity-95 active:scale-98 transition-all cursor-pointer"
-                      >
-                        <FileText className="w-3.5 h-3.5" />
-                        <span>موضوع الامتحان</span>
-                      </button>
+                      {directPdfUrl ? (
+                        <a
+                          href={`/api/pdf/proxy?url=${encodeURIComponent(directPdfUrl)}&download=1&filename=${encodeURIComponent(
+                            `${exam.subject_name || "BAC"}_${exam.title_ar || "شهادة_البكالوريا"}.pdf`
+                          )}`}
+                          download
+                          onClick={(e) => e.stopPropagation()}
+                          className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs active:scale-98 transition-all"
+                          title="تحميل مباشر لملف PDF"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>تحميل PDF</span>
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenModal(exam, "subject");
+                          }}
+                          className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-[var(--color-primary)] text-white text-xs font-bold shadow-sm hover:opacity-95 active:scale-98 transition-all cursor-pointer"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>موضوع الامتحان</span>
+                        </button>
+                      )}
 
                       <button
                         type="button"
-                        onClick={() => handleOpenModal(exam, "solution")}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenModal(exam, exam.has_solution ? "solution" : "subject");
+                        }}
                         className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold shadow-sm active:scale-98 transition-all cursor-pointer ${
                           exam.has_solution
-                            ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                            ? "bg-stone-800 hover:bg-stone-700 text-emerald-400 hover:text-emerald-300 border border-emerald-500/30"
                             : "bg-card text-theme-muted border border-theme hover:text-theme-text"
                         }`}
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>{exam.has_solution ? "التصحيح الوزاري" : "عناصر الإجابة"}</span>
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>{exam.has_solution ? "التصحيح المعتمد" : "معاينة مدمجة"}</span>
                       </button>
                     </div>
 
                     <div className="flex items-center justify-between px-1 text-[11px]">
                       <button
                         type="button"
-                        onClick={() => handleOpenModal(exam, "subject")}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenModal(exam, "subject");
+                        }}
                         className="text-theme-secondary hover:text-[var(--color-primary)] hover:underline inline-flex items-center gap-1 cursor-pointer"
                       >
-                        <Download className="w-3 h-3" />
-                        <span>معاينة وتحميل PDF</span>
+                        <FileText className="w-3 h-3 text-[var(--color-primary)]" />
+                        <span>معاينة مدمجة داخل الموقع</span>
                       </button>
 
-                      {exam.alternate_sources && exam.alternate_sources.length > 0 && (
-                        <span className="text-[10px] text-theme-muted font-mono" title={`${exam.alternate_sources.length} مرايا رقمية معتمدة`}>
-                          +{exam.alternate_sources.length} مصادر بديلة
+                      {exam.has_solution && (
+                        <span className="text-[10px] text-emerald-500 font-bold font-sans">
+                          سلم التنقيط متوفر
                         </span>
                       )}
                     </div>
@@ -883,68 +912,99 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
                     <th className="py-3 px-4 text-start">النوع</th>
                     <th className="py-3 px-4 text-start">الحل</th>
                     <th className="py-3 px-4 text-start">المصدر</th>
-                    <th className="py-3 px-4 text-center">الإجراءات</th>
+                    <th className="py-3 px-4 text-center">التحميل والمعاينة</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-theme/60">
-                  {displayedExams.map((exam) => (
-                    <tr key={exam.id} className="hover:bg-card/50 transition-colors">
-                      <td className="py-2.5 px-4 font-mono font-black text-theme-text">
-                        {exam.year}
-                      </td>
-                      <td className="py-2.5 px-4 text-theme-secondary font-sans whitespace-nowrap">
-                        {exam.stream_name || ALGERIAN_BAC_STREAMS[exam.streamId as StreamId]?.name_ar}
-                      </td>
-                      <td className="py-2.5 px-4 font-bold text-theme-text whitespace-nowrap">
-                        {exam.subject_name || ALL_SUBJECTS[exam.subjectId as SubjectId]?.name_ar}
-                      </td>
-                      <td className="py-2.5 px-4 font-sans text-theme-text max-w-xs truncate">
-                        {exam.title_ar}
-                      </td>
-                      <td className="py-2.5 px-4 whitespace-nowrap">
-                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-500">
-                          {exam.content_type === "bac_official"
-                            ? "بكالوريا رسمية"
-                            : exam.content_type === "bac_blanc"
-                            ? "بكالوريا تجريبية"
-                            : exam.content_type === "term_exam"
-                            ? "اختبار فصلي"
-                            : "فرض"}
-                        </span>
-                      </td>
-                      <td className="py-2.5 px-4 whitespace-nowrap">
-                        {exam.has_solution ? (
-                          <span className="text-emerald-500 font-bold text-[11px] flex items-center gap-1">
-                            <Check className="w-3.5 h-3.5" />
-                            <span>متوفر</span>
+                  {displayedExams.map((exam) => {
+                    const directPdfUrl = exam.subjectPdfUrl || (exam as any).file_url || (exam as any).source_url || "";
+                    return (
+                      <tr
+                        key={exam.id}
+                        onClick={() => handleOpenModal(exam, "subject")}
+                        className="hover:bg-card/50 cursor-pointer transition-colors"
+                      >
+                        <td className="py-2.5 px-4 font-mono font-black text-theme-text">
+                          {exam.year}
+                        </td>
+                        <td className="py-2.5 px-4 text-theme-secondary font-sans whitespace-nowrap">
+                          {exam.stream_name || ALGERIAN_BAC_STREAMS[exam.streamId as StreamId]?.name_ar}
+                        </td>
+                        <td className="py-2.5 px-4 font-bold text-theme-text whitespace-nowrap">
+                          {exam.subject_name || ALL_SUBJECTS[exam.subjectId as SubjectId]?.name_ar}
+                        </td>
+                        <td className="py-2.5 px-4 font-sans text-theme-text max-w-xs truncate">
+                          {exam.title_ar}
+                        </td>
+                        <td className="py-2.5 px-4 whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-500">
+                            {exam.content_type === "bac_official"
+                              ? "بكالوريا رسمية"
+                              : exam.content_type === "bac_blanc"
+                              ? "بكالوريا تجريبية"
+                              : exam.content_type === "term_exam"
+                              ? "اختبار فصلي"
+                              : "فرض"}
                           </span>
-                        ) : (
-                          <span className="text-stone-400 text-[11px]">بدون حل</span>
-                        )}
-                      </td>
-                      <td className="py-2.5 px-4 text-theme-muted whitespace-nowrap">
-                        {exam.source_name || "ONEC"}
-                      </td>
-                      <td className="py-2.5 px-4 text-center whitespace-nowrap">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenModal(exam, "subject")}
-                            className="px-2.5 py-1 rounded-lg bg-[var(--color-primary)] text-white font-bold text-[11px] hover:opacity-90 cursor-pointer"
-                          >
-                            الموضوع
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenModal(exam, "solution")}
-                            className="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-bold text-[11px] hover:bg-emerald-700 cursor-pointer"
-                          >
-                            التصحيح
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="py-2.5 px-4 whitespace-nowrap">
+                          {exam.has_solution ? (
+                            <span className="text-emerald-500 font-bold text-[11px] flex items-center gap-1">
+                              <Check className="w-3.5 h-3.5" />
+                              <span>متوفر</span>
+                            </span>
+                          ) : (
+                            <span className="text-stone-400 text-[11px]">بدون حل</span>
+                          )}
+                        </td>
+                        <td className="py-2.5 px-4 text-theme-muted whitespace-nowrap">
+                          {exam.source_name || "الأرشيف الرسمي"}
+                        </td>
+                        <td className="py-2.5 px-4 text-center whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-1.5">
+                            {directPdfUrl && (
+                              <a
+                                href={`/api/pdf/proxy?url=${encodeURIComponent(directPdfUrl)}&download=1&filename=${encodeURIComponent(
+                                  `${exam.subject_name || "BAC"}_${exam.title_ar}.pdf`
+                                )}`}
+                                download
+                                onClick={(e) => e.stopPropagation()}
+                                className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] inline-flex items-center gap-1 shadow-xs"
+                                title="تحميل مباشر"
+                              >
+                                <Download className="w-3 h-3" />
+                                <span>تحميل</span>
+                              </a>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenModal(exam, "subject");
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-[var(--color-primary)] text-white font-bold text-[11px] hover:opacity-90 cursor-pointer"
+                            >
+                              الموضوع
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenModal(exam, "solution");
+                              }}
+                              className={`px-2.5 py-1 rounded-lg font-bold text-[11px] cursor-pointer ${
+                                exam.has_solution
+                                  ? "bg-stone-800 hover:bg-stone-700 text-emerald-400 border border-emerald-500/30"
+                                  : "bg-card text-theme-muted border border-theme hover:text-theme-text"
+                              }`}
+                            >
+                              التصحيح
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

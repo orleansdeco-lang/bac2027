@@ -82,6 +82,7 @@ export default function SubscribePage() {
   const [isRedeemingVoucher, setIsRedeemingVoucher] = useState(false);
   const [voucherError, setVoucherError] = useState<string | null>(null);
   const [voucherSuccess, setVoucherSuccess] = useState<string | null>(null);
+  const [hasDiscount, setHasDiscount] = useState(false);
 
   // Receipt file upload state
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
@@ -109,7 +110,8 @@ export default function SubscribePage() {
   const CCP_ACCOUNT = "0041256249";
   const CCP_KEY = "64";
 
-  const selectedPlanPrice = selectedPlanId === "season" ? 4900 : 900;
+  const basePrice = selectedPlanId === "season" ? 4900 : 1500;
+  const selectedPlanPrice = hasDiscount ? Math.round(basePrice * 0.9) : basePrice;
   const selectedPlanName =
     selectedPlanId === "season"
       ? (isAr ? "موسم البكالوريا الكامل 2027" : "Pass Saison Complète BAC 2027")
@@ -377,46 +379,57 @@ export default function SubscribePage() {
         return;
       }
 
-      // If it looks like a physical voucher code SHATER-XXXX-XXXX
-      if (code.toUpperCase().startsWith("SHATER-")) {
-        const res = await fetch("/api/vouchers/redeem", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: effectiveUserId,
-            voucherCode: code.toUpperCase(),
-          }),
-        });
+      const cleanUpper = code.toUpperCase().replace(/\s+/g, "");
+      const isVoucherPattern = cleanUpper.startsWith("SHATER-") || /^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(cleanUpper);
 
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-          throw new Error(data?.error || "رمز البطاقة غير صالح");
+      // 1. If it looks like a physical voucher code, attempt voucher redemption
+      if (isVoucherPattern) {
+        try {
+          const res = await fetch("/api/vouchers/redeem", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: effectiveUserId,
+              voucherCode: cleanUpper.startsWith("SHATER-") ? cleanUpper : `SHATER-${cleanUpper}`,
+            }),
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success) {
+            setVoucherSuccess(data.message || (isAr ? "تم تفعيل اشتراكك بنجاح! مبروك." : "Abonnement activé avec succès !"));
+            trackEvent("voucher_redeemed", { userId: effectiveUserId, code });
+            setTimeout(() => {
+              window.location.href = "/dashboard";
+            }, 1500);
+            return;
+          }
+        } catch {
+          // If voucher redeem errors, fall through to referral handler
         }
-
-        setVoucherSuccess(data.message || (isAr ? "تم تفعيل اشتراكك بنجاح! مبروك." : "Abonnement activé avec succès !"));
-        trackEvent("voucher_redeemed", { userId: effectiveUserId, code });
-
-        setTimeout(() => {
-          window.location.href = "/dashboard";
-        }, 1500);
-      } else {
-        // Referral signup code
-        const res = await fetch("/api/referral", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            referredUserId: effectiveUserId,
-            referralCode: code.toUpperCase(),
-          }),
-        });
-
-        const data = await res.json();
-        if (!res.ok || !data.success) {
-          throw new Error(data?.error || "رمز غير صالح أو تم استخدامه مسبقاً");
-        }
-
-        setVoucherSuccess(isAr ? "تم ربط كود صديقك بنجاح! سيستفيد من المكافأة عند اشتراكك." : "Code parrain enregistré avec succès !");
       }
+
+      // 2. Handle as Referral / Promotional Code
+      const res = await fetch("/api/referral", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          referredUserId: effectiveUserId,
+          referralCode: cleanUpper,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data?.error || "يرجى التأكد من كتابة الكود بشكل صحيح");
+      }
+
+      setHasDiscount(true);
+      setVoucherSuccess(
+        data.message ||
+          (isAr
+            ? "تم تفعيل كود الإحالة وتطبيق تخفيض 10% بنجاح! 🎉"
+            : "Code parrain enregistré avec succès !")
+      );
     } catch (err: any) {
       setVoucherError(err?.message || "فشل التحقق من الكود");
     } finally {
@@ -457,18 +470,18 @@ export default function SubscribePage() {
     {
       q: isAr ? "ما الفرق بين اشتراك الموسم والاشتراك الشهري؟" : "Quelle est la différence entre le pass saison et mensuel ?",
       a: isAr
-        ? "اشتراك الموسم يمنحك وصولاً شاملاً لكل المنصة طوال السنة حتى يوم امتحان البكالوريا في جوان 2027 بسعر 4,900 دج (ما يعادل 490 دج شهرياً فقط)، بينما الاشتراك الشهري يمنحك 30 يوماً بـ 900 دج."
-        : "Le Pass Saison vous accompagne jusqu'au jour de l'examen du BAC pour 4 900 DA, tandis que le Pass Mensuel est à 900 DA pour 30 jours.",
+        ? "اشتراك الموسم يمنحك وصولاً شاملاً لكل المنصة طوال السنة حتى يوم امتحان البكالوريا في جوان 2027 بسعر 4,900 دج (ما يعادل 490 دج شهرياً فقط)، بينما الاشتراك الشهري يمنحك 30 يوماً بـ 1,500 دج."
+        : "Le Pass Saison vous accompagne jusqu'au jour de l'examen du BAC pour 4 900 DA, tandis que le Pass Mensuel est à 1 500 DA pour 30 jours.",
     },
   ];
 
   return (
     <AppShell activeNav="home">
-      <div className="min-h-screen py-6 sm:py-10 bg-canvas">
+      <div className="py-6 sm:py-10">
         <Container size="md" className="space-y-6 sm:space-y-8 max-w-3xl mx-auto px-4 sm:px-6">
           {/* Active Subscription Banner if Already Paid */}
           {access.status === "PAID_ACTIVE" && (
-            <div className="p-5 rounded-3xl bg-emerald-500/10 border border-emerald-500/30 text-center space-y-2 shadow-sm">
+            <div className="p-5 rounded-3xl bg-emerald-500/10 border-2 border-emerald-500/30 text-center space-y-2 shadow-sm">
               <div className="w-10 h-10 rounded-2xl bg-emerald-500/20 text-emerald-600 flex items-center justify-center mx-auto shadow-sm">
                 <CheckCircle2 className="w-5 h-5" />
               </div>
@@ -495,14 +508,14 @@ export default function SubscribePage() {
 
           {/* Rejected Receipt Banner */}
           {(profile as any)?.access_status === "REJECTED" && (
-            <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-center space-y-1.5 shadow-sm">
+            <div className="p-4 rounded-2xl bg-rose-500/10 border-2 border-rose-500/30 text-center space-y-1.5 shadow-sm">
               <div className="w-8 h-8 rounded-xl bg-rose-500/20 text-rose-600 flex items-center justify-center mx-auto">
                 <AlertTriangle className="w-4 h-4" />
               </div>
-              <h3 className="font-bold text-xs sm:text-sm text-rose-900 dark:text-rose-100">
+              <h3 className="font-bold text-xs sm:text-sm text-rose-700">
                 {isAr ? "تم رفض وصل الدفع السابق" : "Reçu précédent non validé"}
               </h3>
-              <p className="text-xs text-rose-700 dark:text-rose-300">
+              <p className="text-xs text-rose-600">
                 {isAr
                   ? `السبب: ${(profile as any)?.rejection_reason || "الوصل غير واضح"}. يرجى إعادة رفع صورة واضحة للوصل.`
                   : "Veuillez soumettre à nouveau un reçu lisible."}
@@ -521,7 +534,7 @@ export default function SubscribePage() {
                 ? "اختر باقتك وفعّل حسابك في الشاطر"
                 : "Abonnez-vous à SHATER BAC"}
             </h1>
-            <p className="text-xs sm:text-sm text-theme-secondary max-w-xl mx-auto">
+            <p className="text-xs sm:text-sm text-theme-secondary max-w-xl mx-auto font-medium">
               {isAr
                 ? "الباقة تفتح لك كامل الموقع والمواد بدون استثناء. كل تقدمك ونتائجك السابقة محفوظة 100%."
                 : "Accès illimité à toutes les matières et à l'Error Lab jusqu'au BAC."}
@@ -529,14 +542,14 @@ export default function SubscribePage() {
           </div>
 
           {/* 1. PLANS SELECTION: Price & Simple Explanation Only */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Plan 1: Season Pass (Featured) */}
             <div
               onClick={() => setSelectedPlanId("season")}
-              className={`relative p-5 rounded-3xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+              className={`relative p-5 sm:p-6 rounded-3xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
                 selectedPlanId === "season"
-                  ? "border-[var(--color-primary)] bg-card shadow-md ring-2 ring-[var(--color-primary)]/20"
-                  : "border-theme-border bg-surface/70 hover:border-[var(--color-primary)]/40 hover:bg-card"
+                  ? "border-[var(--color-primary)] bg-card shadow-clay ring-2 ring-[var(--color-primary)]/20"
+                  : "border-theme-border bg-card/60 hover:border-[var(--color-primary)]/40 hover:bg-card shadow-sm"
               }`}
             >
               <div className="absolute -top-3 right-5 px-3 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-extrabold shadow-sm">
@@ -546,10 +559,10 @@ export default function SubscribePage() {
               <div className="space-y-3 pt-1">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="text-base font-extrabold text-theme-text">
+                    <h3 className="text-base font-black text-theme-text">
                       {isAr ? "موسم البكالوريا 2027 الكامل" : "Pass Saison BAC 2027"}
                     </h3>
-                    <span className="text-[11px] text-theme-muted">
+                    <span className="text-xs text-theme-muted font-medium">
                       {isAr ? "حتى آخر يوم في البكالوريا (جوان 2027)" : "Jusqu'au BAC 2027"}
                     </span>
                   </div>
@@ -564,14 +577,17 @@ export default function SubscribePage() {
                   </div>
                 </div>
 
-                <div className="flex items-baseline gap-1">
+                <div className="flex items-baseline gap-2">
                   <span className="text-2xl sm:text-3xl font-black text-theme-text font-mono">
-                    4,900
+                    {hasDiscount ? "4,410" : "4,900"}
                   </span>
                   <span className="text-xs font-bold text-theme-secondary">دج / الموسم كاملاً</span>
+                  {hasDiscount && (
+                    <span className="text-xs line-through text-theme-muted font-mono">4,900 دج</span>
+                  )}
                 </div>
 
-                <p className="text-xs text-theme-secondary leading-relaxed pt-1 border-t border-theme-border/60">
+                <p className="text-xs text-theme-secondary leading-relaxed pt-2 border-t border-theme-border/60">
                   {isAr
                     ? "فتح كامل وشامل لكل المنصة وجميع المواد ومعمل الأخطاء وبنك المواضيع حتى يوم البكالوريا."
                     : "Accès complet à toutes les fonctionnalités et matières jusqu'au BAC."}
@@ -582,19 +598,19 @@ export default function SubscribePage() {
             {/* Plan 2: Monthly Pass */}
             <div
               onClick={() => setSelectedPlanId("monthly")}
-              className={`p-5 rounded-3xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
+              className={`p-5 sm:p-6 rounded-3xl border-2 cursor-pointer transition-all flex flex-col justify-between ${
                 selectedPlanId === "monthly"
-                  ? "border-[var(--color-primary)] bg-card shadow-md ring-2 ring-[var(--color-primary)]/20"
-                  : "border-theme-border bg-surface/70 hover:border-[var(--color-primary)]/40 hover:bg-card"
+                  ? "border-[var(--color-primary)] bg-card shadow-clay ring-2 ring-[var(--color-primary)]/20"
+                  : "border-theme-border bg-card/60 hover:border-[var(--color-primary)]/40 hover:bg-card shadow-sm"
               }`}
             >
               <div className="space-y-3">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="text-base font-extrabold text-theme-text">
+                    <h3 className="text-base font-black text-theme-text">
                       {isAr ? "الاشتراك الشهري" : "Abonnement Mensuel"}
                     </h3>
-                    <span className="text-[11px] text-theme-muted">
+                    <span className="text-xs text-theme-muted font-medium">
                       {isAr ? "صلاحية 30 يوماً قابلة للتجديد" : "30 jours renouvelables"}
                     </span>
                   </div>
@@ -609,14 +625,17 @@ export default function SubscribePage() {
                   </div>
                 </div>
 
-                <div className="flex items-baseline gap-1">
+                <div className="flex items-baseline gap-2">
                   <span className="text-2xl sm:text-3xl font-black text-theme-text font-mono">
-                    900
+                    {hasDiscount ? "1,350" : "1,500"}
                   </span>
                   <span className="text-xs font-bold text-theme-secondary">دج / شهرياً</span>
+                  {hasDiscount && (
+                    <span className="text-xs line-through text-theme-muted font-mono">1,500 دج</span>
+                  )}
                 </div>
 
-                <p className="text-xs text-theme-secondary leading-relaxed pt-1 border-t border-theme-border/60">
+                <p className="text-xs text-theme-secondary leading-relaxed pt-2 border-t border-theme-border/60">
                   {isAr
                     ? "فتح كامل وشامل لجميع المواد وميزات المنصة لمدة 30 يوماً كاملة قابلة للتجديد."
                     : "Accès complet à toute la plateforme pendant 30 jours."}
@@ -961,24 +980,24 @@ export default function SubscribePage() {
                         <Truck className="w-4 h-4 text-purple-600" />
                         <span>{isAr ? "طلب التوصيل للمنزل والدفع عند الاستلام" : "Livraison à domicile"}</span>
                       </h3>
-                      <span className="text-[11px] text-theme-muted">
-                        {isAr ? "التوصيل متوفر لكافة الولايات. تدفع نقداً عند استلام العلبة المادية." : "Livraison toutes wilayas"}
+                      <span className="text-xs text-theme-secondary">
+                        {isAr ? "التوصيل متوفر لكافة الولايات. تدفع نقداً عند استلام بطاقة ورمز التفعيل." : "Livraison de votre carte d'activation dans toutes les wilayas"}
                       </span>
                     </div>
                     <Link
                       href={`/checkout?plan=${selectedPlanId}`}
-                      className="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all whitespace-nowrap"
+                      className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all whitespace-nowrap"
                     >
                       <span>{isAr ? "فتح صفحة الدفع السريع ⚡" : "Aller au Checkout"}</span>
-                      <ExternalLink className="w-3 h-3" />
+                      <ExternalLink className="w-3.5 h-3.5" />
                     </Link>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-3.5">
                     {/* Auto-filled Name */}
-                    <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-theme-secondary block flex items-center gap-1">
-                        <User className="w-3 h-3 text-[var(--color-primary)]" />
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-theme-text flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 text-[var(--color-primary)]" />
                         <span>{isAr ? "الاسم واللقب" : "Nom et prénom"}</span>
                       </label>
                       <input
@@ -986,15 +1005,15 @@ export default function SubscribePage() {
                         value={shippingName}
                         onChange={(e) => setShippingName(e.target.value)}
                         placeholder={isAr ? "الاسم واللقب" : "Nom et prénom"}
-                        className="w-full px-3 py-2 rounded-xl bg-surface border border-theme-border text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme-border text-xs font-medium text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] placeholder:text-theme-muted"
                       />
                     </div>
 
                     {/* Auto-filled Phone & Optional Parent Phone */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <label className="text-[11px] font-semibold text-theme-secondary block flex items-center gap-1">
-                          <Phone className="w-3 h-3 text-[var(--color-primary)]" />
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-theme-text flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-[var(--color-primary)]" />
                           <span>{isAr ? "رقم الهاتف للتوصيل" : "Téléphone"}</span>
                         </label>
                         <input
@@ -1003,13 +1022,13 @@ export default function SubscribePage() {
                           value={shippingPhone}
                           onChange={(e) => setShippingPhone(e.target.value)}
                           placeholder="05 / 06 / 07..."
-                          className="w-full px-3 py-2 rounded-xl bg-surface border border-theme-border text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme-border text-xs font-medium text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono placeholder:text-theme-muted"
                         />
                       </div>
 
-                      <div className="space-y-1">
-                        <label className="text-[11px] font-semibold text-theme-secondary block flex items-center gap-1">
-                          <Phone className="w-3 h-3 text-stone-400" />
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-theme-text flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-stone-400" />
                           <span>{isAr ? "رقم ولي الأمر (اختياري)" : "Téléphone du parent (optionnel)"}</span>
                         </label>
                         <input
@@ -1018,16 +1037,16 @@ export default function SubscribePage() {
                           value={shippingParentPhone}
                           onChange={(e) => setShippingParentPhone(e.target.value)}
                           placeholder="05 / 06 / 07..."
-                          className="w-full px-3 py-2 rounded-xl bg-surface border border-theme-border text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme-border text-xs font-medium text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] font-mono placeholder:text-theme-muted"
                         />
                       </div>
                     </div>
 
                     {/* Auto-filled Wilaya & Commune */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="space-y-1">
-                        <label className="text-[11px] font-semibold text-theme-secondary block flex items-center gap-1">
-                          <MapPin className="w-3 h-3 text-[var(--color-primary)]" />
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-theme-text flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-[var(--color-primary)]" />
                           <span>{isAr ? "الولاية" : "Wilaya"}</span>
                         </label>
                         <input
@@ -1035,12 +1054,12 @@ export default function SubscribePage() {
                           value={shippingWilaya}
                           onChange={(e) => setShippingWilaya(e.target.value)}
                           placeholder={isAr ? "مثال: الجزائر، سطيف، وهران..." : "Wilaya"}
-                          className="w-full px-3 py-2 rounded-xl bg-surface border border-theme-border text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme-border text-xs font-medium text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] placeholder:text-theme-muted"
                         />
                       </div>
 
-                      <div className="space-y-1">
-                        <label className="text-[11px] font-semibold text-theme-secondary block">
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-theme-text block">
                           <span>{isAr ? "البلدية" : "Commune"}</span>
                         </label>
                         <input
@@ -1048,7 +1067,7 @@ export default function SubscribePage() {
                           value={shippingCommune}
                           onChange={(e) => setShippingCommune(e.target.value)}
                           placeholder={isAr ? "مثال: باب الزوار، العلمة..." : "Commune"}
-                          className="w-full px-3 py-2 rounded-xl bg-surface border border-theme-border text-xs text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]"
+                          className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-theme-border text-xs font-medium text-theme-text focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)] placeholder:text-theme-muted"
                         />
                       </div>
                     </div>

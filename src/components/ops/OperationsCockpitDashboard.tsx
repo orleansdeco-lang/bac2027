@@ -40,6 +40,7 @@ import {
   DollarSign,
   FileSpreadsheet,
   Package,
+  ChevronRight,
 } from "lucide-react";
 import { OperationsDashboardData } from "@/lib/operations/types";
 import { opsFetch } from "@/lib/operations/client-api";

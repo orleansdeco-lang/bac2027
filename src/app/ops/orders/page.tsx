@@ -521,7 +521,7 @@ export default function OperationsOrdersPage() {
                           </a>
 
                           <a
-                            href={`https://wa.me/${intlPhone}?text=${encodeURIComponent(`السلام عليكم ${order.studentName}، نتصل بكم بخصوص طلبكم لحقيبة الشاطر للبكالوريا رقم ${order.orderNumber}`)}`}
+                            href={`https://wa.me/${intlPhone}?text=${encodeURIComponent(`السلام عليكم ${order.studentName}، نتصل بكم بخصوص طلبكم لاشتراك منصة الشاطر للبكالوريا رقم ${order.orderNumber}`)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-colors"
@@ -548,7 +548,7 @@ export default function OperationsOrdersPage() {
                           {order.planName}
                         </div>
                         <div className="text-[10px] text-slate-400 mt-0.5">
-                          حقيبة فيزيائية + كود التفعيل الذكي
+                          بطاقة التفعيل الذكية (الدفع عند الاستلام)
                         </div>
                       </td>
 

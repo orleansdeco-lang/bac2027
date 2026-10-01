@@ -63,7 +63,7 @@ function CheckoutContent() {
     {
       id: "monthly",
       name: "الاشتراك الشهري (30 يوماً)",
-      price_dzd: 900,
+      price_dzd: 1500,
       duration_months: 1,
       active: true,
     },
@@ -232,40 +232,40 @@ function CheckoutContent() {
         {confirmedOrder ? (
           <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in zoom-in-95 duration-300">
             {/* Success Hero Card */}
-            <Card className="p-6 sm:p-10 rounded-3xl bg-[#0D182E] border-2 border-emerald-500/40 text-center space-y-6 shadow-2xl text-white">
-              <div className="w-20 h-20 rounded-3xl bg-emerald-500/20 border-2 border-emerald-500/50 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10">
+            <Card className="p-6 sm:p-10 rounded-3xl bg-card border-2 border-emerald-500/40 text-center space-y-6 shadow-clay text-theme-text">
+              <div className="w-20 h-20 rounded-3xl bg-emerald-500/15 border-2 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/10">
                 <CheckCircle2 className="w-10 h-10" />
               </div>
 
               <div className="space-y-2">
-                <Badge variant="success" size="sm" className="px-3 py-1 font-bold text-xs bg-emerald-500/20 text-emerald-300 border-emerald-500/40">
+                <Badge variant="success" size="sm" className="px-3 py-1 font-bold text-xs bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40">
                   تم الاستلام بنجاح ✓
                 </Badge>
-                <h1 className="text-2xl sm:text-3xl font-black text-white">
+                <h1 className="text-2xl sm:text-3xl font-black text-theme-text">
                   تم تسجيل طلبك
                 </h1>
-                <p className="text-slate-300 text-sm max-w-md mx-auto leading-relaxed">
-                  شكراً لثقتك في منصة شاطر. طلبك قيد المتابعة وسيتم تجهيز علبتك المادية المخصصة للبكالوريا.
+                <p className="text-theme-secondary text-sm max-w-md mx-auto leading-relaxed">
+                  شكراً لثقتك في منصة شاطر. طلبك قيد المتابعة وسيتم توصيل بطاقة التفعيل الخاصة باشتراكك.
                 </p>
               </div>
 
               {/* Order Number Box */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-[#091122] border border-slate-700/80 space-y-2 max-w-md mx-auto">
-                <span className="text-xs text-slate-400 font-mono block">
+              <div className="p-4 sm:p-5 rounded-2xl bg-surface border border-theme-border space-y-2 max-w-md mx-auto">
+                <span className="text-xs text-theme-muted font-mono block">
                   رقم الطلب المرجعي:
                 </span>
                 <div className="flex items-center justify-center gap-3">
-                  <span className="text-2xl sm:text-3xl font-black text-amber-300 font-mono tracking-wider">
+                  <span className="text-2xl sm:text-3xl font-black text-amber-500 dark:text-amber-400 font-mono tracking-wider">
                     {confirmedOrder.order_number}
                   </span>
                   <button
                     type="button"
                     onClick={() => copyOrderNumber(confirmedOrder.order_number)}
-                    className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-all shadow-sm"
+                    className="p-2 rounded-xl bg-card hover:bg-card-muted text-theme-secondary hover:text-theme-text transition-all border border-theme-border shadow-sm cursor-pointer"
                     title="نسخ رقم الطلب"
                   >
                     {copiedOrderNumber ? (
-                      <Check className="w-4 h-4 text-emerald-400" />
+                      <Check className="w-4 h-4 text-emerald-500" />
                     ) : (
                       <Copy className="w-4 h-4" />
                     )}
@@ -274,57 +274,57 @@ function CheckoutContent() {
               </div>
 
               {/* Mandatory Clarification Box */}
-              <div className="p-4 rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 text-amber-200 text-sm font-bold flex items-center justify-center gap-3">
-                <Truck className="w-6 h-6 text-amber-400 shrink-0" />
+              <div className="p-4 rounded-2xl bg-amber-500/10 border-2 border-amber-500/30 text-amber-700 dark:text-amber-300 text-sm font-bold flex items-center justify-center gap-3">
+                <Truck className="w-6 h-6 text-amber-500 shrink-0" />
                 <span className="text-sm sm:text-base leading-snug">
-                  "سيتم إرسال طلبك عبر شركة التوصيل، والدفع يكون عند الاستلام."
+                  "سيتم إرسال بطاقة التفعيل عبر شركة التوصيل، والدفع يكون نقداً عند الاستلام."
                 </span>
               </div>
 
               {/* Order Summary Details */}
-              <div className="pt-4 border-t border-slate-800 text-xs space-y-2.5 text-right font-medium">
-                <div className="flex justify-between items-center text-slate-300">
-                  <span className="text-slate-400">الخطة المطلوبة:</span>
-                  <span className="text-white font-bold">{confirmedOrder.plan_name}</span>
+              <div className="pt-4 border-t border-theme-border text-xs space-y-2.5 text-right font-medium">
+                <div className="flex justify-between items-center text-theme-secondary">
+                  <span className="text-theme-muted">الخطة المطلوبة:</span>
+                  <span className="text-theme-text font-bold">{confirmedOrder.plan_name}</span>
                 </div>
-                <div className="flex justify-between items-center text-slate-300">
-                  <span className="text-slate-400">مدة الاشتراك:</span>
-                  <span className="text-white font-bold">{confirmedOrder.duration_months} أشهر (حتى البكالوريا)</span>
+                <div className="flex justify-between items-center text-theme-secondary">
+                  <span className="text-theme-muted">مدة الاشتراك:</span>
+                  <span className="text-theme-text font-bold">{confirmedOrder.duration_months} أشهر</span>
                 </div>
-                <div className="flex justify-between items-center text-slate-300">
-                  <span className="text-slate-400">وجهة التوصيل:</span>
-                  <span className="text-white font-bold">{confirmedOrder.wilaya} • {confirmedOrder.commune}</span>
+                <div className="flex justify-between items-center text-theme-secondary">
+                  <span className="text-theme-muted">وجهة التوصيل:</span>
+                  <span className="text-theme-text font-bold">{confirmedOrder.wilaya} • {confirmedOrder.commune}</span>
                 </div>
-                <div className="flex justify-between items-center text-slate-300">
-                  <span className="text-slate-400">مصاريف الشحن:</span>
-                  <span className="text-emerald-400 font-bold">مجاناً (0 دج)</span>
+                <div className="flex justify-between items-center text-theme-secondary">
+                  <span className="text-theme-muted">مصاريف الشحن:</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">مجاناً (0 دج)</span>
                 </div>
-                <div className="flex justify-between items-center pt-2 border-t border-slate-800 text-sm font-bold">
-                  <span className="text-slate-200">المبلغ المستحق عند الاستلام:</span>
-                  <span className="text-amber-300 text-lg font-black font-mono">
+                <div className="flex justify-between items-center pt-2 border-t border-theme-border text-sm font-bold">
+                  <span className="text-theme-text">المبلغ المستحق عند الاستلام:</span>
+                  <span className="text-amber-600 dark:text-amber-400 text-lg font-black font-mono">
                     {confirmedOrder.total.toLocaleString()} دج
                   </span>
                 </div>
               </div>
 
               {/* Next Steps Timeline */}
-              <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 text-right space-y-3">
-                <h4 className="text-xs font-bold text-slate-300 flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-indigo-400" />
+              <div className="p-4 rounded-2xl bg-surface border border-theme-border text-right space-y-3">
+                <h4 className="text-xs font-bold text-theme-text flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-indigo-500" />
                   <span>ماذا يحدث الآن؟</span>
                 </h4>
-                <ol className="text-[11px] text-slate-400 space-y-2 pr-4 list-decimal">
+                <ol className="text-xs text-theme-secondary space-y-2 pr-4 list-decimal">
                   <li>
-                    <strong className="text-white">تأكيد الطلب:</strong> سيتصل بك فريق العمل أو يتواصل معك عبر الواتساب لتأكيد العنوان وموعد التوصيل.
+                    <strong className="text-theme-text">تأكيد الطلب:</strong> سيتصل بك فريق العمل أو يتواصل معك عبر الهاتف/الواتساب لتأكيد العنوان وموعد التوصيل.
                   </li>
                   <li>
-                    <strong className="text-white">تجهيز العلبة المادية (Physical Kit):</strong> يتم تخصيص بطاقتك الذكية، الملصقات، وخارطة طريق البكالوريا.
+                    <strong className="text-theme-text">تجهيز بطاقة التفعيل:</strong> يتم إصدار وتجهيز بطاقة الاشتراك الخاصة بحسابك مع رمز التفعيل.
                   </li>
                   <li>
-                    <strong className="text-white">التسليم والدفع:</strong> يستلم الموزع المبلغ كاش عند باب منزلك، ويسلمك الطرد.
+                    <strong className="text-theme-text">التسليم والدفع:</strong> يستلم الموزع المبلغ كاش عند باب منزلك، ويسلمك بطاقة التفعيل.
                   </li>
                   <li>
-                    <strong className="text-white">تفعيل الاشتراك:</strong> تفعّل الإدارة اشتراكك الرقمي فورياً، وتستمتع بجميع ميزات شاطر!
+                    <strong className="text-theme-text">تفعيل الاشتراك:</strong> تفعّل الإدارة اشتراكك الرقمي فورياً، وتستمتع بجميع ميزات شاطر!
                   </li>
                 </ol>
               </div>
@@ -338,12 +338,12 @@ function CheckoutContent() {
                   </Button>
                 </Link>
                 <Link href="/dashboard/orders" className="w-full sm:w-auto">
-                  <Button variant="outline" size="md" className="w-full sm:w-auto font-bold rounded-xl px-6 border-slate-700 text-slate-300 hover:text-white">
+                  <Button variant="outline" size="md" className="w-full sm:w-auto font-bold rounded-xl px-6 border-theme-border text-theme-secondary hover:text-theme-text">
                     <span>قائمة طلباتي</span>
                   </Button>
                 </Link>
                 <Link href="/dashboard" className="w-full sm:w-auto">
-                  <Button variant="outline" size="md" className="w-full sm:w-auto font-bold rounded-xl px-6 border-slate-700 text-slate-300 hover:text-white">
+                  <Button variant="outline" size="md" className="w-full sm:w-auto font-bold rounded-xl px-6 border-theme-border text-theme-secondary hover:text-theme-text">
                     <span>العودة للمنصة</span>
                   </Button>
                 </Link>
@@ -357,15 +357,15 @@ function CheckoutContent() {
           <div className="space-y-6">
             {/* Header */}
             <div className="text-center max-w-2xl mx-auto space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-bold">
                 <Truck className="w-4 h-4" />
-                <span>طلب باقة شاطر المادية • الدفع عند الاستلام (COD)</span>
+                <span>طلب بطاقة التفعيل • الدفع عند الاستلام (COD)</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-black text-theme-text">
                 إتمام الطلب والتوصيل
               </h1>
-              <p className="text-xs sm:text-sm text-theme-muted">
-                احصل على علبة شاطر المادية وبطاقة الاشتراك حتى باب منزلك، وادفع نقداً عند استلام الطرد.
+              <p className="text-xs sm:text-sm text-theme-secondary">
+                احصل على بطاقة اشتراك الشاطر مع رمز التفعيل حتى باب منزلك، وادفع نقداً عند الاستلام.
               </p>
             </div>
 
@@ -631,14 +631,14 @@ function CheckoutContent() {
                       </p>
                     </div>
 
-                    {/* Physical Kit Guarantee */}
-                    <div className="p-3 rounded-2xl bg-card-muted/70 border border-theme text-[11px] text-theme-muted space-y-1">
+                    {/* Activation Card Info */}
+                    <div className="p-3 rounded-2xl bg-surface border border-theme-border text-xs text-theme-secondary space-y-1">
                       <div className="flex items-center gap-1.5 font-bold text-theme-text">
                         <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" />
-                        <span>محتويات العلبة المادية:</span>
+                        <span>طريقة التفعيل والاستلام:</span>
                       </div>
-                      <p>
-                        بطاقة شاطر الذكية VIP + خارطة طريق البكالوريا + ملصقات شاطر الرسمية.
+                      <p className="text-[11px] leading-relaxed">
+                        بطاقة اشتراك الشاطر الرسمية مع رمز التفعيل الفوري لكافة المواد والميزات.
                       </p>
                     </div>
 

@@ -33,7 +33,7 @@ const DEFAULT_PLANS: SubscriptionPlan[] = [
   {
     id: "monthly",
     name: "الاشتراك الشهري",
-    price_dzd: 900.0,
+    price_dzd: 1500.0,
     duration_months: 1,
     active: true,
     created_at: new Date().toISOString(),

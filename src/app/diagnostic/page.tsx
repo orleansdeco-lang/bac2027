@@ -304,17 +304,17 @@ export default function DiagnosticPage() {
       <AppShell activeNav="roadmap">
         <div className="py-6 sm:py-10">
           <Container size="lg" className="w-full">
-            <Card className="p-6 sm:p-8 bg-[#111827] border-slate-800 shadow-xl text-center space-y-6">
-              <div className="h-16 w-16 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+            <Card className="p-6 sm:p-8 bg-card border border-theme-border shadow-xl text-center space-y-6 rounded-3xl">
+              <div className="h-16 w-16 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
                 <Compass className="h-8 w-8" />
               </div>
               <div className="space-y-2">
-                <h1 className="text-xl sm:text-2xl font-bold text-white">
+                <h1 className="text-xl sm:text-2xl font-black text-theme-text">
                   {locale === "ar"
                     ? "حزمة التشخيص قيد الإعداد لهذه الشعبة"
                     : "Pack diagnostic en cours de préparation"}
                 </h1>
-                <p className="text-sm text-slate-400 max-w-md mx-auto leading-relaxed">
+                <p className="text-sm text-theme-secondary max-w-md mx-auto leading-relaxed">
                   {locale === "ar"
                     ? "التشخيص التكيفي التأسيسي مفعل حالياً لشعبة العلوم التجريبية، الرياضيات، وتسيير واقتصاد. يتم حالياً تدقيق الأسئلة المعيارية لشعبتك وفق أحدث المواصفات الرسمية."
                     : "Le diagnostic adaptatif est actuellement actif pour les filières Sciences Expérimentales, Mathématiques et Gestion. Votre filière sera prochainement intégrée."}
@@ -403,13 +403,13 @@ export default function DiagnosticPage() {
                               <span>{status.score ? `${status.score}/20` : (locale === "ar" ? "مكتمل" : "Évalué")}</span>
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-surface border border-theme-border text-theme-muted">
                               <span>{locale === "ar" ? "جاهز للتقييم" : "Non évalué"}</span>
                             </span>
                           )}
                         </div>
 
-                        <div className="flex items-center gap-2 pt-1 border-t border-slate-800/80">
+                        <div className="flex items-center gap-2 pt-1 border-t border-theme-border/60">
                           <Link href={`/diagnostic/${rule.subjectId}`} className="flex-1">
                             <Button
                               size="sm"
@@ -483,28 +483,28 @@ export default function DiagnosticPage() {
             <div className="max-w-3xl mx-auto space-y-6">
               {/* Progress & Header info */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
+                <div className="flex items-center justify-between text-xs text-theme-secondary font-medium">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-white">
+                    <span className="font-black text-theme-text text-sm">
                       {t.diagnostic.questionLabel} {currentIndex + 1} {t.diagnostic.ofLabel} {questions.length}
                     </span>
-                    <Badge variant="outline" size="sm">
+                    <Badge variant="outline" size="sm" className="font-bold border-theme-border text-theme-secondary">
                       {locale === "ar"
                         ? subjectBadgeNameMap[currentQuestion.subjectId]?.ar
                         : subjectBadgeNameMap[currentQuestion.subjectId]?.fr}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-1 text-slate-400 font-mono">
-                    <Clock className="h-3.5 w-3.5 text-blue-400" />
-                    <span>{timeSpent}s</span>
-                    <span className="text-slate-500">/ ~{currentQuestion.expectedSeconds}s</span>
+                  <div className="flex items-center gap-1 text-theme-secondary font-mono text-xs">
+                    <Clock className="h-3.5 w-3.5 text-[var(--color-primary)]" />
+                    <span className="font-bold">{timeSpent}s</span>
+                    <span className="text-theme-muted">/ ~{currentQuestion.expectedSeconds}s</span>
                   </div>
                 </div>
 
                 {/* Progress bar */}
-                <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div className="w-full bg-surface border border-theme-border h-2.5 rounded-full overflow-hidden">
                   <div
-                    className="bg-blue-500 h-full transition-all duration-300 rounded-full"
+                    className="bg-[var(--color-primary)] h-full transition-all duration-300 rounded-full"
                     style={{
                       width: `${Math.round(((currentIndex + 1) / questions.length) * 100)}%`,
                     }}
@@ -513,7 +513,7 @@ export default function DiagnosticPage() {
               </div>
 
               {/* Question Card */}
-              <Card className="p-6 sm:p-8 bg-card border-theme-border shadow-sm space-y-6 rounded-3xl text-theme-text">
+              <Card className="p-6 sm:p-8 bg-card border border-theme-border shadow-clay space-y-6 rounded-3xl text-theme-text">
                 {/* Topic & Dimension Badges */}
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="primary" size="sm">
@@ -548,8 +548,8 @@ export default function DiagnosticPage() {
                         <div
                           className={`h-5 w-5 rounded-full border shrink-0 mt-0.5 flex items-center justify-center text-xs ${
                             isSelected
-                              ? "border-blue-500 bg-blue-600 text-white font-bold"
-                              : "border-slate-700 bg-slate-800 text-slate-500"
+                              ? "border-[var(--color-primary)] bg-[var(--color-primary)] text-white font-bold"
+                              : "border-theme-border bg-surface text-theme-muted"
                           }`}
                         >
                           {isSelected && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
@@ -565,8 +565,8 @@ export default function DiagnosticPage() {
                 {/* Inline Confidence Rating — shown once an option is selected */}
                 {selectedOptionId && (
                   <div className="p-4 sm:p-5 rounded-2xl bg-surface border border-theme-border space-y-3 animate-fade-in">
-                    <div className="text-xs sm:text-sm font-semibold text-slate-300 flex items-center gap-1.5">
-                      <HelpCircle className="h-4 w-4 text-blue-400 shrink-0" />
+                    <div className="text-xs sm:text-sm font-bold text-theme-text flex items-center gap-1.5">
+                      <HelpCircle className="h-4 w-4 text-[var(--color-primary)] shrink-0" />
                       <span>{t.diagnostic.confidencePrompt}</span>
                     </div>
 
@@ -579,10 +579,10 @@ export default function DiagnosticPage() {
                             data-testid="diagnostic-conf-btn"
                             type="button"
                             onClick={() => handleSelectConfidence(lvl)}
-                            className={`min-h-[46px] p-2 sm:p-2.5 rounded-xl border text-center transition-all flex flex-col items-center justify-center active:scale-95 ${
+                            className={`min-h-[46px] p-2 sm:p-2.5 rounded-xl border text-center transition-all flex flex-col items-center justify-center active:scale-95 cursor-pointer ${
                               isChosen
-                                ? "bg-blue-600 text-white border-blue-500 font-bold shadow-md shadow-blue-600/30"
-                                : "bg-[#111827] text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200"
+                                ? "bg-[var(--color-primary)] text-white border-[var(--color-primary)] font-bold shadow-md shadow-[var(--color-primary)]/20"
+                                : "bg-card text-theme-secondary border-theme-border hover:border-[var(--color-primary)] hover:text-theme-text"
                             }`}
                           >
                             <div className="text-sm font-bold">{lvl}</div>
@@ -631,7 +631,7 @@ export default function DiagnosticPage() {
                 <button
                   type="button"
                   onClick={handleRestart}
-                  className="text-xs text-slate-500 hover:text-slate-300 underline inline-flex items-center gap-1"
+                  className="text-xs text-theme-muted hover:text-theme-text underline inline-flex items-center gap-1 cursor-pointer"
                 >
                   <RotateCcw className="h-3 w-3" />
                   <span>{t.diagnostic.restartCta}</span>
