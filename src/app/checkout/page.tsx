@@ -33,6 +33,8 @@ import {
   RefreshCw,
   Gift,
 } from "lucide-react";
+import { trackInitiateCheckout, trackPurchase } from "@/lib/analytics/marketing";
+import { getStoredAttribution } from "@/lib/analytics/tracker";
 
 interface PlanItem {
   id: string;
@@ -144,8 +146,18 @@ function CheckoutContent() {
     return plans.find((p) => p.id === selectedPlanId) || plans[0];
   }, [plans, selectedPlanId]);
 
-  const shippingFeeDzd = 0; // Free delivery for physical VIP kit
+  const shippingFeeDzd = 0; // Free delivery for activation card
   const totalAmountDzd = currentPlan.price_dzd + shippingFeeDzd;
+
+  // Track InitiateCheckout on initial mount
+  useEffect(() => {
+    trackInitiateCheckout({
+      planId: currentPlan.id,
+      planName: currentPlan.name,
+      value: totalAmountDzd,
+      currency: "DZD",
+    });
+  }, [currentPlan.id, currentPlan.name, totalAmountDzd]);
 
   // Handle Form Submission
   const handleConfirmOrder = async (e: React.FormEvent) => {
@@ -186,6 +198,7 @@ function CheckoutContent() {
           commune: commune.trim(),
           address: address.trim(),
           delivery_notes: deliveryNotes.trim() || undefined,
+          attribution: getStoredAttribution(),
         }),
       });
 
@@ -204,6 +217,16 @@ function CheckoutContent() {
         total: data.order?.total || totalAmountDzd,
         wilaya: wilaya.trim(),
         commune: commune.trim(),
+      });
+
+      // Track confirmed purchase
+      trackPurchase({
+        orderId: data.order?.order_number || data.order?.id || "SH-2026-000184",
+        planId: currentPlan.id,
+        planName: currentPlan.name,
+        value: data.order?.total || totalAmountDzd,
+        currency: "DZD",
+        paymentMethod: "COD",
       });
 
       // Scroll to top to view confirmation

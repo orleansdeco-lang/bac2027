@@ -1,9 +1,120 @@
 import { NextRequest, NextResponse } from "next/server";
+import https from "https";
+import http from "http";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 // In-memory resolution cache to make repeat requests instant (0ms latency)
 const resolvedUrlCache = new Map<string, string>();
+
+/**
+ * Robust HTTP/HTTPS buffer fetcher using Node's native network stack.
+ * Bypasses Undici/TLS-fingerprint blocks (e.g. Cloudflare on dzexams.com).
+ */
+function fetchBuffer(
+  url: string,
+  options: { headers?: Record<string, string>; maxRedirects?: number } = {}
+): Promise<{
+  statusCode: number;
+  headers: http.IncomingHttpHeaders;
+  buffer: Buffer;
+  finalUrl: string;
+}> {
+  return new Promise((resolve, reject) => {
+    const maxRedirects = options.maxRedirects ?? 5;
+    if (maxRedirects <= 0) {
+      return reject(new Error("Too many redirects"));
+    }
+
+    let parsed: URL;
+    try {
+      parsed = new URL(url);
+    } catch {
+      return reject(new Error(`Invalid URL: ${url}`));
+    }
+
+    const client = parsed.protocol === "https:" ? https : http;
+    const reqHeaders: Record<string, string> = {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+      Accept: "application/pdf,text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      Referer: url.includes("dzexams.com") ? "https://www.dzexams.com/" : "https://eddirasa.com/",
+      ...(options.headers || {}),
+    };
+
+    const req = client.get(
+      url,
+      {
+        headers: reqHeaders,
+        timeout: 15000,
+      },
+      (res) => {
+        // Follow redirects
+        if (
+          res.statusCode &&
+          res.statusCode >= 300 &&
+          res.statusCode < 400 &&
+          res.headers.location
+        ) {
+          const redirectUrl = new URL(res.headers.location, url).toString();
+          return fetchBuffer(redirectUrl, {
+            ...options,
+            maxRedirects: maxRedirects - 1,
+          })
+            .then(resolve)
+            .catch(reject);
+        }
+
+        const chunks: Buffer[] = [];
+        res.on("data", (chunk: Buffer) => chunks.push(chunk));
+        res.on("end", () => {
+          resolve({
+            statusCode: res.statusCode || 200,
+            headers: res.headers,
+            buffer: Buffer.concat(chunks),
+            finalUrl: url,
+          });
+        });
+      }
+    );
+
+    req.on("error", reject);
+    req.on("timeout", () => {
+      req.destroy();
+      reject(new Error("Upstream connection timed out"));
+    });
+  });
+}
+
+function extractPdfUrlFromHtml(html: string): string | null {
+  const globalFileMatch = html.match(/file:\s*["']([^"']+\.pdf)["']/i);
+  if (globalFileMatch && globalFileMatch[1]) {
+    return globalFileMatch[1].replace(/\\\//g, "/");
+  }
+
+  const uploadsMatch = html.match(/https?:\\?\/\\?\/[^\s"'<>]*(?:uploads|sujets)[^\s"'<>]+\.pdf/i);
+  if (uploadsMatch) {
+    let u = uploadsMatch[0].replace(/\\\//g, "/");
+    if (u.includes("docs.google.com/viewer") && u.includes("url=")) {
+      const extracted = new URL(u).searchParams.get("url");
+      if (extracted) u = decodeURIComponent(extracted);
+    }
+    return u;
+  }
+
+  const anyPdfMatch = html.match(/https?:\\?\/\\?\/[^\s"'<>]+\.pdf/i);
+  if (anyPdfMatch) {
+    let u = anyPdfMatch[0].replace(/\\\//g, "/");
+    if (u.includes("docs.google.com/viewer") && u.includes("url=")) {
+      const extracted = new URL(u).searchParams.get("url");
+      if (extracted) u = decodeURIComponent(extracted);
+    }
+    return u;
+  }
+
+  return null;
+}
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -25,93 +136,68 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
   }
 
-  let targetUrl = resolvedUrlCache.get(rawUrl) || parsedUrl.toString();
+  // Check cache only if it's already a direct PDF URL
+  let cached = resolvedUrlCache.get(rawUrl);
+  let targetUrl = (cached && cached.toLowerCase().includes(".pdf")) ? cached : parsedUrl.toString();
 
-  // If already resolved in cache, skip page scraping
-  if (!resolvedUrlCache.has(rawUrl)) {
-    // 1. Smart resolver for dzexams.com pages (viewer or annales)
-    if (targetUrl.includes("dzexams.com") && !targetUrl.toLowerCase().endsWith(".pdf")) {
-      try {
-        const pageHtml = await fetch(targetUrl, {
-          headers: {
-            "User-Agent":
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-            Referer: "https://www.dzexams.com/",
-          },
-        }).then((r) => r.text());
-
-        // Prefer direct uploads link if present
-        const directUploadMatch = pageHtml.match(/https?:\\?\/\\?\/[^\s"'<>]*(?:dzexams\.com)?\\?\/uploads\\?\/[^\s"'<>]+\.pdf/i);
-        const generalPdfMatch = pageHtml.match(/https?:\\?\/\\?\/[^\s"'<>]+\.pdf/i);
-        const matched = directUploadMatch || generalPdfMatch;
-
-        if (matched) {
-          targetUrl = matched[0].replace(/\\\//g, "/");
-          if (targetUrl.includes("docs.google.com/viewer") && targetUrl.includes("url=")) {
-            const extracted = new URL(targetUrl).searchParams.get("url");
-            if (extracted) targetUrl = decodeURIComponent(extracted);
-          }
-          resolvedUrlCache.set(rawUrl, targetUrl);
-        }
-      } catch (err) {
-        console.warn("Failed to extract dzexams PDF link, using original:", err);
-      }
-    }
-    // 2. Smart resolver for eddirasa article pages
-    else if (targetUrl.includes("eddirasa.com") && !targetUrl.toLowerCase().endsWith(".pdf")) {
-      try {
-        const pageHtml = await fetch(targetUrl, {
-          headers: {
-            "User-Agent":
-              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-            Referer: "https://eddirasa.com/",
-          },
-        }).then((r) => r.text());
-
-        const pdfMatch = pageHtml.match(/https?:\/\/[^\s"'<>]+\.pdf/i);
-        if (pdfMatch) {
-          targetUrl = pdfMatch[0];
-          resolvedUrlCache.set(rawUrl, targetUrl);
-        }
-      } catch (err) {
-        console.warn("Failed to extract eddirasa PDF link:", err);
-      }
-    }
-    // 3. Smart resolver for Google Drive view links
-    else if (targetUrl.includes("drive.google.com/file/d/")) {
-      const driveIdMatch = targetUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-      if (driveIdMatch && driveIdMatch[1]) {
-        targetUrl = `https://drive.google.com/uc?export=download&id=${driveIdMatch[1]}`;
-        resolvedUrlCache.set(rawUrl, targetUrl);
-      }
-    } else {
+  // 1. Google Drive direct conversion
+  if (targetUrl.includes("drive.google.com/file/d/")) {
+    const driveIdMatch = targetUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (driveIdMatch && driveIdMatch[1]) {
+      targetUrl = `https://drive.google.com/uc?export=download&id=${driveIdMatch[1]}`;
       resolvedUrlCache.set(rawUrl, targetUrl);
     }
   }
 
-  try {
-    const upstreamRes = await fetch(targetUrl, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-        Accept: "application/pdf,application/octet-stream,*/*",
-        Referer: targetUrl.includes("dzexams.com") ? "https://www.dzexams.com/" : "https://eddirasa.com/",
-      },
-    });
+  // 2. Pre-resolve HTML pages (DzExams / Eddirasa)
+  if (!targetUrl.toLowerCase().endsWith(".pdf") && (targetUrl.includes("dzexams.com") || targetUrl.includes("eddirasa.com"))) {
+    try {
+      const page = await fetchBuffer(targetUrl);
+      const pageHtml = page.buffer.toString("utf-8");
+      const extracted = extractPdfUrlFromHtml(pageHtml);
+      if (extracted) {
+        targetUrl = extracted;
+        resolvedUrlCache.set(rawUrl, targetUrl);
+      }
+    } catch (err) {
+      console.warn("Pre-resolve error, will try direct fetch:", err);
+    }
+  }
 
-    if (!upstreamRes.ok) {
+  try {
+    let upstreamRes = await fetchBuffer(targetUrl);
+
+    if (upstreamRes.statusCode < 200 || upstreamRes.statusCode >= 400) {
       return NextResponse.json(
-        { error: `Upstream returned status ${upstreamRes.status}` },
-        { status: upstreamRes.status }
+        { error: `Upstream returned status ${upstreamRes.statusCode}` },
+        { status: upstreamRes.statusCode }
       );
     }
 
-    const contentType = upstreamRes.headers.get("content-type") || "application/pdf";
+    let finalBuffer = upstreamRes.buffer;
+    let rawContentType = (upstreamRes.headers["content-type"] as string) || "application/pdf";
+
+    // 3. Emergency fallback: if upstream still returned text/html, extract PDF from it and fetch the PDF stream!
+    if (rawContentType.includes("text/html") || !targetUrl.toLowerCase().includes(".pdf")) {
+      const htmlText = finalBuffer.toString("utf-8");
+      const extracted = extractPdfUrlFromHtml(htmlText);
+      if (extracted && extracted !== targetUrl) {
+        targetUrl = extracted;
+        resolvedUrlCache.set(rawUrl, targetUrl);
+        const pdfRes = await fetchBuffer(extracted);
+        if (pdfRes.statusCode === 200) {
+          finalBuffer = pdfRes.buffer;
+          rawContentType = "application/pdf";
+        }
+      }
+    }
+
+    const contentType = rawContentType.includes("pdf") ? "application/pdf" : rawContentType;
     const urlFilename = new URL(targetUrl).pathname.split("/").pop() || "exam.pdf";
     const filename = customFilename || decodeURIComponent(urlFilename);
 
     const headers = new Headers();
-    headers.set("Content-Type", contentType.includes("pdf") ? "application/pdf" : contentType);
+    headers.set("Content-Type", contentType);
     headers.set(
       "Content-Disposition",
       download
@@ -123,7 +209,7 @@ export async function GET(request: NextRequest) {
     headers.delete("X-Frame-Options");
     headers.delete("Content-Security-Policy");
 
-    return new Response(upstreamRes.body, {
+    return new Response(new Uint8Array(finalBuffer), {
       status: 200,
       headers,
     });

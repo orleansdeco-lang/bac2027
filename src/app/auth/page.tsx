@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { StudentService } from "@/lib/services";
 import { purgeUserAndLegacyStorage, getRegistrationDraft } from "@/lib/onboarding/profile";
+import { trackTrialStart } from "@/lib/analytics/marketing";
 
 function AuthContent() {
   const router = useRouter();
@@ -206,6 +207,7 @@ function AuthContent() {
           purgeUserAndLegacyStorage(newUser.id);
           const { trackEvent } = await import("@/lib/analytics");
           trackEvent("trial_started", { userId: newUser.id, durationHours: 168 });
+          trackTrialStart({ userId: newUser.id, durationDays: 7 });
           setSuccessMsg(
             locale === "fr"
               ? "Compte créé avec succès ! Votre essai gratuit de 7 jours débute dès maintenant."

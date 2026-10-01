@@ -33,6 +33,7 @@ import {
   getRegistrationDraft,
   saveRegistrationDraft,
 } from "@/lib/onboarding/profile";
+import { trackCompleteRegistration } from "@/lib/analytics/marketing";
 import {
   ArrowLeft,
   ArrowRight,
@@ -387,8 +388,16 @@ export default function StudentRegistrationPage() {
       // 3. Persist to service (LocalStorage + Supabase if auth user exists)
       await StudentService.saveRegistration(finalPayload, effectiveUserId);
 
-      // 4. Transition immediately
+      // 4. Marketing Analytics: Track genuine registration completion
       const isEditMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("edit") === "true";
+      if (!isEditMode) {
+        trackCompleteRegistration({
+          method: "email",
+          userId: effectiveUserId,
+        });
+      }
+
+      // 5. Transition immediately
       if (isEditMode) {
         router.push("/account");
       } else {

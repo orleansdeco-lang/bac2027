@@ -28,6 +28,7 @@ import {
 import { ReferralSummary } from "@/lib/referral/types";
 import { generateReferralCode } from "@/lib/referral/code";
 import { MarketingPosterCard } from "@/components/referral/MarketingPosterCard";
+import { trackLead } from "@/lib/analytics/marketing";
 
 export default function ReferralPage() {
   const { t, locale } = useTranslation();
@@ -109,6 +110,10 @@ export default function ReferralPage() {
       navigator.clipboard.writeText(activeShareUrl);
       setCopiedLink(true);
       setTimeout(() => setCopiedLink(false), 2500);
+      trackLead({
+        leadType: "referral_link_share",
+        refCode: activeReferralCode,
+      });
     }
   };
 

@@ -6,6 +6,7 @@ import { getSubscriptionPlanById } from "@/lib/operations/subscriptions";
 import { extractAuthenticatedUserId, extractTokenFromCookies } from "@/lib/operations/auth";
 import { recordAuditLog } from "@/lib/operations/audit";
 import { registerOrderInStore, normalizeToAdminOrder } from "@/lib/operations/orders-store";
+import { sendMetaServerEvent } from "@/lib/analytics/meta-server";
 
 export const dynamic = "force-dynamic";
 
@@ -39,6 +40,7 @@ export async function POST(req: Request) {
       commune,
       address,
       delivery_notes,
+      attribution,
     } = body;
 
     // 1. Data Minimization & Validation: Required fields only
@@ -262,7 +264,11 @@ export async function POST(req: Request) {
 
     // 11. Backward Compatibility: Insert to legacy `payment_orders` with verified columns
     try {
-      const fullShippingDetails = `[COD-KIT] ${orderNumber} | Name: ${cleanFullName} | Phone: ${cleanPhone} | Wilaya: ${cleanWilaya} | Commune: ${cleanCommune} | Address: ${cleanAddress}${cleanNotes ? " | Notes: " + cleanNotes : ""}`;
+      const utmCampaign = attribution?.last_touch?.campaign || attribution?.first_touch?.campaign || "";
+      const utmSource = attribution?.last_touch?.source || attribution?.first_touch?.source || "";
+      const utmInfo = utmCampaign || utmSource ? ` | UTM: ${utmSource}/${utmCampaign}` : "";
+
+      const fullShippingDetails = `[COD-KIT] ${orderNumber} | Name: ${cleanFullName} | Phone: ${cleanPhone} | Wilaya: ${cleanWilaya} | Commune: ${cleanCommune} | Address: ${cleanAddress}${cleanNotes ? " | Notes: " + cleanNotes : ""}${utmInfo}`;
       await client.from("payment_orders").insert({
         id: orderId,
         user_id: callerId || null,
@@ -326,6 +332,31 @@ export async function POST(req: Request) {
         },
       });
     } catch {}
+
+    // 12.5 Meta Conversions API (CAPI) Server-Side Purchase Dispatch
+    // Uses the identical orderNumber or orderId as eventId for deduplication with browser Pixel
+    sendMetaServerEvent({
+      eventName: "Purchase",
+      eventId: orderNumber || `purch_${orderId}`,
+      eventSourceUrl: "https://shater.dz/checkout",
+      userData: {
+        phone: cleanPhone,
+        externalId: callerId || undefined,
+        clientIpAddress: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined,
+        clientUserAgent: req.headers.get("user-agent") || undefined,
+      },
+      customData: {
+        orderId: orderNumber || orderId,
+        value: totalAmount,
+        currency: "DZD",
+        contentName: plan.name,
+        contentIds: [plan.id],
+        contentType: "product",
+        numItems: 1,
+      },
+    }).catch((capiErr) => {
+      console.warn("[Checkout] Non-fatal CAPI background dispatch error:", capiErr);
+    });
 
     // 13. Return Success with Confirmation Message
     return NextResponse.json({

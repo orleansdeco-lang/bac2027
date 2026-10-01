@@ -74,10 +74,13 @@ export const ALLOWED_TELEMETRY_EVENTS = new Set([
   "ad_clicked",
 
   // COMMERCIAL
+  "view_content",
+  "lead_generated",
   "trial_started",
   "trial_expiring",
   "trial_expired",
   "checkout_started",
+  "checkout_initiated",
   "payment_started",
   "payment_order_created",
   "payment_submitted",
@@ -85,6 +88,7 @@ export const ALLOWED_TELEMETRY_EVENTS = new Set([
   "payment_approved",
   "payment_rejected",
   "payment_confirmed",
+  "purchase_completed",
   "subscription_started",
   "subscription_extended",
   "subscription_expired",

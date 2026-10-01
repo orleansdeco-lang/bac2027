@@ -19,6 +19,8 @@ import {
   MissionRepository,
 } from "@/lib/repositories";
 import { trackEvent } from "@/lib/analytics";
+import { trackViewContent, trackInitiateCheckout, trackPurchase } from "@/lib/analytics/marketing";
+import { getStoredAttribution } from "@/lib/analytics/tracker";
 import {
   Sparkles,
   Target,
@@ -127,6 +129,12 @@ export default function SubscribePage() {
 
   useEffect(() => {
     trackEvent("conversion_viewed", { userId: user?.id || null });
+    trackViewContent({
+      contentName: "Subscription Plans",
+      contentCategory: "Pricing",
+      value: 4900,
+      currency: "DZD",
+    });
 
     async function loadData() {
       try {
@@ -283,6 +291,15 @@ export default function SubscribePage() {
         plan: selectedPlanId,
         orderId: data.orderId,
       });
+
+      trackPurchase({
+        orderId: data.orderId || referenceId,
+        planId: selectedPlanId,
+        planName: selectedPlanName,
+        value: selectedPlanPrice,
+        currency: "DZD",
+        paymentMethod: "ONLINE_RECEIPT",
+      });
     } catch (err: any) {
       console.error("Receipt submission error:", err);
       setReceiptError(
@@ -328,6 +345,7 @@ export default function SubscribePage() {
           wilaya: shippingWilaya.trim(),
           commune: shippingCommune.trim(),
           address: (shippingCommune || shippingWilaya || "توصيل للعنوان").trim(),
+          attribution: getStoredAttribution(),
         }),
       });
 
@@ -346,6 +364,15 @@ export default function SubscribePage() {
         plan: selectedPlanId,
         wilaya: shippingWilaya,
         orderNumber: data.order?.order_number,
+      });
+
+      trackPurchase({
+        orderId: data.order?.order_number || data.order?.id || "SH-2026-000184",
+        planId: selectedPlanId,
+        planName: selectedPlanName,
+        value: selectedPlanPrice,
+        currency: "DZD",
+        paymentMethod: "COD",
       });
     } catch (err: any) {
       setCodError(err?.message || "حدث خطأ أثناء تسجيل طلب التوصيل");
