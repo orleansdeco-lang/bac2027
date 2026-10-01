@@ -1,17 +1,34 @@
 /**
- * SHATER CONTROL CENTER — Core Operations & Analytics Service
+ * SHATER CONTROL CENTER — Core Operations & Analytics Service (Real Data Only)
  * French-First Architecture for SaaS Command System
  * 
- * INVARIANTS:
- * 1. Read-first, non-destructive: Safe querying with zero data corruption.
- * 2. Real evidence: NEVER fabricates metrics; accurately displays "Données insuffisantes" when empty.
- * 3. Dual-touch attribution: Compares first_touch (immutable entry) vs last_touch (conversion trigger).
- * 4. Resilient Fallbacks: Reads from Supabase analytics_sessions/events with fallback to durable memory logs.
+ * STRICT INVARIANTS:
+ * 1. ZERO FAKE METRICS: Zero mock arrays, zero estimated multipliers, zero Math.random().
+ * 2. 0 RÉEL ≠ DONNÉE ABSENTE:
+ *    - 0 visites réelles = status: "available", value: 0
+ *    - tracking non configuré = status: "not_configured"
+ *    - dénominateur nul pour calculer un taux = status: "not_available"
+ * 3. ZERO GUESSING:
+ *    - Visiteur anonyme -> Wilaya = "Non précisée" (NULL)
+ *    - Visiteur anonyme -> Filière = "Non précisée" (NULL)
+ * 4. REAL REVENUE ONLY:
+ *    - Revenue = SOMME des commandes réellement payées (payment_status = 'PAID')
+ *    - Ne jamais compter les commandes COD créées non encaissées comme revenu.
+ * 5. REAL CHANNELS ONLY:
+ *    - Ne renvoyer que les canaux d'acquisition ayant au moins une visite réelle.
  */
 
 import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
-import { getAdminClient } from "@/lib/supabase/admin";
 import { OFFICIAL_WILAYAS } from "@/lib/orientation/data/wilayas";
+
+/**
+ * Universal Metric State to distinguish between 0, unconfigured, or unavailable
+ */
+export type MetricState<T = number> =
+  | { status: "available"; value: T }
+  | { status: "not_available"; reason: string }
+  | { status: "not_configured"; reason: string }
+  | { status: "error"; reason: string };
 
 export interface LiveSession {
   sessionId: string;
@@ -21,12 +38,14 @@ export interface LiveSession {
   deviceType: "mobile" | "desktop" | "tablet";
   browser?: string;
   os?: string;
-  wilayaCode?: string;
-  wilayaName?: string;
-  firstSource?: string;
-  firstCampaign?: string;
-  lastSource?: string;
-  lastCampaign?: string;
+  wilayaCode?: string | null;
+  wilayaName: string;
+  streamId?: string | null;
+  streamName: string;
+  firstSource?: string | null;
+  firstCampaign?: string | null;
+  lastSource?: string | null;
+  lastCampaign?: string | null;
   startedAt: string;
   lastActivityAt: string;
   durationSeconds: number;
@@ -37,8 +56,8 @@ export interface FunnelStage {
   id: string;
   nameFr: string;
   count: number;
-  conversionFromPrevious: number; // 0..100 %
-  dropOffRate: number; // 0..100 %
+  conversionRate: MetricState<number>; // Percentage from previous step
+  dropOffRate: MetricState<number>; // Percentage dropped from previous step
   descriptionFr: string;
 }
 
@@ -51,7 +70,7 @@ export interface ChannelStat {
   lastTouchCount: number;
   registrations: number;
   orders: number;
-  conversionRate: number;
+  conversionRate: MetricState<number>;
 }
 
 export interface CampaignSummary {
@@ -65,18 +84,19 @@ export interface CampaignSummary {
   uniqueVisitors: number;
   registrations: number;
   orders: number;
-  conversionRate: number;
+  conversionRate: MetricState<number>;
   firstSeenAt?: string;
   lastSeenAt?: string;
 }
 
 export interface TrackingHealthReport {
+  overallStatus: "HEALTHY" | "WARNING" | "CRITICAL" | "NOT_CONFIGURED";
   isTrackingActive: boolean;
   totalSessionsRecorded: number;
   totalEventsRecorded: number;
   activeSessionsNow: number;
-  missingUtmRate: number; // percentage of external sessions with missing campaign
-  metaPixelConfigured: boolean;
+  missingUtmRate: MetricState<number>; // percentage of external sessions with missing campaign
+  metaPixelStatus: "NOT_CONFIGURED" | "CONFIGURED_NO_EVENTS" | "HEALTHY";
   metaPixelId?: string;
   supabaseConnected: boolean;
   lastEventTimestamp?: string;
@@ -84,27 +104,41 @@ export interface TrackingHealthReport {
 }
 
 /**
- * Maps Wilaya code (01-58) to French name
+ * Maps Wilaya code (01-58) to French name. Returns "Non précisée" if unknown.
  */
 export function getWilayaNameFr(code?: string | null): string {
   if (!code) return "Non précisée";
   const num = parseInt(code, 10);
   const found = OFFICIAL_WILAYAS.find((w) => w.id === num);
-  return found ? `${found.id.toString().padStart(2, "0")} - ${found.name}` : code;
+  return found ? `${found.code} - ${found.nameFr}` : "Non précisée";
+}
+
+const STREAM_LABELS: Record<string, string> = {
+  sciences_exp: "Sciences Expérimentales",
+  math: "Mathématiques",
+  technique_math: "Technique Mathématiques",
+  gestion_eco: "Gestion et Économie",
+  lettres_philo: "Lettres et Philosophie",
+  langues_etrangeres: "Langues Étrangères",
+};
+
+export function getStreamNameFr(streamId?: string | null): string {
+  if (!streamId) return "Non précisée";
+  return STREAM_LABELS[streamId] || "Non précisée";
 }
 
 /**
- * Identifies high-level acquisition channel from source/medium/referrer
+ * Identifies high-level acquisition channel strictly from real source/medium/referrer evidence
  */
 export function categorizeChannel(source?: string | null, medium?: string | null, referrer?: string | null): {
   channel: string;
   channelFr: string;
 } {
-  const s = (source || "").toLowerCase();
-  const m = (medium || "").toLowerCase();
-  const ref = (referrer || "").toLowerCase();
+  const s = (source || "").toLowerCase().trim();
+  const m = (medium || "").toLowerCase().trim();
+  const ref = (referrer || "").toLowerCase().trim();
 
-  if (s.includes("facebook") || s.includes("fb") || ref.includes("facebook.com") || ref.includes("fb.me")) {
+  if (s.includes("facebook") || s.includes("fb") || ref.includes("facebook.com") || ref.includes("fb.me") || ref.includes("l.facebook.com")) {
     if (m.includes("cpc") || m.includes("paid") || m.includes("ad") || m.includes("social_paid")) {
       return { channel: "facebook_ads", channelFr: "Facebook Ads (Payant)" };
     }
@@ -141,15 +175,15 @@ export function categorizeChannel(source?: string | null, medium?: string | null
     return { channel: "referral", channelFr: "Site Référent" };
   }
 
-  return { channel: "direct", channelFr: "Accès Direct / Inconnu" };
+  return { channel: "direct", channelFr: "Accès Direct / Non Identifié" };
 }
 
 /**
  * 1. GET LIVE ACTIVE SESSIONS
- * Returns visitors active in the last windowMinutes (default: 5 min)
+ * Returns real visitors active in the last windowMinutes from DB (last_activity_at >= NOW() - windowMinutes)
  */
 export async function getLiveActiveSessions(windowMinutes: number = 5): Promise<{
-  count: number;
+  count: MetricState<number>;
   sessions: LiveSession[];
 }> {
   const cutoffIso = new Date(Date.now() - windowMinutes * 60 * 1000).toISOString();
@@ -163,54 +197,52 @@ export async function getLiveActiveSessions(windowMinutes: number = 5): Promise<
         .order("last_activity_at", { ascending: false })
         .limit(50);
 
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         const sessions: LiveSession[] = data.map((row: any) => ({
           sessionId: row.session_id,
           anonymousId: row.anonymous_id,
-          userId: row.user_id,
-          currentPath: row.landing_page,
-          deviceType: row.device_type || "desktop",
-          browser: row.browser,
-          os: row.os,
-          wilayaCode: row.wilaya_code,
+          userId: row.user_id || null,
+          currentPath: row.landing_page || "/",
+          deviceType: (row.device_type || "desktop") as "mobile" | "desktop" | "tablet",
+          browser: row.browser || undefined,
+          os: row.os || undefined,
+          wilayaCode: row.wilaya_code || null,
           wilayaName: getWilayaNameFr(row.wilaya_code),
-          firstSource: row.first_utm_source,
-          firstCampaign: row.first_utm_campaign,
-          lastSource: row.last_utm_source,
-          lastCampaign: row.last_utm_campaign,
+          streamId: row.stream_id || null,
+          streamName: getStreamNameFr(row.stream_id),
+          firstSource: row.first_utm_source || null,
+          firstCampaign: row.first_utm_campaign || null,
+          lastSource: row.last_utm_source || null,
+          lastCampaign: row.last_utm_campaign || null,
           startedAt: row.started_at,
           lastActivityAt: row.last_activity_at,
           durationSeconds: row.duration_seconds || 0,
           pageviewsCount: row.pageviews_count || 1,
         }));
 
-        return { count: sessions.length, sessions };
+        return { count: { status: "available", value: sessions.length }, sessions };
       }
-    } catch {}
+    } catch {
+      return { count: { status: "error", reason: "Base de données inaccessible" }, sessions: [] };
+    }
   }
 
-  // Fallback: Read from durable memory logs
-  try {
-    const { getLiveVisitorsCount } = await import("@/lib/operations/visitors");
-    const count = getLiveVisitorsCount(windowMinutes);
-    return { count, sessions: [] };
-  } catch {
-    return { count: 0, sessions: [] };
-  }
+  return { count: { status: "not_configured", reason: "Supabase non configuré" }, sessions: [] };
 }
 
 /**
- * 2. GET OPERATIONS OVERVIEW (TABLEAU DE BORD OPÉRATIONNEL)
+ * 2. GET OPERATIONS OVERVIEW (REAL EVIDENCE ONLY)
  */
 export async function getOperationsOverview(): Promise<{
-  liveVisitors: number;
-  todayVisitors: number;
-  todaySessions: number;
-  todayRegistrations: number;
-  todayPaidSubscriptions: number;
-  conversionRatePercent: number;
+  liveVisitors: MetricState<number>;
+  todayVisitors: MetricState<number>;
+  todaySessions: MetricState<number>;
+  todayRegistrations: MetricState<number>;
+  todayPaidSubscriptions: MetricState<number>;
+  todayRevenueDZD: MetricState<number>;
+  conversionRatePercent: MetricState<number>;
   topChannels: ChannelStat[];
-  activeCampaignsCount: number;
+  activeCampaignsCount: MetricState<number>;
   dataStatusFr: string;
 }> {
   const live = await getLiveActiveSessions(5);
@@ -218,49 +250,81 @@ export async function getOperationsOverview(): Promise<{
   todayStart.setHours(0, 0, 0, 0);
   const todayStartIso = todayStart.toISOString();
 
-  let todayVisitors = 0;
-  let todaySessions = 0;
-  let todayRegistrations = 0;
-  let todayPaidSubscriptions = 0;
+  let todayVisitors: MetricState<number> = { status: "not_configured", reason: "Suivi non configuré" };
+  let todaySessions: MetricState<number> = { status: "not_configured", reason: "Suivi non configuré" };
+  let todayRegistrations: MetricState<number> = { status: "not_configured", reason: "Suivi non configuré" };
+  let todayPaidSubscriptions: MetricState<number> = { status: "not_configured", reason: "Suivi non configuré" };
+  let todayRevenueDZD: MetricState<number> = { status: "not_configured", reason: "Données de paiement non configurées" };
+  let rawVisitorsCount = 0;
+  let rawRegistrationsCount = 0;
 
   if (isSupabaseConfigured && supabase) {
     try {
-      // Sessions today
-      const { data: sessData } = await supabase
+      // 1. Sessions & Visitors today
+      const { data: sessData, error: sessErr } = await supabase
         .from("analytics_sessions")
-        .select("session_id, anonymous_id, user_id, first_utm_source, last_utm_source")
+        .select("session_id, anonymous_id")
         .gte("started_at", todayStartIso);
 
-      if (sessData) {
-        todaySessions = sessData.length;
+      if (!sessErr && sessData) {
+        todaySessions = { status: "available", value: sessData.length };
         const unq = new Set(sessData.map((s: any) => s.anonymous_id));
-        todayVisitors = unq.size;
+        rawVisitorsCount = unq.size;
+        todayVisitors = { status: "available", value: rawVisitorsCount };
+      } else {
+        todaySessions = { status: "error", reason: sessErr?.message || "Erreur sessions" };
+        todayVisitors = { status: "error", reason: sessErr?.message || "Erreur visiteurs" };
       }
 
-      // Profiles / Users registered today
-      const { count: userCount } = await supabase
+      // 2. Profiles / Users registered today
+      const { count: userCount, error: userErr } = await supabase
         .from("profiles")
         .select("*", { count: "exact", head: true })
         .gte("created_at", todayStartIso);
-      todayRegistrations = userCount || 0;
 
-      // Paid orders/subscriptions today
-      const { count: paidCount } = await supabase
+      if (!userErr && userCount !== null) {
+        rawRegistrationsCount = userCount;
+        todayRegistrations = { status: "available", value: userCount };
+      } else {
+        todayRegistrations = { status: "error", reason: userErr?.message || "Erreur profils" };
+      }
+
+      // 3. Paid orders and revenue today
+      const { data: paidOrders, error: paidErr } = await supabase
         .from("orders")
-        .select("*", { count: "exact", head: true })
+        .select("amount")
         .eq("payment_status", "PAID")
         .gte("created_at", todayStartIso);
-      todayPaidSubscriptions = paidCount || 0;
-    } catch {}
+
+      if (!paidErr && paidOrders) {
+        todayPaidSubscriptions = { status: "available", value: paidOrders.length };
+        const sumRevenue = paidOrders.reduce((sum: number, o: any) => sum + (Number(o.amount) || 0), 0);
+        todayRevenueDZD = { status: "available", value: sumRevenue };
+      } else {
+        todayPaidSubscriptions = { status: "error", reason: paidErr?.message || "Erreur commandes" };
+        todayRevenueDZD = { status: "error", reason: paidErr?.message || "Erreur paiements" };
+      }
+    } catch {
+      todayVisitors = { status: "error", reason: "Base inaccessible" };
+      todaySessions = { status: "error", reason: "Base inaccessible" };
+      todayRegistrations = { status: "error", reason: "Base inaccessible" };
+      todayPaidSubscriptions = { status: "error", reason: "Base inaccessible" };
+      todayRevenueDZD = { status: "error", reason: "Base inaccessible" };
+    }
   }
 
-  // Calculate high-level conversion rate
-  const conversionRatePercent = todayVisitors > 0
-    ? Math.round((todayRegistrations / todayVisitors) * 1000) / 10
-    : 0;
+  // Calculate conversion rate safely
+  let conversionRatePercent: MetricState<number>;
+  if (rawVisitorsCount > 0) {
+    const rate = Math.round((rawRegistrationsCount / rawVisitorsCount) * 1000) / 10;
+    conversionRatePercent = { status: "available", value: rate };
+  } else {
+    conversionRatePercent = { status: "not_available", reason: "Aucune visite enregistrée aujourd'hui" };
+  }
 
-  // Retrieve top channels
+  // Retrieve actual traffic channels (zero dummy channels)
   const channels = await getTrafficAcquisition();
+  const campaigns = await getCampaignsList();
 
   return {
     liveVisitors: live.count,
@@ -268,26 +332,27 @@ export async function getOperationsOverview(): Promise<{
     todaySessions,
     todayRegistrations,
     todayPaidSubscriptions,
+    todayRevenueDZD,
     conversionRatePercent,
     topChannels: channels.slice(0, 5),
-    activeCampaignsCount: 1, // At least the ongoing ad launch test
-    dataStatusFr: todayVisitors > 0 ? "Données synchronisées en direct" : "En attente des premières sessions",
+    activeCampaignsCount: { status: "available", value: campaigns.length },
+    dataStatusFr: rawVisitorsCount > 0 ? "Données synchronisées en direct" : "En attente des premières sessions mesurées",
   };
 }
 
 /**
  * 3. GET VISITOR ANALYTICS
- * Detailed breakdowns by date, hour, device, OS, browser, Wilaya, stream
+ * Only computes ratios on real non-zero denominators. Never defaults to 100% or invented splits.
  */
 export async function getVisitorAnalytics(rangeDays: number = 7): Promise<{
-  totalSessions: number;
-  uniqueVisitors: number;
-  avgDurationSeconds: number;
-  devices: { device: string; count: number; percentage: number }[];
-  browsers: { browser: string; count: number; percentage: number }[];
-  operatingSystems: { os: string; count: number; percentage: number }[];
-  wilayas: { code: string; nameFr: string; count: number; percentage: number }[];
-  streams: { streamId: string; nameFr: string; count: number }[];
+  totalSessions: MetricState<number>;
+  uniqueVisitors: MetricState<number>;
+  avgDurationSeconds: MetricState<number>;
+  devices: Array<{ device: string; count: number; percentage: MetricState<number> }>;
+  browsers: Array<{ browser: string; count: number; percentage: MetricState<number> }>;
+  operatingSystems: Array<{ os: string; count: number; percentage: MetricState<number> }>;
+  wilayas: Array<{ code: string; nameFr: string; count: number; percentage: MetricState<number> }>;
+  streams: Array<{ streamId: string; nameFr: string; count: number }>;
 }> {
   const cutoffIso = new Date(Date.now() - rangeDays * 24 * 3600 * 1000).toISOString();
 
@@ -299,7 +364,7 @@ export async function getVisitorAnalytics(rangeDays: number = 7): Promise<{
         .select("*")
         .gte("started_at", cutoffIso)
         .order("started_at", { ascending: false })
-        .limit(2000);
+        .limit(3000);
       if (data) sessions = data;
     } catch {}
   }
@@ -315,7 +380,7 @@ export async function getVisitorAnalytics(rangeDays: number = 7): Promise<{
   const streamCounts: Record<string, number> = {};
 
   for (const s of sessions) {
-    totalDuration += s.duration_seconds || 0;
+    totalDuration += Number(s.duration_seconds) || 0;
     const dev = (s.device_type || "desktop") as "mobile" | "desktop" | "tablet";
     deviceCounts[dev] = (deviceCounts[dev] || 0) + 1;
 
@@ -325,22 +390,35 @@ export async function getVisitorAnalytics(rangeDays: number = 7): Promise<{
     const o = s.os || "Autre";
     osCounts[o] = (osCounts[o] || 0) + 1;
 
-    if (s.wilaya_code) {
+    // Only count known wilayas
+    if (s.wilaya_code && s.wilaya_code !== "UNKNOWN" && s.wilaya_code !== "null") {
       wilayaCounts[s.wilaya_code] = (wilayaCounts[s.wilaya_code] || 0) + 1;
     }
 
-    if (s.stream_id) {
+    // Only count known streams
+    if (s.stream_id && s.stream_id !== "null") {
       streamCounts[s.stream_id] = (streamCounts[s.stream_id] || 0) + 1;
     }
   }
 
-  const avgDurationSeconds = totalSessions > 0 ? Math.round(totalDuration / totalSessions) : 0;
+  const calcPercentage = (count: number): MetricState<number> => {
+    if (totalSessions <= 0) {
+      return { status: "not_available", reason: "Aucune session" };
+    }
+    return { status: "available", value: Math.round((count / totalSessions) * 100) };
+  };
 
-  const devices = Object.entries(deviceCounts).map(([device, count]) => ({
-    device: device === "mobile" ? "Mobile (Smartphone)" : device === "desktop" ? "Ordinateur (Bureau)" : "Tablette",
-    count,
-    percentage: totalSessions > 0 ? Math.round((count / totalSessions) * 100) : 0,
-  }));
+  const avgDuration = totalSessions > 0
+    ? { status: "available" as const, value: Math.round(totalDuration / totalSessions) }
+    : { status: "not_available" as const, reason: "Aucune session" };
+
+  const devices = Object.entries(deviceCounts)
+    .filter(([_, count]) => count > 0)
+    .map(([device, count]) => ({
+      device: device === "mobile" ? "Mobile (Smartphone)" : device === "desktop" ? "Ordinateur (Bureau)" : "Tablette",
+      count,
+      percentage: calcPercentage(count),
+    }));
 
   const browsers = Object.entries(browserCounts)
     .sort((a, b) => b[1] - a[1])
@@ -348,7 +426,7 @@ export async function getVisitorAnalytics(rangeDays: number = 7): Promise<{
     .map(([browser, count]) => ({
       browser,
       count,
-      percentage: totalSessions > 0 ? Math.round((count / totalSessions) * 100) : 0,
+      percentage: calcPercentage(count),
     }));
 
   const operatingSystems = Object.entries(osCounts)
@@ -357,7 +435,7 @@ export async function getVisitorAnalytics(rangeDays: number = 7): Promise<{
     .map(([os, count]) => ({
       os,
       count,
-      percentage: totalSessions > 0 ? Math.round((count / totalSessions) * 100) : 0,
+      percentage: calcPercentage(count),
     }));
 
   const wilayas = Object.entries(wilayaCounts)
@@ -367,28 +445,19 @@ export async function getVisitorAnalytics(rangeDays: number = 7): Promise<{
       code,
       nameFr: getWilayaNameFr(code),
       count,
-      percentage: totalSessions > 0 ? Math.round((count / totalSessions) * 100) : 0,
+      percentage: calcPercentage(count),
     }));
-
-  const STREAM_LABELS: Record<string, string> = {
-    sciences_exp: "Sciences Expérimentales",
-    math: "Mathématiques",
-    technique_math: "Technique Mathématiques",
-    gestion_eco: "Gestion et Économie",
-    lettres_philo: "Lettres et Philosophie",
-    langues_etrangeres: "Langues Étrangères",
-  };
 
   const streams = Object.entries(streamCounts).map(([streamId, count]) => ({
     streamId,
-    nameFr: STREAM_LABELS[streamId] || streamId,
+    nameFr: getStreamNameFr(streamId),
     count,
   }));
 
   return {
-    totalSessions,
-    uniqueVisitors,
-    avgDurationSeconds,
+    totalSessions: { status: "available", value: totalSessions },
+    uniqueVisitors: { status: "available", value: uniqueVisitors },
+    avgDurationSeconds: avgDuration,
     devices,
     browsers,
     operatingSystems,
@@ -398,7 +467,8 @@ export async function getVisitorAnalytics(rangeDays: number = 7): Promise<{
 }
 
 /**
- * 4. GET TRAFFIC ACQUISITION & DUAL-TOUCH ATTRIBUTION
+ * 4. GET TRAFFIC ACQUISITION & ATTRIBUTION
+ * Strictly returns channels with real evidence. Zero static dummy channels.
  */
 export async function getTrafficAcquisition(): Promise<ChannelStat[]> {
   let sessions: any[] = [];
@@ -427,7 +497,7 @@ export async function getTrafficAcquisition(): Promise<ChannelStat[]> {
         lastTouchCount: 0,
         registrations: 0,
         orders: 0,
-        conversionRate: 0,
+        conversionRate: { status: "not_available", reason: "En attente" },
       });
     }
 
@@ -438,37 +508,27 @@ export async function getTrafficAcquisition(): Promise<ChannelStat[]> {
     if (s.user_id) stat.registrations++;
   }
 
-  // Ensure default channels exist even if 0
-  const defaults = [
-    { channel: "facebook_ads", channelFr: "Facebook Ads (Payant)" },
-    { channel: "instagram_ads", channelFr: "Instagram Ads" },
-    { channel: "tiktok", channelFr: "TikTok" },
-    { channel: "telegram", channelFr: "Telegram (Groupes/Canaux)" },
-    { channel: "google_organic", channelFr: "Google Recherche" },
-    { channel: "direct", channelFr: "Accès Direct / Inconnu" },
-  ];
-
-  for (const d of defaults) {
-    if (!channelMap.has(d.channel)) {
-      channelMap.set(d.channel, {
-        channel: d.channel,
-        channelFr: d.channelFr,
-        visits: 0,
-        uniqueVisitors: 0,
-        firstTouchCount: 0,
-        lastTouchCount: 0,
-        registrations: 0,
-        orders: 0,
-        conversionRate: 0,
-      });
+  // Calculate real conversion rate per channel (only where visits > 0)
+  for (const stat of Array.from(channelMap.values())) {
+    if (stat.visits > 0) {
+      stat.conversionRate = {
+        status: "available",
+        value: Math.round((stat.registrations / stat.visits) * 1000) / 10,
+      };
+    } else {
+      stat.conversionRate = { status: "not_available", reason: "Aucune visite" };
     }
   }
 
-  return Array.from(channelMap.values()).sort((a, b) => b.visits - a.visits);
+  // Strictly return only channels with real visits (Zero dummy placeholders)
+  return Array.from(channelMap.values())
+    .filter((c) => c.visits > 0)
+    .sort((a, b) => b.visits - a.visits);
 }
 
 /**
  * 5. GET MARKETING CAMPAIGNS LIST & PERFORMANCE
+ * Only returns campaigns that actually have rows or measured traffic. Zero mock campaigns.
  */
 export async function getCampaignsList(): Promise<CampaignSummary[]> {
   let dbCampaigns: any[] = [];
@@ -487,7 +547,6 @@ export async function getCampaignsList(): Promise<CampaignSummary[]> {
 
   const campaignMap = new Map<string, CampaignSummary>();
 
-  // Register campaigns from DB
   for (const c of dbCampaigns) {
     campaignMap.set(c.utm_campaign, {
       id: c.id,
@@ -500,11 +559,10 @@ export async function getCampaignsList(): Promise<CampaignSummary[]> {
       uniqueVisitors: 0,
       registrations: 0,
       orders: 0,
-      conversionRate: 0,
+      conversionRate: { status: "not_available", reason: "Aucune visite" },
     });
   }
 
-  // Tally campaign stats from sessions
   for (const s of sessions) {
     const cName = s.last_utm_campaign || s.first_utm_campaign;
     if (!cName) continue;
@@ -521,7 +579,7 @@ export async function getCampaignsList(): Promise<CampaignSummary[]> {
         uniqueVisitors: 0,
         registrations: 0,
         orders: 0,
-        conversionRate: 0,
+        conversionRate: { status: "not_available", reason: "En attente" },
       });
     }
 
@@ -530,39 +588,26 @@ export async function getCampaignsList(): Promise<CampaignSummary[]> {
     if (s.user_id) c.registrations++;
   }
 
-  // Compute conversion rates
-  for (const c of campaignMap.values()) {
-    c.conversionRate = c.visits > 0 ? Math.round((c.registrations / c.visits) * 1000) / 10 : 0;
-  }
-
-  // If no campaign recorded yet, include honest record of the ongoing ad test
-  if (campaignMap.size === 0) {
-    return [
-      {
-        id: "camp_ad_test_oct2026",
-        name: "Test Publicitaire SHATER (Campagne Initiale)",
-        utmCampaign: "shater_ad_launch",
-        utmSource: "facebook",
-        utmMedium: "paid_social",
-        status: "active",
-        visits: 0,
-        uniqueVisitors: 0,
-        registrations: 0,
-        orders: 0,
-        conversionRate: 0,
-      },
-    ];
+  for (const c of Array.from(campaignMap.values())) {
+    if (c.visits > 0) {
+      c.conversionRate = {
+        status: "available",
+        value: Math.round((c.registrations / c.visits) * 1000) / 10,
+      };
+    } else {
+      c.conversionRate = { status: "not_available", reason: "Aucune visite mesurée" };
+    }
   }
 
   return Array.from(campaignMap.values()).sort((a, b) => b.visits - a.visits);
 }
 
 /**
- * 6. GET CONVERSION FUNNEL METRICS
+ * 6. GET CONVERSION FUNNEL METRICS (ZERO EXTRAPOLATION)
  */
 export async function getFunnelMetrics(): Promise<{
   stages: FunnelStage[];
-  overallConversionPercent: number;
+  overallConversion: MetricState<number>;
 }> {
   let uniqueVisitors = 0;
   let engagedVisitors = 0;
@@ -576,18 +621,19 @@ export async function getFunnelMetrics(): Promise<{
       const [sessRes, profRes, diagRes, ordRes] = await Promise.all([
         supabase.from("analytics_sessions").select("anonymous_id, pageviews_count, duration_seconds"),
         supabase.from("profiles").select("id", { count: "exact", head: true }),
-        supabase.from("analytics_events").select("id", { count: "exact", head: true }).in("event_name", ["diagnostic_completed", "trial_started", "first_mission_started"]),
+        supabase.from("analytics_events").select("id", { count: "exact", head: true }).in("event_name", ["diagnostic_completed", "first_mission_started"]),
         supabase.from("orders").select("id, payment_status, subscription_status"),
       ]);
 
       if (sessRes.data) {
         const unq = new Set(sessRes.data.map((s: any) => s.anonymous_id));
         uniqueVisitors = unq.size;
-        engagedVisitors = sessRes.data.filter((s: any) => (s.pageviews_count || 1) >= 2 || (s.duration_seconds || 0) >= 30).length;
+        engagedVisitors = sessRes.data.filter((s: any) => (Number(s.pageviews_count) || 1) >= 2 || (Number(s.duration_seconds) || 0) >= 30).length;
       }
 
       registrations = profRes.count || 0;
-      trialsOrDiagnostics = diagRes.count || Math.min(registrations, Math.round(registrations * 0.7));
+      // Strictly real database count. ZERO * 0.7 fallback estimation!
+      trialsOrDiagnostics = diagRes.count || 0;
 
       if (ordRes.data) {
         checkoutsInitiated = ordRes.data.length;
@@ -596,10 +642,19 @@ export async function getFunnelMetrics(): Promise<{
     } catch {}
   }
 
-  // Construct stages with mathematical precision
-  const calcRate = (current: number, previous: number) => {
-    if (previous <= 0) return 0;
-    return Math.min(100, Math.round((current / previous) * 1000) / 10);
+  const calcConversion = (current: number, previous: number): MetricState<number> => {
+    if (previous <= 0) {
+      return { status: "not_available", reason: "Étape précédente nulle" };
+    }
+    return { status: "available", value: Math.min(100, Math.round((current / previous) * 1000) / 10) };
+  };
+
+  const calcDropOff = (current: number, previous: number): MetricState<number> => {
+    if (previous <= 0) {
+      return { status: "not_available", reason: "Étape précédente nulle" };
+    }
+    const conv = Math.min(100, (current / previous) * 100);
+    return { status: "available", value: Math.max(0, Math.round((100 - conv) * 10) / 10) };
   };
 
   const stages: FunnelStage[] = [
@@ -607,61 +662,62 @@ export async function getFunnelMetrics(): Promise<{
       id: "visitors",
       nameFr: "1. Visiteurs Uniques (Arrivée)",
       count: uniqueVisitors,
-      conversionFromPrevious: 100,
-      dropOffRate: 0,
+      conversionRate: { status: "available", value: 100 },
+      dropOffRate: { status: "available", value: 0 },
       descriptionFr: "Trafic brut atteignant la plateforme ou une landing page.",
     },
     {
       id: "engaged",
       nameFr: "2. Visiteurs Engagés (≥ 2 pages)",
       count: engagedVisitors,
-      conversionFromPrevious: calcRate(engagedVisitors, uniqueVisitors),
-      dropOffRate: Math.max(0, 100 - calcRate(engagedVisitors, uniqueVisitors)),
+      conversionRate: calcConversion(engagedVisitors, uniqueVisitors),
+      dropOffRate: calcDropOff(engagedVisitors, uniqueVisitors),
       descriptionFr: "Visiteurs ayant exploré au moins 2 pages ou passé plus de 30 secondes.",
     },
     {
       id: "registered",
       nameFr: "3. Inscriptions Réussies",
       count: registrations,
-      conversionFromPrevious: calcRate(registrations, engagedVisitors || uniqueVisitors),
-      dropOffRate: Math.max(0, 100 - calcRate(registrations, engagedVisitors || uniqueVisitors)),
+      conversionRate: calcConversion(registrations, engagedVisitors || uniqueVisitors),
+      dropOffRate: calcDropOff(registrations, engagedVisitors || uniqueVisitors),
       descriptionFr: "Comptes élèves créés avec succès.",
     },
     {
       id: "trial_diagnostic",
-      nameFr: "4. Diagnostic ou Essai Démarré",
+      nameFr: "4. Diagnostic ou Mission Démarrée",
       count: trialsOrDiagnostics,
-      conversionFromPrevious: calcRate(trialsOrDiagnostics, registrations),
-      dropOffRate: Math.max(0, 100 - calcRate(trialsOrDiagnostics, registrations)),
+      conversionRate: calcConversion(trialsOrDiagnostics, registrations),
+      dropOffRate: calcDropOff(trialsOrDiagnostics, registrations),
       descriptionFr: "Élèves ayant passé leur test de diagnostic ou démarré la première mission.",
     },
     {
       id: "checkout",
       nameFr: "5. Commandes COD Initiées",
       count: checkoutsInitiated,
-      conversionFromPrevious: calcRate(checkoutsInitiated, trialsOrDiagnostics || registrations),
-      dropOffRate: Math.max(0, 100 - calcRate(checkoutsInitiated, trialsOrDiagnostics || registrations)),
-      descriptionFr: "Élèves ayant finalisé le formulaire de commande avec paiement à la livraison.",
+      conversionRate: calcConversion(checkoutsInitiated, trialsOrDiagnostics || registrations),
+      dropOffRate: calcDropOff(checkoutsInitiated, trialsOrDiagnostics || registrations),
+      descriptionFr: "Élèves ayant validé le formulaire de commande de pack physique.",
     },
     {
       id: "paid",
       nameFr: "6. Abonnements Activés / Réglés",
       count: subscriptionsPaid,
-      conversionFromPrevious: calcRate(subscriptionsPaid, checkoutsInitiated),
-      dropOffRate: Math.max(0, 100 - calcRate(subscriptionsPaid, checkoutsInitiated)),
+      conversionRate: calcConversion(subscriptionsPaid, checkoutsInitiated),
+      dropOffRate: calcDropOff(subscriptionsPaid, checkoutsInitiated),
       descriptionFr: "Paiement COD encaissé et compte premium actif.",
     },
   ];
 
-  const overallConversionPercent = uniqueVisitors > 0
-    ? Math.round((subscriptionsPaid / uniqueVisitors) * 1000) / 10
-    : 0;
+  const overallConversion = uniqueVisitors > 0
+    ? { status: "available" as const, value: Math.round((subscriptionsPaid / uniqueVisitors) * 1000) / 10 }
+    : { status: "not_available" as const, reason: "Aucun visiteur enregistré" };
 
-  return { stages, overallConversionPercent };
+  return { stages, overallConversion };
 }
 
 /**
- * 7. GET USER JOURNEY (PARCOURS UTILISATEUR COMPLET)
+ * 7. GET USER JOURNEY (CHRONOLOGIE RÉELLE)
+ * Zero simulated events to fill a timeline. Only actual database sessions/orders/events.
  */
 export async function getUserJourney(identifier: string): Promise<{
   identifier: string;
@@ -679,14 +735,14 @@ export async function getUserJourney(identifier: string): Promise<{
     lastSource?: string;
     lastCampaign?: string;
   };
-  timeline: {
+  timeline: Array<{
     id: string;
     type: "session" | "event" | "order" | "registration";
     titleFr: string;
     detailFr: string;
     timestamp: string;
     badgeFr?: string;
-  }[];
+  }>;
 }> {
   const timeline: any[] = [];
   let userProfile: any = null;
@@ -694,7 +750,6 @@ export async function getUserJourney(identifier: string): Promise<{
 
   if (isSupabaseConfigured && supabase) {
     try {
-      // 1. Check if identifier is user_id in profiles
       const { data: prof } = await supabase
         .from("profiles")
         .select("*")
@@ -706,7 +761,7 @@ export async function getUserJourney(identifier: string): Promise<{
           id: prof.id,
           fullName: prof.full_name || prof.username,
           phone: prof.phone,
-          stream: prof.stream,
+          stream: getStreamNameFr(prof.stream),
           wilaya: getWilayaNameFr(prof.wilaya),
           createdAt: prof.created_at,
         };
@@ -715,7 +770,7 @@ export async function getUserJourney(identifier: string): Promise<{
           id: `reg_${prof.id}`,
           type: "registration",
           titleFr: "Création du compte élève",
-          detailFr: `Compte inscrit avec filière ${prof.stream || "Générale"} (${prof.wilaya || "Algérie"})`,
+          detailFr: `Compte inscrit avec filière ${getStreamNameFr(prof.stream)} (${getWilayaNameFr(prof.wilaya)})`,
           timestamp: prof.created_at,
           badgeFr: "Compte",
         });
@@ -723,7 +778,6 @@ export async function getUserJourney(identifier: string): Promise<{
 
       const targetUserId = userProfile?.id || identifier;
 
-      // 2. Fetch Sessions
       const { data: sessions } = await supabase
         .from("analytics_sessions")
         .select("*")
@@ -750,7 +804,6 @@ export async function getUserJourney(identifier: string): Promise<{
         }
       }
 
-      // 3. Fetch Orders
       const { data: orders } = await supabase
         .from("orders")
         .select("*")
@@ -770,13 +823,12 @@ export async function getUserJourney(identifier: string): Promise<{
         }
       }
 
-      // 4. Fetch Key Learning Events
       const { data: events } = await supabase
         .from("analytics_events")
         .select("*")
         .or(`user_id.eq.${targetUserId},anonymous_id.eq.${identifier}`)
         .order("occurred_at", { ascending: true })
-        .limit(30);
+        .limit(50);
 
       if (events && events.length > 0) {
         for (const e of events) {
@@ -784,7 +836,7 @@ export async function getUserJourney(identifier: string): Promise<{
             id: e.id,
             type: "event",
             titleFr: `Événement: ${e.event_name}`,
-            detailFr: `Page: ${e.route}`,
+            detailFr: `Route: ${e.route}`,
             timestamp: e.occurred_at,
             badgeFr: "Action",
           });
@@ -793,7 +845,6 @@ export async function getUserJourney(identifier: string): Promise<{
     } catch {}
   }
 
-  // Sort timeline chronologically
   timeline.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
   return {
@@ -805,16 +856,16 @@ export async function getUserJourney(identifier: string): Promise<{
 }
 
 /**
- * 8. GET PAGE ANALYTICS & LANDING PAGES
+ * 8. GET PAGES ANALYTICS
  */
 export async function getPagesAnalytics(): Promise<{
-  pages: {
+  pages: Array<{
     path: string;
     pageviews: number;
     uniqueVisitors: number;
-    avgDurationSeconds: number;
+    avgDurationSeconds: MetricState<number>;
     isLanding: boolean;
-  }[];
+  }>;
 }> {
   let sessions: any[] = [];
   if (isSupabaseConfigured && supabase) {
@@ -822,7 +873,7 @@ export async function getPagesAnalytics(): Promise<{
       const { data } = await supabase
         .from("analytics_sessions")
         .select("landing_page, duration_seconds, pageviews_count, anonymous_id")
-        .limit(2000);
+        .limit(3000);
       if (data) sessions = data;
     } catch {}
   }
@@ -847,9 +898,9 @@ export async function getPagesAnalytics(): Promise<{
       });
     }
     const item = pageMap.get(p)!;
-    item.pageviews += s.pageviews_count || 1;
+    item.pageviews += Number(s.pageviews_count) || 1;
     item.visitors.add(s.anonymous_id);
-    item.totalDuration += s.duration_seconds || 0;
+    item.totalDuration += Number(s.duration_seconds) || 0;
   }
 
   const pages = Array.from(pageMap.values())
@@ -857,7 +908,9 @@ export async function getPagesAnalytics(): Promise<{
       path: item.path,
       pageviews: item.pageviews,
       uniqueVisitors: item.visitors.size,
-      avgDurationSeconds: item.visitors.size > 0 ? Math.round(item.totalDuration / item.visitors.size) : 0,
+      avgDurationSeconds: item.visitors.size > 0
+        ? { status: "available" as const, value: Math.round(item.totalDuration / item.visitors.size) }
+        : { status: "not_available" as const, reason: "Aucune visite" },
       isLanding: item.isLanding,
     }))
     .sort((a, b) => b.pageviews - a.pageviews);
@@ -866,7 +919,7 @@ export async function getPagesAnalytics(): Promise<{
 }
 
 /**
- * 9. GET TRACKING HEALTH & TELEMETRY DIAGNOSTICS
+ * 9. GET TRACKING HEALTH & TELEMETRY DIAGNOSTICS (OBJECTIVE RULES ONLY)
  */
 export async function getTrackingHealth(): Promise<TrackingHealthReport> {
   const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
@@ -877,6 +930,8 @@ export async function getTrackingHealth(): Promise<TrackingHealthReport> {
   let missingUtmCount = 0;
   let lastEventTimestamp: string | undefined;
 
+  let supabaseConnected = false;
+
   if (isSupabaseConfigured && supabase) {
     try {
       const [sessRes, evtRes] = await Promise.all([
@@ -884,83 +939,61 @@ export async function getTrackingHealth(): Promise<TrackingHealthReport> {
         supabase.from("analytics_events").select("occurred_at").order("occurred_at", { ascending: false }).limit(1),
       ]);
 
-      totalSessions = sessRes.count || 0;
-      if (sessRes.data) {
-        for (const s of sessRes.data) {
-          if (!s.first_utm_campaign && s.referrer && !s.referrer.includes("shater.dz")) {
-            missingUtmCount++;
+      if (!sessRes.error) {
+        supabaseConnected = true;
+        totalSessions = sessRes.count || 0;
+        if (sessRes.data) {
+          for (const s of sessRes.data) {
+            if (!s.first_utm_campaign && s.referrer && !s.referrer.includes("shater.dz")) {
+              missingUtmCount++;
+            }
           }
         }
       }
 
-      if (evtRes.data && evtRes.data.length > 0) {
+      if (!evtRes.error && evtRes.data && evtRes.data.length > 0) {
         lastEventTimestamp = evtRes.data[0].occurred_at;
       }
     } catch {
-      warnings.push("La connexion aux tables analytics de Supabase est instable ou incomplète.");
+      warnings.push("La connexion aux tables analytics de Supabase est interrompue.");
     }
   } else {
-    warnings.push("Supabase n'est pas configuré; le mode mémoire local durable est actif.");
+    warnings.push("Supabase n'est pas configuré.");
   }
 
+  // Meta Pixel Objective Status
+  let metaPixelStatus: TrackingHealthReport["metaPixelStatus"] = "NOT_CONFIGURED";
   if (!pixelId) {
-    warnings.push("Le Pixel Meta (Facebook Ads) n'a pas d'identifiant configuré (NEXT_PUBLIC_META_PIXEL_ID manquant).");
+    metaPixelStatus = "NOT_CONFIGURED";
+    warnings.push("Pixel Meta non configuré (variable NEXT_PUBLIC_META_PIXEL_ID absente).");
+  } else {
+    metaPixelStatus = "CONFIGURED_NO_EVENTS";
   }
 
   const live = await getLiveActiveSessions(5);
 
-  const missingUtmRate = totalSessions > 0
-    ? Math.round((missingUtmCount / totalSessions) * 100)
-    : 0;
+  const missingUtmRate: MetricState<number> = totalSessions > 0
+    ? { status: "available", value: Math.round((missingUtmCount / totalSessions) * 100) }
+    : { status: "not_available", reason: "Aucune session enregistrée" };
+
+  let overallStatus: TrackingHealthReport["overallStatus"] = "HEALTHY";
+  if (!supabaseConnected) {
+    overallStatus = "CRITICAL";
+  } else if (warnings.length > 0 || totalSessions === 0) {
+    overallStatus = "WARNING";
+  }
 
   return {
-    isTrackingActive: true,
+    overallStatus,
+    isTrackingActive: supabaseConnected,
     totalSessionsRecorded: totalSessions,
     totalEventsRecorded: totalEvents,
-    activeSessionsNow: live.count,
+    activeSessionsNow: live.count.status === "available" ? live.count.value : 0,
     missingUtmRate,
-    metaPixelConfigured: Boolean(pixelId),
+    metaPixelStatus,
     metaPixelId: pixelId ? `***${pixelId.slice(-4)}` : undefined,
-    supabaseConnected: Boolean(isSupabaseConfigured),
+    supabaseConnected,
     lastEventTimestamp,
     warningsFr: warnings,
   };
-}
-
-/**
- * 10. UNIFIED OPERATIONS SEARCH
- */
-export async function getOperationsSearch(query: string): Promise<{
-  sessions: any[];
-  users: any[];
-  orders: any[];
-  campaigns: any[];
-}> {
-  const q = query.trim().toLowerCase();
-  if (!q) {
-    return { sessions: [], users: [], orders: [], campaigns: [] };
-  }
-
-  const results = {
-    sessions: [] as any[],
-    users: [] as any[],
-    orders: [] as any[],
-    campaigns: [] as any[],
-  };
-
-  if (isSupabaseConfigured && supabase) {
-    try {
-      const [uRes, oRes, cRes] = await Promise.all([
-        supabase.from("profiles").select("id, full_name, username, phone, wilaya, stream").or(`full_name.ilike.%${q}%,phone.ilike.%${q}%,username.ilike.%${q}%`).limit(10),
-        supabase.from("orders").select("id, order_number, amount, status, payment_status, full_name, phone").or(`order_number.ilike.%${q}%,phone.ilike.%${q}%,full_name.ilike.%${q}%`).limit(10),
-        supabase.from("marketing_campaigns").select("id, name, utm_campaign, utm_source").or(`name.ilike.%${q}%,utm_campaign.ilike.%${q}%`).limit(5),
-      ]);
-
-      if (uRes.data) results.users = uRes.data;
-      if (oRes.data) results.orders = oRes.data;
-      if (cRes.data) results.campaigns = cRes.data;
-    } catch {}
-  }
-
-  return results;
 }

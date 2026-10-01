@@ -559,7 +559,7 @@ export const HighSchoolSelector: React.FC<HighSchoolSelectorProps> = ({
               <button
                 type="submit"
                 disabled={isSubmittingSchool || proposedSchoolName.trim().length < 3}
-                className="px-4 py-2 rounded-xl bg-electric hover:bg-electric/90 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-electric/20 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isSubmittingSchool ? (
                   <>

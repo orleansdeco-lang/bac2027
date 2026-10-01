@@ -41,6 +41,9 @@ export default function AcademicProfilePage() {
   const router = useRouter();
   const { direction, locale } = useTranslation();
   const isAr = locale === "ar";
+  const isRTL = direction === "rtl" || isAr;
+  const NextIcon = isRTL ? ArrowLeft : ArrowRight;
+  const BackIcon = isRTL ? ArrowRight : ArrowLeft;
   const { user, isLoading } = useAuth();
 
   // Enforce auth & registration prerequisite and prevent redundant onboarding loop
@@ -612,10 +615,10 @@ export default function AcademicProfilePage() {
                   onClick={handleProceedToSummary}
                   variant="primary"
                   size="lg"
-                  className="w-full justify-center text-base font-bold shadow-xl shadow-electric/25 bg-electric hover:bg-electric-hover text-white"
+                  className="w-full justify-center text-base font-bold shadow-md bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white"
                 >
-                  <span>{isAr ? "متابعة" : "Continuer"}</span>
-                  <ArrowLeft className="w-4 h-4 ml-2 rtl:mr-2 rtl:ml-0" />
+                  <span>{isAr ? "أكمل" : "Continuer"}</span>
+                  <NextIcon className="w-4 h-4 ml-2 rtl:mr-2 rtl:ml-0" />
                 </Button>
               </div>
             </Card>
@@ -641,7 +644,7 @@ export default function AcademicProfilePage() {
               <div className="rounded-xl bg-canvas/80 border border-theme-border p-4 text-xs space-y-2.5 mb-8 text-right rtl:text-right ltr:text-left">
                 <div className="flex items-center justify-between">
                   <span className="text-theme-muted">{isAr ? "الهدف في الباك:" : "Objectif:"}</span>
-                  <span className="font-bold text-electric font-mono">{targetScore} / 20</span>
+                  <span className="font-bold text-[var(--color-primary)] font-mono">{targetScore} / 20</span>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -681,28 +684,29 @@ export default function AcademicProfilePage() {
               {/* CTA Handoff to Diagnostic */}
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
-                  onClick={() => setShowSummary(false)}
-                  variant="outline"
-                  size="lg"
-                  className="w-full sm:w-auto px-5 border-theme-border"
-                >
-                  <span>{isAr ? "تعديل" : "Modifier"}</span>
-                </Button>
-                <Button
                   onClick={handleStartDiagnostic}
                   disabled={submitting}
                   variant="primary"
                   size="lg"
-                  className="w-full sm:flex-1 justify-center text-base font-bold shadow-xl shadow-electric/25 bg-electric hover:bg-electric-hover text-white"
+                  className="w-full sm:flex-1 justify-center text-base font-bold shadow-md bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white"
                 >
                   {submitting ? (
                     <span>{isAr ? "جاري البدء..." : "Démarrage..."}</span>
                   ) : (
                     <>
-                      <span>{isAr ? "نكتاشفو مستوايا" : "Découvrir mon niveau"}</span>
-                      <ArrowLeft className="w-4 h-4 ml-2 rtl:mr-2 rtl:ml-0" />
+                      <span>{isAr ? "أكمل إلى تشخيص مستواي" : "Découvrir mon niveau"}</span>
+                      <NextIcon className="w-4 h-4 ml-2 rtl:mr-2 rtl:ml-0" />
                     </>
                   )}
+                </Button>
+                <Button
+                  onClick={() => setShowSummary(false)}
+                  variant="outline"
+                  size="lg"
+                  className="w-full sm:w-auto px-5 border-theme bg-card hover:bg-card-hover text-theme-secondary hover:text-theme-text"
+                >
+                  <BackIcon className="w-4 h-4 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
+                  <span>{isAr ? "الرجوع للتعديل" : "Modifier"}</span>
                 </Button>
               </div>
             </Card>

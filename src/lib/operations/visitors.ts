@@ -475,7 +475,7 @@ export function getVisitorAnalyticsDetailed(targetDate?: string): VisitorAnalyti
   const totalDev = mobileCount + desktopCount + tabletCount;
   const deviceRatios = {
     mobile: totalDev > 0 ? Math.round((mobileCount / totalDev) * 100) : 0,
-    desktop: totalDev > 0 ? Math.round((desktopCount / totalDev) * 100) : 100,
+    desktop: totalDev > 0 ? Math.round((desktopCount / totalDev) * 100) : 0,
     tablet: totalDev > 0 ? Math.round((tabletCount / totalDev) * 100) : 0,
   };
 

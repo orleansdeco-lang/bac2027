@@ -12,6 +12,8 @@ import { StudentService } from "@/lib/services";
 import { getStudentAccess, formatTrialCountdown } from "@/lib/access";
 import { Logo } from "./Logo";
 import { Badge } from "./Badge";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { SOCIAL_CHANNELS } from "@/lib/constants/social-links";
 import {
   Compass,
   Map,
@@ -485,33 +487,118 @@ export function Sidebar({ className }: SidebarProps) {
           </Link>
         </div>
 
-        {/* WhatsApp Customer Service Action */}
-        <a
-          href={`https://wa.me/213550853234?text=${encodeURIComponent("مرحباً، أحتاج إلى مساعدة ودعم فني في منصة الشاطر للبكالوريا.")}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          data-testid="sidebar-whatsapp-support-btn"
-          className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-card hover:bg-white border border-emerald-500/25 hover:border-emerald-500/40 text-emerald-800 shadow-xs transition-all group cursor-pointer text-xs"
-        >
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-              <MessageCircle className="w-3.5 h-3.5 fill-current" />
-            </div>
-            <div className="text-start">
-              <span className="font-bold text-[11px] block leading-none font-sans text-theme-text">
-                {isAr ? "الدعم الفني المباشر" : "Support WhatsApp"}
-              </span>
-              <span
-                dir="ltr"
-                className="text-[10px] text-theme-muted font-mono leading-none mt-1 inline-block text-left"
-                style={{ unicodeBidi: "isolate" }}
+        {/* Support & Social Channels Hub */}
+        <div className="p-3 rounded-2xl bg-card border border-theme shadow-xs space-y-2.5">
+          <div className="flex items-center justify-between px-0.5">
+            <span className="text-[11px] font-bold text-theme-text font-sans">
+              {isAr ? "تواصل معنا والدعم الفني" : "Support & Réseaux"}
+            </span>
+            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+              {isAr ? "متاح" : "En ligne"}
+            </span>
+          </div>
+
+          {/* Quick Direct Chat: WhatsApp & Telegram */}
+          <div className="grid grid-cols-2 gap-2">
+            <a
+              href={SOCIAL_CHANNELS.whatsapp.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="sidebar-whatsapp-btn"
+              className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 hover:border-emerald-500/50 text-emerald-700 dark:text-emerald-400 text-xs font-bold transition-all shadow-xs group cursor-pointer"
+              title={isAr ? "تواصل معنا عبر واتساب" : "Contacter sur WhatsApp"}
+            >
+              <MessageCircle className="w-4 h-4 fill-emerald-600 text-emerald-600 shrink-0 group-hover:scale-110 transition-transform" />
+              <span className="truncate">{isAr ? "واتساب" : "WhatsApp"}</span>
+            </a>
+
+            <a
+              href={SOCIAL_CHANNELS.telegram.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="sidebar-telegram-btn"
+              className="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 hover:border-sky-500/50 text-sky-700 dark:text-sky-400 text-xs font-bold transition-all shadow-xs group cursor-pointer"
+              title={isAr ? "انضم لقناتنا على تيليغرام" : "Canal Telegram"}
+            >
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" className="shrink-0 text-sky-500 group-hover:scale-110 transition-transform">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.19-.08-.05-.19-.02-.27 0-.12.03-1.99 1.27-5.61 3.72-.53.36-1.01.54-1.44.53-.47-.01-1.38-.27-2.06-.49-.83-.27-1.49-.42-1.43-.88.03-.24.37-.49 1.02-.75 3.98-1.73 6.64-2.87 7.98-3.43 3.8-1.58 4.59-1.86 5.11-1.87.11 0 .37.03.54.17.14.12.18.28.2.45-.02.07-.02.13-.04.2z" />
+              </svg>
+              <span className="truncate">{isAr ? "تيليغرام" : "Telegram"}</span>
+            </a>
+          </div>
+
+          {/* Social Communities Bar: Instagram, Facebook, TikTok, YouTube */}
+          <div className="flex items-center justify-between pt-1 border-t border-theme/60">
+            <span className="text-[10px] text-theme-muted font-sans">
+              {isAr ? "صفحاتنا:" : "Réseaux:"}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <a
+                href={SOCIAL_CHANNELS.instagram.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="sidebar-instagram-btn"
+                className="w-7 h-7 rounded-lg bg-surface hover:bg-[#E1306C]/10 border border-theme hover:border-[#E1306C]/30 text-theme-muted hover:text-[#E1306C] flex items-center justify-center transition-all shadow-2xs group cursor-pointer"
+                title={isAr ? "إنستغرام" : "Instagram"}
               >
-                +213 550 85 32 34
-              </span>
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:scale-110 transition-transform">
+                  <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                  <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                  <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+                </svg>
+              </a>
+
+              <a
+                href={SOCIAL_CHANNELS.facebook.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="sidebar-facebook-btn"
+                className="w-7 h-7 rounded-lg bg-surface hover:bg-[#1877F2]/10 border border-theme hover:border-[#1877F2]/30 text-theme-muted hover:text-[#1877F2] flex items-center justify-center transition-all shadow-2xs group cursor-pointer"
+                title={isAr ? "فيسبوك" : "Facebook"}
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" className="group-hover:scale-110 transition-transform">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+              </a>
+
+              <a
+                href={SOCIAL_CHANNELS.tiktok.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="sidebar-tiktok-btn"
+                className="w-7 h-7 rounded-lg bg-surface hover:bg-slate-900/10 border border-theme hover:border-slate-800/30 text-theme-muted hover:text-theme-text flex items-center justify-center transition-all shadow-2xs group cursor-pointer"
+                title={isAr ? "تيك توك" : "TikTok"}
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" className="group-hover:scale-110 transition-transform">
+                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64c.29 0 .58.04.85.12V9.4a6.33 6.33 0 0 0-.85-.06A6.34 6.34 0 0 0 3.14 15.7a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V9.05a8.28 8.28 0 0 0 3.77.92V6.69z"/>
+                </svg>
+              </a>
+
+              <a
+                href={SOCIAL_CHANNELS.youtube.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                data-testid="sidebar-youtube-btn"
+                className="w-7 h-7 rounded-lg bg-surface hover:bg-[#FF0000]/10 border border-theme hover:border-[#FF0000]/30 text-theme-muted hover:text-[#FF0000] flex items-center justify-center transition-all shadow-2xs group cursor-pointer"
+                title={isAr ? "يوتيوب" : "YouTube"}
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" className="group-hover:scale-110 transition-transform">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+              </a>
             </div>
           </div>
-          <ExternalLink className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-        </a>
+        </div>
+
+        {/* Language Switcher at the very bottom */}
+        <div className="pt-2 border-t border-theme/60 space-y-1.5">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[10px] font-bold text-theme-muted uppercase tracking-wider font-sans">
+              {isAr ? "لغة المنصة" : "Langue"}
+            </span>
+          </div>
+          <LanguageSwitcher variant="sidebar" />
+        </div>
       </div>
     </div>
   );

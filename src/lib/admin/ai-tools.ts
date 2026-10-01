@@ -503,26 +503,22 @@ const searchStudyRoomsTool: AdminToolDefinition<SearchStudyRoomsInput> = {
       }
     }
 
-    if (rooms.length === 0) {
-      rooms = [
-        { id: "room-1", name: "مراجعة الرياضيات — المتتاليات", subject_id: "math", is_active: true, status: "live" },
-        { id: "room-2", name: "حلول الفيزياء — الدارة RC", subject_id: "physics", is_active: true, status: "live" },
-        { id: "room-3", name: "منهجية العلوم — تركيب البروتين", subject_id: "natural_sciences", is_active: true, status: "live" },
-      ];
-    }
-
     const q = (input?.query || "").toLowerCase().trim();
     const filtered = q ? rooms.filter((r) => r.name?.toLowerCase().includes(q)) : rooms;
+    const activeCount = filtered.filter((r) => r.is_active || r.status === "live").length;
 
     return {
       success: true,
       toolName: "search_study_rooms",
       data: {
         totalRooms: filtered.length,
-        activeRoomsCount: filtered.filter((r) => r.is_active || r.status === "live").length,
+        activeRoomsCount: activeCount,
         rooms: filtered,
       },
-      summary: `يوجد ${filtered.length} غرفة مذاكرة ومجلس علم، منها ${filtered.filter((r) => r.is_active || r.status === "live").length} مجالس نشطة حالياً.`,
+      summary:
+        filtered.length > 0
+          ? `يوجد ${filtered.length} غرفة مذاكرة ومجلس علم، منها ${activeCount} مجالس نشطة حالياً.`
+          : "لا توجد مجالس علم مسجلة حالياً في قاعدة البيانات.",
       citation: {
         source: "ديوان شاطر / virtual study tables",
         timestamp: new Date().toISOString(),

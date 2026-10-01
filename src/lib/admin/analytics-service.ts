@@ -341,50 +341,33 @@ export async function getPlatformOverview(token?: string | null): Promise<Platfo
         if (recentAttempts.data) {
           activeStudentsToday = new Set(recentAttempts.data.map((r: any) => r.user_id)).size;
         }
-        activeStudents7d = Math.max(activeStudentsToday, Math.round(totalStudents * 0.38));
+        activeStudents7d = Math.max(activeStudentsToday, 0);
       } catch (err) {
-        console.warn("[AnalyticsService] Supabase overview query encountered error, falling back to observable cache:", err);
+        console.warn("[AnalyticsService] Supabase overview query encountered error:", err);
       }
-    }
-
-    // Baseline fallbacks if database is newly initialized
-    if (!totalStudents) {
-      totalStudents = 1240;
-      activeStudentsToday = 348;
-      activeStudents7d = 620;
-      newStudents7d = 84;
-      newStudents30d = 312;
-      totalStudySessions = 1890;
-      exercisesAttempted = 8940;
-      exercisesCompleted = 3420;
-      correctAnswers = 6633;
-      incorrectAnswers = 2307;
-      activeStudyRooms = 8;
-      paidSubscriptions = 210;
-      pendingSubscriptions = 14;
     }
 
     const accuracyRate =
       exercisesAttempted > 0
         ? Math.round((correctAnswers / exercisesAttempted) * 1000) / 10
-        : 74.2;
+        : 0;
 
     return {
       totalStudents,
-      activeStudentsToday: activeStudentsToday || Math.round(totalStudents * 0.28),
-      activeStudents7d: activeStudents7d || Math.round(totalStudents * 0.52),
-      newStudents7d: newStudents7d || 84,
-      newStudents30d: newStudents30d || 312,
-      totalStudySessions: totalStudySessions || 1890,
+      activeStudentsToday,
+      activeStudents7d,
+      newStudents7d,
+      newStudents30d,
+      totalStudySessions,
       exercisesAttempted,
       exercisesCompleted,
       correctAnswers,
       incorrectAnswers,
       accuracyRate,
-      activeStudyRooms: activeStudyRooms || 8,
+      activeStudyRooms,
       paidSubscriptions,
       pendingSubscriptions,
-      dataHealthScore: 94.8,
+      dataHealthScore: 100,
       generatedAt: new Date().toISOString(),
     };
   });
@@ -453,36 +436,6 @@ export async function getStudentStatistics(token?: string | null): Promise<Stude
       }
     }
 
-    // Default distribution if remote DB has no rows yet
-    if (total === 0) {
-      total = 1240;
-      onboardingCompleted = 1080;
-      streamCounts["sciences_exp"] = 520;
-      streamCounts["math"] = 210;
-      streamCounts["technique_math"] = 180;
-      streamCounts["gestion_eco"] = 160;
-      streamCounts["lettres_philo"] = 110;
-      streamCounts["langues_etrangeres"] = 60;
-
-      wilayaCounts["16"] = 272; // Alger
-      wilayaCounts["31"] = 173; // Oran
-      wilayaCounts["25"] = 136; // Constantine
-      wilayaCounts["19"] = 111; // Sétif
-      wilayaCounts["05"] = 86;  // Batna
-      wilayaCounts["15"] = 74;  // Tizi Ouzou
-      wilayaCounts["06"] = 68;  // Béjaïa
-      wilayaCounts["13"] = 62;  // Tlemcen
-      wilayaCounts["35"] = 55;  // Boumerdès
-      wilayaCounts["09"] = 50;  // Blida
-      wilayaCounts["other"] = 153;
-
-      targetScoreBuckets["10_12"] = 124;
-      targetScoreBuckets["12_14"] = 347;
-      targetScoreBuckets["14_16"] = 496;
-      targetScoreBuckets["16_18"] = 210;
-      targetScoreBuckets["18_20"] = 63;
-    }
-
     // Map Wilayas with official Arabic names
     const wilayaMap = new Map(OFFICIAL_WILAYAS.map((w) => [w.code, w.nameAr]));
     const byWilaya = Object.entries(wilayaCounts)
@@ -490,7 +443,7 @@ export async function getStudentStatistics(token?: string | null): Promise<Stude
         code,
         nameAr: wilayaMap.get(code) || (code === "other" ? "ولايات أخرى" : `ولاية ${code}`),
         count,
-        percentage: Math.round((count / total) * 1000) / 10,
+        percentage: total > 0 ? Math.round((count / total) * 1000) / 10 : 0,
       }))
       .sort((a, b) => b.count - a.count);
 
@@ -500,20 +453,20 @@ export async function getStudentStatistics(token?: string | null): Promise<Stude
         streamId,
         nameAr: STREAM_NAMES_AR[streamId] || streamId,
         count,
-        percentage: Math.round((count / total) * 1000) / 10,
+        percentage: total > 0 ? Math.round((count / total) * 1000) / 10 : 0,
       }))
       .sort((a, b) => b.count - a.count);
 
     // Map Target Scores
     const byTargetScore = [
-      { range: "10-11.99", label: "مقبول (10 - 11.99)", count: targetScoreBuckets["10_12"], percentage: Math.round((targetScoreBuckets["10_12"] / total) * 100) },
-      { range: "12-13.99", label: "قريب من الجيد (12 - 13.99)", count: targetScoreBuckets["12_14"], percentage: Math.round((targetScoreBuckets["12_14"] / total) * 100) },
-      { range: "14-15.99", label: "جيد (14 - 15.99)", count: targetScoreBuckets["14_16"], percentage: Math.round((targetScoreBuckets["14_16"] / total) * 100) },
-      { range: "16-17.99", label: "جيد جداً (16 - 17.99)", count: targetScoreBuckets["16_18"], percentage: Math.round((targetScoreBuckets["16_18"] / total) * 100) },
-      { range: "18-20", label: "ممتاز (18 - 20)", count: targetScoreBuckets["18_20"], percentage: Math.round((targetScoreBuckets["18_20"] / total) * 100) },
+      { range: "10-11.99", label: "مقبول (10 - 11.99)", count: targetScoreBuckets["10_12"], percentage: total > 0 ? Math.round((targetScoreBuckets["10_12"] / total) * 100) : 0 },
+      { range: "12-13.99", label: "قريب من الجيد (12 - 13.99)", count: targetScoreBuckets["12_14"], percentage: total > 0 ? Math.round((targetScoreBuckets["12_14"] / total) * 100) : 0 },
+      { range: "14-15.99", label: "جيد (14 - 15.99)", count: targetScoreBuckets["14_16"], percentage: total > 0 ? Math.round((targetScoreBuckets["14_16"] / total) * 100) : 0 },
+      { range: "16-17.99", label: "جيد جداً (16 - 17.99)", count: targetScoreBuckets["16_18"], percentage: total > 0 ? Math.round((targetScoreBuckets["16_18"] / total) * 100) : 0 },
+      { range: "18-20", label: "ممتاز (18 - 20)", count: targetScoreBuckets["18_20"], percentage: total > 0 ? Math.round((targetScoreBuckets["18_20"] / total) * 100) : 0 },
     ];
 
-    // Growth trend over last 7 days
+    // Growth trend over last 7 days (Strictly authentic data, zero Math.random)
     const days = 7;
     const growthTrend = [];
     for (let i = days - 1; i >= 0; i--) {
@@ -521,18 +474,18 @@ export async function getStudentStatistics(token?: string | null): Promise<Stude
       const dateKey = d.toISOString().split("T")[0];
       growthTrend.push({
         date: dateKey,
-        newUsers: dateCounts[dateKey] || Math.floor(10 + Math.random() * 8),
+        newUsers: dateCounts[dateKey] || 0,
       });
     }
 
     return {
       summary: {
         total,
-        activeToday: Math.round(total * 0.28),
-        active7d: Math.round(total * 0.52),
+        activeToday: 0,
+        active7d: 0,
         active30d: total,
         onboardingCompletedCount: onboardingCompleted,
-        onboardingCompletionRate: Math.round((onboardingCompleted / total) * 1000) / 10,
+        onboardingCompletionRate: total > 0 ? Math.round((onboardingCompleted / total) * 1000) / 10 : 0,
       },
       byWilaya,
       byStream,
@@ -600,29 +553,12 @@ export async function getLearningStatistics(token?: string | null): Promise<Lear
       }
     }
 
-    // Fallbacks if database practice attempts are minimal
-    if (totalAttempts === 0) {
-      totalAttempts = 8940;
-      totalCorrect = 6633;
-
-      subjectAttempts["math"] = { total: 3200, correct: 2304 };
-      subjectAttempts["physics"] = { total: 2450, correct: 1690 };
-      subjectAttempts["natural_sciences"] = { total: 1890, correct: 1530 };
-      subjectAttempts["philosophy"] = { total: 1400, correct: 1064 };
-
-      skillAttempts["math_derivatives_chain_rule"] = { total: 840, correct: 571, subjectId: "math" };
-      skillAttempts["math_functions_limits_factoring"] = { total: 720, correct: 504, subjectId: "math" };
-      skillAttempts["physics_rc_circuit_differential"] = { total: 680, correct: 442, subjectId: "physics" };
-      skillAttempts["physics_nuclear_decay_law"] = { total: 610, correct: 457, subjectId: "physics" };
-      skillAttempts["science_protein_synthesis_translation"] = { total: 540, correct: 432, subjectId: "natural_sciences" };
-    }
-
     const mostPracticedSubjects = Object.entries(subjectAttempts)
       .map(([subjectId, stats]) => ({
         subjectId,
         nameAr: SUBJECT_NAMES_AR[subjectId] || subjectId,
         attempts: stats.total,
-        accuracy: Math.round((stats.correct / stats.total) * 1000) / 10,
+        accuracy: stats.total > 0 ? Math.round((stats.correct / stats.total) * 1000) / 10 : 0,
       }))
       .sort((a, b) => b.attempts - a.attempts);
 
@@ -634,7 +570,7 @@ export async function getLearningStatistics(token?: string | null): Promise<Lear
           titleAr: skill?.title_ar || skillId,
           subjectId: stats.subjectId,
           attempts: stats.total,
-          accuracy: Math.round((stats.correct / stats.total) * 1000) / 10,
+          accuracy: stats.total > 0 ? Math.round((stats.correct / stats.total) * 1000) / 10 : 0,
         };
       })
       .sort((a, b) => b.attempts - a.attempts)
@@ -649,7 +585,7 @@ export async function getLearningStatistics(token?: string | null): Promise<Lear
           titleAr: skill?.title_ar || skillId,
           subjectId: stats.subjectId,
           errorCount,
-          errorRate: Math.round((errorCount / stats.total) * 1000) / 10,
+          errorRate: stats.total > 0 ? Math.round((errorCount / stats.total) * 1000) / 10 : 0,
         };
       })
       .sort((a, b) => b.errorRate - a.errorRate)
@@ -659,8 +595,8 @@ export async function getLearningStatistics(token?: string | null): Promise<Lear
       skillId: s.skillId,
       titleAr: s.titleAr,
       subjectId: s.subjectId,
-      affectedStudents: Math.max(12, Math.round(s.errorCount * 0.45)),
-      recurrenceRate: Math.min(88, Math.round(s.errorRate * 0.85)),
+      affectedStudents: s.errorCount,
+      recurrenceRate: s.errorRate,
     }));
 
     const mostAttemptedExercises = Object.entries(questionAttempts)
@@ -669,7 +605,7 @@ export async function getLearningStatistics(token?: string | null): Promise<Lear
         subjectId: stats.subjectId,
         skillId: stats.skillId,
         attempts: stats.total,
-        failureRate: Math.round((stats.incorrect / stats.total) * 1000) / 10,
+        failureRate: stats.total > 0 ? Math.round((stats.incorrect / stats.total) * 1000) / 10 : 0,
       }))
       .sort((a, b) => b.attempts - a.attempts)
       .slice(0, 10);
@@ -677,9 +613,9 @@ export async function getLearningStatistics(token?: string | null): Promise<Lear
     return {
       summary: {
         totalAttempts,
-        overallAccuracy: Math.round((totalCorrect / totalAttempts) * 1000) / 10,
-        totalMasteredSkills: 1840,
-        diagnosticCompletionRate: 82.4,
+        overallAccuracy: totalAttempts > 0 ? Math.round((totalCorrect / totalAttempts) * 1000) / 10 : 0,
+        totalMasteredSkills: 0,
+        diagnosticCompletionRate: 0,
       },
       mostPracticedSubjects,
       mostPracticedLessons,

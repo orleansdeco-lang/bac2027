@@ -482,8 +482,8 @@ export const dictionaries: Record<Locale, Dictionary> = {
     },
     onboarding: {
       nav: {
-        back: "السابق",
-        next: "متابعة",
+        back: "الرجوع",
+        next: "أكمل",
         stepOf: "الخطوة {current} من {total}",
         finish: "بناء الخريطة",
       },

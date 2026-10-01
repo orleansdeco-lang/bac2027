@@ -26,6 +26,7 @@ const config: Config = {
         "theme-border-hover": "var(--color-border-hover)",
         "theme-border-strong": "var(--color-border-strong)",
 
+        "theme-base": "var(--color-text-primary)",
         "theme-text": "var(--color-text-primary)",
         "theme-secondary": "var(--color-text-secondary)",
         "theme-muted": "var(--color-text-muted)",
@@ -34,6 +35,17 @@ const config: Config = {
         "theme-primary-hover": "var(--color-primary-hover)",
         "theme-primary-active": "var(--color-primary-active)",
         "theme-accent": "var(--color-accent)",
+
+        electric: {
+          DEFAULT: "var(--color-primary)",
+          hover: "var(--color-primary-hover)",
+        },
+        "electric-hover": "var(--color-primary-hover)",
+
+        danger: {
+          DEFAULT: "var(--color-error)",
+          soft: "var(--color-error-soft)",
+        },
 
         dark: {
           bg: "var(--color-bg-base)",

@@ -62,6 +62,17 @@ export const ALLOWED_TELEMETRY_EVENTS = new Set([
   "pilot_session_ended",
   "pilot_resume_success",
 
+  // ORIENTATION
+  "orientation_started",
+  "orientation_stream_selected",
+  "orientation_score_completed",
+  "orientation_results_viewed",
+  "orientation_program_clicked",
+
+  // PROMOTIONS & ADS
+  "ad_impression",
+  "ad_clicked",
+
   // COMMERCIAL
   "trial_started",
   "trial_expiring",

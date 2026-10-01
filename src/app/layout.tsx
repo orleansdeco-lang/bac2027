@@ -112,7 +112,7 @@ export default function RootLayout({
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://shater.dz";
 
   return (
-    <html lang="ar" dir="rtl" className="h-full bg-canvas text-theme-text" data-theme="focus">
+    <html lang="ar" dir="rtl" className="h-full bg-canvas text-theme-text" data-theme="bac-mastery">
       <body className="min-h-screen antialiased bg-canvas text-theme-text selection:bg-[var(--color-primary)] selection:text-[var(--color-primary-text)]">
         <GoogleAnalytics />
         <MetaPixel />

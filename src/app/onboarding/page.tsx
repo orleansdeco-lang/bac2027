@@ -828,14 +828,24 @@ export default function OnboardingPage() {
       {draft.currentStep !== "welcome" && draft.currentStep !== "summary" && (
         <footer className="sticky bottom-0 z-30 border-t border-theme bg-surface/95 backdrop-blur-md py-3.5 transition-colors duration-200">
           <Container size="sm" className="flex items-center justify-between gap-3 max-w-lg">
-            <Button variant="outline" size="md" onClick={handleBack}>
-              <BackArrow className="h-4 w-4" />
-              <span>{t.onboarding.nav.back}</span>
-            </Button>
-
-            <Button variant="primary" size="md" onClick={handleNext} className="font-bold">
+            <Button
+              variant="primary"
+              size="md"
+              onClick={handleNext}
+              className="font-bold bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white shadow-md flex-1 sm:flex-initial"
+            >
               <span>{t.onboarding.nav.next}</span>
               <NextArrow className="h-4 w-4" />
+            </Button>
+
+            <Button
+              variant="outline"
+              size="md"
+              onClick={handleBack}
+              className="border-theme bg-card hover:bg-card-hover text-theme-secondary hover:text-theme-text"
+            >
+              <BackArrow className="h-4 w-4" />
+              <span>{t.onboarding.nav.back}</span>
             </Button>
           </Container>
         </footer>

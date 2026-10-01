@@ -458,9 +458,9 @@ export default function StudentRegistrationPage() {
                   key={i}
                   className={`h-2 rounded-full transition-all duration-300 ${
                     isActive
-                      ? "w-8 bg-electric"
+                      ? "w-8 bg-[var(--color-primary)]"
                       : isDone
-                      ? "w-2 bg-success"
+                      ? "w-2 bg-[var(--color-success)]"
                       : "w-2 bg-theme-border"
                   }`}
                 />
@@ -601,9 +601,9 @@ export default function StudentRegistrationPage() {
                   onClick={handleNext}
                   variant="primary"
                   size="lg"
-                  className="w-full justify-center text-base font-bold shadow-lg shadow-electric/20"
+                  className="w-full justify-center text-base font-bold shadow-md bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white"
                 >
-                  <span>{isAr ? "نكمل" : "Continuer"}</span>
+                  <span>{isAr ? "أكمل" : "Continuer"}</span>
                   <NextIcon className="w-4 h-4 ml-2 rtl:mr-2 rtl:ml-0" />
                 </Button>
               </div>
@@ -634,18 +634,18 @@ export default function StudentRegistrationPage() {
                 <button
                   type="button"
                   onClick={() => setStudentStatus("schooled")}
-                  className={`p-6 rounded-2xl border text-right rtl:text-right ltr:text-left transition-all duration-200 flex flex-col justify-between ${
+                  className={`p-6 rounded-2xl border text-right rtl:text-right ltr:text-left transition-all duration-200 flex flex-col justify-between cursor-pointer ${
                     studentStatus === "schooled"
-                      ? "bg-electric/10 border-electric shadow-lg shadow-electric/10 text-theme-base ring-1 ring-electric"
-                      : "bg-canvas/60 border-theme-border text-theme-muted hover:border-theme-border/80 hover:bg-canvas"
+                      ? "bg-[var(--color-primary-soft)]/50 border-[var(--color-primary)] shadow-sm text-theme-base ring-1 ring-[var(--color-primary)]"
+                      : "bg-canvas/60 border-theme-border text-theme-muted hover:border-[var(--color-primary)]/40 hover:bg-canvas"
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-electric/20 text-electric flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-xl bg-[var(--color-primary-soft)] text-[var(--color-primary)] flex items-center justify-center">
                       <School className="w-5 h-5" />
                     </div>
                     {studentStatus === "schooled" && (
-                      <div className="w-6 h-6 rounded-full bg-electric text-white flex items-center justify-center">
+                      <div className="w-6 h-6 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center">
                         <Check className="w-3.5 h-3.5" />
                       </div>
                     )}
@@ -666,10 +666,10 @@ export default function StudentRegistrationPage() {
                 <button
                   type="button"
                   onClick={() => setStudentStatus("free")}
-                  className={`p-6 rounded-2xl border text-right rtl:text-right ltr:text-left transition-all duration-200 flex flex-col justify-between ${
+                  className={`p-6 rounded-2xl border text-right rtl:text-right ltr:text-left transition-all duration-200 flex flex-col justify-between cursor-pointer ${
                     studentStatus === "free"
-                      ? "bg-electric/10 border-electric shadow-lg shadow-electric/10 text-theme-base ring-1 ring-electric"
-                      : "bg-canvas/60 border-theme-border text-theme-muted hover:border-theme-border/80 hover:bg-canvas"
+                      ? "bg-[var(--color-primary-soft)]/50 border-[var(--color-primary)] shadow-sm text-theme-base ring-1 ring-[var(--color-primary)]"
+                      : "bg-canvas/60 border-theme-border text-theme-muted hover:border-[var(--color-primary)]/40 hover:bg-canvas"
                   }`}
                 >
                   <div className="flex items-center justify-between w-full mb-3">
@@ -677,7 +677,7 @@ export default function StudentRegistrationPage() {
                       <GraduationCap className="w-5 h-5" />
                     </div>
                     {studentStatus === "free" && (
-                      <div className="w-6 h-6 rounded-full bg-electric text-white flex items-center justify-center">
+                      <div className="w-6 h-6 rounded-full bg-[var(--color-primary)] text-white flex items-center justify-center">
                         <Check className="w-3.5 h-3.5" />
                       </div>
                     )}
@@ -697,22 +697,22 @@ export default function StudentRegistrationPage() {
 
               <div className="flex items-center gap-3 mt-8">
                 <Button
-                  onClick={handleBack}
-                  variant="outline"
-                  size="lg"
-                  className="px-5 border-theme-border"
-                >
-                  <BackIcon className="w-4 h-4 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
-                  <span>{isAr ? "رجوع" : "Retour"}</span>
-                </Button>
-                <Button
                   onClick={handleNext}
                   variant="primary"
                   size="lg"
-                  className="flex-1 justify-center text-base font-bold shadow-lg shadow-electric/20"
+                  className="flex-1 justify-center text-base font-bold shadow-md bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white"
                 >
-                  <span>{isAr ? "نكمل" : "Continuer"}</span>
+                  <span>{isAr ? "أكمل" : "Continuer"}</span>
                   <NextIcon className="w-4 h-4 ml-2 rtl:mr-2 rtl:ml-0" />
+                </Button>
+                <Button
+                  onClick={handleBack}
+                  variant="outline"
+                  size="lg"
+                  className="px-5 border-theme-border text-theme-secondary hover:text-theme-base bg-card hover:bg-card-hover"
+                >
+                  <BackIcon className="w-4 h-4 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
+                  <span>{isAr ? "الرجوع" : "Retour"}</span>
                 </Button>
               </div>
             </Card>
@@ -748,16 +748,16 @@ export default function StudentRegistrationPage() {
                       key={sId}
                       type="button"
                       onClick={() => setStreamId(sId)}
-                      className={`p-4 rounded-xl border text-right rtl:text-right ltr:text-left transition-all duration-150 flex items-center justify-between ${
+                      className={`p-4 rounded-xl border text-right rtl:text-right ltr:text-left transition-all duration-150 flex items-center justify-between cursor-pointer ${
                         isSelected
-                          ? "bg-electric/15 border-electric text-theme-base shadow-sm ring-1 ring-electric"
-                          : "bg-canvas/50 border-theme-border/70 text-theme-muted hover:border-theme-border hover:bg-canvas"
+                          ? "bg-[var(--color-primary-soft)]/60 border-[var(--color-primary)] text-theme-base shadow-sm ring-1 ring-[var(--color-primary)]"
+                          : "bg-canvas/50 border-theme-border/70 text-theme-muted hover:border-[var(--color-primary)]/40 hover:bg-canvas"
                       }`}
                     >
                       <div className="flex items-center gap-3">
                         <div
                           className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-                            isSelected ? "bg-electric text-white" : "bg-theme-border/40 text-theme-muted"
+                            isSelected ? "bg-[var(--color-primary)] text-white" : "bg-theme-border/40 text-theme-muted"
                           }`}
                         >
                           <Icon className="w-4 h-4" />
@@ -768,7 +768,7 @@ export default function StudentRegistrationPage() {
                           </p>
                         </div>
                       </div>
-                      {isSelected && <Check className="w-4 h-4 text-electric" />}
+                      {isSelected && <Check className="w-4 h-4 text-[var(--color-primary)]" />}
                     </button>
                   );
                 })}
@@ -776,7 +776,7 @@ export default function StudentRegistrationPage() {
 
               {/* Sub-Specialty selector if Technique Math is selected */}
               {streamId === "technique_math" && (
-                <div className="mt-4 p-4 rounded-xl bg-canvas border border-electric/40 animate-fadeIn">
+                <div className="mt-4 p-4 rounded-xl bg-canvas border border-[var(--color-primary)]/40 animate-fadeIn">
                   <label className="block text-xs font-bold text-cyan-400 mb-2">
                     {isAr ? "اختر التخصص الهندسي (تقني رياضي) *" : "Branche de Génie (Technique Math) *"}
                   </label>
@@ -789,14 +789,14 @@ export default function StudentRegistrationPage() {
                           key={spId}
                           type="button"
                           onClick={() => setTechniqueMathSpecialty(spId)}
-                          className={`p-2.5 px-3 rounded-lg border text-xs font-semibold flex items-center justify-between transition ${
+                          className={`p-2.5 px-3 rounded-lg border text-xs font-semibold flex items-center justify-between transition cursor-pointer ${
                             isSpSelected
-                              ? "bg-electric/20 border-electric text-electric"
+                              ? "bg-[var(--color-primary-soft)] border-[var(--color-primary)] text-[var(--color-primary)] font-bold ring-1 ring-[var(--color-primary)]"
                               : "bg-surface border-theme-border text-theme-muted hover:bg-surface/80"
                           }`}
                         >
                           <span>{isAr ? sp.name_ar : sp.name_fr}</span>
-                          {isSpSelected && <Check className="w-3.5 h-3.5" />}
+                          {isSpSelected && <Check className="w-3.5 h-3.5 text-[var(--color-primary)]" />}
                         </button>
                       );
                     })}
@@ -806,22 +806,22 @@ export default function StudentRegistrationPage() {
 
               <div className="flex items-center gap-3 mt-8">
                 <Button
-                  onClick={handleBack}
-                  variant="outline"
-                  size="lg"
-                  className="px-5 border-theme-border"
-                >
-                  <BackIcon className="w-4 h-4 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
-                  <span>{isAr ? "رجوع" : "Retour"}</span>
-                </Button>
-                <Button
                   onClick={handleNext}
                   variant="primary"
                   size="lg"
-                  className="flex-1 justify-center text-base font-bold shadow-lg shadow-electric/20"
+                  className="flex-1 justify-center text-base font-bold shadow-md bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white"
                 >
-                  <span>{isAr ? "نكمل" : "Continuer"}</span>
+                  <span>{isAr ? "أكمل" : "Continuer"}</span>
                   <NextIcon className="w-4 h-4 ml-2 rtl:mr-2 rtl:ml-0" />
+                </Button>
+                <Button
+                  onClick={handleBack}
+                  variant="outline"
+                  size="lg"
+                  className="px-5 border-theme-border text-theme-secondary hover:text-theme-base bg-card hover:bg-card-hover"
+                >
+                  <BackIcon className="w-4 h-4 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
+                  <span>{isAr ? "الرجوع" : "Retour"}</span>
                 </Button>
               </div>
             </Card>
@@ -959,22 +959,22 @@ export default function StudentRegistrationPage() {
 
               <div className="flex items-center gap-3 mt-8">
                 <Button
-                  onClick={handleBack}
-                  variant="outline"
-                  size="lg"
-                  className="px-5 border-theme-border"
-                >
-                  <BackIcon className="w-4 h-4 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
-                  <span>{isAr ? "رجوع" : "Retour"}</span>
-                </Button>
-                <Button
                   onClick={handleNext}
                   variant="primary"
                   size="lg"
-                  className="flex-1 justify-center text-base font-bold shadow-lg shadow-electric/20"
+                  className="flex-1 justify-center text-base font-bold shadow-md bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white"
                 >
-                  <span>{isAr ? "نكمل" : "Continuer"}</span>
+                  <span>{isAr ? "أكمل" : "Continuer"}</span>
                   <NextIcon className="w-4 h-4 ml-2 rtl:mr-2 rtl:ml-0" />
+                </Button>
+                <Button
+                  onClick={handleBack}
+                  variant="outline"
+                  size="lg"
+                  className="px-5 border-theme-border text-theme-secondary hover:text-theme-base bg-card hover:bg-card-hover"
+                >
+                  <BackIcon className="w-4 h-4 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
+                  <span>{isAr ? "الرجوع" : "Retour"}</span>
                 </Button>
               </div>
             </Card>
@@ -1050,20 +1050,11 @@ export default function StudentRegistrationPage() {
 
               <div className="flex flex-col sm:flex-row items-center gap-3 mt-8">
                 <Button
-                  onClick={handleBack}
-                  variant="outline"
-                  size="lg"
-                  className="w-full sm:w-auto px-5 border-theme-border"
-                >
-                  <BackIcon className="w-4 h-4 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
-                  <span>{isAr ? "نرجع نعدل" : "Modifier"}</span>
-                </Button>
-                <Button
                   onClick={handleFinalSubmit}
                   disabled={submitting}
                   variant="primary"
                   size="lg"
-                  className="w-full sm:flex-1 justify-center text-base font-bold shadow-xl shadow-electric/25 bg-electric hover:bg-electric-hover text-white"
+                  className="w-full sm:flex-1 justify-center text-base font-bold shadow-md bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white"
                 >
                   {submitting ? (
                     <span>{isAr ? "جاري الحفظ..." : "Enregistrement..."}</span>
@@ -1072,11 +1063,20 @@ export default function StudentRegistrationPage() {
                       <span>
                         {typeof window !== "undefined" && new URLSearchParams(window.location.search).get("edit") === "true"
                           ? (isAr ? "حفظ وتحديث البيانات والعودة للحساب" : "Enregistrer et retourner au compte")
-                          : (isAr ? "كلش صحيح — نكمل" : "Tout est correct — Continuer")}
+                          : (isAr ? "أكمل التسجيل وابدأ" : "Terminer et commencer")}
                       </span>
                       <NextIcon className="w-4 h-4 ml-2 rtl:mr-2 rtl:ml-0" />
                     </>
                   )}
+                </Button>
+                <Button
+                  onClick={handleBack}
+                  variant="outline"
+                  size="lg"
+                  className="w-full sm:w-auto px-5 border-theme-border text-theme-secondary hover:text-theme-base bg-card hover:bg-card-hover"
+                >
+                  <BackIcon className="w-4 h-4 mr-1.5 rtl:ml-1.5 rtl:mr-0" />
+                  <span>{isAr ? "الرجوع للتعديل" : "Modifier"}</span>
                 </Button>
               </div>
             </Card>
