@@ -11,6 +11,7 @@ import { OperationsOverviewKPIs, StudentOperationalSummary } from "./types";
 import { getPaymentOrders } from "./payments";
 import { getStoredTelemetryEvents } from "./telemetry";
 import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "../supabase/client";
+import { getAdminClient } from "../supabase/admin";
 import { getCapturedClientErrors } from "../monitoring";
 import { loadServerStudentProfiles } from "./students";
 
@@ -20,7 +21,7 @@ export async function getOperationsOverviewKPIs(
 ): Promise<OperationsOverviewKPIs> {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-  const client = token ? createAuthenticatedSupabaseClient(token) : supabase;
+  const client = getAdminClient() || (token ? createAuthenticatedSupabaseClient(token) : null) || supabase;
 
   // 1. Fetch Orders with operator token
   const allOrders = await getPaymentOrders({ limit: 500 }, token);
@@ -386,7 +387,7 @@ export async function getStudentsOperationalList(
   token?: string | null
 ): Promise<StudentOperationalSummary[]> {
   const summaries: StudentOperationalSummary[] = [];
-  const client = token ? createAuthenticatedSupabaseClient(token) : supabase;
+  const client = getAdminClient() || (token ? createAuthenticatedSupabaseClient(token) : null) || supabase;
   const pendingOrders = await getPaymentOrders({ status: "PENDING" }, token);
   const pendingUserIds = new Set(pendingOrders.map((o) => o.userId));
 
@@ -432,6 +433,7 @@ export async function getStudentsOperationalList(
             streamId: p.stream_id,
             wilayaName: p.wilaya_name,
             communeName: p.commune_name,
+            schoolName: p.school_name || p.raw_draft?.schoolName || p.raw_draft?.school_name || undefined,
             accessStatus: (p.access_status || (remainingMs <= 0 ? "EXPIRED" : "TRIAL")) as any,
             plan: p.plan || "PILOT_TRIAL",
             trialStartedAt: p.trial_started_at || p.created_at,

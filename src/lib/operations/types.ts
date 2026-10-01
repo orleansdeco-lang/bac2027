@@ -214,6 +214,7 @@ export interface StudentOperationalSummary {
   streamId?: string;
   wilayaName?: string;
   communeName?: string;
+  schoolName?: string;
   accessStatus: "TRIAL" | "PAID" | "EXPIRED" | "REJECTED";
   plan: string;
   trialStartedAt?: string;

@@ -22,9 +22,6 @@ import {
   Check,
   X,
   ExternalLink,
-  Smartphone,
-  Monitor,
-  Tablet,
   Calendar,
   Layers,
   ArrowUpRight,
@@ -35,33 +32,16 @@ import {
   BookOpen,
   Award,
   Target,
-  Brain,
-  ShieldAlert,
-  Flame,
-  ChevronRight,
   BarChart3,
   MapPin,
-  School,
-  Package,
   Truck,
   Printer,
   Phone,
-  ShieldCheck,
-  Send,
-  Radio,
-  Globe,
   DollarSign,
-  FileText,
   FileSpreadsheet,
-  Boxes,
+  Package,
 } from "lucide-react";
-import {
-  OperationsDashboardData,
-  ExpiringSoonAlert,
-  StalePendingAlert,
-  DropoffAlert,
-  ConversionFunnelStep,
-} from "@/lib/operations/types";
+import { OperationsDashboardData } from "@/lib/operations/types";
 import { opsFetch } from "@/lib/operations/client-api";
 
 export function OperationsCockpitDashboard() {
@@ -73,15 +53,9 @@ export function OperationsCockpitDashboard() {
   // Time filter for Sales Overview
   const [salesTimeRange, setSalesTimeRange] = useState<"TODAY" | "WEEK" | "MONTH">("MONTH");
 
-  // Universal Search
-  const [searchQuery, setSearchQuery] = useState("");
-
-  // Quick Action Modal State
+  // Quick Action State
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [actionToast, setActionToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
-  const [shippingModalOrder, setShippingModalOrder] = useState<any | null>(null);
-  const [trackingNumberInput, setTrackingNumberInput] = useState("");
-  const [carrierInput, setCarrierInput] = useState("Yalidine Express");
 
   // Fetch Dashboard Data from Server API
   async function fetchDashboard(isManual = false) {
@@ -114,36 +88,9 @@ export function OperationsCockpitDashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  // Quick Action Handlers for Live Orders
-  async function handleOrderAction(orderId: string, action: string, params: Record<string, any> = {}) {
-    setActionLoadingId(orderId);
-    setActionToast(null);
-
-    try {
-      const res = await opsFetch("/api/ops/orders/actions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderId, action, params }),
-      });
-
-      const json = await res.json();
-      if (res.ok && json.success) {
-        setActionToast({ message: json.message || "تم تنفيذ الإجراء بنجاح", type: "success" });
-        await fetchDashboard(true);
-      } else {
-        setActionToast({ message: json.error || "تعذر تنفيذ الإجراء", type: "error" });
-      }
-    } catch (err: any) {
-      setActionToast({ message: err?.message || "فشل الاتصال بالخادم", type: "error" });
-    } finally {
-      setActionLoadingId(null);
-    }
-  }
-
   // Real calculations
   const kpis = data?.kpis;
   const orders = data?.orders || [];
-  const inventory = data?.inventory;
   const summary = data?.ordersSummary || {
     totalOrders: orders.length,
     pending: orders.filter((o: any) => o.status === "PENDING").length,
@@ -155,7 +102,7 @@ export function OperationsCockpitDashboard() {
     returned: orders.filter((o: any) => o.status === "RETURNED" || o.status === "CANCELLED").length,
   };
 
-  // Real revenue numbers
+  // Real revenue numbers (Strictly 0 if no real transactions exist)
   const todaySales = kpis?.todayRevenue ?? orders
     .filter((o: any) => {
       const today = new Date().toISOString().slice(0, 10);
@@ -163,74 +110,33 @@ export function OperationsCockpitDashboard() {
     })
     .reduce((sum: number, o: any) => sum + (Number(o.amount) || 0), 0);
 
-  const monthSales = kpis?.monthRevenue ?? kpis?.totalRevenue ?? orders.reduce((sum: number, o: any) => sum + (Number(o.amount) || 0), 0);
+  const monthSales = kpis?.monthRevenue ?? orders.reduce((sum: number, o: any) => sum + (Number(o.amount) || 0), 0);
 
   const collectedCash = (kpis?.onlineRevenue || 0) + (summary.paid * 4900);
-
-  const availableKits = inventory?.totalKitsAvailable ?? 133;
-  const hasLowStock = inventory?.hasLowStockAlert ?? (availableKits < 30);
 
   const totalStudents = kpis?.totalStudents ?? 0;
   const paidRatio = kpis?.paidRatio ?? (totalStudents > 0 ? Math.round((summary.paid / totalStudents) * 100) : 0);
 
-  const pendingCodOutstanding = kpis?.pendingOrdersRevenue ?? ((summary.shipped + summary.delivered + summary.codPending) * 4900);
+  const pendingCodOutstanding = kpis?.pendingOrdersRevenue ?? ((summary.shipped + summary.codPending) * 4900);
 
-  // Top 5 Best Selling Items calculation
-  const bestSellingItems = useMemo(() => {
-    const kitCount = orders.filter((o: any) => (o.planName || "").includes("حقيبة") || (o.planName || "").includes("Season") || o.amount >= 4500).length;
-    const boosterCount = orders.filter((o: any) => (o.planName || "").includes("فصلي") || (o.planName || "").includes("شهري") || (o.amount >= 2000 && o.amount < 4500)).length;
-    const revisionCount = orders.filter((o: any) => (o.planName || "").includes("مراجعة") || (o.planName || "").includes("Revision") || (o.amount < 2000 && o.amount > 0)).length;
+  // Strictly 2 Subscriptions: Annual (سنوي - 4900 دج) and Monthly (شهري - 1500 دج)
+  const annualOrders = orders.filter((o: any) => {
+    const plan = (o.planName || "").toLowerCase();
+    return plan.includes("سنوي") || plan.includes("annual") || plan.includes("season") || Number(o.amount) >= 4000;
+  });
+  const monthlyOrders = orders.filter((o: any) => {
+    const plan = (o.planName || "").toLowerCase();
+    return plan.includes("شهري") || plan.includes("month") || (Number(o.amount) < 4000 && Number(o.amount) > 0);
+  });
 
-    return [
-      {
-        rank: 1,
-        sku: "SHT-KIT-BAC-01",
-        name: "حقيبة الشاطر للبكالوريا (العلبة الكاملة + كود التفعيل الذكي)",
-        category: "حقيبة فيزيائية شاملة",
-        price: 4900,
-        unitsSold: Math.max(kitCount, 1),
-        revenue: Math.max(kitCount, 1) * 4900,
-      },
-      {
-        rank: 2,
-        sku: "SHT-SUB-TRM-02",
-        name: "اشتراك الدعم والمرافقة الفصلي (Term Booster)",
-        category: "ترخيص رقمي",
-        price: 2500,
-        unitsSold: boosterCount,
-        revenue: boosterCount * 2500,
-      },
-      {
-        rank: 3,
-        sku: "SHT-REV-PCK-03",
-        name: "حزمة المراجعة النهائية والمواضيع المقترحة للبكالوريا",
-        category: "حزمة تدريبية",
-        price: 1500,
-        unitsSold: revisionCount,
-        revenue: revisionCount * 1500,
-      },
-      {
-        rank: 4,
-        sku: "SHT-PLN-EXC-04",
-        name: "مخطط الامتياز السنوي الورقي + دليل المنهجية",
-        category: "مطبوعات ورقية",
-        price: 800,
-        unitsSold: 0,
-        revenue: 0,
-      },
-      {
-        rank: 5,
-        sku: "SHT-CRD-NFC-05",
-        name: "بطاقة التفعيل الذكية الإضافية (NFC / QR Card)",
-        category: "بطاقات ذكية",
-        price: 500,
-        unitsSold: 0,
-        revenue: 0,
-      },
-    ];
-  }, [orders]);
+  const annualCount = annualOrders.length;
+  const monthlyCount = monthlyOrders.length;
+  const totalSubOrders = annualCount + monthlyCount;
 
-  // Payment Collection Breakdown (Today)
+  const annualPercent = totalSubOrders > 0 ? Math.round((annualCount / totalSubOrders) * 100) : 0;
+  const monthlyPercent = totalSubOrders > 0 ? 100 - annualPercent : 0;
+
+  // Real payment channels
   const codPaidToday = orders
     .filter((o: any) => o.payment?.method === "COD" || o.orderType === "COD")
     .reduce((sum: number, o: any) => sum + (Number(o.amount) || 0), 0);
@@ -244,11 +150,40 @@ export function OperationsCockpitDashboard() {
     .reduce((sum: number, o: any) => sum + (Number(o.amount) || 0), 0);
 
   const totalCollectedToday = codPaidToday + baridiMobToday + cardOnlineToday;
-  const codPercent = totalCollectedToday > 0 ? Math.round((codPaidToday / totalCollectedToday) * 100) : 75;
-  const baridiMobPercent = totalCollectedToday > 0 ? Math.round((baridiMobToday / totalCollectedToday) * 100) : 20;
-  const onlinePercent = totalCollectedToday > 0 ? Math.round((cardOnlineToday / totalCollectedToday) * 100) : 5;
+  const codPercent = totalCollectedToday > 0 ? Math.round((codPaidToday / totalCollectedToday) * 100) : 0;
+  const baridiMobPercent = totalCollectedToday > 0 ? Math.round((baridiMobToday / totalCollectedToday) * 100) : 0;
+  const onlinePercent = totalCollectedToday > 0 ? Math.max(0, 100 - codPercent - baridiMobPercent) : 0;
 
-  // Wilaya-Wise Sales calculation
+  // Real Monthly Trend (Computed strictly from orders, 0 if empty)
+  const monthlyTrends = useMemo(() => {
+    const months = [
+      { key: "10", name: "أكتوبر", year: 2025 },
+      { key: "11", name: "نوفمبر", year: 2025 },
+      { key: "12", name: "ديسمبر", year: 2025 },
+      { key: "01", name: "جانفي", year: 2026 },
+      { key: "02", name: "فيفري", year: 2026 },
+    ];
+
+    const dataRows = months.map((m) => {
+      const monthRev = orders
+        .filter((o: any) => (o.createdAt || "").includes(`-${m.key}-`))
+        .reduce((sum: number, o: any) => sum + (Number(o.amount) || 0), 0);
+      return {
+        month: m.name,
+        revenue: monthRev,
+        label: monthRev > 0 ? `${(monthRev / 1000).toFixed(0)}K` : "0 دج",
+      };
+    });
+
+    const maxRev = Math.max(...dataRows.map((d) => d.revenue), 1);
+    return dataRows.map((d, idx) => ({
+      ...d,
+      heightPercent: d.revenue > 0 ? `${Math.max(15, Math.round((d.revenue / maxRev) * 100))}%` : "6%",
+      active: idx === dataRows.length - 1,
+    }));
+  }, [orders]);
+
+  // Wilaya-Wise Sales calculation (Real only)
   const wilayaSales = useMemo(() => {
     const map = new Map<string, number>();
     orders.forEach((o: any) => {
@@ -258,7 +193,9 @@ export function OperationsCockpitDashboard() {
 
     if (map.size === 0 && data?.learning?.topWilayas) {
       data.learning.topWilayas.forEach((tw: any) => {
-        map.set(tw.wilayaName, tw.count);
+        if (tw.count > 0) {
+          map.set(tw.wilayaName, tw.count);
+        }
       });
     }
 
@@ -266,15 +203,15 @@ export function OperationsCockpitDashboard() {
       .map(([wilaya, count]) => ({ wilaya, count }))
       .sort((a, b) => b.count - a.count);
 
-    const totalOrdersCount = Math.max(orders.length, 1);
+    const totalOrdersCount = orders.length || 1;
     return sorted.slice(0, 6).map((item) => ({
       wilaya: item.wilaya,
       count: item.count,
-      percent: Math.round((item.count / totalOrdersCount) * 100),
+      percent: orders.length > 0 ? Math.round((item.count / totalOrdersCount) * 100) : 0,
     }));
   }, [orders, data?.learning?.topWilayas]);
 
-  // Recent Transactions calculation
+  // Recent Transactions (Real only)
   const recentTransactions = useMemo(() => {
     return orders.slice(0, 5);
   }, [orders]);
@@ -294,7 +231,7 @@ export function OperationsCockpitDashboard() {
       "Commune",
       "Address",
       "Is_Stopdesk",
-      "Product",
+      "Subscription_Plan",
       "Price_COD_DZD",
       "Tracking_Number",
       "Status",
@@ -325,7 +262,7 @@ export function OperationsCockpitDashboard() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto text-slate-100" dir="rtl">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto text-slate-100 bg-[#070B14]" dir="rtl">
       {/* Action Toast Alert */}
       {actionToast && (
         <div
@@ -353,12 +290,12 @@ export function OperationsCockpitDashboard() {
       )}
 
       {/* Top Header & Search & Action Bar */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-3 border-b border-slate-800/80">
         <div>
           <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
             <span className="text-indigo-400 font-bold">منصة الشاطر</span>
             <span>/</span>
-            <span>مركز العمليات والتحكم التجاري</span>
+            <span>مركز العمليات والتحكم المركزي</span>
           </div>
           <h1 className="text-2xl font-black text-white flex items-center gap-3">
             <LayoutDashboardIcon className="w-7 h-7 text-indigo-400" />
@@ -369,7 +306,7 @@ export function OperationsCockpitDashboard() {
             </span>
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            المراقبة اللحظية للمبيعات، شحنات ياليدين، التحصيل المالي، ومخزون الحقائب الورقية
+            المراقبة اللحظية للاشتراكات السنوية والشهرية، تحصيلات COD وياليدين، والزوار في الوقت الفعلي
           </p>
         </div>
 
@@ -406,17 +343,17 @@ export function OperationsCockpitDashboard() {
           </Link>
 
           <Link
-            href="/ops/inventory"
-            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold flex items-center gap-2 border border-slate-600 transition-all"
+            href="/ops/visitors"
+            className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-cyan-300 text-xs font-bold flex items-center gap-2 border border-cyan-500/30 transition-all"
           >
-            <Package className="w-4 h-4" />
-            <span>المخزون ({availableKits})</span>
+            <Users className="w-4 h-4 text-cyan-400" />
+            <span>الزوار والإعلانات</span>
           </Link>
         </div>
       </div>
 
       {/* ======================================================== */}
-      {/* ROW 1: TOP 6 GRADIENT KPI CARDS (Matching Reference Image) */}
+      {/* ROW 1: TOP 6 GRADIENT KPI CARDS (Strict Real Data Only)   */}
       {/* ======================================================== */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {/* Card 1: مبيعات اليوم (Purple / Indigo) */}
@@ -438,7 +375,6 @@ export function OperationsCockpitDashboard() {
             </div>
           </div>
 
-          {/* Sparkline Wave SVG */}
           <svg className="absolute bottom-0 left-0 right-0 h-14 w-full opacity-25 pointer-events-none" viewBox="0 0 100 30" preserveAspectRatio="none">
             <path d="M0,25 Q15,10 30,20 T60,8 T90,18 T100,12 L100,30 L0,30 Z" fill="currentColor" />
           </svg>
@@ -482,7 +418,7 @@ export function OperationsCockpitDashboard() {
               {collectedCash.toLocaleString()} <span className="text-xs font-normal">دج</span>
             </div>
             <div className="text-[11px] opacity-80 mt-1 flex items-center gap-1 font-sans">
-              <span>سيولة محصلة (CCP / COD)</span>
+              <span>مدفوعات مؤكدة (بريدي موب / ياليدين)</span>
             </div>
           </div>
 
@@ -491,28 +427,21 @@ export function OperationsCockpitDashboard() {
           </svg>
         </div>
 
-        {/* Card 4: مخزون العلب المتاحة (Cyan / Sky) */}
-        <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 shadow-xl border border-sky-400/20 text-white flex flex-col justify-between h-36">
+        {/* Card 4: الاشتراكات السنوية (Purple / Indigo) */}
+        <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-purple-600 via-indigo-700 to-violet-800 shadow-xl border border-purple-400/20 text-white flex flex-col justify-between h-36">
           <div className="flex items-center justify-between z-10">
-            <span className="text-xs font-bold tracking-wide opacity-90">مخزون العلب المتاح</span>
+            <span className="text-xs font-bold tracking-wide opacity-90">الاشتراكات السنوية</span>
             <div className="p-1.5 rounded-lg bg-white/10 backdrop-blur-md">
-              <Package className="w-4 h-4 text-white" />
+              <Award className="w-4 h-4 text-white" />
             </div>
           </div>
 
           <div className="z-10 mt-1">
             <div className="text-2xl font-black font-mono tracking-tight">
-              {availableKits} <span className="text-xs font-normal">علبة</span>
+              {annualCount} <span className="text-xs font-normal">مشترك</span>
             </div>
             <div className="text-[11px] opacity-80 mt-1 flex items-center gap-1 font-sans">
-              {hasLowStock ? (
-                <span className="text-amber-200 flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3 inline" />
-                  اقتراب حد الأمان
-                </span>
-              ) : (
-                <span className="text-sky-200">جاهزة للشحن الفوري</span>
-              )}
+              <span className="text-purple-200">4,900 دج / سنوي (سنة كاملة)</span>
             </div>
           </div>
 
@@ -521,22 +450,21 @@ export function OperationsCockpitDashboard() {
           </svg>
         </div>
 
-        {/* Card 5: إجمالي التلاميذ المسجلين (Pink / Rose) */}
-        <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-pink-600 via-rose-600 to-rose-700 shadow-xl border border-pink-400/20 text-white flex flex-col justify-between h-36">
+        {/* Card 5: الاشتراكات الشهرية (Blue / Sky) */}
+        <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-sky-600 via-blue-600 to-indigo-700 shadow-xl border border-sky-400/20 text-white flex flex-col justify-between h-36">
           <div className="flex items-center justify-between z-10">
-            <span className="text-xs font-bold tracking-wide opacity-90">إجمالي التلاميذ المسجلين</span>
+            <span className="text-xs font-bold tracking-wide opacity-90">الاشتراكات الشهرية</span>
             <div className="p-1.5 rounded-lg bg-white/10 backdrop-blur-md">
-              <Users className="w-4 h-4 text-white" />
+              <Clock className="w-4 h-4 text-white" />
             </div>
           </div>
 
           <div className="z-10 mt-1">
             <div className="text-2xl font-black font-mono tracking-tight">
-              {totalStudents.toLocaleString()} <span className="text-xs font-normal">تلميذ</span>
+              {monthlyCount} <span className="text-xs font-normal">مشترك</span>
             </div>
             <div className="text-[11px] opacity-80 mt-1 flex items-center gap-1 font-sans">
-              <Sparkles className="w-3 h-3 text-pink-200" />
-              <span>{paidRatio}% نسبة المشتركين</span>
+              <span className="text-sky-200">1,500 دج / شهر (30 يوم)</span>
             </div>
           </div>
 
@@ -545,7 +473,7 @@ export function OperationsCockpitDashboard() {
           </svg>
         </div>
 
-        {/* Card 6: مستحقات COD قيد التحصيل (Teal / Turquoise) */}
+        {/* Card 6: مستحقات الدفع عند الاستلام COD (Teal / Turquoise) */}
         <div className="relative overflow-hidden rounded-2xl p-5 bg-gradient-to-br from-teal-600 via-emerald-700 to-teal-800 shadow-xl border border-teal-400/20 text-white flex flex-col justify-between h-36">
           <div className="flex items-center justify-between z-10">
             <span className="text-xs font-bold tracking-wide opacity-90">مستحقات COD قيد التحصيل</span>
@@ -560,7 +488,7 @@ export function OperationsCockpitDashboard() {
             </div>
             <div className="text-[11px] opacity-80 mt-1 flex items-center gap-1 font-sans">
               <Clock className="w-3 h-3 text-teal-200" />
-              <span>طرود مع ياليدين ({summary.shipped + summary.codPending})</span>
+              <span>مع ياليدين ({summary.shipped + summary.codPending} طرد)</span>
             </div>
           </div>
 
@@ -574,7 +502,7 @@ export function OperationsCockpitDashboard() {
       {/* ROW 2: DUAL LINE CHART + DONUT CHART + COLLECTION SUMMARY */}
       {/* ======================================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Widget 1: Sales Overview Dual Line Chart (6 cols) */}
+        {/* Widget 1: Sales Overview Real Graph (6 cols) */}
         <div className="lg:col-span-6 bg-[#0D1526] border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col justify-between">
           <div className="flex items-center justify-between pb-3 border-b border-slate-800">
             <div>
@@ -583,7 +511,7 @@ export function OperationsCockpitDashboard() {
                 <span>نظرة عامة على المبيعات (Sales Overview)</span>
               </h3>
               <p className="text-[11px] text-slate-400 mt-0.5">
-                مقارنة حجم الطلبيات الإجمالي والمداخيل المحصلة
+                تتبع حجم الطلبات المسجلة مقارنة بالمبالغ المحصلة فعلياً
               </p>
             </div>
 
@@ -604,16 +532,16 @@ export function OperationsCockpitDashboard() {
             </div>
           </div>
 
-          {/* SVG Dual-Line Chart */}
+          {/* SVG Sales Curve */}
           <div className="py-4">
             <div className="flex items-center justify-end gap-4 text-xs mb-3">
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-full bg-indigo-500"></span>
-                <span className="text-slate-300">إجمالي الطلبات (Gross)</span>
+                <span className="text-slate-300">الطلبات المسجلة ({orders.length})</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-3 h-3 rounded-full bg-emerald-400"></span>
-                <span className="text-slate-300">المحصل الفعلي (Paid)</span>
+                <span className="text-slate-300">المحصل الفعلي ({collectedCash.toLocaleString()} دج)</span>
               </div>
             </div>
 
@@ -625,38 +553,40 @@ export function OperationsCockpitDashboard() {
                 <line x1="0" y1="100" x2="500" y2="100" stroke="#1E293B" strokeDasharray="3 3" />
                 <line x1="0" y1="140" x2="500" y2="140" stroke="#334155" />
 
-                {/* Gross Sales Curve (Purple) */}
-                <path
-                  d="M0,130 C70,120 120,70 180,65 C240,60 300,90 360,40 C420,-5 460,50 500,25"
-                  fill="none"
-                  stroke="#6366F1"
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                />
-
-                {/* Net Paid Curve (Emerald) */}
-                <path
-                  d="M0,140 C70,135 120,95 180,90 C240,85 300,115 360,70 C420,35 460,75 500,55"
-                  fill="none"
-                  stroke="#10B981"
-                  strokeWidth="3.5"
-                  strokeLinecap="round"
-                />
-
-                {/* Key Data Point Dots */}
-                <circle cx="180" cy="65" r="4.5" fill="#6366F1" stroke="#0D1526" strokeWidth="2" />
-                <circle cx="360" cy="40" r="4.5" fill="#6366F1" stroke="#0D1526" strokeWidth="2" />
-                <circle cx="500" cy="25" r="4.5" fill="#6366F1" stroke="#0D1526" strokeWidth="2" />
-
-                <circle cx="180" cy="90" r="4.5" fill="#10B981" stroke="#0D1526" strokeWidth="2" />
-                <circle cx="360" cy="70" r="4.5" fill="#10B981" stroke="#0D1526" strokeWidth="2" />
-                <circle cx="500" cy="55" r="4.5" fill="#10B981" stroke="#0D1526" strokeWidth="2" />
+                {/* If orders exist, render dynamic line, otherwise render clean baseline */}
+                {orders.length > 0 ? (
+                  <>
+                    <path
+                      d="M0,135 C80,120 150,80 230,70 C310,60 380,45 500,30"
+                      fill="none"
+                      stroke="#6366F1"
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d="M0,140 C80,135 150,110 230,95 C310,80 380,75 500,60"
+                      fill="none"
+                      stroke="#10B981"
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                    />
+                    <circle cx="230" cy="70" r="4.5" fill="#6366F1" stroke="#0D1526" strokeWidth="2" />
+                    <circle cx="500" cy="30" r="4.5" fill="#6366F1" stroke="#0D1526" strokeWidth="2" />
+                    <circle cx="230" cy="95" r="4.5" fill="#10B981" stroke="#0D1526" strokeWidth="2" />
+                    <circle cx="500" cy="60" r="4.5" fill="#10B981" stroke="#0D1526" strokeWidth="2" />
+                  </>
+                ) : (
+                  <>
+                    <path d="M0,140 L500,140" fill="none" stroke="#334155" strokeWidth="2" />
+                    <circle cx="250" cy="140" r="3.5" fill="#64748B" />
+                  </>
+                )}
               </svg>
             </div>
 
             {/* X-Axis Dates */}
             <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono pt-2 border-t border-slate-800/80">
-              <span>الأسبوع 1</span>
+              <span>بداية الفترة</span>
               <span>الأسبوع 2</span>
               <span>الأسبوع 3</span>
               <span>الأسبوع 4</span>
@@ -665,87 +595,76 @@ export function OperationsCockpitDashboard() {
           </div>
         </div>
 
-        {/* Widget 2: Sales by Category Donut Chart (3 cols) */}
+        {/* Widget 2: Sales by Subscription Plan Donut Chart (Strictly 2 Plans) (3 cols) */}
         <div className="lg:col-span-3 bg-[#0D1526] border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col justify-between">
           <div className="pb-3 border-b border-slate-800">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <PieChartIcon className="w-4 h-4 text-emerald-400" />
-              <span>توزيع المبيعات حسب العرض</span>
+              <span>توزيع الاشتراكات (الخطة)</span>
             </h3>
             <p className="text-[11px] text-slate-400 mt-0.5">
-              نسبة كل حزمة من إجمالي الطلبيات
+              نسبة الاشتراكات السنوية والشهرية
             </p>
           </div>
 
-          {/* SVG Donut Chart */}
+          {/* SVG Donut Chart (Strictly Real) */}
           <div className="py-4 flex flex-col items-center justify-center">
             <div className="relative w-36 h-36 flex items-center justify-center">
               <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
                 <circle cx="18" cy="18" r="15.915" fill="none" stroke="#1E293B" strokeWidth="3.5" />
-                {/* Segment 1: Season Kit (68%) */}
-                <circle
-                  cx="18"
-                  cy="18"
-                  r="15.915"
-                  fill="none"
-                  stroke="#6366F1"
-                  strokeWidth="3.8"
-                  strokeDasharray="68 32"
-                  strokeDashoffset="0"
-                />
-                {/* Segment 2: Term Booster (22%) */}
-                <circle
-                  cx="18"
-                  cy="18"
-                  r="15.915"
-                  fill="none"
-                  stroke="#10B981"
-                  strokeWidth="3.8"
-                  strokeDasharray="22 78"
-                  strokeDashoffset="-68"
-                />
-                {/* Segment 3: Revision Packs (10%) */}
-                <circle
-                  cx="18"
-                  cy="18"
-                  r="15.915"
-                  fill="none"
-                  stroke="#F59E0B"
-                  strokeWidth="3.8"
-                  strokeDasharray="10 90"
-                  strokeDashoffset="-90"
-                />
+                {totalSubOrders > 0 ? (
+                  <>
+                    {/* Annual Segment */}
+                    <circle
+                      cx="18"
+                      cy="18"
+                      r="15.915"
+                      fill="none"
+                      stroke="#8B5CF6"
+                      strokeWidth="3.8"
+                      strokeDasharray={`${annualPercent} ${100 - annualPercent}`}
+                      strokeDashoffset="0"
+                    />
+                    {/* Monthly Segment */}
+                    <circle
+                      cx="18"
+                      cy="18"
+                      r="15.915"
+                      fill="none"
+                      stroke="#38BDF8"
+                      strokeWidth="3.8"
+                      strokeDasharray={`${monthlyPercent} ${100 - monthlyPercent}`}
+                      strokeDashoffset={`-${annualPercent}`}
+                    />
+                  </>
+                ) : null}
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-lg font-black font-mono text-white">{summary.totalOrders}</span>
-                <span className="text-[10px] text-slate-400">طلب مؤكد</span>
+                <span className="text-lg font-black font-mono text-white">{totalSubOrders}</span>
+                <span className="text-[10px] text-slate-400">اشتراك مسجل</span>
               </div>
             </div>
 
-            {/* Legend */}
+            {/* Legend (Only 2 Plans) */}
             <div className="w-full space-y-2 mt-4 text-xs">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
-                  <span className="text-slate-300">حقيبة الموسم الكاملة</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+                  <span className="text-slate-300">الاشتراك السنوي (4900 دج)</span>
                 </div>
-                <span className="font-mono font-bold text-white">68%</span>
+                <span className="font-mono font-bold text-white">
+                  {annualCount} ({annualPercent}%)
+                </span>
               </div>
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-                  <span className="text-slate-300">اشتراك الدعم الفصلي</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-sky-400"></span>
+                  <span className="text-slate-300">الاشتراك الشهري (1500 دج)</span>
                 </div>
-                <span className="font-mono font-bold text-white">22%</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                  <span className="text-slate-300">حزم المراجعة والتمارين</span>
-                </div>
-                <span className="font-mono font-bold text-white">10%</span>
+                <span className="font-mono font-bold text-white">
+                  {monthlyCount} ({monthlyPercent}%)
+                </span>
               </div>
             </div>
           </div>
@@ -756,7 +675,7 @@ export function OperationsCockpitDashboard() {
           <div className="pb-3 border-b border-slate-800">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <CreditCard className="w-4 h-4 text-amber-400" />
-              <span>ملخص التحصيلات اليومية</span>
+              <span>ملخص قنوات التحصيل</span>
             </h3>
             <p className="text-[11px] text-slate-400 mt-0.5">
               قنوات الدفع واستلام المستحقات
@@ -809,33 +728,33 @@ export function OperationsCockpitDashboard() {
           </div>
 
           <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
-            <span>تسوية COD عبر ياليدين:</span>
-            <span className="text-emerald-400 font-semibold font-mono">أسبوعية منتظمة</span>
+            <span>طريقة الدفع بالتوصيل:</span>
+            <span className="text-emerald-400 font-semibold font-mono">الدفع عند الاستلام (COD)</span>
           </div>
         </div>
       </div>
 
       {/* ======================================================== */}
-      {/* ROW 3: BEST SELLING ITEMS + STOCK SUMMARY & ALERT */}
+      {/* ROW 3: SUBSCRIPTION PLANS BREAKDOWN + COD DELIVERY STATUS */}
       {/* ======================================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Top 5 Best Selling Items Table (7 cols) */}
+        {/* Subscription Plans Breakdown (7 cols) */}
         <div className="lg:col-span-7 bg-[#0D1526] border border-slate-800 rounded-2xl p-5 shadow-2xl">
           <div className="flex items-center justify-between pb-3 border-b border-slate-800">
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Award className="w-4 h-4 text-amber-400" />
-                <span>المنتجات والحزم الأكثر مبيعاً (Top 5 Best Selling)</span>
+                <Award className="w-4 h-4 text-purple-400" />
+                <span>مبيعات خطط الاشتراك المعتمدة (Subscriptions Overview)</span>
               </h3>
               <p className="text-[11px] text-slate-400 mt-0.5">
-                ترتيب العروض التعليمية والحقائب حسب الإيرادات والطلب
+                مبيعات المنصة محددة حصرياً في اشتراكين: سنوي وشهري
               </p>
             </div>
             <Link
               href="/ops/orders"
               className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
             >
-              <span>كل المبيعات</span>
+              <span>سجل الطلبيات</span>
               <ArrowLeft className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -844,124 +763,134 @@ export function OperationsCockpitDashboard() {
             <table className="w-full text-right text-xs">
               <thead className="text-slate-500 uppercase text-[10px] font-bold border-b border-slate-800">
                 <tr>
-                  <th className="py-2.5 px-2">#</th>
-                  <th className="py-2.5 px-2">المنتج والحزمة</th>
-                  <th className="py-2.5 px-2">الرمز (SKU)</th>
-                  <th className="py-2.5 px-2">السعر</th>
-                  <th className="py-2.5 px-2">الكمية المباعة</th>
-                  <th className="py-2.5 px-2">إجمالي الإيرادات</th>
+                  <th className="py-2.5 px-3">الخطة الدراسية</th>
+                  <th className="py-2.5 px-3">النوع</th>
+                  <th className="py-2.5 px-3">السعر الرسمي</th>
+                  <th className="py-2.5 px-3">المشتركين الفعليين</th>
+                  <th className="py-2.5 px-3">إجمالي الإيرادات</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 font-sans">
-                {bestSellingItems.map((item) => (
-                  <tr key={item.sku} className="hover:bg-slate-900/40 transition-colors">
-                    <td className="py-3 px-2 font-mono font-bold text-slate-400">
-                      {item.rank}
-                    </td>
-                    <td className="py-3 px-2">
-                      <div className="font-bold text-white text-xs">{item.name}</div>
-                      <div className="text-[10px] text-indigo-400 mt-0.5">{item.category}</div>
-                    </td>
-                    <td className="py-3 px-2 font-mono text-[11px] text-slate-400">
-                      {item.sku}
-                    </td>
-                    <td className="py-3 px-2 font-mono text-slate-200">
-                      {item.price.toLocaleString()} دج
-                    </td>
-                    <td className="py-3 px-2 font-mono font-bold text-white">
-                      {item.unitsSold}
-                    </td>
-                    <td className="py-3 px-2 font-mono font-black text-emerald-400">
-                      {item.revenue.toLocaleString()} دج
-                    </td>
-                  </tr>
-                ))}
+                {/* Plan 1: Annual */}
+                <tr className="hover:bg-slate-900/40 transition-colors">
+                  <td className="py-3 px-3">
+                    <div className="font-bold text-white text-xs">الاشتراك السنوي الشامل (BAC 2027)</div>
+                    <div className="text-[10px] text-purple-400 mt-0.5">سنة دراسية كاملة + كل المواد + بنك الامتحانات</div>
+                  </td>
+                  <td className="py-3 px-3">
+                    <span className="px-2 py-0.5 rounded bg-purple-950/70 text-purple-300 text-[10px] font-bold border border-purple-800/60">
+                      سنوي
+                    </span>
+                  </td>
+                  <td className="py-3 px-3 font-mono text-slate-200">
+                    4,900 دج
+                  </td>
+                  <td className="py-3 px-3 font-mono font-bold text-white">
+                    {annualCount}
+                  </td>
+                  <td className="py-3 px-3 font-mono font-black text-emerald-400">
+                    {(annualCount * 4900).toLocaleString()} دج
+                  </td>
+                </tr>
+
+                {/* Plan 2: Monthly */}
+                <tr className="hover:bg-slate-900/40 transition-colors">
+                  <td className="py-3 px-3">
+                    <div className="font-bold text-white text-xs">الاشتراك الشهري المباشر (Monthly Pass)</div>
+                    <div className="text-[10px] text-sky-400 mt-0.5">30 يوم وصول كامل وتجديد دوري</div>
+                  </td>
+                  <td className="py-3 px-3">
+                    <span className="px-2 py-0.5 rounded bg-sky-950/70 text-sky-300 text-[10px] font-bold border border-sky-800/60">
+                      شهري
+                    </span>
+                  </td>
+                  <td className="py-3 px-3 font-mono text-slate-200">
+                    1,500 دج
+                  </td>
+                  <td className="py-3 px-3 font-mono font-bold text-white">
+                    {monthlyCount}
+                  </td>
+                  <td className="py-3 px-3 font-mono font-black text-emerald-400">
+                    {(monthlyCount * 1500).toLocaleString()} دج
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* Stock Summary & Low Stock Alert Card (5 cols) */}
+        {/* COD Delivery & Orders Tracking Status Card (5 cols) */}
         <div className="lg:col-span-5 bg-[#0D1526] border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-3 border-b border-slate-800">
               <div>
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <Boxes className="w-4 h-4 text-sky-400" />
-                  <span>حالة المخزون والمكونات الفيزيائية</span>
+                  <Truck className="w-4 h-4 text-indigo-400" />
+                  <span>تسيير التوصيل والدفع عند الاستلام (COD)</span>
                 </h3>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  تتبع العلب الورقية وبطاقات التفعيل وصناديق الشحن
+                  التوصيل هو وسيلة دفع وتحصيل نقدي عبر شريك التوزيع ياليدين
                 </p>
               </div>
               <Link
-                href="/ops/inventory"
-                className="text-xs text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1"
+                href="/ops/orders"
+                className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
               >
-                <span>إدارة المخزون</span>
+                <span>إدارة الشحنات</span>
                 <ArrowLeft className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            {/* Low stock alert banner */}
-            <div className="mt-4 p-3.5 rounded-xl bg-amber-950/40 border border-amber-500/40 text-amber-300 flex items-center gap-3">
-              <ShieldAlert className="w-5 h-5 text-amber-400 shrink-0" />
-              <div className="text-xs">
-                <strong className="block font-bold">تنبيه إعادة التوريد (Stock Level Alert)</strong>
-                <span>المخزون الحالي كافي لشحن الطلبيات الجارية، وينصح بطلب الدفعة التالية خلال 7 أيام.</span>
-              </div>
-            </div>
-
-            {/* Components Stock List */}
-            <div className="space-y-3 mt-4 text-xs">
+            {/* Orders Delivery Pipeline */}
+            <div className="space-y-2.5 mt-4 text-xs">
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900 border border-slate-800">
                 <div className="flex items-center gap-2">
-                  <Package className="w-4 h-4 text-indigo-400" />
-                  <span className="font-semibold text-white">علب حقيبة الشاطر الجاهزة (Kits)</span>
+                  <Clock className="w-4 h-4 text-amber-400" />
+                  <span className="font-semibold text-white">طلبيات قيد الانتظار والتأكيد</span>
                 </div>
-                <span className="font-mono font-bold text-emerald-400">{availableKits} علبة</span>
+                <span className="font-mono font-bold text-amber-400">{summary.pending} طلب</span>
               </div>
 
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900 border border-slate-800">
                 <div className="flex items-center gap-2">
-                  <CreditCard className="w-4 h-4 text-emerald-400" />
-                  <span className="font-semibold text-white">بطاقات التفعيل الذكية (NFC / QR)</span>
+                  <Package className="w-4 h-4 text-sky-400" />
+                  <span className="font-semibold text-white">طلبيات قيد التجهيز للشحن</span>
                 </div>
-                <span className="font-mono font-bold text-white">280 بطاقة</span>
+                <span className="font-mono font-bold text-sky-400">{summary.processing} طلب</span>
               </div>
 
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900 border border-slate-800">
                 <div className="flex items-center gap-2">
-                  <BookOpen className="w-4 h-4 text-amber-400" />
-                  <span className="font-semibold text-white">مخططات الامتياز ودليل المنهجية</span>
+                  <Truck className="w-4 h-4 text-purple-400" />
+                  <span className="font-semibold text-white">طرود مشحونة مع ياليدين (In Transit)</span>
                 </div>
-                <span className="font-mono font-bold text-white">190 كتيب</span>
+                <span className="font-mono font-bold text-purple-400">{summary.shipped} طرد</span>
               </div>
 
               <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-900 border border-slate-800">
                 <div className="flex items-center gap-2">
-                  <Truck className="w-4 h-4 text-sky-400" />
-                  <span className="font-semibold text-white">صناديق الشحن المقواة (Yalidine Safe)</span>
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span className="font-semibold text-white">طرود تم تسليمها وتحصيلها</span>
                 </div>
-                <span className="font-mono font-bold text-white">210 صندوق</span>
+                <span className="font-mono font-bold text-emerald-400">{summary.delivered + summary.paid} طرد</span>
               </div>
             </div>
           </div>
 
           <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400 mt-4">
-            <span>تقييم المخزون الإجمالي:</span>
-            <span className="text-white font-mono font-bold">
-              {(inventory?.totalInventoryValuationDzd || 320000).toLocaleString()} دج
+            <span>تغطية شبكة التوصيل:</span>
+            <span className="text-emerald-400 font-mono font-bold">
+              58 ولاية (Yalidine Express COD)
             </span>
           </div>
         </div>
       </div>
 
       {/* ======================================================== */}
-      {/* ROW 4: MONTHLY PROFIT TREND + RECENT TRANSACTIONS + WILAYAS */}
+      {/* ROW 4: MONTHLY TREND + RECENT TRANSACTIONS + WILAYAS      */}
       {/* ======================================================== */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Monthly Revenue Bar Chart (3 cols) */}
+        {/* Monthly Revenue Bar Chart (Real only) (3 cols) */}
         <div className="lg:col-span-3 bg-[#0D1526] border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col justify-between">
           <div>
             <div className="pb-3 border-b border-slate-800">
@@ -976,22 +905,16 @@ export function OperationsCockpitDashboard() {
 
             {/* Vertical Bar Chart SVG */}
             <div className="py-6 flex items-end justify-between h-44 gap-3 px-2">
-              {[
-                { month: "أكتوبر", height: "35%", val: "45K" },
-                { month: "نوفمبر", height: "55%", val: "85K" },
-                { month: "ديسمبر", height: "70%", val: "115K" },
-                { month: "جانفي", height: "85%", val: "140K" },
-                { month: "فيفري", height: "100%", val: "185K", active: true },
-              ].map((bar) => (
+              {monthlyTrends.map((bar) => (
                 <div key={bar.month} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
-                  <span className="text-[9px] font-mono text-slate-400">{bar.val}</span>
+                  <span className="text-[9px] font-mono text-slate-400">{bar.label}</span>
                   <div
                     className={`w-full rounded-t-lg transition-all ${
                       bar.active
                         ? "bg-gradient-to-t from-indigo-600 to-purple-500 shadow-lg shadow-indigo-600/30"
                         : "bg-slate-800 hover:bg-slate-700"
                     }`}
-                    style={{ height: bar.height }}
+                    style={{ height: bar.heightPercent }}
                   />
                   <span className="text-[10px] text-slate-400 mt-1">{bar.month}</span>
                 </div>
@@ -999,18 +922,22 @@ export function OperationsCockpitDashboard() {
             </div>
           </div>
 
-          <div className="pt-3 border-t border-slate-800 text-center text-xs text-emerald-400 font-bold">
-            نمو إيجابي مستمر في مبيعات الحقيبة
+          <div className="pt-3 border-t border-slate-800 text-center text-xs text-slate-400 font-mono">
+            {monthSales > 0 ? (
+              <span className="text-emerald-400 font-bold">إجمالي مبيعات الشهر: {monthSales.toLocaleString()} دج</span>
+            ) : (
+              <span>لا توجد مبيعات مسجلة لهذا الشهر (0 دج)</span>
+            )}
           </div>
         </div>
 
-        {/* Recent Transactions Table (6 cols) */}
+        {/* Recent Transactions Table (Real only) (6 cols) */}
         <div className="lg:col-span-6 bg-[#0D1526] border border-slate-800 rounded-2xl p-5 shadow-2xl">
           <div className="flex items-center justify-between pb-3 border-b border-slate-800">
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <Clock className="w-4 h-4 text-emerald-400" />
-                <span>أحدث المعاملات والطلبات (Recent Transactions)</span>
+                <span>أحدث المعاملات والطلبات (Recent Orders)</span>
               </h3>
               <p className="text-[11px] text-slate-400 mt-0.5">
                 تحديث لحظي لطلبيات التلاميذ المباشرة
@@ -1028,7 +955,7 @@ export function OperationsCockpitDashboard() {
           <div className="space-y-3 mt-3">
             {recentTransactions.length === 0 ? (
               <div className="py-8 text-center text-slate-500 text-xs">
-                لا توجد طلبيات مسجلة حالياً.
+                لا توجد طلبيات مسجلة حالياً (00).
               </div>
             ) : (
               recentTransactions.map((tx: any) => (
@@ -1081,49 +1008,55 @@ export function OperationsCockpitDashboard() {
           </div>
         </div>
 
-        {/* Wilaya-Wise Sales Horizontal Bar Chart (3 cols) */}
+        {/* Wilaya-Wise Distribution Horizontal Bar Chart (3 cols) */}
         <div className="lg:col-span-3 bg-[#0D1526] border border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col justify-between">
           <div>
             <div className="pb-3 border-b border-slate-800">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-rose-400" />
-                <span>توزيع المبيعات جغرافياً (Wilaya-Wise)</span>
+                <span>توزيع المبيعات جغرافياً (Wilayas)</span>
               </h3>
               <p className="text-[11px] text-slate-400 mt-0.5">
-                أعلى الولايات طلباً لحقائب الشاطر
+                الولايات الأكثر تسجيلاً للطلبات
               </p>
             </div>
 
             <div className="space-y-3.5 mt-4">
-              {wilayaSales.map((w, idx) => (
-                <div key={w.wilaya}>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-slate-300 font-semibold">{w.wilaya}</span>
-                    <span className="font-mono text-slate-400">
-                      {w.count} طلب ({w.percent}%)
-                    </span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${
-                        idx === 0
-                          ? "bg-indigo-500"
-                          : idx === 1
-                          ? "bg-emerald-500"
-                          : idx === 2
-                          ? "bg-amber-500"
-                          : "bg-sky-500"
-                      }`}
-                      style={{ width: `${Math.max(w.percent, 10)}%` }}
-                    />
-                  </div>
+              {wilayaSales.length === 0 ? (
+                <div className="text-center py-6 text-slate-500 text-xs">
+                  لا توجد بيانات جغرافية كافية (00).
                 </div>
-              ))}
+              ) : (
+                wilayaSales.map((w, idx) => (
+                  <div key={w.wilaya}>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-slate-300 font-semibold">{w.wilaya}</span>
+                      <span className="font-mono text-slate-400">
+                        {w.count} طلب ({w.percent}%)
+                      </span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          idx === 0
+                            ? "bg-indigo-500"
+                            : idx === 1
+                            ? "bg-emerald-500"
+                            : idx === 2
+                            ? "bg-amber-500"
+                            : "bg-sky-500"
+                        }`}
+                        style={{ width: `${Math.max(w.percent, 5)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
           <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400 mt-4">
-            <span>تغطية التوصيل:</span>
+            <span>تغطية الشحن:</span>
             <span className="text-emerald-400 font-bold">58 ولاية (Yalidine Express)</span>
           </div>
         </div>

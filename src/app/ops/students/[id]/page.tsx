@@ -561,24 +561,30 @@ export default function StudentDossierPage() {
 
               <div className="bg-[#10192E] p-3 rounded-2xl border border-slate-800">
                 <div className="text-[10px] text-slate-400 font-bold uppercase">الثانوية والصفة</div>
-                <div className="text-xs font-bold text-white mt-1 flex items-center gap-1 truncate" title={p.school_name || ""}>
+                <div className="text-xs font-bold text-white mt-1 flex items-center gap-1 truncate" title={p.school_name || p.raw_draft?.schoolName || p.raw_draft?.school_name || ""}>
                   <School className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                  <span className="truncate">{p.school_name || (p.student_status === "free" ? "مترشح حر" : "ثانوية عامة")}</span>
+                  <span className="truncate">{p.school_name || p.raw_draft?.schoolName || p.raw_draft?.school_name || (p.student_status === "free" ? "مترشح حر" : "غير محددة")}</span>
                 </div>
               </div>
 
               <div className="bg-[#10192E] p-3 rounded-2xl border border-slate-800">
                 <div className="text-[10px] text-slate-400 font-bold uppercase">المعدل المستهدف</div>
                 <div className="text-sm font-black text-indigo-400 font-mono mt-0.5">
-                  {p.target_score ? Number(p.target_score).toFixed(2) : "16.00"}{" "}
-                  <span className="text-[10px] text-slate-400 font-normal">/ 20</span>
+                  {p.target_score ? (
+                    <>
+                      {Number(p.target_score).toFixed(2)}{" "}
+                      <span className="text-[10px] text-slate-400 font-normal">/ 20</span>
+                    </>
+                  ) : (
+                    <span className="text-xs font-normal text-slate-500 font-sans">غير محدد</span>
+                  )}
                 </div>
               </div>
 
               <div className="bg-[#10192E] p-3 rounded-2xl border border-slate-800">
                 <div className="text-[10px] text-slate-400 font-bold uppercase">التخصص المرغوب</div>
                 <div className="text-xs font-bold text-amber-300 mt-1 truncate" title={p.target_specialty || "غير محدد"}>
-                  {p.target_specialty || "الطب / الذكاء الاصطناعي"}
+                  {p.target_specialty || "غير محدد"}
                 </div>
               </div>
             </div>
@@ -1079,7 +1085,9 @@ export default function StudentDossierPage() {
 
               <div className="flex justify-between py-1.5">
                 <span className="text-slate-400">ساعات الدراسة الأسبوعية:</span>
-                <span className="text-white font-mono">{p.weekly_study_hours || 10} ساعة / أسبوع</span>
+                <span className="text-white font-mono">
+                  {p.weekly_study_hours ? `${p.weekly_study_hours} ساعة / أسبوع` : "غير محدد"}
+                </span>
               </div>
 
               <div className="flex justify-between py-1.5">

@@ -205,13 +205,13 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
           <span>التوصيل</span>
         </Link>
         <Link
-          href="/ops/inventory"
+          href="/ops/visitors"
           className={`flex flex-col items-center gap-1 p-1.5 rounded-xl text-[10px] transition-colors ${
-            pathname === "/ops/inventory" ? "text-indigo-400 font-bold" : "hover:text-slate-200"
+            pathname === "/ops/visitors" ? "text-cyan-400 font-bold" : "hover:text-slate-200"
           }`}
         >
-          <div className="w-4 h-4 flex items-center justify-center">📦</div>
-          <span>المخزون</span>
+          <div className="w-4 h-4 flex items-center justify-center">📊</div>
+          <span>الزوار</span>
         </Link>
         <Link
           href="/ops/students"

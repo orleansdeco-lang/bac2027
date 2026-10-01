@@ -22,6 +22,8 @@ import {
   Sparkles,
   MapPin,
   ExternalLink,
+  MessageCircle,
+  School,
 } from "lucide-react";
 import { StudentOperationalSummary } from "@/lib/operations/types";
 import { opsFetch } from "@/lib/operations/client-api";
@@ -124,6 +126,7 @@ export default function OpsStudentsPage() {
       "هاتف الطالب",
       "هاتف ولي الأمر",
       "الشعبة",
+      "الثانوية",
       "الولاية",
       "البلدية",
       "حالة الحساب",
@@ -140,6 +143,7 @@ export default function OpsStudentsPage() {
       `"${s.studentPhone || ""}"`,
       `"${s.parentPhone || ""}"`,
       `"${getStreamLabel(s.streamId)}"`,
+      `"${s.schoolName || ""}"`,
       `"${s.wilayaName || ""}"`,
       `"${s.communeName || ""}"`,
       `"${s.accessStatus}"`,
@@ -410,6 +414,7 @@ export default function OpsStudentsPage() {
                   <th className="px-4 py-3.5">هاتف التلميذ</th>
                   <th className="px-4 py-3.5">هاتف ولي الأمر</th>
                   <th className="px-4 py-3.5">الشعبة</th>
+                  <th className="px-4 py-3.5">الثانوية</th>
                   <th className="px-4 py-3.5">الولاية والبلدية</th>
                   <th className="px-4 py-3.5">حالة الحساب</th>
                   <th className="px-4 py-3.5">الانتهاء / المتبقي</th>
@@ -420,6 +425,13 @@ export default function OpsStudentsPage() {
               </thead>
               <tbody className="divide-y divide-slate-800/60 font-sans">
                 {filtered.map((student) => {
+                  const studentIntlPhone = student.studentPhone
+                    ? `213${student.studentPhone.replace(/\D/g, "").replace(/^0/, "")}`
+                    : null;
+                  const parentIntlPhone = student.parentPhone
+                    ? `213${student.parentPhone.replace(/\D/g, "").replace(/^0/, "")}`
+                    : null;
+
                   return (
                     <tr key={student.id} className="hover:bg-slate-800/40 transition-colors">
                       {/* Student Name */}
@@ -431,32 +443,58 @@ export default function OpsStudentsPage() {
                       </td>
 
                       {/* Student Phone */}
-                      <td className="px-4 py-3.5 font-mono text-xs text-cyan-300 font-semibold" dir="ltr">
+                      <td className="px-4 py-3.5" dir="ltr">
                         {student.studentPhone ? (
-                          <a
-                            href={`tel:${student.studentPhone}`}
-                            className="hover:underline inline-flex items-center gap-1 text-cyan-400"
-                            title="اتصال بالطالب"
-                          >
-                            <Phone className="w-3 h-3 text-cyan-500 shrink-0" />
-                            <span>{student.studentPhone}</span>
-                          </a>
+                          <div className="flex items-center gap-1.5 font-mono text-xs text-cyan-300 font-semibold">
+                            <a
+                              href={`tel:${student.studentPhone}`}
+                              className="hover:underline inline-flex items-center gap-1 text-cyan-400"
+                              title="اتصال هاتفي بالطالب"
+                            >
+                              <Phone className="w-3 h-3 text-cyan-500 shrink-0" />
+                              <span>{student.studentPhone}</span>
+                            </a>
+                            {studentIntlPhone && (
+                              <a
+                                href={`https://wa.me/${studentIntlPhone}?text=${encodeURIComponent(`السلام عليكم ${student.fullName}، نتصل بكم من إدارة منصة الشاطر`)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-colors"
+                                title="مراسلة التلميذ عبر واتساب"
+                              >
+                                <MessageCircle className="w-3.5 h-3.5" />
+                              </a>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-slate-500 font-sans">—</span>
                         )}
                       </td>
 
                       {/* Parent Phone */}
-                      <td className="px-4 py-3.5 font-mono text-xs text-amber-300" dir="ltr">
+                      <td className="px-4 py-3.5" dir="ltr">
                         {student.parentPhone ? (
-                          <a
-                            href={`tel:${student.parentPhone}`}
-                            className="hover:underline inline-flex items-center gap-1 text-amber-400"
-                            title="اتصال بولي الأمر"
-                          >
-                            <Phone className="w-3 h-3 text-amber-500 shrink-0" />
-                            <span>{student.parentPhone}</span>
-                          </a>
+                          <div className="flex items-center gap-1.5 font-mono text-xs text-amber-300">
+                            <a
+                              href={`tel:${student.parentPhone}`}
+                              className="hover:underline inline-flex items-center gap-1 text-amber-400"
+                              title="اتصال بولي الأمر"
+                            >
+                              <Phone className="w-3 h-3 text-amber-500 shrink-0" />
+                              <span>{student.parentPhone}</span>
+                            </a>
+                            {parentIntlPhone && (
+                              <a
+                                href={`https://wa.me/${parentIntlPhone}?text=${encodeURIComponent(`السلام عليكم، نتصل بكم من إدارة منصة الشاطر بخصوص حساب التلميذ(ة) ${student.fullName}`)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 transition-colors"
+                                title="مراسلة الولي عبر واتساب"
+                              >
+                                <MessageCircle className="w-3.5 h-3.5" />
+                              </a>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-slate-600 font-sans text-[11px]">غير محدد</span>
                         )}
@@ -465,6 +503,16 @@ export default function OpsStudentsPage() {
                       {/* Stream */}
                       <td className="px-4 py-3.5 text-slate-200 text-xs font-medium">
                         {getStreamLabel(student.streamId)}
+                      </td>
+
+                      {/* High School (الثانوية) */}
+                      <td className="px-4 py-3.5 text-xs text-slate-300">
+                        <div className="flex items-center gap-1.5 font-medium">
+                          <School className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                          <span className="truncate max-w-[150px]" title={student.schoolName || "غير محددة"}>
+                            {student.schoolName || "غير محددة"}
+                          </span>
+                        </div>
                       </td>
 
                       {/* Wilaya & Commune */}

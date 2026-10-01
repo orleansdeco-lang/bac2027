@@ -26,7 +26,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const students = await getStudentsOperationalList(operator.userId, token);
+    const students = await getStudentsOperationalList(operator.userId, operator.token || token);
     return NextResponse.json({ success: true, students });
   } catch (err: any) {
     return NextResponse.json(

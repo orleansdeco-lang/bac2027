@@ -93,6 +93,13 @@ export async function GET(
       }
     }
 
+    if (!studentProfile.school_name && studentProfile.raw_draft) {
+      studentProfile.school_name =
+        studentProfile.raw_draft.schoolName ||
+        studentProfile.raw_draft.school_name ||
+        studentProfile.raw_draft.highSchool;
+    }
+
     // 3. Fetch related subscriptions from canonical public.subscriptions table
     let studentSubscriptions: any[] = [];
     try {

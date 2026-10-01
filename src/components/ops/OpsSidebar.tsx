@@ -44,7 +44,6 @@ const navGroups: NavGroup[] = [
     items: [
       { href: "/ops", label: "لوحة القيادة المركزية", icon: LayoutDashboard },
       { href: "/ops/orders", label: "إدارة الطلبات والتوصيل", icon: Truck, badge: "LIVE" },
-      { href: "/ops/inventory", label: "مخزون العلب الورقية", icon: Package, badge: "KIT" },
       { href: "/ops/subscriptions", label: "الاشتراكات والتراخيص", icon: Sliders },
       { href: "/ops/finance", label: "المالية وتسويات COD", icon: CreditCard },
     ],
@@ -53,7 +52,7 @@ const navGroups: NavGroup[] = [
     title: "ÉLÈVES & ANALYTIQUE",
     items: [
       { href: "/ops/students", label: "دليل التلاميذ CRM", icon: Users },
-      { href: "/ops/overview", label: "الزوار وتتبع الإعلانات", icon: BarChart3 },
+      { href: "/ops/visitors", label: "الزوار وتتبع الإعلانات", icon: BarChart3, badge: "LIVE" },
       { href: "/ops/learning", label: "إحصائيات التعلم الأكاديمي", icon: GraduationCap },
       { href: "/ops/exams", label: "بنك الامتحانات والمواضيع", icon: FileCheck },
     ],
