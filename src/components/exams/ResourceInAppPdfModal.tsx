@@ -34,17 +34,23 @@ export function ResourceInAppPdfModal({
 
   // Determine active PDF URL
   const subjectPdf = exam.pdf_links && exam.pdf_links.length > 0 ? exam.pdf_links[0] : exam.subjectPdfUrl;
-  const solutionPdf =
-    exam.pdf_links && exam.pdf_links.length > 1
-      ? exam.pdf_links[1]
-      : exam.solutionPdfUrl || subjectPdf;
+  const hasSeparateSolutionFile = Boolean(exam.pdf_links && exam.pdf_links.length > 1);
+  const solutionPdf = hasSeparateSolutionFile
+    ? exam.pdf_links[1]
+    : (exam.solutionPdfUrl && exam.solutionPdfUrl !== subjectPdf ? exam.solutionPdfUrl : subjectPdf);
 
-  const hasSolution = Boolean(exam.has_solution || (exam.pdf_links && exam.pdf_links.length > 1));
-  const rawPdfUrl = activeTab === "solution" && hasSolution ? solutionPdf : subjectPdf;
+  const hasSolution = Boolean(
+    exam.has_solution ||
+    hasSeparateSolutionFile ||
+    (exam.title_ar && (exam.title_ar.includes("تصحيح") || exam.title_ar.includes("حل") || exam.title_ar.includes("الحل")))
+  );
+  const isCombinedFile = !hasSeparateSolutionFile && solutionPdf === subjectPdf;
 
-  // Proxy URL for seamless iframe embedding without SAMEORIGIN blocking
+  const rawPdfUrl = activeTab === "solution" && hasSeparateSolutionFile ? solutionPdf : subjectPdf;
+
+  // Proxy URL with #view=FitH for continuous scrolling across all pages
   const proxyEmbedUrl = rawPdfUrl
-    ? `/api/pdf/proxy?url=${encodeURIComponent(rawPdfUrl)}`
+    ? `/api/pdf/proxy?url=${encodeURIComponent(rawPdfUrl)}#view=FitH&pagemode=none`
     : "";
 
   const directDownloadUrl = rawPdfUrl
@@ -62,10 +68,18 @@ export function ResourceInAppPdfModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  // Reset loading state when tab changes
+  // Non-blocking loading state: auto-dismisses after 1.2s to prevent getting stuck
   useEffect(() => {
+    if (isCombinedFile && activeTab === "solution") {
+      setIframeLoaded(true);
+      return;
+    }
     setIframeLoaded(false);
-  }, [activeTab]);
+    const timer = setTimeout(() => {
+      setIframeLoaded(true);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [activeTab, rawPdfUrl, isCombinedFile]);
 
   const handleCopyLink = async () => {
     try {
@@ -133,11 +147,11 @@ export function ResourceInAppPdfModal({
               <a
                 href={directDownloadUrl}
                 download
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all active:scale-98"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-card border border-stone-700 hover:bg-stone-800 text-stone-200 text-xs font-bold transition-all active:scale-98"
                 title="تحميل ملف الـ PDF مباشرة"
               >
-                <Download className="w-4 h-4" />
-                <span>تحميل مباشر</span>
+                <Download className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="text-[11px]">تحميل PDF</span>
               </a>
             ) : null}
 
@@ -185,36 +199,52 @@ export function ResourceInAppPdfModal({
 
         {/* Sub-bar: Subject vs Solution Tabs */}
         {hasSolution && (
-          <div className="bg-[#1f2125] border-b border-stone-800 px-4 py-2 flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => setActiveTab("subject")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === "subject"
-                  ? "bg-white text-stone-900 shadow-sm"
-                  : "bg-stone-800 text-stone-400 hover:text-stone-200"
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>نص الموضوع (Sujet)</span>
-            </button>
+          <div className="bg-[#1f2125] border-b border-stone-800 px-4 py-2 flex items-center justify-between gap-2 shrink-0 flex-wrap">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveTab("subject")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === "subject"
+                    ? "bg-white text-stone-900 shadow-sm"
+                    : "bg-stone-800 text-stone-400 hover:text-stone-200"
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>نص الموضوع (Sujet)</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setActiveTab("solution")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                activeTab === "solution"
-                  ? "bg-emerald-600 text-white shadow-sm"
-                  : "bg-stone-800 text-emerald-400 hover:text-emerald-300"
-              }`}
-            >
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>التصحيح المعتمد (Corrigé)</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("solution")}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === "solution"
+                    ? "bg-emerald-600 text-white shadow-sm"
+                    : "bg-stone-800 text-emerald-400 hover:text-emerald-300"
+                }`}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>التصحيح المعتمد (Corrigé)</span>
+              </button>
+            </div>
+
+            {isCombinedFile && (
+              <span className="text-[11px] text-stone-400 font-sans hidden md:inline">
+                📄 الموضوع والتصحيح مدمجان في نفس الوثيقة — اسحب للأسفل لعرض كل الصفحات
+              </span>
+            )}
           </div>
         )}
 
-        {/* PDF Viewer Body */}
+        {/* Notice Banner for Combined File */}
+        {isCombinedFile && activeTab === "solution" && (
+          <div className="bg-emerald-950/70 border-b border-emerald-800/50 px-4 py-1.5 flex items-center gap-2 text-[11px] text-emerald-300 shrink-0">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span>نموذج التصحيح وسلم التنقيط مرفق في الصفحات التالية من هذه الوثيقة (اسحب للأسفل).</span>
+          </div>
+        )}
+
+        {/* PDF Viewer Body with Non-blocking Loading Indicator */}
         <div className="flex-1 w-full h-full relative bg-[#131416] overflow-hidden">
           {!rawPdfUrl ? (
             <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-3">
@@ -226,15 +256,15 @@ export function ResourceInAppPdfModal({
             </div>
           ) : (
             <>
-              {/* Spinner while loading */}
+              {/* Sleek Floating Non-Blocking Loading Indicator */}
               {!iframeLoaded && (
-                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#131416]/90 text-stone-300">
-                  <RefreshCw className="w-7 h-7 text-emerald-400 animate-spin mb-3" />
-                  <span className="text-xs font-bold">جاري تحميل المستند داخل العارض المدمج...</span>
+                <div className="absolute top-4 start-1/2 -translate-x-1/2 z-20 pointer-events-none bg-stone-900/90 backdrop-blur-md text-white border border-stone-700/80 px-4 py-2 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs font-bold animate-in fade-in duration-200">
+                  <RefreshCw className="w-4 h-4 text-emerald-400 animate-spin" />
+                  <span>جاري فتح المستند...</span>
                 </div>
               )}
 
-              {/* Embedded In-App PDF Stream via Proxy */}
+              {/* Embedded In-App PDF Stream via Proxy with Full Page Scroll */}
               <iframe
                 src={proxyEmbedUrl}
                 title={exam.title_ar}

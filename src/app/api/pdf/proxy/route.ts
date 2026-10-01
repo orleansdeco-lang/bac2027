@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+// In-memory resolution cache to make repeat requests instant (0ms latency)
+const resolvedUrlCache = new Map<string, string>();
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const rawUrl = searchParams.get("url");
@@ -22,59 +25,67 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
   }
 
-  let targetUrl = parsedUrl.toString();
+  let targetUrl = resolvedUrlCache.get(rawUrl) || parsedUrl.toString();
 
-  // 1. Smart resolver for dzexams.com pages (viewer or annales)
-  if (targetUrl.includes("dzexams.com") && !targetUrl.toLowerCase().endsWith(".pdf")) {
-    try {
-      const pageHtml = await fetch(targetUrl, {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-          Referer: "https://www.dzexams.com/",
-        },
-      }).then((r) => r.text());
+  // If already resolved in cache, skip page scraping
+  if (!resolvedUrlCache.has(rawUrl)) {
+    // 1. Smart resolver for dzexams.com pages (viewer or annales)
+    if (targetUrl.includes("dzexams.com") && !targetUrl.toLowerCase().endsWith(".pdf")) {
+      try {
+        const pageHtml = await fetch(targetUrl, {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            Referer: "https://www.dzexams.com/",
+          },
+        }).then((r) => r.text());
 
-      // Prefer direct uploads link if present
-      const directUploadMatch = pageHtml.match(/https?:\\?\/\\?\/[^\s"'<>]*(?:dzexams\.com)?\\?\/uploads\\?\/[^\s"'<>]+\.pdf/i);
-      const generalPdfMatch = pageHtml.match(/https?:\\?\/\\?\/[^\s"'<>]+\.pdf/i);
-      const matched = directUploadMatch || generalPdfMatch;
+        // Prefer direct uploads link if present
+        const directUploadMatch = pageHtml.match(/https?:\\?\/\\?\/[^\s"'<>]*(?:dzexams\.com)?\\?\/uploads\\?\/[^\s"'<>]+\.pdf/i);
+        const generalPdfMatch = pageHtml.match(/https?:\\?\/\\?\/[^\s"'<>]+\.pdf/i);
+        const matched = directUploadMatch || generalPdfMatch;
 
-      if (matched) {
-        targetUrl = matched[0].replace(/\\\//g, "/");
-        if (targetUrl.includes("docs.google.com/viewer") && targetUrl.includes("url=")) {
-          const extracted = new URL(targetUrl).searchParams.get("url");
-          if (extracted) targetUrl = decodeURIComponent(extracted);
+        if (matched) {
+          targetUrl = matched[0].replace(/\\\//g, "/");
+          if (targetUrl.includes("docs.google.com/viewer") && targetUrl.includes("url=")) {
+            const extracted = new URL(targetUrl).searchParams.get("url");
+            if (extracted) targetUrl = decodeURIComponent(extracted);
+          }
+          resolvedUrlCache.set(rawUrl, targetUrl);
         }
+      } catch (err) {
+        console.warn("Failed to extract dzexams PDF link, using original:", err);
       }
-    } catch (err) {
-      console.warn("Failed to extract dzexams PDF link, using original:", err);
     }
-  }
-  // 2. Smart resolver for eddirasa article pages
-  else if (targetUrl.includes("eddirasa.com") && !targetUrl.toLowerCase().endsWith(".pdf")) {
-    try {
-      const pageHtml = await fetch(targetUrl, {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-          Referer: "https://eddirasa.com/",
-        },
-      }).then((r) => r.text());
+    // 2. Smart resolver for eddirasa article pages
+    else if (targetUrl.includes("eddirasa.com") && !targetUrl.toLowerCase().endsWith(".pdf")) {
+      try {
+        const pageHtml = await fetch(targetUrl, {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            Referer: "https://eddirasa.com/",
+          },
+        }).then((r) => r.text());
 
-      const pdfMatch = pageHtml.match(/https?:\/\/[^\s"'<>]+\.pdf/i);
-      if (pdfMatch) {
-        targetUrl = pdfMatch[0];
+        const pdfMatch = pageHtml.match(/https?:\/\/[^\s"'<>]+\.pdf/i);
+        if (pdfMatch) {
+          targetUrl = pdfMatch[0];
+          resolvedUrlCache.set(rawUrl, targetUrl);
+        }
+      } catch (err) {
+        console.warn("Failed to extract eddirasa PDF link:", err);
       }
-    } catch (err) {
-      console.warn("Failed to extract eddirasa PDF link:", err);
     }
-  }
-  // 3. Smart resolver for Google Drive view links
-  else if (targetUrl.includes("drive.google.com/file/d/")) {
-    const driveIdMatch = targetUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
-    if (driveIdMatch && driveIdMatch[1]) {
-      targetUrl = `https://drive.google.com/uc?export=download&id=${driveIdMatch[1]}`;
+    // 3. Smart resolver for Google Drive view links
+    else if (targetUrl.includes("drive.google.com/file/d/")) {
+      const driveIdMatch = targetUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (driveIdMatch && driveIdMatch[1]) {
+        targetUrl = `https://drive.google.com/uc?export=download&id=${driveIdMatch[1]}`;
+        resolvedUrlCache.set(rawUrl, targetUrl);
+      }
+    } else {
+      resolvedUrlCache.set(rawUrl, targetUrl);
     }
   }
 

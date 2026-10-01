@@ -46,7 +46,7 @@ export function ExamPdfViewerModal({
   // Pagination state: page 1 to 4 (for interactive A4 mode)
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
-  const [continuousScroll, setContinuousScroll] = useState<boolean>(false);
+  const [continuousScroll, setContinuousScroll] = useState<boolean>(true);
   const [viewMode, setViewMode] = useState<"interactive" | "original_pdf">("original_pdf");
   const [iframeLoaded, setIframeLoaded] = useState(false);
 
@@ -61,17 +61,24 @@ export function ExamPdfViewerModal({
     exam.subjectPdfUrl || (exam as any).file_url || (exam as any).source_url || "";
   const rawSolutionPdf =
     exam.solutionPdfUrl || (exam as any).solution_url || rawSubjectPdf;
+  const hasSeparateSolution = Boolean(
+    (exam.solutionPdfUrl && exam.solutionPdfUrl !== rawSubjectPdf) ||
+    ((exam as any).solution_url && (exam as any).solution_url !== rawSubjectPdf)
+  );
   const hasSolution = Boolean(
     exam.solutionPdfUrl ||
     (exam as any).solution_url ||
     (exam as any).has_solution ||
-    (exam as any).hasSolution
+    (exam as any).hasSolution ||
+    (exam.title_ar && (exam.title_ar.includes("تصحيح") || exam.title_ar.includes("حل") || exam.title_ar.includes("مع التصحيح")))
   );
+  const isCombinedPdf = !hasSeparateSolution && rawSolutionPdf === rawSubjectPdf;
 
-  const activeRawPdf = activeTab === "solution" && hasSolution ? rawSolutionPdf : rawSubjectPdf;
+  const activeRawPdf = activeTab === "solution" && hasSeparateSolution ? rawSolutionPdf : rawSubjectPdf;
 
+  // Append #view=FitH&pagemode=none for full width and continuous scrolling across all pages
   const proxyEmbedUrl = activeRawPdf
-    ? `/api/pdf/proxy?url=${encodeURIComponent(activeRawPdf)}`
+    ? `/api/pdf/proxy?url=${encodeURIComponent(activeRawPdf)}#view=FitH&pagemode=none`
     : "";
 
   const directDownloadUrl = activeRawPdf
@@ -80,10 +87,18 @@ export function ExamPdfViewerModal({
       )}`
     : "";
 
-  // Reset loading spinner on document switch
+  // Reset loading spinner on document switch with auto-dismiss (prevents infinite loading)
   useEffect(() => {
+    if (isCombinedPdf && activeTab === "solution") {
+      setIframeLoaded(true);
+      return;
+    }
     setIframeLoaded(false);
-  }, [activeTab, activeRawPdf]);
+    const timer = setTimeout(() => {
+      setIframeLoaded(true);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [activeTab, activeRawPdf, isCombinedPdf]);
 
   // Handle ESC key to close modal
   useEffect(() => {
@@ -415,6 +430,14 @@ export function ExamPdfViewerModal({
           </div>
         </div>
 
+        {/* Notice Banner for Combined File */}
+        {isCombinedPdf && activeTab === "solution" && (
+          <div className="bg-emerald-950/70 border-b border-emerald-800/50 px-4 py-1.5 flex items-center gap-2 text-[11px] text-emerald-300 shrink-0">
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+            <span>نموذج التصحيح وسلم التنقيط الرسمي مرفق في الصفحات التالية من هذه الوثيقة (اسحب للأسفل).</span>
+          </div>
+        )}
+
         {/* ================================================================= */}
         {/* 3. DOCUMENT CANVAS (Original Official PDF Viewer OR A4 Sheet)    */}
         {/* ================================================================= */}
@@ -459,10 +482,11 @@ export function ExamPdfViewerModal({
                 </div>
               ) : (
                 <>
+                  {/* Floating non-blocking loading indicator */}
                   {!iframeLoaded && (
-                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#131416]/90 text-stone-300">
-                      <RefreshCw className="w-7 h-7 text-emerald-400 animate-spin mb-3" />
-                      <span className="text-xs font-bold">جاري تحميل وثيقة الامتحان الرسمية داخل العارض المدمج...</span>
+                    <div className="absolute top-4 start-1/2 -translate-x-1/2 z-20 pointer-events-none bg-stone-900/90 backdrop-blur-md text-white border border-stone-700/80 px-4 py-2 rounded-xl shadow-2xl flex items-center gap-2.5 text-xs font-bold animate-in fade-in duration-200">
+                      <RefreshCw className="w-4 h-4 text-emerald-400 animate-spin" />
+                      <span>جاري فتح وثيقة الامتحان...</span>
                     </div>
                   )}
                   <iframe
