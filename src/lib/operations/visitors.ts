@@ -150,9 +150,29 @@ export async function recordVisitorHit(input: {
   utmSource?: string;
   utmCampaign?: string;
   utmMedium?: string;
+  utmContent?: string;
+  utmTerm?: string;
   refCode?: string;
   queryParams?: Record<string, string>;
   isHeartbeat?: boolean;
+  anonymousId?: string;
+  firstTouch?: {
+    source?: string;
+    medium?: string;
+    campaign?: string;
+    content?: string;
+    term?: string;
+  } | null;
+  lastTouch?: {
+    source?: string;
+    medium?: string;
+    campaign?: string;
+    content?: string;
+    term?: string;
+  } | null;
+  deviceType?: "mobile" | "desktop" | "tablet";
+  browser?: string;
+  os?: string;
 }): Promise<VisitorLogEntry> {
   loadDurableLogs();
 
@@ -162,25 +182,31 @@ export async function recordVisitorHit(input: {
   const hour = now.getHours();
 
   const ua = (input.userAgent || "").toLowerCase();
-  let deviceType: "mobile" | "desktop" | "tablet" = "desktop";
-  if (/ipad|tablet|(android(?!.*mobile))/i.test(ua)) {
-    deviceType = "tablet";
-  } else if (/mobile|iphone|android|phone|ipod/i.test(ua)) {
-    deviceType = "mobile";
+  let deviceType: "mobile" | "desktop" | "tablet" = input.deviceType || "desktop";
+  if (!input.deviceType) {
+    if (/ipad|tablet|(android(?!.*mobile))/i.test(ua)) {
+      deviceType = "tablet";
+    } else if (/mobile|iphone|android|phone|ipod/i.test(ua)) {
+      deviceType = "mobile";
+    }
   }
 
-  let browser = "Other";
-  if (/edg\//i.test(ua)) browser = "Edge";
-  else if (/chrome|crios/i.test(ua)) browser = "Chrome";
-  else if (/firefox|fxios/i.test(ua)) browser = "Firefox";
-  else if (/safari/i.test(ua)) browser = "Safari";
+  let browser = input.browser || "Other";
+  if (!input.browser) {
+    if (/edg\//i.test(ua)) browser = "Edge";
+    else if (/chrome|crios/i.test(ua)) browser = "Chrome";
+    else if (/firefox|fxios/i.test(ua)) browser = "Firefox";
+    else if (/safari/i.test(ua)) browser = "Safari";
+  }
 
-  let os = "Other";
-  if (/windows/i.test(ua)) os = "Windows";
-  else if (/android/i.test(ua)) os = "Android";
-  else if (/iphone|ipad|ipod/i.test(ua)) os = "iOS";
-  else if (/macintosh|mac os/i.test(ua)) os = "macOS";
-  else if (/linux/i.test(ua)) os = "Linux";
+  let os = input.os || "Other";
+  if (!input.os) {
+    if (/windows/i.test(ua)) os = "Windows";
+    else if (/android/i.test(ua)) os = "Android";
+    else if (/iphone|ipad|ipod/i.test(ua)) os = "iOS";
+    else if (/macintosh|mac os/i.test(ua)) os = "macOS";
+    else if (/linux/i.test(ua)) os = "Linux";
+  }
 
   const { domain: referrerDomain } = extractReferrerDomain(input.referrer);
 
@@ -199,9 +225,9 @@ export async function recordVisitorHit(input: {
     os,
     referrer: input.referrer || undefined,
     referrerDomain,
-    utmSource: input.utmSource || undefined,
-    utmCampaign: input.utmCampaign || undefined,
-    utmMedium: input.utmMedium || undefined,
+    utmSource: input.lastTouch?.source || input.utmSource || input.firstTouch?.source || undefined,
+    utmCampaign: input.lastTouch?.campaign || input.utmCampaign || input.firstTouch?.campaign || undefined,
+    utmMedium: input.lastTouch?.medium || input.utmMedium || input.firstTouch?.medium || undefined,
     refCode: input.refCode || undefined,
     queryParams: input.queryParams,
     ip: input.ip ? input.ip.split(",")[0].trim() : undefined,
@@ -211,9 +237,10 @@ export async function recordVisitorHit(input: {
   memoryVisitorLogs.unshift(entry);
   saveDurableLogs();
 
-  // Asynchronously persist to Supabase visitor_hits
+  // Asynchronously persist to Supabase (both visitor_hits and analytics_sessions)
   if (isSupabaseConfigured && supabase) {
     try {
+      // 1. Classic visitor_hits
       supabase
         .from("visitor_hits")
         .insert({
@@ -233,6 +260,40 @@ export async function recordVisitorHit(input: {
           ip_hash: entry.ip || null,
           created_at: entry.timestamp,
         })
+        .then(() => {}, () => {});
+
+      // 2. First-party analytics_sessions upsert
+      const anonymousId = input.anonymousId || `anon_${entry.sessionId}`;
+      supabase
+        .from("analytics_sessions")
+        .upsert(
+          {
+            session_id: entry.sessionId,
+            anonymous_id: anonymousId,
+            user_id: entry.userId || null,
+            landing_page: entry.path,
+            referrer: entry.referrer || null,
+            referrer_domain: entry.referrerDomain || null,
+            first_utm_source: input.firstTouch?.source || input.utmSource || null,
+            first_utm_medium: input.firstTouch?.medium || input.utmMedium || null,
+            first_utm_campaign: input.firstTouch?.campaign || input.utmCampaign || null,
+            first_utm_content: input.firstTouch?.content || input.utmContent || null,
+            first_utm_term: input.firstTouch?.term || input.utmTerm || null,
+            last_utm_source: input.lastTouch?.source || input.utmSource || null,
+            last_utm_medium: input.lastTouch?.medium || input.utmMedium || null,
+            last_utm_campaign: input.lastTouch?.campaign || input.utmCampaign || null,
+            last_utm_content: input.lastTouch?.content || input.utmContent || null,
+            last_utm_term: input.lastTouch?.term || input.utmTerm || null,
+            device_type: entry.deviceType,
+            browser: entry.browser || null,
+            os: entry.os || null,
+            ip_hash: entry.ip || null,
+            country: "DZ",
+            last_activity_at: entry.timestamp,
+            is_active: true,
+          },
+          { onConflict: "session_id", ignoreDuplicates: false }
+        )
         .then(() => {}, () => {});
     } catch {}
   }

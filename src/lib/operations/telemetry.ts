@@ -229,6 +229,26 @@ export async function processTelemetryBatch(
       }));
 
       await supabase.from("telemetry_events").insert(rows);
+
+      // Also persist to analytics_events
+      const analyticsRows = validToPersist.map((e) => ({
+        event_id: e.eventId,
+        session_id: e.sessionId,
+        anonymous_id: e.anonymousId,
+        user_id: e.userId || null,
+        event_name: e.eventName,
+        route: e.route || "/",
+        properties: {
+          ...e.metadata,
+          stream: e.stream || null,
+          subject: e.subject || null,
+          skill_id: e.skillId || null,
+          mission_id: e.missionId || null,
+          content_id: e.contentId || null,
+        },
+        occurred_at: e.occurredAt,
+      }));
+      supabase.from("analytics_events").insert(analyticsRows).then(() => {}, () => {});
     } catch {
       // Retained in memory fallback
     }

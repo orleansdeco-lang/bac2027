@@ -353,21 +353,6 @@ export default function AccountPage() {
     };
   }, [lastLessonId, isAr]);
 
-  if (authLoading || !user) {
-    return (
-      <AppShell>
-        <div className="min-h-[60vh] flex items-center justify-center">
-          <div className="animate-pulse flex flex-col items-center gap-3">
-            <Compass className="h-6 w-6 text-[var(--color-primary)] animate-spin" />
-            <p className="text-sm font-mono text-theme-muted">
-              {isAr ? "جاري توجيه الحساب..." : "Chargement du profil..."}
-            </p>
-          </div>
-        </div>
-      </AppShell>
-    );
-  }
-
   // Study Character Mapping
   const characterMap: Record<string, { nameAr: string; nameFr: string; img: string }> = {
     boy: { nameAr: "الفتى الطموح", nameFr: "L'Ambitieux", img: "/illustrations/characters/boy.jpg" },
@@ -390,7 +375,7 @@ export default function AccountPage() {
 
   const creditBalance = referralSummary?.creditBalanceDzd ?? (profile as any)?.credit_balance_dzd ?? 0;
 
-  // Generate QR code pointing to registration with referral code
+  // Generate QR code pointing to registration with referral code (Hook unconditionally declared)
   useEffect(() => {
     if (referralCode) {
       const regUrl = typeof window !== "undefined"
@@ -409,6 +394,21 @@ export default function AccountPage() {
         .catch((err) => console.error("Error generating QR Code:", err));
     }
   }, [referralCode]);
+
+  if (authLoading || !user) {
+    return (
+      <AppShell>
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div className="animate-pulse flex flex-col items-center gap-3">
+            <Compass className="h-6 w-6 text-[var(--color-primary)] animate-spin" />
+            <p className="text-sm font-mono text-theme-muted">
+              {isAr ? "جاري توجيه الحساب..." : "Chargement du profil..."}
+            </p>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
 
   const handleDownloadQr = () => {
     if (!qrDataUrl) return;

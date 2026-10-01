@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { AppShell } from "@/components/ui/AppShell";
 import { Container } from "@/components/ui/Container";
@@ -9,96 +9,83 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { OrderTrackingView } from "@/components/orders/OrderTrackingView";
 import { OrderTrackingData } from "@/lib/orders/tracking";
-import { Package, AlertCircle, RefreshCw, ArrowRight, ArrowLeft } from "lucide-react";
-import { useTranslation } from "@/lib/i18n/context";
+import { RotateCcw, AlertTriangle } from "lucide-react";
 
-export default function OrderTrackingDetailsPage() {
+export default function OrderTrackingDetailPage() {
   const params = useParams();
-  const router = useRouter();
-  const { locale } = useTranslation();
-  const isAr = locale === "ar";
-  const BackArrow = isAr ? ArrowRight : ArrowLeft;
-
-  const rawId = params?.id as string;
-  const orderId = rawId ? decodeURIComponent(rawId) : "";
+  const rawId = (params?.id as string) || "";
+  const orderId = decodeURIComponent(rawId);
 
   const [tracking, setTracking] = useState<OrderTrackingData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchTrackingData = async (isManualRefresh = false) => {
+  const fetchTracking = async () => {
     if (!orderId) return;
-    if (isManualRefresh) setIsRefreshing(true);
-    else setLoading(true);
-
+    setLoading(true);
+    setError(null);
     try {
       const res = await fetch(`/api/orders/${encodeURIComponent(orderId)}/track`);
       const data = await res.json();
-
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "تعذر العثور على الطلب المطلوب.");
+        throw new Error(data.error || "فشل تحميل تفاصيل التتبع للطلب.");
       }
-
       setTracking(data.tracking);
-      setError(null);
     } catch (err: any) {
-      console.error("[OrderTrackingPage] Fetch error:", err);
-      setError(err?.message || "حدث خطأ أثناء تحميل بيانات التتبع.");
+      setError(err?.message || "تعذر تحميل بيانات التتبع.");
     } finally {
       setLoading(false);
-      setIsRefreshing(false);
     }
   };
 
   useEffect(() => {
-    fetchTrackingData();
+    fetchTracking();
   }, [orderId]);
 
   return (
     <AppShell activeNav="orders">
-      <Container size="lg" className="py-6 sm:py-8 space-y-6" dir="rtl">
+      <Container size="lg" className="py-6 sm:py-10 space-y-6" dir="rtl">
         {loading ? (
-          <div className="py-16 flex flex-col items-center justify-center gap-4 text-theme-muted">
-            <RefreshCw className="w-8 h-8 animate-spin text-[var(--color-primary)]" />
-            <p className="text-sm font-bold">جاري تحميل مسار وحالة الطلب...</p>
+          <div className="py-20 text-center space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mx-auto animate-spin">
+              <RotateCcw className="w-6 h-6" />
+            </div>
+            <p className="text-sm font-bold text-theme-muted">
+              جاري تحميل مسار الطلب ({orderId})...
+            </p>
           </div>
-        ) : error || !tracking ? (
-          <div className="max-w-md mx-auto py-12 space-y-5 text-center">
-            <div className="w-16 h-16 rounded-3xl bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto">
-              <AlertCircle className="w-8 h-8" />
+        ) : error ? (
+          <Card className="p-8 text-center space-y-5 rounded-3xl border border-rose-500/30 bg-rose-500/5 max-w-lg mx-auto">
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/15 text-rose-500 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-6 h-6" />
             </div>
-            <div className="space-y-2">
-              <h2 className="text-lg font-black text-theme-text">تعذر تحميل بيانات الطلب</h2>
-              <p className="text-xs text-theme-muted leading-relaxed">
-                {error || "لم نتمكن من العثور على بيانات التتبع لهذا الطلب."}
-              </p>
+            <div className="space-y-1">
+              <h2 className="text-base font-black text-theme-text">تعذر العثور على الطلب</h2>
+              <p className="text-xs text-theme-muted leading-relaxed">{error}</p>
             </div>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <Link href="/orders/track">
+                <Button variant="outline" size="sm" className="rounded-xl text-xs font-bold">
+                  بحث عن طلب آخر
+                </Button>
+              </Link>
               <Button
                 variant="primary"
                 size="sm"
-                onClick={() => fetchTrackingData(false)}
-                className="w-full sm:w-auto rounded-xl font-bold"
+                className="rounded-xl text-xs font-bold"
+                onClick={fetchTracking}
               >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>إعادة المحاولة</span>
+                إعادة المحاولة
               </Button>
-              <Link href="/dashboard/orders" className="w-full sm:w-auto">
-                <Button variant="outline" size="sm" className="w-full sm:w-auto rounded-xl font-bold">
-                  <BackArrow className="w-3.5 h-3.5" />
-                  <span>العودة لطلباتي</span>
-                </Button>
-              </Link>
             </div>
-          </div>
-        ) : (
+          </Card>
+        ) : tracking ? (
           <OrderTrackingView
             tracking={tracking}
-            onRefresh={() => fetchTrackingData(true)}
-            isRefreshing={isRefreshing}
+            onRefresh={fetchTracking}
+            isRefreshing={loading}
           />
-        )}
+        ) : null}
       </Container>
     </AppShell>
   );

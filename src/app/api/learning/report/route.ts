@@ -37,17 +37,30 @@ export async function GET(req: Request) {
       }
     }
 
-    const effectiveTargetId = requestedStudentId || callerUserId || "student-guest-01";
+    let effectiveTargetId = "student-guest-01";
 
-    // Privacy Guard: Student A cannot access Student B's learning report
-    if (callerUserId && !isAdmin && effectiveTargetId !== callerUserId) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "تم حظر الوصول: لا يمكنك الاطلاع على التقرير التعليمي لطالب آخر (حماية الخصوصية).",
-        },
-        { status: 403 }
-      );
+    if (!callerUserId) {
+      if (requestedStudentId && requestedStudentId !== "student-guest-01") {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "يجب تسجيل الدخول بحساب الطالب المصرح له للوصول إلى هذا التقرير التعليمي.",
+          },
+          { status: 401 }
+        );
+      }
+      effectiveTargetId = "student-guest-01";
+    } else {
+      if (!isAdmin && requestedStudentId && requestedStudentId !== callerUserId) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "تم حظر الوصول: لا يمكنك الاطلاع على التقرير التعليمي لطالب آخر (حماية الخصوصية).",
+          },
+          { status: 403 }
+        );
+      }
+      effectiveTargetId = isAdmin && requestedStudentId ? requestedStudentId : callerUserId;
     }
 
     const report = generateStudentLearningReport(effectiveTargetId);

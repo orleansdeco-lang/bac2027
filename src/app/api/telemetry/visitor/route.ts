@@ -17,20 +17,29 @@ export async function POST(req: Request) {
 
     const sessionId = body.sessionId || "ses_guest";
     const path = body.path || "/";
-    if (path.startsWith("/ops") || path.startsWith("/api")) {
+    if (path.startsWith("/admin") || path.startsWith("/ops") || path.startsWith("/api")) {
       return NextResponse.json({ success: true, ignored: true });
     }
     const fullUrl = body.fullUrl || undefined;
     const userId = body.userId || null;
+    const anonymousId = body.anonymousId || undefined;
     const utmSource = body.utmSource || undefined;
     const utmCampaign = body.utmCampaign || undefined;
     const utmMedium = body.utmMedium || undefined;
+    const utmContent = body.utmContent || undefined;
+    const utmTerm = body.utmTerm || undefined;
     const refCode = body.refCode || undefined;
     const queryParams = body.queryParams || {};
     const isHeartbeat = Boolean(body.isHeartbeat);
+    const firstTouch = body.firstTouch || null;
+    const lastTouch = body.lastTouch || null;
+    const deviceType = body.deviceType || undefined;
+    const browser = body.browser || undefined;
+    const os = body.os || undefined;
 
     await recordVisitorHit({
       sessionId,
+      anonymousId,
       path,
       fullUrl,
       userId,
@@ -40,9 +49,16 @@ export async function POST(req: Request) {
       utmSource,
       utmCampaign,
       utmMedium,
+      utmContent,
+      utmTerm,
       refCode,
       queryParams,
       isHeartbeat,
+      firstTouch,
+      lastTouch,
+      deviceType,
+      browser,
+      os,
     });
 
     const liveCount = getLiveVisitorsCount(5);

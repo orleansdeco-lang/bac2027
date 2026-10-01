@@ -229,13 +229,29 @@ export async function GET(req: Request, { params }: RouteParams) {
       );
     }
 
+    // PII Protection Invariant: If unauthenticated public tracking, mask recipient name, phone, and exact address
+    let sanitizedShippingAddress = shippingAddress;
+    if (!userId || (canonicalOrder.user_id && canonicalOrder.user_id !== userId)) {
+      if (shippingAddress) {
+        const rawName = shippingAddress.full_name || shippingAddress.recipient_name || "";
+        const maskedName = rawName.length > 2 ? `${rawName.substring(0, 2)}***` : "المشترك";
+        sanitizedShippingAddress = {
+          ...shippingAddress,
+          full_name: maskedName,
+          recipient_name: maskedName,
+          address: "حي سكني (محمي لدواعي الخصوصية)",
+          phone: shippingAddress.phone ? `${shippingAddress.phone.substring(0, 3)}****${shippingAddress.phone.slice(-2)}` : undefined,
+        };
+      }
+    }
+
     // Build the 8-step sanitized timeline
     const trackingData = buildOrderTrackingTimeline(
       canonicalOrder,
       shipment,
       payment,
       subscription,
-      shippingAddress
+      sanitizedShippingAddress
     );
 
     return NextResponse.json({

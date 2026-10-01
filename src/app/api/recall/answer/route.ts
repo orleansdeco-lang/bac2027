@@ -29,7 +29,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const userId = verifiedUserId || body.userId || "anonymous-student";
+    // Strict Identity Invariant: Never allow unauthenticated callers to spoof another student's userId
+    const userId = verifiedUserId || (process.env.NODE_ENV === "test" && body.userId ? body.userId : "anonymous-student");
     const source = body.source === "inline_push" ? "inline_push" : "in_app";
 
     const result = await RecallRepository.submitAnswer(

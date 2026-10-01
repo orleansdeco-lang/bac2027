@@ -50,12 +50,26 @@ async function resolveStudentContext(req: Request, targetStudentId?: string | nu
     }
   }
 
-  // If no auth header, fallback to targetStudentId in dev/test or anonymous student
-  const effectiveCallerId = callerUserId || targetStudentId || "student-guest-01";
-  const effectiveTargetId = targetStudentId || effectiveCallerId;
+  // Unauthenticated caller cannot target an existing registered student ID
+  if (!callerUserId) {
+    if (targetStudentId && targetStudentId !== "student-guest-01") {
+      return {
+        authorized: false,
+        error: "يجب تسجيل الدخول بحساب الطالب المصرح له للوصول إلى هذا السجل التعليمي.",
+        status: 401,
+      };
+    }
+    return {
+      authorized: true,
+      callerUserId: "student-guest-01",
+      callerRole: "GUEST",
+      isAdmin: false,
+      studentId: "student-guest-01",
+    };
+  }
 
   // Strict Privacy: Student A cannot access Student B's records
-  if (callerUserId && effectiveTargetId !== callerUserId && callerRole === "STUDENT") {
+  if (callerRole === "STUDENT" && targetStudentId && targetStudentId !== callerUserId) {
     return {
       authorized: false,
       error: "غير مصرح لك بالاطلاع على السجل التعليمي لطالب آخر (حماية الخصوصية).",
@@ -65,10 +79,10 @@ async function resolveStudentContext(req: Request, targetStudentId?: string | nu
 
   return {
     authorized: true,
-    callerUserId: effectiveCallerId,
+    callerUserId,
     callerRole,
     isAdmin: false,
-    studentId: effectiveTargetId,
+    studentId: callerUserId,
   };
 }
 

@@ -1241,7 +1241,7 @@ export interface SkillLearningBundle {
 
 // Lazy accessor to Master Curriculum Registry to prevent ES module circular initialization
 export function getSkillLearningBundle(skillId: string): SkillLearningBundle | null {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line
   const { getSkillLearningBundle: getMaster } = require("@/data/curriculum/registry");
   return getMaster(skillId);
 }
@@ -1250,17 +1250,17 @@ export const MASTER_CURRICULUM_REGISTRY: Record<string, SkillLearningBundle> = n
   {} as Record<string, SkillLearningBundle>,
   {
     get(_target, prop: string) {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      // eslint-disable-next-line
       const { MASTER_CURRICULUM_REGISTRY: reg } = require("@/data/curriculum/registry");
       return reg[prop];
     },
     ownKeys() {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      // eslint-disable-next-line
       const { MASTER_CURRICULUM_REGISTRY: reg } = require("@/data/curriculum/registry");
       return Reflect.ownKeys(reg);
     },
     getOwnPropertyDescriptor(_target, prop) {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      // eslint-disable-next-line
       const { MASTER_CURRICULUM_REGISTRY: reg } = require("@/data/curriculum/registry");
       return Reflect.getOwnPropertyDescriptor(reg, prop);
     },

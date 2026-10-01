@@ -31,26 +31,26 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   // 2. Unauthorized State (401 / 403)
   if (!authorized || !user) {
     return (
-      <div className="min-h-screen bg-[#080D1A] flex items-center justify-center p-4" dir="rtl">
+      <div className="min-h-screen bg-[#080D1A] flex items-center justify-center p-4" dir="ltr">
         <div className="max-w-md w-full bg-[#0D1526] border border-[#1E293B] rounded-2xl p-7 text-center space-y-6 shadow-2xl">
           <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto text-red-400 shadow-inner">
             <ShieldAlert className="w-8 h-8" />
           </div>
 
           <div className="space-y-2">
-            <h2 className="text-lg font-bold text-slate-100">تم رفض الوصول: صلاحيات إدارية مطلوبة</h2>
+            <h2 className="text-lg font-bold text-slate-100">Accès Refusé : Droits Administrateur Requis</h2>
             <p className="text-xs text-slate-400 leading-relaxed">
-              {error || "هذه الواجهة مخصصة حصراً لفريق الإدارة والتشغيل المعتمد لمنصة شاطر. لا يمكن الوصول إليها بالحسابات العادية."}
+              {error || "Cette interface est strictement réservée à l'équipe d'exploitation et d'administration de la plateforme SHATER."}
             </p>
           </div>
 
-          <div className="p-3 rounded-xl bg-[#080D1A] border border-[#1E293B] text-[11px] font-mono text-slate-400 text-right space-y-1">
+          <div className="p-3 rounded-xl bg-[#080D1A] border border-[#1E293B] text-[11px] font-mono text-slate-400 text-left space-y-1">
             <div className="flex items-center gap-2 text-red-400 font-semibold">
               <Lock className="w-3.5 h-3.5" />
-              <span>SERVER-SIDE RBAC ENFORCEMENT</span>
+              <span>CONTRÔLE DE SÉCURITÉ RBAC</span>
             </div>
-            <div>Status: 403 Forbidden</div>
-            <div>Policy: requireAdmin() failed</div>
+            <div>Statut : 403 Interdit</div>
+            <div>Règle : requireAdmin() vérifié</div>
           </div>
 
           <div className="flex flex-col gap-2">
@@ -58,14 +58,14 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
               href="/ops/login"
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20 transition-all"
             >
-              <span>تسجيل الدخول الإداري</span>
-              <ArrowRight className="w-4 h-4 rotate-180" />
+              <span>Connexion Administrateur</span>
+              <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               href="/dashboard"
               className="w-full px-4 py-2 rounded-xl text-xs text-slate-400 hover:text-slate-200 transition-colors"
             >
-              العودة لمنصة الطالب
+              Retour à l'espace élève (العودة للمنصة)
             </Link>
           </div>
         </div>
@@ -73,9 +73,9 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // 3. Authorized Control Center Layout
+  // 3. Authorized Control Center Layout (French-first SaaS LTR)
   return (
-    <div className="min-h-screen bg-[#080D1A] text-slate-100 flex flex-col font-sans" dir="rtl">
+    <div className="min-h-screen bg-[#080D1A] text-slate-100 flex flex-col font-sans" dir="ltr">
       <div className="flex flex-1 overflow-hidden">
         {/* Desktop Sidebar */}
         <div className="hidden lg:block shrink-0">
@@ -84,7 +84,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
         {/* Mobile Drawer */}
         {mobileDrawerOpen && (
-          <div className="fixed inset-0 z-50 lg:hidden flex" dir="rtl">
+          <div className="fixed inset-0 z-50 lg:hidden flex" dir="ltr">
             <div
               className="fixed inset-0 bg-black/70 backdrop-blur-sm"
               onClick={() => setMobileDrawerOpen(false)}

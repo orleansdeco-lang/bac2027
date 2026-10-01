@@ -216,7 +216,7 @@ function resolveFromPacksAndBatches(skillId: string): SkillLearningBundle | null
 
   // 18. Pilot Prompt 11/12 fallback (lazy require to eliminate circular module initialization)
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line
     const mappings = require("@/domain/content/mappings");
     const p11Skill = mappings.PROMPT11_SKILLS?.find((s: any) => s.id === skillId);
     if (p11Skill) {

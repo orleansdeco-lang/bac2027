@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isServerOperator, getServerUserRole } from "@/lib/operations/auth";
+import { extractAuthenticatedCaller } from "@/lib/operations/auth";
 import {
   getOperationsIssues,
   createOperationsIssue,
@@ -7,11 +7,11 @@ import {
 } from "@/lib/operations/issues";
 import { IssueCategory, IssueSeverity, IssueStatus } from "@/lib/operations/types";
 
-export async function GET(request: NextRequest) {
-  const userId = request.headers.get("x-user-id");
-  const isOperator = Boolean(userId && (await isServerOperator(userId)));
+export const dynamic = "force-dynamic";
 
-  if (!isOperator) {
+export async function GET(request: NextRequest) {
+  const caller = await extractAuthenticatedCaller(request);
+  if (!caller?.isOperator) {
     return NextResponse.json(
       { error: "Forbidden: Operator or Owner access required." },
       { status: 403 }
@@ -33,10 +33,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const userId = request.headers.get("x-user-id");
-  const isOperator = Boolean(userId && (await isServerOperator(userId)));
-
-  if (!isOperator) {
+  const caller = await extractAuthenticatedCaller(request);
+  if (!caller?.isOperator) {
     return NextResponse.json(
       { error: "Forbidden: Operator or Owner access required." },
       { status: 403 }
@@ -45,7 +43,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const actorRole = (userId && (await getServerUserRole(userId))) || "OPERATOR";
+    const userId = caller.userId;
+    const actorRole = caller.role || "OPERATOR";
 
     if (body.action === "update") {
       if (!body.issueId || !body.status) {
