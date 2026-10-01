@@ -5,8 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { AppShell } from "@/components/ui/AppShell";
 import { Container } from "@/components/ui/Container";
-import { BacExamItem } from "@/data/exams";
-import { ExamPdfViewerModal } from "@/components/exams/ExamPdfViewerModal";
+import { ResourceInAppPdfModal } from "@/components/exams/ResourceInAppPdfModal";
 import { ALL_SUBJECTS, ALGERIAN_BAC_STREAMS } from "@/lib/constants/streams";
 import { StreamId, SubjectId } from "@/types/education";
 import { useAuth } from "@/lib/auth/context";
@@ -191,7 +190,7 @@ function TermExamsContent() {
   const [displayCount, setDisplayCount] = useState<number>(32);
 
   // Modal State
-  const [activeModalExam, setActiveModalExam] = useState<BacExamItem | null>(null);
+  const [activeModalExam, setActiveModalExam] = useState<UnifiedResourceExamItem | null>(null);
   const [modalTab, setModalTab] = useState<"subject" | "solution">("subject");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -206,6 +205,7 @@ function TermExamsContent() {
           const { data, error } = await supabase
             .from("resources")
             .select("*")
+            .neq("pdf_links", "{}")
             .order("created_at", { ascending: false })
             .limit(3000);
 
@@ -303,6 +303,7 @@ function TermExamsContent() {
       const { data, error } = await supabase
         .from("resources")
         .select("*")
+        .neq("pdf_links", "{}")
         .order("created_at", { ascending: false })
         .limit(3000);
 
@@ -432,20 +433,8 @@ function TermExamsContent() {
     }
   };
 
-  const handleOpenModal = (exam: UnifiedResourceExamItem, tab: "subject" | "solution") => {
-    const adapted: BacExamItem = {
-      id: exam.id,
-      year: exam.year || 2024,
-      kind: exam.kind === "term_quiz" ? "term_quiz" : exam.kind === "bac_blanc" ? "bac_blanc" : "term_exam",
-      term: (exam.term as any) || 1,
-      streamId: "sciences_exp",
-      subjectId: "math",
-      title_ar: exam.title_ar,
-      topicsCount: 1,
-      subjectPdfUrl: exam.subjectPdfUrl || exam.pdf_links[0] || "",
-      solutionPdfUrl: exam.solutionPdfUrl || exam.pdf_links[1] || exam.pdf_links[0] || "",
-    };
-    setActiveModalExam(adapted);
+  const handleOpenModal = (exam: UnifiedResourceExamItem, tab: "subject" | "solution" = "subject") => {
+    setActiveModalExam(exam);
     setModalTab(tab);
   };
 
@@ -479,9 +468,9 @@ function TermExamsContent() {
         </div>
       )}
 
-      {/* PDF Modal */}
+      {/* In-App PDF Modal */}
       {activeModalExam && (
-        <ExamPdfViewerModal
+        <ResourceInAppPdfModal
           exam={activeModalExam}
           initialTab={modalTab}
           onClose={() => {
@@ -821,7 +810,8 @@ function TermExamsContent() {
               return (
                 <div
                   key={exam.id}
-                  className="p-5 rounded-3xl bg-surface border border-theme shadow-clay flex flex-col justify-between hover:border-emerald-500/40 hover:shadow-lg transition-all group"
+                  onClick={() => handleOpenModal(exam, "subject")}
+                  className="p-5 rounded-3xl bg-surface border border-theme shadow-clay flex flex-col justify-between hover:border-emerald-500/50 hover:shadow-lg transition-all group cursor-pointer"
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
@@ -841,8 +831,11 @@ function TermExamsContent() {
                       </div>
                       <button
                         type="button"
-                        onClick={() => handleShareExam(exam)}
-                        className="p-1.5 rounded-xl border border-theme bg-card hover:bg-card-hover text-theme-secondary hover:text-theme-text"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShareExam(exam);
+                        }}
+                        className="p-1.5 rounded-xl border border-theme bg-card hover:bg-card-hover text-theme-secondary hover:text-theme-text cursor-pointer"
                       >
                         <Share2 className="w-3.5 h-3.5" />
                       </button>
@@ -874,15 +867,16 @@ function TermExamsContent() {
                     </div>
                   </div>
 
-                  {/* Actions: Direct PDF Download & Preview */}
+                  {/* Actions: Direct In-App PDF Preview & Local Download */}
                   <div className="pt-4 mt-4 border-t border-theme/60 space-y-2">
                     <div className="grid grid-cols-2 gap-2">
                       {directPdfUrl ? (
                         <a
-                          href={directPdfUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          href={`/api/pdf/proxy?url=${encodeURIComponent(directPdfUrl)}&download=1&filename=${encodeURIComponent(
+                            `${exam.subject_name}_${exam.title_ar}.pdf`
+                          )}`}
                           download
+                          onClick={(e) => e.stopPropagation()}
                           className="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs"
                         >
                           <Download className="w-3.5 h-3.5" />
@@ -891,32 +885,27 @@ function TermExamsContent() {
                       ) : (
                         <button
                           type="button"
-                          onClick={() => handleOpenModal(exam, "subject")}
-                          className="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenModal(exam, "subject");
+                          }}
+                          className="py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all cursor-pointer"
                         >
                           الموضوع
                         </button>
                       )}
 
-                      {directPdfUrl ? (
-                        <a
-                          href={directPdfUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="py-2 px-3 rounded-xl bg-card border border-theme hover:bg-card-hover text-theme-text text-xs font-bold transition-all flex items-center justify-center gap-1.5"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                          <span>معاينة</span>
-                        </a>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => handleOpenModal(exam, "solution")}
-                          className="py-2 px-3 rounded-xl bg-card border border-theme hover:bg-card-hover text-theme-text text-xs font-bold transition-all"
-                        >
-                          التصحيح
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleOpenModal(exam, "subject");
+                        }}
+                        className="py-2 px-3 rounded-xl bg-card border border-theme hover:bg-card-hover text-theme-text text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>معاينة مدمجة</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -944,7 +933,11 @@ function TermExamsContent() {
                   {displayedExams.map((exam) => {
                     const directPdf = exam.pdf_links?.[0] || "";
                     return (
-                      <tr key={exam.id} className="hover:bg-card/50">
+                      <tr
+                        key={exam.id}
+                        onClick={() => handleOpenModal(exam, "subject")}
+                        className="hover:bg-card/50 cursor-pointer transition-colors"
+                      >
                         <td className="py-2.5 px-4 font-mono font-bold text-theme-text">{exam.year}</td>
                         <td className="py-2.5 px-4 text-theme-secondary">{exam.stream_name}</td>
                         <td className="py-2.5 px-4 font-bold text-theme-text">{exam.subject_name}</td>
@@ -962,25 +955,28 @@ function TermExamsContent() {
                           <div className="flex items-center justify-center gap-1.5">
                             {directPdf ? (
                               <a
-                                href={directPdf}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                href={`/api/pdf/proxy?url=${encodeURIComponent(directPdf)}&download=1&filename=${encodeURIComponent(
+                                  `${exam.subject_name}_${exam.title_ar}.pdf`
+                                )}`}
                                 download
+                                onClick={(e) => e.stopPropagation()}
                                 title="تحميل ملف الـ PDF مباشرة"
-                                className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all"
+                                className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all shadow-xs"
                               >
                                 <Download className="w-3.5 h-3.5" />
                               </a>
                             ) : null}
-                            <a
-                              href={directPdf || exam.source_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              title="معاينة الملف"
-                              className="p-1.5 rounded-lg bg-card border border-theme hover:bg-card-hover text-theme-secondary hover:text-theme-text transition-all"
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenModal(exam, "subject");
+                              }}
+                              title="معاينة المستند داخل الموقع"
+                              className="p-1.5 rounded-lg bg-card border border-theme hover:bg-card-hover text-theme-secondary hover:text-theme-text transition-all cursor-pointer"
                             >
-                              <ExternalLink className="w-3.5 h-3.5" />
-                            </a>
+                              <FileText className="w-3.5 h-3.5 text-emerald-500" />
+                            </button>
                           </div>
                         </td>
                       </tr>

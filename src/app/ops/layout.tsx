@@ -187,31 +187,31 @@ export default function OpsLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile Bottom Quick Navigation Bar */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#080D1A]/95 backdrop-blur-2xl border-t border-[#1E293B] flex items-center justify-around py-2 px-1 text-slate-400">
         <Link
-          href="/ops/overview"
+          href="/ops"
           className={`flex flex-col items-center gap-1 p-1.5 rounded-xl text-[10px] transition-colors ${
-            pathname === "/ops/overview" ? "text-indigo-400 font-bold" : "hover:text-slate-200"
+            pathname === "/ops" || pathname === "/ops/overview" ? "text-indigo-400 font-bold" : "hover:text-slate-200"
           }`}
         >
           <div className="w-4 h-4 flex items-center justify-center">⚡</div>
           <span>الرئيسية</span>
         </Link>
         <Link
-          href="/ops/finance"
+          href="/ops/orders"
           className={`flex flex-col items-center gap-1 p-1.5 rounded-xl text-[10px] transition-colors ${
-            pathname === "/ops/finance" ? "text-indigo-400 font-bold" : "hover:text-slate-200"
+            pathname === "/ops/orders" ? "text-indigo-400 font-bold" : "hover:text-slate-200"
           }`}
         >
-          <div className="w-4 h-4 flex items-center justify-center">💳</div>
-          <span>الطلبات</span>
+          <div className="w-4 h-4 flex items-center justify-center">🚚</div>
+          <span>التوصيل</span>
         </Link>
         <Link
-          href="/ops/subscriptions"
+          href="/ops/inventory"
           className={`flex flex-col items-center gap-1 p-1.5 rounded-xl text-[10px] transition-colors ${
-            pathname === "/ops/subscriptions" ? "text-indigo-400 font-bold" : "hover:text-slate-200"
+            pathname === "/ops/inventory" ? "text-indigo-400 font-bold" : "hover:text-slate-200"
           }`}
         >
-          <div className="w-4 h-4 flex items-center justify-center">🏷️</div>
-          <span>الأسعار</span>
+          <div className="w-4 h-4 flex items-center justify-center">📦</div>
+          <span>المخزون</span>
         </Link>
         <Link
           href="/ops/students"

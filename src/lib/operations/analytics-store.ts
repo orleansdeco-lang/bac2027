@@ -205,7 +205,7 @@ export async function getOperationsAnalyticsSummary(): Promise<OperationsAnalyti
     topWilayas,
     topSources,
     conversionFunnel: {
-      visitors: Math.max(allSessions.length, 1),
+      visitors: allSessions.length,
       subscribeViews,
       checkoutInitiated,
       ordersCompleted,

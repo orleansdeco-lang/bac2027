@@ -21,6 +21,10 @@ import {
   School,
   MessageSquareQuote,
   FileCheck,
+  Truck,
+  Package,
+  Layers,
+  BarChart3,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 
@@ -36,31 +40,29 @@ interface NavGroup {
 
 const navGroups: NavGroup[] = [
   {
-    title: "MONITOR",
+    title: "COMMERCE & OPÉRATIONS",
     items: [
-      { href: "/ops/overview", label: "Cockpit Overview", icon: LayoutDashboard },
-      { href: "/ops/students", label: "Students Directory", icon: Users },
-      { href: "/ops/learning", label: "Learning Analytics", icon: GraduationCap },
-      { href: "/ops/content", label: "Curriculum Content", icon: BookOpen },
+      { href: "/ops", label: "لوحة القيادة المركزية", icon: LayoutDashboard },
+      { href: "/ops/orders", label: "إدارة الطلبات والتوصيل", icon: Truck, badge: "LIVE" },
+      { href: "/ops/inventory", label: "مخزون العلب الورقية", icon: Package, badge: "KIT" },
+      { href: "/ops/subscriptions", label: "الاشتراكات والتراخيص", icon: Sliders },
+      { href: "/ops/finance", label: "المالية وتسويات COD", icon: CreditCard },
     ],
   },
   {
-    title: "OPERATIONS",
+    title: "ÉLÈVES & ANALYTIQUE",
     items: [
-      { href: "/ops/payments", label: "Payments & Orders", icon: CreditCard, badge: "LIVE" },
-      { href: "/ops/subscriptions", label: "Subscriptions", icon: Sliders },
-      { href: "/ops/finance", label: "Finance & Orders", icon: CreditCard },
-      { href: "/ops/exams", label: "Exams & Subjects Bank", icon: FileCheck, badge: "NEW" },
-      { href: "/ops/issues", label: "Anomalies Queue", icon: AlertCircle },
-      { href: "/ops/schools", label: "High Schools Queue", icon: School },
-      { href: "/ops/experiences", label: "Experiences Moderation", icon: MessageSquareQuote },
+      { href: "/ops/students", label: "دليل التلاميذ CRM", icon: Users },
+      { href: "/ops/overview", label: "الزوار وتتبع الإعلانات", icon: BarChart3 },
+      { href: "/ops/learning", label: "إحصائيات التعلم الأكاديمي", icon: GraduationCap },
+      { href: "/ops/exams", label: "بنك الامتحانات والمواضيع", icon: FileCheck },
     ],
   },
   {
-    title: "GOVERNANCE",
+    title: "GOUVERNANCE & SYSTÈME",
     items: [
-      { href: "/ops/audit", label: "Audit & Logs", icon: FileClock },
-      { href: "/ops/system", label: "System Health", icon: Server },
+      { href: "/ops/audit", label: "سجل التدقيق والحركات", icon: FileClock },
+      { href: "/ops/system", label: "سلامة الخوادم وقواعد البيانات", icon: Server },
     ],
   },
 ];

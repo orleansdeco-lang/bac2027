@@ -25,6 +25,7 @@ import { getStoredTelemetryEvents } from "./telemetry";
 import { ALGERIAN_BAC_STREAMS } from "../constants/streams";
 import { getAllUnifiedOrders } from "./orders-store";
 import { getOperationsAnalyticsSummary } from "./analytics-store";
+import { getKitInventorySummary } from "./inventory-store";
 
 export async function getOperationsDashboardData(
   operatorId?: string,
@@ -392,18 +393,19 @@ export async function getOperationsDashboardData(
     topWilayas,
   };
 
-  // Merge resilient live orders & real analytics
-  const [unifiedOrdersRes, analyticsRes] = await Promise.all([
+  // Merge resilient live orders, real analytics & kit inventory
+  const [unifiedOrdersRes, analyticsRes, inventoryRes] = await Promise.all([
     getAllUnifiedOrders(token).catch(() => ({ orders: [], summary: { totalOrders: 0, pending: 0, processing: 0, shipped: 0, delivered: 0, codPending: 0, paid: 0, returned: 0 } })),
     getOperationsAnalyticsSummary().catch(() => null),
+    getKitInventorySummary().catch(() => null),
   ]);
 
   if (analyticsRes) {
     kpis.liveVisitors = analyticsRes.liveVisitorsNow;
     kpis.todayVisitors = analyticsRes.todayVisitors;
   } else {
-    kpis.liveVisitors = Math.max(activeUserIdsToday.size, 1);
-    kpis.todayVisitors = Math.max(activeUserIdsToday.size, 1);
+    kpis.liveVisitors = activeUserIdsToday.size;
+    kpis.todayVisitors = activeUserIdsToday.size;
   }
 
   // Ensure unified orders pending count is reflected if higher
@@ -432,5 +434,6 @@ export async function getOperationsDashboardData(
     orders: unifiedOrdersRes.orders,
     ordersSummary: unifiedOrdersRes.summary,
     analytics: analyticsRes,
+    inventory: inventoryRes,
   };
 }

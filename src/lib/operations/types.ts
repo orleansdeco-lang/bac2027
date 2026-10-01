@@ -455,6 +455,7 @@ export interface OperationsDashboardData {
   orders?: any[];
   ordersSummary?: any;
   analytics?: any;
+  inventory?: any;
 }
 
 
