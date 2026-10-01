@@ -154,7 +154,13 @@ export default function PlannerPage() {
 
           const smartNotifs = NotificationService.generateSmartNotifications(
             loadedEvents,
-            data.preferences || notificationPrefs
+            data.preferences || {
+              morning_brief: true,
+              task_reminders: true,
+              evening_reflection: true,
+              spiritual_reminders: true,
+              advance_notice_minutes: 15,
+            }
           );
           setNotifications(smartNotifs);
           return;
@@ -174,7 +180,7 @@ export default function PlannerPage() {
     } finally {
       if (showLoading) setIsLoading(false);
     }
-  }, [todayIso, notificationPrefs]);
+  }, [todayIso]);
 
   useEffect(() => {
     loadPlannerData(true);

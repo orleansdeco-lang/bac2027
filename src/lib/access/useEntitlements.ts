@@ -62,16 +62,14 @@ export function useEntitlements() {
     }
 
     // Fallback if not loaded
-    if (!entitlements) {
-      setEntitlements(DEFAULT_FREE_ENTITLEMENTS);
-    }
-  }, [user?.id, entitlements]);
+    setEntitlements((prev) => prev || DEFAULT_FREE_ENTITLEMENTS);
+  }, [user?.id]);
 
   useEffect(() => {
     if (!isAuthLoading) {
       fetchEntitlements();
     }
-  }, [isAuthLoading, user?.id, fetchEntitlements]);
+  }, [isAuthLoading, fetchEntitlements]);
 
   const activeEntitlements = entitlements || DEFAULT_FREE_ENTITLEMENTS;
 
