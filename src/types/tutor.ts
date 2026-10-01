@@ -44,4 +44,10 @@ export interface TutorResponse {
   suggestedTask?: TutorTask | null;
   mode?: TutorMode;
   provider: "gemini" | "local_expert";
+  dailyAiQuota?: {
+    used: number;
+    remaining: number;
+    total: number;
+  };
 }
+

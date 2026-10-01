@@ -46,7 +46,28 @@ export const StudentRepository = {
       return memoryStudentProfiles.get(effectiveUserId);
     }
 
-    const dbClient = token ? createAuthenticatedSupabaseClient(token) : supabase;
+    // Avoid querying student_profiles with anon client when unauthenticated
+    const isMockOrLocalId = effectiveUserId.startsWith("usr_std_") ||
+      effectiveUserId.startsWith("local_") ||
+      effectiveUserId.startsWith("demo-") ||
+      effectiveUserId === "demo-user";
+
+    if (typeof window !== "undefined" && isMockOrLocalId) {
+      const local = getStrategicProfile(effectiveUserId);
+      if (local) return local;
+    }
+
+    let dbClient: any = token ? createAuthenticatedSupabaseClient(token) : null;
+    if (!dbClient && typeof window === "undefined") {
+      try {
+        const { getAdminClient } = require("@/lib/supabase/admin");
+        dbClient = getAdminClient();
+      } catch {}
+    }
+    if (!dbClient) {
+      dbClient = supabase;
+    }
+
     if (isSupabaseConfigured && dbClient && effectiveUserId) {
       try {
         const { data, error } = await dbClient
@@ -56,7 +77,11 @@ export const StudentRepository = {
           .maybeSingle();
 
         if (error) {
-          console.error("StudentRepository.getProfile error:", error);
+          if (error.code === "42501" || error.message?.includes("permission denied")) {
+            console.warn("StudentRepository.getProfile access boundary:", error.message);
+          } else {
+            console.error("StudentRepository.getProfile error:", error);
+          }
           // Do not return null immediately; fall back to local data below
         } else if (data) {
           const localFallback = getStrategicProfile(effectiveUserId) || ({} as any);
@@ -260,7 +285,17 @@ export const StudentRepository = {
       memoryStudentProfiles.set(targetId, { ...sanitizedProfile, id: targetId });
     }
 
-    const dbClient = token ? createAuthenticatedSupabaseClient(token) : supabase;
+    let dbClient: any = token ? createAuthenticatedSupabaseClient(token) : null;
+    if (!dbClient && typeof window === "undefined") {
+      try {
+        const { getAdminClient } = require("@/lib/supabase/admin");
+        dbClient = getAdminClient();
+      } catch {}
+    }
+    if (!dbClient) {
+      dbClient = supabase;
+    }
+
     if (isSupabaseConfigured && dbClient && userId) {
       try {
         const createdAt = (profile as any).created_at || (profile as any).createdAt || new Date().toISOString();
@@ -273,14 +308,18 @@ export const StudentRepository = {
           trial_expires_at: trialExpires,
         };
 
+        const resolvedStreamId = profile.streamId || (profile as any).stream_id || "sciences_exp";
+        const rawScore = Number(profile.targetScore || (profile as any).target_score);
+        const resolvedScore = !isNaN(rawScore) && rawScore >= 10 && rawScore <= 20 ? rawScore : 16.0;
+
         const basePayload: Record<string, any> = {
           id: userId,
           user_id: userId,
           education_level: profile.educationLevel || "secondary",
           exam_type: profile.examType || "bac",
-          stream_id: profile.streamId,
+          stream_id: resolvedStreamId,
           specialty_id: profile.techniqueMathSpecialty || null,
-          target_score: profile.targetScore,
+          target_score: resolvedScore,
           baseline_score: null,
           weekly_study_hours: 10,
           future_objective: profile.futureObjective?.customText || profile.futureObjective?.preset || null,

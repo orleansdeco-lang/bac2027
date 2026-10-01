@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { TopBar } from "./TopBar";
 import { Sidebar } from "./Sidebar";
 import { GlobalTutorButton } from "../tutor/GlobalTutorButton";
+import { TrialBanner } from "../paywall/TrialBanner";
 
 import { cn } from "@/lib/utils";
 
@@ -39,6 +40,7 @@ export function AppShell({
   return (
     <div className="min-h-screen bg-canvas text-theme-text flex flex-col selection:bg-[var(--color-primary)] selection:text-[var(--color-primary-text)] transition-colors duration-200">
       {showTopBar && <TopBar />}
+      {showTopBar && !isExcluded && <TrialBanner />}
 
       <div
         className={cn(

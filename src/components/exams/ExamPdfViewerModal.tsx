@@ -47,12 +47,6 @@ export function ExamPdfViewerModal({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [continuousScroll, setContinuousScroll] = useState<boolean>(true);
-  const [viewMode, setViewMode] = useState<"interactive" | "original_pdf">("original_pdf");
-  const [iframeLoaded, setIframeLoaded] = useState(false);
-
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [copied, setCopied] = useState(false);
-
   const sheetRef = useRef<HTMLDivElement>(null);
   const details: ExamFullDetails = getExamFullDetails(exam);
 
@@ -75,6 +69,23 @@ export function ExamPdfViewerModal({
   const isCombinedPdf = !hasSeparateSolution && rawSolutionPdf === rawSubjectPdf;
 
   const activeRawPdf = activeTab === "solution" && hasSeparateSolution ? rawSolutionPdf : rawSubjectPdf;
+
+  // Check if active document has a direct, verified PDF file
+  const hasDirectPdf = Boolean(
+    activeRawPdf &&
+    activeRawPdf.toLowerCase().includes(".pdf") &&
+    !activeRawPdf.includes("dzexams.com/viewer") &&
+    !activeRawPdf.includes("dzexams.com/ar/annales") &&
+    !activeRawPdf.includes("google.com/search")
+  );
+
+  const [viewMode, setViewMode] = useState<"interactive" | "original_pdf">(
+    hasDirectPdf ? "original_pdf" : "interactive"
+  );
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // Append #view=FitH&pagemode=none for full width and continuous scrolling across all pages
   const proxyEmbedUrl = activeRawPdf
@@ -454,6 +465,15 @@ export function ExamPdfViewerModal({
                 <span className="text-stone-500 text-xs font-mono">• دورة {exam.year}</span>
               </div>
               <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("interactive")}
+                  className="px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-emerald-400 border border-emerald-500/30 font-bold text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                  title="التبديل لعرض الأسئلة والحلول بنسق A4 التفاعلي"
+                >
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>نسق A4 التفاعلي</span>
+                </button>
                 {directDownloadUrl && (
                   <a
                     href={directDownloadUrl}
@@ -475,6 +495,19 @@ export function ExamPdfViewerModal({
               </div>
             </div>
             <div className="flex-1 w-full h-full relative bg-[#131416]">
+              {/* Floating Switcher to Interactive A4 */}
+              <div className="absolute bottom-4 start-1/2 -translate-x-1/2 z-20 pointer-events-auto bg-stone-900/95 backdrop-blur-md border border-stone-700/80 px-4 py-2 rounded-2xl shadow-2xl flex items-center gap-3 text-xs">
+                <span className="text-stone-300 text-[11px] hidden sm:inline">
+                  الموضوع متوفر بالكامل بنسق A4 التفاعلي المعتمد
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("interactive")}
+                  className="px-3 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs transition-all cursor-pointer shadow-xs"
+                >
+                  فتح نسق A4 التفاعلي
+                </button>
+              </div>
               {!proxyEmbedUrl ? (
                 <div className="flex flex-col items-center justify-center h-full p-8 text-center space-y-3">
                   <FileText className="w-10 h-10 text-stone-500 mx-auto" />

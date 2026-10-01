@@ -135,47 +135,8 @@ export function CampusAccessGate({
     );
   }
 
-  // 2. SUBSCRIPTION & TRIAL GATE
-  const hasAccess = gate.hasPremiumAccess;
-  if (!hasAccess && gate.accessDecision && !gate.accessDecision.canUseProduct) {
-    return (
-      <div className="min-h-[500px] flex items-center justify-center p-4 sm:p-8" dir="rtl">
-        <Card className="max-w-xl w-full p-6 sm:p-8 border-amber-500/40 bg-surface-elevated/95 backdrop-blur-xl shadow-2xl relative overflow-hidden rounded-3xl">
-          <div className="relative text-center">
-            <div className="w-16 h-16 rounded-3xl bg-amber-500/20 border border-amber-500/30 text-amber-500 flex items-center justify-center mx-auto mb-4">
-              <ShieldAlert className="w-8 h-8" />
-            </div>
+  // 2. REGISTERED STUDENT ACCESS: All registered students have access to the Diwan community & experiences bank.
 
-            <Badge variant="warning" size="md" className="mb-3 px-3 py-1 font-bold">
-              فترة التجربة انتهت ⏳
-            </Badge>
-
-            <h2 className="text-xl sm:text-2xl font-black text-theme-text mb-3">
-              اشترك الآن للوصول الكامل إلى مجالس العلم
-            </h2>
-
-            <p className="text-sm text-theme-muted leading-relaxed mb-6">
-              لقد انتهت فترة الـ 7 أيام التجريبية المجانية. للانضمام إلى طاولات التحدي التفاعلية وبنك التجارب، فعّل اشتراكك الفصلي أو السنوي للبكالوريا.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link href="/subscribe" className="w-full sm:w-auto">
-                <Button variant="primary" size="lg" className="w-full bg-amber-500 hover:bg-amber-600 gap-2">
-                  <Sparkles className="w-4 h-4" />
-                  <span>تفعيل الاشتراك الآن</span>
-                </Button>
-              </Link>
-              <Link href="/dashboard" className="w-full sm:w-auto">
-                <Button variant="ghost" size="lg" className="w-full">
-                  <span>العودة للوحة التحكم</span>
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </Card>
-      </div>
-    );
-  }
 
   // 3. TABLE SESSION STREAM VERIFICATION (SPECTATOR VS PARTICIPANT)
   const studentStream =

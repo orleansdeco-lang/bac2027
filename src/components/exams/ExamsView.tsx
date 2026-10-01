@@ -13,6 +13,10 @@ import { useAuth } from "@/lib/auth/context";
 import { StudentService } from "@/lib/services";
 import { BacContentService } from "@/lib/services/bac-content-service";
 import { BacMasterItem, MasterInventoryStats } from "@/lib/content/bac-inventory";
+import { supabase } from "@/lib/supabase/client";
+import { useEntitlements } from "@/lib/access/useEntitlements";
+import { PaywallModal } from "@/components/paywall/PaywallModal";
+import { ProBadge } from "@/components/paywall/ProBadge";
 import {
   FileText,
   CheckCircle2,
@@ -108,21 +112,100 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [displayCount, setDisplayCount] = useState<number>(32);
 
-  // Modal State
+  // Modal & Paywall State
+  const { canAccess } = useEntitlements();
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+  const [selectedPaywallExam, setSelectedPaywallExam] = useState<BacExamItem | null>(null);
   const [activeModalExam, setActiveModalExam] = useState<BacExamItem | null>(null);
   const [modalTab, setModalTab] = useState<"subject" | "solution">("subject");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Initial Load of Master Inventory
+  // Free Tier rule: Recent official BAC papers (2023, 2024) are free for everyone
+  const isFreeExam = (exam: BacExamItem) => {
+    return exam.year >= 2023 && (exam.kind === "official_bac" || (exam as any).content_type === "bac_official");
+  };
+
+
+
+  // Initial Load of Master Inventory + Verified Supabase Resources
   useEffect(() => {
     let isMounted = true;
-    BacContentService.loadAllInventory().then((res) => {
-      if (isMounted) {
-        setInventoryItems(res.items);
-        if (res.stats) setStats(res.stats);
-        setIsLoading(false);
+    async function loadData() {
+      try {
+        const res = await BacContentService.loadAllInventory();
+        let items = res.items;
+
+        // Fetch verified items with PDF links from Supabase resources table
+        if (supabase) {
+          const { data: dbResources } = await supabase
+            .from("resources")
+            .select("*")
+            .neq("pdf_links", "{}")
+            .order("created_at", { ascending: false })
+            .limit(1000);
+
+          if (dbResources && dbResources.length > 0) {
+            const mappedDbItems: BacMasterItem[] = dbResources.map((row: any) => {
+              const stream = (row.stream || "عام / جميع الشعب") as string;
+              const hasSol = Boolean(row.title?.includes("تصحيح") || row.title?.includes("حل") || row.pdf_links?.length > 1);
+              return {
+                id: row.id,
+                year: Number(row.title?.match(/20\d{2}/)?.[0]) || 2024,
+                session: "regular",
+                kind: (row.category === "بكالوريا" ? "official_bac" : "term_exam") as any,
+                term: row.term ? (Number(row.term) as any) : undefined,
+                streamId: "sciences_exp" as any,
+                subjectId: "math" as any,
+                title_ar: row.title,
+                topicsCount: 1,
+                subjectPdfUrl: row.pdf_links?.[0] || "",
+                solutionPdfUrl: row.pdf_links?.[1] || row.pdf_links?.[0] || "",
+                keywords: [row.subject || "", row.stream || ""],
+                durationMinutes: 180,
+                coefficient: 5,
+                country: "DZ",
+                education_level: "secondary",
+                grade: "3AS",
+                stream_name: stream,
+                subject_name: row.subject || "مادة تعليمية",
+                content_type: (row.category === "بكالوريا" ? "bac_official" : "term_exam") as any,
+                source_name: "مستودع المنصة المعتمد",
+                source_url: row.source_url || row.pdf_links?.[0] || "",
+                file_url: row.pdf_links?.[0] || "",
+                file_type: "pdf",
+                language: "ar",
+                has_solution: hasSol,
+                solution_url: row.pdf_links?.[1] || "",
+                estimated_pages: 3,
+                estimated_questions: 4,
+                topic: row.title,
+                topics: [row.title],
+                skills: [],
+                difficulty: "standard",
+                source_type: "official_storage",
+                rights_status: "verified",
+                quality_status: "verified",
+                alternate_sources: [],
+                discovered_at: row.created_at || new Date().toISOString(),
+              };
+            });
+            // Prepend verified Supabase resources with working PDF links
+            items = [...mappedDbItems, ...items];
+          }
+        }
+
+        if (isMounted) {
+          setInventoryItems(items);
+          if (res.stats) setStats(res.stats);
+          setIsLoading(false);
+        }
+      } catch (err) {
+        console.warn("Failed to load inventory:", err);
+        if (isMounted) setIsLoading(false);
       }
-    });
+    }
+
+    loadData();
     return () => {
       isMounted = false;
     };
@@ -267,6 +350,11 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
   };
 
   const handleOpenModal = (exam: BacExamItem, tab: "subject" | "solution") => {
+    if (!isFreeExam(exam) && !canAccess("EXAMS_FULL_LIBRARY")) {
+      setSelectedPaywallExam(exam);
+      setIsPaywallOpen(true);
+      return;
+    }
     setActiveModalExam(exam);
     setModalTab(tab);
   };
@@ -303,6 +391,17 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
         </div>
       )}
 
+      {/* Paywall Modal for Locked Archive & Term Exams */}
+      <PaywallModal
+        isOpen={isPaywallOpen}
+        onClose={() => {
+          setIsPaywallOpen(false);
+          setSelectedPaywallExam(null);
+        }}
+        feature="EXAMS_FULL_LIBRARY"
+        title={selectedPaywallExam ? `موضوع ${selectedPaywallExam.title_ar}` : undefined}
+      />
+
       {/* PDF Viewer Modal */}
       {activeModalExam && (
         <ExamPdfViewerModal
@@ -317,6 +416,7 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
           }}
         />
       )}
+
 
       <Container size="lg" className="py-6 sm:py-10 space-y-6 sm:space-y-8">
         {/* ================================================================= */}
@@ -778,7 +878,9 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
                             دورة استثنائية
                           </span>
                         )}
+                        {!isFreeExam(exam) && <ProBadge size="sm" />}
                       </div>
+
 
                       {/* Quick Share Button */}
                       <button
@@ -904,9 +1006,11 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
                         onClick={() => handleOpenModal(exam, "subject")}
                         className="hover:bg-card/50 cursor-pointer transition-colors"
                       >
-                        <td className="py-2.5 px-4 font-mono font-black text-theme-text">
-                          {exam.year}
+                        <td className="py-2.5 px-4 font-mono font-black text-theme-text flex items-center gap-1.5">
+                          <span>{exam.year}</span>
+                          {!isFreeExam(exam) && <ProBadge size="sm" />}
                         </td>
+
                         <td className="py-2.5 px-4 text-theme-secondary font-sans whitespace-nowrap">
                           {exam.stream_name || ALGERIAN_BAC_STREAMS[exam.streamId as StreamId]?.name_ar}
                         </td>

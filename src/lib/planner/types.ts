@@ -30,7 +30,9 @@ export type EventType =
   | "personal"
   | "break"
   | "exam_prep"
-  | "revision";
+  | "revision"
+  | "GROUP_STUDY"
+  | "group_study";
 
 export type PlannerEventType = EventType;
 
@@ -140,10 +142,14 @@ export interface DailyReflection {
   user_id?: string;
   date: string; // YYYY-MM-DD
   whatLearned?: string;
+  what_learned?: string;
   learned_today?: string;
   dayMood?: DayMood;
+  day_mood?: DayMood;
   mood?: StudentMood;
   hardestPart?: string;
+  hardest_part?: string;
+  hardestChallenge?: string;
   hardest_challenge?: string;
   tomorrowGoal?: string;
   tomorrow_goal?: string;
@@ -174,12 +180,19 @@ export interface PlannerPreferences {
   userId?: string;
   user_id?: string;
   themePreference?: ThemePreference;
+  theme_preference?: ThemePreference;
   planningStyle?: PlanningStyle;
+  planning_style?: PlanningStyle;
   preferredStudyTimes?: string[];
+  preferred_study_times?: string[];
   studyDays?: string[];
+  study_days?: string[];
   fixedCommitments?: FixedCommitment[];
+  fixed_commitments?: FixedCommitment[];
   dailyStudyTargetMinutes?: number;
+  daily_study_target_minutes?: number;
   bacTargetScore?: number;
+  bac_target_score?: number;
   updatedAt?: string;
   updated_at?: string;
 }
@@ -191,17 +204,25 @@ export interface NotificationPreferences {
   userId?: string;
   user_id?: string;
   morningReminder?: boolean;
+  morning_reminder?: boolean;
   morning_brief?: boolean;
   upcomingTaskReminder?: boolean;
+  upcoming_task_reminder?: boolean;
   task_reminders?: boolean;
   taskStartReminder?: boolean;
+  task_start_reminder?: boolean;
   completionEncouragement?: boolean;
+  completion_encouragement?: boolean;
   eveningReflectionReminder?: boolean;
+  evening_reflection_reminder?: boolean;
   evening_reflection?: boolean;
   spiritualReminders?: boolean;
   spiritual_reminders?: boolean;
   morningTime?: string;
+  morning_time?: string;
   eveningTime?: string;
+  evening_time?: string;
+  advanceNoticeMinutes?: number;
   advance_notice_minutes?: number;
   updatedAt?: string;
   updated_at?: string;
@@ -220,7 +241,7 @@ export interface PlannerStats {
   weekSubjectsCount: number;
   weekProgressDelta: number;
   streakDays: number;
-  quizAverageScore: number;
+  quizAverageScore?: number;
 }
 
 export interface PlannerWeeklyStats {

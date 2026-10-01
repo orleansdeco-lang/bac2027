@@ -5,6 +5,7 @@ import { PlannerEvent, PlannerEventType, PriorityLevel } from "@/lib/planner/typ
 import { X, Plus, Calendar, Clock, BookOpen, AlertCircle } from "lucide-react";
 import { getStreamSubjects, ALL_SUBJECTS } from "@/lib/constants/streams";
 import { StreamId, SubjectId } from "@/types/education";
+import { getAlgeriaDateString } from "@/lib/planner/algeria-date";
 
 interface AddTaskModalProps {
   isOpen: boolean;
@@ -21,11 +22,15 @@ export const AddTaskModal: React.FC<AddTaskModalProps> = ({
   initialDateIso,
   streamId = "sciences_exp",
 }) => {
+  const safeStreamId = (streamId === "sciences" ? "sciences_exp" : streamId) as StreamId;
+  const streamSubjects = getStreamSubjects(safeStreamId) || [];
+  const defaultSubj = streamSubjects[0]?.subjectId || "math";
+
   const [title, setTitle] = useState("");
   const [eventType, setEventType] = useState<PlannerEventType>("study");
-  const [subjectId, setSubjectId] = useState<string>("math");
+  const [subjectId, setSubjectId] = useState<string>(defaultSubj);
   const [date, setDate] = useState(
-    initialDateIso || new Date().toISOString().split("T")[0]
+    initialDateIso || getAlgeriaDateString()
   );
   const [startTime, setStartTime] = useState("18:00");
   const [durationMinutes, setDurationMinutes] = useState(45);
@@ -34,16 +39,11 @@ export const AddTaskModal: React.FC<AddTaskModalProps> = ({
 
   if (!isOpen) return null;
 
-  const safeStreamId = (streamId === "sciences" ? "sciences_exp" : streamId) as StreamId;
-  const streamSubjects = getStreamSubjects(safeStreamId) || [];
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
 
     onAddTask({
-      user_id: "local_user",
-      userId: "local_user",
       title: title.trim(),
       description: description.trim() || undefined,
       type: eventType,

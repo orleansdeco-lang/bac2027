@@ -117,9 +117,19 @@ export async function POST(req: Request) {
     }
 
     // 4. Update demographic profile fields in Supabase PostgreSQL (access_status is authoritative)
+    const resolvedStreamId = body.streamId || existingProfile?.stream_id || "sciences_exp";
+    const rawTargetScore = Number(body.targetScore);
+    const resolvedTargetScore = !isNaN(rawTargetScore) && rawTargetScore >= 10 && rawTargetScore <= 20
+      ? rawTargetScore
+      : (Number(existingProfile?.target_score) || 16.0);
+
     const updatePayload: Record<string, any> = {
       id: targetStudentId,
       user_id: targetStudentId,
+      education_level: body.educationLevel || existingProfile?.education_level || "secondary",
+      exam_type: body.examType || existingProfile?.exam_type || "bac",
+      stream_id: resolvedStreamId,
+      target_score: resolvedTargetScore,
       updated_at: new Date().toISOString(),
       access_status: effectiveAccessStatus,
       plan: effectivePlan,
@@ -130,13 +140,11 @@ export async function POST(req: Request) {
     if (body.studentPhone !== undefined) updatePayload.student_phone = body.studentPhone;
     if (body.parentPhone !== undefined) updatePayload.parent_phone = body.parentPhone;
     if (body.studentStatus !== undefined) updatePayload.student_status = body.studentStatus;
-    if (body.streamId !== undefined) updatePayload.stream_id = body.streamId;
     if (body.wilayaCode !== undefined) updatePayload.wilaya_code = body.wilayaCode;
     if (body.wilayaName !== undefined) updatePayload.wilaya_name = body.wilayaName;
     if (body.communeCode !== undefined) updatePayload.commune_code = body.communeCode;
     if (body.communeName !== undefined) updatePayload.commune_name = body.communeName;
     if (body.schoolName !== undefined) updatePayload.school_name = body.schoolName;
-    if (body.targetScore !== undefined) updatePayload.target_score = body.targetScore;
     if (body.registrationCompletedAt) updatePayload.registration_completed_at = body.registrationCompletedAt;
 
     const { error: upsertError } = await client

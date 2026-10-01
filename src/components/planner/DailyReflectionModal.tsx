@@ -50,7 +50,6 @@ export const DailyReflectionModal: React.FC<DailyReflectionModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSaveReflection({
-      user_id: "local_user",
       date: dateIso,
       mood,
       learned_today: learnedToday.trim(),

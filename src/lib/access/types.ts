@@ -3,6 +3,42 @@
  * Prompt 18: 48-Hour Free Trial & Conversion Architecture
  */
 
+export type UserPlan = "FREE" | "TRIAL" | "PREMIUM" | "ADMIN";
+
+export type FeatureKey =
+  | "EXAMS_FULL_LIBRARY"
+  | "EXAMS_OFFICIAL_RECENT"
+  | "PLANNER_BASIC"
+  | "PLANNER_PRO_AI"
+  | "DIAGNOSTIC_BASIC"
+  | "DIAGNOSTIC_FULL"
+  | "ERROR_LAB_BASIC"
+  | "ERROR_LAB_AI_TWINS"
+  | "AI_TUTOR_BASIC"
+  | "AI_TUTOR_UNLIMITED"
+  | "ANALYTICS_PRO"
+  | "CAMPUS_COMMUNITY";
+
+export interface DailyAiQuota {
+  used: number;
+  total: number;
+  remaining: number;
+}
+
+export interface UserEntitlements {
+  userId: string;
+  plan: UserPlan;
+  isPremium: boolean;
+  isTrial: boolean;
+  isAdmin: boolean;
+  isFree: boolean;
+  trialDaysRemaining: number;
+  trialEndsAt: string | null;
+  subscriptionExpiresAt: string | null;
+  dailyAiQuota: DailyAiQuota;
+  features: Record<FeatureKey, boolean>;
+}
+
 export type TrialStatus = "NOT_STARTED" | "ACTIVE" | "EXPIRED";
 export type AccessStatus = "TRIAL" | "PAID" | "EXPIRED";
 export type Plan = "PILOT_TRIAL" | "PAID" | "season" | "monthly" | string;
@@ -36,3 +72,4 @@ export interface StudentAccessDecision {
   isExpiringSoon: boolean; // < 6 hours
   reason: string;
 }
+

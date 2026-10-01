@@ -10,6 +10,8 @@ import { StrategicProfile } from "@/types/onboarding";
 
 export * from "./types";
 export * from "./server-time";
+export * from "./entitlements";
+export * from "./useEntitlements";
 
 export const TRIAL_DURATION_DAYS = 7;
 export const TRIAL_DURATION_HOURS = 168; // 7 days * 24 hours
@@ -222,13 +224,13 @@ export function getStudentAccess(
   const remainingHours = Math.max(0, Math.floor(remainingMs / (1000 * 60 * 60)));
   const remainingMinutes = Math.max(0, Math.floor(remainingMs / (1000 * 60)));
 
-  // 4. Check for Expiration
+  // 4. Free Tier (Trial Expired, Non-blocking continuous educational value)
   if (remainingMs <= 0) {
     return {
       status: "TRIAL_EXPIRED",
       trialStatus: "EXPIRED",
       accessStatus: "EXPIRED",
-      plan: "PILOT_TRIAL",
+      plan: "FREE",
       trialStartedAt,
       trialExpiresAt,
       remainingMilliseconds: 0,
@@ -236,13 +238,13 @@ export function getStudentAccess(
       remainingMinutes: 0,
       remainingDays: 0,
       remainingHoursOnly: 0,
-      canUseProduct: false,
+      canUseProduct: true,
       isExpiringSoon: false,
-      reason: "trial_7d_expired",
+      reason: "free_tier_continuous",
     };
   }
 
-  // 5. Active Trial
+  // 5. Active Trial (All-Access Pass)
   const remainingDays = Math.floor(remainingHours / 24);
   const remainingHoursOnly = remainingHours % 24;
 
@@ -265,15 +267,16 @@ export function getStudentAccess(
 }
 
 /**
- * Authoritative entitlement verification function (Section 35)
+ * Authoritative entitlement verification function
  * Returns true if trial active OR subscription active.
- * False if trial expired and no active subscription.
+ * False if in free tier (trial expired and no active subscription).
  */
 export function hasPremiumAccess(
   profile?: AccessProfileInput | StrategicProfile | null,
   referenceDate?: Date
 ): boolean {
   const access = getStudentAccess(profile, referenceDate);
-  return access.canUseProduct;
+  return access.status === "PAID_ACTIVE" || access.status === "TRIAL_ACTIVE";
 }
+
 

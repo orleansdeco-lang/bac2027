@@ -59,9 +59,15 @@ export const TodayObjectivesCard: React.FC<TodayObjectivesCardProps> = ({
             <h2 className="text-base sm:text-lg font-black text-theme-text font-sans">
               أهداف اليوم
             </h2>
-            <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-[var(--color-primary-soft)] text-[var(--color-primary)] border border-[var(--color-primary)]/20">
-              {completedCount} / {total} منجز
-            </span>
+            {total > 0 ? (
+              <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-[var(--color-primary-soft)] text-[var(--color-primary)] border border-[var(--color-primary)]/20">
+                {completedCount} من {total} منجز
+              </span>
+            ) : (
+              <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-surface text-theme-secondary border border-theme">
+                في انتظار أول مهمة
+              </span>
+            )}
           </div>
           <p className="text-xs text-theme-secondary mt-1 font-medium">
             حدد أولوياتك اليومية وأنجزها خطوة بخطوة
@@ -80,22 +86,24 @@ export const TodayObjectivesCard: React.FC<TodayObjectivesCardProps> = ({
               fill="transparent"
               className="text-theme-muted/20"
             />
-            <circle
-              cx="40"
-              cy="40"
-              r={radius}
-              stroke="currentColor"
-              strokeWidth="7"
-              strokeDasharray={circumference}
-              strokeDashoffset={strokeDashoffset}
-              strokeLinecap="round"
-              fill="transparent"
-              className="text-[var(--color-primary)] transition-all duration-500"
-            />
+            {total > 0 && (
+              <circle
+                cx="40"
+                cy="40"
+                r={radius}
+                stroke="currentColor"
+                strokeWidth="7"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeDashoffset}
+                strokeLinecap="round"
+                fill="transparent"
+                className="text-[var(--color-primary)] transition-all duration-500"
+              />
+            )}
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
             <span className="text-sm font-black text-theme-text font-mono leading-none">
-              {percentage}%
+              {total > 0 ? `${percentage}%` : "--"}
             </span>
           </div>
         </div>
@@ -104,9 +112,20 @@ export const TodayObjectivesCard: React.FC<TodayObjectivesCardProps> = ({
       {/* Objectives Checklist */}
       <div className="space-y-2">
         {objectives.length === 0 ? (
-          <div className="text-center py-6 px-4 rounded-2xl border border-dashed border-theme bg-surface/60 text-theme-muted">
-            <Sparkles className="w-6 h-6 mx-auto mb-2 opacity-50 text-[var(--color-primary)]" />
-            <p className="text-xs font-medium">لا توجد أهداف مضافة لليوم حتى الآن.</p>
+          <div className="text-center py-7 px-4 rounded-2xl border border-dashed border-theme bg-surface/60 text-theme-muted">
+            <Sparkles className="w-7 h-7 mx-auto mb-2 opacity-50 text-[var(--color-primary)]" />
+            <p className="text-xs font-bold text-theme-text mb-1">مازال ما برمجتش أول مهمة لليوم.</p>
+            <p className="text-[11px] text-theme-secondary mb-3 font-medium">
+              أضف هدفاً دراسياً أو مراجعة سريعة لتبدأ يومك بتركيز.
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsAdding(true)}
+              className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-hover)] transition-all cursor-pointer shadow-xs inline-flex items-center gap-1.5"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>إضافة هدف لليوم</span>
+            </button>
           </div>
         ) : (
           objectives.map((obj) => (

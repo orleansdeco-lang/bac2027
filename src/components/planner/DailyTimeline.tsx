@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { PlannerEvent } from "@/lib/planner/types";
 import {
   Clock,
@@ -12,7 +13,10 @@ import {
   Plus,
   Sparkles,
   Check,
+  Landmark,
 } from "lucide-react";
+import { ALL_SUBJECTS } from "@/lib/constants/streams";
+import { SubjectId } from "@/types/education";
 
 interface DailyTimelineProps {
   dateIso: string;
@@ -183,8 +187,8 @@ export const DailyTimeline: React.FC<DailyTimelineProps> = ({
 
                     <div className="flex items-center gap-2 text-xs text-theme-secondary truncate">
                       {evt.subject_id && (
-                        <span className="font-bold text-[11px] px-2 py-0.5 rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
-                          {evt.subject_id}
+                        <span className="font-bold text-[11px] px-2.5 py-0.5 rounded-full bg-[var(--color-primary-soft)] text-[var(--color-primary)]">
+                          {ALL_SUBJECTS[evt.subject_id as SubjectId]?.name_ar || evt.subject_id}
                         </span>
                       )}
                       {evt.description && (
@@ -198,6 +202,18 @@ export const DailyTimeline: React.FC<DailyTimelineProps> = ({
 
                 {/* Left side in RTL: Action Buttons */}
                 <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                  {/* Diwan Group Study Link (Phase 14) */}
+                  {(evt.title?.includes("ديوان") || evt.notes?.includes("ديوان") || (evt.type as any) === "group_study" || (evt.event_type as any) === "group_study") && (
+                    <Link
+                      href="/diwan"
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 border border-amber-500/30 transition-all cursor-pointer"
+                      title="الانتقال إلى طاولة ديوان العلم"
+                    >
+                      <Landmark className="w-3.5 h-3.5" />
+                      <span>ديوان العلم 🏛️</span>
+                    </Link>
+                  )}
+
                   {/* Start Study Session Button */}
                   {!isCompleted && (
                     <button

@@ -1,6 +1,7 @@
 /**
- * SHATER Planner — Hybrid Offline-First Storage Engine
- * Invariant: Works seamlessly offline via localStorage, syncs with Supabase when available
+ * SHATER Planner — Authoritative Storage Engine
+ * Strictly connects to Supabase PostgreSQL & Authoritative Server APIs.
+ * Eliminates fake mock seed data, fake streaks, and unpersisted localStorage states.
  */
 
 export type {
@@ -19,9 +20,13 @@ import type {
   NotificationPreferences,
   PlannerNotificationItem,
 } from "./types";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
 
-const STORAGE_KEYS = {
+import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "@/lib/supabase/client";
+import { getAlgeriaDateString } from "./algeria-date";
+
+export { getAlgeriaDateString as getTodayDateString };
+
+const CACHE_KEYS = {
   EVENTS: "shater_planner_events",
   SESSIONS: "shater_study_sessions",
   REFLECTIONS: "shater_daily_reflections",
@@ -31,353 +36,116 @@ const STORAGE_KEYS = {
 };
 
 /**
- * Returns today's date in YYYY-MM-DD local format
+ * Empty seed generator — returns zero mock events in production.
  */
-export function getTodayDateString(): string {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+export function generateSeedEvents(_userId?: string): PlannerEvent[] {
+  return [];
 }
 
-/**
- * Seed initial mock/demo events matching the product design mockup
- */
-export function generateSeedEvents(userId: string = "demo-user"): PlannerEvent[] {
-  const today = getTodayDateString();
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const tomorrowStr = tomorrow.toISOString().split("T")[0];
-
-  const inTwoDays = new Date();
-  inTwoDays.setDate(inTwoDays.getDate() + 2);
-  const inTwoDaysStr = inTwoDays.toISOString().split("T")[0];
-
-  const now = new Date().toISOString();
-
-  return [
-    {
-      id: "seed-1",
-      userId,
-      user_id: userId,
-      title: "Mathématiques — Révision Dérivées & Continuité",
-      type: "STUDY",
-      event_type: "study",
-      date: today,
-      startTime: "08:00",
-      start_time: "08:00",
-      endTime: "09:30",
-      end_time: "09:30",
-      durationMinutes: 90,
-      duration_minutes: 90,
-      streamId: "sciences_exp",
-      stream_id: "sciences_exp",
-      subjectId: "math",
-      subject_id: "math",
-      skillId: "math-derivatives",
-      priority: "HIGH",
-      status: "COMPLETED",
-      notes: "Fiche mémo + 3 exercices type BAC",
-      description: "Fiche mémo + 3 exercices type BAC",
-      source: "MANUAL",
-      completedAt: now,
-      completed_at: now,
-      actualMinutesSpent: 90,
-      actual_minutes_spent: 90,
-      createdAt: now,
-      created_at: now,
-      updatedAt: now,
-      updated_at: now,
-    },
-    {
-      id: "seed-2",
-      userId,
-      user_id: userId,
-      title: "Physique-Chimie — Sujet BAC Blanc 2024",
-      type: "PRACTICE",
-      event_type: "practice",
-      date: today,
-      startTime: "10:00",
-      start_time: "10:00",
-      endTime: "11:30",
-      end_time: "11:30",
-      durationMinutes: 90,
-      duration_minutes: 90,
-      streamId: "sciences_exp",
-      stream_id: "sciences_exp",
-      subjectId: "physics",
-      subject_id: "physics",
-      skillId: "phy-nuclear-decay",
-      priority: "HIGH",
-      status: "IN_PROGRESS",
-      notes: "Exercice 1 & 2 : Transformations nucléaires",
-      description: "Exercice 1 & 2 : Transformations nucléaires",
-      source: "MANUAL",
-      createdAt: now,
-      created_at: now,
-      updatedAt: now,
-      updated_at: now,
-    },
-    {
-      id: "seed-3",
-      userId,
-      user_id: userId,
-      title: "Sciences Naturelles — Synthèse des Protéines",
-      type: "REVIEW",
-      event_type: "review",
-      date: today,
-      startTime: "14:00",
-      start_time: "14:00",
-      endTime: "15:00",
-      end_time: "15:00",
-      durationMinutes: 60,
-      duration_minutes: 60,
-      streamId: "sciences_exp",
-      stream_id: "sciences_exp",
-      subjectId: "natural_sciences",
-      subject_id: "natural_sciences",
-      priority: "MEDIUM",
-      status: "TODO",
-      notes: "Schéma bilan de la traduction et transcription",
-      description: "Schéma bilan de la traduction et transcription",
-      source: "AI",
-      createdAt: now,
-      created_at: now,
-      updatedAt: now,
-      updated_at: now,
-    },
-    {
-      id: "seed-4",
-      userId,
-      user_id: userId,
-      title: "Français — Texte d'histoire & Compte rendu",
-      type: "HOMEWORK",
-      event_type: "homework",
-      date: today,
-      startTime: "16:30",
-      start_time: "16:30",
-      endTime: "17:15",
-      end_time: "17:15",
-      durationMinutes: 45,
-      duration_minutes: 45,
-      streamId: "sciences_exp",
-      stream_id: "sciences_exp",
-      subjectId: "french",
-      subject_id: "french",
-      priority: "LOW",
-      status: "TODO",
-      notes: "Méthodologie du compte rendu objectif",
-      description: "Méthodologie du compte rendu objectif",
-      source: "MANUAL",
-      createdAt: now,
-      created_at: now,
-      updatedAt: now,
-      updated_at: now,
-    },
-    {
-      id: "seed-5",
-      userId,
-      user_id: userId,
-      title: "Philosophie — Problématique de la Conscience",
-      type: "STUDY",
-      event_type: "study",
-      date: tomorrowStr,
-      startTime: "09:00",
-      start_time: "09:00",
-      endTime: "10:30",
-      end_time: "10:30",
-      durationMinutes: 90,
-      duration_minutes: 90,
-      streamId: "sciences_exp",
-      stream_id: "sciences_exp",
-      subjectId: "philosophy",
-      subject_id: "philosophy",
-      priority: "MEDIUM",
-      status: "TODO",
-      notes: "Lire et résumer les 3 thèses principales",
-      description: "Lire et résumer les 3 thèses principales",
-      source: "AI",
-      createdAt: now,
-      created_at: now,
-      updatedAt: now,
-      updated_at: now,
-    },
-    {
-      id: "seed-6",
-      userId,
-      user_id: userId,
-      title: "Mathématiques — Fonctions Exponentielles",
-      type: "STUDY",
-      event_type: "study",
-      date: inTwoDaysStr,
-      startTime: "15:00",
-      start_time: "15:00",
-      endTime: "16:30",
-      end_time: "16:30",
-      durationMinutes: 90,
-      duration_minutes: 90,
-      streamId: "sciences_exp",
-      stream_id: "sciences_exp",
-      subjectId: "math",
-      subject_id: "math",
-      priority: "HIGH",
-      status: "TODO",
-      notes: "Étude de branches infinies",
-      description: "Étude de branches infinies",
-      source: "MANUAL",
-      createdAt: now,
-      created_at: now,
-      updatedAt: now,
-      updated_at: now,
-    },
-  ];
-}
-
-/**
- * Seed initial mock daily reflections
- */
-export function generateSeedReflections(userId: string = "demo-user"): DailyReflection[] {
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split("T")[0];
-
-  return [
-    {
-      id: "seed-refl-1",
-      userId,
-      user_id: userId,
-      date: yesterdayStr,
-      whatLearned: "J'ai bien consolidé les limites et les asymptotes en maths, mais j'ai manqué de temps en physique.",
-      learned_today: "J'ai bien consolidé les limites et les asymptotes en maths, mais j'ai manqué de temps en physique.",
-      dayMood: "GOOD",
-      mood: "good",
-      hardestPart: "Calcul d'intégrale par parties",
-      hardest_challenge: "Calcul d'intégrale par parties",
-      tomorrowGoal: "Résoudre 2 exercices types BAC en physique nucléaire",
-      tomorrow_goal: "Résoudre 2 exercices types BAC en physique nucléaire",
-      gratitudeNote: "الحمد لله على نعمة الفهم والتركيز",
-      gratitude_note: "الحمد لله على نعمة الفهم والتركيز",
-      createdAt: new Date().toISOString(),
-      created_at: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    },
-  ];
-}
-
-/**
- * Default Preferences
- */
-export function getDefaultPreferences(userId: string = "demo-user"): PlannerPreferences {
-  return {
-    userId,
-    user_id: userId,
-    themePreference: "boys",
-    planningStyle: "HYBRID",
-    preferredStudyTimes: ["morning", "evening"],
-    studyDays: ["saturday", "sunday", "monday", "tuesday", "wednesday", "thursday", "friday"],
-    fixedCommitments: [
-      {
-        id: "sch-1",
-        title: "Lycée (Cour de cours)",
-        type: "SCHOOL",
-        dayOfWeek: 1, // Monday
-        startTime: "08:00",
-        endTime: "16:00",
-      },
-    ],
-    dailyStudyTargetMinutes: 180, // 3 hours
-    bacTargetScore: 15.5,
-    updatedAt: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-}
-
-/**
- * Default Notifications Settings
- */
-export function getDefaultNotificationPreferences(userId: string = "demo-user"): NotificationPreferences {
-  return {
-    userId,
-    user_id: userId,
-    morningReminder: true,
-    morning_brief: true,
-    upcomingTaskReminder: true,
-    task_reminders: true,
-    taskStartReminder: true,
-    completionEncouragement: true,
-    eveningReflectionReminder: true,
-    evening_reflection: true,
-    spiritualReminders: true,
-    spiritual_reminders: true,
-    morningTime: "08:00",
-    eveningTime: "21:00",
-    advance_notice_minutes: 15,
-    updatedAt: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  };
-}
+// In-memory cache for ultra-fast local state rendering
+const memoryCache = {
+  events: new Map<string, PlannerEvent[]>(),
+  sessions: new Map<string, StudySession[]>(),
+  reflections: new Map<string, DailyReflection[]>(),
+};
 
 export const PlannerStorage = {
   // ============================================================================
-  // 1. EVENTS / TASKS
+  // 1. PLANNER EVENTS / TASKS
   // ============================================================================
-  getEvents(userId: string = "demo-user"): PlannerEvent[] {
+
+  /**
+   * Synchronous cached events getter (for instant initial UI render)
+   */
+  getEvents(userId: string = "default"): PlannerEvent[] {
+    if (memoryCache.events.has(userId)) {
+      return memoryCache.events.get(userId) || [];
+    }
     if (typeof window !== "undefined") {
       try {
-        const raw = localStorage.getItem(`${STORAGE_KEYS.EVENTS}_${userId}`);
+        const raw = localStorage.getItem(`${CACHE_KEYS.EVENTS}_${userId}`);
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          if (Array.isArray(parsed)) return parsed;
         }
-      } catch (err) {
-        console.warn("Failed to read planner events from localStorage", err);
-      }
+      } catch {}
     }
-    const seed = generateSeedEvents(userId);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem(`${STORAGE_KEYS.EVENTS}_${userId}`, JSON.stringify(seed));
-      } catch (e) {}
-    }
-    return seed;
+    return [];
   },
 
-  async loadEvents(userId?: string): Promise<PlannerEvent[]> {
-    const effectiveUserId = userId || "demo-user";
-
-    // Try localStorage first
+  /**
+   * Save all events to memory cache and local storage (offline resilience)
+   */
+  saveAll(events: PlannerEvent[], userId?: string): void {
+    const effectiveUserId = userId || "default";
+    memoryCache.events.set(effectiveUserId, events);
     if (typeof window !== "undefined") {
       try {
-        const raw = localStorage.getItem(`${STORAGE_KEYS.EVENTS}_${effectiveUserId}`);
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        localStorage.setItem(`${CACHE_KEYS.EVENTS}_${effectiveUserId}`, JSON.stringify(events));
+      } catch {}
+    }
+  },
+
+  /**
+   * Asynchronously loads authoritative events from PostgreSQL via /api/planner
+   */
+  async loadEvents(userId?: string): Promise<PlannerEvent[]> {
+    const effectiveUserId = userId || "default";
+
+    // In browser: call authoritative /api/planner endpoint
+    if (typeof window !== "undefined") {
+      try {
+        const res = await fetch("/api/planner", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          cache: "no-store",
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.events)) {
+            const mapped: PlannerEvent[] = data.events;
+            memoryCache.events.set(effectiveUserId, mapped);
+            try {
+              localStorage.setItem(`${CACHE_KEYS.EVENTS}_${effectiveUserId}`, JSON.stringify(mapped));
+            } catch {}
+            return mapped;
+          }
         }
       } catch (err) {
-        console.warn("Failed to read planner events from localStorage", err);
+        console.warn("[PlannerStorage.loadEvents] API fetch error:", err);
       }
+
+      // Return memory/local cache as fallback if network fails
+      return this.getEvents(effectiveUserId);
     }
 
-    // Try Supabase if configured
-    if (Boolean(isSupabaseConfigured) && supabase && userId && userId !== "demo-user") {
+    // On Server: Query Supabase directly
+    if (isSupabaseConfigured && effectiveUserId && effectiveUserId !== "default") {
       try {
-        const { data, error } = await supabase
+        let client: any = supabase;
+        try {
+          const { getAdminClient } = require("@/lib/supabase/admin");
+          client = getAdminClient() || supabase;
+        } catch {}
+
+        const { data, error } = await client
           .from("planner_events")
           .select("*")
-          .eq("user_id", userId)
+          .eq("user_id", effectiveUserId)
           .order("date", { ascending: true })
           .order("start_time", { ascending: true });
 
-        if (!error && data && data.length > 0) {
-          const mapped: PlannerEvent[] = data.map((d: any) => ({
+        if (!error && data) {
+          return data.map((d: any) => ({
             id: d.id,
             userId: d.user_id,
             user_id: d.user_id,
             title: d.title,
             type: d.type,
-            event_type: d.type,
+            event_type: d.type?.toLowerCase(),
             date: d.date,
             startTime: d.start_time,
             start_time: d.start_time,
@@ -403,487 +171,411 @@ export const PlannerStorage = {
             updatedAt: d.updated_at,
             updated_at: d.updated_at,
           }));
-
-          if (typeof window !== "undefined") {
-            localStorage.setItem(
-              `${STORAGE_KEYS.EVENTS}_${effectiveUserId}`,
-              JSON.stringify(mapped)
-            );
-          }
-          return mapped;
         }
       } catch (err) {
-        console.warn("Supabase fetch failed for planner_events, fallback to seed", err);
+        console.warn("[PlannerStorage.loadEvents] Server query error:", err);
       }
     }
 
-    // Default Seed Events
-    const seed = generateSeedEvents(effectiveUserId);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(`${STORAGE_KEYS.EVENTS}_${effectiveUserId}`, JSON.stringify(seed));
-    }
-    return seed;
+    return [];
   },
 
+  /**
+   * Save (create or update) a planner task in PostgreSQL
+   */
   async saveEvent(event: any): Promise<PlannerEvent> {
-    const effectiveUserId = event.userId || event.user_id || "demo-user";
-    const now = new Date().toISOString();
+    const isNew = !event.id || event.id.startsWith("task-") || event.id.startsWith("temp-");
+    const normalizedType = (event.type || event.event_type || "STUDY").toUpperCase();
+    const normalizedPriority = (event.priority || "MEDIUM").toUpperCase();
+    const normalizedStatus = (event.status || "TODO").toUpperCase();
 
-    const normalized: PlannerEvent = {
-      id: event.id || `task-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-      userId: effectiveUserId,
-      user_id: effectiveUserId,
+    const payload = {
       title: event.title,
-      type: event.type || event.event_type || "STUDY",
-      event_type: event.event_type || event.type || "study",
+      type: normalizedType,
       date: event.date,
-      startTime: event.startTime || event.start_time || "09:00",
-      start_time: event.start_time || event.startTime || "09:00",
-      endTime: event.endTime || event.end_time,
-      end_time: event.end_time || event.endTime,
-      durationMinutes: event.durationMinutes || event.duration_minutes || 60,
-      duration_minutes: event.duration_minutes || event.durationMinutes || 60,
-      streamId: event.streamId || event.stream_id || "sciences_exp",
-      stream_id: event.stream_id || event.streamId || "sciences_exp",
-      subjectId: event.subjectId || event.subject_id,
-      subject_id: event.subject_id || event.subjectId,
-      skillId: event.skillId || event.skill_id,
-      skill_id: event.skill_id || event.skillId,
-      priority: event.priority || "MEDIUM",
-      status: event.status || "TODO",
-      notes: event.notes || event.description,
-      description: event.description || event.notes,
-      source: event.source || "MANUAL",
-      completedAt: event.completedAt || event.completed_at,
-      completed_at: event.completed_at || event.completedAt,
-      createdAt: event.createdAt || event.created_at || now,
-      created_at: event.created_at || event.createdAt || now,
-      updatedAt: now,
-      updated_at: now,
+      start_time: event.startTime || event.start_time || "18:00",
+      end_time: event.endTime || event.end_time || null,
+      duration_minutes: Number(event.durationMinutes || event.duration_minutes) || 45,
+      stream_id: event.streamId || event.stream_id || "sciences_exp",
+      subject_id: event.subjectId || event.subject_id || null,
+      skill_id: event.skillId || event.skill_id || null,
+      priority: normalizedPriority,
+      status: normalizedStatus,
+      notes: event.notes || event.description || null,
+      source: (event.source || "MANUAL").toUpperCase(),
+      new_date: event.new_date,
+      new_start_time: event.new_start_time,
+      reschedule_reason: event.reschedule_reason,
     };
 
-    // 1. Update localStorage
+    // Client-side execution via API
     if (typeof window !== "undefined") {
       try {
-        const events = this.getEvents(effectiveUserId);
-        const index = events.findIndex((e) => e.id === normalized.id);
-        if (index >= 0) {
-          events[index] = normalized;
-        } else {
-          events.push(normalized);
-        }
-        localStorage.setItem(`${STORAGE_KEYS.EVENTS}_${effectiveUserId}`, JSON.stringify(events));
-      } catch (err) {
-        console.warn("Failed to write event to localStorage", err);
-      }
-    }
+        const url = isNew ? "/api/planner/events" : `/api/planner/events/${event.id}`;
+        const method = isNew ? "POST" : "PATCH";
 
-    // 2. Sync to Supabase in background
-    if (Boolean(isSupabaseConfigured) && supabase && effectiveUserId !== "demo-user") {
-      try {
-        await supabase.from("planner_events").upsert({
-          id: normalized.id,
-          user_id: effectiveUserId,
-          title: normalized.title,
-          type: normalized.type,
-          date: normalized.date,
-          start_time: normalized.startTime,
-          end_time: normalized.endTime || null,
-          duration_minutes: normalized.durationMinutes,
-          stream_id: normalized.streamId,
-          subject_id: normalized.subjectId || null,
-          skill_id: normalized.skillId || null,
-          priority: normalized.priority,
-          status: normalized.status,
-          notes: normalized.notes || null,
-          source: normalized.source,
-          completed_at: normalized.completedAt || null,
-          updated_at: now,
+        const res = await fetch(url, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
         });
+
+        if (res.ok) {
+          const resData = await res.json();
+          if (resData.success && resData.event) {
+            // Update local memory cache
+            const userId = resData.event.userId || "default";
+            const existingList = memoryCache.events.get(userId) || [];
+            const idx = existingList.findIndex((e) => e.id === resData.event.id);
+            if (idx >= 0) {
+              existingList[idx] = resData.event;
+            } else {
+              existingList.push(resData.event);
+            }
+            memoryCache.events.set(userId, existingList);
+            try {
+              localStorage.setItem(`${CACHE_KEYS.EVENTS}_${userId}`, JSON.stringify(existingList));
+            } catch {}
+            return resData.event;
+          }
+        }
       } catch (err) {
-        console.warn("Background Supabase upsert failed for planner event", err);
+        console.error("[PlannerStorage.saveEvent] API call failed:", err);
       }
     }
 
-    return normalized;
-  },
+    // Server-side direct execution
+    if (typeof window === "undefined") {
+      let client: any = supabase;
+      try {
+        const { getAdminClient } = require("@/lib/supabase/admin");
+        client = getAdminClient() || supabase;
+      } catch {}
 
-  async bulkSaveEvents(newEvents: any[], userId: string = "demo-user"): Promise<void> {
-    for (const evt of newEvents) {
-      await this.saveEvent({ ...evt, userId });
+      if (client && event.userId) {
+        const row = {
+          user_id: event.userId,
+          title: payload.title,
+          type: payload.type,
+          date: payload.date,
+          start_time: payload.start_time,
+          end_time: payload.end_time,
+          duration_minutes: payload.duration_minutes,
+          stream_id: payload.stream_id,
+          subject_id: payload.subject_id,
+          skill_id: payload.skill_id,
+          priority: payload.priority,
+          status: payload.status,
+          notes: payload.notes,
+          source: payload.source,
+          updated_at: new Date().toISOString(),
+        };
+
+        if (isNew) {
+          const { data } = await client.from("planner_events").insert(row).select().single();
+          if (data) return data;
+        } else {
+          const { data } = await client.from("planner_events").update(row).eq("id", event.id).select().single();
+          if (data) return data;
+        }
+      }
     }
+
+    return event as PlannerEvent;
   },
 
-  async deleteEvent(eventId: string, userId?: string): Promise<void> {
-    const effectiveUserId = userId || "demo-user";
-
+  /**
+   * Delete an event authoritatively
+   */
+  async deleteEvent(eventId: string, userId: string = "default"): Promise<void> {
     if (typeof window !== "undefined") {
       try {
-        const events = this.getEvents(effectiveUserId);
-        const filtered = events.filter((e) => e.id !== eventId);
-        localStorage.setItem(`${STORAGE_KEYS.EVENTS}_${effectiveUserId}`, JSON.stringify(filtered));
-      } catch (err) {
-        console.warn("Failed to delete event in localStorage", err);
-      }
-    }
+        await fetch(`/api/planner/events/${eventId}`, {
+          method: "DELETE",
+        });
 
-    if (Boolean(isSupabaseConfigured) && supabase && effectiveUserId !== "demo-user") {
-      try {
-        await supabase.from("planner_events").delete().eq("id", eventId).eq("user_id", effectiveUserId);
+        // Update local cache
+        const existingList = memoryCache.events.get(userId) || [];
+        const filtered = existingList.filter((e) => e.id !== eventId);
+        memoryCache.events.set(userId, filtered);
+        try {
+          localStorage.setItem(`${CACHE_KEYS.EVENTS}_${userId}`, JSON.stringify(filtered));
+        } catch {}
       } catch (err) {
-        console.warn("Supabase delete failed for event", err);
+        console.error("[PlannerStorage.deleteEvent] Error:", err);
       }
     }
+  },
+
+  /**
+   * Bulk save accepted events (e.g. from AI Planner Proposal)
+   */
+  async bulkSaveEvents(events: Array<Omit<PlannerEvent, "id" | "created_at" | "updated_at">>): Promise<PlannerEvent[]> {
+    if (typeof window !== "undefined") {
+      try {
+        const res = await fetch("/api/planner/ai-proposal", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "commit",
+            events,
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.events) {
+            return data.events;
+          }
+        }
+      } catch (err) {
+        console.error("[PlannerStorage.bulkSaveEvents] Error:", err);
+      }
+    }
+    return [];
   },
 
   // ============================================================================
   // 2. STUDY SESSIONS
   // ============================================================================
-  getStudySessions(userId: string = "demo-user"): StudySession[] {
+
+  getStudySessions(userId: string = "default"): StudySession[] {
+    if (memoryCache.sessions.has(userId)) {
+      return memoryCache.sessions.get(userId) || [];
+    }
     if (typeof window !== "undefined") {
       try {
-        const raw = localStorage.getItem(`${STORAGE_KEYS.SESSIONS}_${userId}`);
+        const raw = localStorage.getItem(`${CACHE_KEYS.SESSIONS}_${userId}`);
         if (raw) return JSON.parse(raw);
-      } catch (err) {
-        console.warn("Failed to read study sessions from localStorage", err);
-      }
+      } catch {}
     }
     return [];
   },
 
   async loadStudySessions(userId?: string): Promise<StudySession[]> {
-    const effectiveUserId = userId || "demo-user";
+    const effectiveUserId = userId || "default";
 
     if (typeof window !== "undefined") {
       try {
-        const raw = localStorage.getItem(`${STORAGE_KEYS.SESSIONS}_${effectiveUserId}`);
-        if (raw) return JSON.parse(raw);
-      } catch (err) {
-        console.warn("Failed to read study sessions from localStorage", err);
-      }
-    }
-
-    if (Boolean(isSupabaseConfigured) && supabase && userId && userId !== "demo-user") {
-      try {
-        const { data, error } = await supabase
-          .from("study_sessions")
-          .select("*")
-          .eq("user_id", userId)
-          .order("started_at", { ascending: false });
-
-        if (!error && data) {
-          const mapped: StudySession[] = data.map((d: any) => ({
-            id: d.id,
-            userId: d.user_id,
-            eventId: d.event_id,
-            streamId: d.stream_id,
-            subjectId: d.subject_id,
-            skillId: d.skill_id,
-            plannedDurationMinutes: d.planned_duration_minutes,
-            actualDurationSeconds: d.actual_duration_seconds,
-            startedAt: d.started_at,
-            endedAt: d.ended_at,
-            status: d.status,
-            interruptionsCount: d.interruptions_count,
-            notes: d.notes,
-            createdAt: d.created_at,
-          }));
-          return mapped;
+        const res = await fetch("/api/planner", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.sessions)) {
+            memoryCache.sessions.set(effectiveUserId, data.sessions);
+            try {
+              localStorage.setItem(`${CACHE_KEYS.SESSIONS}_${effectiveUserId}`, JSON.stringify(data.sessions));
+            } catch {}
+            return data.sessions;
+          }
         }
-      } catch (err) {
-        console.warn("Supabase load failed for study_sessions", err);
-      }
+      } catch {}
+      return this.getStudySessions(effectiveUserId);
     }
 
     return [];
   },
 
-  async saveStudySession(session: StudySession): Promise<StudySession> {
-    const effectiveUserId = session.userId || "demo-user";
-
+  async saveStudySession(session: any): Promise<StudySession> {
     if (typeof window !== "undefined") {
       try {
-        const sessions = await this.loadStudySessions(effectiveUserId);
-        const index = sessions.findIndex((s) => s.id === session.id);
-        if (index >= 0) sessions[index] = session;
-        else sessions.unshift(session);
-        localStorage.setItem(`${STORAGE_KEYS.SESSIONS}_${effectiveUserId}`, JSON.stringify(sessions));
-      } catch (err) {
-        console.warn("Failed to write study session to localStorage", err);
-      }
-    }
-
-    if (Boolean(isSupabaseConfigured) && supabase && session.userId && session.userId !== "demo-user") {
-      try {
-        await supabase.from("study_sessions").upsert({
-          id: session.id,
-          user_id: session.userId,
-          event_id: session.eventId || null,
-          stream_id: session.streamId,
-          subject_id: session.subjectId,
-          skill_id: session.skillId || null,
-          planned_duration_minutes: session.plannedDurationMinutes,
-          actual_duration_seconds: session.actualDurationSeconds,
-          started_at: session.startedAt,
-          ended_at: session.endedAt || null,
-          status: session.status,
-          interruptions_count: session.interruptionsCount,
-          notes: session.notes || null,
+        const res = await fetch("/api/planner/sessions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            event_id: session.eventId || session.event_id || null,
+            stream_id: session.streamId || session.stream_id || "sciences_exp",
+            subject_id: session.subjectId || session.subject_id || "math",
+            skill_id: session.skillId || session.skill_id || null,
+            planned_duration_minutes: session.plannedDurationMinutes || session.planned_duration_minutes || 45,
+            actual_duration_seconds: session.actualDurationSeconds || session.actual_duration_seconds || 0,
+            started_at: session.startedAt || session.started_at,
+            ended_at: session.endedAt || session.ended_at,
+            status: (session.status || "COMPLETED").toUpperCase(),
+            interruptions_count: session.interruptionsCount || 0,
+            notes: session.notes || null,
+            mark_event_completed: true,
+          }),
         });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.session) {
+            return data.session;
+          }
+        }
       } catch (err) {
-        console.warn("Supabase upsert failed for study session", err);
+        console.error("[PlannerStorage.saveStudySession] API error:", err);
       }
     }
 
-    return session;
+    return session as StudySession;
   },
 
   // ============================================================================
   // 3. DAILY REFLECTIONS
   // ============================================================================
-  getReflection(date: string, userId: string = "demo-user"): DailyReflection | null {
+
+  getReflection(date: string, userId: string = "default"): DailyReflection | null {
+    const list = memoryCache.reflections.get(userId) || [];
+    const found = list.find((r) => r.date === date);
+    if (found) return found;
+
     if (typeof window !== "undefined") {
       try {
-        const raw = localStorage.getItem(`${STORAGE_KEYS.REFLECTIONS}_${userId}`);
+        const raw = localStorage.getItem(`${CACHE_KEYS.REFLECTIONS}_${userId}`);
         if (raw) {
-          const reflections: DailyReflection[] = JSON.parse(raw);
-          return reflections.find((r) => r.date === date) || null;
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            return parsed.find((r) => r.date === date) || null;
+          }
         }
-      } catch (e) {}
+      } catch {}
     }
-    const seed = generateSeedReflections(userId);
-    return seed.find((r) => r.date === date) || null;
+    return null;
   },
 
   async loadReflections(userId?: string): Promise<DailyReflection[]> {
-    const effectiveUserId = userId || "demo-user";
+    const effectiveUserId = userId || "default";
 
     if (typeof window !== "undefined") {
       try {
-        const raw = localStorage.getItem(`${STORAGE_KEYS.REFLECTIONS}_${effectiveUserId}`);
-        if (raw) return JSON.parse(raw);
-      } catch (err) {
-        console.warn("Failed to read reflections from localStorage", err);
-      }
-    }
-
-    if (Boolean(isSupabaseConfigured) && supabase && userId && userId !== "demo-user") {
-      try {
-        const { data, error } = await supabase
-          .from("daily_reflections")
-          .select("*")
-          .eq("user_id", userId)
-          .order("date", { ascending: false });
-
-        if (!error && data) {
-          const mapped: DailyReflection[] = data.map((d: any) => ({
-            id: d.id,
-            userId: d.user_id,
-            user_id: d.user_id,
-            date: d.date,
-            whatLearned: d.what_learned,
-            learned_today: d.what_learned,
-            dayMood: d.day_mood,
-            mood: d.day_mood,
-            hardestPart: d.hardest_part,
-            hardest_challenge: d.hardest_part,
-            tomorrowGoal: d.tomorrow_goal,
-            tomorrow_goal: d.tomorrow_goal,
-            gratitudeNote: d.gratitude_note,
-            gratitude_note: d.gratitude_note,
-            createdAt: d.created_at,
-            created_at: d.created_at,
-            updatedAt: d.updated_at,
-            updated_at: d.updated_at,
-          }));
-          return mapped;
+        const res = await fetch("/api/planner", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && Array.isArray(data.reflections)) {
+            memoryCache.reflections.set(effectiveUserId, data.reflections);
+            try {
+              localStorage.setItem(`${CACHE_KEYS.REFLECTIONS}_${effectiveUserId}`, JSON.stringify(data.reflections));
+            } catch {}
+            return data.reflections;
+          }
         }
-      } catch (err) {
-        console.warn("Supabase load failed for daily_reflections", err);
-      }
+      } catch {}
     }
-
-    const seed = generateSeedReflections(effectiveUserId);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(`${STORAGE_KEYS.REFLECTIONS}_${effectiveUserId}`, JSON.stringify(seed));
-    }
-    return seed;
+    return memoryCache.reflections.get(effectiveUserId) || [];
   },
 
   async saveReflection(reflection: any): Promise<DailyReflection> {
-    const effectiveUserId = reflection.userId || reflection.user_id || "demo-user";
-    const now = new Date().toISOString();
-
-    const normalized: DailyReflection = {
-      id: reflection.id || `refl-${reflection.date}-${Date.now()}`,
-      userId: effectiveUserId,
-      user_id: effectiveUserId,
-      date: reflection.date,
-      whatLearned: reflection.whatLearned || reflection.learned_today || "",
-      learned_today: reflection.learned_today || reflection.whatLearned || "",
-      dayMood: reflection.dayMood || reflection.mood || "GOOD",
-      mood: reflection.mood || reflection.dayMood || "good",
-      hardestPart: reflection.hardestPart || reflection.hardest_challenge,
-      hardest_challenge: reflection.hardest_challenge || reflection.hardestPart,
-      tomorrowGoal: reflection.tomorrowGoal || reflection.tomorrow_goal,
-      tomorrow_goal: reflection.tomorrow_goal || reflection.tomorrow_goal,
-      gratitudeNote: reflection.gratitudeNote || reflection.gratitude_note,
-      gratitude_note: reflection.gratitude_note || reflection.gratitudeNote,
-      createdAt: reflection.createdAt || reflection.created_at || now,
-      created_at: reflection.created_at || reflection.createdAt || now,
-      updatedAt: now,
-      updated_at: now,
-    };
-
     if (typeof window !== "undefined") {
       try {
-        const reflections = await this.loadReflections(effectiveUserId);
-        const index = reflections.findIndex((r) => r.id === normalized.id || r.date === normalized.date);
-        if (index >= 0) reflections[index] = normalized;
-        else reflections.unshift(normalized);
-        localStorage.setItem(`${STORAGE_KEYS.REFLECTIONS}_${effectiveUserId}`, JSON.stringify(reflections));
-      } catch (err) {
-        console.warn("Failed to save reflection to localStorage", err);
-      }
-    }
-
-    if (Boolean(isSupabaseConfigured) && supabase && effectiveUserId !== "demo-user") {
-      try {
-        await supabase.from("daily_reflections").upsert({
-          id: normalized.id,
-          user_id: effectiveUserId,
-          date: normalized.date,
-          what_learned: normalized.whatLearned,
-          day_mood: normalized.dayMood,
-          hardest_part: normalized.hardestPart || null,
-          tomorrow_goal: normalized.tomorrowGoal || null,
-          updated_at: now,
+        const res = await fetch("/api/planner/reflection", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date: reflection.date,
+            what_learned: reflection.what_learned || reflection.learned_today || "",
+            day_mood: (reflection.day_mood || reflection.mood || "GOOD").toUpperCase(),
+            hardest_part: reflection.hardest_part || reflection.hardest_challenge || null,
+            tomorrow_goal: reflection.tomorrow_goal || null,
+          }),
         });
-      } catch (err) {
-        console.warn("Supabase upsert failed for daily reflection", err);
-      }
-    }
 
-    return normalized;
-  },
-
-  // ============================================================================
-  // 4. PREFERENCES
-  // ============================================================================
-  async loadPreferences(userId?: string): Promise<PlannerPreferences> {
-    const effectiveUserId = userId || "demo-user";
-
-    if (typeof window !== "undefined") {
-      try {
-        const raw = localStorage.getItem(`${STORAGE_KEYS.PREFERENCES}_${effectiveUserId}`);
-        if (raw) return JSON.parse(raw);
-      } catch (err) {
-        console.warn("Failed to read planner preferences from localStorage", err);
-      }
-    }
-
-    if (Boolean(isSupabaseConfigured) && supabase && userId && userId !== "demo-user") {
-      try {
-        const { data, error } = await supabase
-          .from("planner_preferences")
-          .select("*")
-          .eq("user_id", userId)
-          .single();
-
-        if (!error && data) {
-          const prefs: PlannerPreferences = {
-            userId: data.user_id,
-            themePreference: data.theme_preference,
-            planningStyle: data.planning_style,
-            preferredStudyTimes: data.preferred_study_times,
-            studyDays: data.study_days,
-            fixedCommitments: data.fixed_commitments || [],
-            dailyStudyTargetMinutes: data.daily_study_target_minutes,
-            bacTargetScore: Number(data.bac_target_score) || 15.0,
-            updatedAt: data.updated_at,
-          };
-          return prefs;
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.reflection) {
+            const userId = data.reflection.userId || "default";
+            const currentList = memoryCache.reflections.get(userId) || [];
+            const idx = currentList.findIndex((r) => r.date === data.reflection.date);
+            if (idx >= 0) currentList[idx] = data.reflection;
+            else currentList.unshift(data.reflection);
+            memoryCache.reflections.set(userId, currentList);
+            try {
+              localStorage.setItem(`${CACHE_KEYS.REFLECTIONS}_${userId}`, JSON.stringify(currentList));
+            } catch {}
+            return data.reflection;
+          }
         }
       } catch (err) {
-        console.warn("Supabase load failed for planner_preferences", err);
+        console.error("[PlannerStorage.saveReflection] API error:", err);
       }
     }
 
-    return getDefaultPreferences(effectiveUserId);
+    return reflection as DailyReflection;
   },
 
-  async savePreferences(prefs: PlannerPreferences): Promise<PlannerPreferences> {
-    const effectiveUserId = prefs.userId || "demo-user";
+  // ============================================================================
+  // 4. PLANNER PREFERENCES
+  // ============================================================================
 
+  getPlannerPreferences(): PlannerPreferences {
+    return {
+      dailyStudyTargetMinutes: 120,
+      daily_study_target_minutes: 120,
+      bacTargetScore: 16.0,
+      bac_target_score: 16.0,
+      themePreference: "boys",
+      theme_preference: "boys",
+      planningStyle: "HYBRID",
+      planning_style: "HYBRID",
+      preferredStudyTimes: ["morning", "evening"],
+      preferred_study_times: ["morning", "evening"],
+      studyDays: ["saturday", "sunday", "monday", "tuesday", "wednesday", "thursday"],
+      study_days: ["saturday", "sunday", "monday", "tuesday", "wednesday", "thursday"],
+      fixedCommitments: [],
+      fixed_commitments: [],
+    };
+  },
+
+  async savePlannerPreferences(prefs: Partial<PlannerPreferences>): Promise<void> {
     if (typeof window !== "undefined") {
-      localStorage.setItem(`${STORAGE_KEYS.PREFERENCES}_${effectiveUserId}`, JSON.stringify(prefs));
-    }
-
-    if (Boolean(isSupabaseConfigured) && supabase && prefs.userId && prefs.userId !== "demo-user") {
       try {
-        await supabase.from("planner_preferences").upsert({
-          user_id: prefs.userId,
-          theme_preference: prefs.themePreference,
-          planning_style: prefs.planningStyle,
-          preferred_study_times: prefs.preferredStudyTimes,
-          study_days: prefs.studyDays,
-          fixed_commitments: prefs.fixedCommitments,
-          daily_study_target_minutes: prefs.dailyStudyTargetMinutes,
-          bac_target_score: prefs.bacTargetScore,
-          updated_at: new Date().toISOString(),
+        await fetch("/api/planner/preferences", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(prefs),
         });
       } catch (err) {
-        console.warn("Supabase upsert failed for planner preferences", err);
+        console.error("[PlannerStorage.savePlannerPreferences] API error:", err);
       }
     }
-
-    return prefs;
   },
 
   // ============================================================================
   // 5. NOTIFICATION PREFERENCES
   // ============================================================================
-  getNotificationPreferences(userId: string = "demo-user"): NotificationPreferences {
-    if (typeof window !== "undefined") {
-      try {
-        const raw = localStorage.getItem(`${STORAGE_KEYS.NOTIF_PREFS}_${userId}`);
-        if (raw) return JSON.parse(raw);
-      } catch (err) {}
-    }
-    return getDefaultNotificationPreferences(userId);
+
+  getNotificationPreferences(): NotificationPreferences {
+    return {
+      morningReminder: true,
+      morning_reminder: true,
+      morning_brief: true,
+      upcomingTaskReminder: true,
+      upcoming_task_reminder: true,
+      taskStartReminder: true,
+      task_start_reminder: true,
+      completionEncouragement: true,
+      completion_encouragement: true,
+      eveningReflectionReminder: true,
+      evening_reflection_reminder: true,
+      evening_reflection: true,
+      spiritualReminders: false,
+      spiritual_reminders: false,
+      morningTime: "08:00",
+      morning_time: "08:00",
+      eveningTime: "21:00",
+      evening_time: "21:00",
+      advanceNoticeMinutes: 15,
+      advance_notice_minutes: 15,
+    };
   },
 
   async loadNotificationPreferences(userId?: string): Promise<NotificationPreferences> {
-    const effectiveUserId = userId || "demo-user";
-    return this.getNotificationPreferences(effectiveUserId);
+    return this.getNotificationPreferences();
   },
 
-  async saveNotificationPreferences(prefs: NotificationPreferences): Promise<NotificationPreferences> {
-    const effectiveUserId = prefs.userId || prefs.user_id || "demo-user";
-
+  async saveNotificationPreferences(prefs: Partial<NotificationPreferences>): Promise<void> {
     if (typeof window !== "undefined") {
-      localStorage.setItem(`${STORAGE_KEYS.NOTIF_PREFS}_${effectiveUserId}`, JSON.stringify(prefs));
-    }
-
-    if (Boolean(isSupabaseConfigured) && supabase && effectiveUserId !== "demo-user") {
       try {
-        await supabase.from("notification_preferences").upsert({
-          user_id: effectiveUserId,
-          morning_reminder: prefs.morningReminder ?? prefs.morning_brief,
-          upcoming_task_reminder: prefs.upcomingTaskReminder ?? prefs.task_reminders,
-          task_start_reminder: prefs.taskStartReminder,
-          completion_encouragement: prefs.completionEncouragement,
-          evening_reflection_reminder: prefs.eveningReflectionReminder ?? prefs.evening_reflection,
-          spiritual_reminders: prefs.spiritualReminders ?? prefs.spiritual_reminders,
-          morning_time: prefs.morningTime,
-          evening_time: prefs.eveningTime,
-          updated_at: new Date().toISOString(),
+        await fetch("/api/planner/preferences", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            spiritual_reminders: prefs.spiritual_reminders,
+          }),
         });
       } catch (err) {
-        console.warn("Supabase upsert failed for notification preferences", err);
+        console.error("[PlannerStorage.saveNotificationPreferences] API error:", err);
       }
     }
-
-    return prefs;
   },
 };

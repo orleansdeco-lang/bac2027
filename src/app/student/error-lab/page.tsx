@@ -43,6 +43,10 @@ import { RecallTrainerSettingsCard } from "@/components/recall/RecallTrainerSett
 import { trackEvent } from "@/lib/analytics";
 import { getStrategicProfile, getRegistrationDraft } from "@/lib/onboarding/profile";
 import { getSkillById } from "@/lib/mission";
+import { useEntitlements } from "@/lib/access/useEntitlements";
+import { PaywallModal } from "@/components/paywall/PaywallModal";
+import { ProBadge } from "@/components/paywall/ProBadge";
+
 
 interface MinisterialTrap {
   id: string;
@@ -118,6 +122,8 @@ export default function StudentErrorLabPage() {
   const isRtl = direction === "rtl";
   const NextArrow = isRtl ? ArrowLeft : ArrowRight;
 
+  const { canAccess } = useEntitlements();
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"recall_gaps" | "mission_errors" | "settings">("recall_gaps");
   const [selectedSubject, setSelectedSubject] = useState<string>("all");
   const [items, setItems] = useState<RecallQuestionWithState[]>([]);
@@ -125,6 +131,7 @@ export default function StudentErrorLabPage() {
   const [summary, setSummary] = useState<ErrorLabSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedTrapId, setExpandedTrapId] = useState<string | null>("trap-hist-1");
+
 
   useEffect(() => {
     async function loadData() {
@@ -458,27 +465,47 @@ export default function StudentErrorLabPage() {
                       💡 <strong className="text-theme-text">التفسير الصحيح:</strong> {item.explanation}
                     </p>
 
-                    {/* Action footer */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-theme-border/50">
-                      <a
-                        href={item.target_lesson_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs text-[var(--color-primary)] hover:underline font-semibold"
-                      >
-                        <BookOpen className="w-3.5 h-3.5" />
-                        <span>راجع ثغرة هذا الدرس في المنهاج 📖</span>
-                      </a>
+                      {/* Action footer */}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-theme-border/50">
+                        <a
+                          href={item.target_lesson_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs text-[var(--color-primary)] hover:underline font-semibold"
+                        >
+                          <BookOpen className="w-3.5 h-3.5" />
+                          <span>راجع ثغرة هذا الدرس في المنهاج 📖</span>
+                        </a>
 
-                      <Link href={`/student/arena/quick-recall?questionId=${item.id}`}>
-                        <Button variant="outline" size="sm" className="gap-1.5 text-xs font-semibold">
-                          <span>إعادة اختبار هذا السؤال 🎯</span>
-                          <NextArrow className="w-3.5 h-3.5" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </Card>
-                ))}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Link href={`/student/arena/quick-recall?questionId=${item.id}`}>
+                            <Button variant="outline" size="sm" className="gap-1.5 text-xs font-semibold">
+                              <span>إعادة اختبار 🎯</span>
+                              <NextArrow className="w-3.5 h-3.5" />
+                            </Button>
+                          </Link>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!canAccess("ERROR_LAB_AI_TWINS")) {
+                                setIsPaywallOpen(true);
+                              } else {
+                                window.location.href = `/student/arena/quick-recall?twin=1&questionId=${item.id}`;
+                              }
+                            }}
+                            className="px-3 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 text-purple-600 dark:text-purple-400 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
+                            title="توليد سؤال توأم ذكي بنفس الصعوبة"
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>سؤال توأم ذكي</span>
+                            <ProBadge size="sm" />
+                          </button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+
               </div>
             ) : (
               /* Rich Empty State: Celebratory banner + Common Ministerial BAC Traps Explorer */
@@ -781,6 +808,13 @@ export default function StudentErrorLabPage() {
           </div>
         )}
       </Container>
+
+      <PaywallModal
+        isOpen={isPaywallOpen}
+        onClose={() => setIsPaywallOpen(false)}
+        feature="ERROR_LAB_AI_TWINS"
+      />
     </AppShell>
   );
 }
+

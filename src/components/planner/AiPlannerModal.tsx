@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { PlannerEvent } from "@/lib/planner/types";
-import { PlannerAiService } from "@/lib/planner/ai-planner-service";
 import {
   Sparkles,
   X,
@@ -11,7 +10,14 @@ import {
   Calendar,
   Clock,
   Bot,
+  AlertCircle,
+  TrendingUp,
+  HelpCircle,
+  XCircle,
 } from "lucide-react";
+import { getAlgeriaDateString } from "@/lib/planner/algeria-date";
+import { ALL_SUBJECTS } from "@/lib/constants/streams";
+import { SubjectId } from "@/types/education";
 
 interface AiPlannerModalProps {
   isOpen: boolean;
@@ -21,6 +27,16 @@ interface AiPlannerModalProps {
   ) => void;
   streamId?: string;
   startDateIso?: string;
+}
+
+interface AiProposalData {
+  type: string;
+  title: string;
+  streamNameAr: string;
+  whyAr: string;
+  impactAr: string;
+  daysCount: number;
+  proposedEvents: any[];
 }
 
 export const AiPlannerModal: React.FC<AiPlannerModalProps> = ({
@@ -34,10 +50,9 @@ export const AiPlannerModal: React.FC<AiPlannerModalProps> = ({
   const [daysCount, setDaysCount] = useState(5);
   const [dailyHours, setDailyHours] = useState(3);
   const [isLoading, setIsLoading] = useState(false);
-  const [aiResult, setAiResult] = useState<{
-    proposedEvents: Omit<PlannerEvent, "id" | "created_at" | "updated_at">[];
-    rationale?: string;
-  } | null>(null);
+  const [isCommitting, setIsCommitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [proposal, setProposal] = useState<AiProposalData | null>(null);
 
   if (!isOpen) return null;
 
@@ -58,31 +73,68 @@ export const AiPlannerModal: React.FC<AiPlannerModalProps> = ({
 
   const handleGenerate = async () => {
     setIsLoading(true);
+    setErrorMessage(null);
     try {
-      const activeStart =
-        startDateIso || new Date().toISOString().split("T")[0];
-      const result = await PlannerAiService.generateStudyPlan({
-        userPrompt: prompt,
-        streamId,
-        startDate: activeStart,
-        daysCount,
-        dailyHoursAvailable: dailyHours,
+      const activeStart = startDateIso || getAlgeriaDateString();
+      const res = await fetch("/api/planner/ai-proposal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "generate",
+          userPrompt: prompt,
+          streamId,
+          startDate: activeStart,
+          daysCount,
+          dailyHoursAvailable: dailyHours,
+        }),
       });
 
-      setAiResult({
-        proposedEvents: result.proposedEvents,
-        rationale: result.rationale || result.summaryAr || "خطة مقترحة متوازنة لشعبتك",
-      });
-    } catch (err) {
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "تعذر توليد المقترح الذكي حالياً.");
+      }
+
+      setProposal(data.proposal);
+    } catch (err: any) {
       console.error("AI Planner error:", err);
+      setErrorMessage(err.message || "حدث خطأ أثناء التواصل مع المساعد الذكي.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleAccept = () => {
-    if (!aiResult) return;
-    onAcceptPlan(aiResult.proposedEvents);
+  const handleAccept = async () => {
+    if (!proposal || !proposal.proposedEvents?.length) return;
+    setIsCommitting(true);
+    setErrorMessage(null);
+    try {
+      const res = await fetch("/api/planner/ai-proposal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "commit",
+          events: proposal.proposedEvents,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "فشل تثبيت الخطة في قاعدة البيانات.");
+      }
+
+      // Propagate to parent to refresh state
+      onAcceptPlan(proposal.proposedEvents);
+      onClose();
+    } catch (err: any) {
+      console.error("Commit error:", err);
+      setErrorMessage(err.message || "حدث خطأ أثناء تثبيت الخطة.");
+    } finally {
+      setIsCommitting(false);
+    }
+  };
+
+  const handleReject = () => {
+    setProposal(null);
     onClose();
   };
 
@@ -106,20 +158,27 @@ export const AiPlannerModal: React.FC<AiPlannerModalProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-lg sm:text-xl font-black text-theme-text font-sans">
-                المقترح الذكي لجدول المذاكرة
+                الشاطر يقترح عليك
               </h2>
               <span className="text-xs px-2.5 py-0.5 rounded-full font-bold bg-[var(--color-accent-soft)] text-[#8F5E1F] border border-[var(--color-accent)]/30">
-                مساعد شاطر
+                مساعد الذكاء الاصطناعي
               </span>
             </div>
             <p className="text-xs text-theme-secondary mt-1 font-medium">
-              يقترح عليك الذكاء الاصطناعي خطة مراجعة متوازنة حسب شعبتك — لن يتم تطبيق أي شيء إلا بعد موافقتك.
+              خطة دراسية ذكية مبنية على معاملات شعبتك وإشارات معمل الأخطاء — لن يتم تطبيق أي شيء إلا بموافقتك.
             </p>
           </div>
         </div>
 
-        {/* If no proposal generated yet: show inputs */}
-        {!aiResult ? (
+        {errorMessage && (
+          <div className="mb-4 p-3 rounded-2xl border border-red-500/30 bg-red-500/10 text-red-600 text-xs font-bold flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        {/* State A: Inputs before generating */}
+        {!proposal ? (
           <div className="space-y-4">
             {/* Natural language prompt */}
             <div>
@@ -128,7 +187,7 @@ export const AiPlannerModal: React.FC<AiPlannerModalProps> = ({
               </label>
               <textarea
                 rows={3}
-                placeholder="مثال: أريد التركيز على الرياضيات والعلوم، وأفضل الدراسة بعد الخامسة مساءً..."
+                placeholder="مثال: أريد التركيز على الرياضيات والعلوم، وأفضل المذاكرة بعد الخامسة مساءً..."
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
                 className="w-full text-xs font-medium rounded-xl p-3 border border-theme bg-surface text-theme-text placeholder:text-theme-muted focus:outline-none focus:border-[var(--color-primary)]"
@@ -205,90 +264,133 @@ export const AiPlannerModal: React.FC<AiPlannerModalProps> = ({
                 {isLoading ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>جاري التفكير وصياغة الخطة...</span>
+                    <span>جاري صياغة مقترح شاطر...</span>
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>توليد الخطة الذكية ✨</span>
+                    <span>توليد المقترح الذكي ✨</span>
                   </>
                 )}
               </button>
             </div>
           </div>
         ) : (
-          /* Proposed Plan Review */
+          /* State B: Phase 12 Structured Proposal (WHY, WHAT CHANGES, IMPACT, ACCEPT/EDIT/REJECT) */
           <div className="space-y-4">
-            {/* Rationale Card */}
-            <div className="p-4 rounded-2xl border border-theme bg-surface text-theme-text">
-              <div className="flex items-center gap-2 font-bold text-xs mb-1.5 text-emerald-700">
-                <Bot className="w-4 h-4" />
-                <span>رؤية المساعد الذكي:</span>
+            {/* 1. WHY? (لماذا) */}
+            <div className="p-4 rounded-2xl border border-blue-500/20 bg-blue-500/5 text-theme-text">
+              <div className="flex items-center gap-2 font-black text-xs mb-1.5 text-blue-600">
+                <HelpCircle className="w-4 h-4" />
+                <span>لماذا هذا المقترح؟ (التعليل التربوي)</span>
               </div>
               <p className="text-xs leading-relaxed text-theme-secondary font-medium">
-                {aiResult.rationale}
+                {proposal.whyAr}
               </p>
             </div>
 
-            {/* Generated Items List */}
+            {/* 2. IMPACT? (الأثر المتوقع) */}
+            <div className="p-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 text-theme-text">
+              <div className="flex items-center gap-2 font-black text-xs mb-1.5 text-emerald-600">
+                <TrendingUp className="w-4 h-4" />
+                <span>الأثر المتوقع على التحضير</span>
+              </div>
+              <p className="text-xs leading-relaxed text-theme-secondary font-medium">
+                {proposal.impactAr}
+              </p>
+            </div>
+
+            {/* 3. WHAT CHANGES? (المهام المقترحة) */}
             <div>
               <div className="flex items-center justify-between mb-2 text-xs font-bold text-theme-text">
-                <span>المهام المقترحة ({aiResult.proposedEvents.length} مهمة)</span>
-                <span className="text-theme-muted font-mono">
-                  {daysCount} أيام
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-[var(--color-primary)]" />
+                  <span>المهام والأنشطة المقترحة ({proposal.proposedEvents?.length || 0} مهمة)</span>
+                </div>
+                <span className="text-[11px] px-2 py-0.5 rounded-full bg-surface border border-theme text-theme-secondary font-mono">
+                  {proposal.daysCount} أيام
                 </span>
               </div>
 
-              <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
-                {aiResult.proposedEvents.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="p-3 rounded-xl border border-theme bg-surface text-xs flex items-center justify-between gap-3"
-                  >
-                    <div className="flex items-center gap-2.5 truncate">
-                      <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-card border border-theme text-theme-secondary">
-                        {item.date.slice(5)} {item.start_time}
-                      </span>
-                      <span className="font-bold text-theme-text truncate">
-                        {item.title}
-                      </span>
-                    </div>
+              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                {proposal.proposedEvents?.map((item, idx) => {
+                  const subMeta = ALL_SUBJECTS[item.subject_id as SubjectId];
+                  return (
+                    <div
+                      key={idx}
+                      className="p-3 rounded-xl border border-theme bg-surface text-xs flex items-center justify-between gap-3"
+                    >
+                      <div className="flex items-center gap-2.5 truncate">
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-card border border-theme text-theme-secondary shrink-0">
+                          {item.date?.slice(5)} | {item.start_time || "18:00"}
+                        </span>
+                        <div className="truncate">
+                          <span className="font-bold text-theme-text block truncate">
+                            {item.title}
+                          </span>
+                          {item.notes && (
+                            <span className="text-[10px] text-theme-muted block truncate">
+                              {item.notes}
+                            </span>
+                          )}
+                        </div>
+                      </div>
 
-                    <div className="flex items-center gap-2 shrink-0 font-mono text-[11px] text-theme-muted font-bold">
-                      <span>{item.duration_minutes} د</span>
+                      <div className="flex items-center gap-2 shrink-0 font-mono text-[11px] text-theme-muted font-bold">
+                        {subMeta && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-primary-soft)] text-[var(--color-primary)] font-sans hidden sm:inline-block">
+                            {subMeta.name_ar}
+                          </span>
+                        )}
+                        <span>{item.duration_minutes || 45} د</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
-            {/* Decision Actions */}
+            {/* Decision Buttons: قبول / تعديل / رفض */}
             <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-theme">
               <div className="flex items-center gap-2 w-full sm:w-auto">
+                {/* Reject (رفض) */}
                 <button
                   type="button"
-                  onClick={() => setAiResult(null)}
-                  className="px-3 py-2 rounded-xl text-xs font-bold border border-theme bg-surface text-theme-secondary hover:text-theme-text transition-all cursor-pointer"
+                  onClick={handleReject}
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold border border-red-500/20 bg-red-500/5 text-red-600 hover:bg-red-500/10 transition-all flex items-center gap-1.5 cursor-pointer"
+                >
+                  <XCircle className="w-3.5 h-3.5" />
+                  <span>رفض الخطة</span>
+                </button>
+
+                {/* Edit (تعديل) */}
+                <button
+                  type="button"
+                  onClick={() => setProposal(null)}
+                  className="px-3.5 py-2 rounded-xl text-xs font-bold border border-theme bg-surface text-theme-secondary hover:text-theme-text transition-all cursor-pointer"
                 >
                   تعديل المدخلات ✏️
                 </button>
-                <button
-                  type="button"
-                  onClick={handleGenerate}
-                  className="px-3 py-2 rounded-xl text-xs font-bold border border-theme bg-surface text-theme-secondary hover:text-theme-text transition-all flex items-center gap-1 cursor-pointer"
-                >
-                  <RefreshCw className="w-3 h-3" />
-                  <span>إعادة التوليد 🔄</span>
-                </button>
               </div>
 
+              {/* Accept (قبول) */}
               <button
                 type="button"
+                disabled={isCommitting}
                 onClick={handleAccept}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white shadow-xs transition-all cursor-pointer"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white shadow-xs transition-all cursor-pointer disabled:opacity-50"
               >
-                <CheckCircle2 className="w-4 h-4" />
-                <span>اعتماد الخطة وتثبيتها في الجدول ✨</span>
+                {isCommitting ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>جاري التثبيت في الجدول...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>قبول واعتماد الخطة في الجدول ✨</span>
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -297,3 +399,4 @@ export const AiPlannerModal: React.FC<AiPlannerModalProps> = ({
     </div>
   );
 };
+

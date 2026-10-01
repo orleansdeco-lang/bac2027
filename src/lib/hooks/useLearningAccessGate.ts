@@ -7,7 +7,8 @@ import { StudentService } from "@/lib/services";
 import { StudentProfile } from "@/types/student";
 import { StudentLearningContext, getStudentSubjects } from "@/domain/student";
 import { getRegistrationDraft } from "@/lib/onboarding/profile";
-import { getStudentAccess, StudentAccessDecision } from "@/lib/access";
+import { getStudentAccess, hasPremiumAccess as verifyHasPremiumAccess, StudentAccessDecision } from "@/lib/access";
+
 
 export interface LearningAccessGateState {
   isLoading: boolean;
@@ -125,10 +126,12 @@ export function useLearningAccessGate(options?: {
           setProfile(studentProfile);
           setLearningContext(ctx);
           setAccessDecision(access);
-          setHasPremiumAccess(access.canUseProduct);
+          setHasPremiumAccess(verifyHasPremiumAccess(studentProfile));
           setIsAuthorized(true);
           setIsLoading(false);
         }
+
+
       } catch (err) {
         console.error("Access gate error:", err);
         if (isMounted) {

@@ -41,6 +41,9 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { MathRenderer } from "@/components/ui/MathRenderer";
 import { getStrategicProfile, getRegistrationDraft } from "@/lib/onboarding/profile";
+import { useEntitlements } from "@/lib/access/useEntitlements";
+import { PaywallModal } from "@/components/paywall/PaywallModal";
+
 
 interface BacAITutorProps {
   isDrawer?: boolean;
@@ -153,6 +156,8 @@ export function BacAITutor({
 }: BacAITutorProps) {
   const { user } = useAuth();
   const effectiveUserId = user?.id || "anonymous-student";
+  const { isPremium, isTrial, dailyAiQuota, refreshEntitlements } = useEntitlements();
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
@@ -163,6 +168,7 @@ export function BacAITutor({
   const [customApiKey, setCustomApiKey] = useState("");
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -252,16 +258,26 @@ export function BacAITutor({
       TutorClient.saveChatHistory(finalMessages);
     } catch (err: any) {
       console.error("Failed to get tutor reply:", err);
+      const isQuota = Boolean(err?.isQuotaExceeded || err?.upgradeRequired);
+      const content = isQuota
+        ? "⚠️ لقد استنفدت حصتك اليومية المجانية (5 أسئلة مع الأستاذ الذكي اليوم). يمكنك الترقية إلى الشاطر بريميوم للاستفادة من توجيه الأستاذ الذكي غير المحدود وتفكيك المنهجية خطوة بخطوة."
+        : (err?.message && !err.message.includes("Tutor API error") ? err.message : "⚠️ حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة مرة أخرى أو التحقق من اتصالك بالإنترنت.");
+
       const errorMessage: ChatMessage = {
         id: `err-${Date.now()}`,
         role: "assistant",
-        content: "⚠️ حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة مرة أخرى أو التحقق من اتصالك بالإنترنت.",
+        content,
         timestamp: new Date().toLocaleTimeString("ar-DZ", { hour: "2-digit", minute: "2-digit" }),
       };
       setMessages([...newMessages, errorMessage]);
+      if (isQuota) {
+        setIsPaywallOpen(true);
+      }
     } finally {
       setIsLoading(false);
+      refreshEntitlements?.().catch(() => {});
     }
+
   };
 
   const handleAddTaskToMustWin = async (task: TutorTask, messageId: string) => {
@@ -316,18 +332,30 @@ export function BacAITutor({
           </div>
 
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-base sm:text-lg font-black text-theme-text font-sans">
                 الأستاذ الذكي 🤖
               </h2>
-              <Badge variant="primary" size="sm" className="font-mono text-[10px] bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30">
-                Socratic AI BAC
-              </Badge>
+              {isPremium || isTrial ? (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 flex items-center gap-1 font-mono">
+                  <Sparkles className="w-2.5 h-2.5" />
+                  <span>PRO غير محدود</span>
+                </span>
+              ) : (
+                <span
+                  onClick={() => setIsPaywallOpen(true)}
+                  className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30 cursor-pointer hover:bg-amber-500/25 flex items-center gap-1"
+                  title="حصة الأسئلة اليومية المجانية"
+                >
+                  <span>الحصة: {dailyAiQuota?.remaining ?? 5}/{dailyAiQuota?.total ?? 5} أسئلة</span>
+                </span>
+              )}
             </div>
             <p className="text-[11px] text-theme-muted hidden sm:block">
               المدرب البيداغوجي لشهادة البكالوريا — تعليم سقراطي، تسميع ذكي، وتكليف بالمهام
             </p>
           </div>
+
         </div>
 
         {/* Controls */}
@@ -707,6 +735,13 @@ export function BacAITutor({
           </motion.div>
         )}
       </AnimatePresence>
+
+      <PaywallModal
+        isOpen={isPaywallOpen}
+        onClose={() => setIsPaywallOpen(false)}
+        feature="AI_TUTOR_UNLIMITED"
+      />
     </div>
   );
 }
+

@@ -158,8 +158,12 @@ export const PlannerHero: React.FC<PlannerHeroProps> = ({
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                 <span>اقتراح جدول ذكي</span>
+                <span className="text-[9px] font-black px-1.5 py-0.2 rounded-md bg-amber-500/20 text-amber-400 font-mono border border-amber-500/30">
+                  PRO
+                </span>
               </button>
             )}
+
           </div>
         </div>
       </div>

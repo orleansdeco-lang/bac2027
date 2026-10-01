@@ -75,7 +75,7 @@ export const TodayBilanSummary: React.FC<TodayBilanSummaryProps> = ({
             <span>المهام المنجزة</span>
           </div>
           <div className="text-sm sm:text-base font-black text-theme-text font-mono">
-            {tasksCompletedToday} / {tasksTotalToday}
+            {tasksTotalToday > 0 ? `${tasksCompletedToday} / ${tasksTotalToday}` : "لا مهام اليوم"}
           </div>
         </div>
 
@@ -86,7 +86,7 @@ export const TodayBilanSummary: React.FC<TodayBilanSummaryProps> = ({
             <span>أيام متتالية</span>
           </div>
           <div className="text-sm sm:text-base font-black text-amber-600 font-mono">
-            {streakDays} {streakDays === 1 ? "يوم" : "أيام"}
+            {streakDays > 0 ? `${streakDays} ${streakDays === 1 ? "يوم" : "أيام"}` : "0 أيام"}
           </div>
         </div>
       </div>
@@ -100,9 +100,9 @@ export const TodayBilanSummary: React.FC<TodayBilanSummaryProps> = ({
               {reflectionToday ? "انطباع وملاحظات اليوم" : "تدوين انطباع اليوم"}
             </span>
           </div>
-          {reflectionToday?.mood && (
+          {(reflectionToday?.day_mood || reflectionToday?.mood) && (
             <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-card border border-theme text-theme-secondary">
-              {moodEmojis[reflectionToday.mood] || "✨"}
+              {moodEmojis[(reflectionToday.day_mood || reflectionToday.mood || "").toLowerCase()] || "✨"}
             </span>
           )}
         </div>
@@ -110,7 +110,7 @@ export const TodayBilanSummary: React.FC<TodayBilanSummaryProps> = ({
         {reflectionToday ? (
           <div className="space-y-2 text-xs">
             <p className="line-clamp-2 text-theme-secondary italic font-medium">
-              "{reflectionToday.learned_today || "تم تسجيل انطباعك بنجاح!"}"
+              "{reflectionToday.what_learned || reflectionToday.learned_today || "تم تسجيل انطباعك بنجاح!"}"
             </p>
             <button
               type="button"

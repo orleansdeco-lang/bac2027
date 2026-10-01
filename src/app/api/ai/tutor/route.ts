@@ -296,6 +296,7 @@ import { requireServerAuth } from "@/lib/auth/server-guard";
 import { rateLimiter } from "@/lib/security/rate-limiter";
 import { TutorRequestSchema } from "@/lib/validation/campus-schemas";
 import { sanitizeUserContent } from "@/lib/security/sanitize";
+import { recordAiQueryUsage } from "@/lib/access/entitlements";
 
 export async function POST(req: NextRequest) {
   try {
@@ -311,7 +312,28 @@ export async function POST(req: NextRequest) {
 
     const clientKey = authResult.userId || req.ip || "unknown-client";
 
-    // 2. Rate Limiting Protection (Max 15 requests per minute)
+    // 2. Freemium Daily AI Quota Check (5 questions/day for FREE, unlimited for TRIAL/PREMIUM/ADMIN)
+    const userPlan = authResult.entitlements?.plan || "FREE";
+    const quotaCheck = await recordAiQueryUsage(authResult.userId || "anonymous", userPlan);
+
+    if (!quotaCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "QUOTA_EXCEEDED",
+          message: "لقد استنفدت حصتك اليومية المجانية (5 أسئلة مع الأستاذ الذكي اليوم). للاستفادة من توجيه الأستاذ الذكي غير المحدود، يمكنك الترقية إلى الشاطر بريميوم.",
+          upgradeRequired: true,
+          dailyAiQuota: {
+            used: quotaCheck.used,
+            remaining: 0,
+            total: quotaCheck.total,
+          },
+        },
+        { status: 429 }
+      );
+    }
+
+    // 3. Rate Limiting Protection (Max 15 requests per minute)
     const rateCheck = rateLimiter.check(clientKey, 15, 60000);
     if (!rateCheck.success) {
       return NextResponse.json(
@@ -391,6 +413,11 @@ export async function POST(req: NextRequest) {
             suggestedTask,
             mode,
             provider: "gemini",
+            dailyAiQuota: {
+              used: quotaCheck.used,
+              remaining: quotaCheck.remaining,
+              total: quotaCheck.total,
+            },
           };
           return NextResponse.json(result, { headers: rateHeaders });
         }
@@ -407,9 +434,15 @@ export async function POST(req: NextRequest) {
       suggestedTask,
       mode,
       provider: "local_expert",
+      dailyAiQuota: {
+        used: quotaCheck.used,
+        remaining: quotaCheck.remaining,
+        total: quotaCheck.total,
+      },
     };
 
     return NextResponse.json(result, { headers: rateHeaders });
+
   } catch (error: any) {
     console.error("[Tutor API] Global error:", error);
     return NextResponse.json(

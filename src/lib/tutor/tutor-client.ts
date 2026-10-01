@@ -93,11 +93,18 @@ export const TutorClient = {
     });
 
     if (!res.ok) {
-      const errText = await res.text().catch(() => "");
-      throw new Error(`Tutor API error ${res.status}: ${errText}`);
+      const errJson = await res.json().catch(() => null);
+      if (errJson?.error === "QUOTA_EXCEEDED" || errJson?.upgradeRequired) {
+        const quotaErr: any = new Error(errJson.message || "لقد استنفدت حصتك اليومية المجانية (5 أسئلة).");
+        quotaErr.isQuotaExceeded = true;
+        quotaErr.upgradeRequired = true;
+        throw quotaErr;
+      }
+      throw new Error(errJson?.message || `Tutor API error ${res.status}`);
     }
 
     return (await res.json()) as TutorResponse;
+
   },
 
   /**

@@ -5,6 +5,9 @@ import { StudentRepository } from "@/lib/repositories/student-repository";
 import { getStudentAccess, StudentAccessDecision } from "@/lib/access";
 import { StrategicProfile } from "@/types/onboarding";
 
+import { getUserEntitlements } from "@/lib/access/entitlements";
+import { UserEntitlements, FeatureKey } from "@/lib/access/types";
+
 export interface ServerAuthResult {
   authenticated: boolean;
   authorized: boolean;
@@ -12,6 +15,7 @@ export interface ServerAuthResult {
   userEmail?: string;
   profile?: StrategicProfile | null;
   accessDecision?: StudentAccessDecision | null;
+  entitlements?: UserEntitlements | null;
   errorResponse?: NextResponse;
 }
 
@@ -26,8 +30,8 @@ export function extractAuthToken(req: NextRequest | Request): string | null {
   }
 
   // NextRequest cookies
-  if ("cookies" in req && typeof req.cookies?.getAll === "function") {
-    const cookies = req.cookies.getAll();
+  if ("cookies" in req && typeof (req as any).cookies?.getAll === "function") {
+    const cookies = (req as any).cookies.getAll();
     for (const c of cookies) {
       const name = c.name.toLowerCase();
       if (
@@ -65,11 +69,11 @@ export function extractAuthToken(req: NextRequest | Request): string | null {
 
 /**
  * Authoritative Server-Side Guard for Route Handlers
- * Verifies authentication AND active subscription/trial window.
+ * Verifies authentication and calculates authoritative user entitlements.
  */
 export async function requireServerAuth(
   req: NextRequest | Request,
-  options?: { requireActiveSubscription?: boolean }
+  options?: { requireActiveSubscription?: boolean; requireFeature?: FeatureKey }
 ): Promise<ServerAuthResult> {
   const token = extractAuthToken(req);
 
@@ -121,15 +125,16 @@ export async function requireServerAuth(
   // 2. Fetch authoritative profile & verify subscription status
   let profile: StrategicProfile | null = null;
   try {
-    profile = await StudentRepository.getProfile(verifiedUserId);
+    profile = await StudentRepository.getProfile(verifiedUserId, token);
   } catch (err) {
     console.warn("[ServerGuard] Failed to fetch student profile:", err);
   }
 
   const accessDecision = getStudentAccess(profile);
+  const entitlements = await getUserEntitlements(verifiedUserId, token);
 
-  // 3. Subscription & 7-Day Trial Gate
-  if (options?.requireActiveSubscription !== false && !accessDecision.canUseProduct) {
+  // 3. Feature-specific entitlement check if requested
+  if (options?.requireFeature && !entitlements.features[options.requireFeature]) {
     return {
       authenticated: true,
       authorized: false,
@@ -137,12 +142,38 @@ export async function requireServerAuth(
       userEmail: verifiedEmail,
       profile,
       accessDecision,
+      entitlements,
+      errorResponse: NextResponse.json(
+        {
+          success: false,
+          error: "Premium Feature Required",
+          feature: options.requireFeature,
+          message: "هذه الميزة متاحة حصرياً لمشتركي الشاطر بريميوم.",
+          upgradeRequired: true,
+          redirectUrl: "/subscribe",
+        },
+        { status: 403 }
+      ),
+    };
+  }
+
+  // 4. Strict Subscription Gate if explicitly enabled (options.requireActiveSubscription === true)
+  if (options?.requireActiveSubscription === true && !entitlements.isPremium) {
+    return {
+      authenticated: true,
+      authorized: false,
+      userId: verifiedUserId,
+      userEmail: verifiedEmail,
+      profile,
+      accessDecision,
+      entitlements,
       errorResponse: NextResponse.json(
         {
           success: false,
           error: "Subscription Required",
           reason: accessDecision.reason,
-          message: "انتهت فترة التجربة المجانية (7 أيام). يرجى الاشتراك للمتابعة.",
+          message: "هذه العملية تتطلب اشتراكاً مفعلاً في الشاطر بريميوم.",
+          upgradeRequired: true,
           redirectUrl: "/subscribe",
         },
         { status: 403 }
@@ -157,5 +188,7 @@ export async function requireServerAuth(
     userEmail: verifiedEmail,
     profile,
     accessDecision,
+    entitlements,
   };
 }
+

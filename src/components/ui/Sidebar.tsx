@@ -465,15 +465,21 @@ export function Sidebar({ className }: SidebarProps) {
         <div className="p-3.5 rounded-2xl bg-card border border-[var(--color-primary)]/25 shadow-xs text-center space-y-2">
           <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-theme-text font-sans">
             <Crown className="w-4 h-4 text-amber-500 fill-amber-500" />
-            <span>{isPaid ? (isAr ? "اشتراكك مفعّل • Pro" : "Pass Actif • Pro") : (isAr ? "عضوية الشاطر" : "Pass SHATER")}</span>
+            <span>
+              {isPaid
+                ? (isAr ? "الشاطر بريميوم • مفعل" : "Pass Actif • Pro")
+                : isTrial
+                ? (isAr ? "تجربة بريميوم شاملة" : "Essai Pro Gratuit")
+                : (isAr ? "النسخة المجانية للشاطر" : "Version Gratuite")}
+            </span>
           </div>
 
           <p className="text-[11px] text-theme-secondary leading-snug">
             {isPaid
               ? (isAr ? "وصول كامل مفتوح لكل مواد وتمارين شعبتك." : "Accès illimité actif.")
               : isTrial
-              ? (isAr ? `فترة تجريبية: باقي ${formatTrialCountdown(access.remainingHours, true)}` : `Essai : ${access.remainingHours}h restantes`)
-              : (isAr ? "فعّل اشتراكك لفتح المنهاج والتصحيح الذكي" : "Débloquez tout le programme")}
+              ? (isAr ? `باقي في التجربة: ${formatTrialCountdown(access.remainingHours, true)}` : `Essai : ${access.remainingHours}h restantes`)
+              : (isAr ? "يمكنك الترقية لفتح كامل الأرشيف والذكاء الاصطناعي." : "Débloquez tout l'archive et l'IA.")}
           </p>
 
           <Link
@@ -483,9 +489,10 @@ export function Sidebar({ className }: SidebarProps) {
           >
             {isPaid
               ? (isAr ? "تفاصيل الاشتراك" : "Mon Abonnement")
-              : (isAr ? "ترقية الحساب الآن ←" : "Passer en Pro →")}
+              : (isAr ? "ترقية إلى بريميوم ←" : "Passer en Pro →")}
           </Link>
         </div>
+
 
         {/* Support & Social Channels Hub */}
         <div className="p-3 rounded-2xl bg-card border border-theme shadow-xs space-y-2.5">

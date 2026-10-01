@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import https from "https";
 import http from "http";
+import { requireServerAuth } from "@/lib/auth/server-guard";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -121,10 +122,24 @@ export async function GET(request: NextRequest) {
   const rawUrl = searchParams.get("url");
   const download = searchParams.get("download") === "1";
   const customFilename = searchParams.get("filename");
+  const isPremiumRequired = searchParams.get("isPremium") === "1";
+
+  // Server-Side Entitlement Gate for Premium Documents
+  if (isPremiumRequired) {
+    const authResult = await requireServerAuth(request, { requireFeature: "EXAMS_FULL_LIBRARY" });
+    if (!authResult.authorized) {
+      if (authResult.errorResponse) return authResult.errorResponse;
+      return NextResponse.json(
+        { error: "Subscription required for this document" },
+        { status: 403 }
+      );
+    }
+  }
 
   if (!rawUrl) {
     return NextResponse.json({ error: "Missing url parameter" }, { status: 400 });
   }
+
 
   let parsedUrl: URL;
   try {
