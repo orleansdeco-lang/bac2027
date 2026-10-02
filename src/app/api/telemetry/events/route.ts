@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { processTelemetryBatch, checkRateLimit } from "@/lib/operations/telemetry";
 import { extractAuthenticatedUserId } from "@/lib/operations/auth";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 export const dynamic = "force-dynamic";
 
@@ -54,6 +55,18 @@ export async function POST(req: Request) {
 
     const rawEvents = Array.isArray(body) ? body : (body.events || [body]);
     const result = await processTelemetryBatch(rawEvents, serverDerivedUserId);
+
+    // If database persistence failed completely on a configured database, return 503
+    if (isSupabaseConfigured && result.persistenceMode === "failed" && result.acceptedCount > 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          ...result,
+          error: "Database telemetry events persistence failed",
+        },
+        { status: 503 }
+      );
+    }
 
     return NextResponse.json(
       {

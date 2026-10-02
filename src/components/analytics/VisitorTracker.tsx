@@ -99,7 +99,9 @@ export function VisitorTracker() {
         path: pathname || "/",
         fullUrl,
         search,
-        sessionId: deviceId, // Use consistent device ID so a visitor is counted once per day
+        visitorId: deviceId,
+        anonymousId: deviceId,
+        sessionId: sessionId,
         userId,
         referrer: document.referrer || undefined,
         utmSource,

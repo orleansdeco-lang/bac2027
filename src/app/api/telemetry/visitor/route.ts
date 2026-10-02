@@ -3,7 +3,7 @@ import { recordVisitorHit, getLiveVisitorsCount } from "@/lib/operations/visitor
 import { recordVisitorHit as recordInMemoryHit } from "@/lib/operations/analytics-store";
 import { extractAuthenticatedUserId } from "@/lib/operations/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
-import { supabase } from "@/lib/supabase/client";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
 
 export const dynamic = "force-dynamic";
 
@@ -58,9 +58,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, ignored: true });
     }
 
-    const visitorId = body.visitorId || body.anonymousId || undefined;
+    const visitorId = body.visitorId || body.anonymousId || (body.sessionId?.startsWith("dev_") ? body.sessionId : undefined) || (body.sessionId ? `vid_${body.sessionId}` : undefined);
     const fullUrl = body.fullUrl || undefined;
-    const anonymousId = body.anonymousId || undefined;
+    const anonymousId = body.anonymousId || visitorId || undefined;
     const utmSource = body.utmSource || undefined;
     const utmCampaign = body.utmCampaign || undefined;
     const utmMedium = body.utmMedium || undefined;
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
 
     // Record visitor hit through the primary path (visitors.ts)
     // Uses server-derived userId, NOT client-submitted
-    await recordVisitorHit({
+    const hitResult = await recordVisitorHit({
       sessionId,
       anonymousId,
       path,
@@ -104,7 +104,7 @@ export async function POST(req: Request) {
 
     // Upsert analytics_visitors record for identity stitching
     if (visitorId && !isHeartbeat) {
-      upsertAnalyticsVisitor({
+      await upsertAnalyticsVisitor({
         visitorId,
         userId: serverDerivedUserId,
         deviceType,
@@ -130,14 +130,29 @@ export async function POST(req: Request) {
         deviceType: body.deviceType,
         browser: body.browser,
       });
-    } catch (e) {
+    } catch {
       // Ignore memory cache errors
     }
 
     const liveCount = getLiveVisitorsCount(5);
 
+    // If database persistence failed on a configured database, return 503 instead of false 200
+    if (isSupabaseConfigured && !hitResult.persisted) {
+      return NextResponse.json(
+        {
+          success: false,
+          persisted: false,
+          mode: hitResult.mode,
+          error: "Database telemetry persistence failed",
+        },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json({
       success: true,
+      persisted: hitResult.persisted,
+      mode: hitResult.mode,
       liveCount,
     });
   } catch (err: any) {
@@ -155,7 +170,7 @@ import { classifyChannel } from "@/lib/analytics/attribution";
  * Uses the secure record_visitor_identity RPC to guarantee first-touch immutability.
  * Fire-and-forget — does not block the response.
  */
-function upsertAnalyticsVisitor(data: {
+async function upsertAnalyticsVisitor(data: {
   visitorId: string;
   userId: string | null;
   deviceType?: string;
@@ -164,12 +179,12 @@ function upsertAnalyticsVisitor(data: {
   firstTouch?: { source?: string; medium?: string; campaign?: string; content?: string; term?: string } | null;
   referrer?: string;
   landingPage?: string;
-}): void {
+}): Promise<boolean> {
   try {
     const admin = getAdminClient();
     // Use admin client if available, otherwise fall back to anon client
     const client = admin || supabase;
-    if (!client) return;
+    if (!client) return false;
 
     const device = (data.deviceType === "mobile" || data.deviceType === "tablet")
       ? data.deviceType
@@ -181,59 +196,57 @@ function upsertAnalyticsVisitor(data: {
       data.referrer
     );
 
-    client
-      .rpc("record_visitor_identity", {
-        p_visitor_id: data.visitorId,
-        p_user_id: data.userId || null,
-        p_device_type: device,
-        p_browser: data.browser || null,
-        p_os: data.os || null,
-        p_landing_page: data.landingPage || "/",
-        p_referrer: data.referrer || null,
-        p_source: data.firstTouch?.source || null,
-        p_medium: data.firstTouch?.medium || null,
-        p_campaign: data.firstTouch?.campaign || null,
-        p_content: data.firstTouch?.content || null,
-        p_term: data.firstTouch?.term || null,
-        p_channel: channel,
-      })
-      .then(({ error }) => {
-        if (error) {
-          console.warn("[Analytics] record_visitor_identity RPC failed, using direct insert:", error.message);
-          // Fallback: direct upsert to analytics_visitors
-          const fallbackClient = admin || supabase;
-          if (fallbackClient) {
-            fallbackClient
-              .from("analytics_visitors")
-              .upsert({
-                visitor_id: data.visitorId,
-                user_id: data.userId || null,
-                first_seen_at: new Date().toISOString(),
-                last_seen_at: new Date().toISOString(),
-                first_utm_source: data.firstTouch?.source || null,
-                first_utm_medium: data.firstTouch?.medium || null,
-                first_utm_campaign: data.firstTouch?.campaign || null,
-                first_utm_content: data.firstTouch?.content || null,
-                first_utm_term: data.firstTouch?.term || null,
-                first_referrer: data.referrer || null,
-                first_landing_page: data.landingPage || "/",
-                first_channel: channel,
-                device_type: device,
-                browser: data.browser || null,
-                os: data.os || null,
-                total_sessions: 1,
-                total_pageviews: 1,
-                is_bot: false,
-              }, { onConflict: "visitor_id" })
-              .then(({ error: upsertErr }) => {
-                if (upsertErr) console.warn("[Analytics] analytics_visitors direct upsert failed:", upsertErr.message);
-              }, () => {});
-          }
-        }
-      }, (err) => {
-        console.warn("[Analytics] record_visitor_identity exception:", err?.message);
-      });
+    const { error: rpcError } = await client.rpc("record_visitor_identity", {
+      p_visitor_id: data.visitorId,
+      p_user_id: data.userId || null,
+      p_device_type: device,
+      p_browser: data.browser || null,
+      p_os: data.os || null,
+      p_landing_page: data.landingPage || "/",
+      p_referrer: data.referrer || null,
+      p_source: data.firstTouch?.source || null,
+      p_medium: data.firstTouch?.medium || null,
+      p_campaign: data.firstTouch?.campaign || null,
+      p_content: data.firstTouch?.content || null,
+      p_term: data.firstTouch?.term || null,
+      p_channel: channel,
+    });
+
+    if (!rpcError) {
+      return true;
+    }
+
+    console.warn("[Analytics] record_visitor_identity RPC failed, using direct insert:", rpcError.message);
+    const { error: upsertErr } = await client
+      .from("analytics_visitors")
+      .upsert({
+        visitor_id: data.visitorId,
+        user_id: data.userId || null,
+        first_seen_at: new Date().toISOString(),
+        last_seen_at: new Date().toISOString(),
+        first_utm_source: data.firstTouch?.source || null,
+        first_utm_medium: data.firstTouch?.medium || null,
+        first_utm_campaign: data.firstTouch?.campaign || null,
+        first_utm_content: data.firstTouch?.content || null,
+        first_utm_term: data.firstTouch?.term || null,
+        first_referrer: data.referrer || null,
+        first_landing_page: data.landingPage || "/",
+        first_channel: channel,
+        device_type: device,
+        browser: data.browser || null,
+        os: data.os || null,
+        total_sessions: 1,
+        total_pageviews: 1,
+        is_bot: false,
+      }, { onConflict: "visitor_id" });
+
+    if (upsertErr) {
+      console.warn("[Analytics] analytics_visitors direct upsert failed:", upsertErr.message);
+      return false;
+    }
+    return true;
   } catch (err: any) {
     console.warn("[Analytics] upsertAnalyticsVisitor exception:", err?.message);
+    return false;
   }
 }

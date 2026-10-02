@@ -407,7 +407,7 @@ export function ParentsLandingView() {
                 <span>الدفع عند الاستلام لـ 58 ولاية</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-[#0F172A]">
-                ابدأوا الآن بمنح ابنكم تجربة 3 أيام مجانية كاملة
+                امنحوا ابنكم انطلاقة واثقة وراحة بال كاملة
               </h2>
               <p className="text-xs sm:text-sm text-[#475569]">
                 دعوه يجرب المنظومة أولاً، وإذا أعجبته النتيجة نرسل لكم ظرف الاشتراك لباب منزلكم.

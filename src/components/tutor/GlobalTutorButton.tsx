@@ -5,10 +5,17 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Bot, Sparkles, X } from "lucide-react";
 import { BacAITutor } from "./BacAITutor";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/lib/auth/context";
 
 export function GlobalTutorButton() {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+
+  // The Smart Tutor must strictly appear ONLY for authenticated logged-in accounts
+  if (!user) {
+    return null;
+  }
 
   // If already on the dedicated /tutor page, don't show floating drawer trigger
   if (pathname === "/tutor" || pathname === "/student/tutor") {

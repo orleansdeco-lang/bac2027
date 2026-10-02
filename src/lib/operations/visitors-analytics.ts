@@ -114,6 +114,8 @@ export interface FetchVisitorsAnalyticsOptions {
   token?: string | null;
 }
 
+import { getAlgeriaTodayStartIso, getAlgeriaWeekStartIso, getAlgeriaMonthStartIso } from "./timezone";
+
 export async function getVisitorsAnalytics(
   options: FetchVisitorsAnalyticsOptions = {}
 ): Promise<VisitorsAnalyticsResponse> {
@@ -125,9 +127,9 @@ export async function getVisitorsAnalytics(
   const periodDays = period === "today" ? 1 : period === "7d" ? 7 : period === "90d" ? 90 : 30;
   const periodStartMs = now.getTime() - periodDays * 24 * 60 * 60 * 1000;
   const periodStartDate = new Date(periodStartMs);
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-  const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const monthStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const todayStart = getAlgeriaTodayStartIso(now);
+  const weekStart = getAlgeriaWeekStartIso(now);
+  const monthStart = getAlgeriaMonthStartIso(now);
   const live5mStart = new Date(now.getTime() - 5 * 60 * 1000).toISOString();
 
   const client = getAdminClient() || (token ? createAuthenticatedSupabaseClient(token) : null) || supabase;

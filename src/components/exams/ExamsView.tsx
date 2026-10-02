@@ -92,6 +92,13 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter();
   const { user } = useAuth();
 
+  // Strict Account Requirement: The BAC exam bank cannot be accessed without an account
+  useEffect(() => {
+    if (!user && !embedded) {
+      router.replace("/auth?redirectTo=" + encodeURIComponent("/exams"));
+    }
+  }, [user, embedded, router]);
+
   // Inventory State
   const [inventoryItems, setInventoryItems] = useState<BacMasterItem[]>([]);
   const [stats, setStats] = useState<MasterInventoryStats | null>(null);

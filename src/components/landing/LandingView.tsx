@@ -201,7 +201,7 @@ export function LandingView() {
                       className="w-full sm:w-auto font-black px-8 py-4 rounded-2xl flex items-center justify-center gap-2 text-sm bg-[#5F8F86] hover:bg-[#527D75] text-white shadow-lg shadow-[#5F8F86]/25 transition-all cursor-pointer hover:scale-[1.02]"
                     >
                       <Sparkles className="h-4 w-4 text-white" />
-                      <span>ابدأ تجربتك المجانية لمدة 3 أيام</span>
+                      <span>اكتشف مستواك وابنِ خطتك للباك 🚀</span>
                       <Arrow className="h-4 w-4" />
                     </Button>
                   </Link>
@@ -424,7 +424,7 @@ export function LandingView() {
                       size="md"
                       className="w-full rounded-2xl bg-[#5F8F86] hover:bg-[#527D75] text-white font-black text-xs py-3 shadow-md shadow-[#5F8F86]/20 cursor-pointer"
                     >
-                      <span>ابدأ تجربتك المجانية (7 أيام بدون دفع)</span>
+                      <span>عالج ثغراتك وابدأ التحضير الذكي 🎯</span>
                       <Arrow className="w-3.5 h-3.5 ms-1.5" />
                     </Button>
                   </Link>
@@ -621,7 +621,7 @@ export function LandingView() {
                   size="md"
                   className="font-black px-7 py-3.5 rounded-2xl bg-[#5F8F86] hover:bg-[#527D75] text-white text-xs shadow-md shadow-[#5F8F86]/20 cursor-pointer"
                 >
-                  <span>ابدأ مجاناً</span>
+                  <span>جرّب الركائز الثلاث وفعّل جاهزيتك ⚡</span>
                   <Arrow className="w-3.5 h-3.5 ms-1.5" />
                 </Button>
               </Link>
@@ -735,17 +735,17 @@ export function LandingView() {
                 </div>
 
                 <div className="pt-1 flex flex-col sm:flex-row items-center gap-3">
-                  <Link href="/diwan" className="w-full sm:w-auto">
+                  <Link href={user ? "/diwan" : "/auth?redirectTo=/diwan"} className="w-full sm:w-auto">
                     <Button
                       variant="primary"
                       size="md"
                       className="w-full sm:w-auto font-black px-6 py-3 rounded-2xl bg-[#5F8F86] hover:bg-[#527D75] text-white text-xs shadow-md shadow-[#5F8F86]/20 cursor-pointer"
                     >
-                      <span>ادخل ديوان العلم 🏛️</span>
+                      <span>ادخل مجالس العلم مع زملائك 🏛️</span>
                       <Arrow className="w-3.5 h-3.5 ms-1.5" />
                     </Button>
                   </Link>
-                  <span className="text-[11px] text-[#475569]">بيئة أكاديمية خالية من المحادثات العشوائية</span>
+                  <span className="text-[11px] text-[#475569]">مذاكرة حية وجلسات تركيز هادئة</span>
                 </div>
 
               </div>
@@ -775,7 +775,7 @@ export function LandingView() {
               </div>
 
               <div className="flex flex-col sm:flex-row items-center gap-2.5 shrink-0 w-full sm:w-auto">
-                <Link href="/exams" className="w-full sm:w-auto">
+                <Link href={user ? "/exams" : "/auth?redirectTo=/exams"} className="w-full sm:w-auto">
                   <Button
                     variant="outline"
                     size="md"
@@ -792,7 +792,7 @@ export function LandingView() {
                     size="md"
                     className="w-full sm:w-auto rounded-2xl bg-[#5F8F86] hover:bg-[#527D75] text-white text-xs font-black px-6 py-3 cursor-pointer shadow-md shadow-[#5F8F86]/20"
                   >
-                    <span>ابدأ مجاناً</span>
+                    <span>تدرّب على مواضيع البكالوريا الرسمية 📝</span>
                     <Arrow className="w-3.5 h-3.5 ms-1" />
                   </Button>
                 </Link>
@@ -915,11 +915,11 @@ export function LandingView() {
                         size="md"
                         className="w-full sm:w-auto font-black px-7 py-3.5 rounded-2xl bg-[#5F8F86] hover:bg-[#527D75] text-white text-xs shadow-md shadow-[#5F8F86]/20 cursor-pointer"
                       >
-                        <span>ابدأ تحضيرك الآن (مجاناً)</span>
+                        <span>ابنِ فرحتك نهار النتائج من اليوم 🎓</span>
                         <Arrow className="w-3.5 h-3.5 ms-1.5" />
                       </Button>
                     </Link>
-                    <span className="text-xs text-[#475569]">7 أيام تجربة مجانية بدون أي التزام</span>
+                    <span className="text-xs text-[#475569]">3 أيام تجربة كاملة لكافة ميزات المنصة</span>
                   </div>
                 </div>
 
@@ -954,7 +954,7 @@ export function LandingView() {
                 <span>اشتراكات واضحة بدون غموض</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-[#0F172A]">
-                ابدأ بـ 7 أيام تجربة مجانية (0 دج)
+                جرّب المنظومة لـ 3 أيام كاملة (0 دج)
               </h2>
               <p className="text-xs sm:text-sm text-[#475569] font-medium">
                 لا نطلب أي بطاقة بنكية عند التسجيل. جرّب المنصة بحرية كاملة وتأكد من فائدتها.
@@ -1016,7 +1016,7 @@ export function LandingView() {
                               : "border-[#E4DED2] text-[#0F172A] hover:bg-[#FAF7F0]"
                           }`}
                         >
-                          <span>ابدأ مجاناً</span>
+                          <span>اختر هذه الخطة وابدأ تجربتك 🌟</span>
                           <Arrow className="w-3.5 h-3.5" />
                         </Button>
                       </Link>
@@ -1169,7 +1169,7 @@ export function LandingView() {
                   size="lg"
                   className="w-full sm:w-auto font-black px-8 py-4 rounded-2xl text-sm bg-[#5F8F86] hover:bg-[#527D75] text-white shadow-lg shadow-[#5F8F86]/25 cursor-pointer hover:scale-[1.02]"
                 >
-                  <span>ابدأ تجربتك المجانية (3 أيام)</span>
+                  <span>انضم لنخبة المتفوقين في البكالوريا ✨</span>
                   <Arrow className="w-4 h-4 ms-2" />
                 </Button>
               </Link>
@@ -1265,7 +1265,7 @@ export function LandingView() {
                 size="sm"
                 className="rounded-xl font-black text-xs px-4 py-2 bg-[#5F8F86] text-white shadow-md shadow-[#5F8F86]/20"
               >
-                <span>ابدأ مجاناً</span>
+                <span>سجّل وانطلق 🚀</span>
                 <Arrow className="w-3.5 h-3.5 ms-1" />
               </Button>
             </Link>

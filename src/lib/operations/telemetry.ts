@@ -182,6 +182,8 @@ export interface IngestionResult {
   acceptedCount: number;
   duplicateCount: number;
   rejectedCount: number;
+  persistedCount: number;
+  persistenceMode: "full" | "fallback" | "failed" | "memory_only";
   errors: string[];
 }
 
@@ -193,6 +195,8 @@ export async function processTelemetryBatch(
     acceptedCount: 0,
     duplicateCount: 0,
     rejectedCount: 0,
+    persistedCount: 0,
+    persistenceMode: "memory_only",
     errors: [],
   };
 
@@ -215,8 +219,12 @@ export async function processTelemetryBatch(
     }
 
     const item = raw as Record<string, unknown>;
-    const eventName = typeof item.eventName === "string" ? item.eventName : (item.name as string);
-    const eventId = typeof item.eventId === "string" ? item.eventId : (item.id as string);
+    const eventName = typeof item.eventName === "string" 
+      ? item.eventName 
+      : (typeof item.name === "string" ? item.name : (typeof item.event_name === "string" ? item.event_name : ""));
+    const eventId = typeof item.eventId === "string" 
+      ? item.eventId 
+      : (typeof item.id === "string" ? item.id : (typeof item.event_id === "string" ? item.event_id : ""));
 
     if (!eventName || !ALLOWED_TELEMETRY_EVENTS.has(eventName)) {
       result.rejectedCount++;
@@ -248,9 +256,11 @@ export async function processTelemetryBatch(
       if (first) seenEventIds.delete(first);
     }
 
-    const visitorId = String(item.visitorId || item.anonymousId || "anon");
-    const sessionId = String(item.sessionId || item.anonymousId || "ses");
-    const pagePath = typeof item.pagePath === "string" ? item.pagePath : (typeof item.route === "string" ? item.route : "/");
+    const visitorId = String(item.visitorId || item.visitor_id || item.anonymousId || item.anonymous_id || "anon");
+    const sessionId = String(item.sessionId || item.session_id || item.anonymousId || item.anonymous_id || "ses");
+    const pagePath = typeof item.pagePath === "string" 
+      ? item.pagePath 
+      : (typeof item.page_path === "string" ? item.page_path : (typeof item.route === "string" ? item.route : "/"));
 
     // Critical conversion deduplication (sliding 5-minute window)
     if (CRITICAL_CONVERSION_EVENTS.has(eventName)) {
@@ -318,8 +328,11 @@ export async function processTelemetryBatch(
       
       // Try with visitor_id and page_path first
       const { error: analyticsError } = await supabase.from("analytics_events").insert(analyticsRows);
-      if (analyticsError) {
-        console.warn("[Analytics] analytics_events insert failed:", analyticsError.message);
+      if (!analyticsError) {
+        result.persistedCount = validToPersist.length;
+        result.persistenceMode = "full";
+      } else {
+        console.warn("[Analytics] analytics_events primary insert rejected:", analyticsError.message);
         // Fallback: insert without visitor_id and page_path (columns may not exist in production)
         const fallbackRows = validToPersist.map((e) => ({
           event_id: e.eventId,
@@ -341,8 +354,14 @@ export async function processTelemetryBatch(
           occurred_at: e.occurredAt,
         }));
         const { error: fallbackError } = await supabase.from("analytics_events").insert(fallbackRows);
-        if (fallbackError) {
-          console.warn("[Analytics] analytics_events fallback insert also failed:", fallbackError.message);
+        if (!fallbackError) {
+          result.persistedCount = validToPersist.length;
+          result.persistenceMode = "fallback";
+        } else {
+          result.persistedCount = 0;
+          result.persistenceMode = "failed";
+          result.errors.push(`analytics_events insert rejected: ${fallbackError.message}`);
+          console.error("[Analytics] analytics_events fallback insert also failed:", fallbackError.message);
         }
       }
 

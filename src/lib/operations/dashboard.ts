@@ -39,6 +39,8 @@ import { getRegisteredStudentsAnalytics } from "./students-analytics";
 import { getConversionFunnelData } from "./conversion-funnel";
 import { getProductUsageAnalytics } from "./product-usage";
 
+import { getAlgeriaTodayStartIso, getAlgeriaWeekStartIso, getAlgeriaMonthStartIso } from "./timezone";
+
 export async function getOperationsDashboardData(
   operatorId?: string,
   token?: string | null
@@ -46,9 +48,9 @@ export async function getOperationsDashboardData(
   const client = getAdminClient() || (token ? createAuthenticatedSupabaseClient(token) : null) || supabase;
   const now = new Date();
   const nowMs = now.getTime();
-  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-  const weekStart = new Date(nowMs - 7 * 24 * 60 * 60 * 1000).toISOString();
-  const monthStart = new Date(nowMs - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const todayStart = getAlgeriaTodayStartIso(now);
+  const weekStart = getAlgeriaWeekStartIso(now);
+  const monthStart = getAlgeriaMonthStartIso(now);
   const twelveHoursAgo = new Date(nowMs - 12 * 60 * 60 * 1000).toISOString();
   const sevenDaysFromNow = new Date(nowMs + 7 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -421,8 +423,8 @@ export async function getOperationsDashboardData(
     })),
     getOperationsAnalyticsSummary().catch(() => null),
     getKitInventorySummary().catch(() => null),
-    getVisitorsAnalytics({ period: "today" }).catch(() => null),
-    getRegisteredStudentsAnalytics({ period: "today", pageSize: 1 }).catch(() => null),
+    getVisitorsAnalytics({ period: "today", token, operatorId }).catch(() => null),
+    getRegisteredStudentsAnalytics({ period: "today", pageSize: 1, token, operatorId }).catch(() => null),
     getConversionFunnelData({ period: "30d", token }).catch(() => null),
     getProductUsageAnalytics({ periodDays: 30, token }).catch(() => null),
   ]);

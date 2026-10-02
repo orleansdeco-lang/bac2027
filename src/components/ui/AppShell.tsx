@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { usePathname } from "next/navigation";
+import React, { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { TopBar } from "./TopBar";
 import { Sidebar } from "./Sidebar";
 import { GlobalTutorButton } from "../tutor/GlobalTutorButton";
@@ -30,6 +30,7 @@ export function AppShell({
   noPadding = false,
 }: AppShellProps) {
   const pathname = usePathname() || "";
+  const router = useRouter();
   const { user } = useAuth();
   const { entitlements, isLoading: isEntitlementsLoading, refresh } = useEntitlements();
 
@@ -55,8 +56,15 @@ export function AppShell({
     pathname.startsWith("/subscribe/") ||
     pathname.startsWith("/checkout");
 
+  // Client-Side Guard: Direct URL to any internal page strictly requires an account
+  useEffect(() => {
+    if (!isExcluded && !user && !isSubscriptionRoute) {
+      router.replace(`/auth?redirectTo=${encodeURIComponent(pathname)}`);
+    }
+  }, [isExcluded, user, isSubscriptionRoute, pathname, router]);
+
   // ONLY authenticated users with an expired account are blocked!
-  // Unauthenticated visitors are either on public landing pages or redirected to /auth by Edge Middleware.
+  // Unauthenticated visitors are either on public landing pages or redirected to /auth.
   const isExpired = Boolean(user) && (entitlements.isExpired || (!entitlements.canUseProduct && !entitlements.isAdmin));
   const shouldBlockAccess = isExpired && !isExcluded && !isSubscriptionRoute && !isEntitlementsLoading;
 
@@ -86,7 +94,7 @@ export function AppShell({
         </main>
       </div>
 
-      {!shouldBlockAccess && <GlobalTutorButton />}
+      {Boolean(user) && !shouldBlockAccess && <GlobalTutorButton />}
 
       {showFooter && (
         <footer className="hidden md:block py-6 border-t border-theme text-center text-xs text-theme-muted transition-colors duration-200">

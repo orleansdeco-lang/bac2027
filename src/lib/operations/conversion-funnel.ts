@@ -14,6 +14,7 @@
 
 import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "../supabase/client";
 import { getAdminClient } from "../supabase/admin";
+import { getAlgeriaTodayStartIso } from "./timezone";
 
 export type FunnelPeriod = "today" | "7d" | "30d" | "90d" | "custom";
 
@@ -93,7 +94,7 @@ export async function getConversionFunnelData(
     startDate = new Date(options.customStartDate);
     endDate = new Date(options.customEndDate);
   } else if (period === "today") {
-    startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    startDate = new Date(getAlgeriaTodayStartIso(now));
   } else if (period === "7d") {
     startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   } else if (period === "90d") {

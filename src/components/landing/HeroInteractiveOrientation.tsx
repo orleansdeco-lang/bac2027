@@ -428,7 +428,7 @@ export function HeroInteractiveOrientation() {
             className="w-full sm:w-auto px-5 py-2 rounded-xl bg-[#5F8F86] hover:bg-[#527D75] text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5" />
-            <span>ابدأ مجاناً</span>
+            <span>ثبّت هدفك وابدأ التحضير 🎯</span>
           </button>
         </Link>
       </div>

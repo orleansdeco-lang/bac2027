@@ -21,12 +21,21 @@ function DiwanMainContent() {
   const router = useRouter();
   const { user } = useAuth();
 
+  // Strict Account Requirement: Diwan cannot be entered without an authenticated account
+  useEffect(() => {
+    if (!user) {
+      router.replace("/auth?redirectTo=" + encodeURIComponent("/diwan"));
+    }
+  }, [user, router]);
+
   const queryTableId = searchParams?.get("table") || searchParams?.get("roomId");
 
   // Track diwan_opened on mount
   useEffect(() => {
-    trackProductEvent("diwan_opened", {});
-  }, []);
+    if (user) {
+      trackProductEvent("diwan_opened", {});
+    }
+  }, [user]);
 
   // Multi-tab isolation: unique persistent ID per browser session/tab
   const [clientId, setClientId] = useState<string>("");

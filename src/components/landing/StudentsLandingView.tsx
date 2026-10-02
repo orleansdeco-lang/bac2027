@@ -139,7 +139,7 @@ export function StudentsLandingView() {
                       className="w-full sm:w-auto font-black px-8 py-4 rounded-2xl bg-[#5F8F86] hover:bg-[#527D75] text-white text-sm shadow-lg shadow-[#5F8F86]/20 cursor-pointer hover:scale-[1.02] transition-all"
                     >
                       <Sparkles className="w-4 h-4 text-white" />
-                      <span>ابدأ تجربتك المجانية لمدة 3 أيام</span>
+                      <span>انطلق نحو حلمك في البكالوريا 🚀</span>
                       <ArrowLeft className="w-4 h-4" />
                     </Button>
                   </Link>
@@ -404,7 +404,7 @@ export function StudentsLandingView() {
                   size="md"
                   className="font-black px-8 py-4 rounded-2xl bg-[#5F8F86] hover:bg-[#527D75] text-white text-xs shadow-md shadow-[#5F8F86]/20 cursor-pointer"
                 >
-                  <span>جرّب المنظومة مجاناً لمدة 3 أيام</span>
+                  <span>ابنِ مسارك الدراسي واضمن تفوقك 🎯</span>
                   <ArrowLeft className="w-4 h-4 ms-2" />
                 </Button>
               </Link>
@@ -462,7 +462,7 @@ export function StudentsLandingView() {
 
             <div className="pt-4 flex items-center justify-center gap-4 text-xs text-[#475569]">
               <Link href={signupUrl} className="text-[#5F8F86] hover:underline font-bold">
-                ابدأ تجربتك المجانية لمدة 3 أيام
+                انضم لدفعة بكالوريا 2027 ✨
               </Link>
               <span>•</span>
               <Link href="/auth?mode=login" className="hover:text-[#0F172A] font-bold">
