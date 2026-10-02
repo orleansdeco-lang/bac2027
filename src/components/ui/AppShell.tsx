@@ -8,6 +8,7 @@ import { GlobalTutorButton } from "../tutor/GlobalTutorButton";
 import { TrialBanner } from "../paywall/TrialBanner";
 
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth/context";
 import { useEntitlements } from "@/lib/access/useEntitlements";
 import { SubscriptionRequiredScreen } from "../paywall/SubscriptionRequiredScreen";
 
@@ -29,11 +30,21 @@ export function AppShell({
   noPadding = false,
 }: AppShellProps) {
   const pathname = usePathname() || "";
+  const { user } = useAuth();
   const { entitlements, isLoading: isEntitlementsLoading, refresh } = useEntitlements();
 
-  const isExcluded =
+  // Public Landing Pages and flows: NEVER blocked by SubscriptionRequiredScreen
+  const isPublicLanding =
     pathname === "/" ||
     pathname === "/landing" ||
+    pathname === "/student" ||
+    pathname === "/students" ||
+    pathname === "/parents" ||
+    pathname === "/privacy" ||
+    pathname === "/terms";
+
+  const isExcluded =
+    isPublicLanding ||
     pathname.startsWith("/auth") ||
     pathname.startsWith("/ops") ||
     pathname.startsWith("/onboarding") ||
@@ -44,7 +55,9 @@ export function AppShell({
     pathname.startsWith("/subscribe/") ||
     pathname.startsWith("/checkout");
 
-  const isExpired = entitlements.isExpired || (!entitlements.canUseProduct && !entitlements.isAdmin);
+  // ONLY authenticated users with an expired account are blocked!
+  // Unauthenticated visitors are either on public landing pages or redirected to /auth by Edge Middleware.
+  const isExpired = Boolean(user) && (entitlements.isExpired || (!entitlements.canUseProduct && !entitlements.isAdmin));
   const shouldBlockAccess = isExpired && !isExcluded && !isSubscriptionRoute && !isEntitlementsLoading;
 
   const shouldShowSidebar = showSidebar !== undefined ? showSidebar : (!isExcluded && !shouldBlockAccess);

@@ -89,17 +89,22 @@ export async function getUserEntitlements(
   if (!userId || userId === "guest" || userId === "unauthenticated") {
     return {
       userId: "guest",
-      plan: "EXPIRED",
+      plan: "FREE",
       isPremium: false,
       isTrial: false,
       isAdmin: false,
-      isExpired: true,
-      isFree: false,
-      canUseProduct: false,
-      trialDaysRemaining: 0,
-      trialHoursRemaining: 0,
+      isExpired: false,
+      isFree: true,
+      canUseProduct: true,
+      trialDaysRemaining: 3,
+      trialHoursRemaining: 72,
       trialEndsAt: null,
       subscriptionExpiresAt: null,
+      dailyAiQuota: {
+        used: 0,
+        total: 0,
+        remaining: 0,
+      },
       features: {
         EXAMS_FULL_LIBRARY: false,
         EXAMS_OFFICIAL_RECENT: false,
