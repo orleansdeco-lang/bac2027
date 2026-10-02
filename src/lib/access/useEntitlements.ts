@@ -11,7 +11,10 @@ const DEFAULT_FREE_ENTITLEMENTS: UserEntitlements = {
   isTrial: false,
   isAdmin: false,
   isFree: true,
+  isExpired: false,
+  canUseProduct: true,
   trialDaysRemaining: 0,
+  trialHoursRemaining: 0,
   trialEndsAt: null,
   subscriptionExpiresAt: null,
   dailyAiQuota: {
@@ -87,9 +90,13 @@ export function useEntitlements() {
     isTrial: activeEntitlements.isTrial,
     isAdmin: activeEntitlements.isAdmin,
     isFree: activeEntitlements.isFree,
+    isExpired: activeEntitlements.isExpired ?? false,
+    canUseProduct: activeEntitlements.canUseProduct ?? true,
     trialDaysRemaining: activeEntitlements.trialDaysRemaining,
+    trialHoursRemaining: activeEntitlements.trialHoursRemaining ?? (activeEntitlements.trialDaysRemaining * 24),
     dailyAiQuota: activeEntitlements.dailyAiQuota,
     canAccess,
     refreshEntitlements: fetchEntitlements,
+    refresh: fetchEntitlements,
   };
 }

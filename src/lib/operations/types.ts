@@ -504,7 +504,7 @@ export interface CockpitAcquisitionSection {
     attributedRegistrations: number;
     unattributedRegistrations: number;
     unattributedPercentage: number;
-    message: string;
+    warningMessage: string;
   };
 }
 

@@ -55,9 +55,9 @@ export async function recordAiQueryUsage(
   userId: string,
   userPlan: UserPlan
 ): Promise<{ allowed: boolean; used: number; remaining: number; total: number }> {
-  const isUnlimited = userPlan === "PREMIUM" || userPlan === "TRIAL" || userPlan === "ADMIN";
+  const isAllowed = userPlan === "PREMIUM" || userPlan === "TRIAL" || userPlan === "ADMIN" || userPlan === "STAFF";
 
-  if (isUnlimited) {
+  if (isAllowed) {
     return {
       allowed: true,
       used: 0,
@@ -66,26 +66,12 @@ export async function recordAiQueryUsage(
     };
   }
 
-  const dayKey = `${userId}:${getTodayDateString()}`;
-  const currentUsed = aiDailyUsageMap.get(dayKey) || 0;
-
-  if (currentUsed >= FREE_DAILY_AI_QUOTA) {
-    return {
-      allowed: false,
-      used: currentUsed,
-      remaining: 0,
-      total: FREE_DAILY_AI_QUOTA,
-    };
-  }
-
-  const nextCount = currentUsed + 1;
-  aiDailyUsageMap.set(dayKey, nextCount);
-
+  // EXPIRED accounts and unauthenticated users get 0 AI queries
   return {
-    allowed: true,
-    used: nextCount,
-    remaining: Math.max(0, FREE_DAILY_AI_QUOTA - nextCount),
-    total: FREE_DAILY_AI_QUOTA,
+    allowed: false,
+    used: 0,
+    remaining: 0,
+    total: 0,
   };
 }
 
@@ -101,35 +87,32 @@ export async function getUserEntitlements(
 
   // Anonymous / Guest Visitor fallback
   if (!userId || userId === "guest" || userId === "unauthenticated") {
-    const used = await getDailyAiUsage("guest");
     return {
       userId: "guest",
-      plan: "FREE",
+      plan: "EXPIRED",
       isPremium: false,
       isTrial: false,
       isAdmin: false,
-      isFree: true,
+      isExpired: true,
+      isFree: false,
+      canUseProduct: false,
       trialDaysRemaining: 0,
+      trialHoursRemaining: 0,
       trialEndsAt: null,
       subscriptionExpiresAt: null,
-      dailyAiQuota: {
-        used,
-        total: FREE_DAILY_AI_QUOTA,
-        remaining: Math.max(0, FREE_DAILY_AI_QUOTA - used),
-      },
       features: {
         EXAMS_FULL_LIBRARY: false,
-        EXAMS_OFFICIAL_RECENT: true,
-        PLANNER_BASIC: true,
+        EXAMS_OFFICIAL_RECENT: false,
+        PLANNER_BASIC: false,
         PLANNER_PRO_AI: false,
-        DIAGNOSTIC_BASIC: true,
+        DIAGNOSTIC_BASIC: false,
         DIAGNOSTIC_FULL: false,
-        ERROR_LAB_BASIC: true,
+        ERROR_LAB_BASIC: false,
         ERROR_LAB_AI_TWINS: false,
-        AI_TUTOR_BASIC: true,
+        AI_TUTOR_BASIC: false,
         AI_TUTOR_UNLIMITED: false,
         ANALYTICS_PRO: false,
-        CAMPUS_COMMUNITY: true,
+        CAMPUS_COMMUNITY: false,
       },
     };
   }
@@ -173,7 +156,7 @@ export async function getUserEntitlements(
     } catch {}
   }
 
-  // If user is Admin, immediately grant full access
+  // If user is Admin/Staff, immediately grant full access
   if (isAdmin) {
     return {
       userId,
@@ -181,15 +164,13 @@ export async function getUserEntitlements(
       isPremium: true,
       isTrial: false,
       isAdmin: true,
+      isExpired: false,
       isFree: false,
+      canUseProduct: true,
       trialDaysRemaining: 0,
+      trialHoursRemaining: 0,
       trialEndsAt: null,
       subscriptionExpiresAt: null,
-      dailyAiQuota: {
-        used: 0,
-        total: Infinity,
-        remaining: Infinity,
-      },
       features: {
         EXAMS_FULL_LIBRARY: true,
         EXAMS_OFFICIAL_RECENT: true,
@@ -223,15 +204,13 @@ export async function getUserEntitlements(
       isPremium: true,
       isTrial: false,
       isAdmin: false,
+      isExpired: false,
       isFree: false,
+      canUseProduct: true,
       trialDaysRemaining: 0,
+      trialHoursRemaining: 0,
       trialEndsAt: null,
       subscriptionExpiresAt: subExpiresAt,
-      dailyAiQuota: {
-        used: 0,
-        total: Infinity,
-        remaining: Infinity,
-      },
       features: {
         EXAMS_FULL_LIBRARY: true,
         EXAMS_OFFICIAL_RECENT: true,
@@ -249,11 +228,11 @@ export async function getUserEntitlements(
     };
   }
 
-  // 3. Check for 7-Day Free Trial
+  // 3. Check for 3-Day (72h) Free Trial
   const createdAt =
+    studentProfile?.trial_started_at ||
     studentProfile?.created_at ||
     studentProfile?.createdAt ||
-    studentProfile?.trial_started_at ||
     now.toISOString();
 
   const accountCreatedMs = new Date(createdAt).getTime();
@@ -262,6 +241,7 @@ export async function getUserEntitlements(
   const isTrialActive = trialRemainingMs > 0;
 
   if (isTrialActive) {
+    const trialHoursRemaining = Math.max(1, Math.floor(trialRemainingMs / (60 * 60 * 1000)));
     const trialDaysRemaining = Math.max(1, Math.ceil(trialRemainingMs / (24 * 60 * 60 * 1000)));
     return {
       userId,
@@ -269,15 +249,13 @@ export async function getUserEntitlements(
       isPremium: true,
       isTrial: true,
       isAdmin: false,
+      isExpired: false,
       isFree: false,
+      canUseProduct: true,
       trialDaysRemaining,
+      trialHoursRemaining,
       trialEndsAt: new Date(trialExpiresMs).toISOString(),
       subscriptionExpiresAt: null,
-      dailyAiQuota: {
-        used: 0,
-        total: Infinity,
-        remaining: Infinity,
-      },
       features: {
         EXAMS_FULL_LIBRARY: true,
         EXAMS_OFFICIAL_RECENT: true,
@@ -295,36 +273,33 @@ export async function getUserEntitlements(
     };
   }
 
-  // 4. Default: Continuous FREE Tier (Zero lockout, genuine value)
-  const used = await getDailyAiUsage(userId);
+  // 4. Trial Expired: Access is strictly BLOCKED until subscription is purchased
   return {
     userId,
-    plan: "FREE",
+    plan: "EXPIRED",
     isPremium: false,
     isTrial: false,
     isAdmin: false,
-    isFree: true,
+    isExpired: true,
+    isFree: false,
+    canUseProduct: false,
     trialDaysRemaining: 0,
+    trialHoursRemaining: 0,
     trialEndsAt: new Date(trialExpiresMs).toISOString(),
     subscriptionExpiresAt: null,
-    dailyAiQuota: {
-      used,
-      total: FREE_DAILY_AI_QUOTA,
-      remaining: Math.max(0, FREE_DAILY_AI_QUOTA - used),
-    },
     features: {
       EXAMS_FULL_LIBRARY: false,
-      EXAMS_OFFICIAL_RECENT: true,
-      PLANNER_BASIC: true,
+      EXAMS_OFFICIAL_RECENT: false,
+      PLANNER_BASIC: false,
       PLANNER_PRO_AI: false,
-      DIAGNOSTIC_BASIC: true,
+      DIAGNOSTIC_BASIC: false,
       DIAGNOSTIC_FULL: false,
-      ERROR_LAB_BASIC: true,
+      ERROR_LAB_BASIC: false,
       ERROR_LAB_AI_TWINS: false,
-      AI_TUTOR_BASIC: true,
+      AI_TUTOR_BASIC: false,
       AI_TUTOR_UNLIMITED: false,
       ANALYTICS_PRO: false,
-      CAMPUS_COMMUNITY: true,
+      CAMPUS_COMMUNITY: false,
     },
   };
 }

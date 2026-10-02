@@ -201,7 +201,7 @@ export function LandingView() {
                       className="w-full sm:w-auto font-black px-8 py-4 rounded-2xl flex items-center justify-center gap-2 text-sm bg-[#5F8F86] hover:bg-[#527D75] text-white shadow-lg shadow-[#5F8F86]/25 transition-all cursor-pointer hover:scale-[1.02]"
                     >
                       <Sparkles className="h-4 w-4 text-white" />
-                      <span>ابدأ مجاناً الآن</span>
+                      <span>ابدأ تجربتك المجانية لمدة 3 أيام</span>
                       <Arrow className="h-4 w-4" />
                     </Button>
                   </Link>
@@ -1021,7 +1021,7 @@ export function LandingView() {
                         </Button>
                       </Link>
                       <span className="text-[10px] text-[#475569] text-center block pt-1.5">
-                        أسبوع كامل مجاناً قبل أي دفع
+                        3 أيام كاملة مجاناً قبل أي دفع
                       </span>
                     </div>
                   </div>
@@ -1169,7 +1169,7 @@ export function LandingView() {
                   size="lg"
                   className="w-full sm:w-auto font-black px-8 py-4 rounded-2xl text-sm bg-[#5F8F86] hover:bg-[#527D75] text-white shadow-lg shadow-[#5F8F86]/25 cursor-pointer hover:scale-[1.02]"
                 >
-                  <span>ابدأ مجاناً</span>
+                  <span>ابدأ تجربتك المجانية (3 أيام)</span>
                   <Arrow className="w-4 h-4 ms-2" />
                 </Button>
               </Link>

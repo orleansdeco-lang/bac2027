@@ -156,13 +156,47 @@ export async function getConversionFunnelData(
   if (!rpcSuccess && isSupabaseConfigured && client) {
     try {
       // 2a. Visitors
-      const { data: visData } = await client
-        .from("analytics_visitors")
-        .select("visitor_id, user_id, first_seen_at, first_channel, first_utm_source, first_utm_campaign")
-        .gte("first_seen_at", startIso)
-        .lte("first_seen_at", endIso);
+      let visitorsList: any[] = [];
+      try {
+        const { data: visData, error: visErr } = await client
+          .from("analytics_visitors")
+          .select("visitor_id, user_id, first_seen_at, first_channel, first_utm_source, first_utm_campaign")
+          .gte("first_seen_at", startIso)
+          .lte("first_seen_at", endIso);
+        if (!visErr && Array.isArray(visData)) {
+          visitorsList = visData;
+        }
+      } catch {
+        visitorsList = [];
+      }
 
-      const visitorsList = visData || [];
+      // If analytics_visitors table does not exist or has no rows, fall back to analytics_sessions
+      if (visitorsList.length === 0) {
+        try {
+          const { data: sessVis } = await client
+            .from("analytics_sessions")
+            .select("session_id, anonymous_id, user_id, started_at, first_utm_source, first_utm_campaign")
+            .gte("started_at", startIso)
+            .lte("started_at", endIso);
+
+          const seen = new Set<string>();
+          for (const s of (sessVis || [])) {
+            const vid = s.anonymous_id || s.session_id;
+            if (vid && !seen.has(vid)) {
+              seen.add(vid);
+              visitorsList.push({
+                visitor_id: vid,
+                user_id: s.user_id,
+                first_seen_at: s.started_at,
+                first_channel: s.first_utm_source,
+                first_utm_source: s.first_utm_source,
+                first_utm_campaign: s.first_utm_campaign,
+              });
+            }
+          }
+        } catch {}
+      }
+
       const visitorCount = visitorsList.length;
 
       // 2b. Engaged Visitors from sessions
@@ -174,14 +208,16 @@ export async function getConversionFunnelData(
         .gt("pageviews_count", 1);
 
       // 2c. Signup Started events
-      const { data: signupEvents } = await client
-        .from("analytics_events")
-        .select("visitor_id, session_id")
-        .gte("occurred_at", startIso)
-        .lte("occurred_at", endIso)
-        .eq("event_name", "signup_started");
-
-      const signupStartedCount = new Set((signupEvents || []).map((e) => e.visitor_id || e.session_id).filter(Boolean)).size;
+      let signupStartedCount = 0;
+      try {
+        const { data: signupEvents } = await client
+          .from("analytics_events")
+          .select("session_id, anonymous_id")
+          .gte("occurred_at", startIso)
+          .lte("occurred_at", endIso)
+          .eq("event_name", "signup_started");
+        signupStartedCount = new Set((signupEvents || []).map((e) => e.anonymous_id || e.session_id).filter(Boolean)).size;
+      } catch {}
 
       // 2d. Student Profiles created in period
       const { data: profiles } = await client

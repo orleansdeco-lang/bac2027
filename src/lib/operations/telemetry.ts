@@ -315,7 +315,36 @@ export async function processTelemetryBatch(
         },
         occurred_at: e.occurredAt,
       }));
-      supabase.from("analytics_events").insert(analyticsRows).then(() => {}, () => {});
+      
+      // Try with visitor_id and page_path first
+      const { error: analyticsError } = await supabase.from("analytics_events").insert(analyticsRows);
+      if (analyticsError) {
+        console.warn("[Analytics] analytics_events insert failed:", analyticsError.message);
+        // Fallback: insert without visitor_id and page_path (columns may not exist in production)
+        const fallbackRows = validToPersist.map((e) => ({
+          event_id: e.eventId,
+          session_id: e.sessionId,
+          anonymous_id: e.anonymousId,
+          user_id: e.userId || null,
+          event_name: e.eventName,
+          route: e.route || e.pagePath || "/",
+          properties: {
+            ...e.metadata,
+            page_path: e.pagePath || e.route || "/",
+            visitor_id: e.visitorId || e.anonymousId,
+            stream: e.stream || null,
+            subject: e.subject || null,
+            skill_id: e.skillId || null,
+            mission_id: e.missionId || null,
+            content_id: e.contentId || null,
+          },
+          occurred_at: e.occurredAt,
+        }));
+        const { error: fallbackError } = await supabase.from("analytics_events").insert(fallbackRows);
+        if (fallbackError) {
+          console.warn("[Analytics] analytics_events fallback insert also failed:", fallbackError.message);
+        }
+      }
 
       // 2. Legacy telemetry_events table
       const rows = validToPersist.map((e) => ({
@@ -333,9 +362,12 @@ export async function processTelemetryBatch(
         content_id: e.contentId || null,
         metadata: e.metadata || {},
       }));
-      await supabase.from("telemetry_events").insert(rows);
-    } catch {
-      // Retained in memory fallback
+      const { error: legacyError } = await supabase.from("telemetry_events").insert(rows);
+      if (legacyError) {
+        console.warn("[Analytics] telemetry_events insert failed:", legacyError.message);
+      }
+    } catch (err: any) {
+      console.warn("[Analytics] Supabase persistence exception:", err?.message);
     }
   }
 

@@ -191,12 +191,18 @@ export async function getVisitorsAnalytics(
   // 2. Resilient Direct PostgreSQL Fallback if RPC is not present
   if (!rpcSuccess && isSupabaseConfigured && client) {
     try {
-      // 2a. Fetch visitors table for overview and new/returning metrics
-      const { data: visitorsData } = await client
-        .from("analytics_visitors")
-        .select("visitor_id, first_seen_at, last_seen_at, last_landing_page, device_type");
-
-      const visitors = visitorsData || [];
+      // 2a. Fetch visitors table for overview and new/returning metrics (if table exists)
+      let visitors: any[] = [];
+      try {
+        const { data: visitorsData, error: visErr } = await client
+          .from("analytics_visitors")
+          .select("visitor_id, first_seen_at, last_seen_at, last_landing_page, device_type");
+        if (!visErr && Array.isArray(visitorsData)) {
+          visitors = visitorsData;
+        }
+      } catch {
+        visitors = [];
+      }
 
       let uniqToday = 0;
       let newToday = 0;
@@ -226,19 +232,47 @@ export async function getVisitorsAnalytics(
         }
       }
 
-      // 2b. Fetch sessions table within period
-      const { data: sessionsData } = await client
-        .from("analytics_sessions")
-        .select("session_id, visitor_id, landing_page, referrer, first_channel, first_utm_source, device_type, wilaya_code, country, started_at, last_activity_at, is_active")
-        .gte("started_at", periodStartDate.toISOString())
-        .order("started_at", { ascending: false });
+      // 2b. Fetch sessions table within period using columns guaranteed to exist in schema
+      let sessions: any[] = [];
+      try {
+        const { data: sessionsData, error: sessErr } = await client
+          .from("analytics_sessions")
+          .select("session_id, anonymous_id, landing_page, referrer, first_utm_source, first_utm_campaign, device_type, wilaya_code, country, started_at, last_activity_at, is_active")
+          .gte("started_at", periodStartDate.toISOString())
+          .order("started_at", { ascending: false });
 
-      const sessions = sessionsData || [];
+        if (!sessErr && Array.isArray(sessionsData)) {
+          sessions = sessionsData;
+        }
+      } catch {
+        sessions = [];
+      }
 
-      // Sessions today count
+      // Sessions today count and visitor aggregation from sessions if analytics_visitors was empty
       let sessToday = 0;
+      const todayVisitorsSet = new Set<string>();
+      const weekVisitorsSet = new Set<string>();
+      const monthVisitorsSet = new Set<string>();
+
       for (const s of sessions) {
-        if ((s.started_at || "") >= todayStart) sessToday++;
+        const vid = s.anonymous_id || s.session_id;
+        const started = s.started_at || "";
+        if (started >= todayStart) {
+          sessToday++;
+          if (vid) todayVisitorsSet.add(vid);
+        }
+        if (started >= weekStart && vid) weekVisitorsSet.add(vid);
+        if (started >= monthStart && vid) monthVisitorsSet.add(vid);
+      }
+
+      // If analytics_visitors is empty (table not migrated yet), derive from sessions
+      if (visitors.length === 0) {
+        uniqToday = todayVisitorsSet.size;
+        newToday = todayVisitorsSet.size;
+        retToday = 0;
+        uniq7d = weekVisitorsSet.size;
+        uniq30d = monthVisitorsSet.size;
+        periodNew = monthVisitorsSet.size;
       }
 
       kpis = {
@@ -289,28 +323,30 @@ export async function getVisitorsAnalytics(
         else if (dev === "tablet") tablet++;
         else unknown++;
 
+        const vid = s.anonymous_id || s.session_id;
+
         // Trend aggregation
         const day = (s.started_at || "").slice(0, 10);
         if (day) {
           sessionsByDay[day] = (sessionsByDay[day] || 0) + 1;
           if (!visitorsByDay[day]) visitorsByDay[day] = new Set();
-          if (s.visitor_id) visitorsByDay[day].add(s.visitor_id);
+          if (vid) visitorsByDay[day].add(vid);
         }
 
         // Returning vs new
-        if (s.visitor_id && !seenPeriodVisitors.has(s.visitor_id)) {
-          seenPeriodVisitors.add(s.visitor_id);
-          const firstSeen = visitorFirstSeenMap.get(s.visitor_id);
+        if (vid && !seenPeriodVisitors.has(vid)) {
+          seenPeriodVisitors.add(vid);
+          const firstSeen = visitorFirstSeenMap.get(vid);
           if (firstSeen && firstSeen < periodStartDate.toISOString()) {
             periodReturning++;
           }
         }
 
         // Sources
-        const src = s.first_channel || s.first_utm_source || (s.referrer ? "referral" : "direct");
+        const src = s.first_utm_source || (s.referrer ? "referral" : "direct");
         if (!sourceMap[src]) sourceMap[src] = { visitors: new Set(), sessions: 0 };
         sourceMap[src].sessions++;
-        if (s.visitor_id) sourceMap[src].visitors.add(s.visitor_id);
+        if (vid) sourceMap[src].visitors.add(vid);
 
         // Entry page
         const entry = s.landing_page || "/";

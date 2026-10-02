@@ -59,7 +59,7 @@ export async function getProductUsageAnalytics(
     try {
       const { data: rawEvents } = await client
         .from("analytics_events")
-        .select("event_name, page_path")
+        .select("event_name, route")
         .gte("occurred_at", periodStart)
         .limit(10000);
 

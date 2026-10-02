@@ -3,6 +3,7 @@ import { recordVisitorHit, getLiveVisitorsCount } from "@/lib/operations/visitor
 import { recordVisitorHit as recordInMemoryHit } from "@/lib/operations/analytics-store";
 import { extractAuthenticatedUserId } from "@/lib/operations/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
+import { supabase } from "@/lib/supabase/client";
 
 export const dynamic = "force-dynamic";
 
@@ -166,7 +167,9 @@ function upsertAnalyticsVisitor(data: {
 }): void {
   try {
     const admin = getAdminClient();
-    if (!admin) return;
+    // Use admin client if available, otherwise fall back to anon client
+    const client = admin || supabase;
+    if (!client) return;
 
     const device = (data.deviceType === "mobile" || data.deviceType === "tablet")
       ? data.deviceType
@@ -178,7 +181,7 @@ function upsertAnalyticsVisitor(data: {
       data.referrer
     );
 
-    admin
+    client
       .rpc("record_visitor_identity", {
         p_visitor_id: data.visitorId,
         p_user_id: data.userId || null,
@@ -194,8 +197,43 @@ function upsertAnalyticsVisitor(data: {
         p_term: data.firstTouch?.term || null,
         p_channel: channel,
       })
-      .then(() => {}, () => {});
-  } catch {
-    // Non-fatal — analytics should never crash the visitor experience
+      .then(({ error }) => {
+        if (error) {
+          console.warn("[Analytics] record_visitor_identity RPC failed, using direct insert:", error.message);
+          // Fallback: direct upsert to analytics_visitors
+          const fallbackClient = admin || supabase;
+          if (fallbackClient) {
+            fallbackClient
+              .from("analytics_visitors")
+              .upsert({
+                visitor_id: data.visitorId,
+                user_id: data.userId || null,
+                first_seen_at: new Date().toISOString(),
+                last_seen_at: new Date().toISOString(),
+                first_utm_source: data.firstTouch?.source || null,
+                first_utm_medium: data.firstTouch?.medium || null,
+                first_utm_campaign: data.firstTouch?.campaign || null,
+                first_utm_content: data.firstTouch?.content || null,
+                first_utm_term: data.firstTouch?.term || null,
+                first_referrer: data.referrer || null,
+                first_landing_page: data.landingPage || "/",
+                first_channel: channel,
+                device_type: device,
+                browser: data.browser || null,
+                os: data.os || null,
+                total_sessions: 1,
+                total_pageviews: 1,
+                is_bot: false,
+              }, { onConflict: "visitor_id" })
+              .then(({ error: upsertErr }) => {
+                if (upsertErr) console.warn("[Analytics] analytics_visitors direct upsert failed:", upsertErr.message);
+              }, () => {});
+          }
+        }
+      }, (err) => {
+        console.warn("[Analytics] record_visitor_identity exception:", err?.message);
+      });
+  } catch (err: any) {
+    console.warn("[Analytics] upsertAnalyticsVisitor exception:", err?.message);
   }
 }

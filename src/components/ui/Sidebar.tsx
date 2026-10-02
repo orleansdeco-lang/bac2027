@@ -469,8 +469,8 @@ export function Sidebar({ className }: SidebarProps) {
               {isPaid
                 ? (isAr ? "الشاطر بريميوم • مفعل" : "Pass Actif • Pro")
                 : isTrial
-                ? (isAr ? "تجربة بريميوم شاملة" : "Essai Pro Gratuit")
-                : (isAr ? "النسخة المجانية للشاطر" : "Version Gratuite")}
+                ? (isAr ? "تجربة بريميوم (3 أيام)" : "Essai Pro (3 Jours)")
+                : (isAr ? "انتهت فترة التجربة" : "Essai terminé")}
             </span>
           </div>
 
@@ -479,7 +479,7 @@ export function Sidebar({ className }: SidebarProps) {
               ? (isAr ? "وصول كامل مفتوح لكل مواد وتمارين شعبتك." : "Accès illimité actif.")
               : isTrial
               ? (isAr ? `باقي في التجربة: ${formatTrialCountdown(access.remainingHours, true)}` : `Essai : ${access.remainingHours}h restantes`)
-              : (isAr ? "يمكنك الترقية لفتح كامل الأرشيف والذكاء الاصطناعي." : "Débloquez tout l'archive et l'IA.")}
+              : (isAr ? "يرجى تفعيل اشتراكك لمتابعة استخدام المنصة." : "Veuillez activer votre abonnement pour continuer.")}
           </p>
 
           <Link
@@ -489,7 +489,9 @@ export function Sidebar({ className }: SidebarProps) {
           >
             {isPaid
               ? (isAr ? "تفاصيل الاشتراك" : "Mon Abonnement")
-              : (isAr ? "ترقية إلى بريميوم ←" : "Passer en Pro →")}
+              : isTrial
+              ? (isAr ? "الاشتراك الكامل ←" : "S'abonner ←")
+              : (isAr ? "تفعيل الاشتراك الآن ←" : "Activer l'abonnement →")}
           </Link>
         </div>
 

@@ -3,7 +3,7 @@
  * Prompt 18: 48-Hour Free Trial & Conversion Architecture
  */
 
-export type UserPlan = "FREE" | "TRIAL" | "PREMIUM" | "ADMIN";
+export type UserPlan = "TRIAL" | "PREMIUM" | "EXPIRED" | "ADMIN" | "STAFF" | "FREE";
 
 export type FeatureKey =
   | "EXAMS_FULL_LIBRARY"
@@ -19,7 +19,7 @@ export type FeatureKey =
   | "ANALYTICS_PRO"
   | "CAMPUS_COMMUNITY";
 
-export const FREE_DAILY_AI_QUOTA = 5;
+export const FREE_DAILY_AI_QUOTA = 0;
 
 export interface DailyAiQuota {
   used: number;
@@ -33,11 +33,14 @@ export interface UserEntitlements {
   isPremium: boolean;
   isTrial: boolean;
   isAdmin: boolean;
+  isExpired: boolean;
   isFree: boolean;
+  canUseProduct: boolean;
   trialDaysRemaining: number;
+  trialHoursRemaining: number;
   trialEndsAt: string | null;
   subscriptionExpiresAt: string | null;
-  dailyAiQuota: DailyAiQuota;
+  dailyAiQuota?: DailyAiQuota;
   features: Record<FeatureKey, boolean>;
 }
 

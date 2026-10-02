@@ -314,11 +314,30 @@ export default function StudentRegistrationPage() {
   };
 
   // Next Step Action
-  const handleNext = () => {
+  const handleNext = async () => {
     setErrorMsg(null);
 
     if (currentStep === 1) {
       if (!validateStep1()) return;
+      setSubmitting(true);
+      try {
+        const effectiveUserId = user?.id || (typeof window !== "undefined" ? JSON.parse(localStorage.getItem("bac_auth_user") || "{}")?.id : undefined);
+        const checkRes = await fetch("/api/auth/check-phone", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: studentPhone, userId: effectiveUserId }),
+        });
+        const checkData = await checkRes.json().catch(() => null);
+        if (!checkRes.ok || checkData?.isUnique === false) {
+          setErrorMsg(checkData?.error || (isAr ? "رقم الهاتف مسجل مسبقاً بحساب طالب آخر." : "Ce numéro est déjà associé à un autre compte élève."));
+          setSubmitting(false);
+          return;
+        }
+      } catch (err) {
+        console.warn("Could not pre-verify phone uniqueness via API, continuing...", err);
+      } finally {
+        setSubmitting(false);
+      }
       persistCurrentDraft();
       setCurrentStep(2);
       return;
@@ -403,7 +422,7 @@ export default function StudentRegistrationPage() {
         });
         trackTrialStart({
           userId: effectiveUserId,
-          durationDays: 7,
+          durationDays: 3,
         });
       }
 
@@ -416,9 +435,11 @@ export default function StudentRegistrationPage() {
     } catch (err: any) {
       console.error("Registration error:", err);
       setErrorMsg(
-        isAr
-          ? "حدث خطأ أثناء حفظ المعلومات. يرجى المحاولة مرة أخرى."
-          : "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer."
+        err?.message || (
+          isAr
+            ? "حدث خطأ أثناء حفظ المعلومات. يرجى المحاولة مرة أخرى."
+            : "Une erreur est survenue lors de l'enregistrement. Veuillez réessayer."
+        )
       );
       setSubmitting(false);
     }
@@ -618,12 +639,19 @@ export default function StudentRegistrationPage() {
               <div className="mt-8">
                 <Button
                   onClick={handleNext}
+                  disabled={submitting}
                   variant="primary"
                   size="lg"
                   className="w-full justify-center text-base font-bold shadow-md bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white"
                 >
-                  <span>{isAr ? "أكمل" : "Continuer"}</span>
-                  <NextIcon className="w-4 h-4 ml-2 rtl:mr-2 rtl:ml-0" />
+                  {submitting ? (
+                    <span>{isAr ? "جاري التحقق..." : "Vérification..."}</span>
+                  ) : (
+                    <>
+                      <span>{isAr ? "أكمل" : "Continuer"}</span>
+                      <NextIcon className="w-4 h-4 ml-2 rtl:mr-2 rtl:ml-0" />
+                    </>
+                  )}
                 </Button>
               </div>
             </Card>

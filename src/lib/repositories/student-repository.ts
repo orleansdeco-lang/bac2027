@@ -20,7 +20,7 @@ import {
   getAcademicProfileDraft,
   saveAcademicProfileDraft,
 } from "../onboarding/profile";
-import { normalizeAlgerianPhone } from "@/domain/administrative/phone-validation";
+import { normalizeAlgerianPhone, toCanonicalAlgerianPhone } from "@/domain/administrative/phone-validation";
 import { calculateTrialExpiration } from "@/lib/access";
 
 const memoryStudentProfiles = new Map<string, any>();
@@ -444,9 +444,24 @@ export const StudentRepository = {
     // Persist to Supabase if authenticated
     if (isSupabaseConfigured && supabase && userId) {
       try {
+        const canonicalPhone = toCanonicalAlgerianPhone(sanitizedData.studentPhone);
+
+        // Enforce phone uniqueness: verify no other student uses this phone
+        const { data: existingPhoneStudents } = await supabase
+          .from("student_profiles")
+          .select("id")
+          .or(`student_phone.eq.${sanitizedData.studentPhone},student_phone.eq.${canonicalPhone},canonical_phone.eq.${canonicalPhone}`)
+          .neq("id", effectiveUserId)
+          .limit(1);
+
+        if (existingPhoneStudents && existingPhoneStudents.length > 0) {
+          throw new Error("رقم الهاتف هذا مسجل بالفعل في حساب آخر. يرجى تسجيل الدخول بحسابك السابق.");
+        }
+
         const enrichedDraft = {
           ...updatedProfile,
           ...sanitizedData,
+          canonical_phone: canonicalPhone,
           registration_completed_at: sanitizedData.registrationCompletedAt,
           registrationCompletedAt: sanitizedData.registrationCompletedAt,
           first_name: sanitizedData.firstName,
@@ -466,6 +481,7 @@ export const StudentRepository = {
           first_name: sanitizedData.firstName.trim(),
           last_name: sanitizedData.lastName.trim(),
           student_phone: sanitizedData.studentPhone,
+          canonical_phone: canonicalPhone,
           parent_phone: sanitizedData.parentPhone || null,
           student_status: sanitizedData.studentStatus,
           wilaya_code: sanitizedData.wilayaCode,
@@ -484,6 +500,10 @@ export const StudentRepository = {
           .upsert(fullPayload, { onConflict: "id" });
 
         if (fullErr) {
+          // If the error is a unique constraint on canonical_phone
+          if (fullErr.message?.includes("canonical_phone") || fullErr.code === "23505") {
+            throw new Error("رقم الهاتف هذا مسجل بالفعل في حساب آخر. يرجى تسجيل الدخول بحسابك السابق.");
+          }
           console.warn("StudentRepository.saveRegistrationData using foundation schema + raw_draft fallback:", fullErr.message);
           const basePayload: Record<string, any> = {
             id: userId,

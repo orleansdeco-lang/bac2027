@@ -12,13 +12,13 @@ export * from "./types";
 export * from "./server-time";
 export * from "./useEntitlements";
 
-export const TRIAL_DURATION_DAYS = 7;
-export const TRIAL_DURATION_HOURS = 168; // 7 days * 24 hours
+export const TRIAL_DURATION_DAYS = 3;
+export const TRIAL_DURATION_HOURS = 72; // 3 days * 24 hours
 export const TRIAL_DURATION_MS = TRIAL_DURATION_HOURS * 60 * 60 * 1000;
 
 /**
  * Calculates trial expiration date:
- * Strictly 7 days (168 hours) from account creation date.
+ * Strictly 3 days (72 hours) from account creation date.
  */
 export function calculateTrialExpiration(startDate: Date = new Date()): Date {
   return new Date(startDate.getTime() + TRIAL_DURATION_MS);
@@ -212,24 +212,24 @@ export function getStudentAccess(
   const trialStartedAt = (profile as any).trial_started_at || profileCreated;
   const accountCreatedMs = new Date(profileCreated).getTime();
 
-  // Authoritative trial expiration: STRICTLY account_created_at + 7 days (168 hours)
-  const authoritative7dMs = accountCreatedMs + TRIAL_DURATION_MS;
-  const authoritativeExpiresAtIso = new Date(authoritative7dMs).toISOString();
+  // Authoritative trial expiration: STRICTLY account_created_at + 3 days (72 hours)
+  const authoritative3dMs = accountCreatedMs + TRIAL_DURATION_MS;
+  const authoritativeExpiresAtIso = new Date(authoritative3dMs).toISOString();
 
   // Guard against client clock or legacy trial values
-  // Always enforce authoritative account_created_at + 7 days
+  // Always enforce authoritative account_created_at + 3 days
   const trialExpiresAt = authoritativeExpiresAtIso;
-  const remainingMs = authoritative7dMs - nowMs;
+  const remainingMs = authoritative3dMs - nowMs;
   const remainingHours = Math.max(0, Math.floor(remainingMs / (1000 * 60 * 60)));
   const remainingMinutes = Math.max(0, Math.floor(remainingMs / (1000 * 60)));
 
-  // 4. Free Tier (Trial Expired, Non-blocking continuous educational value)
+  // 4. Trial Expired: Access is BLOCKED until subscription is verified
   if (remainingMs <= 0) {
     return {
-      status: "TRIAL_EXPIRED",
+      status: "EXPIRED",
       trialStatus: "EXPIRED",
       accessStatus: "EXPIRED",
-      plan: "FREE",
+      plan: "EXPIRED",
       trialStartedAt,
       trialExpiresAt,
       remainingMilliseconds: 0,
@@ -237,13 +237,13 @@ export function getStudentAccess(
       remainingMinutes: 0,
       remainingDays: 0,
       remainingHoursOnly: 0,
-      canUseProduct: true,
+      canUseProduct: false,
       isExpiringSoon: false,
-      reason: "free_tier_continuous",
+      reason: "trial_3d_expired_subscription_required",
     };
   }
 
-  // 5. Active Trial (All-Access Pass)
+  // 5. Active 3-Day Trial (Full Access Pass)
   const remainingDays = Math.floor(remainingHours / 24);
   const remainingHoursOnly = remainingHours % 24;
 
@@ -261,7 +261,7 @@ export function getStudentAccess(
     remainingHoursOnly,
     canUseProduct: true,
     isExpiringSoon: remainingHours < 24,
-    reason: "trial_7d_active",
+    reason: "trial_3d_active",
   };
 }
 

@@ -8,6 +8,8 @@ import { GlobalTutorButton } from "../tutor/GlobalTutorButton";
 import { TrialBanner } from "../paywall/TrialBanner";
 
 import { cn } from "@/lib/utils";
+import { useEntitlements } from "@/lib/access/useEntitlements";
+import { SubscriptionRequiredScreen } from "../paywall/SubscriptionRequiredScreen";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -27,6 +29,8 @@ export function AppShell({
   noPadding = false,
 }: AppShellProps) {
   const pathname = usePathname() || "";
+  const { entitlements, isLoading: isEntitlementsLoading, refresh } = useEntitlements();
+
   const isExcluded =
     pathname === "/" ||
     pathname === "/landing" ||
@@ -35,7 +39,15 @@ export function AppShell({
     pathname.startsWith("/onboarding") ||
     pathname === "/reset-demo";
 
-  const shouldShowSidebar = showSidebar !== undefined ? showSidebar : !isExcluded;
+  const isSubscriptionRoute =
+    pathname === "/subscribe" ||
+    pathname.startsWith("/subscribe/") ||
+    pathname.startsWith("/checkout");
+
+  const isExpired = entitlements.isExpired || (!entitlements.canUseProduct && !entitlements.isAdmin);
+  const shouldBlockAccess = isExpired && !isExcluded && !isSubscriptionRoute && !isEntitlementsLoading;
+
+  const shouldShowSidebar = showSidebar !== undefined ? showSidebar : (!isExcluded && !shouldBlockAccess);
 
   return (
     <div className="min-h-screen bg-canvas text-theme-text flex flex-col selection:bg-[var(--color-primary)] selection:text-[var(--color-primary-text)] transition-colors duration-200">
@@ -53,11 +65,15 @@ export function AppShell({
         {shouldShowSidebar && <Sidebar />}
 
         <main className="flex-1 min-w-0 w-full">
-          {children}
+          {shouldBlockAccess ? (
+            <SubscriptionRequiredScreen onRefresh={refresh} />
+          ) : (
+            children
+          )}
         </main>
       </div>
 
-      <GlobalTutorButton />
+      {!shouldBlockAccess && <GlobalTutorButton />}
 
       {showFooter && (
         <footer className="hidden md:block py-6 border-t border-theme text-center text-xs text-theme-muted transition-colors duration-200">

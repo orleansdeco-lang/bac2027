@@ -31,6 +31,7 @@ import {
   FileText,
   AlertCircle,
   ShieldCheck,
+  Lock,
 } from "lucide-react";
 import { ChatMessage, TutorMode, TutorTask } from "@/types/tutor";
 import { TutorClient } from "@/lib/tutor/tutor-client";
@@ -260,7 +261,7 @@ export function BacAITutor({
       console.error("Failed to get tutor reply:", err);
       const isQuota = Boolean(err?.isQuotaExceeded || err?.upgradeRequired);
       const content = isQuota
-        ? "⚠️ لقد استنفدت حصتك اليومية المجانية (5 أسئلة مع الأستاذ الذكي اليوم). يمكنك الترقية إلى الشاطر بريميوم للاستفادة من توجيه الأستاذ الذكي غير المحدود وتفكيك المنهجية خطوة بخطوة."
+        ? "⚠️ انتهت فترة التجربة المجانية الخاصة بك (3 أيام). يرجى تفعيل اشتراكك لمواصلة الاستفادة من توجيه الأستاذ الذكي غير المحدود وجميع أدوات المنصة."
         : (err?.message && !err.message.includes("Tutor API error") ? err.message : "⚠️ حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة مرة أخرى أو التحقق من اتصالك بالإنترنت.");
 
       const errorMessage: ChatMessage = {
@@ -339,15 +340,16 @@ export function BacAITutor({
               {isPremium || isTrial ? (
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-500 border border-emerald-500/30 flex items-center gap-1 font-mono">
                   <Sparkles className="w-2.5 h-2.5" />
-                  <span>PRO غير محدود</span>
+                  <span>{isTrial ? "تجربة بريميوم (3 أيام)" : "PRO غير محدود"}</span>
                 </span>
               ) : (
                 <span
                   onClick={() => setIsPaywallOpen(true)}
-                  className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/30 cursor-pointer hover:bg-amber-500/25 flex items-center gap-1"
-                  title="حصة الأسئلة اليومية المجانية"
+                  className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-500 border border-rose-500/30 cursor-pointer hover:bg-rose-500/25 flex items-center gap-1"
+                  title="انتهت فترة التجربة - يتطلب اشتراك"
                 >
-                  <span>الحصة: {dailyAiQuota?.remaining ?? 5}/{dailyAiQuota?.total ?? 5} أسئلة</span>
+                  <Lock className="w-2.5 h-2.5" />
+                  <span>انتهت التجربة - تفعيل الاشتراك</span>
                 </span>
               )}
             </div>

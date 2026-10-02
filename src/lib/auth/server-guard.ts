@@ -133,7 +133,32 @@ export async function requireServerAuth(
   const accessDecision = getStudentAccess(profile);
   const entitlements = await getUserEntitlements(verifiedUserId, token);
 
-  // 3. Feature-specific entitlement check if requested
+  // 3. Strict Product Access Gate: If account is EXPIRED, block product APIs
+  if (!entitlements.canUseProduct && !entitlements.isAdmin) {
+    return {
+      authenticated: true,
+      authorized: false,
+      userId: verifiedUserId,
+      userEmail: verifiedEmail,
+      profile,
+      accessDecision,
+      entitlements,
+      errorResponse: NextResponse.json(
+        {
+          success: false,
+          error: "SUBSCRIPTION_REQUIRED",
+          code: "TRIAL_EXPIRED",
+          reason: accessDecision.reason,
+          message: "انتهت فترة التجربة الخاصة بك. للاستمرار في استخدام المنصة، يرجى تفعيل اشتراكك.",
+          upgradeRequired: true,
+          redirectUrl: "/subscribe",
+        },
+        { status: 403 }
+      ),
+    };
+  }
+
+  // 4. Feature-specific entitlement check if requested
   if (options?.requireFeature && !entitlements.features[options.requireFeature]) {
     return {
       authenticated: true,
@@ -157,7 +182,7 @@ export async function requireServerAuth(
     };
   }
 
-  // 4. Strict Subscription Gate if explicitly enabled (options.requireActiveSubscription === true)
+  // 5. Strict Subscription Gate if explicitly enabled (options.requireActiveSubscription === true)
   if (options?.requireActiveSubscription === true && !entitlements.isPremium) {
     return {
       authenticated: true,
@@ -170,7 +195,7 @@ export async function requireServerAuth(
       errorResponse: NextResponse.json(
         {
           success: false,
-          error: "Subscription Required",
+          error: "SUBSCRIPTION_REQUIRED",
           reason: accessDecision.reason,
           message: "هذه العملية تتطلب اشتراكاً مفعلاً في الشاطر بريميوم.",
           upgradeRequired: true,

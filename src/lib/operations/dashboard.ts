@@ -421,8 +421,8 @@ export async function getOperationsDashboardData(
     })),
     getOperationsAnalyticsSummary().catch(() => null),
     getKitInventorySummary().catch(() => null),
-    getVisitorsAnalytics("today", token).catch(() => null),
-    getRegisteredStudentsAnalytics({ period: "today", pageSize: 1 }, token).catch(() => null),
+    getVisitorsAnalytics({ period: "today" }).catch(() => null),
+    getRegisteredStudentsAnalytics({ period: "today", pageSize: 1 }).catch(() => null),
     getConversionFunnelData({ period: "30d", token }).catch(() => null),
     getProductUsageAnalytics({ periodDays: 30, token }).catch(() => null),
   ]);
@@ -512,7 +512,7 @@ export async function getOperationsDashboardData(
       attributedRegistrations: 0,
       unattributedRegistrations: totalStudents,
       unattributedPercentage: 100,
-      message: "بيانات الإحالة قيد المعالجة المباشرة",
+      warningMessage: "بيانات الإحالة قيد المعالجة المباشرة",
     },
   };
 
@@ -566,10 +566,10 @@ export async function getOperationsDashboardData(
       deliveredCount: (unifiedOrdersRes.summary?.delivered || 0) + (unifiedOrdersRes.summary?.paid || 0),
     },
     inventory: {
-      availableStudyPacks: inventoryRes?.inStock ?? 0,
-      reservedCards: inventoryRes?.reserved ?? 0,
-      lowStockWarning: inventoryRes?.lowStockAlert ?? false,
-      status: inventoryRes?.statusLabel ?? "المخزون متوفر",
+      availableStudyPacks: inventoryRes?.totalKitsAvailable ?? 0,
+      reservedCards: inventoryRes?.totalKitsReserved ?? 0,
+      lowStockWarning: inventoryRes?.hasLowStockAlert ?? false,
+      status: inventoryRes?.hasLowStockAlert ? "تحذير: مخزون منخفض" : "المخزون متوفر",
     },
     payments: {
       codCount: codPaidCount,

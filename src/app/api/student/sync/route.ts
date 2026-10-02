@@ -4,6 +4,7 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { createAuthenticatedSupabaseClient, isSupabaseConfigured, supabase } from "@/lib/supabase/client";
 import { fetchAuthoritativeStudentProfile, saveServerStudentProfile } from "@/lib/operations/students";
 import { recordAuthoritativeBusinessEvent } from "@/lib/operations/telemetry";
+import { toCanonicalAlgerianPhone, normalizeAlgerianPhone } from "@/domain/administrative/phone-validation";
 
 export const dynamic = "force-dynamic";
 
@@ -103,8 +104,11 @@ export async function POST(req: Request) {
     let subExpiresAt = activeSub?.expires_at || existingProfile?.subscription_expires_at;
     let rejectionReason = existingProfile?.rejection_reason;
 
-    const profileCreated = existingProfile?.created_at || existingProfile?.trial_started_at || new Date().toISOString();
-    const isTrialExpired = Date.now() - new Date(profileCreated).getTime() > 7 * 24 * 60 * 60 * 1000;
+    const trialStartedAt = existingProfile?.trial_started_at || existingProfile?.created_at || new Date().toISOString();
+    const trialExpiresAt = existingProfile?.trial_expires_at
+      ? new Date(existingProfile.trial_expires_at).getTime()
+      : new Date(trialStartedAt).getTime() + 3 * 24 * 60 * 60 * 1000;
+    const isTrialExpired = Date.now() > trialExpiresAt;
 
     if (isPaidActive) {
       effectiveAccessStatus = "PAID";
@@ -149,7 +153,33 @@ export async function POST(req: Request) {
 
     if (body.firstName !== undefined) updatePayload.first_name = body.firstName;
     if (body.lastName !== undefined) updatePayload.last_name = body.lastName;
-    if (body.studentPhone !== undefined) updatePayload.student_phone = body.studentPhone;
+
+    if (body.studentPhone !== undefined && body.studentPhone.trim() !== "") {
+      const canonicalPhone = toCanonicalAlgerianPhone(body.studentPhone);
+      const localPhone = normalizeAlgerianPhone(body.studentPhone);
+
+      const { data: dupPhone } = await client
+        .from("student_profiles")
+        .select("id")
+        .neq("id", targetStudentId)
+        .or(`student_phone.eq.${localPhone},student_phone.eq.${canonicalPhone},canonical_phone.eq.${canonicalPhone}`)
+        .limit(1)
+        .maybeSingle();
+
+      if (dupPhone) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "رقم الهاتف مسجل بالفعل في حساب طالب آخر. لا يمكن استخدام نفس الرقم في أكثر من حساب.",
+          },
+          { status: 409 }
+        );
+      }
+
+      updatePayload.student_phone = localPhone;
+      updatePayload.canonical_phone = canonicalPhone;
+    }
+
     if (body.parentPhone !== undefined) updatePayload.parent_phone = body.parentPhone;
     if (body.studentStatus !== undefined) updatePayload.student_status = body.studentStatus;
     if (body.wilayaCode !== undefined) updatePayload.wilaya_code = body.wilayaCode;

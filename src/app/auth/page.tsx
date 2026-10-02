@@ -173,8 +173,9 @@ function AuthContent() {
     setSubmitting(true);
 
     try {
+      const normalizedEmail = email.trim().toLowerCase();
       if (mode === "login") {
-        const { user: loggedInUser, error } = await signIn(email, password);
+        const { user: loggedInUser, error } = await signIn(normalizedEmail, password);
         if (error) {
           setErrorMsg(error.message);
         } else if (loggedInUser) {
@@ -199,19 +200,32 @@ function AuthContent() {
           }
         }
       } else {
-        const { user: newUser, error } = await signUp(email, password);
+        const { user: newUser, error } = await signUp(normalizedEmail, password);
         if (error) {
-          setErrorMsg(error.message);
+          const lowerMsg = (error.message || "").toLowerCase();
+          if (
+            lowerMsg.includes("already registered") ||
+            lowerMsg.includes("already in use") ||
+            lowerMsg.includes("user already exists")
+          ) {
+            setErrorMsg(
+              locale === "fr"
+                ? "Cet e-mail est déjà associé à un compte. Veuillez vous connecter."
+                : "هذا البريد الإلكتروني مسجل بالفعل. يرجى تسجيل الدخول بحسابك السابق."
+            );
+          } else {
+            setErrorMsg(error.message);
+          }
         } else if (newUser) {
           // Clean slate for new account: eradicate any previous session state
           purgeUserAndLegacyStorage(newUser.id);
           const { trackEvent } = await import("@/lib/analytics");
-          trackEvent("trial_started", { userId: newUser.id, durationHours: 168 });
-          trackTrialStart({ userId: newUser.id, durationDays: 7 });
+          trackEvent("trial_started", { userId: newUser.id, durationHours: 72 });
+          trackTrialStart({ userId: newUser.id, durationDays: 3 });
           setSuccessMsg(
             locale === "fr"
-              ? "Compte créé avec succès ! Votre essai gratuit de 7 jours débute dès maintenant."
-              : "تم إنشاء حسابك بنجاح! بدأت تجربتك المجانية الكاملة لمدة 7 أيام."
+              ? "Compte créé avec succès ! Votre essai gratuit de 3 jours débute dès maintenant."
+              : "تم إنشاء حسابك بنجاح! بدأت تجربتك المجانية الكاملة لمدة 3 أيام."
           );
           setTimeout(() => {
             router.push("/auth/register");
@@ -345,7 +359,7 @@ function AuthContent() {
                   </p>
                   <div className="text-[10px] text-emerald-400 font-bold flex items-center gap-1.5 pt-0.5 border-t border-white/10">
                     <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                    <span>أنشئ حسابك المجاني في دقيقة واحدة للوصول الفوري (7 أيام مجاناً، 0 دج)</span>
+                    <span>أنشئ حسابك للوصول الفوري (3 أيام تجربة مجانية كاملة، 0 دج)</span>
                   </div>
                 </div>
               )}
@@ -357,14 +371,14 @@ function AuthContent() {
                     <Sparkles className="w-4 h-4 shrink-0 text-[var(--color-primary)]" />
                     <span>
                       {locale === "fr"
-                        ? "Essai gratuit d'une semaine (7 jours) inclus"
-                        : "فترة تجريبية مجانية لمدة أسبوع كامل (7 أيام)"}
+                        ? "Essai gratuit complet de 3 jours (72 heures) inclus"
+                        : "فترة تجريبية مجانية كاملة لمدة 3 أيام (72 ساعة)"}
                     </span>
                   </div>
                   <p className="text-theme-secondary text-[11px] leading-relaxed">
                     {locale === "fr"
-                      ? "Accès complet immédiat aux matières de votre filière et à votre diagnostic initial."
-                      : "وصول كامل ومباشر لمواد شعبتك والتشخيص الأولي دون أي التزام مالي."}
+                      ? "Accès complet immédiat aux matières de votre filière, planner, diwan et examens sans engagement."
+                      : "وصول كامل ومباشر لمواد شعبتك، المخطط، الديوان، وبنك الامتحانات دون أي التزام مالي."}
                   </p>
                 </div>
               )}
@@ -505,8 +519,8 @@ function AuthContent() {
                             ? "Se connecter"
                             : "تسجيل الدخول"
                           : locale === "fr"
-                          ? "Démarrer mon essai gratuit (7 jours)"
-                          : "بدء التجربة المجانية (أسبوع مجاني)"}
+                          ? "Démarrer mon essai gratuit (3 jours)"
+                          : "بدء التجربة المجانية (3 أيام)"}
                       </span>
                       {isRTL ? <ArrowLeft className="w-4 h-4" /> : <ArrowRight className="w-4 h-4" />}
                     </div>

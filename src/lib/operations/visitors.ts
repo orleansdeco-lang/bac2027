@@ -241,61 +241,116 @@ export async function recordVisitorHit(input: {
 
   // Asynchronously persist to Supabase (both visitor_hits and analytics_sessions)
   if (isSupabaseConfigured && supabase) {
-    try {
-      // 1. Classic visitor_hits
-      supabase
-        .from("visitor_hits")
-        .insert({
-          session_id: entry.sessionId,
-          user_id: entry.userId || null,
-          path: entry.path,
-          full_url: entry.fullUrl || null,
-          query_params: entry.queryParams || {},
-          referrer: entry.referrer || null,
-          utm_source: entry.utmSource || null,
-          utm_campaign: entry.utmCampaign || null,
-          utm_medium: entry.utmMedium || null,
-          ref_code: entry.refCode || null,
-          device_type: entry.deviceType,
-          browser: entry.browser || null,
-          os: entry.os || null,
-          ip_hash: entry.ip || null,
-          created_at: entry.timestamp,
-        })
-        .then(() => {}, () => {});
+    const anonymousId = input.anonymousId || `anon_${entry.sessionId}`;
+    const visitorId = input.visitorId || anonymousId;
+    
+    const channel = classifyChannel(
+      input.firstTouch?.source || input.utmSource,
+      input.firstTouch?.medium || input.utmMedium,
+      entry.referrer
+    );
 
-      // 2. First-party analytics_sessions upsert
-      const anonymousId = input.anonymousId || `anon_${entry.sessionId}`;
-      const visitorId = input.visitorId || anonymousId;
-      
-      const channel = classifyChannel(
-        input.firstTouch?.source || input.utmSource,
-        input.firstTouch?.medium || input.utmMedium,
-        entry.referrer
-      );
+    // 1. visitor_hits — direct insert with error logging
+    supabase
+      .from("visitor_hits")
+      .insert({
+        session_id: entry.sessionId,
+        user_id: entry.userId || null,
+        path: entry.path,
+        full_url: entry.fullUrl || null,
+        query_params: entry.queryParams || {},
+        referrer: entry.referrer || null,
+        utm_source: entry.utmSource || null,
+        utm_campaign: entry.utmCampaign || null,
+        utm_medium: entry.utmMedium || null,
+        ref_code: entry.refCode || null,
+        device_type: entry.deviceType,
+        browser: entry.browser || null,
+        os: entry.os || null,
+        ip_hash: entry.ip || null,
+        created_at: entry.timestamp,
+      })
+      .then(({ error }) => {
+        if (error) console.warn("[Analytics] visitor_hits insert failed:", error.message);
+      }, (err) => {
+        console.warn("[Analytics] visitor_hits insert exception:", err?.message);
+      });
 
-      supabase
-        .rpc("record_session_identity", {
-          p_session_id: entry.sessionId,
-          p_visitor_id: visitorId,
-          p_anonymous_id: anonymousId,
-          p_user_id: entry.userId || null,
-          p_landing_page: entry.path,
-          p_referrer: entry.referrer || null,
-          p_source: input.firstTouch?.source || input.utmSource || null,
-          p_medium: input.firstTouch?.medium || input.utmMedium || null,
-          p_campaign: input.firstTouch?.campaign || input.utmCampaign || null,
-          p_content: input.firstTouch?.content || input.utmContent || null,
-          p_term: input.firstTouch?.term || input.utmTerm || null,
-          p_channel: channel,
-          p_device_type: entry.deviceType,
-          p_browser: entry.browser || null,
-          p_os: entry.os || null,
-          p_ip_hash: entry.ip || null,
-          p_country: "DZ",
-        })
-        .then(() => {}, () => {});
-    } catch {}
+    // 2. analytics_sessions — try RPC first, fall back to direct insert
+    supabase
+      .rpc("record_session_identity", {
+        p_session_id: entry.sessionId,
+        p_visitor_id: visitorId,
+        p_anonymous_id: anonymousId,
+        p_user_id: entry.userId || null,
+        p_landing_page: entry.path,
+        p_referrer: entry.referrer || null,
+        p_source: input.firstTouch?.source || input.utmSource || null,
+        p_medium: input.firstTouch?.medium || input.utmMedium || null,
+        p_campaign: input.firstTouch?.campaign || input.utmCampaign || null,
+        p_content: input.firstTouch?.content || input.utmContent || null,
+        p_term: input.firstTouch?.term || input.utmTerm || null,
+        p_channel: channel,
+        p_device_type: entry.deviceType,
+        p_browser: entry.browser || null,
+        p_os: entry.os || null,
+        p_ip_hash: entry.ip || null,
+        p_country: "DZ",
+      })
+      .then(({ error }) => {
+        if (error) {
+          console.warn("[Analytics] record_session_identity RPC failed, using direct insert fallback:", error.message);
+          
+          const sessionPayload: Record<string, any> = {
+            session_id: entry.sessionId,
+            anonymous_id: anonymousId,
+            user_id: entry.userId || null,
+            landing_page: entry.path,
+            referrer: entry.referrer || null,
+            first_utm_source: input.firstTouch?.source || input.utmSource || null,
+            first_utm_medium: input.firstTouch?.medium || input.utmMedium || null,
+            first_utm_campaign: input.firstTouch?.campaign || input.utmCampaign || null,
+            first_utm_content: input.firstTouch?.content || input.utmContent || null,
+            first_utm_term: input.firstTouch?.term || input.utmTerm || null,
+            last_utm_source: input.lastTouch?.source || input.utmSource || null,
+            last_utm_medium: input.lastTouch?.medium || input.utmMedium || null,
+            last_utm_campaign: input.lastTouch?.campaign || input.utmCampaign || null,
+            device_type: entry.deviceType,
+            browser: entry.browser || null,
+            os: entry.os || null,
+            ip_hash: entry.ip || null,
+            country: "DZ",
+            pageviews_count: 1,
+            started_at: entry.timestamp,
+            last_activity_at: entry.timestamp,
+            is_active: true,
+          };
+
+          // Try insert with visitor_id first
+          supabase!
+            .from("analytics_sessions")
+            .insert({ ...sessionPayload, visitor_id: visitorId })
+            .then(({ error: insertErr }) => {
+              if (insertErr) {
+                // If column doesn't exist, retry without visitor_id
+                if (insertErr.code === "PGRST204" || insertErr.message?.includes("visitor_id")) {
+                  supabase!
+                    .from("analytics_sessions")
+                    .insert(sessionPayload)
+                    .then(({ error: fallbackErr }) => {
+                      if (fallbackErr && fallbackErr.code !== "23505") {
+                        console.warn("[Analytics] analytics_sessions fallback insert failed:", fallbackErr.message);
+                      }
+                    }, () => {});
+                } else if (insertErr.code !== "23505") {
+                  console.warn("[Analytics] analytics_sessions insert failed:", insertErr.message);
+                }
+              }
+            }, () => {});
+        }
+      }, (err) => {
+        console.warn("[Analytics] record_session_identity exception:", err?.message);
+      });
   }
 
   return entry;

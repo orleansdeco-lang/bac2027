@@ -312,26 +312,24 @@ export async function POST(req: NextRequest) {
 
     const clientKey = authResult.userId || req.ip || "unknown-client";
 
-    // 2. Freemium Daily AI Quota Check (5 questions/day for FREE, unlimited for TRIAL/PREMIUM/ADMIN)
-    const userPlan = authResult.entitlements?.plan || "FREE";
-    const quotaCheck = await recordAiQueryUsage(authResult.userId || "anonymous", userPlan);
-
-    if (!quotaCheck.allowed) {
+    // 2. Trial / Subscription Gate (Only active TRIAL, active PREMIUM, or ADMIN/STAFF can access AI Tutor)
+    if (!authResult.entitlements?.isPremium && !authResult.entitlements?.isAdmin && !authResult.entitlements?.isTrial) {
       return NextResponse.json(
         {
           success: false,
-          error: "QUOTA_EXCEEDED",
-          message: "لقد استنفدت حصتك اليومية المجانية (5 أسئلة مع الأستاذ الذكي اليوم). للاستفادة من توجيه الأستاذ الذكي غير المحدود، يمكنك الترقية إلى الشاطر بريميوم.",
+          error: "SUBSCRIPTION_REQUIRED",
+          code: "TRIAL_EXPIRED",
+          message: "انتهت فترة التجربة الخاصة بك. للاستمرار في طرح الأسئلة والحصول على إرشادات الأستاذ الذكي، يرجى تفعيل اشتراكك.",
           upgradeRequired: true,
-          dailyAiQuota: {
-            used: quotaCheck.used,
-            remaining: 0,
-            total: quotaCheck.total,
-          },
+          redirectUrl: "/subscribe",
         },
-        { status: 429 }
+        { status: 403 }
       );
     }
+
+    const effectiveTutorUserId = authResult.userId || "anonymous-student";
+    const effectiveTutorPlan = authResult.entitlements?.plan || "TRIAL";
+    const quotaCheck = await recordAiQueryUsage(effectiveTutorUserId, effectiveTutorPlan);
 
     // 3. Rate Limiting Protection (Max 15 requests per minute)
     const rateCheck = rateLimiter.check(clientKey, 15, 60000);

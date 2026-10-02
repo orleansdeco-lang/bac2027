@@ -641,7 +641,7 @@ export function OperationsCockpitDashboard() {
               {acquisition?.attributionQuality.status || "PARTIAL"}
             </span>
             <span className="text-slate-400 text-[11px]">
-              {acquisition?.attributionQuality.message ||
+              {acquisition?.attributionQuality.warningMessage ||
                 "يتم ربط الإحالة تلقائياً عند تسجيل أو دخول الطالب"}
             </span>
           </div>

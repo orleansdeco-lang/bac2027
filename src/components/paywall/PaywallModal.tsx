@@ -28,49 +28,49 @@ interface PaywallModalProps {
 
 const FEATURE_DESCRIPTIONS: Record<
   string,
-  { title: string; desc: string; icon: React.ReactNode; freeNote: string; proBenefit: string }
+  { title: string; desc: string; icon: React.ReactNode; trialNote: string; proBenefit: string }
 > = {
   EXAMS_FULL_LIBRARY: {
     title: "المكتبة الكاملة لأرشيف البكالوريا والفروض",
     desc: "افتح الأرشيف التاريخي الشامل لجميع البكالوريات الرسمية، الفروض الفصلية، والحلول الوزارية المفصلة.",
     icon: <BookOpen className="w-6 h-6 text-amber-400" />,
-    freeNote: "متاح في المجاني: مواضيع البكالوريا الرسمية الحديثة (2024 و 2023)",
-    proBenefit: "يفتح في بريميوم: كامل الأرشيف (2008-2024) + الفروض الفصلية + التصحيحات الوزارية وسلالم التنقيط",
+    trialNote: "متاح بالكامل خلال فترة التجربة المجانية (3 أيام)",
+    proBenefit: "يستمر معك طيلة العام: كامل الأرشيف (2008-2026) + الفروض الفصلية + التصحيحات الوزارية وسلالم التنقيط",
   },
   PLANNER_PRO_AI: {
     title: "المخطط الذكي Planner PRO",
     desc: "جدولة تلقائية ذكية تعيد ترتيب مهامك عند التأخر، وتتكيف مع نقاط ضعفك وشعبتك الرسمية.",
     icon: <Calendar className="w-6 h-6 text-purple-400" />,
-    freeNote: "متاح في المجاني: التخطيط اليدوي اليومي، إدارة المهام، وتدوين الملاحظات",
-    proBenefit: "يفتح في بريميوم: التوزيع الذكي للحصص، إعادة الجدولة الديناميكية، والتكامل مع ثغرات التشخيص",
+    trialNote: "متاح بالكامل خلال فترة التجربة المجانية (3 أيام)",
+    proBenefit: "يستمر معك طيلة العام: التوزيع الذكي للحصص، إعادة الجدولة الديناميكية، والتكامل مع ثغرات التشخيص",
   },
   DIAGNOSTIC_FULL: {
     title: "التشخيص الشامل وشجرة التمكن",
     desc: "كشف الثغرات عبر جميع المواد، تصنيف مستوى التمكن لكل درس، وخريطة مخصصة لسد الفجوات.",
     icon: <Brain className="w-6 h-6 text-blue-400" />,
-    freeNote: "متاح في المجاني: التشخيص الأولي لمادة أساسية وتحديد المستوى المبدئي",
-    proBenefit: "يفتح في بريميوم: فحص شامل لجميع المواد، شجرة المفاهيم المترابطة، وتقرير الجاهزية للبكالوريا",
+    trialNote: "متاح بالكامل خلال فترة التجربة المجانية (3 أيام)",
+    proBenefit: "يستمر معك طيلة العام: فحص شامل لجميع المواد، شجرة المفاهيم المترابطة، وتقرير الجاهزية للبكالوريا",
   },
   ERROR_LAB_AI_TWINS: {
     title: "مخبر الأخطاء والأسئلة التوأم (AI Twins)",
     desc: "توليد أسئلة توأم ذكية للأخطاء التي ارتكبتها للتأكد من هضم الفكرة واستيعاب فخاخ البكالوريا.",
     icon: <Zap className="w-6 h-6 text-rose-400" />,
-    freeNote: "متاح في المجاني: سجل الأخطاء المحفوظة واستكشاف الفخاخ الوزارية الشائعة",
-    proBenefit: "يفتح في بريميوم: أسئلة توأم مولدة ذكياً، جولات ترميم مكثفة، وتتبع مؤشر القضاء على الثغرة",
+    trialNote: "متاح بالكامل خلال فترة التجربة المجانية (3 أيام)",
+    proBenefit: "يستمر معك طيلة العام: أسئلة توأم مولدة ذكياً، جولات ترميم مكثفة، وتتبع مؤشر القضاء على الثغرة",
   },
   AI_TUTOR_UNLIMITED: {
     title: "الأستاذ الذكي غير المحدود (AI Tutor PRO)",
     desc: "مرافقة بيداغوجية تفاعلية على مدار الساعة لشرح خطوات الحل، تفكيك المنهجية، وتقنية فاينمان.",
     icon: <Sparkles className="w-6 h-6 text-emerald-400" />,
-    freeNote: "متاح في المجاني: 5 أسئلة يومياً لمرافقتك في المسائل الأساسية",
-    proBenefit: "يفتح في بريميوم: أسئلة غير محدودة، فحص منهجي كامل، وتحليل أسباب الخطأ خطوة بخطوة",
+    trialNote: "متاح بالكامل خلال فترة التجربة المجانية (3 أيام)",
+    proBenefit: "يستمر معك طيلة العام: مرافقة كاملة، فحص منهجي خطوة بخطوة، وأسئلة غير محدودة",
   },
   ANALYTICS_PRO: {
     title: "التحليلات المتقدمة ومؤشر الجاهزية",
     desc: "تنبؤ مبني على بياناتك الحقيقية لنسبة جاهزيتك للبكالوريا وتتبع ساعات التركيز الفعالة.",
     icon: <ShieldCheck className="w-6 h-6 text-indigo-400" />,
-    freeNote: "متاح في المجاني: إحصائيات المهام المنجزة وساعات الدراسة الإجمالية",
-    proBenefit: "يفتح في بريميوم: مسار التطور نحو البكالوريا، نسبة تغطية المنهاج، وتنبؤ ذكي بالعلامة المتوقعة",
+    trialNote: "متاح بالكامل خلال فترة التجربة المجانية (3 أيام)",
+    proBenefit: "يستمر معك طيلة العام: مسار التطور نحو البكالوريا، نسبة تغطية المنهاج، وتنبؤ ذكي بالعلامة المتوقعة",
   },
 };
 
@@ -88,8 +88,8 @@ export function PaywallModal({
       title: title || "ميزة حصرية لمشتركي الشاطر بريميوم",
       desc: description || "هذه الميزة مصممة للطلاب الراغبين في التفوق والحصول على متابعة مخصصة.",
       icon: <Sparkles className="w-6 h-6 text-amber-400" />,
-      freeNote: "أنت تستمتع بالنسخة المجانية وقيمتها التعليمية الأساسية",
-      proBenefit: "بريميوم يمنحك التوجيه الشخصي والوصول الشامل لجميع الأدوات المتقدمة",
+      trialNote: "متاح بالكامل خلال فترة التجربة المجانية (3 أيام)",
+      proBenefit: "بريميوم يمنحك التوجيه الشخصي والوصول الشامل لجميع أدوات المنصة طيلة الموسم",
     };
 
   return (
@@ -132,20 +132,20 @@ export function PaywallModal({
             </p>
           </div>
 
-          {/* Comparison Cards: Free vs Premium */}
+          {/* Comparison Cards: Trial vs Premium Subscription */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-right pt-2">
             <div className="p-3.5 rounded-2xl bg-surface/70 border border-theme/80 space-y-1.5">
               <span className="text-[11px] font-bold text-theme-muted uppercase tracking-wider block">
-                🌱 ما تحصل عليه مجاناً
+                ⏳ فترة التجربة (3 أيام)
               </span>
               <p className="text-xs text-theme-text leading-relaxed">
-                {featureInfo.freeNote}
+                {featureInfo.trialNote}
               </p>
             </div>
 
             <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-1.5">
               <span className="text-[11px] font-bold text-amber-400 uppercase tracking-wider block">
-                ⭐ ما يفتحه لك بريميوم
+                ⭐ بعد التفعيل الكامل
               </span>
               <p className="text-xs text-theme-text leading-relaxed font-medium">
                 {featureInfo.proBenefit}
@@ -189,7 +189,7 @@ export function PaywallModal({
               onClick={onClose}
               className="w-full sm:w-auto text-xs text-theme-muted hover:text-theme-text"
             >
-              <span>متابعة الاستخدام المجاني</span>
+              <span>إغلاق</span>
             </Button>
           </div>
         </div>

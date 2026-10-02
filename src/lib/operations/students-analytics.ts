@@ -234,12 +234,12 @@ export async function getRegisteredStudentsAnalytics(
       // 2b. Query analytics_events for authenticated product activity
       const { data: events } = await client
         .from("analytics_events")
-        .select("user_id, occurred_at, page_path, route")
+        .select("user_id, occurred_at, route")
         .not("user_id", "is", null)
         .gte("occurred_at", monthStart);
 
       const validEvents = (events || []).filter((e) => {
-        const path = (e.page_path || e.route || "").toLowerCase();
+        const path = ((e as any).page_path || e.route || "").toLowerCase();
         return !path.startsWith("/ops") && !path.startsWith("/admin") && !path.startsWith("/api");
       });
 

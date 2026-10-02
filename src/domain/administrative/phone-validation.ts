@@ -12,8 +12,31 @@
 export interface PhoneValidationResult {
   isValid: boolean;
   normalized: string;
+  canonical?: string;
   error_ar?: string;
   error_fr?: string;
+}
+
+export function toCanonicalAlgerianPhone(input: string): string {
+  if (!input) return "";
+
+  // 1. Remove all whitespace, hyphens, periods, parentheses, slashes
+  let clean = input.trim().replace(/[\s\.\-\(\)\/]/g, "");
+
+  // 2. Normalize international prefix
+  if (clean.startsWith("00213")) {
+    clean = "+213" + clean.substring(5);
+  } else if (clean.startsWith("213") && clean.length >= 11) {
+    clean = "+" + clean;
+  } else if (clean.startsWith("0") && clean.length === 10) {
+    clean = "+213" + clean.substring(1);
+  } else if (/^[567]\d{8}$/.test(clean)) {
+    clean = "+213" + clean;
+  } else if (!clean.startsWith("+") && clean.startsWith("213")) {
+    clean = "+" + clean;
+  }
+
+  return clean;
 }
 
 export function normalizeAlgerianPhone(input: string): string {
@@ -22,13 +45,15 @@ export function normalizeAlgerianPhone(input: string): string {
   // 1. Remove all whitespace, hyphens, periods, parentheses, slashes
   let clean = input.trim().replace(/[\s\.\-\(\)\/]/g, "");
 
-  // 2. Handle international prefix
+  // 2. Handle international prefix to local 0X
   if (clean.startsWith("+213")) {
     clean = "0" + clean.substring(4);
   } else if (clean.startsWith("00213")) {
     clean = "0" + clean.substring(5);
   } else if (clean.startsWith("213") && clean.length >= 11) {
     clean = "0" + clean.substring(3);
+  } else if (/^[567]\d{8}$/.test(clean)) {
+    clean = "0" + clean;
   }
 
   return clean;
@@ -79,8 +104,11 @@ export function validateAlgerianPhone(
     };
   }
 
+  const canonical = toCanonicalAlgerianPhone(input);
+
   return {
     isValid: true,
     normalized,
+    canonical,
   };
 }
