@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { extractAndVerifyOperator } from "@/lib/operations/auth";
+import { extractAndVerifyOperator, ensureValidOperatorUuid } from "@/lib/operations/auth";
 import { getPaymentOrders } from "@/lib/operations/payments";
 import { getAuditLogs } from "@/lib/operations/audit";
 import { getStoredTelemetryEvents } from "@/lib/operations/telemetry";
@@ -62,7 +62,7 @@ export async function GET(
       // Fallback to ops_get_student_dossier RPC if profile not directly found
       const { data: dossierData, error: dossierError } = await client.rpc(
         "ops_get_student_dossier",
-        { p_student_id: studentId, p_operator_id: operator.userId }
+        { p_student_id: studentId, p_operator_id: ensureValidOperatorUuid(operator.userId) }
       );
       if (!dossierError && dossierData) {
         studentProfile = dossierData;

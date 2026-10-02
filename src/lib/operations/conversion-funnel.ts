@@ -15,6 +15,7 @@
 import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "../supabase/client";
 import { getAdminClient } from "../supabase/admin";
 import { getAlgeriaTodayStartIso } from "./timezone";
+import { ensureValidOperatorUuid } from "./auth";
 
 export type FunnelPeriod = "today" | "7d" | "30d" | "90d" | "custom";
 
@@ -136,7 +137,7 @@ export async function getConversionFunnelData(
         {
           p_start_date: startIso,
           p_end_date: endIso,
-          p_operator_id: options.operatorId || "7f7f704e-d9f1-4edf-9952-591f41fc0c55",
+          p_operator_id: ensureValidOperatorUuid(options.operatorId),
         }
       );
 

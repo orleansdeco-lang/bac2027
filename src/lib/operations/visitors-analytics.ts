@@ -12,6 +12,7 @@
 
 import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "../supabase/client";
 import { getAdminClient } from "../supabase/admin";
+import { ensureValidOperatorUuid } from "./auth";
 
 export type VisitorAnalyticsPeriod = "today" | "7d" | "30d" | "90d";
 
@@ -167,7 +168,7 @@ export async function getVisitorsAnalytics(
         "ops_get_visitors_analytics",
         {
           p_period_days: periodDays,
-          p_operator_id: operatorId || "7f7f704e-d9f1-4edf-9952-591f41fc0c55",
+          p_operator_id: ensureValidOperatorUuid(operatorId),
         }
       );
 

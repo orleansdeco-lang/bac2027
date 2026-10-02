@@ -20,6 +20,7 @@ import { getSubscriptionPlanById } from "./subscriptions";
 import { qualifyReferralOnSubscription } from "../referral";
 import { createVoucher } from "./vouchers";
 import { recordAuthoritativeBusinessEvent } from "./telemetry";
+import { ensureValidOperatorUuid } from "./auth";
 
 export const AUTHORITATIVE_PLANS: Record<string, AuthoritativePlan> = {
   season: {
@@ -448,7 +449,7 @@ export async function approvePaymentOrder(
     // 1. Call atomic PostgreSQL approval RPC
     let rpcRes = await client.rpc("admin_authoritative_approve_order", {
       p_order_id: cleanId,
-      p_operator_id: operatorId,
+      p_operator_id: ensureValidOperatorUuid(operatorId),
       p_reason: reason,
     });
 
@@ -542,7 +543,7 @@ export async function rejectPaymentOrder(
   try {
     let rpcRes = await client.rpc("admin_authoritative_reject_order", {
       p_order_id: cleanId,
-      p_operator_id: operatorId,
+      p_operator_id: ensureValidOperatorUuid(operatorId),
       p_reason: reason,
     });
 

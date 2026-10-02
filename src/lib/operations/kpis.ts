@@ -14,6 +14,7 @@ import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } fro
 import { getAdminClient } from "../supabase/admin";
 import { getCapturedClientErrors } from "../monitoring";
 import { loadServerStudentProfiles } from "./students";
+import { ensureValidOperatorUuid } from "./auth";
 
 export async function getOperationsOverviewKPIs(
   operatorId?: string,
@@ -71,7 +72,7 @@ export async function getOperationsOverviewKPIs(
         try {
           const { data: cockpitData, error: cockpitError } = await client.rpc(
             "ops_get_cockpit_kpis",
-            { p_operator_id: operatorId }
+            { p_operator_id: ensureValidOperatorUuid(operatorId) }
           );
           if (!cockpitError && cockpitData) {
             const p = cockpitData.productStatus || {};
@@ -110,7 +111,7 @@ export async function getOperationsOverviewKPIs(
         try {
           const { data: kpiCounts, error: kpiCountsError } = await client.rpc(
             "ops_get_student_kpi_counts",
-            { p_operator_id: operatorId }
+            { p_operator_id: ensureValidOperatorUuid(operatorId) }
           );
           if (!kpiCountsError && kpiCounts) {
             totalStudents = Number(kpiCounts.total_students) || 0;
@@ -399,7 +400,7 @@ export async function getStudentsOperationalList(
       if (operatorId) {
         const { data: rpcProfiles, error: rpcError } = await client.rpc(
           "ops_get_student_directory",
-          { p_operator_id: operatorId, p_limit: 100 }
+          { p_operator_id: ensureValidOperatorUuid(operatorId), p_limit: 100 }
         );
 
         if (!rpcError && Array.isArray(rpcProfiles)) {

@@ -13,6 +13,7 @@
 import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "../supabase/client";
 import { getAdminClient } from "../supabase/admin";
 import { CockpitProductUsageSection } from "./types";
+import { ensureValidOperatorUuid } from "./auth";
 
 export interface FetchProductUsageOptions {
   periodDays?: number;
@@ -33,7 +34,7 @@ export async function getProductUsageAnalytics(
     try {
       const { data: rpcData, error: rpcError } = await client.rpc("ops_get_product_usage", {
         p_period_days: periodDays,
-        p_operator_id: options.operatorId || undefined,
+        p_operator_id: ensureValidOperatorUuid(options.operatorId),
       });
 
       if (!rpcError && rpcData && typeof rpcData === "object") {

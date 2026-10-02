@@ -17,6 +17,7 @@ import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } fro
 import { getAdminClient } from "../supabase/admin";
 import { getPaymentOrders } from "./payments";
 import { loadServerStudentProfiles } from "./students";
+import { ensureValidOperatorUuid } from "./auth";
 
 export type AnalyticsPeriod = "today" | "7d" | "30d" | "90d";
 
@@ -159,7 +160,7 @@ export async function getRegisteredStudentsAnalytics(
         "ops_get_student_analytics",
         {
           p_period_days: periodDays,
-          p_operator_id: operatorId || "7f7f704e-d9f1-4edf-9952-591f41fc0c55",
+          p_operator_id: ensureValidOperatorUuid(operatorId),
         }
       );
 
