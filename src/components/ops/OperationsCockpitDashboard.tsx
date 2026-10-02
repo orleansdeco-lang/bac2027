@@ -142,6 +142,22 @@ export function OperationsCockpitDashboard() {
     document.body.removeChild(link);
   };
 
+  if (loading && !data) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto text-slate-100 bg-[#070B14] min-h-[60vh] flex flex-col items-center justify-center" dir="rtl">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
+            <RefreshCw className="w-6 h-6 animate-spin" />
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-sm font-bold text-white">جاري تحميل بيانات لوحة العمليات...</h2>
+            <p className="text-xs text-slate-400 font-mono">الاستعلام اللحظي من قاعدة البيانات</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto text-slate-100 bg-[#070B14]"
@@ -462,8 +478,8 @@ export function OperationsCockpitDashboard() {
               </div>
             </div>
             <div className="text-[10px] text-slate-400 flex items-center justify-between">
-              <span>مؤكدة: {business?.ordersByStatus.delivered ?? 0}</span>
-              <span>قيد الانتظار: {business?.ordersByStatus.pending ?? 0}</span>
+              <span>مؤكدة: {business?.ordersByStatus?.delivered ?? 0}</span>
+              <span>قيد الانتظار: {business?.ordersByStatus?.pending ?? 0}</span>
             </div>
           </div>
 
@@ -475,11 +491,11 @@ export function OperationsCockpitDashboard() {
             </div>
             <div className="my-2">
               <div className="text-sm font-mono font-bold text-white flex items-center justify-between">
-                <span className="text-purple-300">سنوي: {business?.subscriptions.annualCount ?? 0}</span>
-                <span className="text-sky-300">شهري: {business?.subscriptions.monthlyCount ?? 0}</span>
+                <span className="text-purple-300">سنوي: {business?.subscriptions?.annualCount ?? 0}</span>
+                <span className="text-sky-300">شهري: {business?.subscriptions?.monthlyCount ?? 0}</span>
               </div>
               <div className="text-[11px] font-mono text-emerald-400 mt-1">
-                {((business?.subscriptions.annualRevenue ?? 0) + (business?.subscriptions.monthlyRevenue ?? 0)).toLocaleString()} دج
+                {((business?.subscriptions?.annualRevenue ?? 0) + (business?.subscriptions?.monthlyRevenue ?? 0)).toLocaleString()} دج
               </div>
             </div>
             <div className="text-[10px] text-slate-400">
@@ -633,15 +649,15 @@ export function OperationsCockpitDashboard() {
             <span className="text-slate-300 font-semibold">حالة جودة التوثيق:</span>
             <span
               className={`px-2 py-0.5 rounded font-mono font-bold text-[10px] ${
-                acquisition?.attributionQuality.status === "REAL"
+                acquisition?.attributionQuality?.status === "REAL"
                   ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
                   : "bg-amber-500/10 text-amber-400 border border-amber-500/30"
               }`}
             >
-              {acquisition?.attributionQuality.status || "PARTIAL"}
+              {acquisition?.attributionQuality?.status || "PARTIAL"}
             </span>
             <span className="text-slate-400 text-[11px]">
-              {acquisition?.attributionQuality.warningMessage ||
+              {acquisition?.attributionQuality?.warningMessage ||
                 "يتم ربط الإحالة تلقائياً عند تسجيل أو دخول الطالب"}
             </span>
           </div>
@@ -649,11 +665,11 @@ export function OperationsCockpitDashboard() {
           <div className="font-mono text-slate-400 text-[11px]">
             تسجيلات بإحالة موثقة:{" "}
             <span className="text-white font-bold">
-              {acquisition?.attributionQuality.attributedRegistrations ?? 0}
+              {acquisition?.attributionQuality?.attributedRegistrations ?? 0}
             </span>{" "}
             | مباشرة/غير محددة:{" "}
             <span className="text-slate-400">
-              {acquisition?.attributionQuality.unattributedRegistrations ?? 0}
+              {acquisition?.attributionQuality?.unattributedRegistrations ?? 0}
             </span>
           </div>
         </div>
@@ -732,21 +748,21 @@ export function OperationsCockpitDashboard() {
                 <span className="font-bold text-white text-sm">الديوان والمذاكرة الجماعية</span>
               </div>
               <span className="px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 font-mono text-xs font-bold">
-                {productUsage?.diwan.total ?? 0} تفاعل
+                {productUsage?.diwan?.total ?? 0} تفاعل
               </span>
             </div>
             <div className="space-y-1.5 text-xs">
               <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">طاولات تم إنشاؤها (Tables Created):</span>
-                <span className="font-mono font-bold text-white">{productUsage?.diwan.tablesCreated ?? 0}</span>
+                <span className="font-mono font-bold text-white">{productUsage?.diwan?.tablesCreated ?? 0}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">انضمام إلى طاولات (Tables Joined):</span>
-                <span className="font-mono font-bold text-white">{productUsage?.diwan.tablesJoined ?? 0}</span>
+                <span className="font-mono font-bold text-white">{productUsage?.diwan?.tablesJoined ?? 0}</span>
               </div>
               <div className="flex justify-between py-1">
                 <span className="text-slate-400">فتح قسم الديوان (Diwan Opened):</span>
-                <span className="font-mono font-bold text-white">{productUsage?.diwan.opened ?? 0}</span>
+                <span className="font-mono font-bold text-white">{productUsage?.diwan?.opened ?? 0}</span>
               </div>
             </div>
           </div>
@@ -759,13 +775,13 @@ export function OperationsCockpitDashboard() {
                 <span className="font-bold text-white text-sm">المخطط الذكي للدروس</span>
               </div>
               <span className="px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-mono text-xs font-bold">
-                {productUsage?.planner.opened ?? 0} فتح
+                {productUsage?.planner?.opened ?? 0} فتح
               </span>
             </div>
             <div className="space-y-1.5 text-xs">
               <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">مرات فتح المخطط (Planner Opened):</span>
-                <span className="font-mono font-bold text-white">{productUsage?.planner.opened ?? 0}</span>
+                <span className="font-mono font-bold text-white">{productUsage?.planner?.opened ?? 0}</span>
               </div>
               <div className="text-[11px] text-slate-500 pt-1">
                 يشمل مراجعة وتعديل جداول الحفظ والمراجعة الأسبوعية
@@ -781,21 +797,21 @@ export function OperationsCockpitDashboard() {
                 <span className="font-bold text-white text-sm">بنك الامتحانات والتقييم</span>
               </div>
               <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 font-mono text-xs font-bold">
-                {productUsage?.exams.total ?? 0} حدث
+                {productUsage?.exams?.total ?? 0} حدث
               </span>
             </div>
             <div className="space-y-1.5 text-xs">
               <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">فتح الامتحانات (Exam Opened):</span>
-                <span className="font-mono font-bold text-white">{productUsage?.exams.opened ?? 0}</span>
+                <span className="font-mono font-bold text-white">{productUsage?.exams?.opened ?? 0}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">بدء الامتحان (Exam Started):</span>
-                <span className="font-mono font-bold text-white">{productUsage?.exams.started ?? 0}</span>
+                <span className="font-mono font-bold text-white">{productUsage?.exams?.started ?? 0}</span>
               </div>
               <div className="flex justify-between py-1">
                 <span className="text-slate-400">إكمال الامتحان (Exam Completed):</span>
-                <span className="font-mono font-bold text-emerald-400">{productUsage?.exams.completed ?? 0}</span>
+                <span className="font-mono font-bold text-emerald-400">{productUsage?.exams?.completed ?? 0}</span>
               </div>
             </div>
           </div>
@@ -808,13 +824,13 @@ export function OperationsCockpitDashboard() {
                 <span className="font-bold text-white text-sm">الملخصات والخرائط الذهنية</span>
               </div>
               <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 font-mono text-xs font-bold">
-                {productUsage?.summaries.opened ?? 0} فتح
+                {productUsage?.summaries?.opened ?? 0} فتح
               </span>
             </div>
             <div className="space-y-1.5 text-xs">
               <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">استعراض الملخصات (Summary Opened):</span>
-                <span className="font-mono font-bold text-white">{productUsage?.summaries.opened ?? 0}</span>
+                <span className="font-mono font-bold text-white">{productUsage?.summaries?.opened ?? 0}</span>
               </div>
               <div className="text-[11px] text-slate-500 pt-1">
                 استعراض خرائط المواد ومذكرات الحفظ
@@ -830,13 +846,13 @@ export function OperationsCockpitDashboard() {
                 <span className="font-bold text-white text-sm">حاسبة المعدل التوجيهي</span>
               </div>
               <span className="px-2 py-0.5 rounded bg-sky-500/10 text-sky-300 font-mono text-xs font-bold">
-                {productUsage?.calculator.used ?? 0} استخدام
+                {productUsage?.calculator?.used ?? 0} استخدام
               </span>
             </div>
             <div className="space-y-1.5 text-xs">
               <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">مرات حساب المعدل (Calculator Used):</span>
-                <span className="font-mono font-bold text-white">{productUsage?.calculator.used ?? 0}</span>
+                <span className="font-mono font-bold text-white">{productUsage?.calculator?.used ?? 0}</span>
               </div>
               <div className="text-[11px] text-slate-500 pt-1">
                 حساب المعدل الموزون والتوجيه الجامعي
@@ -852,22 +868,22 @@ export function OperationsCockpitDashboard() {
                 <span className="font-bold text-white text-sm">أقسام تفاعلية أخرى</span>
               </div>
               <span className="px-2 py-0.5 rounded bg-teal-500/10 text-teal-300 font-mono text-xs font-bold">
-                {productUsage?.other.total ?? 0} حدث
+                {productUsage?.other?.total ?? 0} حدث
               </span>
             </div>
             <div className="space-y-1.5 text-xs">
               <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">التوجيه الجامعي (Orientation):</span>
-                <span className="font-mono font-bold text-white">{productUsage?.other.orientationOpened ?? 0}</span>
+                <span className="font-mono font-bold text-white">{productUsage?.other?.orientationOpened ?? 0}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-800">
                 <span className="text-slate-400">استعراض المواد (Subject Opened):</span>
-                <span className="font-mono font-bold text-white">{productUsage?.other.subjectOpened ?? 0}</span>
+                <span className="font-mono font-bold text-white">{productUsage?.other?.subjectOpened ?? 0}</span>
               </div>
               <div className="flex justify-between py-1">
                 <span className="text-slate-400">تدريبات ومختبر الأخطاء:</span>
                 <span className="font-mono font-bold text-white">
-                  {(productUsage?.other.practiceCompleted ?? 0) + (productUsage?.other.retestCompleted ?? 0)}
+                  {(productUsage?.other?.practiceCompleted ?? 0) + (productUsage?.other?.retestCompleted ?? 0)}
                 </span>
               </div>
             </div>
@@ -930,35 +946,35 @@ export function OperationsCockpitDashboard() {
           <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
             <span className="text-slate-400 block text-[10px]">من زائر إلى تسجيل</span>
             <span className="text-lg font-black font-mono text-white">
-              {conversion?.ratios.visitorToRegistration ?? 0}%
+              {conversion?.ratios?.visitorToRegistration ?? 0}%
             </span>
           </div>
 
           <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
             <span className="text-slate-400 block text-[10px]">من تسجيل إلى تفعيل</span>
             <span className="text-lg font-black font-mono text-cyan-300">
-              {conversion?.ratios.registrationToActivation ?? 0}%
+              {conversion?.ratios?.registrationToActivation ?? 0}%
             </span>
           </div>
 
           <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
             <span className="text-slate-400 block text-[10px]">من تفعيل إلى تجربة</span>
             <span className="text-lg font-black font-mono text-amber-300">
-              {conversion?.ratios.activationToTrial ?? 0}%
+              {conversion?.ratios?.activationToTrial ?? 0}%
             </span>
           </div>
 
           <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
             <span className="text-slate-400 block text-[10px]">من تجربة إلى اشتراك مدفوع</span>
             <span className="text-lg font-black font-mono text-emerald-400">
-              {conversion?.ratios.trialToPaid ?? 0}%
+              {conversion?.ratios?.trialToPaid ?? 0}%
             </span>
           </div>
 
           <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-950/60 to-purple-950/60 border border-indigo-500/40 col-span-2 sm:col-span-1">
             <span className="text-indigo-300 block text-[10px]">التحويل الإجمالي (End-to-End)</span>
             <span className="text-lg font-black font-mono text-indigo-200">
-              {conversion?.ratios.overallConversion ?? 0}%
+              {conversion?.ratios?.overallConversion ?? 0}%
             </span>
           </div>
         </div>
@@ -1039,19 +1055,19 @@ export function OperationsCockpitDashboard() {
               <div className="flex justify-between py-1.5 border-b border-slate-800">
                 <span className="text-slate-300">شحنات منقولة مع ياليدين (In Transit):</span>
                 <span className="font-mono font-bold text-purple-400">
-                  {commerce?.delivery.inTransit ?? 0} طرد
+                  {commerce?.delivery?.inTransit ?? 0} طرد
                 </span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-slate-800">
                 <span className="text-slate-300">طرود تم تسليمها (Delivered):</span>
                 <span className="font-mono font-bold text-emerald-400">
-                  {commerce?.delivery.delivered ?? 0} طرد
+                  {commerce?.delivery?.delivered ?? 0} طرد
                 </span>
               </div>
               <div className="flex justify-between py-1.5">
                 <span className="text-slate-300">قيد التجهيز والشحن:</span>
                 <span className="font-mono font-bold text-amber-400">
-                  {commerce?.delivery.pendingShipment ?? 0} طلب
+                  {commerce?.delivery?.pendingShipment ?? 0} طلب
                 </span>
               </div>
             </div>
@@ -1070,22 +1086,22 @@ export function OperationsCockpitDashboard() {
               <div className="flex justify-between py-1.5 border-b border-slate-800">
                 <span className="text-slate-300">الدفع عند الاستلام (COD):</span>
                 <span className="font-mono font-bold text-white">
-                  {commerce?.payments.codCount ?? 0} طلب (
-                  {(commerce?.payments.codRevenue ?? 0).toLocaleString()} دج)
+                  {commerce?.payments?.codCount ?? 0} طلب (
+                  {(commerce?.payments?.codRevenue ?? 0).toLocaleString()} دج)
                 </span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-slate-800">
                 <span className="text-slate-300">بريدي موب / CCP:</span>
                 <span className="font-mono font-bold text-white">
-                  {commerce?.payments.baridimobCount ?? 0} طلب (
-                  {(commerce?.payments.baridimobRevenue ?? 0).toLocaleString()} دج)
+                  {commerce?.payments?.baridimobCount ?? 0} طلب (
+                  {(commerce?.payments?.baridimobRevenue ?? 0).toLocaleString()} دج)
                 </span>
               </div>
               <div className="flex justify-between py-1.5">
                 <span className="text-slate-300">البطاقة الذهبية / CIB:</span>
                 <span className="font-mono font-bold text-white">
-                  {commerce?.payments.onlineCount ?? 0} طلب (
-                  {(commerce?.payments.onlineRevenue ?? 0).toLocaleString()} دج)
+                  {commerce?.payments?.onlineCount ?? 0} طلب (
+                  {(commerce?.payments?.onlineRevenue ?? 0).toLocaleString()} دج)
                 </span>
               </div>
             </div>
@@ -1099,7 +1115,7 @@ export function OperationsCockpitDashboard() {
                 <span>مخزون بطاقات وباقات شاطر</span>
               </span>
               <span className="text-[10px] text-amber-400 font-bold">
-                {commerce?.inventory.status || "متوفر"}
+                {commerce?.inventory?.status || "متوفر"}
               </span>
             </div>
 
@@ -1107,19 +1123,19 @@ export function OperationsCockpitDashboard() {
               <div className="flex justify-between py-1.5 border-b border-slate-800">
                 <span className="text-slate-300">باقات وبطاقات جاهزة للشحن:</span>
                 <span className="font-mono font-bold text-emerald-400">
-                  {commerce?.inventory.availableStudyPacks ?? 0} باقة
+                  {commerce?.inventory?.availableStudyPacks ?? 0} باقة
                 </span>
               </div>
               <div className="flex justify-between py-1.5 border-b border-slate-800">
                 <span className="text-slate-300">بطاقات محجوزة لطلبات قيد المعالجة:</span>
                 <span className="font-mono font-bold text-white">
-                  {commerce?.inventory.reservedCards ?? 0} بطاقة
+                  {commerce?.inventory?.reservedCards ?? 0} بطاقة
                 </span>
               </div>
               <div className="flex justify-between py-1.5">
                 <span className="text-slate-300">تنبيه انخفاض المخزون:</span>
                 <span className="font-mono font-bold text-slate-400">
-                  {commerce?.inventory.lowStockWarning ? "نعم — يرجى تزويد المخزن" : "لا — المخزون آمن"}
+                  {commerce?.inventory?.lowStockWarning ? "نعم — يرجى تزويد المخزن" : "لا — المخزون آمن"}
                 </span>
               </div>
             </div>
