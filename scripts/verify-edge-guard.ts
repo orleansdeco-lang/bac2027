@@ -248,9 +248,9 @@ async function runEdgeGuardVerification() {
   // -------------------------------------------------------------------
   // 6. Public Route Neutrality
   // -------------------------------------------------------------------
-  console.log("\n[Test Suite 6: Public Route Neutrality]");
+  console.log("\n[Test Suite 6: Public Route Neutrality (Strict Landing Pages)]");
 
-  const publicRoutes = ["/", "/auth", "/auth/login", "/onboarding", "/subscribe", "/landing", "/faq"];
+  const publicRoutes = ["/", "/student", "/parents", "/auth", "/auth/login", "/auth/register", "/landing"];
   for (const p of publicRoutes) {
     const req = createRequest(p);
     const res = middleware(req);
@@ -258,6 +258,91 @@ async function runEdgeGuardVerification() {
     assert(
       res.status === 200 && !res.headers.get("location"),
       `Public route ${p} passes through freely without redirect`
+    );
+  }
+
+  // -------------------------------------------------------------------
+  // 7. Strict Protection of /student/* subroutes, internal pages & APIs
+  // -------------------------------------------------------------------
+  console.log("\n[Test Suite 7: Protection of /student/* Subroutes, Internal Pages & APIs]");
+
+  const unauthenticatedProtectedPages = [
+    { path: "/student/dashboard", name: "Student subroute: /student/dashboard" },
+    { path: "/student/planner", name: "Student subroute: /student/planner" },
+    { path: "/student/error-lab", name: "Student subroute: /student/error-lab" },
+    { path: "/student/arena/quick-recall", name: "Student subroute: /student/arena/quick-recall" },
+    { path: "/diwan", name: "Diwan without invite" },
+    { path: "/diwan?invite=vip123", name: "Diwan WITH invite param (strictly protected)" },
+    { path: "/planner", name: "Planner" },
+    { path: "/exams", name: "Exams repository" },
+    { path: "/orientation", name: "Orientation calculator" },
+    { path: "/faq", name: "FAQ page" },
+    { path: "/onboarding", name: "Onboarding flow" },
+    { path: "/subscribe", name: "Subscribe page" },
+  ];
+
+  for (const page of unauthenticatedProtectedPages) {
+    const req = createRequest(page.path);
+    const res = middleware(req);
+    const isRedirect = res.status === 307 || res.status === 302;
+    const location = res.headers.get("location") || "";
+    const redirectUrl = new URL(location, "https://bac-mastery.dz");
+
+    assert(
+      isRedirect,
+      `Unauthenticated access to ${page.name} redirects (Status: ${res.status})`,
+      `Got status ${res.status}`
+    );
+
+    assert(
+      redirectUrl.pathname === "/auth",
+      `Redirect destination is /auth for ${page.name}`,
+      `Got destination ${redirectUrl.pathname}`
+    );
+
+    assert(
+      redirectUrl.searchParams.get("redirectTo") === page.path,
+      `Preserves exact redirectTo parameter for ${page.name}`,
+      `Expected ${page.path}, got ${redirectUrl.searchParams.get("redirectTo")}`
+    );
+  }
+
+  // API Route Protection
+  {
+    const req = createRequest("/api/planner");
+    const res = middleware(req);
+    assert(
+      res.status === 401,
+      "Unauthenticated request to protected API /api/planner returns 401 Unauthorized",
+      `Got status ${res.status}`
+    );
+  }
+
+  {
+    const req = createRequest("/api/diwan/tables");
+    const res = middleware(req);
+    assert(
+      res.status === 401,
+      "Unauthenticated request to protected API /api/diwan/tables returns 401 Unauthorized",
+      `Got status ${res.status}`
+    );
+  }
+
+  {
+    const req = createRequest("/api/auth/check-phone?phone=0555123456");
+    const res = middleware(req);
+    assert(
+      res.status === 200 && !res.headers.get("location"),
+      "Public signup API /api/auth/check-phone passes through without interception"
+    );
+  }
+
+  {
+    const req = createRequest("/api/subscriptions/plans");
+    const res = middleware(req);
+    assert(
+      res.status === 200 && !res.headers.get("location"),
+      "Public pricing API /api/subscriptions/plans passes through without interception"
     );
   }
 

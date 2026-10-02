@@ -97,7 +97,7 @@ export function StudentsLandingView() {
   const trialDays = LANDING_CONFIG.trialDurationDays;
 
   // WhatsApp share to parents text
-  const shareMessage = `السلام عليكم، لقيت هاد المنصة الجزائرية للباك (الشاطر) فيها تنظيم هايل ومجالس تركيز ومستكشف التوجيه وتجربة مجانية 7 أيام بدون دفع. شوفو تفاصيل الأولياء هنا: https://shater-bac.dz/parents`;
+  const shareMessage = `السلام عليكم، لقيت هاد المنصة الجزائرية للباك (الشاطر) فيها تنظيم هايل ومجالس تركيز ومستكشف التوجيه وتجربة مجانية 3 أيام بدون دفع. شوفو تفاصيل الأولياء هنا: https://shater-bac.dz/parents`;
   const whatsappShareUrl = `https://wa.me/?text=${encodeURIComponent(shareMessage)}`;
 
   return (
@@ -139,7 +139,7 @@ export function StudentsLandingView() {
                       className="w-full sm:w-auto font-black px-8 py-4 rounded-2xl bg-[#5F8F86] hover:bg-[#527D75] text-white text-sm shadow-lg shadow-[#5F8F86]/20 cursor-pointer hover:scale-[1.02] transition-all"
                     >
                       <Sparkles className="w-4 h-4 text-white" />
-                      <span>ابدأ مجاناً (7 أيام • 0 دج)</span>
+                      <span>ابدأ تجربتك المجانية لمدة 3 أيام</span>
                       <ArrowLeft className="w-4 h-4" />
                     </Button>
                   </Link>
@@ -404,7 +404,7 @@ export function StudentsLandingView() {
                   size="md"
                   className="font-black px-8 py-4 rounded-2xl bg-[#5F8F86] hover:bg-[#527D75] text-white text-xs shadow-md shadow-[#5F8F86]/20 cursor-pointer"
                 >
-                  <span>جرّب المنظومة مجاناً لـ 7 أيام</span>
+                  <span>جرّب المنظومة مجاناً لمدة 3 أيام</span>
                   <ArrowLeft className="w-4 h-4 ms-2" />
                 </Button>
               </Link>
@@ -461,20 +461,20 @@ export function StudentsLandingView() {
             </div>
 
             <div className="pt-4 flex items-center justify-center gap-4 text-xs text-[#475569]">
-              <Link href="/orientation" className="text-[#5F8F86] hover:underline font-bold">
-                مستكشف التوجيه
+              <Link href={signupUrl} className="text-[#5F8F86] hover:underline font-bold">
+                ابدأ تجربتك المجانية لمدة 3 أيام
               </Link>
               <span>•</span>
-              <Link href="/diwan" className="text-[#8C5D23] hover:underline font-bold">
-                ديوان العلم
-              </Link>
-              <span>•</span>
-              <Link href="/exams" className="hover:text-[#0F172A]">
-                بنك البكالوريات
+              <Link href="/auth?mode=login" className="hover:text-[#0F172A] font-bold">
+                تسجيل الدخول
               </Link>
               <span>•</span>
               <Link href="/parents" className="hover:text-[#0F172A]">
-                صفحة الأولياء
+                دليل الأولياء
+              </Link>
+              <span>•</span>
+              <Link href="/" className="hover:text-[#0F172A]">
+                الرئيسية
               </Link>
             </div>
 

@@ -131,7 +131,7 @@ export function TopBar() {
     ? (isAr ? streamLabels[activeStream].ar : streamLabels[activeStream].fr)
     : null;
 
-  // 7-Day (168-Hour) Server-Anchored Trial Calculation
+  // 3-Day (72-Hour) Server-Anchored Trial Calculation
   const trialExpiresAt = studentProfile?.trialExpiresAt;
   const trialRemainingHours = trialExpiresAt
     ? Math.max(0, Math.ceil((new Date(trialExpiresAt).getTime() - Date.now()) / (3600 * 1000)))
@@ -147,7 +147,12 @@ export function TopBar() {
   const countdownText = trialRemainingHours !== null ? formatTrialCountdown(trialRemainingHours, isAr) : "";
   const expiryDateText = trialExpiresAt ? formatTrialExpiryDate(trialExpiresAt, isAr) : "";
 
-  const isLandingPage = pathname === "/" || pathname === "/landing";
+  const isLandingPage =
+    pathname === "/" ||
+    pathname === "/landing" ||
+    pathname === "/student" ||
+    pathname === "/students" ||
+    pathname === "/parents";
 
   return (
     <header className="sticky top-0 z-40 border-b border-theme bg-surface/95 backdrop-blur-md transition-colors duration-200">
@@ -180,7 +185,7 @@ export function TopBar() {
             </Badge>
           )}
 
-          {/* 7-Day Trial Countdown Indicator */}
+          {/* 3-Day Trial Countdown Indicator */}
           {isTrialActive && (
             <div
               title={
@@ -198,7 +203,7 @@ export function TopBar() {
 
           {isTrialExpired && (
             <div
-              title={isAr ? "انتهت الفترة التجريبية (7 أيام)" : "Période d'essai (7 jours) expirée"}
+              title={isAr ? "انتهت الفترة التجريبية (3 أيام)" : "Période d'essai (3 jours) expirée"}
               className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[var(--color-warning-soft)] border border-[var(--color-warning)]/30 text-[var(--color-warning)] text-[10px] sm:text-xs font-mono font-bold whitespace-nowrap"
             >
               <AlertTriangle className="w-3 h-3 shrink-0" />
@@ -209,46 +214,54 @@ export function TopBar() {
 
         {/* Center Desktop: Landing Navigation Links or Search Pill */}
         {isLandingPage ? (
-          <nav className="hidden lg:flex items-center gap-6 xl:gap-8 mx-auto">
+          <nav className="hidden lg:flex items-center gap-5 xl:gap-7 mx-auto">
             <Link
-              href="#two-modes"
-              className="text-xs font-bold text-theme-secondary hover:text-[var(--color-primary)] transition-colors"
+              href="/student"
+              className={`text-xs font-bold transition-colors ${
+                pathname === "/student" || pathname === "/students"
+                  ? "text-[var(--color-primary)] font-extrabold"
+                  : "text-theme-secondary hover:text-[var(--color-primary)]"
+              }`}
             >
-              {isAr ? "طريقتان للتعلم" : "Deux modes"}
+              {isAr ? "فضاء الطالب 🎓" : "Espace Élève 🎓"}
             </Link>
             <Link
-              href="#what-is-shater"
-              className="text-xs font-bold text-theme-secondary hover:text-[var(--color-primary)] transition-colors"
+              href="/parents"
+              className={`text-xs font-bold transition-colors ${
+                pathname === "/parents"
+                  ? "text-[var(--color-primary)] font-extrabold"
+                  : "text-theme-secondary hover:text-[var(--color-primary)]"
+              }`}
             >
-              {isAr ? "واش معناها شاطر؟" : "L'Esprit SHATER"}
+              {isAr ? "فضاء الأولياء 👨‍👩‍👧" : "Espace Parents 👨‍👩‍👧"}
             </Link>
             <Link
-              href="#how-it-works"
+              href="/#how-it-works"
               className="text-xs font-bold text-theme-secondary hover:text-[var(--color-primary)] transition-colors"
             >
               {isAr ? "المنظومة العملية" : "Comment ça marche ?"}
             </Link>
             <Link
-              href="/curriculum"
-              className="text-xs font-bold text-theme-secondary hover:text-[var(--color-primary)] transition-colors flex items-center gap-1.5"
+              href="/#pricing-section"
+              className="text-xs font-bold text-theme-secondary hover:text-[var(--color-primary)] transition-colors"
             >
-              <span>{isAr ? "المكتبة الحرة" : "Bibliothèque"}</span>
+              {isAr ? "الاشتراكات والأسعار" : "Tarifs"}
             </Link>
-            <button
-              type="button"
-              onClick={() => setIsSearchOpen(true)}
-              className="text-xs font-bold text-theme-secondary hover:text-[var(--color-primary)] transition-colors flex items-center gap-1.5 cursor-pointer"
-            >
-              <Search className="w-3.5 h-3.5" />
-              <span>{isAr ? "البحث" : "Recherche"}</span>
-            </button>
             <Link
-              href="/diwan"
-              className="text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 shadow-xs"
+              href="/#faq-section"
+              className="text-xs font-bold text-theme-secondary hover:text-[var(--color-primary)] transition-colors"
             >
-              <Landmark className="w-3.5 h-3.5 text-blue-400" />
-              <span>{isAr ? "ديوان العلم 🏛️" : "Diwan 🏛️"}</span>
+              {isAr ? "الأسئلة الشائعة" : "FAQ"}
             </Link>
+            {user && (
+              <Link
+                href="/diwan"
+                className="text-xs font-bold text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 shadow-xs"
+              >
+                <Landmark className="w-3.5 h-3.5 text-blue-400" />
+                <span>{isAr ? "ديوان العلم 🏛️" : "Diwan 🏛️"}</span>
+              </Link>
+            )}
           </nav>
         ) : (
           <div className="hidden md:flex items-center flex-1 max-w-sm lg:max-w-md xl:max-w-lg 3xl:max-w-xl mx-3 lg:mx-6 min-w-0">
@@ -275,19 +288,21 @@ export function TopBar() {
           {/* Active MiniTimer if Focus Session is Running */}
           {isSessionActive && <MiniTimer />}
 
-          {/* Prominent Unified Diwan Navigation Button */}
-          <Link
-            href="/diwan"
-            className={`hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all border shadow-sm ${
-              pathname?.startsWith("/diwan")
-                ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-400 shadow-blue-500/25 ring-2 ring-blue-500/30"
-                : "bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 border-blue-500/30 hover:border-blue-400/50"
-            }`}
-            title={isAr ? "ديوان العلم ومجالس المذاكرة" : "Diwan Al-Ilm 🏛️"}
-          >
-            <Landmark className="w-4 h-4 text-blue-400 shrink-0" />
-            <span>{isAr ? "ديوان العلم 🏛️" : "Diwan Al-Ilm 🏛️"}</span>
-          </Link>
+          {/* Prominent Unified Diwan Navigation Button (Only for Logged-In Users) */}
+          {user && (
+            <Link
+              href="/diwan"
+              className={`hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all border shadow-sm ${
+                pathname?.startsWith("/diwan")
+                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-blue-400 shadow-blue-500/25 ring-2 ring-blue-500/30"
+                  : "bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 hover:text-blue-300 border-blue-500/30 hover:border-blue-400/50"
+              }`}
+              title={isAr ? "ديوان العلم ومجالس المذاكرة" : "Diwan Al-Ilm 🏛️"}
+            >
+              <Landmark className="w-4 h-4 text-blue-400 shrink-0" />
+              <span>{isAr ? "ديوان العلم 🏛️" : "Diwan Al-Ilm 🏛️"}</span>
+            </Link>
+          )}
 
           {/* Desktop CTA Buttons */}
           {!user ? (
@@ -303,7 +318,7 @@ export function TopBar() {
                 className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-[var(--color-primary)] hover:bg-[var(--color-primary-hover)] text-white text-xs font-bold rounded-xl shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
               >
                 <UserPlus className="w-3.5 h-3.5" />
-                <span>{isAr ? "ابدأ الآن" : "Démarrer"}</span>
+                <span>{isAr ? "ابدأ تجربتك المجانية (3 أيام)" : "Essai Gratuit 3 Jours"}</span>
               </Link>
             </div>
           ) : (
@@ -318,42 +333,50 @@ export function TopBar() {
 
           {/* Mobile Quick Action Buttons */}
           <div className="flex md:hidden items-center gap-1.5">
-            {/* Direct Mobile Diwan Button */}
-            <Link
-              href="/diwan"
-              aria-label={isAr ? "ديوان العلم" : "Diwan"}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold transition-all border ${
-                pathname?.startsWith("/diwan")
-                  ? "bg-blue-600 text-white border-blue-400 shadow-xs"
-                  : "text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30"
-              }`}
-              title={isAr ? "ديوان العلم ومجالس المذاكرة" : "Diwan Al-Ilm 🏛️"}
-            >
-              <Landmark className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-              <span className="text-[11px] whitespace-nowrap">{isAr ? "ديوان العلم 🏛️" : "Diwan 🏛️"}</span>
-            </Link>
-
-            {!hasAccount ? (
-              <Link
-                href="/auth/register"
-                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold bg-[var(--color-primary)] text-white rounded-lg shadow-sm transition-all"
-              >
-                <UserPlus className="w-3.5 h-3.5" />
-                <span>{isAr ? "ابدأ" : "Démarrer"}</span>
-              </Link>
-            ) : null}
-
-            <Link
-              href="/account"
-              aria-label={isAr ? "حسابي" : "Mon compte"}
-              className={`p-1.5 rounded-lg border border-theme transition-colors ${
-                pathname === "/account"
-                  ? "bg-[var(--color-primary-muted)] text-[var(--color-primary)] border-[var(--color-primary)]/30"
-                  : "bg-card text-theme-secondary hover:text-theme-text"
-              }`}
-            >
-              <User className="w-4 h-4" />
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  href="/diwan"
+                  aria-label={isAr ? "ديوان العلم" : "Diwan"}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold transition-all border ${
+                    pathname?.startsWith("/diwan")
+                      ? "bg-blue-600 text-white border-blue-400 shadow-xs"
+                      : "text-blue-400 hover:text-blue-300 bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/30"
+                  }`}
+                  title={isAr ? "ديوان العلم ومجالس المذاكرة" : "Diwan Al-Ilm 🏛️"}
+                >
+                  <Landmark className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                  <span className="text-[11px] whitespace-nowrap">{isAr ? "ديوان العلم 🏛️" : "Diwan 🏛️"}</span>
+                </Link>
+                <Link
+                  href="/account"
+                  aria-label={isAr ? "حسابي" : "Mon compte"}
+                  className={`p-1.5 rounded-lg border border-theme transition-colors ${
+                    pathname === "/account"
+                      ? "bg-[var(--color-primary-muted)] text-[var(--color-primary)] border-[var(--color-primary)]/30"
+                      : "bg-card text-theme-secondary hover:text-theme-text"
+                  }`}
+                >
+                  <User className="w-4 h-4" />
+                </Link>
+              </>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <Link
+                  href="/auth"
+                  className="px-2.5 py-1 text-xs font-semibold text-theme-secondary hover:text-theme-text"
+                >
+                  <span>{isAr ? "دخول" : "Connexion"}</span>
+                </Link>
+                <Link
+                  href="/auth/register"
+                  className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold bg-[var(--color-primary)] text-white rounded-lg shadow-sm transition-all"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>{isAr ? "ابدأ" : "Démarrer"}</span>
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Notification Indicator */}
@@ -398,7 +421,7 @@ export function TopBar() {
                       )}
                       {isTrialActive && (
                         <span className="text-[10px] text-emerald-400 font-mono font-semibold">
-                          · {isAr ? `تجربة مجانية (7 أيام): متبقي ${trialRemainingHours} سا` : `Essai 7j: ${trialRemainingHours}h`}
+                          · {isAr ? `تجربة مجانية (3 أيام): متبقي ${trialRemainingHours} سا` : `Essai 3j: ${trialRemainingHours}h`}
                         </span>
                       )}
                       {isTrialExpired && (
@@ -435,7 +458,7 @@ export function TopBar() {
                     className="flex items-center justify-center gap-1.5 py-2 px-3 bg-[var(--color-primary)] text-white text-xs font-bold rounded-xl shadow-sm"
                   >
                     <UserPlus className="w-3.5 h-3.5" />
-                    <span>{isAr ? "ابدأ الآن" : "Démarrer"}</span>
+                    <span>{isAr ? "ابدأ تجربتك (3 أيام)" : "Démarrer (3j)"}</span>
                   </Link>
                   <Link
                     href="/auth"
@@ -454,63 +477,66 @@ export function TopBar() {
           {isLandingPage && (
             <div className="space-y-1 py-1 border-b border-theme/60">
               <Link
-                href="#two-modes"
+                href="/student"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block p-2 text-xs font-bold text-theme-text hover:bg-card rounded-lg transition-colors"
               >
-                {isAr ? "← طريقتان للتعلم" : "Deux modes"}
+                {isAr ? "← فضاء الطالب 🎓" : "← Espace Élève 🎓"}
               </Link>
               <Link
-                href="#what-is-shater"
+                href="/parents"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block p-2 text-xs font-bold text-theme-text hover:bg-card rounded-lg transition-colors"
               >
-                {isAr ? "← واش معناها شاطر؟" : "L'Esprit SHATER"}
+                {isAr ? "← فضاء الأولياء 👨‍👩‍👧" : "← Espace Parents 👨‍👩‍👧"}
               </Link>
               <Link
-                href="#how-it-works"
+                href="/#how-it-works"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="block p-2 text-xs font-bold text-theme-text hover:bg-card rounded-lg transition-colors"
               >
-                {isAr ? "← المنظومة العملية" : "Comment ça marche ?"}
+                {isAr ? "← المنظومة العملية" : "← Comment ça marche ?"}
               </Link>
               <Link
-                href="/curriculum"
+                href="/#pricing-section"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="block p-2 text-xs font-bold text-[var(--color-primary)] hover:bg-card rounded-lg transition-colors"
+                className="block p-2 text-xs font-bold text-theme-text hover:bg-card rounded-lg transition-colors"
               >
-                {isAr ? "← المكتبة الحرة" : "Bibliothèque Libre"}
+                {isAr ? "← الاشتراكات والأسعار" : "← Tarifs"}
               </Link>
               <Link
-                href="/orientation"
+                href="/#faq-section"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="block p-2 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:bg-card rounded-lg transition-colors"
+                className="block p-2 text-xs font-bold text-theme-text hover:bg-card rounded-lg transition-colors"
               >
-                {isAr ? "← واش نقدر نقرا؟ (التوجيه الجامعي 🎓)" : "← Orientation Universitaire 🎓"}
+                {isAr ? "← الأسئلة الشائعة" : "← FAQ"}
               </Link>
             </div>
           )}
 
-          {/* Mobile Search Button in Drawer */}
-          <button
-            type="button"
-            onClick={() => {
-              setIsMobileMenuOpen(false);
-              setIsSearchOpen(true);
-            }}
-            className="w-full py-2.5 px-3.5 rounded-2xl bg-card border border-theme hover:border-[var(--color-primary)]/50 text-xs font-medium text-theme-secondary hover:text-theme-text flex items-center justify-between shadow-sm cursor-pointer transition-colors"
-          >
-            <div className="flex items-center gap-2.5">
-              <Search className="w-4 h-4 text-[var(--color-primary)]" />
-              <span>{isAr ? "ابحث عن درس، مادة، أو أداة..." : "Rechercher un cours, outil..."}</span>
-            </div>
-            <span className="text-[10px] font-mono text-theme-muted bg-surface px-1.5 py-0.5 rounded border border-theme">
-              {isAr ? "بحث" : "Chercher"}
-            </span>
-          </button>
+          {/* Mobile Search Button in Drawer (Only for Authenticated Users) */}
+          {user && (
+            <button
+              type="button"
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setIsSearchOpen(true);
+              }}
+              className="w-full py-2.5 px-3.5 rounded-2xl bg-card border border-theme hover:border-[var(--color-primary)]/50 text-xs font-medium text-theme-secondary hover:text-theme-text flex items-center justify-between shadow-sm cursor-pointer transition-colors"
+            >
+              <div className="flex items-center gap-2.5">
+                <Search className="w-4 h-4 text-[var(--color-primary)]" />
+                <span>{isAr ? "ابحث عن درس، مادة، أو أداة..." : "Rechercher un cours, outil..."}</span>
+              </div>
+              <span className="text-[10px] font-mono text-theme-muted bg-surface px-1.5 py-0.5 rounded border border-theme">
+                {isAr ? "بحث" : "Chercher"}
+              </span>
+            </button>
+          )}
 
-          {/* Primary Navigation Links Grid */}
-          <div className="grid grid-cols-2 gap-2">
+          {/* Primary Navigation Links Grid (Only for Authenticated Users) */}
+          {user && (
+            <div className="grid grid-cols-2 gap-2">
             <Link
               href="/auth/register"
               onClick={() => setIsMobileMenuOpen(false)}
@@ -601,6 +627,7 @@ export function TopBar() {
               <span>{isAr ? "وضع الامتحان" : "Mode Examen"}</span>
             </Link>
           </div>
+        )}
 
           {/* Mobile Drawer Footer: Language Switcher hidden until translation is ready */}
           {/* <div className="pt-2 border-t border-theme flex items-center justify-between">

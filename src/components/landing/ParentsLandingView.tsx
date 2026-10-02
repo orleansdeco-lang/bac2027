@@ -31,7 +31,7 @@ import {
 const PARENT_FAQS = [
   {
     q: "هل أحتاج لإدخال بطاقتي البنكية لبدء التجربة المجانية لابني؟",
-    a: "إطلاقاً. يبدأ ابنكم أو ابنتكم تجربة مجانية كاملة لمدة 7 أيام بمجرد إنشاء الحساب (0 دج)، دون الحاجة لإدخال أي بطاقة دفع أو أي التزام مالي.",
+    a: "إطلاقاً. يبدأ ابنكم أو ابنتكم تجربة مجانية كاملة لمدة 3 أيام بمجرد إنشاء الحساب (0 دج)، دون الحاجة لإدخال أي بطاقة دفع أو أي التزام مالي.",
   },
   {
     q: "كيف أضمن أن ابني يدرس بجدية ولا يضيع وقته داخل المنصة؟",
@@ -57,7 +57,7 @@ export function ParentsLandingView() {
   const trialDays = LANDING_CONFIG.trialDurationDays;
 
   // WhatsApp share to student
-  const studentShareMessage = `السلام عليكم ولدي/بنتي، شوفي هاد المنصة الجزائرية للباك (الشاطر) فيها تنظيم هايل ومجالس تركيز وتجربة مجانية 7 أيام بدون دفع، سجّل وجرّبها من هنا: https://shater-bac.dz/students`;
+  const studentShareMessage = `السلام عليكم ولدي/بنتي، شوفي هاد المنصة الجزائرية للباك (الشاطر) فيها تنظيم هايل ومجالس تركيز وتجربة مجانية 3 أيام بدون دفع، سجّل وجرّبها من هنا: https://shater-bac.dz/student`;
   const whatsappStudentUrl = `https://wa.me/?text=${encodeURIComponent(studentShareMessage)}`;
 
   // Direct WhatsApp contact for parent
@@ -407,7 +407,7 @@ export function ParentsLandingView() {
                 <span>الدفع عند الاستلام لـ 58 ولاية</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-[#0F172A]">
-                ابدأوا الآن بمنح ابنكم أسبوعاً كاملاً مجاناً
+                ابدأوا الآن بمنح ابنكم تجربة 3 أيام مجانية كاملة
               </h2>
               <p className="text-xs sm:text-sm text-[#475569]">
                 دعوه يجرب المنظومة أولاً، وإذا أعجبته النتيجة نرسل لكم ظرف الاشتراك لباب منزلكم.
