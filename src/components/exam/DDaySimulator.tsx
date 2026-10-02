@@ -27,6 +27,7 @@ import {
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { trackProductEvent } from "@/lib/analytics";
 
 export function getOfficialExamDurationMinutes(streamId: StreamId, subjectId: SubjectId): number {
   if (subjectId === "natural_sciences") {
@@ -165,13 +166,19 @@ export const DDaySimulator: React.FC<Props> = ({
         if (prev <= 1) {
           setIsTimerRunning(false);
           setIsExamCompleted(true);
+          trackProductEvent("exam_completed", {
+            stream: streamId,
+            subject: activeSubject,
+            topic: confirmedTopic || 1,
+            completed_by: "timer_expiration",
+          });
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [isTimerRunning, timeLeftSeconds]);
+  }, [isTimerRunning, timeLeftSeconds, streamId, activeSubject, confirmedTopic]);
 
   const formatTimer = (totalSecs: number) => {
     const hours = Math.floor(totalSecs / 3600);
@@ -185,6 +192,12 @@ export const DDaySimulator: React.FC<Props> = ({
     setSelectedTopic(topicNum);
     setIsTimerRunning(true);
     setIsExamCompleted(false);
+    trackProductEvent("exam_started", {
+      stream: streamId,
+      subject: activeSubject,
+      topic: topicNum,
+      duration_minutes: currentExamDetails.exam.durationMinutes,
+    });
   };
 
   const handleResetExam = () => {
@@ -600,6 +613,12 @@ export const DDaySimulator: React.FC<Props> = ({
                 onClick={() => {
                   setIsTimerRunning(false);
                   setIsExamCompleted(true);
+                  trackProductEvent("exam_completed", {
+                    stream: streamId,
+                    subject: activeSubject,
+                    topic: confirmedTopic || 1,
+                    completed_by: "student_submission",
+                  });
                   alert("أحسنت! تم تسجيل انتهاء جلسة الامتحان التجريبي. راجع سلم التنقيط بعناية لتقييم علامتك.");
                 }}
                 className="py-2.5 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow-md transition-all cursor-pointer"

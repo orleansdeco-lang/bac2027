@@ -2,8 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useAuth } from "@/lib/auth/context";
-import { UserEntitlements, UserPlan, FeatureKey, DailyAiQuota } from "./types";
-import { FREE_DAILY_AI_QUOTA } from "./entitlements";
+import { UserEntitlements, UserPlan, FeatureKey, DailyAiQuota, FREE_DAILY_AI_QUOTA } from "./types";
 
 const DEFAULT_FREE_ENTITLEMENTS: UserEntitlements = {
   userId: "guest",

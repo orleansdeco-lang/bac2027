@@ -3,6 +3,7 @@ import { extractAuthenticatedUserId, isServerOperator } from "@/lib/operations/a
 import { getAdminClient } from "@/lib/supabase/admin";
 import { createAuthenticatedSupabaseClient, isSupabaseConfigured, supabase } from "@/lib/supabase/client";
 import { fetchAuthoritativeStudentProfile, saveServerStudentProfile } from "@/lib/operations/students";
+import { recordAuthoritativeBusinessEvent } from "@/lib/operations/telemetry";
 
 export const dynamic = "force-dynamic";
 
@@ -112,6 +113,17 @@ export async function POST(req: Request) {
       rejectionReason = latestOrder.rejection_reason || "تم رفض وصل التحويل";
     } else if (isTrialExpired) {
       effectiveAccessStatus = "EXPIRED";
+      if (existingProfile?.access_status === "PAID") {
+        recordAuthoritativeBusinessEvent({
+          eventName: "subscription_expired",
+          userId: targetStudentId,
+          metadata: {
+            previous_plan: effectivePlan,
+            expired_at: subExpiresAt,
+          },
+          pagePath: "/api/student/sync",
+        }).catch((e) => console.warn("[Sync] subscription_expired event error:", e));
+      }
     } else {
       effectiveAccessStatus = "TRIAL";
     }

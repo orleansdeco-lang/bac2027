@@ -19,6 +19,7 @@ import { getAdminClient } from "../supabase/admin";
 import { getSubscriptionPlanById } from "./subscriptions";
 import { qualifyReferralOnSubscription } from "../referral";
 import { createVoucher } from "./vouchers";
+import { recordAuthoritativeBusinessEvent } from "./telemetry";
 
 export const AUTHORITATIVE_PLANS: Record<string, AuthoritativePlan> = {
   season: {
@@ -476,6 +477,23 @@ export async function approvePaymentOrder(
 
     // 2. Fetch authoritative updated order from PostgreSQL
     const updated = await getPaymentOrderById(cleanId, token);
+
+    // 3. Authoritatively record payment_confirmed telemetry event
+    if (updated) {
+      recordAuthoritativeBusinessEvent({
+        eventName: "payment_confirmed",
+        userId: updated.userId,
+        metadata: {
+          order_id: updated.id,
+          plan: updated.plan,
+          amount: updated.amount,
+          payment_method: updated.paymentMethod,
+          operator_id: operatorId,
+        },
+        pagePath: "/ops/orders",
+      }).catch((e) => console.warn("[Payments] Failed to record payment_confirmed telemetry:", e));
+    }
+
     return {
       success: true,
       order: updated || undefined,

@@ -25,6 +25,7 @@ import {
   Package,
   Layers,
   BarChart3,
+  Filter,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/context";
 
@@ -53,6 +54,7 @@ const navGroups: NavGroup[] = [
     items: [
       { href: "/ops/students", label: "دليل التلاميذ CRM", icon: Users },
       { href: "/ops/visitors", label: "الزوار وتتبع الإعلانات", icon: BarChart3, badge: "LIVE" },
+      { href: "/ops/funnel", label: "مسار التحويل والاكتساب", icon: Filter, badge: "FUNNEL" },
       { href: "/ops/learning", label: "إحصائيات التعلم الأكاديمي", icon: GraduationCap },
       { href: "/ops/exams", label: "بنك الامتحانات والمواضيع", icon: FileCheck },
     ],

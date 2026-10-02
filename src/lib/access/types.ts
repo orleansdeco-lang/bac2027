@@ -19,6 +19,8 @@ export type FeatureKey =
   | "ANALYTICS_PRO"
   | "CAMPUS_COMMUNITY";
 
+export const FREE_DAILY_AI_QUOTA = 5;
+
 export interface DailyAiQuota {
   used: number;
   total: number;

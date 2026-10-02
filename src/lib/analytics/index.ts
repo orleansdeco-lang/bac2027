@@ -371,3 +371,14 @@ export function exportAnonymizedPilotData(): AnonymizedPilotExport {
   };
 }
 
+// Re-export controlled taxonomy and first-party product tracker
+export {
+  SHATER_CONTROLLED_EVENTS,
+  type ShaterControlledEventName,
+} from "./taxonomy";
+
+export {
+  trackProductEvent,
+  sendAnalyticsEvent,
+} from "./tracker";
+

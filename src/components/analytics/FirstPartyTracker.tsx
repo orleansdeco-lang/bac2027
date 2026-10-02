@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { sendVisitorHit } from "@/lib/analytics/tracker";
+import { sendVisitorHit, trackProductEvent } from "@/lib/analytics/tracker";
 import { useAuth } from "@/lib/auth/context";
 
 function FirstPartyTrackerInner() {
@@ -24,6 +24,12 @@ function FirstPartyTrackerInner() {
       userId: user?.id || null,
       isHeartbeat: false,
     });
+
+    // Controlled First-Party Acquisition Event: page_view
+    trackProductEvent("page_view", {
+      path: pathname,
+      title: typeof document !== "undefined" ? document.title : "",
+    });
   }, [pathname, searchParams, user?.id]);
 
   // Active session heartbeat every 45 seconds (5-min inactivity window)
@@ -35,6 +41,12 @@ function FirstPartyTrackerInner() {
         search: searchParams?.toString() || "",
         userId: user?.id || null,
         isHeartbeat: true,
+      });
+
+      // Controlled First-Party Engagement Event: session_activity
+      trackProductEvent("session_activity", {
+        path: pathname,
+        interval_seconds: 45,
       });
     }, 45000);
 

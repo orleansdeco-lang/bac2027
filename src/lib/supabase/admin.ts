@@ -9,21 +9,21 @@
 
 import { createClient } from "@supabase/supabase-js";
 
-if (typeof window !== "undefined") {
-  throw new Error("SECURITY VIOLATION: Admin Supabase client cannot be executed in browser context.");
-}
-
 const DEFAULT_SUPABASE_URL = "https://erbvmpnxufgeinqnshzu.supabase.co";
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const serviceRoleKey = typeof window === "undefined" ? (process.env.SUPABASE_SERVICE_ROLE_KEY || "") : "";
 
-export const isServiceRoleConfigured = Boolean(serviceRoleKey && serviceRoleKey.length > 20);
+export const isServiceRoleConfigured = Boolean(typeof window === "undefined" && serviceRoleKey && serviceRoleKey.length > 20);
 
 /**
  * Returns a privileged Supabase client powered by the service_role secret key.
  * Bypasses RLS policies and executes authoritative platform operations.
  */
 export function getAdminClient() {
+  if (typeof window !== "undefined") {
+    throw new Error("SECURITY VIOLATION: Admin Supabase client cannot be executed in browser context.");
+  }
+
   if (!serviceRoleKey) {
     return null;
   }

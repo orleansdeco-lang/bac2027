@@ -38,6 +38,7 @@ import {
   PostponeModal,
 } from "@/components/planner";
 import { RefreshCw, AlertCircle, BookOpen, Calendar, Clock } from "lucide-react";
+import { trackProductEvent } from "@/lib/analytics";
 
 export default function PlannerPage() {
   const { user } = useAuth();
@@ -45,6 +46,10 @@ export default function PlannerPage() {
   const { locale } = useTranslation();
   const { startSession, openFocusMode } = useFocus();
   const isGirls = theme === "girls";
+
+  useEffect(() => {
+    trackProductEvent("planner_opened", {});
+  }, []);
 
   const todayIso = useMemo(() => getAlgeriaDateString(), []);
 

@@ -24,6 +24,7 @@ import { StreamId, SubjectId } from "@/types/education";
 import { useLearningAccessGate, useUserProgress } from "@/lib/hooks";
 import { useAuth } from "@/lib/auth/hooks";
 import { normalizeStreamIdWithDefault } from "@/lib/curriculum/filter";
+import { trackProductEvent } from "@/lib/analytics";
 import {
   BookOpen,
   CheckCircle2,
@@ -131,6 +132,16 @@ export default function FreeRoamCurriculumPage() {
       setSelectedStream(normalizeStreamIdWithDefault(gate.profile.streamId, "sciences_exp"));
     }
   }, [gate.profile?.streamId]);
+
+  // Track subject_opened when user selects a specific subject
+  useEffect(() => {
+    if (selectedSubject && selectedSubject !== "all") {
+      trackProductEvent("subject_opened", {
+        subject: selectedSubject,
+        stream: selectedStream,
+      });
+    }
+  }, [selectedSubject, selectedStream]);
 
   // Fetch authentic pedagogical evidence summary for the active stream
   useEffect(() => {
@@ -425,7 +436,13 @@ export default function FreeRoamCurriculumPage() {
             onSearchChange={(q) => setSearchQuery(q)}
             items={displayItems}
             userSkills={userSkills}
-            onOpenLesson={(skillId) => setActiveModalSkillId(skillId)}
+            onOpenLesson={(skillId) => {
+              setActiveModalSkillId(skillId);
+              trackProductEvent("summary_opened", {
+                skill_id: skillId,
+                stream: selectedStream,
+              });
+            }}
             onToggleMastery={async (skillId, streamId, subjectId) => {
               await markSkillMastered(skillId, streamId, subjectId);
             }}

@@ -14,6 +14,7 @@ import { DiwanTableView } from "@/components/diwan/DiwanTableView";
 import { DiwanSharedSummariesTab } from "@/components/diwan/DiwanSharedSummariesTab";
 import { ExperiencesView } from "@/components/experiences/ExperiencesView";
 import { CreateTableModal } from "@/components/diwan/CreateTableModal";
+import { trackProductEvent } from "@/lib/analytics";
 
 function DiwanMainContent() {
   const searchParams = useSearchParams();
@@ -21,6 +22,11 @@ function DiwanMainContent() {
   const { user } = useAuth();
 
   const queryTableId = searchParams?.get("table") || searchParams?.get("roomId");
+
+  // Track diwan_opened on mount
+  useEffect(() => {
+    trackProductEvent("diwan_opened", {});
+  }, []);
 
   // Multi-tab isolation: unique persistent ID per browser session/tab
   const [clientId, setClientId] = useState<string>("");
@@ -226,6 +232,7 @@ function DiwanMainContent() {
         setIsUserSeated(true);
         const updated = await DiwanService.getMembers(tableId);
         setMembers(updated);
+        trackProductEvent("diwan_table_joined", { table_id: tableId });
       }
     }
   };
@@ -252,6 +259,11 @@ function DiwanMainContent() {
       setIsUserSeated(true);
       const updated = await DiwanService.getMembers(activeTable.id);
       setMembers(updated);
+      trackProductEvent("diwan_table_joined", {
+        table_id: activeTable.id,
+        subject: activeTable.subject,
+        stream: activeTable.stream,
+      });
     }
   };
 
@@ -301,6 +313,15 @@ function DiwanMainContent() {
     const created = await DiwanService.createTable({
       ...tableConfig,
       hostUserId: user?.id || currentUserId,
+    });
+
+    trackProductEvent("diwan_table_created", {
+      table_id: created.id,
+      title: tableConfig.title,
+      subject: tableConfig.subject,
+      topic: tableConfig.topic,
+      stream: tableConfig.stream,
+      capacity: tableConfig.capacity,
     });
 
     // Auto join host

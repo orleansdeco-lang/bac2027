@@ -59,6 +59,7 @@ const sessionsStore = globalThis.__BAC_GLOBAL_ANALYTICS_STORE__;
 export function recordVisitorHit(data: {
   sessionId: string;
   anonymousId?: string;
+  visitorId?: string;
   userId?: string | null;
   path: string;
   referrer?: string | null;
@@ -98,30 +99,6 @@ export function recordVisitorHit(data: {
       lastActivityAt: now,
       pageviewsCount: 1,
     });
-  }
-
-  // Also persist to Supabase `analytics_sessions` if configured
-  if (isSupabaseConfigured && supabase) {
-    try {
-      supabase
-        .from("analytics_sessions")
-        .upsert(
-          {
-            session_id: data.sessionId,
-            anonymous_id: data.anonymousId || `anon_${data.sessionId}`,
-            user_id: data.userId || null,
-            landing_page: data.path,
-            referrer: data.referrer || null,
-            first_utm_source: data.utmSource || null,
-            first_utm_campaign: data.utmCampaign || null,
-            device_type: device,
-            last_activity_at: now,
-            is_active: true,
-          },
-          { onConflict: "session_id", ignoreDuplicates: false }
-        )
-        .then(() => {}, () => {});
-    } catch {}
   }
 }
 

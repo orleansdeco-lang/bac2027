@@ -60,8 +60,8 @@ export const StudentRepository = {
     let dbClient: any = token ? createAuthenticatedSupabaseClient(token) : null;
     if (!dbClient && typeof window === "undefined") {
       try {
-        const { getAdminClient } = require("@/lib/supabase/admin");
-        dbClient = getAdminClient();
+        const adminMod = eval("require")("@/lib/supabase/admin");
+        dbClient = adminMod?.getAdminClient?.();
       } catch {}
     }
     if (!dbClient) {
@@ -288,8 +288,8 @@ export const StudentRepository = {
     let dbClient: any = token ? createAuthenticatedSupabaseClient(token) : null;
     if (!dbClient && typeof window === "undefined") {
       try {
-        const { getAdminClient } = require("@/lib/supabase/admin");
-        dbClient = getAdminClient();
+        const adminMod = eval("require")("@/lib/supabase/admin");
+        dbClient = adminMod?.getAdminClient?.();
       } catch {}
     }
     if (!dbClient) {

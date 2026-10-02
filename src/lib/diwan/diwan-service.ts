@@ -6,7 +6,6 @@
  */
 
 import { supabase, isSupabaseConfigured } from "../supabase/client";
-import { getAdminClient } from "../supabase/admin";
 import {
   DiwanTable,
   DiwanMember,

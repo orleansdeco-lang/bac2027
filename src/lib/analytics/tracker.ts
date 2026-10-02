@@ -9,6 +9,12 @@
  * 5. PII Scrubbing: Zero passwords, tokens, or private secrets in telemetry payload.
  */
 
+import {
+  ShaterControlledEventName,
+  SHATER_CONTROLLED_EVENTS,
+  sanitizeEventMetadata,
+} from "./taxonomy";
+
 export interface UtmAttribution {
   source?: string;
   medium?: string;
@@ -31,25 +37,36 @@ const STORAGE_KEYS = {
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
 
 /**
- * Retrieves or generates a persistent anonymous visitor ID
+ * Retrieves or generates a persistent anonymous visitor ID.
+ * Uses crypto.randomUUID() for cryptographically strong identifiers.
+ * The visitor_id is stored in localStorage and survives across sessions.
  */
 export function getOrCreateAnonymousId(): string {
   if (typeof window === "undefined") return "anon_server";
   try {
-    let anonId = localStorage.getItem(STORAGE_KEYS.ANONYMOUS_ID);
-    if (!anonId) {
-      const rand = Math.random().toString(36).substring(2, 10);
-      anonId = `anon_${Date.now()}_${rand}`;
-      localStorage.setItem(STORAGE_KEYS.ANONYMOUS_ID, anonId);
+    let visitorId = localStorage.getItem(STORAGE_KEYS.ANONYMOUS_ID);
+    if (!visitorId) {
+      // Use crypto.randomUUID() for strong randomness (supported in all modern browsers)
+      if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+        visitorId = `vid_${crypto.randomUUID()}`;
+      } else {
+        // Fallback for very old browsers: use crypto.getRandomValues
+        const array = new Uint8Array(16);
+        crypto.getRandomValues(array);
+        visitorId = `vid_${Array.from(array, b => b.toString(16).padStart(2, "0")).join("")}`;
+      }
+      localStorage.setItem(STORAGE_KEYS.ANONYMOUS_ID, visitorId);
     }
-    return anonId;
+    return visitorId;
   } catch {
     return "anon_ephemeral";
   }
 }
 
 /**
- * Retrieves or creates a session ID based on 30-minute inactivity
+ * Retrieves or creates a session ID based on 30-minute inactivity.
+ * Uses crypto.randomUUID() for session ID generation.
+ * Session stored in sessionStorage (tab-scoped, survives refreshes).
  */
 export function getOrCreateSessionId(): { sessionId: string; isNewSession: boolean } {
   if (typeof window === "undefined") {
@@ -65,8 +82,13 @@ export function getOrCreateSessionId(): { sessionId: string; isNewSession: boole
   let isNewSession = false;
 
   if (isExpired || !sessionId) {
-    const rand = Math.random().toString(36).substring(2, 9);
-    sessionId = `ses_${now}_${rand}`;
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      sessionId = `ses_${crypto.randomUUID()}`;
+    } else {
+      const array = new Uint8Array(8);
+      crypto.getRandomValues(array);
+      sessionId = `ses_${Array.from(array, b => b.toString(16).padStart(2, "0")).join("")}`;
+    }
     sessionStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionId);
     isNewSession = true;
   }
@@ -108,6 +130,21 @@ export function captureAttribution(currentPath: string, search: string): {
   const currentUtm = parseUtmFromSearch(search);
   const referrer = typeof document !== "undefined" ? document.referrer || undefined : undefined;
   const now = new Date().toISOString();
+  
+  // Determine if the referrer is external
+  let isExternalReferrer = false;
+  if (referrer) {
+    try {
+      const refHost = new URL(referrer).hostname;
+      const currentHost = window.location.hostname;
+      if (refHost !== currentHost && !refHost.endsWith("shater.dz")) {
+        isExternalReferrer = true;
+      }
+    } catch {}
+  }
+
+  // A new touchpoint exists if there are UTMs OR an external referrer
+  const hasNewTouchpoint = Boolean(currentUtm || isExternalReferrer);
 
   let firstTouch: UtmAttribution | null = null;
   try {
@@ -118,9 +155,9 @@ export function captureAttribution(currentPath: string, search: string): {
   } catch {}
 
   // If first touch is not recorded yet, record it permanently
-  if (!firstTouch && (currentUtm || referrer)) {
+  if (!firstTouch && hasNewTouchpoint) {
     firstTouch = {
-      ...currentUtm,
+      ...(currentUtm || {}),
       referrer,
       landingPage: currentPath,
       capturedAt: now,
@@ -138,10 +175,10 @@ export function captureAttribution(currentPath: string, search: string): {
     }
   } catch {}
 
-  // Update last touch if new UTM parameters are detected in URL
-  if (currentUtm) {
+  // Update last touch if new external acquisition parameters are detected
+  if (hasNewTouchpoint) {
     lastTouch = {
-      ...currentUtm,
+      ...(currentUtm || {}),
       referrer,
       landingPage: currentPath,
       capturedAt: now,
@@ -232,11 +269,21 @@ export function sendVisitorHit(params: {
   }
 
   const anonymousId = getOrCreateAnonymousId();
-  const { sessionId } = getOrCreateSessionId();
+  const { sessionId, isNewSession } = getOrCreateSessionId();
   const { firstTouch, lastTouch } = captureAttribution(path, search);
   const { deviceType, browser, os } = detectCoarseDevice();
 
+  // If this is an authentically new session, emit session_start
+  if (isNewSession && !isHeartbeat) {
+    sendAnalyticsEvent("session_start", {
+      path,
+      referrer: typeof document !== "undefined" ? document.referrer || undefined : undefined,
+      channel: lastTouch?.source || firstTouch?.source || "direct",
+    });
+  }
+
   const payload = {
+    visitorId: anonymousId, // Canonical visitor identity
     sessionId,
     anonymousId,
     userId,
@@ -277,26 +324,45 @@ export function sendVisitorHit(params: {
 }
 
 /**
- * Sends a granular first-party product or learning event
+ * Sends a granular first-party product, acquisition, or monetization event.
+ * Conforms to the controlled taxonomy and includes complete identity chain:
+ * event_id, visitor_id, session_id, user_id (server-verified), timestamp, page_path, metadata.
  */
 export function sendAnalyticsEvent(
-  eventName: string,
+  eventName: ShaterControlledEventName | string,
   properties: Record<string, any> = {}
 ): void {
   if (typeof window === "undefined") return;
 
-  const anonymousId = getOrCreateAnonymousId();
+  const visitorId = getOrCreateAnonymousId();
   const { sessionId } = getOrCreateSessionId();
-  const eventId = `evt_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+  const pagePath = window.location.pathname;
+  const now = new Date().toISOString();
+  
+  // Crypto-strong event ID
+  let eventId: string;
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    eventId = `evt_${crypto.randomUUID()}`;
+  } else {
+    const array = new Uint8Array(8);
+    crypto.getRandomValues(array);
+    eventId = `evt_${Array.from(array, b => b.toString(16).padStart(2, "0")).join("")}`;
+  }
+
+  const cleanMetadata = sanitizeEventMetadata(properties);
 
   const payload = {
     eventId,
     eventName,
+    visitorId,
     sessionId,
-    anonymousId,
-    route: window.location.pathname,
-    properties,
-    occurredAt: new Date().toISOString(),
+    anonymousId: visitorId,
+    pagePath,
+    route: pagePath,
+    timestamp: now,
+    occurredAt: now,
+    metadata: cleanMetadata,
+    properties: cleanMetadata,
   };
 
   const jsonStr = JSON.stringify(payload);
@@ -314,3 +380,14 @@ export function sendAnalyticsEvent(
     keepalive: true,
   }).catch(() => {});
 }
+
+/**
+ * High-level typed facade for product event tracking
+ */
+export function trackProductEvent(
+  eventName: ShaterControlledEventName,
+  metadata: Record<string, unknown> = {}
+): void {
+  sendAnalyticsEvent(eventName, metadata);
+}
+

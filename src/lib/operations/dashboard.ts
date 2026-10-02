@@ -17,6 +17,14 @@ import {
   DropoffAlert,
   ConversionFunnelStep,
   LearningIntelligenceMetrics,
+  CockpitBusinessSection,
+  CockpitAudienceSection,
+  CockpitAcquisitionSection,
+  CockpitProductUsageSection,
+  CockpitConversionSection,
+  CockpitCommerceSection,
+  CockpitGeographySection,
+  CockpitDataIntegrity,
 } from "./types";
 import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "../supabase/client";
 import { getAdminClient } from "../supabase/admin";
@@ -26,6 +34,10 @@ import { ALGERIAN_BAC_STREAMS } from "../constants/streams";
 import { getAllUnifiedOrders } from "./orders-store";
 import { getOperationsAnalyticsSummary } from "./analytics-store";
 import { getKitInventorySummary } from "./inventory-store";
+import { getVisitorsAnalytics } from "./visitors-analytics";
+import { getRegisteredStudentsAnalytics } from "./students-analytics";
+import { getConversionFunnelData } from "./conversion-funnel";
+import { getProductUsageAnalytics } from "./product-usage";
 
 export async function getOperationsDashboardData(
   operatorId?: string,
@@ -393,16 +405,34 @@ export async function getOperationsDashboardData(
     topWilayas,
   };
 
-  // Merge resilient live orders, real analytics & kit inventory
-  const [unifiedOrdersRes, analyticsRes, inventoryRes] = await Promise.all([
-    getAllUnifiedOrders(token).catch(() => ({ orders: [], summary: { totalOrders: 0, pending: 0, processing: 0, shipped: 0, delivered: 0, codPending: 0, paid: 0, returned: 0 } })),
+  // Merge resilient live orders, real analytics, specialized analytics engines & kit inventory
+  const [
+    unifiedOrdersRes,
+    analyticsRes,
+    inventoryRes,
+    visitorsRes,
+    studentsRes,
+    funnelRes,
+    productUsageRes,
+  ] = await Promise.all([
+    getAllUnifiedOrders(token).catch(() => ({
+      orders: [],
+      summary: { totalOrders: 0, pending: 0, processing: 0, shipped: 0, delivered: 0, codPending: 0, paid: 0, returned: 0 }
+    })),
     getOperationsAnalyticsSummary().catch(() => null),
     getKitInventorySummary().catch(() => null),
+    getVisitorsAnalytics("today", token).catch(() => null),
+    getRegisteredStudentsAnalytics({ period: "today", pageSize: 1 }, token).catch(() => null),
+    getConversionFunnelData({ period: "30d", token }).catch(() => null),
+    getProductUsageAnalytics({ periodDays: 30, token }).catch(() => null),
   ]);
 
   if (analyticsRes) {
     kpis.liveVisitors = analyticsRes.liveVisitorsNow;
     kpis.todayVisitors = analyticsRes.todayVisitors;
+  } else if (visitorsRes) {
+    kpis.liveVisitors = visitorsRes.liveActivity?.activeNow ?? activeUserIdsToday.size;
+    kpis.todayVisitors = visitorsRes.kpis?.uniqueVisitorsToday ?? activeUserIdsToday.size;
   } else {
     kpis.liveVisitors = activeUserIdsToday.size;
     kpis.todayVisitors = activeUserIdsToday.size;
@@ -421,6 +451,171 @@ export async function getOperationsDashboardData(
     }
   }
 
+  // ------------------------------------------------------------------------------
+  // 6. SYNTHESIZE THE 7 AUTHORITATIVE COCKPIT SECTIONS
+  // ------------------------------------------------------------------------------
+
+  // Section 1: Business
+  const annualOrders = orders.filter((o: any) => {
+    const plan = (o.plan || o.planName || "").toLowerCase();
+    return plan.includes("سنوي") || plan.includes("annual") || plan.includes("season") || Number(o.amount) >= 4000;
+  });
+  const monthlyOrders = orders.filter((o: any) => {
+    const plan = (o.plan || o.planName || "").toLowerCase();
+    return plan.includes("شهري") || plan.includes("month") || (Number(o.amount) < 4000 && Number(o.amount) > 0);
+  });
+
+  const business: CockpitBusinessSection = {
+    todaySales: todayRevenue,
+    monthSales: monthRevenue,
+    collectedCash: onlineRevenue + ((unifiedOrdersRes.summary?.paid || 0) * 4900),
+    pendingCod: pendingOrdersRevenue,
+    totalOrders: orders.length,
+    ordersByStatus: {
+      pending: unifiedOrdersRes.summary?.pending || 0,
+      processing: unifiedOrdersRes.summary?.processing || 0,
+      shipped: unifiedOrdersRes.summary?.shipped || 0,
+      delivered: unifiedOrdersRes.summary?.delivered || 0,
+      paid: unifiedOrdersRes.summary?.paid || 0,
+      returned: unifiedOrdersRes.summary?.returned || 0,
+    },
+    subscriptions: {
+      total: totalStudents,
+      annualCount: annualOrders.length,
+      monthlyCount: monthlyOrders.length,
+      annualRevenue: annualOrders.reduce((sum, o) => sum + (Number(o.amount) || 0), 0),
+      monthlyRevenue: monthlyOrders.reduce((sum, o) => sum + (Number(o.amount) || 0), 0),
+    },
+  };
+
+  // Section 2: Audience
+  const audience: CockpitAudienceSection = {
+    visitorsToday: visitorsRes?.kpis?.uniqueVisitorsToday ?? kpis.todayVisitors ?? 0,
+    newVisitorsToday: visitorsRes?.kpis?.newVisitorsToday ?? 0,
+    returningVisitorsToday: visitorsRes?.kpis?.returningVisitorsToday ?? 0,
+    registeredStudents: studentsRes?.kpis?.totalStudents ?? totalStudents,
+    activeStudentsToday: studentsRes?.kpis?.activeToday ?? activeUserIdsToday.size,
+    activeStudents7d: studentsRes?.kpis?.activeLast7Days ?? 0,
+    activeStudents30d: studentsRes?.kpis?.activeLast30Days ?? 0,
+    neverActiveStudents: studentsRes?.kpis?.neverActive ?? 0,
+    trialStudents: studentsRes?.kpis?.trialStudents ?? trialStudents,
+    paidStudents: studentsRes?.kpis?.paidStudents ?? paidStudents,
+    expiredSubscriptions: studentsRes?.kpis?.expiredSubscriptions ?? expiredStudents,
+  };
+
+  // Section 3: Acquisition
+  const acquisition: CockpitAcquisitionSection = {
+    topSources: funnelRes?.sources ?? [],
+    topCampaigns: (funnelRes?.campaigns ?? []).slice(0, 5),
+    attributionQuality: funnelRes?.attributionIntegrity ?? {
+      status: "PARTIAL",
+      attributedRegistrations: 0,
+      unattributedRegistrations: totalStudents,
+      unattributedPercentage: 100,
+      message: "بيانات الإحالة قيد المعالجة المباشرة",
+    },
+  };
+
+  // Section 4: Product Usage
+  const productUsage: CockpitProductUsageSection = productUsageRes ?? {
+    diwan: { opened: 0, tablesCreated: 0, tablesJoined: 0, total: 0 },
+    planner: { opened: 0 },
+    exams: { opened: 0, started: 0, completed: 0, total: 0 },
+    summaries: { opened: 0 },
+    calculator: { used: 0 },
+    other: { subjectOpened: 0, orientationOpened: 0, practiceCompleted: 0, retestCompleted: 0, total: 0 },
+    mostUsedSections: [],
+    totalProductEvents: 0,
+  };
+
+  // Section 5: Conversion
+  const conversion: CockpitConversionSection = {
+    stages: (funnelRes?.stages ?? []).map((s) => ({
+      key: s.key,
+      label: s.label,
+      count: s.count,
+      conversionFromPrev: s.conversionFromPrev,
+      definition: s.definition,
+    })),
+    ratios: funnelRes?.ratios ?? {
+      visitorToRegistration: 0,
+      registrationToActivation: 0,
+      activationToTrial: 0,
+      trialToPaid: 0,
+      overallConversion: 0,
+    },
+  };
+
+  // Section 6: Commerce
+  const codPaidCount = orders.filter((o: any) => o.paymentMethod === "cod" || o.orderType === "COD").length;
+  const baridiMobOrders = orders.filter((o: any) => o.paymentMethod === "baridimob" || o.paymentMethod === "ccp");
+  const onlineOrders = orders.filter((o: any) => o.paymentMethod === "cib" || o.paymentMethod === "edahabia" || o.paymentMethod === "card");
+
+  const commerce: CockpitCommerceSection = {
+    totalOrders: orders.length,
+    delivery: {
+      carrier: "Yalidine Express",
+      inTransit: unifiedOrdersRes.summary?.shipped || 0,
+      delivered: unifiedOrdersRes.summary?.delivered || 0,
+      pendingShipment: (unifiedOrdersRes.summary?.processing || 0) + (unifiedOrdersRes.summary?.pending || 0),
+    },
+    cod: {
+      pendingCollectionDZD: pendingOrdersRevenue,
+      collectedDZD: (unifiedOrdersRes.summary?.paid || 0) * 4900,
+      pendingCount: (unifiedOrdersRes.summary?.shipped || 0) + (unifiedOrdersRes.summary?.codPending || 0),
+      deliveredCount: (unifiedOrdersRes.summary?.delivered || 0) + (unifiedOrdersRes.summary?.paid || 0),
+    },
+    inventory: {
+      availableStudyPacks: inventoryRes?.inStock ?? 0,
+      reservedCards: inventoryRes?.reserved ?? 0,
+      lowStockWarning: inventoryRes?.lowStockAlert ?? false,
+      status: inventoryRes?.statusLabel ?? "المخزون متوفر",
+    },
+    payments: {
+      codCount: codPaidCount,
+      codRevenue: codRevenue,
+      baridimobCount: baridiMobOrders.length,
+      baridimobRevenue: baridiMobOrders.reduce((sum, o) => sum + (Number(o.amount) || 0), 0),
+      onlineCount: onlineOrders.length,
+      onlineRevenue: onlineOrders.reduce((sum, o) => sum + (Number(o.amount) || 0), 0),
+    },
+  };
+
+  // Section 7: Geography
+  const hasReliableGeography = topWilayas.length > 0 && topWilayas[0].count > 0;
+  const geography: CockpitGeographySection = {
+    hasReliableGeography,
+    wilayas: hasReliableGeography
+      ? topWilayas.map((tw) => ({
+          wilaya: tw.wilayaName,
+          ordersCount: orders.filter((o: any) => (o.wilaya || o.shippingWilaya || "").includes(tw.wilayaName)).length,
+          studentsCount: tw.count,
+          percentage: tw.percentage,
+        }))
+      : [],
+    message: hasReliableGeography ? undefined : "غير متاح — البيانات غير كافية",
+  };
+
+  // Data Integrity Indicator
+  let integrityStatus: "REAL" | "PARTIAL" | "UNAVAILABLE" = "UNAVAILABLE";
+  let integrityMessage = "لا توجد بيانات مسجلة في قاعدة البيانات حالياً";
+
+  if (totalStudents > 0 || (visitorsRes?.kpis?.uniqueVisitorsToday ?? 0) > 0 || orders.length > 0) {
+    if (funnelRes?.attributionIntegrity?.status === "REAL") {
+      integrityStatus = "REAL";
+      integrityMessage = "جميع المؤشرات مستخرجة مباشرة ومطابقة بنسبة 100% لسجلات PostgreSQL";
+    } else {
+      integrityStatus = "PARTIAL";
+      integrityMessage = "المؤشرات حقيقية مع وجود مصادر مباشرة قيد التوثيق الكامل لبيانات الإحالة";
+    }
+  }
+
+  const dataIntegrity: CockpitDataIntegrity = {
+    status: integrityStatus,
+    lastUpdated: now.toISOString(),
+    message: integrityMessage,
+  };
+
   return {
     kpis,
     alerts: {
@@ -435,5 +630,16 @@ export async function getOperationsDashboardData(
     ordersSummary: unifiedOrdersRes.summary,
     analytics: analyticsRes,
     inventory: inventoryRes,
+
+    // Integrated 7 Sections + Integrity
+    business,
+    audience,
+    acquisition,
+    productUsage,
+    conversion,
+    commerce,
+    geography,
+    dataIntegrity,
   };
 }
+

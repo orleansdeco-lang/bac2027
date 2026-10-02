@@ -10,6 +10,7 @@ import {
   RotateCcw,
   HelpCircle,
 } from "lucide-react";
+import { trackProductEvent } from "@/lib/analytics";
 
 export interface SubjectRule {
   id: string;
@@ -175,6 +176,19 @@ export function BacAverageCalculator() {
       average: avg,
     };
   }, [currentStream, scores]);
+
+  // Debounced telemetry: emit calculator_used without noisy keystroke flood
+  React.useEffect(() => {
+    if (average > 0) {
+      const timer = setTimeout(() => {
+        trackProductEvent("calculator_used", {
+          stream: streamKey,
+          estimated_average: Math.round(average * 100) / 100,
+        });
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [average, streamKey]);
 
   const getMention = (avg: number) => {
     if (avg >= 18) return { label: "ممتاز (Excellent)", color: "text-amber-700 bg-amber-50 border-amber-200" };

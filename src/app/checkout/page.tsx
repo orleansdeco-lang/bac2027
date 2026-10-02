@@ -34,7 +34,7 @@ import {
   Gift,
 } from "lucide-react";
 import { trackInitiateCheckout, trackPurchase } from "@/lib/analytics/marketing";
-import { getStoredAttribution } from "@/lib/analytics/tracker";
+import { getStoredAttribution, trackProductEvent } from "@/lib/analytics/tracker";
 
 interface PlanItem {
   id: string;
@@ -157,6 +157,14 @@ function CheckoutContent() {
       value: totalAmountDzd,
       currency: "DZD",
     });
+
+    // Controlled First-Party Monetization Event: checkout_started
+    trackProductEvent("checkout_started", {
+      plan_id: currentPlan.id,
+      plan_name: currentPlan.name,
+      value: totalAmountDzd,
+      currency: "DZD",
+    });
   }, [currentPlan.id, currentPlan.name, totalAmountDzd]);
 
   // Handle Form Submission
@@ -227,6 +235,15 @@ function CheckoutContent() {
         value: data.order?.total || totalAmountDzd,
         currency: "DZD",
         paymentMethod: "COD",
+      });
+
+      // Controlled First-Party Monetization Event: payment_submitted
+      trackProductEvent("payment_submitted", {
+        order_number: data.order?.order_number || data.order?.id,
+        plan_id: currentPlan.id,
+        amount: data.order?.total || totalAmountDzd,
+        payment_method: "COD",
+        wilaya: wilaya.trim(),
       });
 
       // Scroll to top to view confirmation

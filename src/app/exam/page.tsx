@@ -17,7 +17,7 @@ import { getStudentSubjects } from "@/domain/student";
 import { SUBJECT_REGISTRY } from "@/domain/curriculum/subjects";
 import { PROMPT11_PAST_BAC_REFERENCES } from "@/domain/content/past-bac-references";
 import { SubjectId, StreamId } from "@/types/education";
-import { trackEvent } from "@/lib/analytics";
+import { trackEvent, trackProductEvent } from "@/lib/analytics";
 import { normalizeStreamIdWithDefault } from "@/lib/curriculum/filter";
 import {
   Target,
@@ -49,6 +49,10 @@ export default function ExamModePage() {
 
   const NextArrow = isAr ? ArrowLeft : ArrowRight;
   const BackArrow = isAr ? ArrowRight : ArrowLeft;
+
+  useEffect(() => {
+    trackProductEvent("exam_opened", {});
+  }, []);
 
   useEffect(() => {
     async function loadExamData() {

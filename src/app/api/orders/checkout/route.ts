@@ -7,6 +7,7 @@ import { extractAuthenticatedUserId, extractTokenFromCookies } from "@/lib/opera
 import { recordAuditLog } from "@/lib/operations/audit";
 import { registerOrderInStore, normalizeToAdminOrder } from "@/lib/operations/orders-store";
 import { sendMetaServerEvent } from "@/lib/analytics/meta-server";
+import { recordAuthoritativeBusinessEvent } from "@/lib/operations/telemetry";
 
 export const dynamic = "force-dynamic";
 

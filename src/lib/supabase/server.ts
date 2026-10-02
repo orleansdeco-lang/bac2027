@@ -1,10 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { getAdminClient, isServiceRoleConfigured } from "./admin";
 
-if (typeof window !== "undefined") {
-  throw new Error("SECURITY VIOLATION: server.ts can only be executed in a Node.js server context.");
-}
-
 /**
  * Server-side Supabase client scaffolding for Route Handlers and Server Actions.
  */
@@ -17,6 +13,9 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || DEFAULT_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || DEFAULT_SUPABASE_ANON_KEY;
 
 export function createServerSupabaseClient(token?: string | null) {
+  if (typeof window !== "undefined") {
+    throw new Error("SECURITY VIOLATION: server.ts can only be executed in a Node.js server context.");
+  }
   if (!supabaseUrl || !supabaseAnonKey) {
     return null;
   }

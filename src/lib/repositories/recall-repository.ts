@@ -3,8 +3,7 @@
  * Connects Learner UI, Web Push notifications, Supabase PostgreSQL, and Error Lab.
  */
 
-import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "@/lib/supabase/client";
 import { SEED_FLASH_QUESTIONS } from "@/data/flash-questions-bank";
 import {
   FlashQuestion,
@@ -90,7 +89,7 @@ export class RecallRepository {
     // 1. Try Supabase RPC if configured
     if (isSupabaseConfigured && supabase) {
       try {
-        const client = options.token ? createServerSupabaseClient(options.token) || supabase : supabase;
+        const client = options.token ? createAuthenticatedSupabaseClient(options.token) || supabase : supabase;
         const { data, error } = await client.rpc("get_due_recall_questions", {
           p_limit: limit,
           p_subject: options.subject || null,
@@ -220,7 +219,7 @@ export class RecallRepository {
     // 1. Try authoritative RPC if available
     if (isSupabaseConfigured && supabase) {
       try {
-        const client = options.token ? createServerSupabaseClient(options.token) || supabase : supabase;
+        const client = options.token ? createAuthenticatedSupabaseClient(options.token) || supabase : supabase;
         const { data, error } = await client.rpc("process_recall_answer", {
           p_question_id: questionId,
           p_selected_option_index: selectedOptionIndex,

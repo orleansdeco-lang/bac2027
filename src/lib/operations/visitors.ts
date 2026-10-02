@@ -7,6 +7,7 @@
 import fs from "fs";
 import path from "path";
 import { supabase, isSupabaseConfigured } from "../supabase/client";
+import { classifyChannel } from "../analytics/attribution";
 
 export interface VisitorLogEntry {
   id: string;
@@ -156,6 +157,7 @@ export async function recordVisitorHit(input: {
   queryParams?: Record<string, string>;
   isHeartbeat?: boolean;
   anonymousId?: string;
+  visitorId?: string;
   firstTouch?: {
     source?: string;
     medium?: string;
@@ -264,36 +266,34 @@ export async function recordVisitorHit(input: {
 
       // 2. First-party analytics_sessions upsert
       const anonymousId = input.anonymousId || `anon_${entry.sessionId}`;
+      const visitorId = input.visitorId || anonymousId;
+      
+      const channel = classifyChannel(
+        input.firstTouch?.source || input.utmSource,
+        input.firstTouch?.medium || input.utmMedium,
+        entry.referrer
+      );
+
       supabase
-        .from("analytics_sessions")
-        .upsert(
-          {
-            session_id: entry.sessionId,
-            anonymous_id: anonymousId,
-            user_id: entry.userId || null,
-            landing_page: entry.path,
-            referrer: entry.referrer || null,
-            referrer_domain: entry.referrerDomain || null,
-            first_utm_source: input.firstTouch?.source || input.utmSource || null,
-            first_utm_medium: input.firstTouch?.medium || input.utmMedium || null,
-            first_utm_campaign: input.firstTouch?.campaign || input.utmCampaign || null,
-            first_utm_content: input.firstTouch?.content || input.utmContent || null,
-            first_utm_term: input.firstTouch?.term || input.utmTerm || null,
-            last_utm_source: input.lastTouch?.source || input.utmSource || null,
-            last_utm_medium: input.lastTouch?.medium || input.utmMedium || null,
-            last_utm_campaign: input.lastTouch?.campaign || input.utmCampaign || null,
-            last_utm_content: input.lastTouch?.content || input.utmContent || null,
-            last_utm_term: input.lastTouch?.term || input.utmTerm || null,
-            device_type: entry.deviceType,
-            browser: entry.browser || null,
-            os: entry.os || null,
-            ip_hash: entry.ip || null,
-            country: "DZ",
-            last_activity_at: entry.timestamp,
-            is_active: true,
-          },
-          { onConflict: "session_id", ignoreDuplicates: false }
-        )
+        .rpc("record_session_identity", {
+          p_session_id: entry.sessionId,
+          p_visitor_id: visitorId,
+          p_anonymous_id: anonymousId,
+          p_user_id: entry.userId || null,
+          p_landing_page: entry.path,
+          p_referrer: entry.referrer || null,
+          p_source: input.firstTouch?.source || input.utmSource || null,
+          p_medium: input.firstTouch?.medium || input.utmMedium || null,
+          p_campaign: input.firstTouch?.campaign || input.utmCampaign || null,
+          p_content: input.firstTouch?.content || input.utmContent || null,
+          p_term: input.firstTouch?.term || input.utmTerm || null,
+          p_channel: channel,
+          p_device_type: entry.deviceType,
+          p_browser: entry.browser || null,
+          p_os: entry.os || null,
+          p_ip_hash: entry.ip || null,
+          p_country: "DZ",
+        })
         .then(() => {}, () => {});
     } catch {}
   }

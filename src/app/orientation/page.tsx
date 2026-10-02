@@ -17,7 +17,7 @@ import {
   BacStreamCode, 
   StudentBacProfile 
 } from '@/types/orientation';
-import { trackEvent } from '@/lib/analytics';
+import { trackEvent, trackProductEvent } from '@/lib/analytics';
 import { Scale, ArrowRight, Sparkles, Globe, Building2, LayoutList, LayoutGrid } from 'lucide-react';
 
 export default function OrientationPage() {
@@ -35,6 +35,7 @@ export default function OrientationPage() {
 
   // Track initial page view
   useEffect(() => {
+    trackProductEvent('orientation_opened', {});
     trackEvent('orientation_started', {});
   }, []);
 

@@ -106,12 +106,14 @@ export interface OperationsAuditLog {
 export interface IngestedTelemetryEvent {
   id?: string;
   eventId: string;
+  visitorId?: string;
   anonymousId: string;
   sessionId: string;
   userId?: string | null;
   eventName: string;
   occurredAt: string;
   route?: string;
+  pagePath?: string;
   stream?: string;
   subject?: string;
   skillId?: string;
@@ -443,6 +445,171 @@ export interface LearningIntelligenceMetrics {
   topWilayas: { wilayaName: string; count: number; percentage: number }[];
 }
 
+export interface CockpitBusinessSection {
+  todaySales: number;
+  monthSales: number;
+  collectedCash: number;
+  pendingCod: number;
+  totalOrders: number;
+  ordersByStatus: {
+    pending: number;
+    processing: number;
+    shipped: number;
+    delivered: number;
+    paid: number;
+    returned: number;
+  };
+  subscriptions: {
+    total: number;
+    annualCount: number;
+    monthlyCount: number;
+    annualRevenue: number;
+    monthlyRevenue: number;
+  };
+}
+
+export interface CockpitAudienceSection {
+  visitorsToday: number;
+  newVisitorsToday: number;
+  returningVisitorsToday: number;
+  registeredStudents: number;
+  activeStudentsToday: number; // Definition: authenticated students with >=1 product activity event today
+  activeStudents7d: number;
+  activeStudents30d: number;
+  neverActiveStudents: number;
+  trialStudents: number;
+  paidStudents: number;
+  expiredSubscriptions: number;
+}
+
+export interface CockpitAcquisitionSection {
+  topSources: Array<{
+    source: string;
+    visitors: number;
+    registrations: number;
+    trials: number;
+    paidStudents: number;
+    revenue: number;
+  }>;
+  topCampaigns: Array<{
+    campaign: string;
+    source: string;
+    visitors: number;
+    registrations: number;
+    paid: number;
+    revenue: number;
+  }>;
+  attributionQuality: {
+    status: "REAL" | "PARTIAL" | "UNAVAILABLE";
+    attributedRegistrations: number;
+    unattributedRegistrations: number;
+    unattributedPercentage: number;
+    message: string;
+  };
+}
+
+export interface CockpitProductUsageSection {
+  diwan: {
+    opened: number;
+    tablesCreated: number;
+    tablesJoined: number;
+    total: number;
+  };
+  planner: {
+    opened: number;
+  };
+  exams: {
+    opened: number;
+    started: number;
+    completed: number;
+    total: number;
+  };
+  summaries: {
+    opened: number;
+  };
+  calculator: {
+    used: number;
+  };
+  other: {
+    subjectOpened: number;
+    orientationOpened: number;
+    practiceCompleted: number;
+    retestCompleted: number;
+    total: number;
+  };
+  mostUsedSections: Array<{
+    name: string;
+    labelAr: string;
+    count: number;
+    percentage: number;
+  }>;
+  totalProductEvents: number;
+}
+
+export interface CockpitConversionSection {
+  stages: Array<{
+    key: string;
+    label: string;
+    count: number;
+    conversionFromPrev: number;
+    definition: string;
+  }>;
+  ratios: {
+    visitorToRegistration: number;
+    registrationToActivation: number;
+    activationToTrial: number;
+    trialToPaid: number;
+    overallConversion: number;
+  };
+}
+
+export interface CockpitCommerceSection {
+  totalOrders: number;
+  delivery: {
+    carrier: string;
+    inTransit: number;
+    delivered: number;
+    pendingShipment: number;
+  };
+  cod: {
+    pendingCollectionDZD: number;
+    collectedDZD: number;
+    pendingCount: number;
+    deliveredCount: number;
+  };
+  inventory: {
+    availableStudyPacks: number;
+    reservedCards: number;
+    lowStockWarning: boolean;
+    status: string;
+  };
+  payments: {
+    codCount: number;
+    codRevenue: number;
+    baridimobCount: number;
+    baridimobRevenue: number;
+    onlineCount: number;
+    onlineRevenue: number;
+  };
+}
+
+export interface CockpitGeographySection {
+  hasReliableGeography: boolean;
+  wilayas: Array<{
+    wilaya: string;
+    ordersCount: number;
+    studentsCount: number;
+    percentage: number;
+  }>;
+  message?: string;
+}
+
+export interface CockpitDataIntegrity {
+  status: "REAL" | "PARTIAL" | "UNAVAILABLE";
+  lastUpdated: string;
+  message: string;
+}
+
 export interface OperationsDashboardData {
   kpis: DashboardKPIs;
   alerts: {
@@ -457,6 +624,17 @@ export interface OperationsDashboardData {
   ordersSummary?: any;
   analytics?: any;
   inventory?: any;
+
+  // Authoritative 7 Integrated Cockpit Sections
+  business?: CockpitBusinessSection;
+  audience?: CockpitAudienceSection;
+  acquisition?: CockpitAcquisitionSection;
+  productUsage?: CockpitProductUsageSection;
+  conversion?: CockpitConversionSection;
+  commerce?: CockpitCommerceSection;
+  geography?: CockpitGeographySection;
+  dataIntegrity?: CockpitDataIntegrity;
 }
+
 
 

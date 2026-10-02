@@ -17,13 +17,14 @@
  * 5. ADMIN: full system access + operations.
  */
 
-import { UserPlan, FeatureKey, UserEntitlements, DailyAiQuota } from "./types";
-import { TRIAL_DURATION_MS, getServerAuthoritativeDate } from "./index";
+import { UserPlan, FeatureKey, UserEntitlements, DailyAiQuota, FREE_DAILY_AI_QUOTA } from "./types";
+import { TRIAL_DURATION_MS } from "./index";
+import { getServerAuthoritativeDate } from "./server-time";
 import { supabase, isSupabaseConfigured, createAuthenticatedSupabaseClient } from "../supabase/client";
 import { getAdminClient } from "../supabase/admin";
 import { StudentRepository } from "../repositories/student-repository";
 
-export const FREE_DAILY_AI_QUOTA = 5;
+export { FREE_DAILY_AI_QUOTA };
 
 // In-memory persistent day usage tracker for AI Tutor: Map<"userId:YYYY-MM-DD", number>
 const aiDailyUsageMap = new Map<string, number>();

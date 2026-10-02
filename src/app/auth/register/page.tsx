@@ -33,7 +33,8 @@ import {
   getRegistrationDraft,
   saveRegistrationDraft,
 } from "@/lib/onboarding/profile";
-import { trackCompleteRegistration } from "@/lib/analytics/marketing";
+import { trackCompleteRegistration, trackTrialStart } from "@/lib/analytics/marketing";
+import { trackProductEvent } from "@/lib/analytics";
 import {
   ArrowLeft,
   ArrowRight,
@@ -72,6 +73,11 @@ export default function StudentRegistrationPage() {
   const { direction, locale } = useTranslation();
   const isAr = locale === "ar";
   const { user, isLoading } = useAuth();
+
+  // Track signup_started once on mount
+  useEffect(() => {
+    trackProductEvent("signup_started", {});
+  }, []);
 
   // Enforce auth requirement: cannot access registration without an account
   useEffect(() => {
@@ -394,6 +400,10 @@ export default function StudentRegistrationPage() {
         trackCompleteRegistration({
           method: "email",
           userId: effectiveUserId,
+        });
+        trackTrialStart({
+          userId: effectiveUserId,
+          durationDays: 7,
         });
       }
 

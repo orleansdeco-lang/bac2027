@@ -10,7 +10,6 @@ import { StrategicProfile } from "@/types/onboarding";
 
 export * from "./types";
 export * from "./server-time";
-export * from "./entitlements";
 export * from "./useEntitlements";
 
 export const TRIAL_DURATION_DAYS = 7;

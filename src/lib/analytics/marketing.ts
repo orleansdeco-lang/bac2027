@@ -142,6 +142,11 @@ export function trackCompleteRegistration(params: {
   });
 
   // First-party internal telemetry
+  sendAnalyticsEvent("signup_completed", {
+    userId: params.userId,
+    eventId,
+    method: params.method || "email",
+  });
   sendAnalyticsEvent("registration_completed", {
     userId: params.userId,
     eventId,

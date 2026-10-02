@@ -127,8 +127,8 @@ export const PlannerStorage = {
       try {
         let client: any = supabase;
         try {
-          const { getAdminClient } = require("@/lib/supabase/admin");
-          client = getAdminClient() || supabase;
+          const adminMod = eval("require")("@/lib/supabase/admin");
+          client = adminMod?.getAdminClient?.() || supabase;
         } catch {}
 
         const { data, error } = await client
@@ -248,8 +248,8 @@ export const PlannerStorage = {
     if (typeof window === "undefined") {
       let client: any = supabase;
       try {
-        const { getAdminClient } = require("@/lib/supabase/admin");
-        client = getAdminClient() || supabase;
+        const adminMod = eval("require")("@/lib/supabase/admin");
+        client = adminMod?.getAdminClient?.() || supabase;
       } catch {}
 
       if (client && event.userId) {

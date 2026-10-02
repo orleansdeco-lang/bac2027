@@ -6,6 +6,7 @@ import { supabase, isSupabaseConfigured } from "../supabase/client";
 import { purgeUserAndLegacyStorage, purgeUserScopedStorage, purgeLegacyGlobalStorage } from "../onboarding/profile";
 import { StudentRepository } from "../repositories/student-repository";
 import { clearAllMissionData } from "../mission/storage";
+import { trackProductEvent } from "../analytics";
 
 export interface AuthContextType {
   user: User | null;
@@ -292,6 +293,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           syncAuthCookies(data.session?.access_token || data.user.id);
           syncLocalStudentProfileIfPresent(data.user, data.session?.access_token);
+          trackProductEvent("signup_completed", { method: "email" });
+          trackProductEvent("trial_started", { duration_days: 7 });
           return { user: data.user, error: null };
         }
 
@@ -342,6 +345,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     syncAuthCookies(resolvedId);
     syncLocalStudentProfileIfPresent(fallbackUser);
+    trackProductEvent("signup_completed", { method: "email" });
+    trackProductEvent("trial_started", { duration_days: 7 });
     return { user: fallbackUser, error: null };
   };
 
@@ -371,6 +376,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           syncAuthCookies(data.session?.access_token || data.user.id);
           syncLocalStudentProfileIfPresent(data.user, data.session?.access_token);
+          trackProductEvent("login", { method: "email" });
           return { user: data.user, error: null };
         }
 
@@ -504,6 +510,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem("bac_auth_user");
     }
     syncAuthCookies(null, true); // Explicit wipe on sign out
+    trackProductEvent("logout", {});
     return { error: null };
   };
 

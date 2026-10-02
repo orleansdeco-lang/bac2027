@@ -5,7 +5,6 @@ import { I18nProvider } from "@/lib/i18n/context";
 import { AuthProvider } from "@/lib/auth/context";
 import { ThemeProvider } from "@/lib/theme/context";
 import { ProgressProvider } from "@/lib/progress/progress-context";
-import { VisitorTracker } from "@/components/analytics/VisitorTracker";
 import { FirstPartyTracker } from "@/components/analytics/FirstPartyTracker";
 import { MetaPixel } from "@/components/analytics/MetaPixel";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
@@ -123,7 +122,6 @@ export default function RootLayout({
             <AuthProvider>
               <ProgressProvider>
                 <FocusProvider>
-                  <VisitorTracker />
                   <FirstPartyTracker />
                   <ServiceWorkerRegister />
                   {children}
