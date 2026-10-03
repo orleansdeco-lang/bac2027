@@ -74,11 +74,11 @@ export function OrderTrackingView({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <Link
-            href="/dashboard/orders"
+            href="/dashboard"
             className="inline-flex items-center gap-1.5 text-xs font-bold text-theme-muted hover:text-theme-text transition-colors mb-2"
           >
             <BackArrow className="w-4 h-4" />
-            <span>العودة إلى قائمة طلباتي</span>
+            <span>العودة للوحة التحكم</span>
           </Link>
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="text-xl sm:text-2xl font-black text-theme-text">

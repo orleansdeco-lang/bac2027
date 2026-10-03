@@ -377,11 +377,6 @@ function CheckoutContent() {
                     <span>تتبع مسار طلبك الآن (Timeline)</span>
                   </Button>
                 </Link>
-                <Link href="/dashboard/orders" className="w-full sm:w-auto">
-                  <Button variant="outline" size="md" className="w-full sm:w-auto font-bold rounded-xl px-6 border-theme-border text-theme-secondary hover:text-theme-text">
-                    <span>قائمة طلباتي</span>
-                  </Button>
-                </Link>
                 <Link href="/dashboard" className="w-full sm:w-auto">
                   <Button variant="outline" size="md" className="w-full sm:w-auto font-bold rounded-xl px-6 border-theme-border text-theme-secondary hover:text-theme-text">
                     <span>العودة للمنصة</span>

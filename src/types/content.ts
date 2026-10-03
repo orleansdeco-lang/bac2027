@@ -17,6 +17,7 @@ export interface CurriculumTopic {
   examType: ExamType;
   streamId: StreamId;
   subjectId: SubjectId;
+  branchId?: string;
   title_ar: string;
   title_fr: string;
   description_ar?: string;

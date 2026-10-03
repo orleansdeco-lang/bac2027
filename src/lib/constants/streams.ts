@@ -160,10 +160,27 @@ export const ALL_SUBJECTS: Record<SubjectId, Subject> = {
     name_fr: "3ème Langue Vivante (Espagnol / Allemand / Italien)",
     isScientific: false,
   },
-};
-
-export const EXTENDED_ALL_SUBJECTS: Record<ExtendedSubjectId, ExtendedSubject> = {
-  ...ALL_SUBJECTS,
+  third_language_de: {
+    id: "third_language_de",
+    code: "ALL",
+    name_ar: "اللغة الألمانية",
+    name_fr: "Allemand",
+    isScientific: false,
+  },
+  third_language_es: {
+    id: "third_language_es",
+    code: "ESP",
+    name_ar: "اللغة الإسبانية",
+    name_fr: "Espagnol",
+    isScientific: false,
+  },
+  third_language_it: {
+    id: "third_language_it",
+    code: "ITA",
+    name_ar: "اللغة الإيطالية",
+    name_fr: "Italien",
+    isScientific: false,
+  },
   german: {
     id: "german",
     code: "ALL",
@@ -206,6 +223,10 @@ export const EXTENDED_ALL_SUBJECTS: Record<ExtendedSubjectId, ExtendedSubject> =
     name_fr: "Histoire de l'Art",
     isScientific: false,
   },
+};
+
+export const EXTENDED_ALL_SUBJECTS: Record<ExtendedSubjectId, ExtendedSubject> = {
+  ...ALL_SUBJECTS,
 };
 
 export const ALGERIAN_BAC_STREAMS: Record<StreamId, Stream> = {
@@ -258,6 +279,10 @@ export const ALGERIAN_BAC_STREAMS: Record<StreamId, Stream> = {
     description_ar: "هندسة تطبيقية متخصصة (ميكانيكية، مدنية، كهربائية، أو طرائق) مع الرياضيات والفيزياء.",
     description_fr: "Ingénierie appliquée (mécanique, civile, électrique ou procédés) avec maths et physique.",
     subjects: [
+      { subjectId: "mechanical_eng", coefficient: 6, isCoreSubject: true },
+      { subjectId: "civil_eng", coefficient: 6, isCoreSubject: true },
+      { subjectId: "electrical_eng", coefficient: 6, isCoreSubject: true },
+      { subjectId: "process_eng", coefficient: 6, isCoreSubject: true },
       { subjectId: "math", coefficient: 6, isCoreSubject: true },
       { subjectId: "physics", coefficient: 6, isCoreSubject: true },
       { subjectId: "arabic", coefficient: 3, isCoreSubject: false },
@@ -319,6 +344,9 @@ export const ALGERIAN_BAC_STREAMS: Record<StreamId, Stream> = {
       { subjectId: "french", coefficient: 5, isCoreSubject: true },
       { subjectId: "english", coefficient: 5, isCoreSubject: true },
       { subjectId: "third_language", coefficient: 4, isCoreSubject: true },
+      { subjectId: "third_language_de", coefficient: 4, isCoreSubject: true },
+      { subjectId: "third_language_es", coefficient: 4, isCoreSubject: true },
+      { subjectId: "third_language_it", coefficient: 4, isCoreSubject: true },
       { subjectId: "arabic", coefficient: 5, isCoreSubject: true },
       { subjectId: "history_geography", coefficient: 2, isCoreSubject: false },
       { subjectId: "philosophy", coefficient: 2, isCoreSubject: false },
@@ -513,4 +541,138 @@ export function getStreamSubjects(
  */
 export function getTotalStreamCoefficients(subjects: StreamSubjectRule[]): number {
   return subjects.reduce((sum, s) => sum + s.coefficient, 0);
+}
+
+export interface StreamBranchMeta {
+  id: string;
+  streamId: ExtendedStreamId;
+  name_ar: string;
+  name_fr: string;
+  code: string;
+  specialtySubjectId: SubjectId;
+  description_ar?: string;
+  description_fr?: string;
+}
+
+export const STREAM_BRANCHES: Record<string, StreamBranchMeta[]> = {
+  technique_math: [
+    {
+      id: "mechanical_eng",
+      streamId: "technique_math",
+      name_ar: "هندسة ميكانيكية",
+      name_fr: "Génie Mécanique",
+      code: "GM",
+      specialtySubjectId: "mechanical_eng",
+      description_ar: "دراسة الأنظمة الآلية، الوصلات، مقاومة المواد RDM، ومخططات الصنع.",
+      description_fr: "Systèmes automatisés, liaisons mécaniques, RDM et contrats de phase.",
+    },
+    {
+      id: "civil_eng",
+      streamId: "technique_math",
+      name_ar: "هندسة مدنية",
+      name_fr: "Génie Civil",
+      code: "GC",
+      specialtySubjectId: "civil_eng",
+      description_ar: "ميكانيك الأجسام الصلبة، الروافد، الخرسانة المسلحة، وطبوغرافيا.",
+      description_fr: "Mécanique des solides, poutres continues, béton armé et topographie.",
+    },
+    {
+      id: "electrical_eng",
+      streamId: "technique_math",
+      name_ar: "هندسة كهربائية",
+      name_fr: "Génie Électrique",
+      code: "GE",
+      specialtySubjectId: "electrical_eng",
+      description_ar: "المنطق التعاقبي، غرافسيت (GRAFCET)، المحركات، وتحويل الطاقة.",
+      description_fr: "Logique séquentielle, GRAFCET, moteurs asynchrones et conversion d'énergie.",
+    },
+    {
+      id: "process_eng",
+      streamId: "technique_math",
+      name_ar: "هندسة الطرائق",
+      name_fr: "Génie des Procédés",
+      code: "GP",
+      specialtySubjectId: "process_eng",
+      description_ar: "الكيمياء العضوية، الحركية الكيميائية، الترموديناميك، وتكرير البترول.",
+      description_fr: "Chimie organique, cinétique, thermodynamique et raffinage pétrolier.",
+    },
+  ],
+  langues_etrangeres: [
+    {
+      id: "allemand",
+      streamId: "langues_etrangeres",
+      name_ar: "اللغة الألمانية",
+      name_fr: "Allemand",
+      code: "DE",
+      specialtySubjectId: "third_language_de",
+      description_ar: "اللغة الأجنبية الثالثة: ألمانية (فهم النص، القواعد، والتعبير).",
+      description_fr: "Troisième langue vivante : Allemand (compréhension et expression écrite).",
+    },
+    {
+      id: "espagnol",
+      streamId: "langues_etrangeres",
+      name_ar: "اللغة الإسبانية",
+      name_fr: "Espagnol",
+      code: "ES",
+      specialtySubjectId: "third_language_es",
+      description_ar: "اللغة الأجنبية الثالثة: إسبانية (فهم النص، القواعد، والتعبير).",
+      description_fr: "Troisième langue vivante : Espagnol (compréhension et expression écrite).",
+    },
+    {
+      id: "italien",
+      streamId: "langues_etrangeres",
+      name_ar: "اللغة الإيطالية",
+      name_fr: "Italien",
+      code: "IT",
+      specialtySubjectId: "third_language_it",
+      description_ar: "اللغة الأجنبية الثالثة: إيطالية (فهم النص، القواعد، والتعبير).",
+      description_fr: "Troisième langue vivante : Italien (compréhension et expression écrite).",
+    },
+  ],
+  arts: [
+    {
+      id: "cinema_audiovisuel",
+      streamId: "arts",
+      name_ar: "سينما وسمعي بصري",
+      name_fr: "Cinéma & Audiovisuel",
+      code: "CIN",
+      specialtySubjectId: "art_specialty",
+      description_ar: "لغة الصورة، السيناريو، الإخراج والمونتاج.",
+      description_fr: "Langage de l'image, scénario, réalisation et montage audiovisuel.",
+    },
+    {
+      id: "arts_plastiques",
+      streamId: "arts",
+      name_ar: "فنون تشكيلية",
+      name_fr: "Arts Plastiques",
+      code: "PLA",
+      specialtySubjectId: "art_specialty",
+      description_ar: "الرسم، النحت، التصميم الغرافيكي وتاريخ الفنون التشكيلية.",
+      description_fr: "Dessin, sculpture, design graphique et histoire des arts plastiques.",
+    },
+    {
+      id: "musique",
+      streamId: "arts",
+      name_ar: "موسيقى",
+      name_fr: "Musique",
+      code: "MUS",
+      specialtySubjectId: "art_specialty",
+      description_ar: "الصولفيج، المقامات، الهارموني، والتحليل الموسيقي.",
+      description_fr: "Solfège, modes musicaux, harmonie et analyse musicale.",
+    },
+    {
+      id: "theatre",
+      streamId: "arts",
+      name_ar: "مسرح",
+      name_fr: "Théâtre",
+      code: "THE",
+      specialtySubjectId: "art_specialty",
+      description_ar: "السينوغرافيا، الإخراج المسرحي، التمثيل وفن الأداء.",
+      description_fr: "Scénographie, mise en scène théâtrale et jeu d'acteur.",
+    },
+  ],
+};
+
+export function getStreamBranches(streamId: string): StreamBranchMeta[] {
+  return STREAM_BRANCHES[streamId] || [];
 }

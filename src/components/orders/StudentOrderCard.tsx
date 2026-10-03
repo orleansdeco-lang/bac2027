@@ -211,7 +211,7 @@ export function StudentOrderCard({ order }: StudentOrderCardProps) {
         <span className="text-[11px] text-theme-muted">
           متابعة مراحل الشحن، التوصيل، والدفع وتفعيل الاشتراك:
         </span>
-        <Link href={`/dashboard/orders/${encodeURIComponent(order.id || order.order_number)}`}>
+        <Link href={`/orders/track/${encodeURIComponent(order.id || order.order_number)}`}>
           <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[var(--color-primary)] hover:bg-[var(--color-primary)]/90 text-white font-bold text-xs shadow-sm transition-all hover:scale-[1.02]">
             <Clock className="w-3.5 h-3.5" />
             <span>تتبع مسار الطلب (Timeline)</span>

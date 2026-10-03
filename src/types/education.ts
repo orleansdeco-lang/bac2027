@@ -31,6 +31,38 @@ export type TechniqueMathSpecialty =
   | "electrical_eng"
   | "process_eng";
 
+export type TechniqueMathBranch = TechniqueMathSpecialty;
+
+export type ForeignLanguageBranch =
+  | "allemand"
+  | "espagnol"
+  | "italien"
+  | "german"
+  | "spanish"
+  | "italian";
+
+export type ArtsBranch =
+  | "cinema_audiovisuel"
+  | "arts_plastiques"
+  | "musique"
+  | "theatre";
+
+export type StreamBranchId =
+  | TechniqueMathBranch
+  | ForeignLanguageBranch
+  | ArtsBranch;
+
+export interface StreamBranch {
+  id: string;
+  streamId: ExtendedStreamId;
+  name_ar: string;
+  name_fr: string;
+  code: string;
+  specialtySubjectId: SubjectId;
+  description_ar?: string;
+  description_fr?: string;
+}
+
 export type StandardSubjectId =
   | "math"
   | "physics"
@@ -48,16 +80,18 @@ export type StandardSubjectId =
   | "civil_eng"
   | "electrical_eng"
   | "process_eng"
-  | "third_language";
-
-export type ExtendedSubjectId =
-  | StandardSubjectId
+  | "third_language"
+  | "third_language_de"
+  | "third_language_es"
+  | "third_language_it"
   | "german"
   | "spanish"
   | "italian"
   | "tamazight"
   | "art_specialty"
   | "art_history";
+
+export type ExtendedSubjectId = StandardSubjectId;
 
 export type SubjectId = StandardSubjectId;
 

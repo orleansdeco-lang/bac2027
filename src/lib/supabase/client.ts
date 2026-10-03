@@ -20,16 +20,46 @@ export const supabase = isSupabaseConfigured && typeof createClient === "functio
   : null;
 
 /**
+ * Validates whether a token string is a structurally sound, non-expired Supabase JWT.
+ * Prevents PostgREST PGRST301 errors ("Expected 3 parts in JWT; got 1" or "JWT expired")
+ * when operator cookies (e.g. "ops_operator") or expired session tokens are passed.
+ */
+export function isValidSupabaseJwt(token?: string | null): boolean {
+  if (!token || typeof token !== "string") return false;
+  const parts = token.trim().split(".");
+  if (parts.length !== 3) return false;
+  try {
+    const payloadPart = parts[1];
+    const base64 = payloadPart.replace(/-/g, "+").replace(/_/g, "/");
+    const jsonStr = typeof atob === "function"
+      ? atob(base64)
+      : Buffer.from(base64, "base64").toString("utf8");
+    const payload = JSON.parse(jsonStr);
+    if (payload && typeof payload.exp === "number") {
+      // Check expiration
+      if (payload.exp * 1000 <= Date.now()) {
+        return false;
+      }
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Creates an authenticated Supabase client using an operator/student Bearer token.
  * Passes the Authorization header so RLS policies and SECURITY DEFINER RPCs evaluate auth.uid().
+ * If token is missing, not a valid JWT, or expired, falls back to standard supabase client
+ * so that PostgREST queries and SECURITY DEFINER RPCs succeed without PGRST301 rejection.
  */
 export function createAuthenticatedSupabaseClient(token?: string | null) {
   if (!isSupabaseConfigured || typeof createClient !== "function") return null;
-  if (!token) return supabase;
+  if (!token || !isValidSupabaseJwt(token)) return supabase;
   return createClient(supabaseUrl, supabaseAnonKey, {
     global: {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${token.trim()}`,
       },
     },
     auth: {

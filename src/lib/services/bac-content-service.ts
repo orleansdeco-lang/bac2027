@@ -188,6 +188,33 @@ export const BacContentService = {
       result = result.filter((i) => i.streamId === filters.stream);
     }
 
+    // 1.1 Branch (الفروع والتخصصات)
+    if (filters.branch && filters.branch !== "all") {
+      result = result.filter((i) => {
+        if (i.branchId) {
+          return i.branchId === filters.branch;
+        }
+        const specialtyBranches: Record<string, string> = {
+          mechanical_eng: "mechanical_eng",
+          civil_eng: "civil_eng",
+          electrical_eng: "electrical_eng",
+          process_eng: "process_eng",
+          third_language_de: "allemand",
+          third_language_es: "espagnol",
+          third_language_it: "italien",
+          german: "allemand",
+          spanish: "espagnol",
+          italian: "italien",
+        };
+        const itemBranch = specialtyBranches[i.subjectId];
+        if (itemBranch) {
+          return itemBranch === filters.branch;
+        }
+        // Common subjects across that stream (e.g. math, physics, arabic) belong to all branches
+        return true;
+      });
+    }
+
     // 2. Subject
     if (filters.subject && filters.subject !== "all") {
       result = result.filter((i) => {

@@ -56,7 +56,6 @@ import {
 
 import { validateContentStreamCompatibility } from "@/domain/student";
 import { TodayCommandCenter } from "@/components/study-os";
-import { StudentOrdersSection } from "@/components/orders/StudentOrdersSection";
 
 export default function DashboardPage() {
   const { t, locale } = useTranslation();
@@ -934,11 +933,6 @@ export default function DashboardPage() {
           </div>
 
         </section>
-
-        {/* ================================================================= */}
-        {/* SHATER PHYSICAL KIT & COD ORDERS (MY ORDERS)                      */}
-        {/* ================================================================= */}
-        <StudentOrdersSection limit={3} showAllLink={true} />
 
         {/* ================================================================= */}
         {/* 5. ROAD VISUALIZER ACCORDION / EXPANDABLE SECTION                 */}

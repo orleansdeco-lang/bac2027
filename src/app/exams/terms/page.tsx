@@ -6,7 +6,8 @@ import Link from "next/link";
 import { AppShell } from "@/components/ui/AppShell";
 import { Container } from "@/components/ui/Container";
 import { ResourceInAppPdfModal } from "@/components/exams/ResourceInAppPdfModal";
-import { ALL_SUBJECTS, ALGERIAN_BAC_STREAMS } from "@/lib/constants/streams";
+import { ALL_SUBJECTS, ALGERIAN_BAC_STREAMS, getStreamBranches } from "@/lib/constants/streams";
+import { classifyContentItem } from "@/lib/content/stream-classifier";
 import { StreamId, SubjectId } from "@/types/education";
 import { useAuth } from "@/lib/auth/context";
 import { StudentService } from "@/lib/services";
@@ -70,6 +71,8 @@ export interface UnifiedResourceExamItem {
   stream_name: string;
   subjectId: string;
   subject_name: string;
+  branchId?: string;
+  branch_name?: string;
   title_ar: string;
   subjectPdfUrl: string;
   solutionPdfUrl: string;
@@ -85,6 +88,14 @@ function mapSupabaseResourceToExamItem(row: any): UnifiedResourceExamItem {
   const year = yearMatch ? parseInt(yearMatch[0], 10) : 2024;
   const pdfLinks: string[] = Array.isArray(row.pdf_links) ? row.pdf_links : [];
   const category = row.category || "اختبارات";
+
+  const classified = classifyContentItem({
+    title: row.title,
+    subject: row.subject,
+    stream: row.stream,
+    category: row.category,
+    url: row.source_url || pdfLinks[0],
+  });
 
   let kind: "term_exam" | "term_quiz" | "bac_blanc" | "summary" | "exercise" = "term_exam";
   if (category === "فروض" || title.includes("فرض")) kind = "term_quiz";
@@ -106,10 +117,12 @@ function mapSupabaseResourceToExamItem(row: any): UnifiedResourceExamItem {
     category,
     term: row.term ? (Number(row.term) as 1 | 2 | 3) : null,
     schoolName: "ثانوية جزائرية",
-    streamId: "all",
-    stream_name: row.stream || "عام / جميع الشعب",
-    subjectId: row.subject || "الرياضيات",
-    subject_name: row.subject || "الرياضيات",
+    streamId: classified.streamId,
+    stream_name: classified.streamName,
+    subjectId: classified.subjectId,
+    subject_name: classified.subjectName,
+    branchId: classified.branchId,
+    branch_name: classified.branchName,
     title_ar: title,
     subjectPdfUrl: pdfLinks[0] || "",
     solutionPdfUrl: pdfLinks[1] || (hasSolution ? pdfLinks[0] : ""),
@@ -122,30 +135,9 @@ function mapSupabaseResourceToExamItem(row: any): UnifiedResourceExamItem {
 
 function matchesStream(item: UnifiedResourceExamItem, streamId: string): boolean {
   if (streamId === "all") return true;
-  const text = (item.stream_name + " " + item.title_ar + " " + item.streamId).toLowerCase();
-
-  if (streamId === "sciences_exp") {
-    return text.includes("علمي") || text.includes("علوم تجريبية") || text.includes("شعب علمية") || text.includes("sciences_exp");
-  }
-  if (streamId === "math") {
-    return (text.includes("شعبة رياضيات") || text.includes("شعبة الرياضيات") || (text.includes("رياضيات") && !text.includes("تقني"))) || item.streamId === "math";
-  }
-  if (streamId === "technique_math") {
-    return text.includes("تقني") || text.includes("هندسة") || item.streamId === "technique_math";
-  }
-  if (streamId === "gestion_eco") {
-    return text.includes("تسيير") || text.includes("اقتصاد") || text.includes("محاسب") || item.streamId === "gestion_eco";
-  }
-  if (streamId === "lettres_philo") {
-    return text.includes("آداب") || text.includes("اداب") || text.includes("فلسفة") || text.includes("أدبي") || item.streamId === "lettres_philo";
-  }
-  if (streamId === "langues_etrangeres") {
-    return text.includes("لغات") || text.includes("ألماني") || text.includes("إسباني") || text.includes("إيطالي") || item.streamId === "langues_etrangeres";
-  }
-  if (streamId === "arts") {
-    return text.includes("فنون") || item.streamId === "arts";
-  }
-  return true;
+  if (item.streamId === streamId) return true;
+  if (item.streamId === "common" || item.streamId === "all") return true;
+  return false;
 }
 
 function matchesKind(item: UnifiedResourceExamItem, kind: string): boolean {

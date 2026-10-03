@@ -3,6 +3,8 @@ import path from "path";
 import { StreamId, SubjectId } from "@/types/education";
 import { ExamKind, BacExamItem } from "@/data/exams";
 
+import { classifyContentItem } from "./stream-classifier";
+
 export interface AlternateSource {
   source_name: string;
   source_url: string;
@@ -15,6 +17,8 @@ export interface BacMasterItem extends BacExamItem {
   grade: string;
   stream_name: string;
   subject_name: string;
+  branchId?: string;
+  branch_name?: string;
   content_type: "bac_official" | "bac_blanc" | "term_exam" | "term_quiz";
   source_name: string;
   source_url: string;
@@ -39,6 +43,7 @@ export interface BacMasterItem extends BacExamItem {
 
 export interface MasterInventoryFilterParams {
   stream?: string;
+  branch?: string;
   subject?: string;
   year?: number | string;
   decade?: "all" | "2020s" | "2010s" | "2000s" | "1990s";
@@ -79,8 +84,18 @@ function normalizeRawItem(raw: any): BacMasterItem {
   else if (raw.content_type === "term_exam") mappedKind = "term_exam";
   else if (raw.content_type === "term_quiz") mappedKind = "term_quiz";
 
-  const streamId = (raw.stream || "sciences_exp") as StreamId;
-  const subjectId = (raw.subject || "math") as SubjectId;
+  const classified = classifyContentItem({
+    title: raw.title_ar || raw.title,
+    subject: raw.subject || raw.subject_name,
+    stream: raw.stream || raw.stream_name,
+    category: raw.content_type || raw.category,
+    url: raw.file_url || raw.source_url,
+  });
+
+  const streamId = (raw.stream || classified.streamId) as StreamId;
+  const subjectId = (raw.subject || classified.subjectId) as SubjectId;
+  const branchId = raw.branchId || classified.branchId;
+  const branchName = raw.branch_name || classified.branchName;
 
   return {
     id: raw.id,
@@ -90,6 +105,8 @@ function normalizeRawItem(raw: any): BacMasterItem {
     term: raw.term ? (Number(raw.term) as 1 | 2 | 3) : undefined,
     streamId,
     subjectId,
+    branchId,
+    branch_name: branchName,
     title_ar: raw.title_ar || raw.title || "",
     topicsCount: raw.estimated_questions > 4 ? 2 : 1,
     subjectPdfUrl: raw.file_url || raw.source_url || "",
@@ -100,8 +117,8 @@ function normalizeRawItem(raw: any): BacMasterItem {
     country: raw.country || "DZ",
     education_level: raw.education_level || "secondary",
     grade: raw.grade || "3AS",
-    stream_name: raw.stream_name || "",
-    subject_name: raw.subject_name || "",
+    stream_name: raw.stream_name || classified.streamName || "",
+    subject_name: raw.subject_name || classified.subjectName || "",
     content_type: raw.content_type || "bac_official",
     source_name: raw.source_name || "DzExams / ONEC",
     source_url: raw.source_url || "",

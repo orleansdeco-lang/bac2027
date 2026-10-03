@@ -7,12 +7,13 @@ import { AppShell } from "@/components/ui/AppShell";
 import { Container } from "@/components/ui/Container";
 import { BacExamItem } from "@/data/exams";
 import { ExamPdfViewerModal } from "@/components/exams/ExamPdfViewerModal";
-import { ALL_SUBJECTS, ALGERIAN_BAC_STREAMS } from "@/lib/constants/streams";
+import { ALL_SUBJECTS, ALGERIAN_BAC_STREAMS, getStreamBranches } from "@/lib/constants/streams";
 import { StreamId, SubjectId } from "@/types/education";
 import { useAuth } from "@/lib/auth/context";
 import { StudentService } from "@/lib/services";
 import { BacContentService } from "@/lib/services/bac-content-service";
 import { BacMasterItem, MasterInventoryStats } from "@/lib/content/bac-inventory";
+import { classifyContentItem } from "@/lib/content/stream-classifier";
 import { supabase } from "@/lib/supabase/client";
 import { useEntitlements } from "@/lib/access/useEntitlements";
 import { PaywallModal } from "@/components/paywall/PaywallModal";
@@ -108,6 +109,7 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
 
   // Filters State
   const [selectedStream, setSelectedStream] = useState<string>("all");
+  const [selectedBranch, setSelectedBranch] = useState<string>("all");
   const [selectedSubject, setSelectedSubject] = useState<string>("all");
   const [selectedYear, setSelectedYear] = useState<number>(0);
   const [selectedDecade, setSelectedDecade] = useState<string>("all");
@@ -132,8 +134,6 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
     return exam.year >= 2023 && (exam.kind === "official_bac" || (exam as any).content_type === "bac_official");
   };
 
-
-
   // Initial Load of Master Inventory + Verified Supabase Resources
   useEffect(() => {
     let isMounted = true;
@@ -153,7 +153,13 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
 
           if (dbResources && dbResources.length > 0) {
             const mappedDbItems: BacMasterItem[] = dbResources.map((row: any) => {
-              const stream = (row.stream || "عام / جميع الشعب") as string;
+              const classified = classifyContentItem({
+                title: row.title,
+                subject: row.subject,
+                stream: row.stream,
+                category: row.category,
+                url: row.source_url || row.pdf_links?.[0],
+              });
               const hasSol = Boolean(row.title?.includes("تصحيح") || row.title?.includes("حل") || row.pdf_links?.length > 1);
               return {
                 id: row.id,
@@ -161,20 +167,22 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
                 session: "regular",
                 kind: (row.category === "بكالوريا" ? "official_bac" : "term_exam") as any,
                 term: row.term ? (Number(row.term) as any) : undefined,
-                streamId: "sciences_exp" as any,
-                subjectId: "math" as any,
+                streamId: classified.streamId as any,
+                subjectId: classified.subjectId as any,
+                branchId: classified.branchId,
+                branch_name: classified.branchName,
                 title_ar: row.title,
                 topicsCount: 1,
                 subjectPdfUrl: row.pdf_links?.[0] || "",
                 solutionPdfUrl: row.pdf_links?.[1] || row.pdf_links?.[0] || "",
-                keywords: [row.subject || "", row.stream || ""],
+                keywords: [classified.subjectName, classified.streamName, ...(classified.branchName ? [classified.branchName] : [])],
                 durationMinutes: 180,
                 coefficient: 5,
                 country: "DZ",
                 education_level: "secondary",
                 grade: "3AS",
-                stream_name: stream,
-                subject_name: row.subject || "مادة تعليمية",
+                stream_name: classified.streamName,
+                subject_name: classified.subjectName,
                 content_type: (row.category === "بكالوريا" ? "bac_official" : "term_exam") as any,
                 source_name: "مستودع المنصة المعتمد",
                 source_url: row.source_url || row.pdf_links?.[0] || "",
@@ -186,7 +194,7 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
                 estimated_pages: 3,
                 estimated_questions: 4,
                 topic: row.title,
-                topics: [row.title],
+                topics: [classified.subjectName, classified.streamName],
                 skills: [],
                 difficulty: "standard",
                 source_type: "official_storage",
@@ -232,6 +240,7 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
   // Read URL query parameters on initial mount (Deep Link Support)
   useEffect(() => {
     const urlStream = searchParams.get("stream");
+    const urlBranch = searchParams.get("branch");
     const urlSubject = searchParams.get("subject");
     const urlYear = searchParams.get("year");
     const urlSession = searchParams.get("session");
@@ -242,6 +251,7 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
     if (urlStream && ALL_STREAMS_LIST.some((s) => s.id === urlStream)) {
       setSelectedStream(urlStream);
     }
+    if (urlBranch) setSelectedBranch(urlBranch);
     if (urlSubject) setSelectedSubject(urlSubject);
     if (urlYear && !isNaN(Number(urlYear))) setSelectedYear(Number(urlYear));
     if (urlSession) setSelectedSession(urlSession);
@@ -278,11 +288,37 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
     }
   };
 
-  // Dynamic Subjects List based on Selected Stream + item count
+  // Dynamic Branches List for Streams that possess specialties/options
+  const availableBranches = useMemo(() => {
+    if (selectedStream === "all") return [];
+    return getStreamBranches(selectedStream);
+  }, [selectedStream]);
+
+  // Dynamic Subjects List based on Selected Stream + Selected Branch + item count
   const availableSubjects = useMemo(() => {
     let pool = inventoryItems;
     if (selectedStream !== "all") {
       pool = pool.filter((item) => item.streamId === selectedStream);
+    }
+    if (selectedBranch !== "all") {
+      pool = pool.filter((item) => {
+        if (item.branchId) return item.branchId === selectedBranch;
+        const specialtyBranches: Record<string, string> = {
+          mechanical_eng: "mechanical_eng",
+          civil_eng: "civil_eng",
+          electrical_eng: "electrical_eng",
+          process_eng: "process_eng",
+          third_language_de: "allemand",
+          third_language_es: "espagnol",
+          third_language_it: "italien",
+          german: "allemand",
+          spanish: "espagnol",
+          italian: "italien",
+        };
+        const sb = specialtyBranches[item.subjectId];
+        if (sb) return sb === selectedBranch;
+        return true;
+      });
     }
 
     const counts: Record<string, number> = {};
@@ -300,7 +336,7 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
         count: counts[id],
       };
     });
-  }, [inventoryItems, selectedStream]);
+  }, [inventoryItems, selectedStream, selectedBranch]);
 
   // All distinct years available in current dataset
   const allYears = useMemo(() => {
@@ -315,6 +351,7 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
   const filteredExams = useMemo(() => {
     return BacContentService.filterItems(inventoryItems, {
       stream: selectedStream,
+      branch: selectedBranch,
       subject: selectedSubject,
       year: selectedYear === 0 ? "all" : selectedYear,
       decade: selectedDecade as any,
@@ -327,6 +364,7 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
   }, [
     inventoryItems,
     selectedStream,
+    selectedBranch,
     selectedSubject,
     selectedYear,
     selectedDecade,
@@ -368,6 +406,7 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
 
   const handleResetFilters = () => {
     setSelectedStream("all");
+    setSelectedBranch("all");
     setSelectedSubject("all");
     setSelectedYear(0);
     setSelectedDecade("all");
@@ -380,6 +419,7 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
 
   const hasActiveFilters =
     selectedStream !== "all" ||
+    selectedBranch !== "all" ||
     selectedSubject !== "all" ||
     selectedYear !== 0 ||
     selectedDecade !== "all" ||
@@ -551,6 +591,7 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
                 type="button"
                 onClick={() => {
                   setSelectedStream("all");
+                  setSelectedBranch("all");
                   setSelectedSubject("all");
                 }}
                 className={`px-3.5 py-2 rounded-2xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
@@ -570,6 +611,7 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
                     type="button"
                     onClick={() => {
                       setSelectedStream(s.id);
+                      setSelectedBranch("all");
                       setSelectedSubject("all");
                     }}
                     className={`px-3 py-1.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
@@ -597,6 +639,7 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
                     type="button"
                     onClick={() => {
                       setSelectedStream(s.id);
+                      setSelectedBranch("all");
                       setSelectedSubject("all");
                     }}
                     className={`px-2.5 py-1 rounded-xl text-[11px] whitespace-nowrap transition-all cursor-pointer ${
@@ -611,6 +654,60 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
               })}
             </div>
           </div>
+
+          {/* 1.1 Dynamic Branch Selector (for Technique Math, Foreign Languages, Arts) */}
+          {availableBranches.length > 0 && (
+            <div className="space-y-1.5 p-3 rounded-2xl bg-indigo-500/5 dark:bg-indigo-900/10 border border-indigo-500/20 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+                  <span>⚙️ الفروع والتخصصات (خاصة بالشعبة المختارة):</span>
+                  <span className="text-[11px] font-normal text-theme-muted">
+                    اختر فرعك لعرض مواضيع واختبارات التخصص حصراً
+                  </span>
+                </label>
+                <span className="text-[11px] text-theme-secondary font-bold">
+                  {selectedBranch === "all" ? "جميع الفروع" : availableBranches.find((b) => b.id === selectedBranch)?.name_ar}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedBranch("all");
+                    setSelectedSubject("all");
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                    selectedBranch === "all"
+                      ? "bg-indigo-600 text-white shadow-xs"
+                      : "bg-surface text-theme-secondary hover:text-theme-text border border-theme"
+                  }`}
+                >
+                  جميع الفروع
+                </button>
+                {availableBranches.map((b) => {
+                  const isSelected = selectedBranch === b.id;
+                  return (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedBranch(b.id);
+                        setSelectedSubject("all");
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1 ${
+                        isSelected
+                          ? "bg-indigo-600 text-white shadow-xs scale-[1.02]"
+                          : "bg-surface text-theme-secondary hover:text-theme-text border border-theme"
+                      }`}
+                    >
+                      {b.icon && <span>{b.icon}</span>}
+                      <span>{b.name_ar}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* 2. Dynamic Subject Selector Chips */}
           <div className="space-y-1.5">
@@ -908,8 +1005,16 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
                       <h3 className="text-sm font-bold text-theme-text font-sans group-hover:text-[var(--color-primary)] transition-colors line-clamp-2">
                         {exam.title_ar}
                       </h3>
-                      <div className="flex items-center gap-2 text-[11px] text-theme-secondary mt-1 font-sans">
+                      <div className="flex items-center gap-2 text-[11px] text-theme-secondary mt-1 font-sans flex-wrap">
                         <span>{exam.stream_name || stream?.name_ar}</span>
+                        {exam.branch_name && (
+                          <>
+                            <span>•</span>
+                            <span className="font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded-md">
+                              {exam.branch_name}
+                            </span>
+                          </>
+                        )}
                         <span>•</span>
                         <span>{exam.subject_name || subject?.name_ar}</span>
                       </div>
@@ -1019,7 +1124,12 @@ export function ExamsView({ embedded = false }: { embedded?: boolean }) {
                         </td>
 
                         <td className="py-2.5 px-4 text-theme-secondary font-sans whitespace-nowrap">
-                          {exam.stream_name || ALGERIAN_BAC_STREAMS[exam.streamId as StreamId]?.name_ar}
+                          <div>{exam.stream_name || ALGERIAN_BAC_STREAMS[exam.streamId as StreamId]?.name_ar}</div>
+                          {exam.branch_name && (
+                            <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
+                              ({exam.branch_name})
+                            </span>
+                          )}
                         </td>
                         <td className="py-2.5 px-4 font-bold text-theme-text whitespace-nowrap">
                           {exam.subject_name || ALL_SUBJECTS[exam.subjectId as SubjectId]?.name_ar}

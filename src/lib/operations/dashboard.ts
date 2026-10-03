@@ -425,8 +425,8 @@ export async function getOperationsDashboardData(
     getKitInventorySummary().catch(() => null),
     getVisitorsAnalytics({ period: "today", token, operatorId }).catch(() => null),
     getRegisteredStudentsAnalytics({ period: "today", pageSize: 1, token, operatorId }).catch(() => null),
-    getConversionFunnelData({ period: "30d", token }).catch(() => null),
-    getProductUsageAnalytics({ periodDays: 30, token }).catch(() => null),
+    getConversionFunnelData({ period: "30d", token, operatorId }).catch(() => null),
+    getProductUsageAnalytics({ periodDays: 30, token, operatorId }).catch(() => null),
   ]);
 
   if (analyticsRes) {
@@ -506,8 +506,21 @@ export async function getOperationsDashboardData(
   };
 
   // Section 3: Acquisition
+  const acquisitionSources = (funnelRes?.sources && funnelRes.sources.length > 0)
+    ? funnelRes.sources
+    : (visitorsRes?.sources && visitorsRes.sources.length > 0)
+      ? visitorsRes.sources.map((s) => ({
+          source: s.source,
+          visitors: s.visitors,
+          registrations: 0,
+          trials: 0,
+          paidStudents: 0,
+          revenue: 0,
+        }))
+      : [];
+
   const acquisition: CockpitAcquisitionSection = {
-    topSources: funnelRes?.sources ?? [],
+    topSources: acquisitionSources,
     topCampaigns: (funnelRes?.campaigns ?? []).slice(0, 5),
     attributionQuality: funnelRes?.attributionIntegrity ?? {
       status: "PARTIAL",
@@ -519,25 +532,65 @@ export async function getOperationsDashboardData(
   };
 
   // Section 4: Product Usage
-  const productUsage: CockpitProductUsageSection = productUsageRes ?? {
-    diwan: { opened: 0, tablesCreated: 0, tablesJoined: 0, total: 0 },
-    planner: { opened: 0 },
-    exams: { opened: 0, started: 0, completed: 0, total: 0 },
-    summaries: { opened: 0 },
-    calculator: { used: 0 },
-    other: { subjectOpened: 0, orientationOpened: 0, practiceCompleted: 0, retestCompleted: 0, total: 0 },
-    mostUsedSections: [],
-    totalProductEvents: 0,
-  };
+  const derivedTopSections = (visitorsRes?.topPages || [])
+    .filter((p) => !p.path.startsWith("/ops") && !p.path.startsWith("/admin") && !p.path.startsWith("/api"))
+    .map((p) => {
+      let labelAr = p.path;
+      if (p.path === "/") labelAr = "الرئيسية";
+      else if (p.path.startsWith("/diwan")) labelAr = "الديوان";
+      else if (p.path.startsWith("/planner")) labelAr = "المخطط";
+      else if (p.path.startsWith("/orientation")) labelAr = "التوجيه المدرسي";
+      else if (p.path.startsWith("/dashboard")) labelAr = "لوحة التلميذ";
+      else if (p.path.startsWith("/calculator")) labelAr = "حاسبة المعدل";
+      else if (p.path.startsWith("/exams")) labelAr = "بنك الامتحانات";
+      else if (p.path.startsWith("/summaries")) labelAr = "الملخصات";
+      else if (p.path.startsWith("/students")) labelAr = "الطلاب";
+      else if (p.path.startsWith("/checkout")) labelAr = "صفحة الطلب";
+      return {
+        name: p.path,
+        labelAr,
+        count: p.views,
+        percentage: p.percentage,
+      };
+    });
+
+  const productUsage: CockpitProductUsageSection = (productUsageRes && productUsageRes.totalProductEvents > 0)
+    ? productUsageRes
+    : {
+        diwan: productUsageRes?.diwan?.total ? productUsageRes.diwan : {
+          opened: (visitorsRes?.topPages || []).find((p) => p.path === "/diwan")?.views || 0,
+          tablesCreated: 0,
+          tablesJoined: 0,
+          total: (visitorsRes?.topPages || []).find((p) => p.path === "/diwan")?.views || 0,
+        },
+        planner: productUsageRes?.planner?.opened ? productUsageRes.planner : {
+          opened: (visitorsRes?.topPages || []).find((p) => p.path === "/planner")?.views || 0,
+        },
+        exams: productUsageRes?.exams || { opened: 0, started: 0, completed: 0, total: 0 },
+        summaries: productUsageRes?.summaries || { opened: 0 },
+        calculator: productUsageRes?.calculator?.used ? productUsageRes.calculator : {
+          used: (visitorsRes?.topPages || []).find((p) => p.path === "/calculator")?.views || 0,
+        },
+        other: productUsageRes?.other || {
+          subjectOpened: (visitorsRes?.topPages || []).find((p) => p.path === "/dashboard")?.views || 0,
+          orientationOpened: (visitorsRes?.topPages || []).find((p) => p.path === "/orientation")?.views || 0,
+          practiceCompleted: 0,
+          retestCompleted: 0,
+          total: ((visitorsRes?.topPages || []).find((p) => p.path === "/orientation")?.views || 0) +
+                 ((visitorsRes?.topPages || []).find((p) => p.path === "/dashboard")?.views || 0),
+        },
+        mostUsedSections: derivedTopSections.length > 0 ? derivedTopSections : (productUsageRes?.mostUsedSections || []),
+        totalProductEvents: derivedTopSections.reduce((acc, s) => acc + s.count, 0) || (productUsageRes?.totalProductEvents || 0),
+      };
 
   // Section 5: Conversion
   const conversion: CockpitConversionSection = {
-    stages: (funnelRes?.stages ?? []).map((s) => ({
-      key: s.key,
-      label: s.label,
-      count: s.count,
-      conversionFromPrev: s.conversionFromPrev,
-      definition: s.definition,
+    stages: (funnelRes?.stages ?? []).map((s: any) => ({
+      key: s.key || s.id || "",
+      label: s.label || "",
+      count: Number(s.count) || 0,
+      conversionFromPrev: Number(s.conversionFromPrev ?? s.conversionFromPrevious) || 0,
+      definition: s.definition || "",
     })),
     ratios: funnelRes?.ratios ?? {
       visitorToRegistration: 0,

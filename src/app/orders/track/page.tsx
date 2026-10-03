@@ -102,18 +102,18 @@ function OrderTrackingLookupContent() {
               <span>أين أجد رقم الطلب الخاص بي؟</span>
             </div>
             <p className="leading-relaxed">
-              تجد رقم الطلب في صفحة تأكيد الطلب فور إتمام الشراء، أو في رسالة التأكيد عبر البريد الإلكتروني ورسائل الواتساب، كما يظهر في قائمة طلباتي داخل لوحة الطالب.
+              تجد رقم الطلب في صفحة تأكيد الطلب فور إتمام الشراء، أو في رسالة التأكيد عبر البريد الإلكتروني ورسائل الواتساب.
             </p>
           </div>
         </Card>
 
-        {/* Quick Link to My Orders */}
+        {/* Quick Link to Dashboard */}
         <div className="text-center">
           <Link
-            href="/dashboard/orders"
+            href="/dashboard"
             className="inline-flex items-center gap-2 text-xs font-bold text-theme-muted hover:text-[var(--color-primary)] transition-colors"
           >
-            <span>عرض جميع طلباتي السابقة في لوحة التحكم</span>
+            <span>العودة إلى لوحة التحكم</span>
             <NextArrow className="w-3.5 h-3.5" />
           </Link>
         </div>

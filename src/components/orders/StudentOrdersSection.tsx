@@ -103,9 +103,9 @@ export function StudentOrdersSection({
           </button>
 
           {showAllLink && orders.length > (limit || 0) && (
-            <Link href="/dashboard/orders">
+            <Link href="/orders/track">
               <Button variant="ghost" size="sm" className="text-xs font-bold gap-1 text-[var(--color-primary)]">
-                <span>عرض كل الطلبات</span>
+                <span>تتبع الطلبات</span>
                 <NextArrow className="w-3.5 h-3.5" />
               </Button>
             </Link>

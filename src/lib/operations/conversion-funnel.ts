@@ -142,7 +142,14 @@ export async function getConversionFunnelData(
       );
 
       if (!rpcError && rpcData && Array.isArray(rpcData.stages)) {
-        stages = rpcData.stages;
+        stages = rpcData.stages.map((s: any) => ({
+          key: s.key || s.id || "",
+          label: s.label || "",
+          count: Number(s.count) || 0,
+          conversionFromPrev: Number(s.conversionFromPrev ?? s.conversionFromPrevious) || 0,
+          conversionFromTop: Number(s.conversionFromTop ?? s.conversionFromPrevious) || 0,
+          definition: s.definition || "",
+        }));
         if (rpcData.ratios) ratios = rpcData.ratios;
         if (Array.isArray(rpcData.sources)) sources = rpcData.sources;
         if (Array.isArray(rpcData.campaigns)) campaigns = rpcData.campaigns;
