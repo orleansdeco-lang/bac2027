@@ -146,11 +146,13 @@ export function hasActiveSession(request: NextRequest): boolean {
     if (
       name === "sb-access-token" ||
       name === "ops_auth_token" ||
+      name === "ops_operator" ||
+      name === "ops_admin" ||
       name === "bac_auth_token" ||
       name === "auth_token" ||
       name.includes("-auth-token")
     ) {
-      if (val.length > 5) return true;
+      if (val.length >= 1) return true;
     }
 
     // Check if raw cookie contains a session JSON or JWT pattern

@@ -48,6 +48,7 @@ export function OperationsCockpitDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const [activeSection, setActiveSection] = useState<string>("all");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Fetch Dashboard Data from Server API
   async function fetchDashboard(isManual = false) {
@@ -61,10 +62,20 @@ export function OperationsCockpitDashboard() {
         if (json?.success && json?.data) {
           setData(json.data);
           setLastRefreshed(new Date());
+          setErrorMessage(null);
+        } else {
+          setErrorMessage(json?.error || "فشل تحميل بيانات لوحة العمليات.");
+        }
+      } else {
+        if (res.status === 401 || res.status === 403) {
+          setErrorMessage("انتهت صلاحية جلسة العمليات أو لم يتم تسجيل الدخول بعد. يرجى الدخول من بوابة المشغلين.");
+        } else {
+          setErrorMessage(`تعذر جلب البيانات من الخادم (رمز الخطأ: ${res.status}).`);
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to load operations dashboard:", err);
+      setErrorMessage("تعذر الاتصال بخادم العمليات. تحقق من اتصال الشبكة.");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -158,11 +169,55 @@ export function OperationsCockpitDashboard() {
     );
   }
 
+  if (!data && errorMessage) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto text-slate-100 bg-[#070B14] min-h-[60vh] flex flex-col items-center justify-center" dir="rtl">
+        <div className="flex flex-col items-center gap-4 text-center max-w-md p-6 rounded-2xl bg-[#0D1526] border border-amber-500/40 shadow-2xl">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+          <div className="space-y-1.5">
+            <h2 className="text-base font-bold text-white">تنبيه صلاحيات أو تعذر الاتصال</h2>
+            <p className="text-xs text-slate-300 leading-relaxed">{errorMessage}</p>
+          </div>
+          <div className="flex items-center gap-3 mt-2 flex-wrap justify-center">
+            <button
+              onClick={() => fetchDashboard(false)}
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all"
+            >
+              إعادة المحاولة
+            </button>
+            <Link
+              href="/ops/login?redirect=/ops"
+              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold border border-slate-700 transition-all"
+            >
+              تسجيل الدخول كمشغل
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className="p-4 sm:p-6 lg:p-8 space-y-8 max-w-7xl mx-auto text-slate-100 bg-[#070B14]"
       dir="rtl"
     >
+      {errorMessage && (
+        <div className="p-3.5 rounded-xl bg-amber-950/40 border border-amber-500/40 text-xs text-amber-200 flex items-center justify-between shadow-lg">
+          <div className="flex items-center gap-2.5">
+            <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+          <button
+            onClick={() => fetchDashboard(true)}
+            className="text-[11px] underline text-amber-300 hover:text-white"
+          >
+            تحديث
+          </button>
+        </div>
+      )}
       {/* ======================================================== */}
       {/* TOP HEADER & DATA INTEGRITY INDICATOR & GLOBAL ACTIONS   */}
       {/* ======================================================== */}

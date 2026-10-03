@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { extractAndVerifyOperator, extractTokenFromCookies } from "@/lib/operations/auth";
+import { extractAndVerifyOperator, extractTokenFromCookies, OPS_OPERATOR_UUID } from "@/lib/operations/auth";
 import { getOperationsDashboardData } from "@/lib/operations/dashboard";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +32,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const data = await getOperationsDashboardData(operator.userId, token);
+    const data = await getOperationsDashboardData(OPS_OPERATOR_UUID, token);
     return NextResponse.json({ success: true, data });
   } catch (err: any) {
     return NextResponse.json(
