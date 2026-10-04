@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { RecentVisitorActivityItem } from "@/lib/operations/visitors-analytics";
+import { RecentVisitorActivityItem, formatDwellDuration } from "@/lib/operations/visitors-analytics";
 import {
   Activity,
   Search,
@@ -13,6 +13,7 @@ import {
   Clock,
   Repeat,
   UserPlus,
+  ArrowRight,
 } from "lucide-react";
 
 interface Props {
@@ -54,7 +55,7 @@ export function RecentVisitorActivityTable({ activity, loading = false }: Props)
     }
   }
 
-  function formatTime(isoString?: string) {
+  function formatTimeDetails(isoString?: string) {
     if (!isoString) return { date: "—", time: "—" };
     try {
       const d = new Date(isoString);
@@ -68,13 +69,24 @@ export function RecentVisitorActivityTable({ activity, loading = false }: Props)
     }
   }
 
+  function formatClockOnly(isoString?: string) {
+    if (!isoString) return null;
+    try {
+      const d = new Date(isoString);
+      if (isNaN(d.getTime())) return null;
+      return d.toLocaleTimeString("fr-DZ", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    } catch {
+      return null;
+    }
+  }
+
   return (
     <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl overflow-hidden shadow-xl backdrop-blur-xl">
       {/* Header & Filter Controls */}
       <div className="p-4 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4 text-emerald-400" />
-          <span className="text-xs font-bold text-white">النشاط الأخير للزوار (Recent Visitor Activity)</span>
+          <span className="text-xs font-bold text-white">النشاط الأخير للزوار ومدة البقاء (Recent Visitor Activity & Dwell Time)</span>
           <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-800/40">
             {filtered.length} نشاط مسجل
           </span>
@@ -112,8 +124,9 @@ export function RecentVisitorActivityTable({ activity, loading = false }: Props)
         <table className="w-full text-right text-xs text-slate-300">
           <thead className="bg-slate-950/90 text-slate-400 text-[11px] font-semibold border-b border-slate-800">
             <tr>
-              <th className="px-4 py-3">الوقت والتاريخ</th>
               <th className="px-4 py-3">الصفحة المزارة (Page)</th>
+              <th className="px-4 py-3">وقت الدخول والخروج (Entry & Exit)</th>
+              <th className="px-4 py-3">مدة البقاء (Dwell Time)</th>
               <th className="px-4 py-3">نوع الزائر (Visitor Type)</th>
               <th className="px-4 py-3">مصدر الزيارة (Source)</th>
               <th className="px-4 py-3">نوع الجهاز (Device)</th>
@@ -123,41 +136,71 @@ export function RecentVisitorActivityTable({ activity, loading = false }: Props)
           <tbody className="divide-y divide-slate-800/60 font-sans">
             {loading ? (
               <tr>
-                <td colSpan={6} className="p-12 text-center text-slate-500">
+                <td colSpan={7} className="p-12 text-center text-slate-500">
                   <div className="flex items-center justify-center gap-2">
                     <span className="w-4 h-4 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
-                    <span>جاري تحميل أحدث تفاعلات الزوار...</span>
+                    <span>جاري تحميل أحدث تفاعلات الزوار ومدة البقاء...</span>
                   </div>
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={6} className="p-12 text-center text-slate-500 text-xs">
+                <td colSpan={7} className="p-12 text-center text-slate-500 text-xs">
                   لا توجد سجلات نشاط مطابقة في الفترة المحددة
                 </td>
               </tr>
             ) : (
               filtered.map((item, idx) => {
-                const { date, time } = formatTime(item.time);
+                const { date, time } = formatTimeDetails(item.time);
                 const isNew = item.visitorType === "NEW" || (item as any).isNew;
                 const page = (item as any).page || (item as any).path || "/";
                 const source = item.source || "direct";
                 const device = item.device || "desktop";
                 const safeId = String(item.id || (item as any).sessionId || `act_${idx}`);
 
+                // Exact entry & exit times
+                const entryClock = formatClockOnly(item.enteredAt) || time;
+                const exitClock = formatClockOnly(item.exitedAt);
+
+                // Dwell duration
+                const durationText = item.formattedDuration || (typeof item.durationSeconds === "number" ? formatDwellDuration(item.durationSeconds) : null);
+
                 return (
                   <tr key={safeId} className="hover:bg-slate-800/40 transition-colors">
-                    {/* Time */}
-                    <td className="px-4 py-3 font-mono text-[11px] text-slate-400" dir="ltr">
-                      <div className="text-slate-200 font-semibold">{time}</div>
-                      <div className="text-[10px] text-slate-500">{date}</div>
-                    </td>
-
                     {/* Page */}
                     <td className="px-4 py-3">
-                      <span className="font-mono text-cyan-300 text-xs truncate max-w-[240px] block" dir="ltr">
+                      <span className="font-mono text-cyan-300 text-xs truncate max-w-[220px] block" dir="ltr">
                         {page}
                       </span>
+                    </td>
+
+                    {/* Entry & Exit Times */}
+                    <td className="px-4 py-3 font-mono text-[11px] text-slate-400" dir="ltr">
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                          <span className="text-[10px] text-slate-500 font-sans">دخول:</span>
+                          <span>{entryClock}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-slate-300">
+                          <span className="text-[10px] text-slate-500 font-sans">خروج:</span>
+                          <span>{exitClock || (item.enteredAt && !item.exitedAt ? "جارية الآن..." : "—")}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-500">{date}</div>
+                      </div>
+                    </td>
+
+                    {/* Dwell Duration Badge */}
+                    <td className="px-4 py-3">
+                      {durationText && durationText !== "—" ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-cyan-950/70 text-cyan-300 border border-cyan-800/50">
+                          <Clock className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>{durationText}</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono text-slate-500 bg-slate-950/60 border border-slate-800">
+                          <span>&lt; 1ث</span>
+                        </span>
+                      )}
                     </td>
 
                     {/* Visitor Type */}

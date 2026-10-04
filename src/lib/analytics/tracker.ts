@@ -336,7 +336,12 @@ export function sendAnalyticsEvent(
 
   const visitorId = getOrCreateAnonymousId();
   const { sessionId } = getOrCreateSessionId();
-  const pagePath = window.location.pathname;
+  const pagePath =
+    typeof properties?.path === "string" && properties.path
+      ? properties.path
+      : typeof properties?.pagePath === "string" && properties.pagePath
+      ? properties.pagePath
+      : window.location.pathname;
   const now = new Date().toISOString();
   
   // Crypto-strong event ID

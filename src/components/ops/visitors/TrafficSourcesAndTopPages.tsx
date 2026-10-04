@@ -16,6 +16,7 @@ import {
   MapPin,
   ExternalLink,
   Layers,
+  Clock,
 } from "lucide-react";
 
 interface Props {
@@ -72,10 +73,16 @@ export function TrafficSourcesAndTopPages({
                     className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-colors"
                   >
                     <div className="flex items-center justify-between text-xs mb-1.5">
-                      <span className="font-mono text-slate-200 truncate max-w-[240px] sm:max-w-xs" dir="ltr">
+                      <span className="font-mono text-slate-200 truncate max-w-[200px] sm:max-w-xs" dir="ltr">
                         {path}
                       </span>
                       <div className="flex items-center gap-2 font-mono">
+                        {page.avgFormattedDuration && (
+                          <span className="inline-flex items-center gap-1 text-[10px] text-cyan-400 bg-cyan-950/70 px-1.5 py-0.5 rounded border border-cyan-800/40">
+                            <Clock className="w-2.5 h-2.5" />
+                            <span>{page.avgFormattedDuration}</span>
+                          </span>
+                        )}
                         <span className="text-cyan-300 font-bold">{views} مشاهدة</span>
                         <span className="text-[10px] text-slate-400">({percentage}%)</span>
                       </div>

@@ -2,7 +2,7 @@
 
 import React from "react";
 import { VisitorsOverviewKPIs } from "@/lib/operations/visitors-analytics";
-import { Users, UserPlus, Repeat, Activity, Calendar, Eye } from "lucide-react";
+import { Users, UserPlus, Repeat, Activity, Calendar, Clock } from "lucide-react";
 
 interface Props {
   kpis: VisitorsOverviewKPIs;
@@ -15,12 +15,12 @@ export function VisitorsOverviewKPIGrid({ kpis, loading = false }: Props) {
       <div className="flex items-center justify-between">
         <h2 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
           <Users className="w-4 h-4 text-cyan-400" />
-          <span>نظرة عامة على حركة الزوار (Visitors Overview)</span>
+          <span>نظرة عامة على حركة الزوار ومدة الجلسات (Visitors Overview & Session Dwell)</span>
         </h2>
         <span className="text-[11px] text-slate-500 font-mono">بيانات واقعية 100%</span>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
         {/* 1. Unique visitors today */}
         <div className="p-4 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400">
@@ -45,7 +45,23 @@ export function VisitorsOverviewKPIGrid({ kpis, loading = false }: Props) {
           </div>
         </div>
 
-        {/* 3. New visitors today */}
+        {/* 3. Average session duration */}
+        <div className="p-4 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md flex flex-col justify-between">
+          <div className="flex items-center justify-between text-slate-400">
+            <span className="text-[11px] font-semibold">متوسط مدة الجلسة</span>
+            <Clock className="w-4 h-4 text-teal-400" />
+          </div>
+          <div className="mt-2">
+            <div className="text-2xl font-black text-teal-300 font-mono">
+              {kpis.avgSessionDurationFormatted && kpis.avgSessionDurationFormatted !== "—"
+                ? kpis.avgSessionDurationFormatted
+                : "—"}
+            </div>
+            <div className="text-[10px] text-slate-500 font-mono mt-0.5">AVG DWELL TIME</div>
+          </div>
+        </div>
+
+        {/* 4. New visitors today */}
         <div className="p-4 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[11px] font-semibold">زوار جدد اليوم</span>
@@ -57,7 +73,7 @@ export function VisitorsOverviewKPIGrid({ kpis, loading = false }: Props) {
           </div>
         </div>
 
-        {/* 4. Returning visitors today */}
+        {/* 5. Returning visitors today */}
         <div className="p-4 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[11px] font-semibold">زوار عائدون اليوم</span>
@@ -69,7 +85,7 @@ export function VisitorsOverviewKPIGrid({ kpis, loading = false }: Props) {
           </div>
         </div>
 
-        {/* 5. Unique visitors last 7 days */}
+        {/* 6. Unique visitors last 7 days */}
         <div className="p-4 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[11px] font-semibold">فريدون آخر 7 أيام</span>
@@ -81,7 +97,7 @@ export function VisitorsOverviewKPIGrid({ kpis, loading = false }: Props) {
           </div>
         </div>
 
-        {/* 6. Unique visitors last 30 days */}
+        {/* 7. Unique visitors last 30 days */}
         <div className="p-4 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[11px] font-semibold">فريدون آخر 30 يوماً</span>

@@ -11,6 +11,7 @@
 export const SHATER_CONTROLLED_EVENTS = {
   // ACQUISITION
   PAGE_VIEW: "page_view",
+  PAGE_LEAVE: "page_leave",
   SESSION_START: "session_start",
 
   // REGISTRATION

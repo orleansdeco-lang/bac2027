@@ -16,6 +16,21 @@ import { ensureValidOperatorUuid } from "./auth";
 
 export type VisitorAnalyticsPeriod = "today" | "7d" | "30d" | "90d";
 
+export function formatDwellDuration(seconds?: number): string {
+  if (typeof seconds !== "number" || isNaN(seconds) || seconds <= 0) return "—";
+  if (seconds < 60) {
+    return `${seconds}ث`;
+  }
+  const mins = Math.floor(seconds / 60);
+  const remSec = seconds % 60;
+  if (mins < 60) {
+    return remSec > 0 ? `${mins}د ${remSec}ث` : `${mins}د`;
+  }
+  const hours = Math.floor(mins / 60);
+  const remMins = mins % 60;
+  return `${hours}س ${remMins}د`;
+}
+
 export interface VisitorsOverviewKPIs {
   uniqueVisitorsToday: number;
   sessionsToday: number;
@@ -23,6 +38,8 @@ export interface VisitorsOverviewKPIs {
   returningVisitorsToday: number;
   uniqueVisitorsLast7Days: number;
   uniqueVisitorsLast30Days: number;
+  avgSessionDurationSeconds?: number;
+  avgSessionDurationFormatted?: string;
 }
 
 export interface LiveActivityStatus {
@@ -43,6 +60,8 @@ export interface TopPageItem {
   path: string;
   views: number;
   percentage: number;
+  avgDurationSeconds?: number;
+  avgFormattedDuration?: string;
 }
 
 export interface TrafficSourceItem {
@@ -91,6 +110,11 @@ export interface RecentVisitorActivityItem {
   device: string;
   source: string;
   visitorType: "NEW" | "RETURNING";
+  enteredAt?: string;
+  exitedAt?: string;
+  durationSeconds?: number;
+  formattedDuration?: string;
+  eventName?: string;
 }
 
 export interface VisitorsAnalyticsResponse {
@@ -202,14 +226,22 @@ export async function getVisitorsAnalytics(
         }
         if (rpcData.geography) geography = rpcData.geography;
         if (Array.isArray(rpcData.recentActivity)) {
-          recentActivity = rpcData.recentActivity.map((r: any) => ({
-            id: String(r.id || r.sessionId || Math.random().toString(36).slice(2)),
-            time: r.time || new Date().toISOString(),
-            page: r.page || r.path || "/",
-            device: r.device || "desktop",
-            source: r.source || "direct",
-            visitorType: (r.visitorType === "RETURNING" ? "RETURNING" : "NEW") as "NEW" | "RETURNING",
-          }));
+          recentActivity = rpcData.recentActivity.map((r: any) => {
+            const durSec = typeof r.durationSeconds === "number" ? r.durationSeconds : (typeof r.duration_seconds === "number" ? r.duration_seconds : undefined);
+            return {
+              id: String(r.id || r.sessionId || Math.random().toString(36).slice(2)),
+              time: r.time || new Date().toISOString(),
+              page: r.page || r.path || "/",
+              device: r.device || "desktop",
+              source: r.source || "direct",
+              visitorType: (r.visitorType === "RETURNING" ? "RETURNING" : "NEW") as "NEW" | "RETURNING",
+              enteredAt: r.enteredAt || r.entered_at || undefined,
+              exitedAt: r.exitedAt || r.exited_at || undefined,
+              durationSeconds: durSec,
+              formattedDuration: r.formattedDuration || r.formatted_duration || (durSec ? formatDwellDuration(durSec) : undefined),
+              eventName: r.eventName || r.event_name || undefined,
+            };
+          });
         }
         rpcSuccess = true;
       }
@@ -305,6 +337,19 @@ export async function getVisitorsAnalytics(
         periodNew = monthVisitorsSet.size;
       }
 
+      let totalSessionDurationSec = 0;
+      let sessionsWithDuration = 0;
+      for (const s of sessions) {
+        if (s.started_at && s.last_activity_at) {
+          const dur = Math.max(0, Math.round((new Date(s.last_activity_at).getTime() - new Date(s.started_at).getTime()) / 1000));
+          if (dur > 0) {
+            totalSessionDurationSec += dur;
+            sessionsWithDuration++;
+          }
+        }
+      }
+      const avgSessionDuration = sessionsWithDuration > 0 ? Math.round(totalSessionDurationSec / sessionsWithDuration) : 0;
+
       kpis = {
         uniqueVisitorsToday: uniqToday,
         sessionsToday: sessToday,
@@ -312,6 +357,8 @@ export async function getVisitorsAnalytics(
         returningVisitorsToday: retToday,
         uniqueVisitorsLast7Days: uniq7d,
         uniqueVisitorsLast30Days: uniq30d,
+        avgSessionDurationSeconds: avgSessionDuration,
+        avgSessionDurationFormatted: formatDwellDuration(avgSessionDuration),
       };
 
       // 2c. Live Activity Detection (sessions active in last 5 minutes)
@@ -446,12 +493,35 @@ export async function getVisitorsAnalytics(
         .sort((a, b) => b.sessions - a.sessions)
         .slice(0, 10);
 
-      // 2h. Top Pages from analytics_events
+      // 2h. Top Pages from analytics_events (enriched with average dwell time)
       const { data: pageviewData } = await client
         .from("analytics_events")
         .select("page_path, route")
         .eq("event_name", "page_view")
         .gte("occurred_at", periodStartDate.toISOString());
+
+      let pageLeaveData: any[] = [];
+      try {
+        const { data: pld } = await client
+          .from("analytics_events")
+          .select("page_path, route, properties")
+          .eq("event_name", "page_leave")
+          .gte("occurred_at", periodStartDate.toISOString());
+        if (Array.isArray(pld)) pageLeaveData = pld;
+      } catch {
+        pageLeaveData = [];
+      }
+
+      const pageDurationTotals: Record<string, { totalSec: number; count: number }> = {};
+      for (const ev of pageLeaveData) {
+        const p = ev.page_path || ev.route || ev.properties?.path || "/";
+        const sec = typeof ev.properties?.duration_seconds === "number" ? ev.properties.duration_seconds : 0;
+        if (sec > 0) {
+          if (!pageDurationTotals[p]) pageDurationTotals[p] = { totalSec: 0, count: 0 };
+          pageDurationTotals[p].totalSec += sec;
+          pageDurationTotals[p].count += 1;
+        }
+      }
 
       const pvList = pageviewData || [];
       const pvMap: Record<string, number> = {};
@@ -461,11 +531,17 @@ export async function getVisitorsAnalytics(
       }
       const totalPv = pvList.length || 1;
       topPages = Object.entries(pvMap)
-        .map(([p, count]) => ({
-          path: p,
-          views: count,
-          percentage: Number(((count / totalPv) * 100).toFixed(1)),
-        }))
+        .map(([p, count]) => {
+          const durInfo = pageDurationTotals[p];
+          const avgSec = durInfo && durInfo.count > 0 ? Math.round(durInfo.totalSec / durInfo.count) : undefined;
+          return {
+            path: p,
+            views: count,
+            percentage: Number(((count / totalPv) * 100).toFixed(1)),
+            avgDurationSeconds: avgSec,
+            avgFormattedDuration: avgSec ? formatDwellDuration(avgSec) : undefined,
+          };
+        })
         .sort((a, b) => b.views - a.views)
         .slice(0, 15);
 
@@ -503,13 +579,56 @@ export async function getVisitorsAnalytics(
         geography = { hasReliableGeography: false };
       }
 
-      // 2k. Recent Activity (last 50 sessions, zero PII)
-      recentActivity = sessions.slice(0, 50).map((s) => {
+      // 2k. Recent Activity — granular page-level activity enriched with dwell time & entry/exit timestamps
+      let eventActivities: RecentVisitorActivityItem[] = [];
+      try {
+        const { data: recentEvents } = await client
+          .from("analytics_events")
+          .select("event_id, session_id, anonymous_id, event_name, route, properties, occurred_at")
+          .in("event_name", ["page_leave", "page_view"])
+          .order("occurred_at", { ascending: false })
+          .limit(40);
+
+        if (Array.isArray(recentEvents) && recentEvents.length > 0) {
+          eventActivities = recentEvents.map((ev) => {
+            const isLeave = ev.event_name === "page_leave";
+            const props = ev.properties || {};
+            const enteredAt = props.entered_at || (isLeave ? undefined : ev.occurred_at);
+            const exitedAt = props.exited_at || (isLeave ? ev.occurred_at : undefined);
+            const durSec = typeof props.duration_seconds === "number" ? props.duration_seconds : undefined;
+            const formattedDur = props.formatted_duration || (durSec ? formatDwellDuration(durSec) : undefined);
+            const page = props.path || ev.route || "/";
+            const session = sessions.find((s) => s.session_id === ev.session_id);
+
+            return {
+              id: ev.event_id || String((ev as any).id || Math.random().toString(36).slice(2)),
+              time: ev.occurred_at,
+              page,
+              device: session?.device_type || "desktop",
+              source: session?.first_channel || session?.first_utm_source || "direct",
+              visitorType: "NEW",
+              enteredAt,
+              exitedAt,
+              durationSeconds: durSec,
+              formattedDuration: formattedDur,
+              eventName: ev.event_name,
+            };
+          });
+        }
+      } catch {
+        eventActivities = [];
+      }
+
+      // Session activities as resilient baseline
+      const sessionActivities: RecentVisitorActivityItem[] = sessions.slice(0, 40).map((s) => {
         const firstSeen = s.visitor_id ? visitorFirstSeenMap.get(s.visitor_id) : null;
         const isNew = Boolean(
           firstSeen &&
           Math.abs(new Date(firstSeen).getTime() - new Date(s.started_at).getTime()) < 2 * 60 * 1000
         );
+        const durSec = s.last_activity_at && s.started_at
+          ? Math.max(0, Math.round((new Date(s.last_activity_at).getTime() - new Date(s.started_at).getTime()) / 1000))
+          : undefined;
 
         return {
           id: s.session_id,
@@ -518,8 +637,14 @@ export async function getVisitorsAnalytics(
           device: s.device_type || "desktop",
           source: s.first_channel || s.first_utm_source || "direct",
           visitorType: isNew ? "NEW" : "RETURNING",
+          enteredAt: s.started_at,
+          exitedAt: s.last_activity_at,
+          durationSeconds: durSec,
+          formattedDuration: durSec ? formatDwellDuration(durSec) : undefined,
         };
       });
+
+      recentActivity = eventActivities.length > 0 ? eventActivities : sessionActivities;
     } catch {
       // Keep initial defaults
       liveActivity = { isSupported: false, activeNow: null };

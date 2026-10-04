@@ -22,6 +22,7 @@ export const ALLOWED_TELEMETRY_EVENTS = new Set([
   // CONTROLLED FIRST-PARTY TAXONOMY (Prompt requirements)
   // Acquisition
   "page_view",
+  "page_leave",
   "session_start",
 
   // Registration
@@ -384,6 +385,23 @@ export async function processTelemetryBatch(
       const { error: legacyError } = await supabase.from("telemetry_events").insert(rows);
       if (legacyError) {
         console.warn("[Analytics] telemetry_events insert failed:", legacyError.message);
+      }
+
+      // 3. Update analytics_sessions with last_activity_at / ended_at when page_leave events are ingested
+      for (const e of validToPersist) {
+        if (e.eventName === "page_leave" && e.sessionId && !e.sessionId.startsWith("ses_anon") && !e.sessionId.startsWith("ses_server")) {
+          try {
+            await supabase
+              .from("analytics_sessions")
+              .update({
+                last_activity_at: e.occurredAt || new Date().toISOString(),
+                ended_at: e.occurredAt || new Date().toISOString(),
+              })
+              .eq("session_id", e.sessionId);
+          } catch {
+            // Non-blocking session touch
+          }
+        }
       }
     } catch (err: any) {
       console.warn("[Analytics] Supabase persistence exception:", err?.message);
