@@ -228,7 +228,7 @@ export default function RoadmapPage() {
                 مسارك مازال محفوظ. فعّل اشتراكك باش تكمل
               </h1>
               <p className="text-xs sm:text-sm text-theme-secondary leading-relaxed max-w-md mx-auto font-sans">
-                انتهت فترة التجربة المجانية (7 أيام). خريطتك التعليمية وتشخيص نقاط ضعفك محفوظة بدقة. فعّل اشتراكك الآن لمواصلة مسارك نحو البكالوريا.
+                انتهت فترة التجربة المجانية (3 أيام - 72 ساعة). خريطتك التعليمية وتشخيص نقاط ضعفك محفوظة بدقة. فعّل اشتراكك الآن لمواصلة مسارك نحو البكالوريا.
               </p>
             </div>
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">

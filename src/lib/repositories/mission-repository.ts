@@ -15,6 +15,9 @@ import {
 export const MissionRepository = {
   /**
    * Get all missions for the student
+   * INVARIANT: Supabase is authoritative. If Supabase returns data (or empty array),
+   * that authoritative state updates local cache and is returned.
+   * Local storage is only a stale fallback when network fails.
    */
   async getMissions(userId?: string): Promise<Record<string, Mission>> {
     if (isSupabaseConfigured && supabase && userId) {
@@ -26,13 +29,10 @@ export const MissionRepository = {
 
         if (error) {
           console.error("MissionRepository.getMissions error:", error);
-          return loadMissions();
+          return loadMissions(userId);
         }
 
-        if (data && data.length > 0) {
-          const local = loadMissions();
-          if (Object.keys(local).length > 0) return local;
-
+        if (data) {
           const map: Record<string, Mission> = {};
           for (const row of data) {
             map[row.id] = {
@@ -61,21 +61,24 @@ export const MissionRepository = {
               updatedAt: row.updated_at || new Date().toISOString(),
             };
           }
+          // Update user-scoped local cache with authoritative data
+          saveLocalMissions(map, userId);
           return map;
         }
       } catch (err) {
         console.error("MissionRepository.getMissions exception:", err);
+        return loadMissions(userId);
       }
     }
 
-    return loadMissions();
+    return loadMissions(userId);
   },
 
   /**
    * Save a set of missions
    */
   async saveMissions(missions: Record<string, Mission>, userId?: string): Promise<void> {
-    saveLocalMissions(missions);
+    saveLocalMissions(missions, userId);
 
     const missionList = Object.values(missions);
     if (isSupabaseConfigured && supabase && userId && missionList.length > 0) {
@@ -105,14 +108,14 @@ export const MissionRepository = {
    * Update the status of a specific mission
    */
   async updateMissionStatus(missionId: string, status: MissionStatus, userId?: string): Promise<void> {
-    const local = loadMissions();
+    const local = loadMissions(userId);
     if (local[missionId]) {
       local[missionId] = {
         ...local[missionId],
         status,
         updatedAt: new Date().toISOString(),
       };
-      saveLocalMissions(local);
+      saveLocalMissions(local, userId);
     }
 
     if (isSupabaseConfigured && supabase && userId) {
@@ -132,19 +135,19 @@ export const MissionRepository = {
     }
   },
 
-  getActiveMissionId(): string | null {
-    return getLocalActiveMissionId();
+  getActiveMissionId(userId?: string): string | null {
+    return getLocalActiveMissionId(userId);
   },
 
-  setActiveMissionId(id: string): void {
-    setLocalActiveMissionId(id);
+  setActiveMissionId(id: string, userId?: string): void {
+    setLocalActiveMissionId(id, userId);
   },
 
   /**
    * Sync local missions to cloud upon login
    */
   async syncLocalToCloud(userId: string): Promise<void> {
-    const localMissions = loadMissions();
+    const localMissions = loadMissions(userId);
     if (!localMissions || Object.keys(localMissions).length === 0) return;
 
     if (isSupabaseConfigured && supabase) {

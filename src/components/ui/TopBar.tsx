@@ -565,12 +565,12 @@ export function TopBar() {
             </Link>
 
             <Link
-              href="/curriculum"
+              href="/library"
               onClick={() => setIsMobileMenuOpen(false)}
               className="flex items-center gap-2.5 p-2.5 rounded-xl bg-card border border-theme text-xs font-semibold text-theme-text hover:border-[var(--color-primary)]/50 transition-colors"
             >
-              <BookOpen className="w-4 h-4 text-amber-400" />
-              <span>{isAr ? "المكتبة الشاملة" : "Bibliothèque"}</span>
+              <BookOpen className="w-4 h-4 text-blue-400" />
+              <span>{isAr ? "المكتبة والمراجع" : "Bibliothèque"}</span>
             </Link>
 
             <Link

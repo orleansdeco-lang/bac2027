@@ -8,9 +8,9 @@ import { Button } from "./Button";
 import { Target, Flag, Play, CheckCircle2, ArrowRight, ArrowLeft } from "lucide-react";
 
 interface RoadVisualizerProps {
-  targetScore: number;
-  currentBaselineText: string;
-  gapText?: string;
+  targetScore?: number | null;
+  currentBaselineText?: string | null;
+  gapText?: string | null;
   activeMission?: {
     id: string;
     subjectId: string;
@@ -58,7 +58,7 @@ export function RoadVisualizer({
               {isAr ? "الهدف المحدد" : "Objectif choisi"}
             </span>
             <span className="text-lg sm:text-xl font-black text-[var(--color-accent)] font-mono">
-              {targetScore > 0 ? targetScore.toFixed(2) : "16.00"}/20
+              {targetScore && targetScore > 0 ? `${targetScore.toFixed(2)}/20` : (isAr ? "حدد هدفك" : "À définir")}
             </span>
           </div>
           <p className="text-xs text-theme-secondary mt-0.5 leading-relaxed">
@@ -81,14 +81,18 @@ export function RoadVisualizer({
               {isAr ? "مؤشر الانطلاق" : "Indicateur de départ"}
             </span>
             <Badge variant="outline" size="sm" className="text-[10px] text-theme-secondary border-theme">
-              {currentBaselineText}
+              {currentBaselineText || (isAr ? "لم تُجرِ التقييم بعد" : "Non évalué")}
             </Badge>
           </div>
-          {gapText && (
+          {gapText ? (
             <p className="text-xs text-theme-secondary font-medium mt-0.5">
               {isAr ? `المسافة إلى هدفك: حوالي ${gapText}` : `Distance vers l'objectif : environ ${gapText}`}
             </p>
-          )}
+          ) : !currentBaselineText ? (
+            <p className="text-xs text-theme-muted font-medium mt-0.5">
+              {isAr ? "أجرِ التقييم الأولي لمعرفة نقطة انطلاقك وفارق النقاط نحو هدفك." : "Passez le test diagnostique pour situer votre niveau initial."}
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -107,7 +111,7 @@ export function RoadVisualizer({
             <div className="flex items-center justify-between mb-2">
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[var(--color-primary-muted)] text-[var(--color-primary)] border border-[var(--color-primary)]/25">
                 <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-primary)]" />
-                {isAr ? "مهمتك الآن" : "Mission Actuelle"}
+                {activeMission ? (isAr ? "مهمتك الآن" : "Mission Actuelle") : (isAr ? "المسار التكيفي" : "Parcours")}
               </span>
               {activeMission?.estimatedMinutes && (
                 <span className="text-[11px] font-mono text-theme-muted">
@@ -118,7 +122,7 @@ export function RoadVisualizer({
 
             {/* Title */}
             <h3 className="text-sm sm:text-base font-bold text-theme-text leading-snug mb-2 font-sans">
-              {activeMission?.skillTitle || (isAr ? "أتقن قاعدة السلسلة في الاشتقاق" : "Dérivation des fonctions composées")}
+              {activeMission?.skillTitle || (isAr ? "لم نحدد موقعك على الطريق بعد" : "Feuille de route prête pour vous")}
             </h3>
 
             {/* Rationale if present */}
@@ -140,10 +144,12 @@ export function RoadVisualizer({
                 </Button>
               </Link>
             ) : (
-              <Button variant="primary" fullWidth size="lg" onClick={onStartMission} className="font-bold min-h-[48px]">
-                <span>{isAr ? "ابدأ المهمة الآن" : "Démarrer la mission"}</span>
-                <ArrowIcon className="h-4 w-4" />
-              </Button>
+              <Link href="/diagnostic" className="block">
+                <Button variant="primary" fullWidth size="lg" className="font-bold min-h-[48px] shadow-sm">
+                  <span>{isAr ? "ابدأ التقييم الأولي أولاً" : "Passer le diagnostic initial"}</span>
+                  <ArrowIcon className="h-4 w-4" />
+                </Button>
+              </Link>
             )}
           </Card>
         </div>

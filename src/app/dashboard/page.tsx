@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useTranslation } from "@/lib/i18n/context";
@@ -39,6 +39,8 @@ import {
   FileText,
   MessageSquareQuote,
   GraduationCap,
+  RefreshCw,
+  WifiOff,
 } from "lucide-react";
 
 import { ALL_SUBJECTS } from "@/lib/constants/streams";
@@ -65,30 +67,52 @@ export default function DashboardPage() {
   const { masteredCount, totalStudyTimeSeconds, lastLessonId } = useUserProgress();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isOffline, setIsOffline] = useState(false);
   const [isTeacherModalOpen, setIsTeacherModalOpen] = useState(false);
   const [showRoadVisualizer, setShowRoadVisualizer] = useState(false);
 
   const NextArrow = isAr ? ArrowLeft : ArrowRight;
 
+  // Track offline status (Phase 7)
   useEffect(() => {
-    async function loadDashboard() {
-      if (!gate.isAuthorized || !gate.profile) return;
-      try {
-        const dashData = await DashboardService.getDashboardData(gate.profile.id);
-        setData(dashData);
-        trackEvent("dashboard_viewed", { streamId: normalizeStreamIdWithDefault(gate.profile.streamId) });
-      } catch (err) {
-        console.error("Failed to load dashboard data:", err);
-      } finally {
-        setLoading(false);
-      }
+    if (typeof window !== "undefined") {
+      setIsOffline(!navigator.onLine);
+      const handleOnline = () => setIsOffline(false);
+      const handleOffline = () => setIsOffline(true);
+      window.addEventListener("online", handleOnline);
+      window.addEventListener("offline", handleOffline);
+      return () => {
+        window.removeEventListener("online", handleOnline);
+        window.removeEventListener("offline", handleOffline);
+      };
     }
+  }, []);
+
+  const loadDashboard = useCallback(async () => {
+    if (!gate.isAuthorized || !gate.profile) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const dashData = await DashboardService.getDashboardData(gate.profile.id);
+      setData(dashData);
+      trackEvent("dashboard_viewed", { streamId: normalizeStreamIdWithDefault(gate.profile.streamId) });
+    } catch (err: any) {
+      console.error("Failed to load dashboard data:", err);
+      setError(err?.message || (isAr ? "تعذر تحميل لوحة التحكم" : "Échec du chargement"));
+    } finally {
+      setLoading(false);
+    }
+  }, [gate.isAuthorized, gate.profile, isAr]);
+
+  // Load and auto-invalidate on stream change (Phase 9)
+  useEffect(() => {
     if (gate.isAuthorized) {
       loadDashboard();
     } else if (!gate.isLoading) {
       setLoading(false);
     }
-  }, [gate.isAuthorized, gate.isLoading, gate.profile]);
+  }, [gate.isAuthorized, gate.isLoading, gate.profile?.streamId, loadDashboard]);
 
   if (gate.isLoading || loading) {
     return (
@@ -105,6 +129,30 @@ export default function DashboardPage() {
     );
   }
 
+  if (error && !data) {
+    return (
+      <AppShell>
+        <div className="min-h-[60vh] flex items-center justify-center p-4">
+          <div className="max-w-md w-full p-6 sm:p-8 rounded-3xl bg-card border border-rose-500/30 text-center space-y-4 shadow-clay">
+            <AlertTriangle className="w-10 h-10 text-rose-500 mx-auto" />
+            <h2 className="text-lg font-bold text-theme-text">
+              {isAr ? "تعذر تحميل لوحة التحكم" : "Impossible de charger le tableau de bord"}
+            </h2>
+            <p className="text-xs text-theme-secondary leading-relaxed">
+              {isAr
+                ? "حدث خطأ أثناء تحميل بياناتك. تأكد من اتصالك بالإنترنت وأعد المحاولة."
+                : "Une erreur est survenue lors de la récupération de vos données. Vérifiez votre connexion et réessayez."}
+            </p>
+            <Button variant="primary" onClick={() => loadDashboard()} className="font-bold w-full rounded-xl">
+              <RefreshCw className="w-4 h-4 ml-2" />
+              <span>{isAr ? "إعادة المحاولة" : "Réessayer"}</span>
+            </Button>
+          </div>
+        </div>
+      </AppShell>
+    );
+  }
+
   if (!gate.isAuthorized) {
     return null;
   }
@@ -115,11 +163,14 @@ export default function DashboardPage() {
     (profile?.fullName ? profile.fullName.trim().split(" ")[0] : null) ||
     (isAr ? "طالبنا العزيز" : "Élève");
 
-  const targetScore = profile?.targetScore || 16.0;
-  const currentScore = data?.roadPosition?.currentScore ?? 11.5;
-  const gap =
+  // Semantic Nulls: ZERO Fake 11.5 / 16.0 (Phase 2 & Phase 8)
+  const targetScore: number | null = profile?.targetScore ?? null;
+  const currentScore: number | null = data?.roadPosition?.currentScore ?? null;
+  const gap: number | null =
     data?.roadPosition?.gap ??
-    Math.max(0, Math.round((targetScore - currentScore) * 10) / 10);
+    (targetScore !== null && currentScore !== null
+      ? Math.max(0, Math.round((targetScore - currentScore) * 10) / 10)
+      : null);
 
   const streamId = normalizeStreamIdWithDefault(profile?.streamId || (profile as any)?.stream, "sciences_exp");
   const activeStreamMeta = getStreamMetadata(streamId);
@@ -219,7 +270,7 @@ export default function DashboardPage() {
               </div>
               <div className="space-y-1 text-xs sm:text-sm">
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300 text-[11px] font-bold font-mono">
-                  <span>{isAr ? "انتهت فترة التجربة المجانية (7 أيام)" : "Période d'essai (7 jours) expirée"}</span>
+                  <span>{isAr ? "انتهت فترة التجربة المجانية (3 أيام - 72 ساعة)" : "Période d'essai (3 jours - 72h) expirée"}</span>
                 </div>
                 <h3 className="font-extrabold text-stone-900 dark:text-stone-100 text-sm sm:text-base">
                   {isAr
@@ -272,6 +323,45 @@ export default function DashboardPage() {
           </div>
         ) : null}
 
+        {/* Offline indicator (Phase 7) */}
+        {isOffline && (
+          <div className="px-4 py-2.5 rounded-2xl bg-stone-500/10 border border-stone-500/25 flex items-center gap-2 text-xs text-stone-600 dark:text-stone-300">
+            <WifiOff className="w-4 h-4 text-stone-500 shrink-0" />
+            <span>
+              {isAr
+                ? "أنت غير متصل بالإنترنت — يتم عرض آخر بيانات محفوظة محلياً (وضع القراءة فقط)."
+                : "Mode hors ligne actif — affichage des données locales."}
+            </span>
+          </div>
+        )}
+
+        {/* Onboarding Callout for students without diagnostic (Phase 8) */}
+        {!data?.hasCompletedDiagnostic && (
+          <div className="px-5 py-4 rounded-3xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm animate-fade-in">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-600 flex items-center justify-center shrink-0">
+                <Brain className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-theme-text">
+                  {isAr ? "مازال ما درتش التقييم الأولي 🎯" : "Diagnostic initial non effectué"}
+                </h4>
+                <p className="text-xs text-theme-secondary mt-0.5 leading-relaxed">
+                  {isAr
+                    ? "أجرِ التقييم الأولي (15 دقيقة) لتحديد مستواك الدقيق في مواد شعبتك وبناء خطتك اليومية المخصصة."
+                    : "Passez le test de 15 minutes pour identifier vos lacunes et bâtir votre plan personnalisé."}
+                </p>
+              </div>
+            </div>
+            <Link href="/diagnostic" className="w-full sm:w-auto shrink-0">
+              <Button size="sm" variant="primary" className="w-full sm:w-auto rounded-xl font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-sm">
+                <span>{isAr ? "ابدأ التقييم الأولي 🚀" : "Passer le test"}</span>
+                <NextArrow className="w-4 h-4 ml-1" />
+              </Button>
+            </Link>
+          </div>
+        )}
+
         {/* ================================================================= */}
         {/* SHATER STUDY OS — TODAY COMMAND CENTER (PHASE 2)                  */}
         {/* ================================================================= */}
@@ -280,6 +370,7 @@ export default function DashboardPage() {
             userId={profile.id}
             studentName={firstName}
             streamId={streamId}
+            dashboardData={data}
           />
         )}
 
@@ -303,12 +394,21 @@ export default function DashboardPage() {
                   {isAr ? activeStreamMeta.name_ar : activeStreamMeta.name_fr}
                 </span>
 
-                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-[var(--color-accent-soft)] text-[var(--color-accent)] border border-[var(--color-accent)]/20">
-                  <Target className="w-3.5 h-3.5" />
-                  {isAr ? `الهدف: ${targetScore.toFixed(1)}/20` : `Objectif : ${targetScore.toFixed(1)}/20`}
-                </span>
+                {targetScore !== null ? (
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-[var(--color-accent-soft)] text-[var(--color-accent)] border border-[var(--color-accent)]/20">
+                    <Target className="w-3.5 h-3.5" />
+                    {isAr ? `الهدف: ${targetScore.toFixed(1)}/20` : `Objectif : ${targetScore.toFixed(1)}/20`}
+                  </span>
+                ) : (
+                  <Link href="/profile">
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 border border-amber-500/25 hover:bg-amber-500/20 transition-colors">
+                      <Target className="w-3.5 h-3.5" />
+                      {isAr ? "حدد هدفك 🎯" : "Fixer un objectif"}
+                    </span>
+                  </Link>
+                )}
 
-                {gap > 0 && (
+                {gap !== null && gap > 0 && (
                   <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-[var(--color-primary-soft)] text-[var(--color-primary)] border border-[var(--color-primary)]/20">
                     <TrendingUp className="w-3.5 h-3.5" />
                     {isAr ? `الفارق: ${gap.toFixed(1)} نقطة` : `Écart : ${gap.toFixed(1)} pts`}
@@ -655,12 +755,14 @@ export default function DashboardPage() {
             <div>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-2xl sm:text-3xl xl:text-4xl font-black text-[#8F5E1F] font-mono">
-                  {targetScore.toFixed(1)}
+                  {targetScore !== null ? targetScore.toFixed(1) : "--"}
                 </span>
                 <span className="text-xs text-[#8F5E1F]/80 font-mono">/20</span>
               </div>
               <p className="text-[11px] text-[#8F5E1F]/80 mt-1">
-                {isAr ? `الحالي: ${currentScore.toFixed(1)}/20` : `Niveau actuel : ${currentScore.toFixed(1)}/20`}
+                {currentScore !== null
+                  ? (isAr ? `الحالي: ${currentScore.toFixed(1)}/20` : `Niveau actuel : ${currentScore.toFixed(1)}/20`)
+                  : (isAr ? "لم تُجرِ التقييم الأولي بعد" : "Diagnostic initial non effectué")}
               </p>
             </div>
           </div>
@@ -953,8 +1055,8 @@ export default function DashboardPage() {
                 </h3>
                 <p className="text-xs text-theme-secondary">
                   {isAr
-                    ? `مستوى الأساس: 12.0/20 • الهدف: ${targetScore.toFixed(1)}/20 • المهارات المثبتة: ${metrics.demonstratedSkillsCount}/${activeStreamMeta.totalSkills}`
-                    : `Base : 12.0/20 • Objectif : ${targetScore.toFixed(1)}/20 • Compétences validées : ${metrics.demonstratedSkillsCount}/${activeStreamMeta.totalSkills}`}
+                    ? `${currentScore !== null ? `مستوى الأساس: ${currentScore.toFixed(1)}/20` : "مستوى الأساس: لم يُحدد"} • ${targetScore !== null ? `الهدف: ${targetScore.toFixed(1)}/20` : "الهدف: لم يُحدد"} • المهارات المثبتة: ${metrics.demonstratedSkillsCount}/${activeStreamMeta.totalSkills}`
+                    : `${currentScore !== null ? `Base : ${currentScore.toFixed(1)}/20` : "Base : non définie"} • ${targetScore !== null ? `Objectif : ${targetScore.toFixed(1)}/20` : "Objectif : non défini"} • Validées : ${metrics.demonstratedSkillsCount}/${activeStreamMeta.totalSkills}`}
                 </p>
               </div>
             </div>
@@ -967,13 +1069,9 @@ export default function DashboardPage() {
           {showRoadVisualizer && (
             <div className="p-6 border-t border-theme animate-fade-in">
               <RoadVisualizer
-                targetScore={profile?.targetScore || 16.0}
-                currentBaselineText="12.0/20"
-                gapText={
-                  profile?.targetScore
-                    ? `${(profile.targetScore - 12.0).toFixed(1)} pts`
-                    : "4.0 pts"
-                }
+                targetScore={targetScore}
+                currentBaselineText={currentScore !== null ? `${currentScore.toFixed(1)}/20` : null}
+                gapText={gap !== null ? `${gap.toFixed(1)} pts` : null}
                 activeMission={
                   todaysMission?.mission
                     ? {

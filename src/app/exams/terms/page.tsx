@@ -174,6 +174,7 @@ function TermExamsContent() {
   const [selectedTerm, setSelectedTerm] = useState<number | "all" | "bac_blanc">("all");
   const [selectedKind, setSelectedKind] = useState<string>("all");
   const [selectedStream, setSelectedStream] = useState<string>("all");
+  const [selectedBranch, setSelectedBranch] = useState<string>("all");
   const [selectedSubject, setSelectedSubject] = useState<string>("all");
   const [selectedYear, setSelectedYear] = useState<number>(0);
   const [hasSolutionOnly, setHasSolutionOnly] = useState<boolean>(false);
@@ -226,6 +227,8 @@ function TermExamsContent() {
             stream_name: i.stream_name || ALGERIAN_BAC_STREAMS[i.streamId as StreamId]?.name_ar || "عام / جميع الشعب",
             subjectId: i.subjectId || "all",
             subject_name: i.subject_name || ALL_SUBJECTS[i.subjectId as SubjectId]?.name_ar || "الرياضيات",
+            branchId: i.branchId,
+            branch_name: i.branch_name,
             title_ar: i.title_ar,
             subjectPdfUrl: i.subjectPdfUrl || "",
             solutionPdfUrl: i.solutionPdfUrl || "",
@@ -261,6 +264,7 @@ function TermExamsContent() {
   // Read URL query parameters on initial mount
   useEffect(() => {
     const urlStream = searchParams.get("stream");
+    const urlBranch = searchParams.get("branch");
     const urlSubject = searchParams.get("subject");
     const urlTerm = searchParams.get("term");
     const urlKind = searchParams.get("kind");
@@ -270,6 +274,7 @@ function TermExamsContent() {
     if (urlStream && STREAMS_LIST.some((s) => s.id === urlStream)) {
       setSelectedStream(urlStream);
     }
+    if (urlBranch) setSelectedBranch(urlBranch);
     if (urlSubject) setSelectedSubject(urlSubject);
     if (urlTerm) {
       if (urlTerm === "bac_blanc") setSelectedTerm("bac_blanc");
@@ -315,12 +320,39 @@ function TermExamsContent() {
     }
   };
 
-  // Dynamic Subjects based on stream from live resources
+  // Dynamic Branches for Stream
+  const availableBranches = useMemo(() => {
+    if (selectedStream === "all") return [];
+    return getStreamBranches(selectedStream);
+  }, [selectedStream]);
+
+  // Dynamic Subjects based on stream and branch from live resources
   const availableSubjects = useMemo(() => {
     let pool = allItems;
     if (selectedStream !== "all") {
       pool = pool.filter((item) => matchesStream(item, selectedStream));
     }
+    if (selectedBranch !== "all") {
+      pool = pool.filter((item) => {
+        if (item.branchId) return item.branchId === selectedBranch;
+        const specialtyBranches: Record<string, string> = {
+          mechanical_eng: "mechanical_eng",
+          civil_eng: "civil_eng",
+          electrical_eng: "electrical_eng",
+          process_eng: "process_eng",
+          third_language_de: "allemand",
+          third_language_es: "espagnol",
+          third_language_it: "italien",
+          german: "allemand",
+          spanish: "espagnol",
+          italian: "italien",
+        };
+        const sb = specialtyBranches[item.subjectId];
+        if (sb) return sb === selectedBranch;
+        return true;
+      });
+    }
+
     const counts: Record<string, number> = {};
     for (const item of pool) {
       const sName = item.subject_name || "الرياضيات";
@@ -331,7 +363,7 @@ function TermExamsContent() {
       name,
       count: counts[name],
     }));
-  }, [allItems, selectedStream]);
+  }, [allItems, selectedStream, selectedBranch]);
 
   // Available Years
   const availableYears = useMemo(() => {
@@ -365,6 +397,28 @@ function TermExamsContent() {
       result = result.filter((i) => matchesStream(i, selectedStream));
     }
 
+    // Branch
+    if (selectedBranch !== "all") {
+      result = result.filter((i) => {
+        if (i.branchId) return i.branchId === selectedBranch;
+        const specialtyBranches: Record<string, string> = {
+          mechanical_eng: "mechanical_eng",
+          civil_eng: "civil_eng",
+          electrical_eng: "electrical_eng",
+          process_eng: "process_eng",
+          third_language_de: "allemand",
+          third_language_es: "espagnol",
+          third_language_it: "italien",
+          german: "allemand",
+          spanish: "espagnol",
+          italian: "italien",
+        };
+        const sb = specialtyBranches[i.subjectId];
+        if (sb) return sb === selectedBranch;
+        return true;
+      });
+    }
+
     // Subject
     if (selectedSubject !== "all") {
       result = result.filter((i) => i.subject_name === selectedSubject || i.subjectId === selectedSubject);
@@ -388,6 +442,7 @@ function TermExamsContent() {
           i.title_ar.toLowerCase().includes(q) ||
           i.subject_name.toLowerCase().includes(q) ||
           i.stream_name.toLowerCase().includes(q) ||
+          (i.branch_name && i.branch_name.toLowerCase().includes(q)) ||
           i.category.toLowerCase().includes(q) ||
           String(i.year).includes(q)
         );
@@ -400,6 +455,7 @@ function TermExamsContent() {
     selectedTerm,
     selectedKind,
     selectedStream,
+    selectedBranch,
     selectedSubject,
     selectedYear,
     hasSolutionOnly,
@@ -434,6 +490,7 @@ function TermExamsContent() {
     setSelectedTerm("all");
     setSelectedKind("all");
     setSelectedStream("all");
+    setSelectedBranch("all");
     setSelectedSubject("all");
     setSelectedYear(0);
     setHasSolutionOnly(false);
@@ -445,6 +502,7 @@ function TermExamsContent() {
     selectedTerm !== "all" ||
     selectedKind !== "all" ||
     selectedStream !== "all" ||
+    selectedBranch !== "all" ||
     selectedSubject !== "all" ||
     selectedYear !== 0 ||
     hasSolutionOnly ||
@@ -601,6 +659,7 @@ function TermExamsContent() {
                     type="button"
                     onClick={() => {
                       setSelectedStream(stream.id);
+                      setSelectedBranch("all");
                       setSelectedSubject("all");
                     }}
                     className={`px-3 py-1.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
@@ -615,6 +674,60 @@ function TermExamsContent() {
               })}
             </div>
           </div>
+
+          {/* Dynamic Branch Selector (for Technique Math, Foreign Languages, Arts) */}
+          {availableBranches.length > 0 && (
+            <div className="space-y-1.5 p-3 rounded-2xl bg-emerald-500/5 dark:bg-emerald-900/10 border border-emerald-500/20 animate-in fade-in duration-200">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                  <span>⚙️ الفروع والتخصصات (خاصة بالشعبة المختارة):</span>
+                  <span className="text-[11px] font-normal text-theme-muted">
+                    اختر فرعك لعرض فروض واختبارات التخصص فقط
+                  </span>
+                </label>
+                <span className="text-[11px] text-theme-secondary font-bold">
+                  {selectedBranch === "all" ? "جميع الفروع" : availableBranches.find((b) => b.id === selectedBranch)?.name_ar}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedBranch("all");
+                    setSelectedSubject("all");
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                    selectedBranch === "all"
+                      ? "bg-emerald-600 text-white shadow-xs"
+                      : "bg-surface text-theme-secondary hover:text-theme-text border border-theme"
+                  }`}
+                >
+                  جميع الفروع
+                </button>
+                {availableBranches.map((b) => {
+                  const isSelected = selectedBranch === b.id;
+                  return (
+                    <button
+                      key={b.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedBranch(b.id);
+                        setSelectedSubject("all");
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1 ${
+                        isSelected
+                          ? "bg-emerald-600 text-white shadow-xs scale-[1.02]"
+                          : "bg-surface text-theme-secondary hover:text-theme-text border border-theme"
+                      }`}
+                    >
+                      {b.icon && <span>{b.icon}</span>}
+                      <span>{b.name_ar}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Dynamic Subject Chips from Real DB */}
           <div className="space-y-1.5">
@@ -837,8 +950,18 @@ function TermExamsContent() {
                       <h3 className="text-sm font-bold text-theme-text line-clamp-2 group-hover:text-emerald-500 transition-colors">
                         {exam.title_ar}
                       </h3>
-                      <p className="text-[11px] text-theme-secondary mt-1">
-                        {exam.stream_name} • {exam.subject_name}
+                      <p className="text-[11px] text-theme-secondary mt-1 flex items-center gap-1.5 flex-wrap">
+                        <span>{exam.stream_name}</span>
+                        {exam.branch_name && (
+                          <>
+                            <span>•</span>
+                            <span className="font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-md">
+                              {exam.branch_name}
+                            </span>
+                          </>
+                        )}
+                        <span>•</span>
+                        <span>{exam.subject_name}</span>
                       </p>
                     </div>
 
@@ -937,7 +1060,14 @@ function TermExamsContent() {
                         className="hover:bg-card/50 cursor-pointer transition-colors"
                       >
                         <td className="py-2.5 px-4 font-mono font-bold text-theme-text">{exam.year}</td>
-                        <td className="py-2.5 px-4 text-theme-secondary">{exam.stream_name}</td>
+                        <td className="py-2.5 px-4 text-theme-secondary">
+                          <div>{exam.stream_name}</div>
+                          {exam.branch_name && (
+                            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                              ({exam.branch_name})
+                            </span>
+                          )}
+                        </td>
                         <td className="py-2.5 px-4 font-bold text-theme-text">{exam.subject_name}</td>
                         <td className="py-2.5 px-4 text-theme-text max-w-xs truncate">{exam.title_ar}</td>
                         <td className="py-2.5 px-4">

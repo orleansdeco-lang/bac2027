@@ -18,6 +18,8 @@ import { AdaptiveRoadmapInput, MissionRationale } from "@/types/roadmap";
 import { Mission } from "@/types/mission";
 import { StrategicProfile } from "@/types/onboarding";
 import { DiagnosticAnalysisResult } from "@/types/diagnostic";
+import { PlannerStorage } from "@/lib/planner/storage";
+import { PlannerEvent } from "@/lib/planner/types";
 
 export interface StudentDashboardData {
   profile: StrategicProfile | null;
@@ -43,9 +45,9 @@ export interface StudentDashboardData {
     reason_fr: string;
   } | null;
   roadPosition: {
-    goal: number;
-    currentScore: number;
-    gap: number;
+    goal: number | null;
+    currentScore: number | null;
+    gap: number | null;
     hasDiagnostic: boolean;
     hasGaps: boolean;
     hasActiveMission: boolean;
@@ -63,16 +65,24 @@ export interface StudentDashboardData {
     completedMissionsCount: number;
     activeRepairsCount: number;
   };
+  // In-memory preloaded maps for query deduplication (Phase 5/6)
+  masteryMap?: Record<string, any>;
+  errorsMap?: Record<string, any>;
+  missionsMap?: Record<string, any>;
+  plannerEvents?: PlannerEvent[];
 }
+
+export type DashboardState = StudentDashboardData;
 
 export const DashboardService = {
   async getDashboardData(userId?: string): Promise<StudentDashboardData> {
-    const [profile, diagResult, missions, errors, mastery] = await Promise.all([
+    const [profile, diagResult, missions, errors, mastery, plannerEvents] = await Promise.all([
       StudentRepository.getProfile(userId),
       DiagnosticRepository.getResults(userId),
       MissionRepository.getMissions(userId),
       ErrorRepository.getErrors(userId),
       MasteryRepository.getMasteryRecords(userId),
+      PlannerStorage.loadEvents(userId).catch(() => []),
     ]);
 
     const errorList = Object.values(errors);
@@ -147,12 +157,15 @@ export const DashboardService = {
       ? roadmap.queuedMissions[0]
       : null;
 
-    const goal = profile?.targetScore || 16.0;
-    let currentScore = 11.5;
-    if (diagResult?.observedDiagnosticScore) {
+    const goal: number | null = profile?.targetScore ?? null;
+    let currentScore: number | null = null;
+    if (diagResult?.observedDiagnosticScore !== undefined && diagResult?.observedDiagnosticScore !== null) {
       currentScore = Math.round((diagResult.observedDiagnosticScore / 5) * 10) / 10;
     }
-    const gap = Math.max(0, Math.round((goal - currentScore) * 10) / 10);
+    const gap: number | null =
+      goal !== null && currentScore !== null
+        ? Math.max(0, Math.round((goal - currentScore) * 10) / 10)
+        : null;
 
     const metrics = {
       demonstratedSkillsCount: demonstratedCount,
@@ -199,6 +212,10 @@ export const DashboardService = {
       },
       progressMetrics: metrics,
       verifiedMetrics: metrics,
+      masteryMap: mastery,
+      errorsMap: errors,
+      missionsMap: missions,
+      plannerEvents: plannerEvents || [],
     };
   },
 };

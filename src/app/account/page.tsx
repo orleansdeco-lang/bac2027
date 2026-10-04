@@ -796,7 +796,7 @@ export default function AccountPage() {
                       ? (access.plan === "monthly"
                           ? (isAr ? "الاشتراك الشهري (30 يوماً)" : "Pass Mensuel (30 jours)")
                           : (isAr ? "اشتراك السنة الدراسية (موسم كامل)" : "Pass Année Scolaire (Saison Complète)"))
-                      : (isAr ? "تجربة مجانية استكشافية (أسبوع كامل - 7 أيام)" : "Essai Découverte (7 jours)")}
+                      : (isAr ? "تجربة مجانية استكشافية (3 أيام - 72 ساعة)" : "Essai Découverte (3 jours)")}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-xs">

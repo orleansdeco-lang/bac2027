@@ -46,6 +46,7 @@ import {
   Bot,
   Landmark,
   Package,
+  Library,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -207,7 +208,16 @@ export function Sidebar({ className }: SidebarProps) {
           label_ar: "منهاج ودروس شعبتي",
           label_fr: "Mon Programme",
           icon: BookOpen,
-          matches: (p: string) => p.startsWith("/curriculum") || p.startsWith("/library"),
+          matches: (p: string) => p.startsWith("/curriculum"),
+        },
+        {
+          href: "/library",
+          label_ar: "المكتبة الرقمية والمراجع",
+          label_fr: "Bibliothèque & Références",
+          icon: Library,
+          matches: (p: string) => p.startsWith("/library"),
+          badge: isAr ? "شامل" : "Hub",
+          badgeColor: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
         },
       ],
     },

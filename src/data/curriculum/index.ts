@@ -34,8 +34,26 @@ export function getAllTopics(): CurriculumTopic[] {
   return CURRICULUM_TOPICS.filter((t) => t.isActive);
 }
 
-export function getTopicsForSubject(subjectId: string): CurriculumTopic[] {
-  return CURRICULUM_TOPICS.filter((t) => t.subjectId === subjectId && t.isActive).sort((a, b) => a.order - b.order);
+export function getTopicsForSubject(subjectId: string, streamId?: string, branchId?: string): CurriculumTopic[] {
+  return CURRICULUM_TOPICS.filter((t) => {
+    if (!t.isActive) return false;
+    if (t.subjectId !== subjectId) return false;
+    const sId = t.streamId as string | undefined;
+    if (streamId && sId && sId !== streamId && sId !== "common") return false;
+    if (branchId && t.branchId && t.branchId !== branchId) return false;
+    return true;
+  }).sort((a, b) => a.order - b.order);
+}
+
+export function getTopicsForStream(streamId: string, branchId?: string): CurriculumTopic[] {
+  return CURRICULUM_TOPICS.filter((t) => {
+    if (!t.isActive) return false;
+    const sId = t.streamId as string | undefined;
+    const streamMatch = !sId || sId === streamId || sId === "common";
+    if (!streamMatch) return false;
+    if (branchId && t.branchId && t.branchId !== branchId) return false;
+    return true;
+  }).sort((a, b) => a.order - b.order);
 }
 
 export function getTopicById(topicId: string): CurriculumTopic | undefined {

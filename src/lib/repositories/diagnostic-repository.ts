@@ -17,7 +17,7 @@ export const DiagnosticRepository = {
    * Save an in-progress diagnostic session
    */
   async saveSession(session: DiagnosticSession, userId?: string): Promise<void> {
-    saveDiagnosticSession(session);
+    saveDiagnosticSession(session, userId);
 
     if (isSupabaseConfigured && supabase && userId) {
       try {
@@ -45,7 +45,7 @@ export const DiagnosticRepository = {
    * Save final diagnostic analytical results
    */
   async saveResults(results: DiagnosticAnalysisResult, userId?: string): Promise<void> {
-    saveDiagnosticResults(results);
+    saveDiagnosticResults(results, userId);
 
     if (isSupabaseConfigured && supabase && userId) {
       try {
@@ -74,6 +74,9 @@ export const DiagnosticRepository = {
 
   /**
    * Fetch latest diagnostic analytical results
+   * INVARIANT: Supabase is authoritative source of truth.
+   * If user has no record in Supabase, return null (do not let stale local cache forge a score).
+   * Local storage is only used as a stale cache during network failures.
    */
   async getResults(userId?: string): Promise<DiagnosticAnalysisResult | null> {
     if (isSupabaseConfigured && supabase && userId) {
@@ -88,13 +91,12 @@ export const DiagnosticRepository = {
 
         if (error) {
           console.error("DiagnosticRepository.getResults error:", error);
-          return loadDiagnosticResults();
+          // Network / DB failure: fallback to user-scoped local stale cache
+          return loadDiagnosticResults(userId);
         }
 
         if (data) {
-          const local = loadDiagnosticResults();
-          if (local) return local;
-
+          // Authoritative result found in Supabase
           const reconstructed: DiagnosticAnalysisResult = {
             sessionId: data.session_id,
             streamId: "sciences_exp",
@@ -121,15 +123,20 @@ export const DiagnosticRepository = {
             source: "diagnostic",
             completedAt: data.created_at,
           } as any;
-          saveDiagnosticResults(reconstructed);
+          // Refresh user-scoped local cache
+          saveDiagnosticResults(reconstructed, userId);
           return reconstructed;
         }
+
+        // Authoritative: User has NO completed diagnostic in Supabase!
+        return null;
       } catch (err) {
         console.error("DiagnosticRepository.getResults exception:", err);
+        return loadDiagnosticResults(userId);
       }
     }
 
-    return loadDiagnosticResults();
+    return loadDiagnosticResults(userId);
   },
 
   /**

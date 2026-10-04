@@ -54,7 +54,7 @@ export function TeacherEscalationModal({
 
   if (!isOpen) return null;
 
-  // Generate Authoritative Zero-PII Student Learning Brief
+  // Generate Authoritative Zero-PII Student Learning Brief without fabricated numbers
   const brief = generateStudentLearningBrief({
     skillId,
     skillTitle_ar: skillTitle,
@@ -62,93 +62,31 @@ export function TeacherEscalationModal({
     subjectId,
     streamId,
     currentMasteryStatus: "not_yet",
-    totalAttempts: 4,
-    consecutiveFailures: 2,
-    practiceAccuracy: 0.25,
-    recurringErrors: [
-      {
-        errorType,
-        occurrenceCount: 2,
-        sampleContext_ar: `خلل منهجي متكرر في استنتاج الحل النموذجي لـ [${skillTitle}]`,
-      },
-    ],
+    totalAttempts: 1,
+    consecutiveFailures: 1,
+    practiceAccuracy: 0,
+    recurringErrors: errorType
+      ? [
+          {
+            errorType,
+            occurrenceCount: 1,
+            sampleContext_ar: `ملاحظة تعثر منهجي في تطبيق [${skillTitle}]`,
+          },
+        ]
+      : [],
     repairAttemptsCount: 1,
-    lastRepairStatus: "repair_completed",
-    retestFailedCount,
-    averageConfidence: 3.5,
-    overconfidenceCount: 1,
-    avgResponseSeconds: 95,
+    lastRepairStatus: "repair_started",
+    retestFailedCount: retestFailedCount || 1,
+    averageConfidence: 3,
+    overconfidenceCount: 0,
+    avgResponseSeconds: 0,
     expectedSeconds: 60,
-    explanationsViewed: 2,
+    explanationsViewed: 0,
   });
 
-  const qualifiedTeachers = [
-    {
-      id: "t-1",
-      name_ar: "أ. رابح بن يحيى",
-      name_fr: "Pr. R. Benyahia",
-      wilaya_ar: "الجزائر العاصمة (القبة)",
-      wilaya_fr: "Alger (Kouba)",
-      wilayaCode: "16",
-      subject_ar: "رياضيات",
-      mode_ar: "حضوري + عن بعد",
-      experience_ar: "18 سنة تدريس في الثانوي وتحضير البكالوريا",
-      isVerified: true,
-    },
-    {
-      id: "t-2",
-      name_ar: "أ. سمير بلقاسم",
-      name_fr: "Pr. S. Belkacem",
-      wilaya_ar: "وهران (السانية)",
-      wilaya_fr: "Oran (Es Senia)",
-      wilayaCode: "31",
-      subject_ar: "علوم فيزيائية",
-      mode_ar: "عن بعد (حصص توجيهية)",
-      experience_ar: "مفتش تربوي سابق • مؤلف مذكرات وزارية",
-      isVerified: true,
-    },
-    {
-      id: "t-3",
-      name_ar: "أ. فتيحة بن منصور",
-      name_fr: "Pr. F. Benmansour",
-      wilaya_ar: "قسنطينة (المدينة الجديدة)",
-      wilaya_fr: "Constantine (Ali Mendjeli)",
-      wilayaCode: "25",
-      subject_ar: "علوم الطبيعة والحياة",
-      mode_ar: "حضوري + عن بعد",
-      experience_ar: "15 سنة في تصحيح امتحانات البكالوريا الرسمية",
-      isVerified: true,
-    },
-    {
-      id: "t-4",
-      name_ar: "أ. عبد القادر دريسي",
-      name_fr: "Pr. A. Drissi",
-      wilaya_ar: "سطيف (العلمة)",
-      wilaya_fr: "Sétif (El Eulma)",
-      wilayaCode: "19",
-      subject_ar: "محاسبة وتسيير مالي",
-      mode_ar: "حضوري وعن بعد",
-      experience_ar: "أستاذ مبرز في التسيير والاقتصاد",
-      isVerified: true,
-    },
-    {
-      id: "t-5",
-      name_ar: "أ. كمال عمور",
-      name_fr: "Pr. K. Ammour",
-      wilaya_ar: "باتنة",
-      wilaya_fr: "Batna",
-      wilayaCode: "05",
-      subject_ar: "رياضيات وفلسفة",
-      mode_ar: "عن بعد",
-      experience_ar: "مرافقة منهجية لتلاميذ الأقسام النهائية",
-      isVerified: true,
-    },
-  ];
+  const qualifiedTeachers: any[] = [];
 
-  const filteredTeachers =
-    selectedWilaya === "all"
-      ? qualifiedTeachers
-      : qualifiedTeachers.filter((t) => t.wilayaCode === selectedWilaya);
+  const filteredTeachers = qualifiedTeachers;
 
   const handleCopyBrief = () => {
     const briefText = `=====================================================
@@ -299,80 +237,23 @@ BAC MASTERY — بطاقة التوجيه البيداغوجي (STUDENT LEARNING
         {/* 2. VERIFIED TEACHER DIRECTORY (NO MARKETPLACE / NO PAYMENTS)      */}
         {/* ================================================================= */}
         <div className="space-y-3 pt-2">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <GraduationCap className="h-5 w-5 text-blue-400" />
-              <h3 className="text-sm font-bold text-white">
-                {isAr ? "دليل الأساتذة المعتمدين والمفتشين البيداغوجيين" : "Répertoire d'Enseignants Agréés"}
-              </h3>
-            </div>
-
-            {/* Wilaya Filter */}
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] text-slate-400">{isAr ? "الولاية:" : "Wilaya :"}</span>
-              <select
-                value={selectedWilaya}
-                onChange={(e) => setSelectedWilaya(e.target.value)}
-                className="bg-slate-900 border border-slate-700 rounded-lg text-xs px-2.5 py-1 text-slate-200 focus:outline-none focus:border-blue-500"
-              >
-                <option value="all">{isAr ? "كل الولايات" : "Toutes"}</option>
-                <option value="16">{isAr ? "الجزائر (16)" : "Alger (16)"}</option>
-                <option value="31">{isAr ? "وهران (31)" : "Oran (31)"}</option>
-                <option value="25">{isAr ? "قسنطينة (25)" : "Constantine (25)"}</option>
-                <option value="19">{isAr ? "سطيف (19)" : "Sétif (19)"}</option>
-                <option value="05">{isAr ? "باتنة (05)" : "Batna (05)"}</option>
-              </select>
-            </div>
+          <div className="flex items-center gap-2">
+            <GraduationCap className="h-5 w-5 text-blue-400" />
+            <h3 className="text-sm font-bold text-white">
+              {isAr ? "دليل الأساتذة المعتمدين والمفتشين البيداغوجيين" : "Répertoire d'Enseignants Agréés"}
+            </h3>
           </div>
 
-          <p className="text-[11px] text-slate-400 leading-relaxed">
-            {isAr
-              ? "أساتذة معتمدون في برنامج البكالوريا الجزائري يرحبون باستقبال بطاقات التوجيه البيداغوجي لتقديم شرح مركّز."
-              : "Enseignants certifiés disponibles pour accompagner les élèves sur la base de la fiche diagnostic."}
-          </p>
-
-          {/* Teacher Cards */}
-          <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
-            {filteredTeachers.map((teacher) => (
-              <div
-                key={teacher.id}
-                className="p-3.5 rounded-2xl bg-slate-900/60 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:border-slate-700 transition-colors"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs sm:text-sm font-bold text-white">
-                      {isAr ? teacher.name_ar : teacher.name_fr}
-                    </span>
-                    <Badge variant="primary" size="sm" className="text-[10px] py-0">
-                      {isAr ? teacher.subject_ar : teacher.subject_ar}
-                    </Badge>
-                    <Badge variant="outline" size="sm" className="text-[10px] py-0 border-emerald-500/40 text-emerald-400">
-                      {isAr ? "معتمد" : "Vérifié"}
-                    </Badge>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400">
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3 text-blue-400" />
-                      <span>{isAr ? teacher.wilaya_ar : teacher.wilaya_fr}</span>
-                    </span>
-                    <span>•</span>
-                    <span className="text-slate-300 font-medium">{teacher.mode_ar}</span>
-                    <span>•</span>
-                    <span className="text-slate-400">{teacher.experience_ar}</span>
-                  </div>
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyBrief}
-                  className="text-xs border-blue-500/30 text-blue-400 hover:bg-blue-500/10 shrink-0"
-                >
-                  <span>{isAr ? "تجهيز البطاقة للأستاذ" : "Préparer la fiche"}</span>
-                </Button>
-              </div>
-            ))}
+          <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800 text-center space-y-2">
+            <GraduationCap className="h-6 w-6 text-slate-500 mx-auto" />
+            <h4 className="text-sm font-bold text-slate-300">
+              {isAr ? "قائمة الأساتذة المعتمدين قيد التحديث" : "Répertoire d'enseignants en cours d'actualisation"}
+            </h4>
+            <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
+              {isAr
+                ? "يمكنك نسخ بطاقة التوجيه البيداغوجي أعلاه وتقديمها مباشرة لأستاذك في الثانوية أو أستاذ الدعم ليفهم فوراً طبيعة التعثر ويقدم لك الشرح المركز."
+                : "Vous pouvez copier la fiche pédagogique ci-dessus et la présenter directement à votre enseignant au lycée."}
+            </p>
           </div>
         </div>
 

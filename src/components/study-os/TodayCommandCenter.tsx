@@ -27,12 +27,14 @@ interface TodayCommandCenterProps {
   userId: string;
   studentName?: string;
   streamId?: string;
+  dashboardData?: any;
 }
 
 export function TodayCommandCenter({
   userId,
   studentName = "طالب البكالوريا",
   streamId = "sciences_exp",
+  dashboardData,
 }: TodayCommandCenterProps) {
   const {
     isSessionActive,
@@ -56,13 +58,15 @@ export function TodayCommandCenter({
 
   const todayIso = new Date().toISOString().split("T")[0];
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (forceRefresh = false) => {
     if (!userId) return;
     try {
-      const res = await MustWinService.getMustWinObjectives(userId, todayIso);
+      const res = await MustWinService.getMustWinObjectives(userId, todayIso, dashboardData);
       setSummary(res);
 
-      const allEvents = await PlannerStorage.loadEvents(userId);
+      const allEvents: PlannerEvent[] = (!forceRefresh && dashboardData?.plannerEvents !== undefined)
+        ? dashboardData.plannerEvents
+        : await PlannerStorage.loadEvents(userId);
       const todays = allEvents.filter(
         (e) => (e.date === todayIso || e.start_time) && e.status !== "cancelled"
       );
@@ -72,17 +76,17 @@ export function TodayCommandCenter({
     } finally {
       setIsLoading(false);
     }
-  }, [userId, todayIso]);
+  }, [userId, todayIso, dashboardData]);
 
   useEffect(() => {
-    loadData();
+    loadData(false);
   }, [loadData]);
 
   // Handle manual task toggle complete
   const handleToggleComplete = async (item: MustWinItem) => {
     if (item.plannerEventId) {
       PlannerService.toggleEventCompleted(item.plannerEventId);
-      await loadData();
+      await loadData(true);
     } else {
       // Toggle local item completion state
       setSummary((prev) => {
@@ -119,7 +123,7 @@ export function TodayCommandCenter({
       });
 
       setTaskTitle("");
-      await loadData();
+      await loadData(true);
     } catch (err) {
       console.error("Failed to add personal task:", err);
     } finally {

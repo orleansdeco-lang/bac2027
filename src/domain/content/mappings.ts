@@ -262,11 +262,11 @@ export const SCIENCES_EXP_SUBJECTS: Subject[] = [
 
 export const PROMPT11_TOPICS: Topic[] = CURRICULUM_TOPICS.map((t) => ({
   id: t.id,
-  subjectId: t.subjectId,
+  subjectId: t.subjectId as any,
   curriculumId: "curr_bac_sciences_exp",
-  streamId: t.streamId,
+  streamId: ((t.streamId === "common" || !t.streamId) ? "sciences_exp" : t.streamId) as StreamId,
   title_ar: t.title_ar,
-  title_fr: t.title_fr,
+  title_fr: t.title_fr || "",
   description_ar: t.description_ar,
   description_fr: t.description_fr,
   order: t.order,

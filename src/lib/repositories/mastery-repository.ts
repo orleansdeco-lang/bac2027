@@ -14,6 +14,11 @@ import {
 } from "../mission/storage";
 
 export const MasteryRepository = {
+  /**
+   * INVARIANT: Supabase is authoritative.
+   * If Supabase returns data (including empty []), it updates local cache and is returned.
+   * Local storage is only a stale fallback when network fails.
+   */
   async getMasteryRecords(userId?: string): Promise<Record<string, MasteryEvidence>> {
     if (isSupabaseConfigured && supabase && userId) {
       try {
@@ -24,13 +29,10 @@ export const MasteryRepository = {
 
         if (error) {
           console.error("MasteryRepository.getMasteryRecords error:", error);
-          return loadMasteryRecords();
+          return loadMasteryRecords(userId);
         }
 
-        if (data && data.length > 0) {
-          const local = loadMasteryRecords();
-          if (Object.keys(local).length > 0) return local;
-
+        if (data) {
           const map: Record<string, MasteryEvidence> = {};
           for (const row of data) {
             map[row.skill_id] = {
@@ -47,18 +49,25 @@ export const MasteryRepository = {
               achievedAt: row.last_verified_at || row.updated_at,
             };
           }
+          // Update user-scoped local cache
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem(`bac_mastery_mastery_${userId}`, JSON.stringify(map));
+            } catch {}
+          }
           return map;
         }
       } catch (err) {
         console.error("MasteryRepository.getMasteryRecords exception:", err);
+        return loadMasteryRecords(userId);
       }
     }
 
-    return loadMasteryRecords();
+    return loadMasteryRecords(userId);
   },
 
   async saveMasteryRecord(evidence: MasteryEvidence, userId?: string): Promise<void> {
-    saveLocalMasteryEvidence(evidence);
+    saveLocalMasteryEvidence(evidence, userId);
 
     if (isSupabaseConfigured && supabase && userId) {
       try {
@@ -82,7 +91,7 @@ export const MasteryRepository = {
   },
 
   async syncLocalToCloud(userId: string): Promise<void> {
-    const localRecords = loadMasteryRecords();
+    const localRecords = loadMasteryRecords(userId);
     const recordsList = Object.values(localRecords);
     if (recordsList.length === 0) return;
 
@@ -106,11 +115,11 @@ export const MasteryRepository = {
   },
 
   async getSpacedReviewSchedules(userId?: string): Promise<Record<string, SpacedReviewSchedule>> {
-    return loadSpacedReviewSchedules();
+    return loadSpacedReviewSchedules(userId);
   },
 
   async saveSpacedReviewSchedule(schedule: SpacedReviewSchedule, userId?: string): Promise<void> {
-    saveLocalSpacedSchedule(schedule);
+    saveLocalSpacedSchedule(schedule, userId);
 
     if (isSupabaseConfigured && supabase && userId) {
       try {

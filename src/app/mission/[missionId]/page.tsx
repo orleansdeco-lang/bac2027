@@ -384,8 +384,8 @@ export default function MissionPage() {
               </h1>
               <p className="text-xs sm:text-sm text-theme-secondary leading-relaxed max-w-md mx-auto">
                 {isAr
-                  ? "انتهت فترة التجربة المجانية (7 أيام). جميع نقاطك وتشخيصاتك محفوظة بدقة. لتتمكن من حل المهام والتمارين، يرجى تفعيل اشتراكك."
-                  : "Votre essai gratuit de 7 jours est terminé. Vos diagnostics restent intacts. Activez votre pass pour débloquer les exercices et retests."}
+                  ? "انتهت فترة التجربة المجانية (3 أيام - 72 ساعة). جميع نقاطك وتشخيصاتك محفوظة بدقة. لتتمكن من حل المهام والتمارين، يرجى تفعيل اشتراكك."
+                  : "Votre essai gratuit de 3 jours (72h) est terminé. Vos diagnostics restent intacts. Activez votre pass pour débloquer les exercices et retests."}
               </p>
             </div>
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">

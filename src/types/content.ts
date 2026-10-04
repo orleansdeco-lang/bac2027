@@ -4,7 +4,7 @@
  * Core loop: Topic -> Skill -> Practice -> Error -> Repair -> Retest -> Mastery
  */
 
-import { SubjectId, StreamId, ExamType, EducationLevel } from "./education";
+import { SubjectId, StreamId, ExtendedStreamId, ExamType, EducationLevel } from "./education";
 import { DiagnosticDimension } from "./diagnostic";
 
 /**
@@ -15,11 +15,11 @@ export interface CurriculumTopic {
   id: string;
   educationLevel: EducationLevel;
   examType: ExamType;
-  streamId: StreamId;
+  streamId?: ExtendedStreamId | "common";
   subjectId: SubjectId;
   branchId?: string;
   title_ar: string;
-  title_fr: string;
+  title_fr?: string;
   description_ar?: string;
   description_fr?: string;
   order: number;

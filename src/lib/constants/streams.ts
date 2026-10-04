@@ -549,6 +549,7 @@ export interface StreamBranchMeta {
   name_ar: string;
   name_fr: string;
   code: string;
+  icon?: string;
   specialtySubjectId: SubjectId;
   description_ar?: string;
   description_fr?: string;
@@ -562,6 +563,7 @@ export const STREAM_BRANCHES: Record<string, StreamBranchMeta[]> = {
       name_ar: "هندسة ميكانيكية",
       name_fr: "Génie Mécanique",
       code: "GM",
+      icon: "⚙️",
       specialtySubjectId: "mechanical_eng",
       description_ar: "دراسة الأنظمة الآلية، الوصلات، مقاومة المواد RDM، ومخططات الصنع.",
       description_fr: "Systèmes automatisés, liaisons mécaniques, RDM et contrats de phase.",
@@ -572,6 +574,7 @@ export const STREAM_BRANCHES: Record<string, StreamBranchMeta[]> = {
       name_ar: "هندسة مدنية",
       name_fr: "Génie Civil",
       code: "GC",
+      icon: "🏗️",
       specialtySubjectId: "civil_eng",
       description_ar: "ميكانيك الأجسام الصلبة، الروافد، الخرسانة المسلحة، وطبوغرافيا.",
       description_fr: "Mécanique des solides, poutres continues, béton armé et topographie.",
@@ -582,6 +585,7 @@ export const STREAM_BRANCHES: Record<string, StreamBranchMeta[]> = {
       name_ar: "هندسة كهربائية",
       name_fr: "Génie Électrique",
       code: "GE",
+      icon: "⚡",
       specialtySubjectId: "electrical_eng",
       description_ar: "المنطق التعاقبي، غرافسيت (GRAFCET)، المحركات، وتحويل الطاقة.",
       description_fr: "Logique séquentielle, GRAFCET, moteurs asynchrones et conversion d'énergie.",
@@ -592,6 +596,7 @@ export const STREAM_BRANCHES: Record<string, StreamBranchMeta[]> = {
       name_ar: "هندسة الطرائق",
       name_fr: "Génie des Procédés",
       code: "GP",
+      icon: "🧪",
       specialtySubjectId: "process_eng",
       description_ar: "الكيمياء العضوية، الحركية الكيميائية، الترموديناميك، وتكرير البترول.",
       description_fr: "Chimie organique, cinétique, thermodynamique et raffinage pétrolier.",
@@ -604,6 +609,7 @@ export const STREAM_BRANCHES: Record<string, StreamBranchMeta[]> = {
       name_ar: "اللغة الألمانية",
       name_fr: "Allemand",
       code: "DE",
+      icon: "🇩🇪",
       specialtySubjectId: "third_language_de",
       description_ar: "اللغة الأجنبية الثالثة: ألمانية (فهم النص، القواعد، والتعبير).",
       description_fr: "Troisième langue vivante : Allemand (compréhension et expression écrite).",
@@ -614,6 +620,7 @@ export const STREAM_BRANCHES: Record<string, StreamBranchMeta[]> = {
       name_ar: "اللغة الإسبانية",
       name_fr: "Espagnol",
       code: "ES",
+      icon: "🇪🇸",
       specialtySubjectId: "third_language_es",
       description_ar: "اللغة الأجنبية الثالثة: إسبانية (فهم النص، القواعد، والتعبير).",
       description_fr: "Troisième langue vivante : Espagnol (compréhension et expression écrite).",
@@ -624,6 +631,7 @@ export const STREAM_BRANCHES: Record<string, StreamBranchMeta[]> = {
       name_ar: "اللغة الإيطالية",
       name_fr: "Italien",
       code: "IT",
+      icon: "🇮🇹",
       specialtySubjectId: "third_language_it",
       description_ar: "اللغة الأجنبية الثالثة: إيطالية (فهم النص، القواعد، والتعبير).",
       description_fr: "Troisième langue vivante : Italien (compréhension et expression écrite).",
@@ -636,6 +644,7 @@ export const STREAM_BRANCHES: Record<string, StreamBranchMeta[]> = {
       name_ar: "سينما وسمعي بصري",
       name_fr: "Cinéma & Audiovisuel",
       code: "CIN",
+      icon: "🎬",
       specialtySubjectId: "art_specialty",
       description_ar: "لغة الصورة، السيناريو، الإخراج والمونتاج.",
       description_fr: "Langage de l'image, scénario, réalisation et montage audiovisuel.",
@@ -646,6 +655,7 @@ export const STREAM_BRANCHES: Record<string, StreamBranchMeta[]> = {
       name_ar: "فنون تشكيلية",
       name_fr: "Arts Plastiques",
       code: "PLA",
+      icon: "🎨",
       specialtySubjectId: "art_specialty",
       description_ar: "الرسم، النحت، التصميم الغرافيكي وتاريخ الفنون التشكيلية.",
       description_fr: "Dessin, sculpture, design graphique et histoire des arts plastiques.",
@@ -656,6 +666,7 @@ export const STREAM_BRANCHES: Record<string, StreamBranchMeta[]> = {
       name_ar: "موسيقى",
       name_fr: "Musique",
       code: "MUS",
+      icon: "🎵",
       specialtySubjectId: "art_specialty",
       description_ar: "الصولفيج، المقامات، الهارموني، والتحليل الموسيقي.",
       description_fr: "Solfège, modes musicaux, harmonie et analyse musicale.",
@@ -666,6 +677,7 @@ export const STREAM_BRANCHES: Record<string, StreamBranchMeta[]> = {
       name_ar: "مسرح",
       name_fr: "Théâtre",
       code: "THE",
+      icon: "🎭",
       specialtySubjectId: "art_specialty",
       description_ar: "السينوغرافيا، الإخراج المسرحي، التمثيل وفن الأداء.",
       description_fr: "Scénographie, mise en scène théâtrale et jeu d'acteur.",

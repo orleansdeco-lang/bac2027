@@ -166,7 +166,8 @@ export type MethodologyFamily =
   | "islamic_studies"
   | "languages"
   | "economics_management"
-  | "technique_math";
+  | "technique_math"
+  | "arts";
 
 export interface SubjectMethodologyProfile {
   family: MethodologyFamily;

@@ -8,6 +8,11 @@ import { supabase, isSupabaseConfigured } from "../supabase/client";
 import { loadErrorRecords, saveErrorRecord as saveLocalErrorRecord } from "../mission/storage";
 
 export const ErrorRepository = {
+  /**
+   * INVARIANT: Supabase is authoritative.
+   * If Supabase returns data (including empty []), it updates local cache and is returned.
+   * Local storage is only a stale fallback when network fails.
+   */
   async getErrors(userId?: string): Promise<Record<string, ErrorRecord>> {
     if (isSupabaseConfigured && supabase && userId) {
       try {
@@ -18,13 +23,10 @@ export const ErrorRepository = {
 
         if (error) {
           console.error("ErrorRepository.getErrors error:", error);
-          return loadErrorRecords();
+          return loadErrorRecords(userId);
         }
 
-        if (data && data.length > 0) {
-          const local = loadErrorRecords();
-          if (Object.keys(local).length > 0) return local;
-
+        if (data) {
           const map: Record<string, ErrorRecord> = {};
           for (const row of data) {
             map[row.id] = {
@@ -46,18 +48,25 @@ export const ErrorRepository = {
               updatedAt: row.updated_at || new Date().toISOString(),
             };
           }
+          // Update user-scoped local cache
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem(`bac_mastery_errors_${userId}`, JSON.stringify(map));
+            } catch {}
+          }
           return map;
         }
       } catch (err) {
         console.error("ErrorRepository.getErrors exception:", err);
+        return loadErrorRecords(userId);
       }
     }
 
-    return loadErrorRecords();
+    return loadErrorRecords(userId);
   },
 
   async saveError(error: ErrorRecord, userId?: string): Promise<void> {
-    saveLocalErrorRecord(error);
+    saveLocalErrorRecord(error, userId);
 
     if (isSupabaseConfigured && supabase && userId) {
       try {
@@ -85,7 +94,7 @@ export const ErrorRepository = {
   },
 
   async syncLocalToCloud(userId: string): Promise<void> {
-    const localErrors = loadErrorRecords();
+    const localErrors = loadErrorRecords(userId);
     const errorList = Object.values(localErrors);
     if (errorList.length === 0) return;
 

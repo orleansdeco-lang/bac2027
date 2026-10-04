@@ -131,6 +131,12 @@ const NAV_GROUPS: NavGroup[] = [
         permission: "content.read",
       },
       {
+        name: "Bibliothèque & Références",
+        href: "/admin/books",
+        icon: BookOpen,
+        permission: "content.read",
+      },
+      {
         name: "Banque d'Exercices",
         href: "/admin/exercises",
         icon: HelpCircle,

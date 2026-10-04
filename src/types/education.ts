@@ -58,6 +58,7 @@ export interface StreamBranch {
   name_ar: string;
   name_fr: string;
   code: string;
+  icon?: string;
   specialtySubjectId: SubjectId;
   description_ar?: string;
   description_fr?: string;
@@ -80,7 +81,10 @@ export type StandardSubjectId =
   | "civil_eng"
   | "electrical_eng"
   | "process_eng"
-  | "third_language"
+  | "third_language";
+
+export type ExtendedSubjectId =
+  | StandardSubjectId
   | "third_language_de"
   | "third_language_es"
   | "third_language_it"
@@ -91,9 +95,7 @@ export type StandardSubjectId =
   | "art_specialty"
   | "art_history";
 
-export type ExtendedSubjectId = StandardSubjectId;
-
-export type SubjectId = StandardSubjectId;
+export type SubjectId = ExtendedSubjectId;
 
 export interface Subject<S = SubjectId> {
   id: S;

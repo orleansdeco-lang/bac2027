@@ -37,13 +37,23 @@ export function createDiagnosticSession(
   };
 }
 
+function getDiagnosticScopedKey(baseKey: string, userId?: string): string {
+  if (userId) return `${baseKey}_${userId}`;
+  return baseKey;
+}
+
 /**
- * Loads the active session from localStorage
+ * Loads the active session from localStorage with user isolation
  */
-export function loadDiagnosticSession(): DiagnosticSession | null {
+export function loadDiagnosticSession(userId?: string): DiagnosticSession | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = localStorage.getItem(DIAGNOSTIC_SESSION_KEY);
+    const key = getDiagnosticScopedKey(DIAGNOSTIC_SESSION_KEY, userId);
+    let raw = localStorage.getItem(key);
+    // If not found with user key and no user key specified, try base key
+    if (!raw && !userId) {
+      raw = localStorage.getItem(DIAGNOSTIC_SESSION_KEY);
+    }
     if (!raw) return null;
     return JSON.parse(raw) as DiagnosticSession;
   } catch (e) {
@@ -53,24 +63,29 @@ export function loadDiagnosticSession(): DiagnosticSession | null {
 }
 
 /**
- * Saves active session to localStorage
+ * Saves active session to localStorage with user isolation
  */
-export function saveDiagnosticSession(session: DiagnosticSession): void {
+export function saveDiagnosticSession(session: DiagnosticSession, userId?: string): void {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(DIAGNOSTIC_SESSION_KEY, JSON.stringify(session));
+    const key = getDiagnosticScopedKey(DIAGNOSTIC_SESSION_KEY, userId);
+    localStorage.setItem(key, JSON.stringify(session));
   } catch (e) {
     console.error("Failed to save diagnostic session to localStorage", e);
   }
 }
 
 /**
- * Clears active session from localStorage
+ * Clears active session from localStorage with user isolation
  */
-export function clearDiagnosticSession(): void {
+export function clearDiagnosticSession(userId?: string): void {
   if (typeof window === "undefined") return;
   try {
-    localStorage.removeItem(DIAGNOSTIC_SESSION_KEY);
+    const key = getDiagnosticScopedKey(DIAGNOSTIC_SESSION_KEY, userId);
+    localStorage.removeItem(key);
+    if (!userId) {
+      localStorage.removeItem(DIAGNOSTIC_SESSION_KEY);
+    }
   } catch (e) {
     console.error("Failed to clear diagnostic session", e);
   }
@@ -198,12 +213,16 @@ export function completeDiagnosticSession(
 }
 
 /**
- * Loads the latest diagnostic analysis results
+ * Loads the latest diagnostic analysis results with user isolation
  */
-export function loadDiagnosticResults(): DiagnosticAnalysisResult | null {
+export function loadDiagnosticResults(userId?: string): DiagnosticAnalysisResult | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = localStorage.getItem(DIAGNOSTIC_RESULTS_KEY);
+    const key = getDiagnosticScopedKey(DIAGNOSTIC_RESULTS_KEY, userId);
+    let raw = localStorage.getItem(key);
+    if (!raw && !userId) {
+      raw = localStorage.getItem(DIAGNOSTIC_RESULTS_KEY);
+    }
     if (!raw) return null;
     return JSON.parse(raw) as DiagnosticAnalysisResult;
   } catch (e) {
@@ -213,13 +232,30 @@ export function loadDiagnosticResults(): DiagnosticAnalysisResult | null {
 }
 
 /**
- * Saves diagnostic analysis results to localStorage
+ * Saves diagnostic analysis results to localStorage with user isolation
  */
-export function saveDiagnosticResults(results: DiagnosticAnalysisResult): void {
+export function saveDiagnosticResults(results: DiagnosticAnalysisResult, userId?: string): void {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(DIAGNOSTIC_RESULTS_KEY, JSON.stringify(results));
+    const key = getDiagnosticScopedKey(DIAGNOSTIC_RESULTS_KEY, userId);
+    localStorage.setItem(key, JSON.stringify(results));
   } catch (e) {
     console.error("Failed to save diagnostic results", e);
+  }
+}
+
+/**
+ * Clears diagnostic analysis results from localStorage with user isolation
+ */
+export function clearDiagnosticResults(userId?: string): void {
+  if (typeof window === "undefined") return;
+  try {
+    const key = getDiagnosticScopedKey(DIAGNOSTIC_RESULTS_KEY, userId);
+    localStorage.removeItem(key);
+    if (!userId) {
+      localStorage.removeItem(DIAGNOSTIC_RESULTS_KEY);
+    }
+  } catch (e) {
+    console.error("Failed to clear diagnostic results", e);
   }
 }

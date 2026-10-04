@@ -25,6 +25,15 @@ const SUBJECT_NAMES: Record<SubjectId, { ar: string; fr: string }> = {
   electrical_eng: { ar: "الهندسة الكهربائية", fr: "Génie Électrique" },
   process_eng: { ar: "هندسة الطرائق", fr: "Génie des Procédés" },
   third_language: { ar: "اللغة الأجنبية الثالثة", fr: "3ème Langue" },
+  third_language_de: { ar: "اللغة الألمانية", fr: "Allemand" },
+  third_language_es: { ar: "اللغة الإسبانية", fr: "Espagnol" },
+  third_language_it: { ar: "اللغة الإيطالية", fr: "Italien" },
+  german: { ar: "اللغة الألمانية", fr: "Allemand" },
+  spanish: { ar: "اللغة الإسبانية", fr: "Espagnol" },
+  italian: { ar: "اللغة الإيطالية", fr: "Italien" },
+  tamazight: { ar: "اللغة الأمازيغية", fr: "Langue Tamazight" },
+  art_specialty: { ar: "مادة التخصص الفني", fr: "Spécialité Artistique" },
+  art_history: { ar: "تاريخ الفن", fr: "Histoire de l'Art" },
 };
 
 const DIMENSION_NAMES: Record<DiagnosticDimension, { ar: string; fr: string }> = {

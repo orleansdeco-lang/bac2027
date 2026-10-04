@@ -132,7 +132,7 @@ export default function ExamModePage() {
                 مسارك مازال محفوظ. فعّل اشتراكك باش تكمل
               </h1>
               <p className="text-xs sm:text-sm text-theme-secondary leading-relaxed max-w-md mx-auto font-sans">
-                انتهت فترة التجربة المجانية (7 أيام). تحليلات جاهزيتك واختباراتك السابقة محفوظة بالكامل. فعّل اشتراكك الآن لتشغيل محاكي البكالوريا وتوليد المواضيع الرسمية.
+                انتهت فترة التجربة المجانية (3 أيام - 72 ساعة). تحليلات جاهزيتك واختباراتك السابقة محفوظة بالكامل. فعّل اشتراكك الآن لتشغيل محاكي البكالوريا وتوليد المواضيع الرسمية.
               </p>
             </div>
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">

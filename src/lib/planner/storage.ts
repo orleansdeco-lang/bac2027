@@ -49,6 +49,9 @@ const memoryCache = {
   reflections: new Map<string, DailyReflection[]>(),
 };
 
+// In-flight request deduplication map to prevent parallel duplicate network calls
+const inFlightPlannerFetches = new Map<string, Promise<PlannerEvent[]>>();
+
 export const PlannerStorage = {
   // ============================================================================
   // 1. PLANNER EVENTS / TASKS
@@ -94,32 +97,44 @@ export const PlannerStorage = {
 
     // In browser: call authoritative /api/planner endpoint
     if (typeof window !== "undefined") {
-      try {
-        const res = await fetch("/api/planner", {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          cache: "no-store",
-        });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (data && Array.isArray(data.events)) {
-            const mapped: PlannerEvent[] = data.events;
-            memoryCache.events.set(effectiveUserId, mapped);
-            try {
-              localStorage.setItem(`${CACHE_KEYS.EVENTS}_${effectiveUserId}`, JSON.stringify(mapped));
-            } catch {}
-            return mapped;
-          }
-        }
-      } catch (err) {
-        console.warn("[PlannerStorage.loadEvents] API fetch error:", err);
+      const inFlight = inFlightPlannerFetches.get(effectiveUserId);
+      if (inFlight) {
+        return inFlight;
       }
 
-      // Return memory/local cache as fallback if network fails
-      return this.getEvents(effectiveUserId);
+      const fetchPromise = (async () => {
+        try {
+          const res = await fetch("/api/planner", {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            cache: "no-store",
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (data && Array.isArray(data.events)) {
+              const mapped: PlannerEvent[] = data.events;
+              memoryCache.events.set(effectiveUserId, mapped);
+              try {
+                localStorage.setItem(`${CACHE_KEYS.EVENTS}_${effectiveUserId}`, JSON.stringify(mapped));
+              } catch {}
+              return mapped;
+            }
+          }
+        } catch (err) {
+          console.warn("[PlannerStorage.loadEvents] API fetch error:", err);
+        } finally {
+          inFlightPlannerFetches.delete(effectiveUserId);
+        }
+
+        // Return memory/local cache as fallback if network fails
+        return this.getEvents(effectiveUserId);
+      })();
+
+      inFlightPlannerFetches.set(effectiveUserId, fetchPromise);
+      return fetchPromise;
     }
 
     // On Server: Query Supabase directly

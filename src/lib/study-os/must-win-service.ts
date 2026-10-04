@@ -56,19 +56,34 @@ export interface MustWinSummary {
 export const MustWinService = {
   /**
    * Derives exactly up to 3 Must-Win objectives grounded in genuine data
+   * Supports preloaded dashboard data to eliminate duplicate network queries (Phase 5/6)
    */
-  async getMustWinObjectives(userId: string, todayIso?: string): Promise<MustWinSummary> {
+  async getMustWinObjectives(
+    userId: string,
+    todayIso?: string,
+    preloadedDashboardData?: any
+  ): Promise<MustWinSummary> {
     const targetDate = todayIso || new Date().toISOString().split("T")[0];
 
-    // Fetch real data sources in parallel
-    const [dashboardData, errorsMap, masteryMap, diagResult, plannerEvents] = await Promise.all([
-      DashboardService.getDashboardData(userId).catch(() => null),
-      ErrorRepository.getErrors(userId).catch(() => ({})),
-      MasteryRepository.getMasteryRecords(userId).catch(() => ({})),
-      DiagnosticRepository.getResults(userId).catch(() => null),
-      PlannerStorage.loadEvents(userId).catch(() => []),
+    // Reuse preloaded data if available, otherwise fetch once
+    const dashboardData = preloadedDashboardData || await DashboardService.getDashboardData(userId).catch(() => null);
+
+    const [errorsMap, masteryMap, diagResult, rawPlannerEvents] = await Promise.all([
+      dashboardData?.errorsMap
+        ? Promise.resolve(dashboardData.errorsMap)
+        : ErrorRepository.getErrors(userId).catch(() => ({})),
+      dashboardData?.masteryMap
+        ? Promise.resolve(dashboardData.masteryMap)
+        : MasteryRepository.getMasteryRecords(userId).catch(() => ({})),
+      dashboardData?.diagnosticResult !== undefined
+        ? Promise.resolve(dashboardData.diagnosticResult)
+        : DiagnosticRepository.getResults(userId).catch(() => null),
+      dashboardData?.plannerEvents !== undefined
+        ? Promise.resolve(dashboardData.plannerEvents as PlannerEvent[])
+        : PlannerStorage.loadEvents(userId).catch(() => [] as PlannerEvent[]),
     ]);
 
+    const plannerEvents: PlannerEvent[] = (rawPlannerEvents as PlannerEvent[]) || [];
     const errorList: ErrorRecord[] = Object.values(errorsMap || {});
     const masteryList: MasteryEvidence[] = Object.values(masteryMap || {});
     const hasDiagnostic = Boolean(diagResult || dashboardData?.hasCompletedDiagnostic);
