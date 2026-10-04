@@ -31,6 +31,20 @@ export function formatDwellDuration(seconds?: number): string {
   return `${hours}س ${remMins}د`;
 }
 
+export function generateGuestStudentNumber(identifier?: string): string {
+  if (!identifier) return "طالب رقم 1001";
+  const clean = identifier.replace(/^(vid_|ses_|act_|anon_)/, "");
+  let hash = 0;
+  for (let i = 0; i < clean.length; i++) {
+    const char = clean.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0;
+  }
+  const absHash = Math.abs(hash);
+  const studentNum = (absHash % 9000) + 1000;
+  return `طالب رقم ${studentNum}`;
+}
+
 export interface VisitorsOverviewKPIs {
   uniqueVisitorsToday: number;
   sessionsToday: number;
@@ -103,6 +117,25 @@ export interface GeographyBreakdown {
   wilayas?: Array<{ wilaya: string; count: number; percentage: number }>;
 }
 
+export interface StudentProfileSummary {
+  fullName?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  studentPhone?: string;
+  parentPhone?: string;
+  email?: string;
+  wilayaCode?: string;
+  wilayaName?: string;
+  communeName?: string;
+  schoolName?: string;
+  streamId?: string;
+  plan?: string;
+  accessStatus?: string;
+  createdAt?: string;
+  targetScore?: number;
+}
+
 export interface RecentVisitorActivityItem {
   id: string;
   time: string;
@@ -115,6 +148,15 @@ export interface RecentVisitorActivityItem {
   durationSeconds?: number;
   formattedDuration?: string;
   eventName?: string;
+  // Student & Visitor Identity
+  displayName: string;
+  isRegistered: boolean;
+  visitorId?: string;
+  sessionId?: string;
+  userId?: string | null;
+  wilayaCode?: string;
+  wilayaName?: string;
+  studentProfile?: StudentProfileSummary | null;
 }
 
 export interface VisitorsAnalyticsResponse {
@@ -228,6 +270,8 @@ export async function getVisitorsAnalytics(
         if (Array.isArray(rpcData.recentActivity)) {
           recentActivity = rpcData.recentActivity.map((r: any) => {
             const durSec = typeof r.durationSeconds === "number" ? r.durationSeconds : (typeof r.duration_seconds === "number" ? r.duration_seconds : undefined);
+            const ident = r.visitorId || r.visitor_id || r.sessionId || r.session_id || r.id;
+            const isReg = Boolean(r.isRegistered || r.userId || r.user_id);
             return {
               id: String(r.id || r.sessionId || Math.random().toString(36).slice(2)),
               time: r.time || new Date().toISOString(),
@@ -240,6 +284,14 @@ export async function getVisitorsAnalytics(
               durationSeconds: durSec,
               formattedDuration: r.formattedDuration || r.formatted_duration || (durSec ? formatDwellDuration(durSec) : undefined),
               eventName: r.eventName || r.event_name || undefined,
+              displayName: r.displayName || r.display_name || (isReg ? (r.fullName || "طالب مسجل") : generateGuestStudentNumber(ident)),
+              isRegistered: isReg,
+              visitorId: r.visitorId || r.visitor_id || ident,
+              sessionId: r.sessionId || r.session_id || undefined,
+              userId: r.userId || r.user_id || null,
+              wilayaCode: r.wilayaCode || r.wilaya_code || undefined,
+              wilayaName: r.wilayaName || r.wilaya_name || undefined,
+              studentProfile: r.studentProfile || r.student_profile || null,
             };
           });
         }
@@ -584,7 +636,7 @@ export async function getVisitorsAnalytics(
       try {
         const { data: recentEvents } = await client
           .from("analytics_events")
-          .select("event_id, session_id, anonymous_id, event_name, route, properties, occurred_at")
+          .select("event_id, session_id, anonymous_id, user_id, event_name, route, properties, occurred_at")
           .in("event_name", ["page_leave", "page_view"])
           .order("occurred_at", { ascending: false })
           .limit(40);
@@ -599,6 +651,8 @@ export async function getVisitorsAnalytics(
             const formattedDur = props.formatted_duration || (durSec ? formatDwellDuration(durSec) : undefined);
             const page = props.path || ev.route || "/";
             const session = sessions.find((s) => s.session_id === ev.session_id);
+            const effectiveUserId = ev.user_id || session?.user_id || null;
+            const vid = session?.visitor_id || ev.anonymous_id || session?.anonymous_id || ev.session_id;
 
             return {
               id: ev.event_id || String((ev as any).id || Math.random().toString(36).slice(2)),
@@ -612,6 +666,12 @@ export async function getVisitorsAnalytics(
               durationSeconds: durSec,
               formattedDuration: formattedDur,
               eventName: ev.event_name,
+              visitorId: vid,
+              sessionId: ev.session_id,
+              userId: effectiveUserId,
+              displayName: generateGuestStudentNumber(vid),
+              isRegistered: false,
+              studentProfile: null,
             };
           });
         }
@@ -629,6 +689,7 @@ export async function getVisitorsAnalytics(
         const durSec = s.last_activity_at && s.started_at
           ? Math.max(0, Math.round((new Date(s.last_activity_at).getTime() - new Date(s.started_at).getTime()) / 1000))
           : undefined;
+        const vid = s.visitor_id || s.anonymous_id || s.session_id;
 
         return {
           id: s.session_id,
@@ -641,10 +702,77 @@ export async function getVisitorsAnalytics(
           exitedAt: s.last_activity_at,
           durationSeconds: durSec,
           formattedDuration: durSec ? formatDwellDuration(durSec) : undefined,
+          visitorId: vid,
+          sessionId: s.session_id,
+          userId: s.user_id || null,
+          displayName: generateGuestStudentNumber(vid),
+          isRegistered: false,
+          studentProfile: null,
         };
       });
 
-      recentActivity = eventActivities.length > 0 ? eventActivities : sessionActivities;
+      const rawActivities = eventActivities.length > 0 ? eventActivities : sessionActivities;
+
+      // Collect user IDs to resolve registered student names & wilayas
+      const userIdsToResolve = Array.from(new Set(rawActivities.map((a) => a.userId).filter(Boolean))) as string[];
+      const studentProfilesMap = new Map<string, StudentProfileSummary>();
+
+      if (userIdsToResolve.length > 0 && client) {
+        try {
+          const { data: profs } = await client
+            .from("student_profiles")
+            .select("user_id, first_name, last_name, student_phone, parent_phone, wilaya_code, wilaya_name, commune_name, school_name, stream_id, plan, access_status, created_at, target_score")
+            .in("user_id", userIdsToResolve);
+
+          if (Array.isArray(profs)) {
+            for (const p of profs) {
+              const fullName = [p.first_name, p.last_name].filter(Boolean).join(" ").trim() || "طالب مسجل";
+              studentProfilesMap.set(p.user_id, {
+                fullName,
+                firstName: p.first_name,
+                lastName: p.last_name,
+                phone: p.student_phone,
+                studentPhone: p.student_phone,
+                parentPhone: p.parent_phone,
+                wilayaCode: p.wilaya_code,
+                wilayaName: p.wilaya_name,
+                communeName: p.commune_name,
+                schoolName: p.school_name,
+                streamId: p.stream_id,
+                plan: p.plan,
+                accessStatus: p.access_status,
+                createdAt: p.created_at,
+                targetScore: p.target_score,
+              });
+            }
+          }
+        } catch (err: any) {
+          console.warn("[Analytics] Student profiles resolution exception:", err?.message);
+        }
+      }
+
+      // Attach authentic names (e.g. "محمد بن علي (ولاية 16)" vs "طالب رقم 4821")
+      recentActivity = rawActivities.map((act) => {
+        if (act.userId && studentProfilesMap.has(act.userId)) {
+          const p = studentProfilesMap.get(act.userId)!;
+          const wilayaPart = p.wilayaCode ? ` (ولاية ${p.wilayaCode})` : (p.wilayaName ? ` (${p.wilayaName})` : "");
+          return {
+            ...act,
+            displayName: `${p.fullName}${wilayaPart}`,
+            isRegistered: true,
+            wilayaCode: p.wilayaCode,
+            wilayaName: p.wilayaName,
+            studentProfile: p,
+          };
+        }
+        const ident = act.visitorId || act.sessionId || act.id;
+        return {
+          ...act,
+          displayName: generateGuestStudentNumber(ident),
+          isRegistered: false,
+          studentProfile: null,
+        };
+      });
     } catch {
       // Keep initial defaults
       liveActivity = { isSupported: false, activeNow: null };
