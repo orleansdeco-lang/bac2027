@@ -48,10 +48,11 @@ export function VisitorsTrendChart({
     );
   }
 
-  const totalSessions = trend.reduce((sum, t) => sum + (t.sessions || 0), 0);
-  const totalUnique = trend.reduce((sum, t) => sum + (t.uniqueVisitors || 0), 0);
-  const totalNew = trend.reduce((sum, t) => sum + (t.newVisitors || 0), 0);
-  const totalReturning = trend.reduce((sum, t) => sum + (t.returningVisitors || 0), 0);
+  const safeTrend = Array.isArray(trend) ? trend : [];
+  const totalSessions = safeTrend.reduce((sum, t) => sum + (t?.sessions || 0), 0);
+  const totalUnique = safeTrend.reduce((sum, t) => sum + (t?.uniqueVisitors || 0), 0);
+  const totalNew = safeTrend.reduce((sum, t) => sum + (t?.newVisitors || 0), 0);
+  const totalReturning = safeTrend.reduce((sum, t) => sum + (t?.returningVisitors || 0), 0);
 
   return (
     <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md space-y-4">

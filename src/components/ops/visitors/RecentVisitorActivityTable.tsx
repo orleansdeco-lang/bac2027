@@ -25,23 +25,24 @@ export function RecentVisitorActivityTable({ activity, loading = false }: Props)
   const [deviceFilter, setDeviceFilter] = useState("all");
 
   const filtered = useMemo(() => {
-    return activity.filter((item) => {
-      if (deviceFilter !== "all" && item.device.toLowerCase() !== deviceFilter.toLowerCase()) {
+    return (activity || []).filter((item) => {
+      const device = (item.device || "desktop").toLowerCase();
+      if (deviceFilter !== "all" && device !== deviceFilter.toLowerCase()) {
         return false;
       }
       if (search.trim()) {
         const q = search.trim().toLowerCase();
-        const matchPage = item.page.toLowerCase().includes(q);
-        const matchSource = item.source.toLowerCase().includes(q);
-        const matchId = item.id.toLowerCase().includes(q);
-        if (!matchPage && !matchSource && !matchId) return false;
+        const page = ((item as any).page || (item as any).path || "").toLowerCase();
+        const source = (item.source || "").toLowerCase();
+        const id = String(item.id || (item as any).sessionId || "").toLowerCase();
+        if (!page.includes(q) && !source.includes(q) && !id.includes(q)) return false;
       }
       return true;
     });
   }, [activity, search, deviceFilter]);
 
-  function getDeviceIcon(device: string) {
-    switch (device.toLowerCase()) {
+  function getDeviceIcon(device?: string) {
+    switch ((device || "desktop").toLowerCase()) {
       case "mobile":
         return <Smartphone className="w-3.5 h-3.5 text-cyan-400" />;
       case "tablet":
@@ -53,9 +54,11 @@ export function RecentVisitorActivityTable({ activity, loading = false }: Props)
     }
   }
 
-  function formatTime(isoString: string) {
+  function formatTime(isoString?: string) {
+    if (!isoString) return { date: "—", time: "—" };
     try {
       const d = new Date(isoString);
+      if (isNaN(d.getTime())) return { date: "—", time: isoString };
       return {
         date: d.toLocaleDateString("fr-DZ"),
         time: d.toLocaleTimeString("fr-DZ", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
@@ -134,12 +137,16 @@ export function RecentVisitorActivityTable({ activity, loading = false }: Props)
                 </td>
               </tr>
             ) : (
-              filtered.map((item) => {
+              filtered.map((item, idx) => {
                 const { date, time } = formatTime(item.time);
-                const isNew = item.visitorType === "NEW";
+                const isNew = item.visitorType === "NEW" || (item as any).isNew;
+                const page = (item as any).page || (item as any).path || "/";
+                const source = item.source || "direct";
+                const device = item.device || "desktop";
+                const safeId = String(item.id || (item as any).sessionId || `act_${idx}`);
 
                 return (
-                  <tr key={item.id} className="hover:bg-slate-800/40 transition-colors">
+                  <tr key={safeId} className="hover:bg-slate-800/40 transition-colors">
                     {/* Time */}
                     <td className="px-4 py-3 font-mono text-[11px] text-slate-400" dir="ltr">
                       <div className="text-slate-200 font-semibold">{time}</div>
@@ -149,7 +156,7 @@ export function RecentVisitorActivityTable({ activity, loading = false }: Props)
                     {/* Page */}
                     <td className="px-4 py-3">
                       <span className="font-mono text-cyan-300 text-xs truncate max-w-[240px] block" dir="ltr">
-                        {item.page}
+                        {page}
                       </span>
                     </td>
 
@@ -171,22 +178,22 @@ export function RecentVisitorActivityTable({ activity, loading = false }: Props)
                     {/* Source */}
                     <td className="px-4 py-3">
                       <span className="inline-block px-2 py-0.5 rounded-lg bg-slate-950 border border-slate-800 text-[11px] text-slate-300 font-mono">
-                        {item.source}
+                        {source}
                       </span>
                     </td>
 
                     {/* Device */}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5 capitalize text-slate-300">
-                        {getDeviceIcon(item.device)}
-                        <span>{item.device}</span>
+                        {getDeviceIcon(device)}
+                        <span>{device}</span>
                       </div>
                     </td>
 
                     {/* Masked Session ID (Safe, Zero PII) */}
                     <td className="px-4 py-3 text-left">
                       <span className="font-mono text-[10px] text-slate-500 bg-slate-950/80 px-2 py-1 rounded border border-slate-800/60">
-                        {item.id.slice(0, 12)}…
+                        {safeId.length > 12 ? `${safeId.slice(0, 12)}…` : safeId}
                       </span>
                     </td>
                   </tr>

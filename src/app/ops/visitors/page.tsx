@@ -84,13 +84,13 @@ export default function OpsVisitorsPage() {
       "Device",
     ];
 
-    const rows = data.recentActivity.map((item) => [
-      `"${item.id}"`,
-      `"${item.time}"`,
-      `"${item.page}"`,
-      `"${item.visitorType}"`,
-      `"${item.source}"`,
-      `"${item.device}"`,
+    const rows = (data.recentActivity || []).map((item) => [
+      `"${item.id || ""}"`,
+      `"${item.time || ""}"`,
+      `"${item.page || (item as any).path || "/"}"`,
+      `"${item.visitorType || "NEW"}"`,
+      `"${item.source || "direct"}"`,
+      `"${item.device || "desktop"}"`,
     ]);
 
     const csvContent = "\uFEFF" + [headers.join(","), ...rows.map((r) => r.join(","))].join("\r\n");

@@ -56,33 +56,39 @@ export function TrafficSourcesAndTopPages({
           </div>
 
           <div className="space-y-2">
-            {topPages.length === 0 ? (
+            {(topPages || []).length === 0 ? (
               <div className="py-8 text-center text-xs text-slate-500">
                 لا توجد مشاهدات صفحات مسجلة في هذا النطاق الزمني
               </div>
             ) : (
-              topPages.map((page, idx) => (
-                <div
-                  key={page.path}
-                  className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-colors"
-                >
-                  <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="font-mono text-slate-200 truncate max-w-[240px] sm:max-w-xs" dir="ltr">
-                      {page.path}
-                    </span>
-                    <div className="flex items-center gap-2 font-mono">
-                      <span className="text-cyan-300 font-bold">{page.views} مشاهدة</span>
-                      <span className="text-[10px] text-slate-400">({page.percentage}%)</span>
+              (topPages || []).map((page, idx) => {
+                const path = page.path || (page as any).page || "/";
+                const views = page.views ?? (page as any).count ?? 0;
+                const percentage = page.percentage ?? 0;
+
+                return (
+                  <div
+                    key={path || idx}
+                    className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-colors"
+                  >
+                    <div className="flex items-center justify-between text-xs mb-1.5">
+                      <span className="font-mono text-slate-200 truncate max-w-[240px] sm:max-w-xs" dir="ltr">
+                        {path}
+                      </span>
+                      <div className="flex items-center gap-2 font-mono">
+                        <span className="text-cyan-300 font-bold">{views} مشاهدة</span>
+                        <span className="text-[10px] text-slate-400">({percentage}%)</span>
+                      </div>
+                    </div>
+                    <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden">
+                      <div
+                        style={{ width: `${percentage}%` }}
+                        className="h-full bg-cyan-500 rounded-full transition-all duration-300"
+                      />
                     </div>
                   </div>
-                  <div className="h-1.5 w-full bg-slate-900 rounded-full overflow-hidden">
-                    <div
-                      style={{ width: `${page.percentage}%` }}
-                      className="h-full bg-cyan-500 rounded-full transition-all duration-300"
-                    />
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -158,25 +164,31 @@ export function TrafficSourcesAndTopPages({
           </div>
 
           <div className="space-y-2">
-            {entryPages.length === 0 ? (
+            {(entryPages || []).length === 0 ? (
               <div className="py-8 text-center text-xs text-slate-500">
                 لا توجد صفحات دخول مسجلة
               </div>
             ) : (
-              entryPages.map((entry) => (
-                <div
-                  key={entry.page}
-                  className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-center justify-between text-xs"
-                >
-                  <span className="font-mono text-slate-300 truncate max-w-[240px]" dir="ltr">
-                    {entry.page}
-                  </span>
-                  <div className="flex items-center gap-2 font-mono">
-                    <span className="font-bold text-emerald-300">{entry.sessions} جلسة</span>
-                    <span className="text-[10px] text-slate-400">({entry.percentage}%)</span>
+              (entryPages || []).map((entry, idx) => {
+                const page = entry.page || (entry as any).path || "/";
+                const sessions = entry.sessions ?? (entry as any).entries ?? 0;
+                const percentage = entry.percentage ?? 0;
+
+                return (
+                  <div
+                    key={page || idx}
+                    className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-center justify-between text-xs"
+                  >
+                    <span className="font-mono text-slate-300 truncate max-w-[240px]" dir="ltr">
+                      {page}
+                    </span>
+                    <div className="flex items-center gap-2 font-mono">
+                      <span className="font-bold text-emerald-300">{sessions} جلسة</span>
+                      <span className="text-[10px] text-slate-400">({percentage}%)</span>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -199,32 +211,38 @@ export function TrafficSourcesAndTopPages({
           </div>
 
           <div className="space-y-2">
-            {exitPages.length === 0 ? (
+            {(exitPages || []).length === 0 ? (
               <div className="py-8 text-center text-xs text-slate-500">
                 لم يتم تسجيل صفحات خروج محددة بعد للجلسات الحالية
               </div>
             ) : (
-              exitPages.map((exit) => (
-                <div
-                  key={exit.page}
-                  className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-center justify-between text-xs"
-                >
-                  <span className="font-mono text-slate-300 truncate max-w-[240px]" dir="ltr">
-                    {exit.page}
-                  </span>
-                  <div className="flex items-center gap-2 font-mono">
-                    <span className="font-bold text-rose-300">{exit.exits} خروج</span>
-                    <span className="text-[10px] text-slate-400">({exit.percentage}%)</span>
+              (exitPages || []).map((exit, idx) => {
+                const page = exit.page || (exit as any).path || "/";
+                const exits = exit.exits ?? 0;
+                const percentage = exit.percentage ?? 0;
+
+                return (
+                  <div
+                    key={page || idx}
+                    className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 flex items-center justify-between text-xs"
+                  >
+                    <span className="font-mono text-slate-300 truncate max-w-[240px]" dir="ltr">
+                      {page}
+                    </span>
+                    <div className="flex items-center gap-2 font-mono">
+                      <span className="font-bold text-rose-300">{exits} خروج</span>
+                      <span className="text-[10px] text-slate-400">({percentage}%)</span>
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
       </div>
 
       {/* 5. GEOGRAPHY (Strict rule: ONLY show if legitimate geographic data exists) */}
-      {geography.hasReliableGeography && geography.wilayas && geography.wilayas.length > 0 && (
+      {geography?.hasReliableGeography && geography?.wilayas && geography.wilayas.length > 0 && (
         <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/70 border border-slate-800/80 backdrop-blur-md space-y-3">
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <div>

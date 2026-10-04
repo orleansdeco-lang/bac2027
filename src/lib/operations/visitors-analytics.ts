@@ -176,14 +176,41 @@ export async function getVisitorsAnalytics(
         kpis = rpcData.kpis;
         if (rpcData.liveActivity) liveActivity = rpcData.liveActivity;
         if (Array.isArray(rpcData.trend)) trend = rpcData.trend;
-        if (Array.isArray(rpcData.topPages)) topPages = rpcData.topPages;
+        if (Array.isArray(rpcData.topPages)) {
+          topPages = rpcData.topPages.map((p: any) => ({
+            path: p.path || p.page || "/",
+            views: Number(p.views) || 0,
+            percentage: Number(p.percentage) || 0,
+          }));
+        }
         if (Array.isArray(rpcData.sources)) sources = rpcData.sources;
         if (rpcData.devices) devices = rpcData.devices;
         if (rpcData.returningVsNew) returningVsNew = rpcData.returningVsNew;
-        if (Array.isArray(rpcData.entryPages)) entryPages = rpcData.entryPages;
-        if (Array.isArray(rpcData.exitPages)) exitPages = rpcData.exitPages;
+        if (Array.isArray(rpcData.entryPages)) {
+          entryPages = rpcData.entryPages.map((e: any) => ({
+            page: e.page || e.path || "/",
+            sessions: Number(e.sessions ?? e.entries ?? 0),
+            percentage: Number(e.percentage) || 0,
+          }));
+        }
+        if (Array.isArray(rpcData.exitPages)) {
+          exitPages = rpcData.exitPages.map((e: any) => ({
+            page: e.page || e.path || "/",
+            exits: Number(e.exits) || 0,
+            percentage: Number(e.percentage) || 0,
+          }));
+        }
         if (rpcData.geography) geography = rpcData.geography;
-        if (Array.isArray(rpcData.recentActivity)) recentActivity = rpcData.recentActivity;
+        if (Array.isArray(rpcData.recentActivity)) {
+          recentActivity = rpcData.recentActivity.map((r: any) => ({
+            id: String(r.id || r.sessionId || Math.random().toString(36).slice(2)),
+            time: r.time || new Date().toISOString(),
+            page: r.page || r.path || "/",
+            device: r.device || "desktop",
+            source: r.source || "direct",
+            visitorType: (r.visitorType === "RETURNING" ? "RETURNING" : "NEW") as "NEW" | "RETURNING",
+          }));
+        }
         rpcSuccess = true;
       }
     } catch {

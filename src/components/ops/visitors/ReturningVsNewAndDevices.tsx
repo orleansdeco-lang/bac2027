@@ -18,15 +18,15 @@ export function ReturningVsNewAndDevices({
   devices,
   loading = false,
 }: Props) {
-  const totalVisitors = returningVsNew.newVisitors + returningVsNew.returningVisitors;
-  const newPct = returningVsNew.newPercentage || 0;
-  const retPct = returningVsNew.returningPercentage || 0;
+  const totalVisitors = (returningVsNew?.newVisitors || 0) + (returningVsNew?.returningVisitors || 0);
+  const newPct = returningVsNew?.newPercentage || 0;
+  const retPct = returningVsNew?.returningPercentage || 0;
 
-  const totalDevices = devices.total || 1;
-  const mobilePct = Number(((devices.mobile / totalDevices) * 100).toFixed(1));
-  const desktopPct = Number(((devices.desktop / totalDevices) * 100).toFixed(1));
-  const tabletPct = Number(((devices.tablet / totalDevices) * 100).toFixed(1));
-  const unknownPct = Number(((devices.unknown / totalDevices) * 100).toFixed(1));
+  const totalDevices = (devices?.total) || ((devices?.mobile || 0) + (devices?.desktop || 0) + (devices?.tablet || 0) + (devices?.unknown || 0)) || 1;
+  const mobilePct = Number((((devices?.mobile || 0) / totalDevices) * 100).toFixed(1));
+  const desktopPct = Number((((devices?.desktop || 0) / totalDevices) * 100).toFixed(1));
+  const tabletPct = Number((((devices?.tablet || 0) / totalDevices) * 100).toFixed(1));
+  const unknownPct = Number((((devices?.unknown || 0) / totalDevices) * 100).toFixed(1));
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
