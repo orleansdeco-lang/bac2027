@@ -27,5 +27,6 @@ Thumbs.db
 .runtime/
 scratch/
 .venv/
-data/
+/data/
+!src/data/
 *.log
