@@ -467,9 +467,18 @@ export function VisitorDossierModal({ isOpen, onClose, visitor }: Props) {
                       <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80">
                         <div className="text-[10px] text-slate-500">الاسم واللقب</div>
                         <div className="text-sm font-bold text-white mt-0.5">
-                          {profile.fullName || `${profile.firstName || ""} ${profile.lastName || ""}` || "—"}
+                          {profile.fullName || `${profile.firstName || ""} ${profile.lastName || ""}` || (profile.email ? profile.email.split("@")[0] : "") || "—"}
                         </div>
                       </div>
+
+                      {profile.email && (
+                        <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80">
+                          <div className="text-[10px] text-slate-500">البريد الإلكتروني</div>
+                          <div className="text-xs font-bold text-cyan-300 mt-1 font-mono truncate" dir="ltr">
+                            {profile.email}
+                          </div>
+                        </div>
+                      )}
 
                       <div className="p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80">
                         <div className="text-[10px] text-slate-500">الولاية والبلدية</div>

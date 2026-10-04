@@ -721,16 +721,17 @@ export async function getVisitorsAnalytics(
         try {
           const { data: profs } = await client
             .from("student_profiles")
-            .select("user_id, first_name, last_name, student_phone, parent_phone, wilaya_code, wilaya_name, commune_name, school_name, stream_id, plan, access_status, created_at, target_score")
+            .select("user_id, first_name, last_name, email, student_phone, parent_phone, wilaya_code, wilaya_name, commune_name, school_name, stream_id, plan, access_status, created_at, target_score")
             .in("user_id", userIdsToResolve);
 
           if (Array.isArray(profs)) {
             for (const p of profs) {
-              const fullName = [p.first_name, p.last_name].filter(Boolean).join(" ").trim() || "طالب مسجل";
+              const fullName = [p.first_name, p.last_name].filter(Boolean).join(" ").trim() || (p.email ? p.email.split("@")[0] : "") || "طالب مسجل";
               studentProfilesMap.set(p.user_id, {
                 fullName,
                 firstName: p.first_name,
                 lastName: p.last_name,
+                email: p.email,
                 phone: p.student_phone,
                 studentPhone: p.student_phone,
                 parentPhone: p.parent_phone,

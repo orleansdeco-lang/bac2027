@@ -32,7 +32,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const data = await getOperationsDashboardData(operator.userId, token);
+    const data = await getOperationsDashboardData(operator.userId, operator.token || token);
     return NextResponse.json({ success: true, data });
   } catch (err: any) {
     return NextResponse.json(

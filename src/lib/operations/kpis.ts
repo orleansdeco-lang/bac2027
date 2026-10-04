@@ -427,7 +427,7 @@ export async function getStudentsOperationalList(
 
           summaries.push({
             id: p.id,
-            fullName: `${p.first_name || ""} ${p.last_name || ""}`.trim() || "تلميذ مسجل",
+            fullName: `${p.first_name || ""} ${p.last_name || ""}`.trim() || (p.email ? p.email.split("@")[0] : "") || "تلميذ مسجل",
             email: p.email,
             studentPhone: p.student_phone,
             parentPhone: p.parent_phone,

@@ -188,7 +188,7 @@ export async function getRegisteredStudentsAnalytics(
       // 2a. Fetch student profiles basic columns
       const { data: profiles } = await client
         .from("student_profiles")
-        .select("id, created_at, access_status, plan, trial_expires_at, subscription_expires_at, onboarding_completed, academic_profile_completed_at, stream_id");
+        .select("id, email, first_name, last_name, created_at, access_status, plan, trial_expires_at, subscription_expires_at, onboarding_completed, academic_profile_completed_at, stream_id");
 
       const studentList = profiles || [];
       const totalStudents = studentList.length;
@@ -420,7 +420,7 @@ export async function getRegisteredStudentsAnalytics(
       // Apply text search
       if (options.search && options.search.trim()) {
         const q = options.search.trim();
-        query = query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,student_phone.ilike.%${q}%,parent_phone.ilike.%${q}%,id.eq.${q}`);
+        query = query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,email.ilike.%${q}%,student_phone.ilike.%${q}%,parent_phone.ilike.%${q}%,id.eq.${q}`);
       }
 
       const offset = (page - 1) * pageSize;
@@ -500,7 +500,7 @@ export async function getRegisteredStudentsAnalytics(
 
     return {
       id: p.id,
-      fullName: p.fullName || `${p.first_name || ""} ${p.last_name || ""}`.trim() || "تلميذ مسجل",
+      fullName: p.fullName || `${p.first_name || ""} ${p.last_name || ""}`.trim() || (p.email ? p.email.split("@")[0] : "") || "تلميذ مسجل",
       email: p.email || null,
       studentPhone: p.studentPhone || p.student_phone || null,
       parentPhone: p.parentPhone || p.parent_phone || null,
