@@ -24,6 +24,8 @@ ON CONFLICT (user_id, role) DO NOTHING;
 -- STEP 2: PERMANENTLY LOCK public.bootstrap_initial_owner
 -- ------------------------------------------------------------------------------
 
+DROP FUNCTION IF EXISTS public.bootstrap_initial_owner(UUID);
+
 CREATE OR REPLACE FUNCTION public.bootstrap_initial_owner(target_user_id UUID)
 RETURNS BOOLEAN AS $$
 BEGIN
@@ -70,6 +72,8 @@ GRANT EXECUTE ON FUNCTION public.get_my_operator_role() TO authenticated, servic
 -- ------------------------------------------------------------------------------
 -- STEP 4: HARDEN admin_authoritative_approve_order & approve_payment_order
 -- ------------------------------------------------------------------------------
+
+DROP FUNCTION IF EXISTS public.admin_authoritative_approve_order(UUID, UUID, TEXT);
 
 CREATE OR REPLACE FUNCTION public.admin_authoritative_approve_order(
   p_order_id UUID,
@@ -260,6 +264,9 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
+DROP FUNCTION IF EXISTS public.approve_payment_order(UUID, TEXT);
+DROP FUNCTION IF EXISTS public.approve_payment_order(UUID);
+
 CREATE OR REPLACE FUNCTION public.approve_payment_order(
   p_order_id UUID,
   p_reason TEXT DEFAULT 'Payment verified by operator'
@@ -285,6 +292,8 @@ GRANT EXECUTE ON FUNCTION public.approve_payment_order(UUID, TEXT) TO authentica
 -- ------------------------------------------------------------------------------
 -- STEP 5: HARDEN admin_authoritative_reject_order & reject_payment_order
 -- ------------------------------------------------------------------------------
+
+DROP FUNCTION IF EXISTS public.admin_authoritative_reject_order(UUID, UUID, TEXT);
 
 CREATE OR REPLACE FUNCTION public.admin_authoritative_reject_order(
   p_order_id UUID,
@@ -414,16 +423,19 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
+DROP FUNCTION IF EXISTS public.reject_payment_order(UUID, TEXT);
+DROP FUNCTION IF EXISTS public.reject_payment_order(UUID);
+
 CREATE OR REPLACE FUNCTION public.reject_payment_order(
   p_order_id UUID,
-  p_reason TEXT DEFAULT 'Payment rejected by operator'
+  p_rejection_reason TEXT DEFAULT 'Payment rejected by operator'
 )
 RETURNS JSONB AS $$
 BEGIN
   RETURN public.admin_authoritative_reject_order(
     p_order_id,
     auth.uid(),
-    p_reason
+    p_rejection_reason
   );
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
@@ -470,6 +482,8 @@ END $$;
 -- ------------------------------------------------------------------------------
 -- STEP 7: HARDEN ops_get_visitors_analytics (NO FIXED UUID BYPASS)
 -- ------------------------------------------------------------------------------
+
+DROP FUNCTION IF EXISTS public.ops_get_visitors_analytics(INT, UUID);
 
 CREATE OR REPLACE FUNCTION public.ops_get_visitors_analytics(
   p_period_days INT DEFAULT 30,
@@ -836,6 +850,8 @@ GRANT EXECUTE ON FUNCTION public.ops_get_visitors_analytics(INT, UUID) TO authen
 -- STEP 8: HARDEN ops_get_student_analytics (NO FIXED UUID BYPASS)
 -- ------------------------------------------------------------------------------
 
+DROP FUNCTION IF EXISTS public.ops_get_student_analytics(INT, UUID);
+
 CREATE OR REPLACE FUNCTION public.ops_get_student_analytics(
   p_period_days INT DEFAULT 30,
   p_operator_id UUID DEFAULT auth.uid()
@@ -1051,6 +1067,8 @@ GRANT EXECUTE ON FUNCTION public.ops_get_student_analytics(INT, UUID) TO authent
 -- ------------------------------------------------------------------------------
 -- STEP 9: HARDEN ops_get_conversion_funnel (NO FIXED UUID BYPASS)
 -- ------------------------------------------------------------------------------
+
+DROP FUNCTION IF EXISTS public.ops_get_conversion_funnel(TIMESTAMPTZ, TIMESTAMPTZ, UUID);
 
 CREATE OR REPLACE FUNCTION public.ops_get_conversion_funnel(
   p_start_date TIMESTAMPTZ,
@@ -1325,6 +1343,8 @@ GRANT EXECUTE ON FUNCTION public.ops_get_conversion_funnel(TIMESTAMPTZ, TIMESTAM
 -- STEP 10: HARDEN ops_get_cockpit_kpis (NO FIXED UUID BYPASS)
 -- ------------------------------------------------------------------------------
 
+DROP FUNCTION IF EXISTS public.ops_get_cockpit_kpis(UUID);
+
 CREATE OR REPLACE FUNCTION public.ops_get_cockpit_kpis(
   p_operator_id UUID DEFAULT auth.uid()
 )
@@ -1513,6 +1533,8 @@ GRANT EXECUTE ON FUNCTION public.ops_get_cockpit_kpis(UUID) TO authenticated, se
 -- ------------------------------------------------------------------------------
 -- STEP 11: HARDEN ops_get_product_usage (STRICT OPERATOR CHECK & REVOKE anon)
 -- ------------------------------------------------------------------------------
+
+DROP FUNCTION IF EXISTS public.ops_get_product_usage(INT, UUID);
 
 CREATE OR REPLACE FUNCTION public.ops_get_product_usage(
   p_period_days INT DEFAULT 30,
