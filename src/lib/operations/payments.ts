@@ -261,31 +261,47 @@ export async function getPaymentOrders(
     const existingIds = new Set(ordersList.map((o) => o.id));
 
     for (const u of uOrders) {
-      if (!existingIds.has(u.id)) {
-        ordersList.push({
-          id: u.id,
-          user_id: u.user_id,
-          plan: u.plan.id,
-          amount: u.amount,
-          currency: u.currency,
-          payment_method: u.payment.method === "COD" ? "cash" : u.payment.method,
-          order_type: "COD",
-          status: u.status === "COMPLETED" ? "APPROVED" : u.status,
-          delivery_status: u.shipment.status,
-          notes: u.shipping_address.delivery_notes || u.payment.settlement_notes || null,
-          submitted_at: u.created_at,
-          created_at: u.created_at,
-          updated_at: u.updated_at,
-          shipping_name: u.shipping_address.full_name,
-          shipping_phone: u.shipping_address.phone,
-          shipping_wilaya: u.shipping_address.wilaya,
-          shipping_commune: u.shipping_address.commune,
-          shipping_address: u.shipping_address.address,
-        });
+      if (existingIds.has(u.id)) continue;
+
+      // 1. Strict user isolation: if filtering by userId, skip all non-matching orders
+      if (filters?.userId && u.user_id !== filters.userId) {
+        continue;
       }
+
+      // 2. Strict status isolation: if filtering by status, verify matching status
+      const mappedStatus = u.status === "COMPLETED" ? "APPROVED" : u.status;
+      if (filters?.status && mappedStatus !== filters.status) {
+        continue;
+      }
+
+      ordersList.push({
+        id: u.id,
+        user_id: u.user_id,
+        plan: u.plan.id,
+        amount: u.amount,
+        currency: u.currency,
+        payment_method: u.payment.method === "COD" ? "cash" : u.payment.method,
+        order_type: "COD",
+        status: mappedStatus,
+        delivery_status: u.shipment.status,
+        notes: u.shipping_address.delivery_notes || u.payment.settlement_notes || null,
+        submitted_at: u.created_at,
+        created_at: u.created_at,
+        updated_at: u.updated_at,
+        shipping_name: u.shipping_address.full_name,
+        shipping_phone: u.shipping_address.phone,
+        shipping_wilaya: u.shipping_address.wilaya,
+        shipping_commune: u.shipping_address.commune,
+        shipping_address: u.shipping_address.address,
+      });
     }
   } catch (storeErr) {
     console.warn("[getPaymentOrders] Store merge warning:", storeErr);
+  }
+
+  // Ensure limit is strictly respected after merge
+  if (limit && ordersList.length > limit) {
+    ordersList = ordersList.slice(0, limit);
   }
 
   const dataToProcess = ordersList;

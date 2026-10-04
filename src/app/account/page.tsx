@@ -155,13 +155,11 @@ export default function AccountPage() {
       const reg = getRegistrationDraft(user.id);
       if (reg) setRegDraft(reg);
 
-      const records = getStoredPaymentRecords();
+      const records = getStoredPaymentRecords(user.id);
       const userRecord = records.find(
-        (r) => r.userId === user.id || (user.email && r.studentEmail === user.email)
+        (r) => r.userId === user.id || (user.email && r.studentEmail && r.studentEmail.toLowerCase() === user.email.toLowerCase())
       ) || null;
-      if (userRecord) {
-        setPaymentRecord(userRecord);
-      }
+      setPaymentRecord(userRecord);
 
       try {
         const refRes = await fetch(`/api/referral?userId=${encodeURIComponent(user.id)}`);

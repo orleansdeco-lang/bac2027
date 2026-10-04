@@ -106,18 +106,21 @@ export async function GET(
       const { data: subData, error: subError } = await client
         .from("subscriptions")
         .select("*")
-        .eq("student_id", studentId)
+        .or(`student_id.eq.${studentId},user_id.eq.${studentId}`)
         .order("created_at", { ascending: false });
 
       if (!subError && subData) {
-        studentSubscriptions = subData;
+        studentSubscriptions = subData.filter(
+          (s: any) => s.student_id === studentId || s.user_id === studentId
+        );
       }
     } catch (subErr) {
       console.warn("[Student360] Subscriptions query warning:", subErr);
     }
 
-    // 4. Fetch related payment orders
-    const allOrders = await getPaymentOrders({ userId: studentId }, token);
+    // 4. Fetch related payment orders with strict defensive isolation
+    const rawOrders = await getPaymentOrders({ userId: studentId }, token);
+    const allOrders = rawOrders.filter((o) => !o.userId || o.userId === studentId);
 
     // 5. Fetch related audit logs
     const auditLogs = await getAuditLogs({ targetId: studentId, limit: 50 });

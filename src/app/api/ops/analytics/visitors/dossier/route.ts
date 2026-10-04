@@ -77,7 +77,7 @@ export async function GET(req: Request) {
       try {
         const { data: orders } = await client
           .from("payment_orders")
-          .select("id, status, plan, amount_dzd, payment_method, submitted_at, reviewed_at, created_at")
+          .select("id, status, plan, amount, payment_method, submitted_at, reviewed_at, created_at")
           .eq("user_id", effectiveUserId)
           .order("created_at", { ascending: false });
         if (Array.isArray(orders)) paymentOrders = orders;
