@@ -370,7 +370,7 @@ BEGIN
         AND (access_status IS NULL OR access_status != 'PAID');
     EXCEPTION WHEN OTHERS THEN
       NULL;
-    END IF;
+    END;
   END IF;
 
   -- Write to immutable operations audit log
