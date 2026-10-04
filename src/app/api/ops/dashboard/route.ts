@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { extractAndVerifyOperator, extractTokenFromCookies, OPS_OPERATOR_UUID } from "@/lib/operations/auth";
+import { extractAndVerifyOperator, extractTokenFromCookies } from "@/lib/operations/auth";
 import { getOperationsDashboardData } from "@/lib/operations/dashboard";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +20,7 @@ export async function GET(req: Request) {
   if (!operator) {
     return NextResponse.json(
       { success: false, error: "Unauthorized: Operator access required" },
-      { status: 403 }
+      { status: 401 }
     );
   }
 
@@ -32,7 +32,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const data = await getOperationsDashboardData(OPS_OPERATOR_UUID, token);
+    const data = await getOperationsDashboardData(operator.userId, token);
     return NextResponse.json({ success: true, data });
   } catch (err: any) {
     return NextResponse.json(

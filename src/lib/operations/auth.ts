@@ -18,13 +18,20 @@ import { recordAuditLog } from "./audit";
 
 
 
+/**
+ * @deprecated Legacy mock operator UUID. Never use for authorization or authentication.
+ */
 export const OPS_OPERATOR_UUID = "7f7f704e-d9f1-4edf-9952-591f41fc0c55";
 
-export function ensureValidOperatorUuid(_operatorId?: string | null): string {
-  // In Supabase PostgreSQL, migration 055 establishes OPS_OPERATOR_UUID as the
-  // authoritative master credential to bypass RLS and function security gates
-  // when public.user_roles is unseeded.
-  return OPS_OPERATOR_UUID;
+/**
+ * Validates and sanitizes an operator UUID if provided.
+ * Never supplies a hardcoded fallback or bypass credential.
+ */
+export function ensureValidOperatorUuid(operatorId?: string | null): string | undefined {
+  if (operatorId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(operatorId)) {
+    return operatorId;
+  }
+  return undefined;
 }
 
 /**
@@ -68,6 +75,7 @@ export async function getServerUserRole(userId: string, token?: string | null): 
 
   if (isSupabaseConfigured && client) {
     try {
+      // 1. Authoritative check in public.user_roles
       const { data, error } = await client
         .from("user_roles")
         .select("role")
@@ -77,24 +85,23 @@ export async function getServerUserRole(userId: string, token?: string | null): 
       if (!error && data?.role) {
         return normalizeUserRole(data.role);
       }
-      
-      // Resilient bootstrap: if user_roles table is empty, allow the operator as OWNER
-      const { count } = await client.from("user_roles").select("*", { count: "exact", head: true });
-      if (count === 0 || count === null) {
-        return "OWNER";
-      }
 
-      if (!error && !data) {
-        // Authoritative: user has no administrative role in public.user_roles
-        return null;
-      }
+      // 2. Authoritative check via RPC get_my_operator_role
+      try {
+        const { data: rpcRole, error: rpcErr } = await client.rpc("get_my_operator_role");
+        if (!rpcErr && rpcRole) {
+          return normalizeUserRole(rpcRole);
+        }
+      } catch {}
+
+      // Authoritative: user has no administrative role in public.user_roles
+      return null;
     } catch {
-      // Fall through to OWNER if table does not exist or has RLS issues
-      return "OWNER";
+      return null;
     }
   }
 
-  return "OWNER";
+  return null;
 }
 
 /**
@@ -262,6 +269,7 @@ export async function extractAuthenticatedCaller(req: Request): Promise<{
 
 /**
  * Extract authenticated user and verify operator privileges (OWNER or OPERATOR)
+ * Strict Fail-Closed: NEVER returns fallback credentials or unverified roles.
  */
 export async function extractAndVerifyOperator(req: Request): Promise<{
   userId: string;
@@ -270,40 +278,24 @@ export async function extractAndVerifyOperator(req: Request): Promise<{
   token: string | null;
 } | null> {
   const caller = await extractAuthenticatedCaller(req);
-  if (caller && caller.userId) {
-    const role = caller.role || "OWNER";
-    return {
-      userId: caller.userId,
-      role: role as UserRole,
-      isOwner: role === "OWNER",
-      token: caller.token,
-    };
+  if (caller && caller.userId && caller.role) {
+    if (caller.role === "OWNER" || caller.role === "OPERATOR") {
+      return {
+        userId: caller.userId,
+        role: caller.role,
+        isOwner: caller.role === "OWNER",
+        token: caller.token,
+      };
+    }
   }
 
-  // Check cookie directly
-  const cookieHeader = req.headers.get("cookie") || req.headers.get("Cookie");
-  const token = extractTokenFromCookies(cookieHeader);
-  if (token) {
-    return {
-      userId: OPS_OPERATOR_UUID,
-      role: "OWNER",
-      isOwner: true,
-      token,
-    };
-  }
-
-  // Graceful fallback for single-tenant management
-  return {
-    userId: OPS_OPERATOR_UUID,
-    role: "OWNER",
-    isOwner: true,
-    token: null,
-  };
+  return null;
 }
 
 /**
  * Extract and verify caller has Finance privileges (OWNER or OPERATOR)
  * Strictly rejects CONTENT_REVIEWER and normal students.
+ * Strict Fail-Closed: Zero fallback without verified operator credentials.
  */
 export async function extractAndVerifyFinanceOperator(req: Request): Promise<{
   authorized: boolean;
@@ -315,35 +307,37 @@ export async function extractAndVerifyFinanceOperator(req: Request): Promise<{
   error?: string;
 }> {
   const caller = await extractAuthenticatedCaller(req);
-  if (caller) {
-    if (caller.role === "CONTENT_REVIEWER") {
-      return {
-        authorized: false,
-        status: 403,
-        error: "Forbidden: Content Reviewers are denied finance and payment management access.",
-      };
-    }
-    const role = caller.role || "OWNER";
+  if (!caller || !caller.userId) {
+    return {
+      authorized: false,
+      status: 401,
+      error: "Authentication required: No valid session token provided.",
+    };
+  }
+
+  if (caller.role === "CONTENT_REVIEWER") {
+    return {
+      authorized: false,
+      status: 403,
+      error: "Forbidden: Content Reviewers are denied finance and payment management access.",
+    };
+  }
+
+  if (caller.role === "OWNER" || caller.role === "OPERATOR") {
     return {
       authorized: true,
       userId: caller.userId,
-      role: role as UserRole,
-      isOwner: role === "OWNER",
+      role: caller.role,
+      isOwner: caller.role === "OWNER",
       token: caller.token,
       status: 200,
     };
   }
 
-  // Cookie fallback
-  const cookieHeader = req.headers.get("cookie") || req.headers.get("Cookie");
-  const token = extractTokenFromCookies(cookieHeader);
   return {
-    authorized: true,
-    userId: OPS_OPERATOR_UUID,
-    role: "OWNER",
-    isOwner: true,
-    token,
-    status: 200,
+    authorized: false,
+    status: 403,
+    error: "Forbidden: Operator or Owner privileges required for finance operations.",
   };
 }
 
