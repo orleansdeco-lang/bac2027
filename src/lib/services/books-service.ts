@@ -50,7 +50,16 @@ export const BooksService = {
 
         const { data, error } = await query;
         if (!error && data && data.length > 0) {
-          books = data as Book[];
+          books = (data as Book[]).map((b) => {
+            const seedMatch = INITIAL_BOOKS_SEED.find((s) => s.id === b.id);
+            if (seedMatch && seedMatch.file_url.startsWith("/documents/books/")) {
+              return { ...b, file_url: seedMatch.file_url };
+            }
+            if (b.file_url && (b.file_url.includes("dzexams.com") || b.file_url.includes("eddirasa.com"))) {
+              return { ...b, file_url: `/documents/books/${b.id}.pdf` };
+            }
+            return b;
+          });
         }
       } catch (err) {
         console.warn("Could not query books from Supabase, falling back to seed items:", err);

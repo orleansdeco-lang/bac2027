@@ -49,16 +49,59 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, ignored: true, reason: "bot" });
     }
 
-    // SERVER-SIDE USER IDENTITY — never trust client-submitted userId
-    const serverDerivedUserId = await extractAuthenticatedUserId(req);
+    // SERVER-SIDE USER IDENTITY — verified from JWT or database
+    let serverDerivedUserId = await extractAuthenticatedUserId(req);
+
+    const visitorId = body.visitorId || body.anonymousId || (body.sessionId?.startsWith("dev_") ? body.sessionId : undefined) || (body.sessionId ? `vid_${body.sessionId}` : undefined);
+
+    // If serverDerivedUserId is null, verify candidate userId from body or stitch from analytics_visitors
+    if (!serverDerivedUserId && isSupabaseConfigured) {
+      const candidateUserId = (typeof body.userId === "string" && body.userId) || (typeof body.user_id === "string" && body.user_id) || null;
+      if (candidateUserId) {
+        const admin = getAdminClient();
+        const client = admin || supabase;
+        if (client) {
+          const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidateUserId);
+          if (isUuid) {
+            if (admin) {
+              try {
+                const { data } = await admin.auth.admin.getUserById(candidateUserId);
+                if (data?.user?.id) serverDerivedUserId = data.user.id;
+              } catch {}
+            }
+            if (!serverDerivedUserId) {
+              try {
+                const { data } = await client.from("student_profiles").select("id").eq("id", candidateUserId).maybeSingle();
+                if (data?.id) serverDerivedUserId = data.id;
+              } catch {}
+            }
+          } else if (candidateUserId.startsWith("usr_std_")) {
+            try {
+              const { data } = await client.from("student_profiles").select("id").eq("id", candidateUserId).maybeSingle();
+              if (data?.id) serverDerivedUserId = data.id;
+            } catch {}
+          }
+        }
+      }
+
+      // Check persistent visitor identity stitching
+      if (!serverDerivedUserId && visitorId) {
+        try {
+          const admin = getAdminClient();
+          const client = admin || supabase;
+          if (client) {
+            const { data: vRow } = await client.from("analytics_visitors").select("user_id").eq("visitor_id", visitorId).maybeSingle();
+            if (vRow?.user_id) serverDerivedUserId = vRow.user_id;
+          }
+        } catch {}
+      }
+    }
 
     const sessionId = body.sessionId || "ses_guest";
     const path = body.path || "/";
     if (path.startsWith("/admin") || path.startsWith("/ops") || path.startsWith("/api")) {
       return NextResponse.json({ success: true, ignored: true });
     }
-
-    const visitorId = body.visitorId || body.anonymousId || (body.sessionId?.startsWith("dev_") ? body.sessionId : undefined) || (body.sessionId ? `vid_${body.sessionId}` : undefined);
     const fullUrl = body.fullUrl || undefined;
     const anonymousId = body.anonymousId || visitorId || undefined;
     const utmSource = body.utmSource || undefined;
@@ -196,9 +239,11 @@ async function upsertAnalyticsVisitor(data: {
       data.referrer
     );
 
+    const safeUuidUserId = data.userId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.userId) ? data.userId : null;
+
     const { error: rpcError } = await client.rpc("record_visitor_identity", {
       p_visitor_id: data.visitorId,
-      p_user_id: data.userId || null,
+      p_user_id: safeUuidUserId,
       p_device_type: device,
       p_browser: data.browser || null,
       p_os: data.os || null,

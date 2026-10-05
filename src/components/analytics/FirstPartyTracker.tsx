@@ -55,10 +55,12 @@ function FirstPartyTrackerInner() {
       exited_at: exitedAtIso,
       duration_seconds: durationSeconds,
       formatted_duration: formatDwellDuration(durationSeconds),
+      userId: user?.id || null,
+      user_id: user?.id || null,
     });
 
     lastLeaveSentTimeRef.current = now;
-  }, []);
+  }, [user?.id]);
 
   // Track page navigation & SPA route transitions
   useEffect(() => {
@@ -69,17 +71,28 @@ function FirstPartyTrackerInner() {
       return;
     }
 
-    const currentKey = `${pathname}?${searchParams?.toString() || ""}`;
-    if (lastTrackedRef.current === currentKey) return;
+    const isSamePath = currentPathRef.current === pathname;
+
+    // If staying on the same path (e.g. typing or selecting book filters on /library),
+    // update visitor touchpoint without creating duplicate page_view entries or resetting dwell time
+    if (isSamePath) {
+      sendVisitorHit({
+        path: pathname,
+        search: searchParams?.toString() || "",
+        userId: user?.id || null,
+        isHeartbeat: false,
+      });
+      return;
+    }
 
     const now = Date.now();
 
-    // If transitioning from a previous page, record page_leave for it
+    // If transitioning from a previous page, record page_leave for it with full dwell duration
     if (currentPathRef.current && currentPathRef.current !== pathname) {
       emitPageLeave(now);
     }
 
-    lastTrackedRef.current = currentKey;
+    lastTrackedRef.current = pathname;
     currentPathRef.current = pathname;
     enteredAtTimeRef.current = now;
     enteredAtIsoRef.current = new Date(now).toISOString();
@@ -97,6 +110,8 @@ function FirstPartyTrackerInner() {
       path: pathname,
       title: typeof document !== "undefined" ? document.title : "",
       entered_at: enteredAtIsoRef.current,
+      userId: user?.id || null,
+      user_id: user?.id || null,
     });
   }, [pathname, searchParams, user?.id, emitPageLeave]);
 

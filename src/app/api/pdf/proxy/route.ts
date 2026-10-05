@@ -140,6 +140,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing url parameter" }, { status: 400 });
   }
 
+  // Handle local / relative document paths immediately
+  if (rawUrl.startsWith("/")) {
+    const fullUrl = new URL(rawUrl, request.url);
+    return NextResponse.redirect(fullUrl, 302);
+  }
 
   let parsedUrl: URL;
   try {

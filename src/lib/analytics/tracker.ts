@@ -282,11 +282,23 @@ export function sendVisitorHit(params: {
     });
   }
 
+  // Resolve authentic user ID
+  let resolvedUserId = userId;
+  if (!resolvedUserId && typeof window !== "undefined") {
+    try {
+      const localAuth = localStorage.getItem("bac_auth_user");
+      if (localAuth) {
+        const u = JSON.parse(localAuth);
+        if (u?.id) resolvedUserId = String(u.id);
+      }
+    } catch {}
+  }
+
   const payload = {
     visitorId: anonymousId, // Canonical visitor identity
     sessionId,
     anonymousId,
-    userId,
+    userId: resolvedUserId,
     path,
     fullUrl: window.location.href,
     referrer: document.referrer || undefined,
@@ -366,18 +378,39 @@ export function sendAnalyticsEvent(
 
   const cleanMetadata = sanitizeEventMetadata(properties);
 
+  // Derive user ID from properties or client localStorage
+  let resolvedUserId: string | null = null;
+  if (properties?.userId || properties?.user_id) {
+    resolvedUserId = String(properties.userId || properties.user_id);
+  } else {
+    try {
+      const localAuth = localStorage.getItem("bac_auth_user");
+      if (localAuth) {
+        const u = JSON.parse(localAuth);
+        if (u?.id) resolvedUserId = String(u.id);
+      }
+    } catch {}
+  }
+
   const payload = {
     eventId,
     eventName,
     visitorId,
     sessionId,
     anonymousId: visitorId,
+    userId: resolvedUserId,
     pagePath,
     route: pagePath,
     timestamp: now,
     occurredAt: now,
-    metadata: cleanMetadata,
-    properties: cleanMetadata,
+    metadata: {
+      ...cleanMetadata,
+      userId: resolvedUserId,
+    },
+    properties: {
+      ...cleanMetadata,
+      userId: resolvedUserId,
+    },
   };
 
   const jsonStr = JSON.stringify(payload);

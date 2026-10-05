@@ -43,17 +43,24 @@ export function BookPreviewModal({
   };
 
   const rawPdfUrl = book.file_url;
+  const isLocalDoc = Boolean(rawPdfUrl && rawPdfUrl.startsWith("/"));
 
-  // Continuous scrolling in-app PDF stream via proxy
-  const proxyEmbedUrl = rawPdfUrl
-    ? `/api/pdf/proxy?url=${encodeURIComponent(rawPdfUrl)}#view=FitH&pagemode=none`
-    : "";
+  // Continuous scrolling in-app PDF stream:
+  // - Local /documents/... assets load directly with #view=FitH (instant 0ms)
+  // - Remote URLs route through /api/pdf/proxy
+  const proxyEmbedUrl = !rawPdfUrl
+    ? ""
+    : isLocalDoc
+    ? `${rawPdfUrl}#view=FitH&pagemode=none`
+    : `/api/pdf/proxy?url=${encodeURIComponent(rawPdfUrl)}#view=FitH&pagemode=none`;
 
-  const directDownloadUrl = rawPdfUrl
-    ? `/api/pdf/proxy?url=${encodeURIComponent(rawPdfUrl)}&download=1&filename=${encodeURIComponent(
+  const directDownloadUrl = !rawPdfUrl
+    ? ""
+    : isLocalDoc
+    ? rawPdfUrl
+    : `/api/pdf/proxy?url=${encodeURIComponent(rawPdfUrl)}&download=1&filename=${encodeURIComponent(
         `${book.title}.pdf`
-      )}`
-    : "";
+      )}`;
 
   // Close on Escape key
   useEffect(() => {
