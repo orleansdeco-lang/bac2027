@@ -263,6 +263,12 @@ export async function processTelemetryBatch(
       ? item.pagePath 
       : (typeof item.page_path === "string" ? item.page_path : (typeof item.route === "string" ? item.route : "/"));
 
+    // Exclude internal operational and admin routes from public visitor telemetry
+    if (pagePath.startsWith("/ops") || pagePath.startsWith("/admin") || pagePath.startsWith("/api")) {
+      result.rejectedCount++;
+      continue;
+    }
+
     // Critical conversion deduplication (sliding 5-minute window)
     if (CRITICAL_CONVERSION_EVENTS.has(eventName)) {
       const actorKey = serverDerivedUserId || visitorId;

@@ -638,80 +638,97 @@ export async function getVisitorsAnalytics(
           .from("analytics_events")
           .select("event_id, session_id, anonymous_id, user_id, event_name, route, properties, occurred_at")
           .in("event_name", ["page_leave", "page_view"])
+          .not("route", "like", "/ops%")
+          .not("route", "like", "/admin%")
+          .not("route", "like", "/api%")
           .order("occurred_at", { ascending: false })
-          .limit(40);
+          .limit(60);
 
         if (Array.isArray(recentEvents) && recentEvents.length > 0) {
-          eventActivities = recentEvents.map((ev) => {
-            const isLeave = ev.event_name === "page_leave";
-            const props = ev.properties || {};
-            const enteredAt = props.entered_at || (isLeave ? undefined : ev.occurred_at);
-            const exitedAt = props.exited_at || (isLeave ? ev.occurred_at : undefined);
-            const durSec = typeof props.duration_seconds === "number" ? props.duration_seconds : undefined;
-            const formattedDur = props.formatted_duration || (durSec ? formatDwellDuration(durSec) : undefined);
-            const page = props.path || ev.route || "/";
-            const session = sessions.find((s) => s.session_id === ev.session_id);
-            const effectiveUserId = ev.user_id || session?.user_id || null;
-            const vid = session?.visitor_id || ev.anonymous_id || session?.anonymous_id || ev.session_id;
+          eventActivities = recentEvents
+            .filter((ev) => {
+              const r = ev.route || ev.properties?.path || "";
+              return !r.startsWith("/ops") && !r.startsWith("/admin") && !r.startsWith("/api");
+            })
+            .map((ev) => {
+              const isLeave = ev.event_name === "page_leave";
+              const props = ev.properties || {};
+              const enteredAt = props.entered_at || (isLeave ? undefined : ev.occurred_at);
+              const exitedAt = props.exited_at || (isLeave ? ev.occurred_at : undefined);
+              const durSec = typeof props.duration_seconds === "number" ? props.duration_seconds : undefined;
+              const formattedDur = props.formatted_duration || (durSec ? formatDwellDuration(durSec) : undefined);
+              const page = props.path || ev.route || "/";
+              const session = sessions.find((s) => s.session_id === ev.session_id);
+              const effectiveUserId = ev.user_id || session?.user_id || null;
+              const vid = session?.visitor_id || ev.anonymous_id || session?.anonymous_id || ev.session_id;
 
-            return {
-              id: ev.event_id || String((ev as any).id || Math.random().toString(36).slice(2)),
-              time: ev.occurred_at,
-              page,
-              device: session?.device_type || "desktop",
-              source: session?.first_channel || session?.first_utm_source || "direct",
-              visitorType: "NEW",
-              enteredAt,
-              exitedAt,
-              durationSeconds: durSec,
-              formattedDuration: formattedDur,
-              eventName: ev.event_name,
-              visitorId: vid,
-              sessionId: ev.session_id,
-              userId: effectiveUserId,
-              displayName: generateGuestStudentNumber(vid),
-              isRegistered: false,
-              studentProfile: null,
-            };
-          });
+              return {
+                id: ev.event_id || String((ev as any).id || Math.random().toString(36).slice(2)),
+                time: ev.occurred_at,
+                page,
+                device: session?.device_type || "desktop",
+                source: session?.first_channel || session?.first_utm_source || "direct",
+                visitorType: "NEW",
+                enteredAt,
+                exitedAt,
+                durationSeconds: durSec,
+                formattedDuration: formattedDur,
+                eventName: ev.event_name,
+                visitorId: vid,
+                sessionId: ev.session_id,
+                userId: effectiveUserId,
+                displayName: generateGuestStudentNumber(vid),
+                isRegistered: false,
+                studentProfile: null,
+              };
+            });
         }
       } catch {
         eventActivities = [];
       }
 
       // Session activities as resilient baseline
-      const sessionActivities: RecentVisitorActivityItem[] = sessions.slice(0, 40).map((s) => {
-        const firstSeen = s.visitor_id ? visitorFirstSeenMap.get(s.visitor_id) : null;
-        const isNew = Boolean(
-          firstSeen &&
-          Math.abs(new Date(firstSeen).getTime() - new Date(s.started_at).getTime()) < 2 * 60 * 1000
-        );
-        const durSec = s.last_activity_at && s.started_at
-          ? Math.max(0, Math.round((new Date(s.last_activity_at).getTime() - new Date(s.started_at).getTime()) / 1000))
-          : undefined;
-        const vid = s.visitor_id || s.anonymous_id || s.session_id;
+      const sessionActivities: RecentVisitorActivityItem[] = sessions
+        .filter((s) => {
+          const lp = s.landing_page || "";
+          return !lp.startsWith("/ops") && !lp.startsWith("/admin") && !lp.startsWith("/api");
+        })
+        .slice(0, 40)
+        .map((s) => {
+          const firstSeen = s.visitor_id ? visitorFirstSeenMap.get(s.visitor_id) : null;
+          const isNew = Boolean(
+            firstSeen &&
+            Math.abs(new Date(firstSeen).getTime() - new Date(s.started_at).getTime()) < 2 * 60 * 1000
+          );
+          const durSec = s.last_activity_at && s.started_at
+            ? Math.max(0, Math.round((new Date(s.last_activity_at).getTime() - new Date(s.started_at).getTime()) / 1000))
+            : undefined;
+          const vid = s.visitor_id || s.anonymous_id || s.session_id;
 
-        return {
-          id: s.session_id,
-          time: s.last_activity_at || s.started_at,
-          page: s.landing_page || "/",
-          device: s.device_type || "desktop",
-          source: s.first_channel || s.first_utm_source || "direct",
-          visitorType: isNew ? "NEW" : "RETURNING",
-          enteredAt: s.started_at,
-          exitedAt: s.last_activity_at,
-          durationSeconds: durSec,
-          formattedDuration: durSec ? formatDwellDuration(durSec) : undefined,
-          visitorId: vid,
-          sessionId: s.session_id,
-          userId: s.user_id || null,
-          displayName: generateGuestStudentNumber(vid),
-          isRegistered: false,
-          studentProfile: null,
-        };
+          return {
+            id: s.session_id,
+            time: s.last_activity_at || s.started_at,
+            page: s.landing_page || "/",
+            device: s.device_type || "desktop",
+            source: s.first_channel || s.first_utm_source || "direct",
+            visitorType: isNew ? "NEW" : "RETURNING",
+            enteredAt: s.started_at,
+            exitedAt: s.last_activity_at,
+            durationSeconds: durSec,
+            formattedDuration: durSec ? formatDwellDuration(durSec) : undefined,
+            visitorId: vid,
+            sessionId: s.session_id,
+            userId: s.user_id || null,
+            displayName: generateGuestStudentNumber(vid),
+            isRegistered: false,
+            studentProfile: null,
+          };
+        });
+
+      const rawActivities = (eventActivities.length > 0 ? eventActivities : sessionActivities).filter((a) => {
+        const p = a.page || "";
+        return !p.startsWith("/ops") && !p.startsWith("/admin") && !p.startsWith("/api");
       });
-
-      const rawActivities = eventActivities.length > 0 ? eventActivities : sessionActivities;
 
       // Collect user IDs to resolve registered student names & wilayas
       const userIdsToResolve = Array.from(new Set(rawActivities.map((a) => a.userId).filter(Boolean))) as string[];
@@ -721,13 +738,13 @@ export async function getVisitorsAnalytics(
         try {
           const { data: profs } = await client
             .from("student_profiles")
-            .select("user_id, first_name, last_name, email, student_phone, parent_phone, wilaya_code, wilaya_name, commune_name, school_name, stream_id, plan, access_status, created_at, target_score")
-            .in("user_id", userIdsToResolve);
+            .select("id, user_id, first_name, last_name, email, student_phone, parent_phone, wilaya_code, wilaya_name, commune_name, school_name, stream_id, plan, access_status, created_at, target_score")
+            .in("id", userIdsToResolve);
 
           if (Array.isArray(profs)) {
             for (const p of profs) {
               const fullName = [p.first_name, p.last_name].filter(Boolean).join(" ").trim() || (p.email ? p.email.split("@")[0] : "") || "طالب مسجل";
-              studentProfilesMap.set(p.user_id, {
+              const summary: StudentProfileSummary = {
                 fullName,
                 firstName: p.first_name,
                 lastName: p.last_name,
@@ -744,7 +761,9 @@ export async function getVisitorsAnalytics(
                 accessStatus: p.access_status,
                 createdAt: p.created_at,
                 targetScore: p.target_score,
-              });
+              };
+              if (p.id) studentProfilesMap.set(p.id, summary);
+              if (p.user_id) studentProfilesMap.set(p.user_id, summary);
             }
           }
         } catch (err: any) {

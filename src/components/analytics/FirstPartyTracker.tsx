@@ -36,6 +36,11 @@ function FirstPartyTrackerInner() {
     const enteredAtMs = enteredAtTimeRef.current;
     if (!path || !enteredAtMs) return;
 
+    // Strictly exclude internal operations, admin, and API routes
+    if (path.startsWith("/ops") || path.startsWith("/admin") || path.startsWith("/api")) {
+      return;
+    }
+
     // Avoid duplicate emit if already sent within 1000ms for this page
     if (now - lastLeaveSentTimeRef.current < 1000) return;
 
@@ -58,6 +63,12 @@ function FirstPartyTrackerInner() {
   // Track page navigation & SPA route transitions
   useEffect(() => {
     if (!pathname) return;
+
+    // Strictly exclude internal operations, admin, and API routes from visitor analytics
+    if (pathname.startsWith("/ops") || pathname.startsWith("/admin") || pathname.startsWith("/api")) {
+      return;
+    }
+
     const currentKey = `${pathname}?${searchParams?.toString() || ""}`;
     if (lastTrackedRef.current === currentKey) return;
 

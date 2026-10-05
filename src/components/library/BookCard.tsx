@@ -65,7 +65,8 @@ export function BookCard({ book, onPreview, onDownloadTrack }: BookCardProps) {
 
   return (
     <div
-      className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-theme bg-card hover:border-[var(--color-primary)]/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[var(--color-primary)]/5"
+      onClick={() => onPreview(book)}
+      className="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-theme bg-card hover:border-[var(--color-primary)]/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-[var(--color-primary)]/5 cursor-pointer"
       dir="rtl"
     >
       <div>
@@ -204,11 +205,14 @@ export function BookCard({ book, onPreview, onDownloadTrack }: BookCardProps) {
           {/* Preview Button */}
           <button
             type="button"
-            onClick={() => onPreview(book)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPreview(book);
+            }}
             className="flex items-center justify-center gap-1.5 rounded-xl border border-theme bg-surface hover:bg-card-hover py-2.5 text-xs font-bold text-theme-text transition-all active:scale-[0.98] cursor-pointer"
           >
-            <Eye className="w-3.5 h-3.5 text-[var(--color-primary)]" />
-            <span>معاينة</span>
+            <BookOpen className="w-3.5 h-3.5 text-[var(--color-primary)]" />
+            <span>قراءة الكتاب</span>
           </button>
 
           {/* Download Button */}
@@ -217,7 +221,10 @@ export function BookCard({ book, onPreview, onDownloadTrack }: BookCardProps) {
             download
             target="_blank"
             rel="noopener noreferrer"
-            onClick={handleDownload}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDownload(e);
+            }}
             className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-bold text-white shadow-md transition-all active:scale-[0.98] cursor-pointer ${
               isDownloading
                 ? "bg-emerald-600 shadow-emerald-600/20"

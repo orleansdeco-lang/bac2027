@@ -57,7 +57,15 @@ export const StudentRepository = {
       if (local) return local;
     }
 
-    let dbClient: any = token ? createAuthenticatedSupabaseClient(token) : null;
+    let effectiveToken = token;
+    if (!effectiveToken && typeof window !== "undefined") {
+      try {
+        const match = document.cookie.match(/(?:sb-access-token|bac_auth_token)=([^;]+)/);
+        if (match) effectiveToken = decodeURIComponent(match[1]);
+      } catch {}
+    }
+
+    let dbClient: any = effectiveToken ? createAuthenticatedSupabaseClient(effectiveToken) : null;
     if (!dbClient && typeof window === "undefined") {
       try {
         const adminMod = eval("require")("@/lib/supabase/admin");

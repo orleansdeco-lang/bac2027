@@ -166,6 +166,8 @@ export async function fetchAuthoritativeStudentProfile(
       referral_code: profile.referral_code,
       referred_by_code: profile.referred_by_code,
       credit_balance_dzd: profile.credit_balance_dzd || 0,
+      phoneVerified: Boolean(profile.phone_verified),
+      phoneVerifiedAt: profile.phone_verified_at || null,
     };
 
     memoryServerStudents.set(studentId, summary);

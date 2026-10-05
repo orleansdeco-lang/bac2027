@@ -33,6 +33,10 @@ export interface StudentRegistrationData {
   schoolCustomPending?: boolean;
   characterId?: "boy" | "girl" | "scholar";
   registrationCompletedAt?: string;
+  phone_verified?: boolean;
+  phone_verified_at?: string | null;
+  phoneVerified?: boolean;
+  phoneVerifiedAt?: string | null;
 }
 
 export interface AcademicProfileData {

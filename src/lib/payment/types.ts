@@ -78,5 +78,7 @@ export interface PilotPaymentRecord {
   confirmedAt?: string;
   verificationActor?: string;
   studentEmail?: string;
+  rejectionReason?: string;
+  submittedAt?: string;
 }
 

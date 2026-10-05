@@ -38,6 +38,10 @@ export interface StudentProfile {
   canUseProduct?: boolean;
   registrationCompletedAt?: string | null;
   academicProfileCompletedAt?: string | null;
+  phone_verified?: boolean;
+  phone_verified_at?: string | null;
+  phoneVerified?: boolean;
+  phoneVerifiedAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }

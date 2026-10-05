@@ -1,14 +1,6 @@
 -- ==========================================================================================
 -- SHATER Platform - Full Comprehensive Algerian BAC Digital Library Seed (All 6 Streams & 19 Subjects)
 -- File: supabase/populate_all_bac_books.sql
--- Covers:
--- 1. All 6 Official Streams: scientific, math_tech, math, management, literature, languages
--- 2. All 19 Algerian BAC Subjects:
---    - Exact: math, physics, science
---    - Tech: civil_engineering, mechanical_engineering, electrical_engineering, process_engineering
---    - Management: accounting, economics, law
---    - Humanities: arabic, philosophy, islamic, history_geo
---    - Languages: french, english, spanish, german, italian
 -- ==========================================================================================
 
 -- 1. Ensure table exists
@@ -43,7 +35,7 @@ ALTER TABLE public.books ADD CONSTRAINT books_subject_check CHECK (subject IN (
 -- 3. Clear previous seed items to maintain clean unique references
 TRUNCATE TABLE public.books;
 
--- 4. Insert Comprehensive 60+ Authentic Reference Books
+-- 4. Insert Comprehensive 57+ Authentic Reference Books
 INSERT INTO public.books (
     title,
     author,
@@ -58,12 +50,6 @@ INSERT INTO public.books (
     downloads_count,
     is_featured
 ) VALUES
-
--- ==========================================================================================
--- I. هندسات التقني رياضي (CIVIL, MECHANICAL, ELECTRICAL, PROCESS)
--- ==========================================================================================
-
--- 1. هندسة كهربائية - كتاب مدرسي
 (
     'الكتاب المدرسي الرسمي: التكنولوجيا - هندسة كهربائية (السنة الثالثة ثانوي تقني رياضي)',
     'وزارة التربية الوطنية (الديوان الوطني للمطبوعات المدرسية ONPS)',
@@ -71,7 +57,7 @@ INSERT INTO public.books (
     'electrical_engineering',
     ARRAY['math_tech'],
     'https://images.unsplash.com/photo-1517420704952-d9f39e95b43e?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/technique_math/electrical_eng/bac-2024-electrical_eng.pdf',
+    'https://www.dzexams.com/viewer/sujet/UTFTaWdGNDFTQU9qYnhzT3RzcGhmQT09',
     '52 MB',
     280,
     '2024',
@@ -79,7 +65,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 2. هندسة كهربائية - أ. خالد بن مبارك
 (
     'سلسلة الأستاذ خالد بن مبارك في الهندسة الكهربائية: المنطق التعاقبي والدارات المتكاملة والمحركات',
     'الأستاذ خالد بن مبارك',
@@ -87,7 +72,7 @@ INSERT INTO public.books (
     'electrical_engineering',
     ARRAY['math_tech'],
     'https://images.unsplash.com/photo-1517420704952-d9f39e95b43e?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/technique_math/electrical_eng/bac-2023-electrical_eng.pdf',
+    'https://www.dzexams.com/viewer/sujet/YUx5aWFJVUUxL2JCNk1LbUc5eFB2Zz09',
     '44 MB',
     215,
     '2025',
@@ -95,7 +80,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 3. هندسة كهربائية - حوليات ONEC
 (
     'حوليات البكالوريا الرسمية في الهندسة الكهربائية (2018-2024) مع التصحيح وسلم التنقيط',
     'الديوان الوطني للامتحانات والمسابقات (ONEC)',
@@ -103,7 +87,7 @@ INSERT INTO public.books (
     'electrical_engineering',
     ARRAY['math_tech'],
     'https://images.unsplash.com/photo-1517420704952-d9f39e95b43e?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/technique_math/electrical_eng/bac-2024-electrical_eng.pdf',
+    'https://www.dzexams.com/viewer/sujet/QlZhQTNsbDJxNnIvU29xS1c0dWs0Zz09',
     '64 MB',
     330,
     '2025',
@@ -111,7 +95,6 @@ INSERT INTO public.books (
     false
 ),
 
--- 4. هندسة ميكانيكية - كتاب مدرسي
 (
     'الكتاب المدرسي الرسمي: التكنولوجيا - هندسة ميكانيكية (دراسة الآليات والإنشاء الميكانيكي)',
     'وزارة التربية الوطنية (ONPS)',
@@ -119,7 +102,7 @@ INSERT INTO public.books (
     'mechanical_engineering',
     ARRAY['math_tech'],
     'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/technique_math/mechanical_eng/bac-2024-mechanical_eng.pdf',
+    'https://www.dzexams.com/viewer/sujet/MDdDQUR1dnlIL1prU2NhczJQVFBzQT09',
     '58 MB',
     310,
     '2024',
@@ -127,7 +110,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 5. هندسة ميكانيكية - أ. بركاني
 (
     'سلسلة الأستاذ بركاني في الهندسة الميكانيكية: دراسة التصاميم، الميكانيزمات وعقود المرحلة',
     'الأستاذ بركاني لخضر',
@@ -135,7 +117,7 @@ INSERT INTO public.books (
     'mechanical_engineering',
     ARRAY['math_tech'],
     'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/technique_math/mechanical_eng/bac-2023-mechanical_eng.pdf',
+    'https://www.dzexams.com/viewer/sujet/UGZZTVdjRkNKNFVIWldYbDhpYkZZZz09',
     '46 MB',
     230,
     '2025',
@@ -143,7 +125,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 6. هندسة ميكانيكية - حوليات ONEC
 (
     'حوليات البكالوريا الرسمية في الهندسة الميكانيكية (2018-2024) مع الرسوم التخطيطية والحلول',
     'الديوان الوطني للامتحانات والمسابقات (ONEC)',
@@ -151,7 +132,7 @@ INSERT INTO public.books (
     'mechanical_engineering',
     ARRAY['math_tech'],
     'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/technique_math/mechanical_eng/bac-2024-mechanical_eng.pdf',
+    'https://www.dzexams.com/viewer/sujet/ZzhoVFlFR05qaUxibE9weXN6MlRGUT09',
     '68 MB',
     345,
     '2025',
@@ -159,7 +140,6 @@ INSERT INTO public.books (
     false
 ),
 
--- 7. هندسة مدنية - كتاب مدرسي
 (
     'الكتاب المدرسي الرسمي: التكنولوجيا - هندسة مدنية للسنة الثالثة ثانوي تقني رياضي',
     'وزارة التربية الوطنية (ONPS)',
@@ -167,7 +147,7 @@ INSERT INTO public.books (
     'civil_engineering',
     ARRAY['math_tech'],
     'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/technique_math/civil_eng/bac-2024-civil_eng.pdf',
+    'https://www.dzexams.com/viewer/sujet/TE1naC9VRldHbVVKM2xQOTRSb3FTZz09',
     '60 MB',
     320,
     '2024',
@@ -175,7 +155,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 8. هندسة مدنية - أ. لعماري
 (
     'ملخص كودات البناء وحساب المنشآت والأنظمة المثلثية والخرسانة المسلحة (أ. لعماري)',
     'الأستاذ لعماري محمد',
@@ -183,7 +162,7 @@ INSERT INTO public.books (
     'civil_engineering',
     ARRAY['math_tech'],
     'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/technique_math/civil_eng/bac-2023-civil_eng.pdf',
+    'https://www.dzexams.com/viewer/sujet/cFNyalE3UHMxbEwzYzg1QjJIME84QT09',
     '34 MB',
     165,
     '2025',
@@ -191,7 +170,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 9. هندسة مدنية - حوليات ONEC
 (
     'حوليات البكالوريا الرسمية في الهندسة المدنية (2018-2024) بالتصحيح المنهجي وسلم التنقيط',
     'الديوان الوطني للامتحانات والمسابقات (ONEC)',
@@ -199,7 +177,7 @@ INSERT INTO public.books (
     'civil_engineering',
     ARRAY['math_tech'],
     'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/technique_math/civil_eng/bac-2024-civil_eng.pdf',
+    'https://www.dzexams.com/viewer/sujet/Ymk3TmZrSWkzZytDRDduQjJvVWx4QT09',
     '62 MB',
     315,
     '2025',
@@ -207,7 +185,6 @@ INSERT INTO public.books (
     false
 ),
 
--- 10. هندسة الطرائق - كتاب مدرسي
 (
     'الكتاب المدرسي الرسمي: التكنولوجيا - هندسة الطرائق للسنة الثالثة ثانوي',
     'وزارة التربية الوطنية (ONPS)',
@@ -215,7 +192,7 @@ INSERT INTO public.books (
     'process_engineering',
     ARRAY['math_tech'],
     'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/technique_math/process_eng/bac-2024-process_eng.pdf',
+    'https://www.dzexams.com/viewer/sujet/OWtiOVJ1bEtDOWV6dzhRS3NQTUxKQT09',
     '48 MB',
     260,
     '2024',
@@ -223,7 +200,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 11. هندسة الطرائق - سلسلة الكيمياء العضوية
 (
     'سلسلة التفوق في هندسة الطرائق: الكيمياء العضوية، الحركية الكيميائية، والديناميكا الحرارية',
     'لجنة أساتذة هندسة الطرائق',
@@ -231,7 +207,7 @@ INSERT INTO public.books (
     'process_engineering',
     ARRAY['math_tech'],
     'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/technique_math/process_eng/bac-2023-process_eng.pdf',
+    'https://www.dzexams.com/viewer/sujet/YzVYa3h4T1MrcWVydE9SeUZZQmJnQT09',
     '38 MB',
     195,
     '2025',
@@ -239,7 +215,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 12. هندسة الطرائق - حوليات ONEC
 (
     'حوليات البكالوريا الرسمية في هندسة الطرائق (2018-2024) مع التصحيح الوزاري المعتمد',
     'الديوان الوطني للامتحانات والمسابقات (ONEC)',
@@ -247,7 +222,7 @@ INSERT INTO public.books (
     'process_engineering',
     ARRAY['math_tech'],
     'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/technique_math/process_eng/bac-2024-process_eng.pdf',
+    'https://www.dzexams.com/viewer/sujet/Q3p0SWFSTkk1eU1sV2Fkd1grdnBBZz09',
     '56 MB',
     290,
     '2025',
@@ -255,11 +230,6 @@ INSERT INTO public.books (
     false
 ),
 
--- ==========================================================================================
--- II. شعبة تسيير واقتصاد (ACCOUNTING, ECONOMICS, LAW)
--- ==========================================================================================
-
--- 13. محاسبة - كتاب مدرسي
 (
     'الكتاب المدرسي الرسمي: التسيير المحاسبي والمالي للسنة الثالثة ثانوي تسيير واقتصاد',
     'وزارة التربية الوطنية (ONPS)',
@@ -267,7 +237,7 @@ INSERT INTO public.books (
     'accounting',
     ARRAY['management'],
     'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/gestion_eco/accounting/bac-2024-accounting.pdf',
+    'https://www.dzexams.com/viewer/sujet/KzNmdzlsTUNheDlianFUdXpLRGx2dz09',
     '64 MB',
     350,
     '2024',
@@ -275,7 +245,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 14. محاسبة - أ. سعيد كمال (أعمال نهاية السنة)
 (
     'سلسلة الأستاذ سعيد كمال في التسيير المحاسبي: أعمال نهاية السنة والتسويات واستهلاك القروض',
     'الأستاذ سعيد كمال',
@@ -283,7 +252,7 @@ INSERT INTO public.books (
     'accounting',
     ARRAY['management'],
     'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/gestion_eco/accounting/bac-2023-accounting.pdf',
+    'https://www.dzexams.com/viewer/sujet/aXJyM2lXMnZxbVJFTGk4QTIySUVBZz09',
     '48 MB',
     240,
     '2025',
@@ -291,7 +260,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 15. محاسبة - أ. حسام (الميزانية الوظيفية وتحليل الاستغلال)
 (
     'سلسلة الأستاذ حسام في المحاسبة: تحليل الاستغلال التفاضلي والميزانية الوظيفية ونسب التسيير',
     'الأستاذ حسام الدين',
@@ -299,7 +267,7 @@ INSERT INTO public.books (
     'accounting',
     ARRAY['management'],
     'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/gestion_eco/accounting/bac-2022-accounting.pdf',
+    'https://www.dzexams.com/viewer/sujet/d2ZQTkJWK0d0TU5aQzllWlYrR3Nsdz09',
     '42 MB',
     210,
     '2025',
@@ -307,7 +275,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 16. محاسبة - ملخص قيود اليومية
 (
     'مطوية ملخص قيود اليومية المحاسبية الشاملة وجداول الاهتلاكات ونقص القيمة (SCF)',
     'أساتذة التسيير المالي والمحاسبي',
@@ -315,7 +282,7 @@ INSERT INTO public.books (
     'accounting',
     ARRAY['management'],
     'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/gestion_eco/accounting/bac-2024-accounting.pdf',
+    'https://www.dzexams.com/viewer/sujet/bXI5U2ZEbFgzUlJObldIN0ZSWllOdz09',
     '16 MB',
     60,
     '2025',
@@ -323,7 +290,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 17. محاسبة - حوليات ONEC
 (
     'حوليات البكالوريا الرسمية في التسيير المحاسبي والمالي (2018-2024) مع شبكة التقييم الوزارية',
     'الديوان الوطني للامتحانات والمسابقات (ONEC)',
@@ -331,7 +297,7 @@ INSERT INTO public.books (
     'accounting',
     ARRAY['management'],
     'https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/gestion_eco/accounting/bac-2024-accounting.pdf',
+    'https://www.dzexams.com/viewer/sujet/SEhjYVN3aXhqcW1kWGZTcmJIc1FvZz09',
     '72 MB',
     380,
     '2025',
@@ -339,7 +305,6 @@ INSERT INTO public.books (
     false
 ),
 
--- 18. اقتصاد ومناجمنت - كتاب مدرسي
 (
     'الكتاب المدرسي الرسمي: الاقتصاد والمناجمنت للسنة الثالثة ثانوي',
     'وزارة التربية الوطنية (ONPS)',
@@ -347,7 +312,7 @@ INSERT INTO public.books (
     'economics',
     ARRAY['management'],
     'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=600&q=80',
-    'https://eddirasa.com/wp-content/uploads/2014/11/%D9%83%D8%AA%D8%A7%D8%A8-%D8%A7%D9%84%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF-%D9%88%D8%A7%D9%84%D9%85%D9%86%D8%A7%D8%AC%D9%85%D9%86%D8%AA-%D9%88%D8%A7%D9%84%D9%82%D8%A7%D9%86%D9%88%D9%86-%D8%B3%D9%86%D8%A9-%D8%AB%D8%A7%D9%84%D8%AB%D8%A9-%D8%AB%D8%A7%D9%86%D9%88%D9%8A.pdf',
+    'https://www.dzexams.com/viewer/sujet/Tlp5SXd4WjgzZzhQQTZiQjJQajlFQT09',
     '35 MB',
     270,
     '2024',
@@ -355,7 +320,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 19. اقتصاد ومناجمنت - أ. سعيد كمال (ملخص المفاهيم)
 (
     'الملخص الشامل في الاقتصاد والمناجمنت: الأسواق، النقود، البنوك، التجارة الخارجية والبطالة',
     'الأستاذ سعيد كمال',
@@ -363,7 +327,7 @@ INSERT INTO public.books (
     'economics',
     ARRAY['management'],
     'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=600&q=80',
-    'https://eddirasa.com/wp-content/uploads/2014/11/%D9%83%D8%AA%D8%A7%D8%A8-%D8%A7%D9%84%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF-%D9%88%D8%A7%D9%84%D9%85%D9%86%D8%A7%D8%AC%D9%85%D9%86%D8%AA-%D9%88%D8%A7%D9%84%D9%82%D8%A7%D9%86%D9%88%D9%86-%D8%B3%D9%86%D8%A9-%D8%AB%D8%A7%D9%84%D8%AB%D8%A9-%D8%AB%D8%A7%D9%86%D9%88%D9%8A.pdf',
+    'https://www.dzexams.com/viewer/sujet/T1lvTnM0NWxSbm1QUWxGY0pEdHluQT09',
     '24 MB',
     125,
     '2025',
@@ -371,7 +335,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 20. اقتصاد ومناجمنت - حوليات ONEC
 (
     'حوليات البكالوريا الرسمية في الاقتصاد والمناجمنت (2018-2024) مع الإجابات النموذجية',
     'الديوان الوطني للامتحانات والمسابقات (ONEC)',
@@ -379,7 +342,7 @@ INSERT INTO public.books (
     'economics',
     ARRAY['management'],
     'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&w=600&q=80',
-    'https://eddirasa.com/wp-content/uploads/2014/11/%D9%83%D8%AA%D8%A7%D8%A8-%D8%A7%D9%84%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF-%D9%88%D8%A7%D9%84%D9%85%D9%86%D8%A7%D8%AC%D9%85%D9%86%D8%AA-%D9%88%D8%A7%D9%84%D9%82%D8%A7%D9%86%D9%88%D9%86-%D8%B3%D9%86%D8%A9-%D8%AB%D8%A7%D9%84%D8%AB%D8%A9-%D8%AB%D8%A7%D9%86%D9%88%D9%8A.pdf',
+    'https://www.dzexams.com/viewer/sujet/RTJGUERkTEU4eGpqUzVTUzFJUkxldz09',
     '55 MB',
     295,
     '2025',
@@ -387,7 +350,6 @@ INSERT INTO public.books (
     false
 ),
 
--- 21. قانون - كتاب مدرسي
 (
     'الكتاب المدرسي الرسمي: مادة القانون للسنة الثالثة ثانوي شعبة تسيير واقتصاد',
     'وزارة التربية الوطنية (ONPS)',
@@ -395,7 +357,7 @@ INSERT INTO public.books (
     'law',
     ARRAY['management'],
     'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80',
-    'https://eddirasa.com/wp-content/uploads/2014/11/%D9%83%D8%AA%D8%A7%D8%A8-%D8%A7%D9%84%D8%A7%D9%82%D8%AA%D8%B5%D8%A7%D8%AF-%D9%88%D8%A7%D9%84%D9%85%D9%86%D8%A7%D8%AC%D9%85%D9%86%D8%AA-%D9%88%D8%A7%D9%84%D9%82%D8%A7%D9%86%D9%88%D9%86-%D8%B3%D9%86%D8%A9-%D8%AB%D8%A7%D9%84%D8%AB%D8%A9-%D8%AB%D8%A7%D9%86%D9%88%D9%8A.pdf',
+    'https://www.dzexams.com/viewer/sujet/RUFKTjhORjR2aHd0OTIvc1lLQXUvZz09',
     '35 MB',
     240,
     '2024',
@@ -403,7 +365,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 22. قانون - ملخص المواد القانونية
 (
     'الملخص المركز في القانون: عقد العمل، عقد البيع، الشركات التجارية، وعلاقات العمل الفردية',
     'نخبة أساتذة مادة القانون',
@@ -411,7 +372,7 @@ INSERT INTO public.books (
     'law',
     ARRAY['management'],
     'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/gestion_eco/law/bac-2023-law.pdf',
+    'https://www.dzexams.com/viewer/sujet/RnRVYWtBazJtWkVmMlNJMnIzVlIxdz09',
     '20 MB',
     110,
     '2025',
@@ -419,7 +380,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 23. قانون - حوليات ONEC
 (
     'حوليات البكالوريا الرسمية في مادة القانون (2018-2024) مع سلم التنقيط المعتمد',
     'الديوان الوطني للامتحانات والمسابقات (ONEC)',
@@ -427,7 +387,7 @@ INSERT INTO public.books (
     'law',
     ARRAY['management'],
     'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/gestion_eco/law/bac-2024-law.pdf',
+    'https://www.dzexams.com/viewer/sujet/N2NTWG92OEJlY3NpU25TSHRFQTRpQT09',
     '48 MB',
     260,
     '2025',
@@ -435,11 +395,6 @@ INSERT INTO public.books (
     false
 ),
 
--- ==========================================================================================
--- III. اللغات الأجنبية الثالثة (SPANISH, GERMAN, ITALIAN)
--- ==========================================================================================
-
--- 24. إسبانية - كتاب مدرسي
 (
     'الكتاب المدرسي الرسمي: اللغة الإسبانية للسنة الثالثة ثانوي (Viaje al Español)',
     'وزارة التربية الوطنية (ONPS)',
@@ -447,7 +402,7 @@ INSERT INTO public.books (
     'spanish',
     ARRAY['languages'],
     'https://images.unsplash.com/photo-1543783207-ec64e4d95325?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/languages/spanish/bac-2024-spanish.pdf',
+    'https://www.dzexams.com/viewer/sujet/aUlvYXZ1Q05wUUlQUTVJejR3T3hDUT09',
     '46 MB',
     230,
     '2024',
@@ -455,7 +410,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 25. إسبانية - أ. بوحفص / كارلوس
 (
     'الدليل الشامل في قواعد ومصطلحات اللغة الإسبانية للبكالوريا (Gramática y Vocabulario)',
     'الأستاذ بوحفص عبد القادر',
@@ -463,7 +417,7 @@ INSERT INTO public.books (
     'spanish',
     ARRAY['languages'],
     'https://images.unsplash.com/photo-1543783207-ec64e4d95325?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/languages/spanish/bac-2023-spanish.pdf',
+    'https://www.dzexams.com/viewer/sujet/dnY2aDFOSVhtQ3Z3V3RkMGEvT3h0UT09',
     '32 MB',
     160,
     '2025',
@@ -471,7 +425,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 26. إسبانية - حوليات ONEC
 (
     'حوليات البكالوريا الرسمية في اللغة الإسبانية (2018-2024) مع التصحيح الوزاري والوضعيات',
     'الديوان الوطني للامتحانات والمسابقات (ONEC)',
@@ -479,7 +432,7 @@ INSERT INTO public.books (
     'spanish',
     ARRAY['languages'],
     'https://images.unsplash.com/photo-1543783207-ec64e4d95325?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/languages/spanish/bac-2024-spanish.pdf',
+    'https://www.dzexams.com/viewer/sujet/NVB3N3pPVGhCUTZZTGdoSUJZa091QT09',
     '52 MB',
     280,
     '2025',
@@ -487,7 +440,6 @@ INSERT INTO public.books (
     false
 ),
 
--- 27. ألمانية - كتاب مدرسي
 (
     'الكتاب المدرسي الرسمي: اللغة الألمانية للسنة الثالثة ثانوي (Themen Neu / Deutsch)',
     'وزارة التربية الوطنية (ONPS)',
@@ -495,7 +447,7 @@ INSERT INTO public.books (
     'german',
     ARRAY['languages'],
     'https://images.unsplash.com/photo-1527866959252-deab85ef7d1b?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/languages/german/bac-2024-german.pdf',
+    'https://www.dzexams.com/viewer/sujet/c0NCZVB6ZFN1U1huQUJMTno2a3l3Zz09',
     '48 MB',
     240,
     '2024',
@@ -503,7 +455,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 28. ألمانية - أ. كريم
 (
     'دليل قواعد اللغة الألمانية للبكالوريا وشرح تصريف الأفعال وتلخيص النصوص (أ. كريم)',
     'الأستاذ كريم الألماني',
@@ -511,7 +462,7 @@ INSERT INTO public.books (
     'german',
     ARRAY['languages'],
     'https://images.unsplash.com/photo-1527866959252-deab85ef7d1b?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/languages/german/bac-2023-german.pdf',
+    'https://www.dzexams.com/viewer/sujet/c2w4Z3l3Z21OczFvcUpxbTRUQVI1QT09',
     '30 MB',
     150,
     '2025',
@@ -519,7 +470,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 29. ألمانية - حوليات ONEC
 (
     'حوليات البكالوريا الرسمية في اللغة الألمانية (2018-2024) مع سلم التنقيط المعتمد',
     'الديوان الوطني للامتحانات والمسابقات (ONEC)',
@@ -527,7 +477,7 @@ INSERT INTO public.books (
     'german',
     ARRAY['languages'],
     'https://images.unsplash.com/photo-1527866959252-deab85ef7d1b?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/languages/german/bac-2024-german.pdf',
+    'https://www.dzexams.com/viewer/sujet/VkZLNm1tWkxEM3p0NTNKU0NpUnF0UT09',
     '54 MB',
     290,
     '2025',
@@ -535,7 +485,6 @@ INSERT INTO public.books (
     false
 ),
 
--- 30. إيطالية - كتاب مدرسي
 (
     'الكتاب المدرسي الرسمي: اللغة الإيطالية للسنة الثالثة ثانوي (Progetto Italiano)',
     'وزارة التربية الوطنية (ONPS)',
@@ -543,7 +492,7 @@ INSERT INTO public.books (
     'italian',
     ARRAY['languages'],
     'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/languages/italian/bac-2024-italian.pdf',
+    'https://www.dzexams.com/viewer/sujet/NzlnRHppajFQQUZaSzNVd00zWHdIUT09',
     '44 MB',
     220,
     '2024',
@@ -551,7 +500,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 31. إيطالية - ملخص القواعد
 (
     'ملخص قواعد اللغة الإيطالية ومفردات الحضارة والنصوص الموجهة للبكالوريا',
     'لجنة أساتذة اللغة الإيطالية',
@@ -559,7 +507,7 @@ INSERT INTO public.books (
     'italian',
     ARRAY['languages'],
     'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/languages/italian/bac-2023-italian.pdf',
+    'https://www.dzexams.com/viewer/sujet/Y1pCN2ZxbEtuZ014WjJ6c3F1Qmh1Zz09',
     '26 MB',
     130,
     '2025',
@@ -567,7 +515,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 32. إيطالية - حوليات ONEC
 (
     'حوليات البكالوريا الرسمية في اللغة الإيطالية (2018-2024) مع التصحيح والحلول النموذجية',
     'الديوان الوطني للامتحانات والمسابقات (ONEC)',
@@ -575,7 +522,7 @@ INSERT INTO public.books (
     'italian',
     ARRAY['languages'],
     'https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/languages/italian/bac-2024-italian.pdf',
+    'https://www.dzexams.com/viewer/sujet/Vy80ZGNvM1ZqMGFUOWxWUERzbmFMZz09',
     '50 MB',
     270,
     '2025',
@@ -583,11 +530,6 @@ INSERT INTO public.books (
     false
 ),
 
--- ==========================================================================================
--- IV. توسيع شعبة آداب وفلسفة (PHILOSOPHY, ARABIC EXPANSION)
--- ==========================================================================================
-
--- 33. فلسفة - أ. خليل سعيداني (السلسلة الفضية)
 (
     'السلسلة الفضية في الفلسفة: منهجيات كتابة وتحليل المقالات الفلسفية (جدل، استقصاء بالوضع، مقارنة)',
     'الأستاذ خليل سعيداني',
@@ -595,7 +537,7 @@ INSERT INTO public.books (
     'philosophy',
     ARRAY['literature', 'languages', 'scientific', 'management', 'math'],
     'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/lettres_philo/philosophy/bac-2024-philosophy.pdf',
+    'https://www.dzexams.com/viewer/sujet/VnpQQVFvVEs4Nmt3MW03RE1kNjlodz09',
     '36 MB',
     185,
     '2025',
@@ -603,7 +545,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 34. فلسفة - أ. سارة (تحليل ونقد النصوص الفلسفية)
 (
     'كتاب الأستاذة سارة في تحليل ونقد النصوص الفلسفية وتفكيك إشكاليات البكالوريا',
     'الأستاذة سارة بن علي',
@@ -611,7 +552,7 @@ INSERT INTO public.books (
     'philosophy',
     ARRAY['literature'],
     'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/lettres_philo/philosophy/bac-2023-philosophy.pdf',
+    'https://www.dzexams.com/viewer/sujet/QmV4eng1NHp5bW9tQzV5RnBtcmtjUT09',
     '32 MB',
     160,
     '2025',
@@ -619,7 +560,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 35. فلسفة - أ. حماش (الموسوعة الكبرى للمقالات)
 (
     'الموسوعة الكبرى في المقالات الفلسفية الموسعة والمقارنات لجميع شعب البكالوريا',
     'الأستاذ حماش بن عيسى',
@@ -627,7 +567,7 @@ INSERT INTO public.books (
     'philosophy',
     ARRAY['literature', 'languages', 'scientific', 'management', 'math'],
     'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/lettres_philo/philosophy/bac-2024-philosophy.pdf',
+    'https://www.dzexams.com/viewer/sujet/VXhIdTRFWmJmak5MeExPT000R3FZUT09',
     '44 MB',
     230,
     '2024',
@@ -635,7 +575,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 36. أدب عربي - أ. حيقون أسامة (السلسلة الذهبية)
 (
     'السلسلة الذهبية في الأدب العربي: البلاغة، العروض، والتقويم النقدي المنهجي',
     'الأستاذ حيقون أسامة',
@@ -643,7 +582,7 @@ INSERT INTO public.books (
     'arabic',
     ARRAY['literature', 'languages', 'scientific', 'math_tech', 'management'],
     'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/lettres_philo/arabic/bac-2024-arabic.pdf',
+    'https://www.dzexams.com/viewer/sujet/NFY3WDdVeWpKTWNjaVVCQVNEQ2I5UT09',
     '32 MB',
     170,
     '2025',
@@ -651,7 +590,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 37. أدب عربي - إعراب الجمل والقواعد
 (
     'الملخص الشامل في قواعد النحو والصرف وإعراب الجمل التي لها محل والتي ليس لها محل',
     'الأستاذ محمد البشير',
@@ -659,7 +597,7 @@ INSERT INTO public.books (
     'arabic',
     ARRAY['literature', 'languages', 'scientific', 'math_tech', 'management'],
     'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/lettres_philo/arabic/bac-2023-arabic.pdf',
+    'https://www.dzexams.com/viewer/sujet/bmk5bEtZalpsOVlQNHgwbHpLR1phZz09',
     '22 MB',
     105,
     '2025',
@@ -667,7 +605,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 38. أدب عربي - التقويم النقدي لجميع الشعب
 (
     'كتاب التقويم النقدي الشامل: المدارس الأدبية، رواد الشعر الحر والمقال، ونصوص البكالوريا',
     'نخبة أساتذة الأدب العربي',
@@ -675,7 +612,7 @@ INSERT INTO public.books (
     'arabic',
     ARRAY['literature', 'languages'],
     'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/lettres_philo/arabic/bac-2024-arabic.pdf',
+    'https://www.dzexams.com/viewer/sujet/VzBWbXJ4STB6NUJEcCtLR0IzK21odz09',
     '26 MB',
     135,
     '2025',
@@ -683,11 +620,6 @@ INSERT INTO public.books (
     false
 ),
 
--- ==========================================================================================
--- V. العلوم الدقيقة والمواد الأساسية (MATH, PHYSICS, SCIENCE, ISLAMIC, HIST-GEO, FR, EN)
--- ==========================================================================================
-
--- 39. رياضيات - كتاب مدرسي جزء 1
 (
     'الكتاب المدرسي الرسمي: الرياضيات للسنة الثالثة ثانوي (الجزء الأول: الدوال والتحليل)',
     'وزارة التربية الوطنية (ONPS)',
@@ -695,7 +627,7 @@ INSERT INTO public.books (
     'math',
     ARRAY['scientific', 'math_tech', 'math'],
     'https://images.unsplash.com/photo-1509228468518-180dd4864904?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/sciences_exp/math/bac-2024-math.pdf',
+    'https://www.dzexams.com/viewer/sujet/YmRvajlpM0FOWVQ3TFBGLys5alhTUT09',
     '68 MB',
     348,
     '2024',
@@ -703,7 +635,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 40. رياضيات - كتاب مدرسي جزء 2
 (
     'الكتاب المدرسي الرسمي: الرياضيات للسنة الثالثة ثانوي (الجزء الثاني: الهندسة، المتتاليات، والاحتمالات)',
     'وزارة التربية الوطنية (ONPS)',
@@ -711,7 +642,7 @@ INSERT INTO public.books (
     'math',
     ARRAY['scientific', 'math_tech', 'math'],
     'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/sciences_exp/math/bac-2023-math.pdf',
+    'https://www.dzexams.com/viewer/sujet/WHpLU01Ec245K1dBUmVJaHZiTlpxdz09',
     '62 MB',
     312,
     '2024',
@@ -719,7 +650,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 41. رياضيات - نور الدين: الدوال
 (
     'سلسلة الأستاذ نور الدين: الشامل في دراسة الدوال العددية، الأسية واللوغاريتمية',
     'الأستاذ نور الدين',
@@ -727,7 +657,7 @@ INSERT INTO public.books (
     'math',
     ARRAY['scientific', 'math_tech', 'math', 'management'],
     'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/sciences_exp/math/bac-2024-math.pdf',
+    'https://www.dzexams.com/viewer/sujet/TVlkTGlEZHZwZzM5N0R4NlFLSmF2dz09',
     '52 MB',
     285,
     '2025',
@@ -735,7 +665,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 42. رياضيات - نور الدين: المتتاليات
 (
     'سلسلة الأستاذ نور الدين: المتتاليات العددية من الألف إلى الياء (ملخص وتمارين محلولة)',
     'الأستاذ نور الدين',
@@ -743,7 +672,7 @@ INSERT INTO public.books (
     'math',
     ARRAY['scientific', 'math_tech', 'math', 'management'],
     'https://images.unsplash.com/photo-1596495578065-6e0763fa1178?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/sciences_exp/math/bac-2023-math.pdf',
+    'https://www.dzexams.com/viewer/sujet/OFFlSUFWY0VLdWlDY0grOGNXUnhCdz09',
     '39 MB',
     215,
     '2025',
@@ -751,7 +680,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 43. رياضيات - نور الدين: الأعداد المركبة
 (
     'سلسلة الأستاذ نور الدين: الأعداد المركبة والتحويلات النقطية (رياضيات وتقني رياضي)',
     'الأستاذ نور الدين',
@@ -759,7 +687,7 @@ INSERT INTO public.books (
     'math',
     ARRAY['math', 'math_tech'],
     'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/technique_math/math/bac-2024-math.pdf',
+    'https://www.dzexams.com/viewer/sujet/WkMvMGQzUE85OWRKem1HV3BGdElkQT09',
     '44 MB',
     230,
     '2025',
@@ -767,7 +695,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 44. فيزياء - كتاب مدرسي
 (
     'الكتاب المدرسي الرسمي: العلوم الفيزيائية للسنة الثالثة ثانوي (شعب علمية ورياضية وتقنية)',
     'وزارة التربية الوطنية (ONPS)',
@@ -775,7 +702,7 @@ INSERT INTO public.books (
     'physics',
     ARRAY['scientific', 'math_tech', 'math'],
     'https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/sciences_exp/physics/bac-2024-physics.pdf',
+    'https://www.dzexams.com/viewer/sujet/RXVsRzZkL0lweXRERDJsR0t1UjREUT09',
     '72 MB',
     396,
     '2024',
@@ -783,7 +710,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 45. فيزياء - تومي تأشيرة النجاح 1
 (
     'تأشيرة النجاح في الفيزياء (الجزء 1: المتابعة الزمنية لتحول كيميائي في وسط مائي)',
     'الأستاذ تومي',
@@ -791,7 +717,7 @@ INSERT INTO public.books (
     'physics',
     ARRAY['scientific', 'math_tech', 'math'],
     'https://images.unsplash.com/photo-1636466497217-26a8cbeaf0aa?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/sciences_exp/physics/bac-2024-physics.pdf',
+    'https://www.dzexams.com/viewer/sujet/ajZOQWttak9BVHBLUXAvNjRETnkxQT09',
     '45 MB',
     220,
     '2025',
@@ -799,7 +725,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 46. فيزياء - تومي تأشيرة النجاح 2
 (
     'تأشيرة النجاح في الفيزياء (الجزء 2: الظواهر الكهربائية ثنائي القطب RC وثنائي القطب RL)',
     'الأستاذ تومي',
@@ -807,7 +732,7 @@ INSERT INTO public.books (
     'physics',
     ARRAY['scientific', 'math_tech', 'math'],
     'https://images.unsplash.com/photo-1507668077129-56e32842fceb?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/sciences_exp/physics/bac-2023-physics.pdf',
+    'https://www.dzexams.com/viewer/sujet/eWNZL3Z2OEZmMnZVeWwwS3l1aEgvZz09',
     '42 MB',
     198,
     '2025',
@@ -815,7 +740,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 47. فيزياء - تومي تأشيرة النجاح 3
 (
     'تأشيرة النجاح في الفيزياء (الجزء 3: دراسة تطور جملة ميكانيكية وحركة الكواكب والأقمار)',
     'الأستاذ تومي',
@@ -823,7 +747,7 @@ INSERT INTO public.books (
     'physics',
     ARRAY['scientific', 'math_tech', 'math'],
     'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/sciences_exp/physics/bac-2022-physics.pdf',
+    'https://www.dzexams.com/viewer/sujet/ZGNqcFZsWXNUc0JCR0puMU0xUWZvQT09',
     '48 MB',
     240,
     '2025',
@@ -831,7 +755,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 48. فيزياء - قزوري بنك التمارين
 (
     'حوليات وبنك تمارين الأستاذ قزوري في العلوم الفيزيائية (الوحدات الست مع الحلول المنهجية)',
     'الأستاذ عبد القادر قزوري',
@@ -839,7 +762,7 @@ INSERT INTO public.books (
     'physics',
     ARRAY['scientific', 'math_tech', 'math'],
     'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/sciences_exp/physics/bac-2024-physics.pdf',
+    'https://www.dzexams.com/viewer/sujet/d3JVWmsyN1gwZVFWVCs2ZXQwK2k2UT09',
     '52 MB',
     270,
     '2024',
@@ -847,7 +770,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 49. علوم طبيعية - كتاب مدرسي
 (
     'الكتاب المدرسي الرسمي: علوم الطبيعة والحياة للسنة الثالثة ثانوي (شعبة علوم تجريبية)',
     'وزارة التربية الوطنية (ONPS)',
@@ -855,7 +777,7 @@ INSERT INTO public.books (
     'science',
     ARRAY['scientific'],
     'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/sciences_exp/sciences/bac-2024-sciences.pdf',
+    'https://www.dzexams.com/viewer/sujet/L0tWNjNjZ1pNQ1RmU3JUOUFUbFpTdz09',
     '56 MB',
     298,
     '2024',
@@ -863,7 +785,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 50. علوم طبيعية - أحمد أمين خليفة
 (
     'سلسلة التحدي والمسعى العلمي في علوم الطبيعة والحياة (منهجية الاستدلال العلمي الجديدة)',
     'الأستاذ أحمد أمين خليفة',
@@ -871,7 +792,7 @@ INSERT INTO public.books (
     'science',
     ARRAY['scientific', 'math'],
     'https://images.unsplash.com/photo-1576086213369-97a306d36557?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/sciences_exp/sciences/bac-2024-sciences.pdf',
+    'https://www.dzexams.com/viewer/sujet/S3VKb3UrRU9MUnJHVG5ndENaV1FIdz09',
     '54 MB',
     265,
     '2025',
@@ -879,7 +800,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 51. علوم طبيعية - بوالريش أحمد (المناعة)
 (
     'مجلة المتفوق في علوم الطبيعة والحياة (الوحدة الثالثة: دور البروتينات في الدفاع عن الذات)',
     'الأستاذ أحمد بوالريش',
@@ -887,7 +807,7 @@ INSERT INTO public.books (
     'science',
     ARRAY['scientific'],
     'https://images.unsplash.com/photo-1530497610245-94d3c16cda28?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/sciences_exp/sciences/bac-2024-sciences.pdf',
+    'https://www.dzexams.com/viewer/sujet/bkVXVzlvRTlpV1RMYUk5cGNyS3oxdz09',
     '48 MB',
     235,
     '2025',
@@ -895,7 +815,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 52. تاريخ وجغرافيا - محمودي عادل
 (
     'الملخص الشامل والمركز في التاريخ والجغرافيا: مصطلحات، شخصيات، تواريخ وخرائط ميسرة',
     'الأستاذ محمودي عادل',
@@ -903,7 +822,7 @@ INSERT INTO public.books (
     'history_geo',
     ARRAY['scientific', 'math_tech', 'math', 'management', 'literature', 'languages'],
     'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/gestion_eco/history_geo/bac-2024-history_geo.pdf',
+    'https://www.dzexams.com/viewer/sujet/WG1uUnFWZkprVWdhRVhCL1BwTXg2Zz09',
     '26 MB',
     130,
     '2025',
@@ -911,7 +830,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 53. تاريخ وجغرافيا - بورنان عمار
 (
     'السلسلة الأرجوانية في التاريخ والجغرافيا: المنهجية الكاملة والخرائط لنيل العلامة الكاملة',
     'الأستاذ عمار بورنان',
@@ -919,7 +837,7 @@ INSERT INTO public.books (
     'history_geo',
     ARRAY['scientific', 'math_tech', 'math', 'management', 'literature', 'languages'],
     'https://images.unsplash.com/photo-1461360370896-922624d12aa1?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/lettres_philo/history_geo/bac-2024-history_geo.pdf',
+    'https://www.dzexams.com/viewer/sujet/YW00OU1QME5WQzdPQngvRjFHeFFUdz09',
     '31 MB',
     155,
     '2025',
@@ -927,7 +845,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 54. إسلامية - شمس الدين
 (
     'السلسلة الخضراء في العلوم الإسلامية: شرح مفصل لكل عناصر المنهاج وأسئلة الفهم والاستنتاج',
     'الأستاذ شمس الدين حماش',
@@ -935,7 +852,7 @@ INSERT INTO public.books (
     'islamic',
     ARRAY['scientific', 'math_tech', 'math', 'management', 'literature', 'languages'],
     'https://images.unsplash.com/photo-1584281722573-956df1637740?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/sciences_exp/islamic/bac-2024-islamic.pdf',
+    'https://www.dzexams.com/viewer/sujet/U3lMMkVjMmVDYXdMd2NtOXpJZzhaZz09',
     '21 MB',
     115,
     '2025',
@@ -943,7 +860,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 55. إسلامية - بوسعادي
 (
     'مطوية الأستاذ بوسعادي المركزة: الخرائط الذهنية وقواعد الحفظ السريع للشريعة الإسلامية',
     'الأستاذ عبد العزيز بوسعادي',
@@ -951,7 +867,7 @@ INSERT INTO public.books (
     'islamic',
     ARRAY['scientific', 'math_tech', 'math', 'management', 'literature', 'languages'],
     'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/sciences_exp/islamic/bac-2023-islamic.pdf',
+    'https://www.dzexams.com/viewer/sujet/MjlNTmhUaFlOYjJKaVNPT0FrbGJ0QT09',
     '14 MB',
     52,
     '2025',
@@ -959,7 +875,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 56. إنجليزية - ناصري
 (
     'السلسلة الشاملة في اللغة الإنجليزية للبكالوريا: القواعد، المصطلحات، والوضعيات الإدماجية',
     'الأستاذ ناصري',
@@ -967,7 +882,7 @@ INSERT INTO public.books (
     'english',
     ARRAY['scientific', 'math_tech', 'math', 'management', 'literature', 'languages'],
     'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/languages/english/bac-2024-english.pdf',
+    'https://www.dzexams.com/viewer/sujet/WWc5RU05S1YrS3JkUWxQMjltcG1sQT09',
     '33 MB',
     180,
     '2025',
@@ -975,7 +890,6 @@ INSERT INTO public.books (
     true
 ),
 
--- 57. فرنسية - بن يزة
 (
     'الدليل الذهبي في قواعد اللغة الفرنسية وتلخيص النص التاريخي والحجاجي (Le Texte d''Histoire)',
     'الأستاذ بن يزة عبد الحميد',
@@ -983,13 +897,10 @@ INSERT INTO public.books (
     'french',
     ARRAY['scientific', 'math_tech', 'math', 'management', 'literature', 'languages'],
     'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=600&q=80',
-    'https://dzexams.com/files/bac/subjects/languages/french/bac-2024-french.pdf',
+    'https://www.dzexams.com/viewer/sujet/ODZuU0hqUjB3cG93OFJ4ZkF3aVBuUT09',
     '27 MB',
     140,
     '2025',
     4380,
     false
 );
-
--- Check total count
-SELECT count(*) as total_books_inserted FROM public.books;

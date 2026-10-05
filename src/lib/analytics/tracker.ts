@@ -342,6 +342,16 @@ export function sendAnalyticsEvent(
       : typeof properties?.pagePath === "string" && properties.pagePath
       ? properties.pagePath
       : window.location.pathname;
+
+  // Never track internal operator, admin, or API paths
+  if (
+    pagePath.startsWith("/ops") ||
+    pagePath.startsWith("/admin") ||
+    pagePath.startsWith("/api")
+  ) {
+    return;
+  }
+
   const now = new Date().toISOString();
   
   // Crypto-strong event ID

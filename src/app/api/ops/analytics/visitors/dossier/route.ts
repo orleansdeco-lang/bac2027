@@ -38,7 +38,7 @@ export async function GET(req: Request) {
   const sessionId = url.searchParams.get("sessionId") || url.searchParams.get("session_id") || undefined;
   const genericId = url.searchParams.get("id") || undefined;
 
-  const effectiveVisitorId = visitorId || (genericId?.startsWith("vid_") ? genericId : undefined);
+  const effectiveVisitorId = visitorId || (genericId?.startsWith("vid_") || genericId?.startsWith("anon_") ? genericId : undefined);
   const effectiveSessionId = sessionId || (genericId?.startsWith("ses_") ? genericId : undefined);
   const effectiveUserId = userId || (genericId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(genericId) ? genericId : undefined);
 
@@ -67,7 +67,7 @@ export async function GET(req: Request) {
         const { data: prof } = await client
           .from("student_profiles")
           .select("*")
-          .eq("user_id", effectiveUserId)
+          .or(`id.eq.${effectiveUserId},user_id.eq.${effectiveUserId}`)
           .maybeSingle();
         if (prof) studentProfile = prof;
       } catch (err: any) {
@@ -77,7 +77,7 @@ export async function GET(req: Request) {
       try {
         const { data: orders } = await client
           .from("payment_orders")
-          .select("id, status, plan, amount, payment_method, submitted_at, reviewed_at, created_at")
+          .select("id, status, plan, amount, payment_method, submitted_at, reviewed_at, created_at, rejection_reason")
           .eq("user_id", effectiveUserId)
           .order("created_at", { ascending: false });
         if (Array.isArray(orders)) paymentOrders = orders;
@@ -86,10 +86,15 @@ export async function GET(req: Request) {
       }
     }
 
-    // 2. Query all matching sessions
+    // 2. Query all matching sessions (excluding internal /ops and /admin routes)
     let sessions: any[] = [];
     try {
-      let query = client.from("analytics_sessions").select("*");
+      let query = client
+        .from("analytics_sessions")
+        .select("*")
+        .not("landing_page", "like", "/ops%")
+        .not("landing_page", "like", "/admin%");
+
       if (effectiveUserId) {
         query = query.eq("user_id", effectiveUserId);
       } else if (effectiveVisitorId) {
@@ -97,7 +102,7 @@ export async function GET(req: Request) {
       } else if (effectiveSessionId) {
         query = query.eq("session_id", effectiveSessionId);
       } else if (genericId) {
-        query = query.or(`session_id.eq.${genericId},anonymous_id.eq.${genericId}`);
+        query = query.or(`session_id.eq.${genericId},anonymous_id.eq.${genericId},visitor_id.eq.${genericId}`);
       }
 
       const { data: sessData, error: sessErr } = await query.order("started_at", { ascending: false }).limit(50);
@@ -116,7 +121,7 @@ export async function GET(req: Request) {
           const { data: prof } = await client
             .from("student_profiles")
             .select("*")
-            .eq("user_id", foundUserId)
+            .or(`id.eq.${foundUserId},user_id.eq.${foundUserId}`)
             .maybeSingle();
           if (prof) studentProfile = prof;
         } catch {}
@@ -130,24 +135,42 @@ export async function GET(req: Request) {
       let evQuery = client
         .from("analytics_events")
         .select("event_id, session_id, anonymous_id, user_id, event_name, route, page_path, properties, occurred_at")
+        .not("route", "like", "/ops%")
+        .not("route", "like", "/admin%")
+        .not("route", "like", "/api%")
         .order("occurred_at", { ascending: false })
         .limit(150);
 
+      const orParts: string[] = [];
       if (effectiveUserId) {
-        evQuery = evQuery.eq("user_id", effectiveUserId);
-      } else if (sessionIds.length > 0) {
-        evQuery = evQuery.in("session_id", sessionIds.slice(0, 30));
-      } else if (effectiveVisitorId) {
-        evQuery = evQuery.or(`anonymous_id.eq.${effectiveVisitorId},session_id.eq.${effectiveVisitorId}`);
-      } else if (effectiveSessionId) {
-        evQuery = evQuery.eq("session_id", effectiveSessionId);
-      } else if (genericId) {
-        evQuery = evQuery.or(`session_id.eq.${genericId},anonymous_id.eq.${genericId}`);
+        orParts.push(`user_id.eq.${effectiveUserId}`);
+      }
+      if (effectiveVisitorId) {
+        orParts.push(`anonymous_id.eq.${effectiveVisitorId}`);
+      }
+      if (effectiveSessionId) {
+        orParts.push(`session_id.eq.${effectiveSessionId}`);
+      }
+      if (sessionIds.length > 0) {
+        sessionIds.slice(0, 20).forEach((sid) => {
+          orParts.push(`session_id.eq.${sid}`);
+        });
+      }
+      if (genericId && !orParts.some((p) => p.includes(genericId))) {
+        orParts.push(`anonymous_id.eq.${genericId}`);
+        orParts.push(`session_id.eq.${genericId}`);
+      }
+
+      if (orParts.length > 0) {
+        evQuery = evQuery.or(orParts.join(","));
       }
 
       const { data: evData, error: evErr } = await evQuery;
       if (!evErr && Array.isArray(evData)) {
-        events = evData;
+        events = evData.filter((ev) => {
+          const r = ev.route || ev.page_path || "";
+          return !r.startsWith("/ops") && !r.startsWith("/admin") && !r.startsWith("/api");
+        });
       }
     } catch (err: any) {
       console.warn("[OPS_DOSSIER] events lookup exception:", err?.message);

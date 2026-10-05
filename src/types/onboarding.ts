@@ -115,6 +115,10 @@ export interface StrategicProfile {
   subscription_expires_at?: string | null;
   subscriptionStartedAt?: string | null;
   subscriptionExpiresAt?: string | null;
+  phone_verified?: boolean;
+  phone_verified_at?: string | null;
+  phoneVerified?: boolean;
+  phoneVerifiedAt?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }

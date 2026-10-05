@@ -158,6 +158,17 @@ export async function POST(req: Request) {
       const canonicalPhone = toCanonicalAlgerianPhone(body.studentPhone);
       const localPhone = normalizeAlgerianPhone(body.studentPhone);
 
+      // If the student changes their phone number, automatically revoke verification
+      const isPhoneChanged = existingProfile && (
+        (existingProfile.canonical_phone && existingProfile.canonical_phone !== canonicalPhone) ||
+        (existingProfile.student_phone && existingProfile.student_phone !== localPhone)
+      );
+
+      if (isPhoneChanged) {
+        updatePayload.phone_verified = false;
+        updatePayload.phone_verified_at = null;
+      }
+
       const { data: dupPhone } = await client
         .from("student_profiles")
         .select("id")
@@ -215,3 +226,139 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }
+
+/**
+ * GET /api/student/sync
+ * Securely retrieves the authenticated student's authoritative profile, subscriptions, and latest order.
+ * Uses PostgreSQL as the single authoritative source of truth, bypassing browser RLS issues.
+ */
+export async function GET(req: Request) {
+  try {
+    const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
+    let token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.replace(/^Bearer\s+/i, "").trim() : null;
+    if (!token) {
+      const cookieHeader = req.headers.get("cookie") || req.headers.get("Cookie");
+      if (cookieHeader) {
+        const match = cookieHeader.match(/(?:ops_auth_token|sb-access-token)=([^;]+)/);
+        if (match) token = decodeURIComponent(match[1]);
+      }
+    }
+
+    const callerId = await extractAuthenticatedUserId(req);
+    if (!callerId) {
+      return NextResponse.json(
+        { success: false, error: "Authentication required to fetch student profile" },
+        { status: 401 }
+      );
+    }
+
+    const client = getAdminClient() || (token ? createAuthenticatedSupabaseClient(token) : null) || supabase;
+    if (!isSupabaseConfigured || !client) {
+      return NextResponse.json(
+        { success: false, error: "Database service unavailable" },
+        { status: 503 }
+      );
+    }
+
+    // Query profile, subscription, and latest payment order in parallel
+    const [profileRes, subRes, orderRes] = await Promise.all([
+      client
+        .from("student_profiles")
+        .select("*")
+        .eq("id", callerId)
+        .maybeSingle(),
+      client
+        .from("subscriptions")
+        .select("*")
+        .eq("student_id", callerId)
+        .eq("status", "ACTIVE")
+        .gt("expires_at", new Date().toISOString())
+        .order("expires_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      client
+        .from("payment_orders")
+        .select("*")
+        .eq("user_id", callerId)
+        .order("submitted_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
+    const rawProfile = profileRes.data;
+    const activeSub = subRes.data;
+    const latestOrder = orderRes.data;
+
+    // Check if user has an active paid subscription
+    const isPaidActive = Boolean(
+      activeSub ||
+      (rawProfile?.access_status === "PAID" &&
+        rawProfile?.subscription_expires_at &&
+        new Date(rawProfile.subscription_expires_at).getTime() > Date.now())
+    );
+
+    const now = Date.now();
+    const trialStartedAt = rawProfile?.trial_started_at || rawProfile?.created_at || new Date().toISOString();
+    const trialExpiresAt = rawProfile?.trial_expires_at
+      ? new Date(rawProfile.trial_expires_at).toISOString()
+      : new Date(new Date(trialStartedAt).getTime() + 3 * 24 * 60 * 60 * 1000).toISOString();
+    const isTrialExpired = now > new Date(trialExpiresAt).getTime();
+
+    let accessStatus: "TRIAL" | "PAID" | "EXPIRED" | "REJECTED" = "TRIAL";
+    if (isPaidActive) {
+      accessStatus = "PAID";
+    } else if (latestOrder && latestOrder.status === "REJECTED") {
+      accessStatus = "REJECTED";
+    } else if (isTrialExpired) {
+      accessStatus = "EXPIRED";
+    } else {
+      accessStatus = "TRIAL";
+    }
+
+    // Build synthesized strategic profile for the frontend
+    const profile = {
+      id: callerId,
+      educationLevel: rawProfile?.education_level || "secondary",
+      examType: (rawProfile?.exam_type || "bac").toUpperCase(),
+      streamId: rawProfile?.stream_id || "sciences_exp",
+      targetScore: Number(rawProfile?.target_score) || 16.0,
+      subjectEstimates: rawProfile?.raw_draft?.subjectEstimates || {},
+      availableTime: rawProfile?.raw_draft?.availableTime || "12_to_18",
+      studyEnergy: rawProfile?.energy_state || rawProfile?.raw_draft?.studyEnergy || "normal",
+      firstName: rawProfile?.first_name || rawProfile?.raw_draft?.firstName || "",
+      lastName: rawProfile?.last_name || rawProfile?.raw_draft?.lastName || "",
+      fullName: [rawProfile?.first_name, rawProfile?.last_name].filter(Boolean).join(" ").trim() || rawProfile?.email || "طالب شاطر",
+      email: rawProfile?.email,
+      studentPhone: rawProfile?.student_phone || rawProfile?.raw_draft?.studentPhone || "",
+      parentPhone: rawProfile?.parent_phone || rawProfile?.raw_draft?.parentPhone || "",
+      studentStatus: rawProfile?.student_status || rawProfile?.raw_draft?.studentStatus || "schooled",
+      schoolName: rawProfile?.school_name !== undefined ? rawProfile?.school_name : rawProfile?.raw_draft?.schoolName,
+      wilayaCode: rawProfile?.wilaya_code || rawProfile?.raw_draft?.wilayaCode || "",
+      wilayaName: rawProfile?.wilaya_name || rawProfile?.raw_draft?.wilayaName || "",
+      communeCode: rawProfile?.commune_code || rawProfile?.raw_draft?.communeCode || "",
+      communeName: rawProfile?.commune_name || rawProfile?.raw_draft?.communeName || "",
+      accessStatus,
+      access_status: accessStatus,
+      plan: activeSub?.plan_id || rawProfile?.plan || "season",
+      trialStartedAt,
+      trialExpiresAt,
+      subscriptionStartedAt: activeSub?.started_at || rawProfile?.subscription_started_at,
+      subscriptionExpiresAt: activeSub?.expires_at || rawProfile?.subscription_expires_at,
+      rejectionReason: latestOrder?.status === "REJECTED" ? latestOrder.rejection_reason : rawProfile?.rejection_reason,
+      createdAt: rawProfile?.created_at || new Date().toISOString(),
+      updatedAt: rawProfile?.updated_at || new Date().toISOString(),
+      phoneVerified: Boolean(rawProfile?.phone_verified),
+    };
+
+    return NextResponse.json({
+      success: true,
+      profile,
+      activeSubscription: activeSub || null,
+      latestOrder: latestOrder || null,
+    });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
+  }
+}
+

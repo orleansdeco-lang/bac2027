@@ -2,8 +2,19 @@ import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
 import { toCanonicalAlgerianPhone, normalizeAlgerianPhone, validateAlgerianPhone } from "@/domain/administrative/phone-validation";
+import { checkPersistentRateLimit } from "@/lib/security/persistent-rate-limiter";
 
 export const dynamic = "force-dynamic";
+
+function getClientIp(req: Request): string {
+  const forwarded = req.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
+  const realIp = req.headers.get("x-real-ip");
+  if (realIp) return realIp.trim();
+  const cfIp = req.headers.get("cf-connecting-ip");
+  if (cfIp) return cfIp.trim();
+  return "127.0.0.1";
+}
 
 /**
  * POST /api/auth/check-phone
@@ -12,6 +23,23 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(req: Request) {
   try {
+    const clientIp = getClientIp(req);
+    if (clientIp !== "127.0.0.1" && clientIp !== "::1") {
+      const rateLimit = await checkPersistentRateLimit(
+        `check_phone_ip:${clientIp}`,
+        "check_phone",
+        clientIp,
+        30,
+        300
+      );
+      if (!rateLimit.allowed) {
+        return NextResponse.json(
+          { success: false, isUnique: false, error: "تم تجاوز عدد محاولات فحص الأرقام. يرجى الانتظار 5 دقائق." },
+          { status: 429 }
+        );
+      }
+    }
+
     const body = await req.json().catch(() => null);
     const phoneInput = body?.phone;
     const currentUserId = body?.userId;

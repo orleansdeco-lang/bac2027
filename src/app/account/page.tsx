@@ -148,18 +148,58 @@ export default function AccountPage() {
         setPaymentRecord(null);
         return;
       }
-      const p = await StudentService.getProfile(user.id);
-      if (p) {
-        setProfile(p);
+
+      // 1. Fetch Authoritative Student Profile and Payment Order directly from PostgreSQL
+      let authoritativeLoaded = false;
+      try {
+        const res = await fetch("/api/student/sync");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.profile) {
+            setProfile(data.profile);
+            authoritativeLoaded = true;
+
+            if (data.latestOrder) {
+              setPaymentRecord({
+                requestId: data.latestOrder.id,
+                userId: user.id,
+                studentEmail: user.email || undefined,
+                planId: data.latestOrder.plan || "season",
+                state: data.latestOrder.status === "APPROVED"
+                  ? "PAYMENT_CONFIRMED"
+                  : data.latestOrder.status === "REJECTED"
+                  ? "PAYMENT_REJECTED"
+                  : "PAYMENT_PENDING_VERIFICATION",
+                rejectionReason: data.latestOrder.rejection_reason,
+                submittedAt: data.latestOrder.submitted_at || data.latestOrder.created_at,
+                updatedAt: data.latestOrder.updated_at || data.latestOrder.submitted_at,
+              } as any);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("[AccountPage] /api/student/sync fetch fallback:", err);
       }
+
+      // 2. Fallback to client service if server sync not yet loaded
+      if (!authoritativeLoaded) {
+        const p = await StudentService.getProfile(user.id);
+        if (p) {
+          setProfile(p);
+        }
+      }
+
       const reg = getRegistrationDraft(user.id);
       if (reg) setRegDraft(reg);
 
-      const records = getStoredPaymentRecords(user.id);
-      const userRecord = records.find(
-        (r) => r.userId === user.id || (user.email && r.studentEmail && r.studentEmail.toLowerCase() === user.email.toLowerCase())
-      ) || null;
-      setPaymentRecord(userRecord);
+      // 3. Fallback to localStorage payment records ONLY if no database order was found and user ID strictly matches
+      if (!authoritativeLoaded) {
+        const records = getStoredPaymentRecords(user.id);
+        const userRecord = records.find((r) => r.userId === user.id) || null;
+        if (userRecord) {
+          setPaymentRecord(userRecord);
+        }
+      }
 
       try {
         const refRes = await fetch(`/api/referral?userId=${encodeURIComponent(user.id)}`);
@@ -723,23 +763,66 @@ export default function AccountPage() {
                 </div>
               </div>
 
-              {regDraft && (
-                <div className="p-3.5 rounded-2xl bg-card-muted/70 border border-theme space-y-2 text-xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-theme-muted">{isAr ? "بيانات التلميذ:" : "Informations élève :"}</span>
-                    <span className="font-bold text-theme-text">{regDraft.firstName} {regDraft.lastName}</span>
+              {(() => {
+                const sFirstName = profile?.firstName || (profile as any)?.first_name || regDraft?.firstName || "";
+                const sLastName = profile?.lastName || (profile as any)?.last_name || regDraft?.lastName || "";
+                const sFullName = (sFirstName || sLastName)
+                  ? `${sFirstName} ${sLastName}`.trim()
+                  : (profile?.fullName || (profile as any)?.full_name || "");
+                const sStatus = profile?.studentStatus || (profile as any)?.student_status || regDraft?.studentStatus;
+                const sSchool = profile?.schoolName !== undefined ? profile.schoolName : ((profile as any)?.school_name !== undefined ? (profile as any).school_name : regDraft?.schoolName);
+                const sWilaya = profile?.wilayaName || (profile as any)?.wilaya_name || regDraft?.wilayaName;
+                const sCommune = profile?.communeName || (profile as any)?.commune_name || regDraft?.communeName;
+                const sPhone = profile?.studentPhone || (profile as any)?.student_phone || regDraft?.studentPhone;
+                const sParentPhone = profile?.parentPhone || (profile as any)?.parent_phone || regDraft?.parentPhone;
+                const sPhoneVerified = Boolean((profile as any)?.phoneVerified || (profile as any)?.phone_verified);
+
+                if (!sFullName && !sWilaya && !sStatus && !sPhone) {
+                  return null;
+                }
+
+                return (
+                  <div className="p-3.5 rounded-2xl bg-card-muted/70 border border-theme space-y-2.5 text-xs">
+                    {sFullName && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-theme-muted">{isAr ? "اسم التلميذ:" : "Nom & Prénom :"}</span>
+                        <span className="font-bold text-theme-text">{sFullName}</span>
+                      </div>
+                    )}
+                    {sPhone && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-theme-muted">{isAr ? "رقم الهاتف:" : "Téléphone :"}</span>
+                        <div className="flex items-center gap-1.5 font-mono">
+                          <span className="font-bold text-theme-text" dir="ltr">{sPhone}</span>
+                          {sPhoneVerified && (
+                            <span className="text-[10px] text-emerald-500 bg-emerald-500/10 px-1.5 py-0.2 rounded font-sans font-bold">
+                              {isAr ? "مؤكد ✓" : "Vérifié ✓"}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {sParentPhone && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-theme-muted">{isAr ? "هاتف الولي:" : "Tél parent :"}</span>
+                        <span className="font-bold text-theme-text font-mono" dir="ltr">{sParentPhone}</span>
+                      </div>
+                    )}
+                    {(sStatus || sWilaya) && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-theme-muted">{isAr ? "الوضعية والموقع:" : "Statut & Lieu :"}</span>
+                        <span className="text-theme-secondary font-medium text-end">
+                          {sStatus === "schooled"
+                            ? `${isAr ? "متمدرس" : "Scolarisé"}${sSchool ? ` (${sSchool})` : ""}`
+                            : (isAr ? "مترشح حر" : "Candidat libre")}
+                          {sWilaya ? ` · ${sWilaya}` : ""}
+                          {sCommune ? ` (${sCommune})` : ""}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-theme-muted">{isAr ? "الوضعية والموقع:" : "Statut & Lieu :"}</span>
-                    <span className="text-theme-secondary font-medium">
-                      {regDraft.studentStatus === "schooled"
-                        ? `${isAr ? "متمدرس" : "Scolarisé"}${regDraft.schoolName ? ` (${regDraft.schoolName})` : ""}`
-                        : (isAr ? "مترشح حر" : "Candidat libre")}
-                      {regDraft.wilayaName ? ` · ${regDraft.wilayaName}` : ""}
-                    </span>
-                  </div>
-                </div>
-              )}
+                );
+              })()}
 
               <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <Link href="/profile/academic">
@@ -849,21 +932,60 @@ export default function AccountPage() {
                 )}
               </div>
 
-              {/* Pending Payment Record Display */}
+              {/* Payment Order Display: Pending, Rejected, or Processing */}
               {!isPaidActive && paymentRecord && paymentRecord.state !== "PAYMENT_CONFIRMED" && (
-                <div data-testid="account-payment-record" className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-xs space-y-1.5">
+                <div
+                  data-testid="account-payment-record"
+                  className={`p-4 rounded-2xl border text-xs space-y-2.5 ${
+                    paymentRecord.state === "PAYMENT_REJECTED"
+                      ? "bg-rose-500/10 border-rose-500/30 text-rose-300"
+                      : "bg-amber-500/10 border-amber-500/25"
+                  }`}
+                >
                   <div className="flex items-center justify-between">
-                    <span className="text-amber-700 font-bold flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>{isAr ? "طلب اشتراك قيد المعالجة" : "Demande de paiement"}</span>
+                    <span
+                      className={`font-bold flex items-center gap-1.5 ${
+                        paymentRecord.state === "PAYMENT_REJECTED"
+                          ? "text-rose-500 font-bold"
+                          : "text-amber-700 dark:text-amber-400 font-bold"
+                      }`}
+                    >
+                      {paymentRecord.state === "PAYMENT_REJECTED" ? (
+                        <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                      ) : (
+                        <Clock className="w-4 h-4 shrink-0" />
+                      )}
+                      <span>
+                        {paymentRecord.state === "PAYMENT_REJECTED"
+                          ? (isAr ? "تم رفض وصل التحويل" : "Paiement refusé")
+                          : (isAr ? "طلب اشتراك قيد المعالجة" : "Demande de paiement")}
+                      </span>
                     </span>
-                    <Badge variant="warning" size="sm" className="text-[10px] uppercase">
-                      {paymentRecord.state === "PAYMENT_PENDING_VERIFICATION"
-                        ? isAr ? "بانتظار تأكيد المشرف" : "En vérification"
-                        : isAr ? "طلب مسجل" : "Demandé"}
+                    <Badge
+                      variant={paymentRecord.state === "PAYMENT_REJECTED" ? "outline" : "warning"}
+                      size="sm"
+                      className={`text-[10px] uppercase ${
+                        paymentRecord.state === "PAYMENT_REJECTED"
+                          ? "text-rose-500 border-rose-500/40 bg-rose-500/10"
+                          : ""
+                      }`}
+                    >
+                      {paymentRecord.state === "PAYMENT_REJECTED"
+                        ? (isAr ? "مرفوض" : "Refusé")
+                        : paymentRecord.state === "PAYMENT_PENDING_VERIFICATION"
+                        ? (isAr ? "بانتظار تأكيد المشرف" : "En vérification")
+                        : (isAr ? "طلب مسجل" : "Demandé")}
                     </Badge>
                   </div>
-                  <div className="font-mono text-[11px] text-theme-secondary">
+
+                  {paymentRecord.rejectionReason && (
+                    <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-xs">
+                      <span className="font-bold block mb-0.5">{isAr ? "سبب الرفض:" : "Motif :"}</span>
+                      <span>{paymentRecord.rejectionReason}</span>
+                    </div>
+                  )}
+
+                  <div className="font-mono text-[11px] text-theme-secondary flex items-center justify-between">
                     <span>{isAr ? "الرمز المرجعي: " : "Réf : "}</span>
                     <span className="text-theme-text font-bold">{paymentRecord.requestId}</span>
                   </div>

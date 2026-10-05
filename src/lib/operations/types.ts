@@ -237,6 +237,8 @@ export interface StudentOperationalSummary {
   referral_code?: string;
   referred_by_code?: string;
   credit_balance_dzd?: number;
+  phoneVerified?: boolean;
+  phoneVerifiedAt?: string | null;
 }
 
 export interface SubscriptionPlan {
