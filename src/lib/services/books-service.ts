@@ -51,12 +51,19 @@ export const BooksService = {
         const { data, error } = await query;
         if (!error && data && data.length > 0) {
           books = (data as Book[]).map((b) => {
-            const seedMatch = INITIAL_BOOKS_SEED.find((s) => s.id === b.id);
+            const seedMatch = INITIAL_BOOKS_SEED.find(
+              (s) => s.id === b.id || s.title.trim() === b.title.trim()
+            );
             if (seedMatch && seedMatch.file_url.startsWith("/documents/books/")) {
               return { ...b, file_url: seedMatch.file_url };
             }
-            if (b.file_url && (b.file_url.includes("dzexams.com") || b.file_url.includes("eddirasa.com"))) {
-              return { ...b, file_url: `/documents/books/${b.id}.pdf` };
+            if (b.file_url && b.file_url.startsWith("/documents/books/")) {
+              return b;
+            }
+            // Fallback by subject to ensure a valid existing PDF is always loaded
+            const subjFallback = INITIAL_BOOKS_SEED.find((s) => s.subject === b.subject);
+            if (subjFallback) {
+              return { ...b, file_url: subjFallback.file_url };
             }
             return b;
           });
