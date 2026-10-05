@@ -40,7 +40,7 @@ export async function GET(req: Request) {
 
   const effectiveVisitorId = visitorId || (genericId?.startsWith("vid_") || genericId?.startsWith("anon_") ? genericId : undefined);
   const effectiveSessionId = sessionId || (genericId?.startsWith("ses_") ? genericId : undefined);
-  const effectiveUserId = userId || (genericId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(genericId) ? genericId : undefined);
+  let effectiveUserId = userId || (genericId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(genericId) ? genericId : undefined);
 
   if (!effectiveUserId && !effectiveVisitorId && !effectiveSessionId && !genericId) {
     return NextResponse.json(
@@ -123,9 +123,34 @@ export async function GET(req: Request) {
             .select("*")
             .or(`id.eq.${foundUserId},user_id.eq.${foundUserId}`)
             .maybeSingle();
-          if (prof) studentProfile = prof;
+          if (prof) {
+            studentProfile = prof;
+            effectiveUserId = foundUserId;
+          }
         } catch {}
       }
+    }
+
+    // If still no student profile, try looking up via analytics_visitors identity stitching
+    if (!studentProfile && effectiveVisitorId) {
+      try {
+        const { data: vRow } = await client
+          .from("analytics_visitors")
+          .select("user_id")
+          .eq("visitor_id", effectiveVisitorId)
+          .maybeSingle();
+        if (vRow?.user_id) {
+          const { data: prof } = await client
+            .from("student_profiles")
+            .select("*")
+            .or(`id.eq.${vRow.user_id},user_id.eq.${vRow.user_id}`)
+            .maybeSingle();
+          if (prof) {
+            studentProfile = prof;
+            effectiveUserId = vRow.user_id;
+          }
+        }
+      } catch {}
     }
 
     // 3. Query all matching events (chronological journey)
@@ -134,7 +159,7 @@ export async function GET(req: Request) {
     try {
       let evQuery = client
         .from("analytics_events")
-        .select("event_id, session_id, anonymous_id, user_id, event_name, route, page_path, properties, occurred_at")
+        .select("event_id, session_id, anonymous_id, visitor_id, user_id, event_name, route, page_path, properties, occurred_at")
         .not("route", "like", "/ops%")
         .not("route", "like", "/admin%")
         .not("route", "like", "/api%")
@@ -147,6 +172,7 @@ export async function GET(req: Request) {
       }
       if (effectiveVisitorId) {
         orParts.push(`anonymous_id.eq.${effectiveVisitorId}`);
+        orParts.push(`visitor_id.eq.${effectiveVisitorId}`);
       }
       if (effectiveSessionId) {
         orParts.push(`session_id.eq.${effectiveSessionId}`);

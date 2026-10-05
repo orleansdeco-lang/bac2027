@@ -227,7 +227,16 @@ export function RecentVisitorActivityTable({ activity, loading = false }: Props)
                           </div>
                           <div className="flex items-center gap-1.5 text-slate-300">
                             <span className="text-[10px] text-slate-500 font-sans">خروج:</span>
-                            <span>{exitClock || (item.enteredAt && !item.exitedAt ? "جارية الآن..." : "—")}</span>
+                            {exitClock ? (
+                              <span>{exitClock}</span>
+                            ) : item.enteredAt && !item.exitedAt ? (
+                              <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                <span>جارية الآن...</span>
+                              </span>
+                            ) : (
+                              <span>—</span>
+                            )}
                           </div>
                           <div className="text-[10px] text-slate-500">{date}</div>
                         </div>
@@ -235,14 +244,24 @@ export function RecentVisitorActivityTable({ activity, loading = false }: Props)
 
                       {/* Dwell Duration Badge */}
                       <td className="px-4 py-3">
-                        {durationText && durationText !== "—" ? (
+                        {durationText && durationText.includes("نشطة الآن") ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-emerald-950/70 text-emerald-300 border border-emerald-800/50">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            <span>{durationText}</span>
+                          </span>
+                        ) : durationText && durationText !== "—" ? (
                           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono font-bold bg-cyan-950/70 text-cyan-300 border border-cyan-800/50">
                             <Clock className="w-3.5 h-3.5 text-cyan-400" />
                             <span>{durationText}</span>
                           </span>
+                        ) : item.enteredAt && !item.exitedAt ? (
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/40">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                            <span>جارية الآن</span>
+                          </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-mono text-slate-500 bg-slate-950/60 border border-slate-800">
-                            <span>&lt; 1ث</span>
+                            <span>ثوانٍ معدودة</span>
                           </span>
                         )}
                       </td>

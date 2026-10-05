@@ -8,11 +8,29 @@ import { StudentRepository } from "../repositories/student-repository";
 import { clearAllMissionData } from "../mission/storage";
 import { trackProductEvent } from "../analytics";
 
+export interface PhoneOtpSendResult {
+  success: boolean;
+  maskedPhone?: string;
+  cooldownSeconds?: number;
+  isExistingUser?: boolean;
+  error?: string;
+}
+
+export interface PhoneOtpVerifyResult {
+  success: boolean;
+  isNewUser: boolean;
+  redirectUrl: string;
+  user: User | null;
+  error?: string;
+}
+
 export interface AuthContextType {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
   isConfigured: boolean;
+  signInWithPhoneOtp: (phone: string) => Promise<PhoneOtpSendResult>;
+  verifyPhoneOtp: (phone: string, otp: string) => Promise<PhoneOtpVerifyResult>;
   signUp: (email: string, password: string) => Promise<{ user: User | null; error: AuthError | null }>;
   signIn: (email: string, password: string) => Promise<{ user: User | null; error: AuthError | null }>;
   signOut: () => Promise<{ error: AuthError | null }>;
@@ -489,6 +507,113 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { user: fallbackUser, error: null };
   };
 
+  const signInWithPhoneOtp = async (phone: string): Promise<PhoneOtpSendResult> => {
+    try {
+      const res = await fetch("/api/auth/otp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        return {
+          success: false,
+          error: data?.error || "تعذر إرسال رمز التحقق. يرجى المحاولة لاحقاً.",
+          cooldownSeconds: data?.cooldownSeconds,
+        };
+      }
+      return {
+        success: true,
+        maskedPhone: data.maskedPhone,
+        cooldownSeconds: data.cooldownSeconds || 60,
+        isExistingUser: Boolean(data.isExistingUser),
+      };
+    } catch {
+      return {
+        success: false,
+        error: "تعذر الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت.",
+      };
+    }
+  };
+
+  const verifyPhoneOtp = async (phone: string, otp: string): Promise<PhoneOtpVerifyResult> => {
+    try {
+      const res = await fetch("/api/auth/otp/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone, otp }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        return {
+          success: false,
+          isNewUser: false,
+          redirectUrl: "/dashboard",
+          user: null,
+          error: data?.error || "رمز التحقق غير صحيح.",
+        };
+      }
+
+      let resolvedUser: User | null = null;
+
+      // If Supabase magiclink token was generated, exchange it with client Supabase instance
+      if (data.token_hash && isSupabaseConfigured && supabase) {
+        try {
+          const { data: authData } = await supabase.auth.verifyOtp({
+            token_hash: data.token_hash,
+            type: "magiclink",
+          });
+          if (authData?.user) {
+            resolvedUser = authData.user;
+            if (authData.session) setSession(authData.session);
+          }
+        } catch (err) {
+          console.warn("[Auth] Client verifyOtp exception:", err);
+        }
+      }
+
+      if (!resolvedUser) {
+        resolvedUser = {
+          id: data.userId,
+          app_metadata: { provider: "phone" },
+          user_metadata: { phone: data.phone, phone_verified: true },
+          aud: "authenticated",
+          created_at: new Date().toISOString(),
+          role: "authenticated",
+        } as User;
+      }
+
+      setUser(resolvedUser);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("bac_auth_user", JSON.stringify(resolvedUser));
+      }
+      syncAuthCookies(data.token_hash || resolvedUser.id);
+      syncLocalStudentProfileIfPresent(resolvedUser);
+
+      if (data.isNewUser) {
+        trackProductEvent("signup_completed", { method: "phone_whatsapp" });
+        trackProductEvent("trial_started", { duration_days: 3 });
+      } else {
+        trackProductEvent("login", { method: "phone_whatsapp" });
+      }
+
+      return {
+        success: true,
+        isNewUser: Boolean(data.isNewUser),
+        redirectUrl: data.redirectUrl || (data.isNewUser ? "/auth/register" : "/dashboard"),
+        user: resolvedUser,
+      };
+    } catch {
+      return {
+        success: false,
+        isNewUser: false,
+        redirectUrl: "/dashboard",
+        user: null,
+        error: "تعذر الاتصال بالخادم. يرجى التحقق من اتصال الإنترنت.",
+      };
+    }
+  };
+
   const signOut = async () => {
     const currentUid = user?.id;
     if (currentUid) {
@@ -520,6 +645,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       session,
       isLoading,
       isConfigured: isSupabaseConfigured,
+      signInWithPhoneOtp,
+      verifyPhoneOtp,
       signUp,
       signIn,
       signOut,

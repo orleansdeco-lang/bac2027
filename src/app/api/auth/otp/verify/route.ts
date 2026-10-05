@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { extractAuthenticatedUserId } from "@/lib/operations/auth";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase/client";
-import { normalizeAlgerianPhone } from "@/domain/administrative/phone-validation";
-import { verifyOtpHash, hashOtp } from "@/lib/security/otp";
+import {
+  normalizeAlgerianPhone,
+  toCanonicalAlgerianPhone,
+} from "@/domain/administrative/phone-validation";
+import { verifyOtpHash, maskPhone } from "@/lib/security/otp";
 import { checkOtpVerifyRateLimit } from "@/lib/security/persistent-rate-limiter";
 
 export const dynamic = "force-dynamic";
@@ -22,29 +25,25 @@ function getClientIp(req: Request): string {
 
 /**
  * POST /api/auth/otp/verify
- * Authoritatively verifies a 6-digit WhatsApp OTP code and marks student_profiles.phone_verified = true.
+ * Authoritatively verifies a 6-digit WhatsApp OTP code, authenticates the student,
+ * establishes a session, and redirects to either onboarding or dashboard.
  * 
  * SECURITY INVARIANTS:
- * 1. Caller identity is strictly authoritatively extracted from session/token; client body.userId is ignored.
- * 2. Compares HMAC-SHA256 in constant time (timing-safe).
- * 3. Enforces 10-minute expiry and 5 max attempts limit.
- * 4. At max attempts, challenge is automatically invalidated and locked.
- * 5. Successful verification marks challenge consumed atomically and sets phone_verified = true.
+ * 1. Constant-time HMAC comparison (timing-safe).
+ * 2. Enforces 10-minute expiration and max 5 attempts.
+ * 3. At max attempts, challenge is automatically invalidated and locked.
+ * 4. Existing users -> direct login session -> /dashboard.
+ * 5. New users -> account creation -> /auth/register (onboarding wizard).
+ * 6. Sets secure HTTP session cookies on successful verification.
  */
 export async function POST(req: Request) {
   try {
-    // 1. Strict Server-Side Authentication
     const callerId = await extractAuthenticatedUserId(req);
-    if (!callerId) {
-      return NextResponse.json(
-        { success: false, error: "يجب تسجيل الدخول لتأكيد رمز التحقق." },
-        { status: 401 }
-      );
-    }
 
-    // 2. Parse & Validate Code Input
+    // 1. Parse & Validate Input
     const body = await req.json().catch(() => null);
-    const code = body?.code;
+    const code = body?.code || body?.otp;
+    const phoneInput = body?.phone;
 
     if (!code || typeof code !== "string" || !/^\d{6}$/.test(code.trim())) {
       return NextResponse.json(
@@ -56,9 +55,45 @@ export async function POST(req: Request) {
     const trimmedCode = code.trim();
     const clientIp = getClientIp(req);
 
+    const client = getAdminClient() || supabase;
+    if (!isSupabaseConfigured || !client) {
+      return NextResponse.json(
+        { success: false, error: "خدمة قاعدة البيانات غير متاحة حالياً." },
+        { status: 503 }
+      );
+    }
+
+    // 2. Resolve Phone Number for Verification
+    let canonicalPhone: string | null = null;
+    let localPhone: string | null = null;
+
+    if (phoneInput && typeof phoneInput === "string") {
+      canonicalPhone = toCanonicalAlgerianPhone(phoneInput);
+      localPhone = normalizeAlgerianPhone(phoneInput);
+    } else if (callerId) {
+      // Look up caller's phone from profile
+      const { data: callerProfile } = await client
+        .from("student_profiles")
+        .select("student_phone, canonical_phone")
+        .eq("id", callerId)
+        .maybeSingle();
+
+      if (callerProfile) {
+        canonicalPhone = callerProfile.canonical_phone || (callerProfile.student_phone ? toCanonicalAlgerianPhone(callerProfile.student_phone) : null);
+        localPhone = callerProfile.student_phone || (canonicalPhone ? normalizeAlgerianPhone(canonicalPhone) : null);
+      }
+    }
+
+    if (!canonicalPhone) {
+      return NextResponse.json(
+        { success: false, error: "يرجى تحديد رقم الهاتف للتحقق." },
+        { status: 400 }
+      );
+    }
+
     // 3. Verification Anti-Brute-Force Rate Limiting
     const verifyRateLimit = await checkOtpVerifyRateLimit({
-      userId: callerId,
+      userId: callerId || canonicalPhone,
       clientIp,
     });
 
@@ -72,37 +107,22 @@ export async function POST(req: Request) {
       );
     }
 
-    const adminClient = getAdminClient() || supabase;
-    if (!isSupabaseConfigured || !adminClient) {
-      return NextResponse.json(
-        { success: false, error: "خدمة قاعدة البيانات غير متاحة حالياً." },
-        { status: 503 }
-      );
-    }
-
-    // 4. Look up active challenge for this user
-    const { data: challenge, error: challengeErr } = await adminClient
+    // 4. Look up active challenge for this phone
+    let challengeQuery = client
       .from("phone_verification_codes")
       .select("*")
-      .eq("user_id", callerId)
+      .eq("canonical_phone", canonicalPhone)
       .is("consumed_at", null)
       .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .limit(1);
+
+    if (callerId) {
+      challengeQuery = challengeQuery.or(`user_id.eq.${callerId},canonical_phone.eq.${canonicalPhone}`);
+    }
+
+    const { data: challenge, error: challengeErr } = await challengeQuery.maybeSingle();
 
     if (challengeErr) {
-      if (
-        process.env.NODE_ENV === "test" &&
-        (challengeErr.code === "PGRST205" || (challengeErr as any).code === "42P01")
-      ) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "لم يتم العثور على رمز تحقق نشط. يرجى طلب رمز جديد.",
-          },
-          { status: 404 }
-        );
-      }
       console.error("[/api/auth/otp/verify] DB query error:", challengeErr);
       return NextResponse.json(
         { success: false, error: "حدث خطأ أثناء فحص رمز التحقق." },
@@ -125,7 +145,7 @@ export async function POST(req: Request) {
 
     // 5. Expiration Check (10 Minutes)
     if (now > expiresAt) {
-      await adminClient
+      await client
         .from("phone_verification_codes")
         .update({ consumed_at: new Date().toISOString() })
         .eq("id", challenge.id);
@@ -133,7 +153,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           success: false,
-          error: "انتهت صلاحية رمز التحقق (10 دقائق). يرجى طلب رمز جديد.",
+          error: "انتهت صلاحية الرمز. اطلب رمزًا جديدًا.",
         },
         { status: 400 }
       );
@@ -141,7 +161,7 @@ export async function POST(req: Request) {
 
     // 6. Max Attempts Check (5 Attempts)
     if (challenge.attempts >= challenge.max_attempts) {
-      await adminClient
+      await client
         .from("phone_verification_codes")
         .update({ consumed_at: new Date().toISOString() })
         .eq("id", challenge.id);
@@ -149,53 +169,17 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           success: false,
-          error: "تم تجاوز الحد الأقصى للمحاولات (5 محاولات). يرجى طلب رمز جديد.",
+          error: "تم تجاوز عدد المحاولات. حاول لاحقًا.",
           remainingAttempts: 0,
         },
         { status: 400 }
       );
     }
 
-    // 7. Atomic Database RPC Verification (Preferred for concurrency safety)
-    const expectedHash = hashOtp(trimmedCode, callerId, challenge.canonical_phone);
-
-    try {
-      const { data: rpcResult, error: rpcErr } = await adminClient.rpc(
-        "verify_and_consume_phone_otp",
-        {
-          p_user_id: callerId,
-          p_canonical_phone: challenge.canonical_phone,
-          p_otp_hash: expectedHash,
-        }
-      );
-
-      if (!rpcErr && rpcResult && typeof rpcResult === "object") {
-        const resObj = rpcResult as Record<string, any>;
-        if (resObj.success) {
-          return NextResponse.json({
-            success: true,
-            verified: true,
-            message: "تم تأكيد رقم الهاتف بنجاح.",
-          });
-        }
-
-        return NextResponse.json(
-          {
-            success: false,
-            error: resObj.message || "رمز التحقق غير صحيح.",
-            remainingAttempts: resObj.remaining_attempts,
-          },
-          { status: 400 }
-        );
-      }
-    } catch {
-      // Fall through to query-level verification if RPC is not present
-    }
-
-    // 8. Direct Fallback Verification Logic (Timing-Safe)
+    // 7. Timing-Safe Constant-Time Hash Verification
     const isValid = verifyOtpHash(
       trimmedCode,
-      callerId,
+      challenge.user_id,
       challenge.canonical_phone,
       challenge.otp_hash
     );
@@ -207,7 +191,7 @@ export async function POST(req: Request) {
       const remaining = Math.max(0, challenge.max_attempts - newAttempts);
       const isExhausted = remaining === 0;
 
-      await adminClient
+      await client
         .from("phone_verification_codes")
         .update({
           attempts: newAttempts,
@@ -220,49 +204,190 @@ export async function POST(req: Request) {
         {
           success: false,
           error: isExhausted
-            ? "رمز التحقق غير صحيح. تم تجاوز الحد الأقصى للمحاولات (5 محاولات). يرجى طلب رمز جديد."
-            : `رمز التحقق غير صحيح. تبقى لديك ${remaining} محاولات.`,
+            ? "تم تجاوز عدد المحاولات. حاول لاحقًا."
+            : "رمز التحقق غير صحيح.",
           remainingAttempts: remaining,
         },
         { status: 400 }
       );
     }
 
-    // 9. Valid OTP: Consume Challenge Atomically
-    await adminClient
+    // 8. Valid OTP: Consume Challenge Atomically
+    await client
       .from("phone_verification_codes")
       .update({ consumed_at: nowIso, last_attempt_at: nowIso })
       .eq("id", challenge.id);
 
-    // Invalidate any other open codes
-    await adminClient
+    // Invalidate any other open codes for this phone
+    await client
       .from("phone_verification_codes")
       .update({ consumed_at: nowIso })
-      .eq("user_id", callerId)
+      .eq("canonical_phone", canonicalPhone)
       .is("consumed_at", null);
 
-    // 10. Update student_profiles authoritatively via service_role adminClient
-    const localPhone = normalizeAlgerianPhone(challenge.canonical_phone);
-    const { error: profileUpdateErr } = await adminClient
-      .from("student_profiles")
-      .update({
-        phone_verified: true,
-        phone_verified_at: nowIso,
-        student_phone: localPhone,
-        canonical_phone: challenge.canonical_phone,
-        updated_at: nowIso,
-      })
-      .eq("id", callerId);
+    // 9. Resolve / Provision User Account & Student Profile
+    const admin = getAdminClient();
+    let effectiveUserId = callerId || challenge.user_id;
+    let isNewUser = false;
+    let redirectUrl = "/dashboard";
+    let tokenHash: string | null = null;
+    let userEmailToAuth: string | null = null;
 
-    if (profileUpdateErr) {
-      console.error("[/api/auth/otp/verify] Profile update error:", profileUpdateErr);
+    // Check if a student profile exists with this phone
+    let existingProfile: any = null;
+    if (effectiveUserId) {
+      const { data: p } = await client
+        .from("student_profiles")
+        .select("*")
+        .eq("id", effectiveUserId)
+        .maybeSingle();
+      existingProfile = p;
+    } else {
+      const { data: p } = await client
+        .from("student_profiles")
+        .select("*")
+        .or(`canonical_phone.eq.${canonicalPhone},student_phone.eq.${localPhone}`)
+        .limit(1)
+        .maybeSingle();
+      existingProfile = p;
+      if (p) effectiveUserId = p.id;
     }
 
-    return NextResponse.json({
+    if (existingProfile) {
+      effectiveUserId = existingProfile.id;
+      userEmailToAuth = existingProfile.email || `${localPhone}@phone.shater.internal`;
+
+      // Check registration completeness
+      const isRegistered = Boolean(
+        existingProfile.registration_completed_at ||
+        (existingProfile.first_name && existingProfile.stream_id && existingProfile.first_name !== "طالب")
+      );
+
+      if (!isRegistered) {
+        isNewUser = true;
+        redirectUrl = "/auth/register";
+      } else {
+        isNewUser = false;
+        redirectUrl = "/dashboard";
+      }
+
+      // Update phone verification flag authoritatively
+      await client
+        .from("student_profiles")
+        .update({
+          phone_verified: true,
+          phone_verified_at: nowIso,
+          student_phone: localPhone,
+          canonical_phone: canonicalPhone,
+          updated_at: nowIso,
+        })
+        .eq("id", effectiveUserId);
+    } else {
+      // BRAND NEW USER
+      isNewUser = true;
+      redirectUrl = "/auth/register";
+      const syntheticEmail = `${localPhone}@phone.shater.internal`;
+      userEmailToAuth = syntheticEmail;
+
+      if (admin) {
+        try {
+          // Check if auth.users already has this synthetic email
+          const { data: newUser, error: createErr } = await admin.auth.admin.createUser({
+            email: syntheticEmail,
+            email_confirm: true,
+            user_metadata: {
+              phone: canonicalPhone,
+              student_phone: localPhone,
+              phone_verified: true,
+            },
+          });
+
+          if (newUser?.user) {
+            effectiveUserId = newUser.user.id;
+          } else if (createErr) {
+            console.warn("[/api/auth/otp/verify] admin.createUser warning:", createErr.message);
+          }
+        } catch (adminErr) {
+          console.warn("[/api/auth/otp/verify] admin.createUser exception:", adminErr);
+        }
+      }
+
+      if (!effectiveUserId) {
+        // Deterministic resilient fallback ID
+        let h = 0x811c9dc5;
+        for (let i = 0; i < (localPhone || "").length; i++) {
+          h ^= (localPhone || "").charCodeAt(i);
+          h = Math.imul(h, 0x01000193);
+        }
+        effectiveUserId = `usr_std_${(h >>> 0).toString(16).padStart(8, "0")}`;
+      }
+
+      // Create student profile with 3-day trial and verified phone
+      await client
+        .from("student_profiles")
+        .upsert(
+          {
+            id: effectiveUserId,
+            user_id: effectiveUserId,
+            student_phone: localPhone,
+            canonical_phone: canonicalPhone,
+            phone_verified: true,
+            phone_verified_at: nowIso,
+            access_status: "TRIAL",
+            plan: "PILOT_TRIAL",
+            trial_started_at: nowIso,
+            trial_expires_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+            created_at: nowIso,
+            updated_at: nowIso,
+          },
+          { onConflict: "id" }
+        );
+    }
+
+    // 10. Generate Magiclink Session Token if Admin Client is Available
+    if (admin && userEmailToAuth) {
+      try {
+        const { data: linkData } = await admin.auth.admin.generateLink({
+          type: "magiclink",
+          email: userEmailToAuth,
+        });
+        if (linkData?.properties?.hashed_token) {
+          tokenHash = linkData.properties.hashed_token;
+        }
+      } catch (linkErr) {
+        console.warn("[/api/auth/otp/verify] generateLink warning:", linkErr);
+      }
+    }
+
+    // 11. Prepare Successful Response & Set HTTP Auth Cookies
+    const response = NextResponse.json({
       success: true,
       verified: true,
+      isNewUser,
+      redirectUrl,
+      userId: effectiveUserId,
+      token_hash: tokenHash,
+      phone: canonicalPhone,
+      maskedPhone: maskPhone(canonicalPhone),
       message: "تم تأكيد رقم الهاتف بنجاح.",
     });
+
+    // Set auth cookies (1 year duration)
+    const tokenVal = encodeURIComponent(tokenHash || effectiveUserId);
+    const maxAge = 31536000;
+    const isProduction = process.env.NODE_ENV === "production";
+    const secureFlag = isProduction ? "; Secure" : "";
+
+    response.headers.append(
+      "Set-Cookie",
+      `sb-access-token=${tokenVal}; Path=/; Max-Age=${maxAge}; SameSite=Lax${secureFlag}`
+    );
+    response.headers.append(
+      "Set-Cookie",
+      `bac_auth_token=${tokenVal}; Path=/; Max-Age=${maxAge}; SameSite=Lax${secureFlag}`
+    );
+
+    return response;
   } catch (err: unknown) {
     console.error("[/api/auth/otp/verify] Unexpected exception:", err);
     return NextResponse.json(

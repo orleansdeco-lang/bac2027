@@ -44,15 +44,16 @@ export function generateOtp(): string {
 }
 
 /**
- * Hashes an OTP code bound to a specific user and canonical phone using HMAC-SHA256 with OTP_PEPPER.
+ * Hashes an OTP code bound to a specific user (or guest) and canonical phone using HMAC-SHA256 with OTP_PEPPER.
  * Resulting hash cannot be reversed or reused across different users or phone numbers.
  */
-export function hashOtp(otp: string, userId: string, canonicalPhone: string): string {
-  if (!otp || !userId || !canonicalPhone) {
+export function hashOtp(otp: string, userId: string | null | undefined, canonicalPhone: string): string {
+  if (!otp || !canonicalPhone) {
     throw new Error("Missing required parameters for OTP hashing");
   }
   const pepper = getOtpPepper();
-  const payload = `${userId.toLowerCase()}:${canonicalPhone.trim()}:${otp.trim()}`;
+  const userKey = (userId || "guest").toLowerCase().trim();
+  const payload = `${userKey}:${canonicalPhone.trim()}:${otp.trim()}`;
   return crypto.createHmac("sha256", pepper).update(payload).digest("hex");
 }
 
@@ -61,11 +62,11 @@ export function hashOtp(otp: string, userId: string, canonicalPhone: string): st
  */
 export function verifyOtpHash(
   candidateOtp: string,
-  userId: string,
+  userId: string | null | undefined,
   canonicalPhone: string,
   storedHash: string
 ): boolean {
-  if (!candidateOtp || !userId || !canonicalPhone || !storedHash) {
+  if (!candidateOtp || !canonicalPhone || !storedHash) {
     return false;
   }
   const computedHash = hashOtp(candidateOtp, userId, canonicalPhone);
@@ -82,14 +83,43 @@ export function verifyOtpHash(
 /**
  * Safely masks an Algerian phone number for logs and user notifications.
  * Never displays the full phone number in unauthenticated or public contexts.
- * Example: "+213555123456" -> "+2135***3456"
- * Example: "0555123456" -> "0555***3456"
+ * Example: "+213555123456" -> "05 •• •• •• 56"
+ * Example: "0555123456" -> "05 •• •• •• 56"
  */
 export function maskPhone(phone: string): string {
-  if (!phone) return "****";
-  const clean = phone.trim();
-  if (clean.length < 8) return "****";
-  const start = clean.slice(0, 5);
-  const end = clean.slice(-4);
-  return `${start}***${end}`;
+  if (!phone) return "••••";
+  const clean = phone.replace(/\D/g, "");
+  // Convert 2135... to 05...
+  let local = clean;
+  if (local.startsWith("213") && local.length >= 11) {
+    local = "0" + local.slice(3);
+  } else if (!local.startsWith("0") && (local.startsWith("5") || local.startsWith("6") || local.startsWith("7"))) {
+    local = "0" + local;
+  }
+
+  if (local.length === 10) {
+    const prefix = local.slice(0, 2); // 05, 06, 07
+    const suffix = local.slice(8);    // last 2 digits
+    return `${prefix} •• •• •• ${suffix}`;
+  }
+
+  const start = phone.slice(0, 4);
+  const end = phone.slice(-2);
+  return `${start} •••• ${end}`;
+}
+
+/**
+ * Formats Algerian phone into readable groups: 05 55 12 34 56
+ */
+export function formatAlgerianPhoneDisplay(phone: string): string {
+  if (!phone) return "";
+  const clean = phone.replace(/\D/g, "");
+  let local = clean;
+  if (local.startsWith("213") && local.length >= 11) {
+    local = "0" + local.slice(3);
+  }
+  if (local.length === 10) {
+    return `${local.slice(0, 2)} ${local.slice(2, 4)} ${local.slice(4, 6)} ${local.slice(6, 8)} ${local.slice(8, 10)}`;
+  }
+  return phone;
 }

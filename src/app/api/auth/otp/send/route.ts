@@ -34,26 +34,20 @@ function getClientIp(req: Request): string {
 
 /**
  * POST /api/auth/otp/send
- * Dispatches a server-generated 6-digit WhatsApp OTP to the authenticated student's phone.
+ * Dispatches a server-generated 6-digit WhatsApp OTP for Phone-First Authentication or Profile Verification.
  * 
  * SECURITY INVARIANTS:
- * 1. Caller identity is strictly authoritatively extracted from session/token; client body.userId is ignored.
+ * 1. Works for both unauthenticated visitors (login/signup) and authenticated users (profile update).
  * 2. Enforces phone number format (must be Algerian mobile: 05, 06, 07).
- * 3. Enforces persistent rate limiting (60s cooldown, 4/hr/phone, 4/hr/user, 10/hr/IP).
- * 4. Invalidates any existing active challenge for this user/phone before inserting a new one.
+ * 3. Enforces persistent rate limiting (60s cooldown, 4/hr/phone, 10/hr/IP).
+ * 4. Invalidates any existing active challenge for this phone before inserting a new one.
  * 5. OTP is hashed using HMAC-SHA256 with server-side OTP_PEPPER. Plaintext OTP is NEVER stored.
  * 6. Plaintext OTP is NEVER returned in response or leaked in stdout.
  */
 export async function POST(req: Request) {
   try {
-    // 1. Strict Server-Side Authentication
+    // 1. Identify Optional Authenticated Caller
     const callerId = await extractAuthenticatedUserId(req);
-    if (!callerId) {
-      return NextResponse.json(
-        { success: false, error: "يجب تسجيل الدخول لطلب رمز التحقق." },
-        { status: 401 }
-      );
-    }
 
     // 2. Parse & Validate Input Phone
     const body = await req.json().catch(() => null);
@@ -97,33 +91,38 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3. Uniqueness Check against already verified profiles (Anti-Enumeration Guard)
-    const { data: existingVerified, error: checkError } = await client
+    // 3. User Identity Resolution & Uniqueness Guard
+    let targetUserId: string | null = callerId;
+    let isExistingUser = false;
+
+    // Check if phone matches an existing student profile
+    const { data: matchedProfile } = await client
       .from("student_profiles")
-      .select("id")
-      .neq("id", callerId)
-      .eq("phone_verified", true)
+      .select("id, phone_verified")
       .or(`canonical_phone.eq.${canonicalPhone},student_phone.eq.${localPhone}`)
       .limit(1)
       .maybeSingle();
 
-    if (checkError) {
-      console.warn("[/api/auth/otp/send] Uniqueness check DB error:", checkError.message);
-    }
-
-    if (existingVerified) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "رقم الهاتف هذا مسجل ومؤكد بالفعل في حساب آخر. يرجى تسجيل الدخول بحسابك السابق.",
-        },
-        { status: 409 }
-      );
+    if (matchedProfile) {
+      isExistingUser = true;
+      // If an authenticated user is trying to change their phone to a number already verified by someone else
+      if (callerId && matchedProfile.id !== callerId && matchedProfile.phone_verified) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "رقم الهاتف هذا مسجل ومؤكد بالفعل في حساب آخر. يرجى تسجيل الدخول بحسابك السابق.",
+          },
+          { status: 409 }
+        );
+      }
+      if (!targetUserId) {
+        targetUserId = matchedProfile.id;
+      }
     }
 
     // 4. Persistent Rate Limiting & Cooldown Guard
     const rateLimit = await checkOtpSendRateLimit({
-      userId: callerId,
+      userId: targetUserId,
       canonicalPhone,
       clientIp,
     });
@@ -139,24 +138,24 @@ export async function POST(req: Request) {
       );
     }
 
-    // 5. Invalidate Any Previous Active Challenge for this user/phone
+    // 5. Invalidate Any Previous Active Challenge for this phone
     const nowIso = new Date().toISOString();
     await client
       .from("phone_verification_codes")
       .update({ consumed_at: nowIso })
-      .or(`user_id.eq.${callerId},canonical_phone.eq.${canonicalPhone}`)
+      .eq("canonical_phone", canonicalPhone)
       .is("consumed_at", null);
 
     // 6. Cryptographically Generate & Hash OTP
     const rawOtp = generateOtp();
-    const otpHash = hashOtp(rawOtp, callerId, canonicalPhone);
+    const otpHash = hashOtp(rawOtp, targetUserId, canonicalPhone);
     const expiresAt = new Date(Date.now() + OTP_EXPIRATION_MS).toISOString();
 
     // 7. Persist OTP Challenge (Only HMAC hash is stored)
     const { error: insertError } = await client
       .from("phone_verification_codes")
       .insert({
-        user_id: callerId,
+        user_id: targetUserId,
         canonical_phone: canonicalPhone,
         otp_hash: otpHash,
         expires_at: expiresAt,
@@ -190,7 +189,6 @@ export async function POST(req: Request) {
       await client
         .from("phone_verification_codes")
         .update({ consumed_at: new Date().toISOString() })
-        .eq("user_id", callerId)
         .eq("canonical_phone", canonicalPhone)
         .is("consumed_at", null);
 
@@ -206,7 +204,9 @@ export async function POST(req: Request) {
     // 9. Return Safe Response (Plaintext OTP is NEVER leaked)
     return NextResponse.json({
       success: true,
+      maskedPhone: maskPhone(canonicalPhone),
       cooldownSeconds: OTP_COOLDOWN_SECONDS,
+      isExistingUser,
       message: "تم إرسال رمز التحقق بنجاح عبر واتساب.",
     });
   } catch (err: unknown) {

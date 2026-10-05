@@ -91,13 +91,16 @@ export async function checkPersistentRateLimit(
 /**
  * Checks if a user or phone number has sent an OTP within the last 60 seconds (cooldown).
  */
+/**
+ * Checks if a user or phone number has sent an OTP within the last 60 seconds (cooldown).
+ */
 export async function checkOtpSendCooldown(
-  userId: string,
+  userId: string | null | undefined,
   canonicalPhone: string,
   cooldownSeconds: number = 60
 ): Promise<{ allowed: boolean; remainingSeconds: number }> {
   // 1. Fast in-memory sliding window check
-  const memKey = `otp_cooldown:${userId}:${canonicalPhone}`;
+  const memKey = userId ? `otp_cooldown:${userId}:${canonicalPhone}` : `otp_cooldown:${canonicalPhone}`;
   const memCheck = rateLimiter.check(memKey, 1, cooldownSeconds * 1000);
   if (!memCheck.success) {
     return {
@@ -112,7 +115,7 @@ export async function checkOtpSendCooldown(
     try {
       // 2. Try PostgreSQL RPC
       const { data, error } = await client.rpc("check_otp_send_cooldown", {
-        p_user_id: userId,
+        p_user_id: userId || null,
         p_canonical_phone: canonicalPhone,
         p_cooldown_seconds: cooldownSeconds,
       });
@@ -125,30 +128,23 @@ export async function checkOtpSendCooldown(
       }
 
       // 3. Fallback to querying latest created_at across codes and rate limit events
-      const [codesRes, eventsRes] = await Promise.all([
-        client
-          .from("phone_verification_codes")
-          .select("created_at")
-          .or(`user_id.eq.${userId},canonical_phone.eq.${canonicalPhone}`)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-        client
-          .from("rate_limit_events")
-          .select("created_at")
-          .eq("action", "otp_send")
-          .or(`identifier.eq.${userId},identifier.eq.${canonicalPhone}`)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle(),
-      ]);
+      let codesQuery = client
+        .from("phone_verification_codes")
+        .select("created_at")
+        .order("created_at", { ascending: false })
+        .limit(1);
 
-      const latestCodeTime = codesRes.data?.created_at ? new Date(codesRes.data.created_at).getTime() : 0;
-      const latestEventTime = eventsRes.data?.created_at ? new Date(eventsRes.data.created_at).getTime() : 0;
-      const latestTime = Math.max(latestCodeTime, latestEventTime);
+      if (userId) {
+        codesQuery = codesQuery.or(`user_id.eq.${userId},canonical_phone.eq.${canonicalPhone}`);
+      } else {
+        codesQuery = codesQuery.eq("canonical_phone", canonicalPhone);
+      }
 
-      if (latestTime > 0) {
-        const elapsedSeconds = Math.floor((Date.now() - latestTime) / 1000);
+      const { data: latestCode } = await codesQuery.maybeSingle();
+
+      const latestCodeTime = latestCode?.created_at ? new Date(latestCode.created_at).getTime() : 0;
+      if (latestCodeTime > 0) {
+        const elapsedSeconds = Math.floor((Date.now() - latestCodeTime) / 1000);
         if (elapsedSeconds < cooldownSeconds) {
           return {
             allowed: false,
@@ -168,10 +164,10 @@ export async function checkOtpSendCooldown(
 
 /**
  * Comprehensive rate limit check before sending an OTP.
- * Enforces cooldown (60s), phone limit (4/hr), user limit (4/hr), and IP limit (10/hr).
+ * Enforces cooldown (60s), phone limit (4/hr), user limit (4/hr if authenticated), and IP limit (10/hr).
  */
 export async function checkOtpSendRateLimit(params: {
-  userId: string;
+  userId?: string | null;
   canonicalPhone: string;
   clientIp?: string;
 }): Promise<RateLimitResult> {
@@ -203,20 +199,22 @@ export async function checkOtpSendRateLimit(params: {
     };
   }
 
-  // 3. User Limit: Max 4 requests / hour
-  const userLimit = await checkPersistentRateLimit(
-    `otp_send_user:${userId}`,
-    "otp_send",
-    userId,
-    4,
-    3600
-  );
-  if (!userLimit.allowed) {
-    return {
-      allowed: false,
-      resetSeconds: userLimit.resetSeconds,
-      error: "تم تجاوز الحد الأقصى لطلبات الرمز لحسابك (4 طلبات في الساعة). يرجى المحاولة لاحقاً.",
-    };
+  // 3. User Limit (if authenticated): Max 4 requests / hour
+  if (userId) {
+    const userLimit = await checkPersistentRateLimit(
+      `otp_send_user:${userId}`,
+      "otp_send",
+      userId,
+      4,
+      3600
+    );
+    if (!userLimit.allowed) {
+      return {
+        allowed: false,
+        resetSeconds: userLimit.resetSeconds,
+        error: "تم تجاوز الحد الأقصى لطلبات الرمز لحسابك (4 طلبات في الساعة). يرجى المحاولة لاحقاً.",
+      };
+    }
   }
 
   // 4. IP Limit: Max 10 requests / hour
