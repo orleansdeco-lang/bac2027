@@ -48,10 +48,14 @@ export async function GET(req: Request) {
     else if (periodParam === "90d" || periodParam === "90") validPeriod = "90d";
     else validPeriod = "30d";
 
+    const limitParam = url.searchParams.get("limit") || url.searchParams.get("activityLimit");
+    const activityLimit = limitParam ? Math.min(Math.max(parseInt(limitParam, 10) || 250, 20), 1000) : 250;
+
     const data = await getVisitorsAnalytics({
       period: validPeriod,
       operatorId: operator.userId,
       token: operator.token || token,
+      activityLimit,
     });
 
     return NextResponse.json({

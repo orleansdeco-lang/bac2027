@@ -105,7 +105,7 @@ export async function GET(req: Request) {
         query = query.or(`session_id.eq.${genericId},anonymous_id.eq.${genericId},visitor_id.eq.${genericId}`);
       }
 
-      const { data: sessData, error: sessErr } = await query.order("started_at", { ascending: false }).limit(50);
+      const { data: sessData, error: sessErr } = await query.order("started_at", { ascending: false }).limit(100);
       if (!sessErr && Array.isArray(sessData)) {
         sessions = sessData;
       }
@@ -164,7 +164,7 @@ export async function GET(req: Request) {
         .not("route", "like", "/admin%")
         .not("route", "like", "/api%")
         .order("occurred_at", { ascending: false })
-        .limit(150);
+        .limit(300);
 
       const orParts: string[] = [];
       if (effectiveUserId) {

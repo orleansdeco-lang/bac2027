@@ -1,7 +1,11 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { RecentVisitorActivityItem, formatDwellDuration, generateGuestStudentNumber } from "@/lib/operations/visitors-analytics";
+import React, { useState, useMemo, useEffect } from "react";
+import {
+  RecentVisitorActivityItem,
+  formatDwellDuration,
+  generateGuestStudentNumber,
+} from "@/lib/operations/visitors-analytics";
 import { VisitorDossierModal } from "./VisitorDossierModal";
 import {
   Activity,
@@ -16,8 +20,12 @@ import {
   UserPlus,
   User,
   GraduationCap,
-  ArrowRight,
-  Compass,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Info,
+  SlidersHorizontal,
 } from "lucide-react";
 
 interface Props {
@@ -28,25 +36,71 @@ interface Props {
 export function RecentVisitorActivityTable({ activity, loading = false }: Props) {
   const [search, setSearch] = useState("");
   const [deviceFilter, setDeviceFilter] = useState("all");
+  const [visitorTypeFilter, setVisitorTypeFilter] = useState("all");
+  const [pageSize, setPageSize] = useState<string>("25");
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [selectedVisitor, setSelectedVisitor] = useState<RecentVisitorActivityItem | null>(null);
+
+  // Reset page to 1 whenever search or filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, deviceFilter, visitorTypeFilter, pageSize]);
 
   const filtered = useMemo(() => {
     return (activity || []).filter((item) => {
+      // 1. Device filter
       const device = (item.device || "desktop").toLowerCase();
       if (deviceFilter !== "all" && device !== deviceFilter.toLowerCase()) {
         return false;
       }
+
+      // 2. Visitor type filter
+      const isReg = Boolean(item.isRegistered || item.studentProfile || item.userId);
+      const isNew = item.visitorType === "NEW";
+      if (visitorTypeFilter === "registered" && !isReg) return false;
+      if (visitorTypeFilter === "guest" && isReg) return false;
+      if (visitorTypeFilter === "new" && !isNew) return false;
+      if (visitorTypeFilter === "returning" && isNew) return false;
+
+      // 3. Search query
       if (search.trim()) {
         const q = search.trim().toLowerCase();
         const page = ((item as any).page || (item as any).path || "").toLowerCase();
         const source = (item.source || "").toLowerCase();
         const name = (item.displayName || "").toLowerCase();
-        const id = String(item.id || (item as any).sessionId || "").toLowerCase();
-        if (!page.includes(q) && !source.includes(q) && !id.includes(q) && !name.includes(q)) return false;
+        const id = String(item.id || (item as any).sessionId || (item as any).visitorId || "").toLowerCase();
+        const wilaya = String(item.wilayaCode || item.wilayaName || "").toLowerCase();
+
+        if (
+          !page.includes(q) &&
+          !source.includes(q) &&
+          !id.includes(q) &&
+          !name.includes(q) &&
+          !wilaya.includes(q)
+        ) {
+          return false;
+        }
       }
+
       return true;
     });
-  }, [activity, search, deviceFilter]);
+  }, [activity, search, deviceFilter, visitorTypeFilter]);
+
+  // Pagination calculations
+  const totalItems = filtered.length;
+  const isAll = pageSize === "all";
+  const numSize = isAll ? Math.max(1, totalItems) : Math.max(1, parseInt(pageSize, 10) || 25);
+  const totalPages = isAll ? 1 : Math.max(1, Math.ceil(totalItems / numSize));
+  const safePage = Math.min(Math.max(1, currentPage), totalPages);
+
+  const paginatedItems = useMemo(() => {
+    if (isAll) return filtered;
+    const start = (safePage - 1) * numSize;
+    return filtered.slice(start, start + numSize);
+  }, [filtered, isAll, safePage, numSize]);
+
+  const startItem = totalItems === 0 ? 0 : (safePage - 1) * numSize + 1;
+  const endItem = isAll ? totalItems : Math.min(safePage * numSize, totalItems);
 
   function getDeviceIcon(device?: string) {
     switch ((device || "desktop").toLowerCase()) {
@@ -89,39 +143,78 @@ export function RecentVisitorActivityTable({ activity, loading = false }: Props)
   return (
     <>
       <div className="bg-slate-900/80 border border-slate-800/80 rounded-2xl overflow-hidden shadow-xl backdrop-blur-xl">
-        {/* Header & Filter Controls */}
-        <div className="p-4 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Activity className="w-4 h-4 text-emerald-400" />
-            <span className="text-xs font-bold text-white">النشاط الأخير للزوار والطلاب (Recent Activity & Dwell Time)</span>
-            <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-800/40">
-              {filtered.length} نشاط مسجل
+        {/* Header & Badges */}
+        <div className="p-4 border-b border-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-emerald-400" />
+              <span className="text-xs font-bold text-white">النشاط الأخير للزوار والطلاب (Recent Activity & Dwell Time)</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-mono text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-800/40">
+                {totalItems} نشاط مسجل
+              </span>
+              {activity && activity.length > totalItems && (
+                <span className="text-[10px] text-slate-400 font-mono">
+                  (من إجمالي {activity.length})
+                </span>
+              )}
+            </div>
+            <span className="hidden sm:inline-flex items-center gap-1 text-[10px] text-slate-500 bg-slate-950/70 px-2 py-0.5 rounded border border-slate-800/60">
+              <Info className="w-3 h-3 text-cyan-400" />
+              <span>يتم تجميع زيارات نفس الصفحة لحساب مدة البقاء بدقة وتجنب التكرار</span>
             </span>
           </div>
 
+          {/* Filter Controls Bar */}
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             {/* Search */}
-            <div className="relative w-full sm:w-64">
+            <div className="relative w-full sm:w-56">
               <Search className="w-3.5 h-3.5 text-slate-500 absolute right-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="بحث بالاسم أو المسار أو المصدر..."
+                placeholder="بحث بالاسم، الصفحة، المصدر..."
                 className="w-full pr-8 pl-3 py-1.5 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
               />
             </div>
+
+            {/* Visitor Type Filter */}
+            <select
+              value={visitorTypeFilter}
+              onChange={(e) => setVisitorTypeFilter(e.target.value)}
+              className="bg-slate-950/80 border border-slate-800 text-slate-300 text-xs rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-cyan-500 cursor-pointer"
+            >
+              <option value="all">كل الهويات</option>
+              <option value="registered">طلاب مسجلون فقط 🎓</option>
+              <option value="guest">زوار ضيوف فقط 👤</option>
+              <option value="returning">زوار عائدون</option>
+              <option value="new">زوار جدد</option>
+            </select>
 
             {/* Device Filter */}
             <select
               value={deviceFilter}
               onChange={(e) => setDeviceFilter(e.target.value)}
-              className="bg-slate-950/80 border border-slate-800 text-slate-300 text-xs rounded-xl px-3 py-1.5 focus:outline-none focus:border-cyan-500"
+              className="bg-slate-950/80 border border-slate-800 text-slate-300 text-xs rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-cyan-500 cursor-pointer"
             >
               <option value="all">كل الأجهزة</option>
               <option value="mobile">الهاتف (Mobile)</option>
               <option value="desktop">الكمبيوتر (Desktop)</option>
               <option value="tablet">اللوحي (Tablet)</option>
+            </select>
+
+            {/* Page Size Selector */}
+            <select
+              value={pageSize}
+              onChange={(e) => setPageSize(e.target.value)}
+              className="bg-slate-950/80 border border-slate-800 text-cyan-400 text-xs font-mono rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-cyan-500 cursor-pointer"
+            >
+              <option value="25">25 في الصفحة</option>
+              <option value="50">50 في الصفحة</option>
+              <option value="100">100 في الصفحة</option>
+              <option value="all">عرض الكل ({totalItems})</option>
             </select>
           </div>
         </div>
@@ -150,14 +243,14 @@ export function RecentVisitorActivityTable({ activity, loading = false }: Props)
                     </div>
                   </td>
                 </tr>
-              ) : filtered.length === 0 ? (
+              ) : paginatedItems.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="p-12 text-center text-slate-500 text-xs">
                     لا توجد سجلات نشاط مطابقة في الفترة المحددة
                   </td>
                 </tr>
               ) : (
-                filtered.map((item, idx) => {
+                paginatedItems.map((item, idx) => {
                   const { date, time } = formatTimeDetails(item.time);
                   const isNew = item.visitorType === "NEW" || (item as any).isNew;
                   const page = (item as any).page || (item as any).path || "/";
@@ -175,7 +268,9 @@ export function RecentVisitorActivityTable({ activity, loading = false }: Props)
                   const exitClock = formatClockOnly(item.exitedAt);
 
                   // Dwell duration
-                  const durationText = item.formattedDuration || (typeof item.durationSeconds === "number" ? formatDwellDuration(item.durationSeconds) : null);
+                  const durationText =
+                    item.formattedDuration ||
+                    (typeof item.durationSeconds === "number" ? formatDwellDuration(item.durationSeconds) : null);
 
                   return (
                     <tr key={safeId} className="hover:bg-slate-800/40 transition-colors">
@@ -302,6 +397,66 @@ export function RecentVisitorActivityTable({ activity, loading = false }: Props)
             </tbody>
           </table>
         </div>
+
+        {/* Pagination & Table Footer */}
+        {totalItems > 0 && !isAll && (
+          <div className="p-3 border-t border-slate-800/80 bg-slate-950/60 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="text-xs text-slate-400 font-mono">
+              عرض{" "}
+              <span className="text-white font-bold">{startItem}</span> -{" "}
+              <span className="text-white font-bold">{endItem}</span> من أصل{" "}
+              <span className="text-cyan-400 font-bold">{totalItems}</span> نشاط
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              {/* First Page */}
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={safePage <= 1}
+                title="الصفحة الأولى"
+                className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              >
+                <ChevronsRight className="w-4 h-4" />
+              </button>
+
+              {/* Previous Page */}
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={safePage <= 1}
+                title="الصفحة السابقة"
+                className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+
+              {/* Page Indicator */}
+              <div className="px-3 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs font-mono text-slate-300">
+                صفحة <span className="text-cyan-400 font-bold">{safePage}</span> من{" "}
+                <span className="text-white font-bold">{totalPages}</span>
+              </div>
+
+              {/* Next Page */}
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={safePage >= totalPages}
+                title="الصفحة التالية"
+                className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+
+              {/* Last Page */}
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={safePage >= totalPages}
+                title="الصفحة الأخيرة"
+                className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:bg-slate-800 hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors"
+              >
+                <ChevronsLeft className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Visitor Dossier & Journey Inspector Modal */}

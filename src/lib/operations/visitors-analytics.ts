@@ -179,6 +179,7 @@ export interface FetchVisitorsAnalyticsOptions {
   period?: VisitorAnalyticsPeriod;
   operatorId?: string;
   token?: string | null;
+  activityLimit?: number;
 }
 
 import { getAlgeriaTodayStartIso, getAlgeriaWeekStartIso, getAlgeriaMonthStartIso } from "./timezone";
@@ -191,7 +192,8 @@ import { getAlgeriaTodayStartIso, getAlgeriaWeekStartIso, getAlgeriaMonthStartIs
  */
 export async function buildRichRecentVisitorActivity(
   client: any,
-  periodStartDate: Date
+  periodStartDate: Date,
+  limit: number = 250
 ): Promise<RecentVisitorActivityItem[]> {
   const nowMs = Date.now();
 
@@ -204,7 +206,7 @@ export async function buildRichRecentVisitorActivity(
     const { data: visData } = await client
       .from("analytics_visitors")
       .select("visitor_id, user_id, first_seen_at, total_sessions")
-      .limit(500);
+      .limit(1000);
 
     if (Array.isArray(visData)) {
       for (const v of visData) {
@@ -225,7 +227,7 @@ export async function buildRichRecentVisitorActivity(
       .select("session_id, visitor_id, anonymous_id, user_id, landing_page, referrer, first_utm_source, first_channel, device_type, started_at, last_activity_at")
       .gte("started_at", periodStartDate.toISOString())
       .order("started_at", { ascending: false })
-      .limit(100);
+      .limit(Math.max(limit * 2, 600));
 
     if (Array.isArray(sessData)) {
       for (const s of sessData) {
@@ -249,7 +251,7 @@ export async function buildRichRecentVisitorActivity(
       .not("route", "like", "/admin%")
       .not("route", "like", "/api%")
       .order("occurred_at", { ascending: false })
-      .limit(120);
+      .limit(Math.max(limit * 4, 1200));
 
     if (Array.isArray(evData)) {
       rawEvents = evData.filter((ev: any) => {
@@ -367,7 +369,7 @@ export async function buildRichRecentVisitorActivity(
   if (visitsMap.size > 0) {
     activities = Array.from(visitsMap.values())
       .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-      .slice(0, 40)
+      .slice(0, limit)
       .map((v) => ({
         id: v.id,
         time: v.time,
@@ -392,7 +394,7 @@ export async function buildRichRecentVisitorActivity(
         const lp = s.landing_page || "";
         return !lp.startsWith("/ops") && !lp.startsWith("/admin") && !lp.startsWith("/api");
       })
-      .slice(0, 40)
+      .slice(0, limit)
       .map((s: any) => {
         const vid = s.visitor_id || s.anonymous_id || s.session_id;
         const effectiveUserId = s.user_id || visitorUserMap.get(vid) || null;
@@ -909,7 +911,7 @@ export async function getVisitorsAnalytics(
       }
 
       // 2k. Recent Activity — granular page-level activity enriched with dwell time & entry/exit timestamps
-      recentActivity = await buildRichRecentVisitorActivity(client, periodStartDate);
+      recentActivity = await buildRichRecentVisitorActivity(client, periodStartDate, options.activityLimit || 250);
     } catch {
       // Keep initial defaults
       liveActivity = { isSupported: false, activeNow: null };
@@ -921,7 +923,7 @@ export async function getVisitorsAnalytics(
   // deduplicated visits, and authentic student profiles
   if (isSupabaseConfigured && client) {
     try {
-      const richActivity = await buildRichRecentVisitorActivity(client, periodStartDate);
+      const richActivity = await buildRichRecentVisitorActivity(client, periodStartDate, options.activityLimit || 250);
       if (richActivity.length > 0) {
         recentActivity = richActivity;
       }

@@ -36,7 +36,7 @@ export default function OpsVisitorsPage() {
     setError(null);
 
     try {
-      const res = await opsFetch(`/api/ops/analytics/visitors?period=${period}`);
+      const res = await opsFetch(`/api/ops/analytics/visitors?period=${period}&limit=300`);
       if (res.ok) {
         const json = await res.json();
         if (json.success) {
