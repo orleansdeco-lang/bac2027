@@ -417,10 +417,22 @@ export async function getRegisteredStudentsAnalytics(
         }
       }
 
-      // Apply text search
+      // Apply text search (Phone primary, Email legacy, Name, User ID)
       if (options.search && options.search.trim()) {
         const q = options.search.trim();
-        query = query.or(`first_name.ilike.%${q}%,last_name.ilike.%${q}%,email.ilike.%${q}%,student_phone.ilike.%${q}%,parent_phone.ilike.%${q}%,id.eq.${q}`);
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(q);
+        const searchFilters = [
+          `student_phone.ilike.%${q}%`,
+          `canonical_phone.ilike.%${q}%`,
+          `parent_phone.ilike.%${q}%`,
+          `email.ilike.%${q}%`,
+          `first_name.ilike.%${q}%`,
+          `last_name.ilike.%${q}%`,
+        ];
+        if (isUuid) {
+          searchFilters.push(`id.eq.${q}`);
+        }
+        query = query.or(searchFilters.join(","));
       }
 
       const offset = (page - 1) * pageSize;
@@ -455,9 +467,10 @@ export async function getRegisteredStudentsAnalytics(
       const q = options.search.trim().toLowerCase();
       filtered = filtered.filter(
         (s) =>
-          s.fullName.toLowerCase().includes(q) ||
           (s.studentPhone && s.studentPhone.includes(q)) ||
           (s.parentPhone && s.parentPhone.includes(q)) ||
+          (s.email && s.email.toLowerCase().includes(q)) ||
+          s.fullName.toLowerCase().includes(q) ||
           s.id.toLowerCase().includes(q)
       );
     }

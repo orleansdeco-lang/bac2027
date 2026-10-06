@@ -120,14 +120,8 @@ export function BookCard({ book, onPreview, onDownloadTrack }: BookCardProps) {
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Share2 className="w-3.5 h-3.5" />}
           </button>
 
-          {/* Bottom Overlay Info (File Size & Year & Pages) */}
-          <div className="absolute bottom-2.5 inset-x-3 flex items-center justify-between text-white text-[11px] font-mono">
-            {book.file_size && (
-              <span className="rounded-md bg-black/60 px-2 py-0.5 backdrop-blur-md border border-white/10 font-bold">
-                {book.file_size}
-              </span>
-            )}
-
+          {/* Bottom Overlay Info (Year & Pages) */}
+          <div className="absolute bottom-2.5 inset-x-3 flex items-center justify-end text-white text-[11px] font-mono">
             <div className="flex items-center gap-1">
               {book.year_edition && (
                 <span className="rounded-md bg-black/60 px-2 py-0.5 backdrop-blur-md border border-white/10">

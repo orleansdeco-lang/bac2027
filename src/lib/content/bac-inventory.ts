@@ -120,7 +120,7 @@ function normalizeRawItem(raw: any): BacMasterItem {
     stream_name: raw.stream_name || classified.streamName || "",
     subject_name: raw.subject_name || classified.subjectName || "",
     content_type: raw.content_type || "bac_official",
-    source_name: raw.source_name || "DzExams / ONEC",
+    source_name: raw.source_name || "ONEC / وزارة التربية الوطنية",
     source_url: raw.source_url || "",
     file_url: raw.file_url || "",
     file_type: raw.file_type || "pdf",

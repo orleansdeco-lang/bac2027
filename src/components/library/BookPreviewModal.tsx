@@ -46,13 +46,14 @@ export function BookPreviewModal({
   const isLocalDoc = Boolean(rawPdfUrl && rawPdfUrl.startsWith("/"));
 
   // Continuous scrolling in-app PDF stream:
-  // - Local /documents/... assets load directly with #view=FitH (instant 0ms)
+  // - #toolbar=0&navpanes=0 hides external browser viewer headers/titles
+  // - Local /documents/... assets load directly (instant 0ms)
   // - Remote URLs route through /api/pdf/proxy
   const proxyEmbedUrl = !rawPdfUrl
     ? ""
     : isLocalDoc
-    ? `${rawPdfUrl}#view=FitH&pagemode=none`
-    : `/api/pdf/proxy?url=${encodeURIComponent(rawPdfUrl)}#view=FitH&pagemode=none`;
+    ? `${rawPdfUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`
+    : `/api/pdf/proxy?url=${encodeURIComponent(rawPdfUrl)}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
 
   const directDownloadUrl = !rawPdfUrl
     ? ""
@@ -145,12 +146,6 @@ export function BookPreviewModal({
                     <span className="px-1.5 py-0.2 rounded bg-stone-700 text-stone-300 text-[10px]">
                       طبعة {book.year_edition}
                     </span>
-                  </>
-                )}
-                {book.file_size && (
-                  <>
-                    <span>•</span>
-                    <span className="text-[10px] text-stone-400">{book.file_size}</span>
                   </>
                 )}
               </div>

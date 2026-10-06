@@ -488,9 +488,18 @@ export default function AccountPage() {
                         {isAr ? streamMeta.name_ar : streamMeta.name_fr}
                       </Badge>
                     </div>
-                    <p className="text-xs text-theme-muted mt-0.5">
-                      {user.email}
-                    </p>
+                    {/* Primary Phone Identity */}
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-xs text-theme-muted font-mono" dir="ltr">
+                        {profile?.studentPhone || (profile as any)?.student_phone || regDraft?.studentPhone || user?.user_metadata?.phone || (user?.email && !user.email.endsWith("@phone.shater.internal") ? user.email : "طالب SHATER")}
+                      </span>
+                      {Boolean((profile as any)?.phone_verified || (profile as any)?.phoneVerified || user?.user_metadata?.phone_verified) && (
+                        <Badge variant="outline" size="sm" className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[10px] py-0 px-1.5 flex items-center gap-1 font-bold">
+                          <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500" />
+                          <span>{isAr ? "موثق ✓" : "Vérifié"}</span>
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -1197,20 +1206,25 @@ export default function AccountPage() {
             <Card className="p-5 space-y-4 border border-theme shadow-card">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-2xl bg-[var(--color-primary-soft)] border border-[var(--color-primary)]/30 flex items-center justify-center text-[var(--color-primary)]">
-                    <User className="h-5 w-5" />
+                  <div className="h-10 w-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-500">
+                    <Smartphone className="h-5 w-5" />
                   </div>
                   <div>
-                    <span className="text-xs text-theme-muted block">{isAr ? "البريد الإلكتروني للحساب" : "E-mail du compte"}</span>
-                    <span className="text-sm font-bold text-theme-text font-mono break-all">
-                      {user.email}
+                    <span className="text-xs text-theme-muted block">{isAr ? "رقم الهاتف الموثق" : "Téléphone vérifié"}</span>
+                    <span className="text-sm font-bold text-theme-text font-mono dir-ltr">
+                      {profile?.studentPhone || (profile as any)?.student_phone || regDraft?.studentPhone || user?.user_metadata?.phone || (user?.email && !user.email.endsWith("@phone.shater.internal") ? user.email : "غير مسجل")}
                     </span>
+                    {user?.email && !user.email.endsWith("@phone.shater.internal") && (
+                      <span className="text-[11px] text-theme-muted block mt-0.5 font-mono">
+                        {isAr ? `البريد الاحتياطي: ${user.email}` : `Email secondaire: ${user.email}`}
+                      </span>
+                    )}
                   </div>
                 </div>
 
                 <Badge variant="outline" size="sm" className="border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                   <Check className="h-3 w-3 text-emerald-500" />
-                  <span>{isAr ? "حساب نشط" : "Compte actif"}</span>
+                  <span>{isAr ? "حساب موثق ✓" : "Compte vérifié"}</span>
                 </Badge>
               </div>
 

@@ -369,7 +369,7 @@ export default function OpsStudentsPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="بحث بالاسم، رقم هاتف التلميذ (05/06/07)، هاتف ولي الأمر، أو معرف الطالب..."
+              placeholder="بحث برقم الهاتف (05/06/07)، الاسم، الإيميل السابق، أو معرف الطالب..."
               className="w-full pr-9 pl-3 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 transition-colors"
             />
           </div>
