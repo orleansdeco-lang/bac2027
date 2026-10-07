@@ -50,26 +50,54 @@ export function LibraryHero({ stats }: LibraryHeroProps) {
       <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-[var(--color-primary)]/10 blur-3xl pointer-events-none" />
       <div className="absolute -bottom-24 -right-24 w-72 h-72 rounded-full bg-blue-500/10 blur-3xl pointer-events-none" />
 
+      {/* Development Notice Banner */}
+      <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-700 dark:text-amber-300">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0 text-amber-500 font-bold">
+            🚧
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-sm">خزانة المراجع الرقمية — قيد التطوير والتحديث</span>
+              <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                نسخة تجريبية Beta
+              </span>
+            </div>
+            <p className="text-xs text-stone-600 dark:text-stone-400 mt-0.5">
+              يجري حالياً التدقيق البيداغوجي وتجهيز أفضل النسخ الرسمية وسلاسل المتفوقين لتوفير تصفح وقراءة مريحة.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Link
+            href="/exams"
+            className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-bold text-xs transition-colors shadow-xs inline-flex items-center gap-1.5"
+          >
+            <span>بنك البكالوريات الرسمية</span>
+          </Link>
+        </div>
+      </div>
+
       <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 md:gap-8">
         {/* Text Details & Branding */}
         <div className="space-y-3 max-w-2xl">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[var(--color-primary)]/15 text-[var(--color-primary)] border border-[var(--color-primary)]/20 shadow-xs">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 shadow-xs">
               <Library className="w-3.5 h-3.5" />
-              <span>المكتبة الرقمية والمراجع الوطنية</span>
+              <span>خزانة المراجع (قيد التطوير والتحديث)</span>
             </span>
-            <span className="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-stone-500/10 text-stone-600 dark:text-stone-400 border border-stone-500/20">
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>نسخ معتمدة ومحققة 2024-2026</span>
+              <span>نسخة تجريبية 2026</span>
             </span>
           </div>
 
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-theme-text leading-tight">
-            مكتبة المراجع، السلاسل والكتب المدرسية
+            خزانة المراجع والسلاسل والكتب المدرسية
           </h1>
 
           <p className="text-xs sm:text-sm text-theme-muted leading-relaxed">
-            المنصة المرجعية المتكاملة لطلبة البكالوريا: تحميل مباشر ومعاينة سريعة لكتب وزارة التربية الوطنية، سلاسل كبار الأساتذة (تأشيرة النجاح، المغني، الهباج، بوالريش)، والملخصات النموذجية الشاملة لكافة الشعب.
+            قسم تجريبي قيد التطوير لإتاحة الكتب المدرسية وسلاسل الأساتذة المعتمدة. ننصح بالتركيز حالياً على بنك مواضيع البكالوريات وفروض الفصول المعتمدة في الأقسام الرئيسية.
           </p>
 
           {/* Quick Category Action Chips */}

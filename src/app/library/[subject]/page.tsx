@@ -35,8 +35,8 @@ export async function generateMetadata({
   }
 
   return {
-    title: `مراجع وكتب ${subjectMeta.label} للبكالوريا | المكتبة الرقمية - الشاطر`,
-    description: `تحميل مباشر لأفضل مراجع وسلاسل وكتب مادة ${subjectMeta.label} لشهادة البكالوريا بالجزائر: الكتب المدرسية الرسمية وسلاسل كبار الأساتذة.`,
+    title: `مراجع وكتب ${subjectMeta.label} (قيد التطوير) | خزانة المراجع - الشاطر`,
+    description: `قسم تجريبي قيد التطوير لمراجع وسلاسل وكتب مادة ${subjectMeta.label} لشهادة البكالوريا بالجزائر.`,
   };
 }
 
@@ -68,7 +68,7 @@ async function SubjectLibraryContent({
             <div className="flex items-center gap-2 text-xs font-semibold text-theme-muted">
               <Link href="/library" className="hover:text-[var(--color-primary)] transition flex items-center gap-1">
                 <Library className="w-3.5 h-3.5" />
-                <span>المكتبة الرقمية</span>
+                <span>خزانة المراجع (قيد التطوير)</span>
               </Link>
               <span>/</span>
               <span className="text-theme-text font-bold">{subjectMeta.label}</span>
