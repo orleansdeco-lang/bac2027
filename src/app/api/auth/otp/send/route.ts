@@ -17,6 +17,7 @@ import {
 } from "@/lib/security/otp";
 import { checkOtpSendRateLimit } from "@/lib/security/persistent-rate-limiter";
 import { getWhatsAppProvider } from "@/lib/whatsapp/provider";
+import { invalidateActiveChallenges, createOtpChallenge } from "@/lib/security/otp-store";
 
 export const dynamic = "force-dynamic";
 
@@ -139,12 +140,7 @@ export async function POST(req: Request) {
     }
 
     // 5. Invalidate Any Previous Active Challenge for this phone
-    const nowIso = new Date().toISOString();
-    await client
-      .from("phone_verification_codes")
-      .update({ consumed_at: nowIso })
-      .eq("canonical_phone", canonicalPhone)
-      .is("consumed_at", null);
+    await invalidateActiveChallenges(canonicalPhone);
 
     // 6. Cryptographically Generate & Hash OTP
     const rawOtp = generateOtp();
@@ -152,20 +148,16 @@ export async function POST(req: Request) {
     const expiresAt = new Date(Date.now() + OTP_EXPIRATION_MS).toISOString();
 
     // 7. Persist OTP Challenge (Only HMAC hash is stored)
-    const { error: insertError } = await client
-      .from("phone_verification_codes")
-      .insert({
-        user_id: targetUserId,
-        canonical_phone: canonicalPhone,
-        otp_hash: otpHash,
-        expires_at: expiresAt,
-        attempts: 0,
-        max_attempts: OTP_MAX_ATTEMPTS,
-        created_at: nowIso,
-      });
+    const challengeResult = await createOtpChallenge({
+      userId: targetUserId,
+      canonicalPhone,
+      otpHash,
+      expiresAt,
+      maxAttempts: OTP_MAX_ATTEMPTS,
+    });
 
-    if (insertError) {
-      console.error("[/api/auth/otp/send] Failed to persist OTP challenge:", insertError);
+    if (!challengeResult.success) {
+      console.error("[/api/auth/otp/send] Failed to persist OTP challenge:", challengeResult.error);
       return NextResponse.json(
         { success: false, error: "تعذر إنشاء رمز التحقق. يرجى إعادة المحاولة." },
         { status: 500 }
@@ -186,11 +178,7 @@ export async function POST(req: Request) {
       );
 
       // Invalidate the unused challenge so user isn't locked out by a failed send
-      await client
-        .from("phone_verification_codes")
-        .update({ consumed_at: new Date().toISOString() })
-        .eq("canonical_phone", canonicalPhone)
-        .is("consumed_at", null);
+      await invalidateActiveChallenges(canonicalPhone);
 
       return NextResponse.json(
         {

@@ -34,7 +34,7 @@ export async function checkPersistentRateLimit(
   maxRequests: number,
   windowSeconds: number
 ): Promise<{ allowed: boolean; resetSeconds: number }> {
-  const client = getAdminClient() || supabase;
+  const client = getAdminClient();
 
   if (isSupabaseConfigured && client) {
     try {
@@ -54,25 +54,33 @@ export async function checkPersistentRateLimit(
         };
       }
 
-      // 2. Direct table fallback if RPC is not yet created
+      // 2. Direct table fallback if RPC is not yet created or returns error
       const windowStart = new Date(Date.now() - windowSeconds * 1000).toISOString();
-      const { count } = await client
+      const { count, error: countErr } = await client
         .from("rate_limit_events")
         .select("*", { count: "exact", head: true })
         .eq("key", key)
         .gte("created_at", windowStart);
+
+      if (countErr) {
+        throw countErr;
+      }
 
       const currentCount = count || 0;
       if (currentCount >= maxRequests) {
         return { allowed: false, resetSeconds: windowSeconds };
       }
 
-      await client.from("rate_limit_events").insert({
+      const { error: insertErr } = await client.from("rate_limit_events").insert({
         key,
         action,
         identifier,
         created_at: new Date().toISOString(),
       });
+
+      if (insertErr) {
+        throw insertErr;
+      }
 
       return { allowed: true, resetSeconds: windowSeconds };
     } catch (dbErr) {
@@ -109,7 +117,7 @@ export async function checkOtpSendCooldown(
     };
   }
 
-  const client = getAdminClient() || supabase;
+  const client = getAdminClient();
 
   if (isSupabaseConfigured && client) {
     try {

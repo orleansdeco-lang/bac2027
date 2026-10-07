@@ -61,9 +61,9 @@ export function normalizeAlgerianPhone(input: string): string {
 
 export function validateAlgerianPhone(
   input: string,
-  options: { isOptional?: boolean; fieldName_ar?: string; fieldName_fr?: string } = {}
+  options: { isOptional?: boolean; fieldName_ar?: string; fieldName_fr?: string; requireMobile?: boolean } = {}
 ): PhoneValidationResult {
-  const { isOptional = false, fieldName_ar = "رقم الهاتف", fieldName_fr = "Numéro de téléphone" } = options;
+  const { isOptional = false, fieldName_ar = "رقم الهاتف", fieldName_fr = "Numéro de téléphone", requireMobile = false } = options;
 
   if (!input || input.trim() === "") {
     if (isOptional) {
@@ -95,7 +95,16 @@ export function validateAlgerianPhone(
   // Algerian fixed landline pattern: starts with 02, 03, 04 and has 9 or 10 digits
   const isLandline = /^(02|03|04)\d{7,8}$/.test(normalized);
 
-  if (!isMobile && !isLandline) {
+  if (requireMobile) {
+    if (!isMobile) {
+      return {
+        isValid: false,
+        normalized,
+        error_ar: `يرجى إدخال رقم هاتف محمول جزائري صحيح (يبدأ بـ 05 أو 06 أو 07) لتلقي رمز واتساب.`,
+        error_fr: `Veuillez saisir un numéro de mobile algérien valide (05, 06, 07).`,
+      };
+    }
+  } else if (!isMobile && !isLandline) {
     return {
       isValid: false,
       normalized,
@@ -112,3 +121,14 @@ export function validateAlgerianPhone(
     canonical,
   };
 }
+
+/**
+ * Validates strictly Algerian mobile lines (05, 06, 07) for WhatsApp messaging.
+ */
+export function validateAlgerianMobilePhone(
+  input: string,
+  options?: { isOptional?: boolean; fieldName_ar?: string; fieldName_fr?: string }
+): PhoneValidationResult {
+  return validateAlgerianPhone(input, { ...options, requireMobile: true });
+}
+

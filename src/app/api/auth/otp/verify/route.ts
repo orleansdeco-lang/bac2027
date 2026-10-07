@@ -8,6 +8,12 @@ import {
 } from "@/domain/administrative/phone-validation";
 import { verifyOtpHash, maskPhone } from "@/lib/security/otp";
 import { checkOtpVerifyRateLimit } from "@/lib/security/persistent-rate-limiter";
+import {
+  getActiveOtpChallenge,
+  consumeOtpChallenge,
+  incrementOtpAttempts,
+  invalidateActiveChallenges,
+} from "@/lib/security/otp-store";
 
 export const dynamic = "force-dynamic";
 
@@ -108,27 +114,7 @@ export async function POST(req: Request) {
     }
 
     // 4. Look up active challenge for this phone
-    let challengeQuery = client
-      .from("phone_verification_codes")
-      .select("*")
-      .eq("canonical_phone", canonicalPhone)
-      .is("consumed_at", null)
-      .order("created_at", { ascending: false })
-      .limit(1);
-
-    if (callerId) {
-      challengeQuery = challengeQuery.or(`user_id.eq.${callerId},canonical_phone.eq.${canonicalPhone}`);
-    }
-
-    const { data: challenge, error: challengeErr } = await challengeQuery.maybeSingle();
-
-    if (challengeErr) {
-      console.error("[/api/auth/otp/verify] DB query error:", challengeErr);
-      return NextResponse.json(
-        { success: false, error: "حدث خطأ أثناء فحص رمز التحقق." },
-        { status: 500 }
-      );
-    }
+    const challenge = await getActiveOtpChallenge(canonicalPhone, callerId);
 
     if (!challenge) {
       return NextResponse.json(
@@ -145,10 +131,7 @@ export async function POST(req: Request) {
 
     // 5. Expiration Check (10 Minutes)
     if (now > expiresAt) {
-      await client
-        .from("phone_verification_codes")
-        .update({ consumed_at: new Date().toISOString() })
-        .eq("id", challenge.id);
+      await consumeOtpChallenge(challenge.id);
 
       return NextResponse.json(
         {
@@ -161,10 +144,7 @@ export async function POST(req: Request) {
 
     // 6. Max Attempts Check (5 Attempts)
     if (challenge.attempts >= challenge.max_attempts) {
-      await client
-        .from("phone_verification_codes")
-        .update({ consumed_at: new Date().toISOString() })
-        .eq("id", challenge.id);
+      await consumeOtpChallenge(challenge.id);
 
       return NextResponse.json(
         {
@@ -184,21 +164,14 @@ export async function POST(req: Request) {
       challenge.otp_hash
     );
 
-    const nowIso = new Date().toISOString();
-
     if (!isValid) {
-      const newAttempts = challenge.attempts + 1;
+      const newAttempts = await incrementOtpAttempts(challenge.id);
       const remaining = Math.max(0, challenge.max_attempts - newAttempts);
       const isExhausted = remaining === 0;
 
-      await client
-        .from("phone_verification_codes")
-        .update({
-          attempts: newAttempts,
-          last_attempt_at: nowIso,
-          ...(isExhausted ? { consumed_at: nowIso } : {}),
-        })
-        .eq("id", challenge.id);
+      if (isExhausted) {
+        await consumeOtpChallenge(challenge.id);
+      }
 
       return NextResponse.json(
         {
@@ -213,21 +186,13 @@ export async function POST(req: Request) {
     }
 
     // 8. Valid OTP: Consume Challenge Atomically
-    await client
-      .from("phone_verification_codes")
-      .update({ consumed_at: nowIso, last_attempt_at: nowIso })
-      .eq("id", challenge.id);
-
-    // Invalidate any other open codes for this phone
-    await client
-      .from("phone_verification_codes")
-      .update({ consumed_at: nowIso })
-      .eq("canonical_phone", canonicalPhone)
-      .is("consumed_at", null);
+    await consumeOtpChallenge(challenge.id);
+    await invalidateActiveChallenges(canonicalPhone);
 
     // 9. Resolve / Provision User Account & Student Profile
     const admin = getAdminClient();
-    let effectiveUserId = callerId || challenge.user_id;
+    const nowIso = new Date().toISOString();
+    let effectiveUserId: string | null = callerId || challenge.user_id;
     let isNewUser = false;
     let redirectUrl = "/dashboard";
     let tokenHash: string | null = null;
@@ -373,7 +338,7 @@ export async function POST(req: Request) {
     });
 
     // Set auth cookies (1 year duration)
-    const tokenVal = encodeURIComponent(tokenHash || effectiveUserId);
+    const tokenVal = encodeURIComponent(tokenHash || effectiveUserId || "");
     const maxAge = 31536000;
     const isProduction = process.env.NODE_ENV === "production";
     const secureFlag = isProduction ? "; Secure" : "";

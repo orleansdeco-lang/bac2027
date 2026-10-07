@@ -468,7 +468,7 @@ export default function SubscribePage() {
   const isExpired = access.status === "TRIAL_EXPIRED";
 
   // WhatsApp activation message
-  const activationWhatsAppMessage = `مرحباً، قمت بتسديد اشتراك منصة الشاطر.\n\n📌 رقم الطلب: ${orderResult?.referenceId || "جديد"}\n🎓 نوع الاشتراك: ${selectedPlanName} (${selectedPlanPrice.toLocaleString()} دج)\n👤 اسم الطالب: ${shippingName || profile?.fullName || profile?.studentPhone || "طالب مسجل"}\n📱 رقم الهاتف: ${shippingPhone || profile?.studentPhone || "غير مسجل"}\n\nمرفق صورة الوصل للتفعيل الفوري.`;
+  const activationWhatsAppMessage = `مرحباً، قمت بتسديد اشتراك منصة الشاطر.\n\n📌 رقم الطلب: ${orderResult?.referenceId || "جديد"}\n🎓 نوع الاشتراك: ${selectedPlanName} (${selectedPlanPrice.toLocaleString()} دج)\n👤 اسم الطالب: ${shippingName || profile?.fullName || user?.email || "طالب مسجل"}\n📱 رقم الهاتف: ${shippingPhone || profile?.studentPhone || "غير مسجل"}\n\nمرفق صورة الوصل للتفعيل الفوري.`;
   const activationWhatsAppUrl = `https://wa.me/${ACTIVATION_WHATSAPP_NUMBER}?text=${encodeURIComponent(activationWhatsAppMessage)}`;
   const supportWhatsAppUrl = `https://wa.me/${SUPPORT_WHATSAPP_NUMBER}?text=${encodeURIComponent(
     "مرحباً، أحتاج مساعدة بخصوص الاشتراك في منصة الشاطر."

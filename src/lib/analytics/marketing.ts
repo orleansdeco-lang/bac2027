@@ -121,7 +121,7 @@ export function trackCompleteRegistration(params: {
   const eventId = params.eventId || generateEventId("reg");
   const payload = {
     status: "success",
-    method: params.method || "phone_whatsapp",
+    method: params.method || "email",
   };
 
   debugLog("CompleteRegistration", payload, eventId);
@@ -138,14 +138,14 @@ export function trackCompleteRegistration(params: {
 
   // GA4
   trackGAEvent("sign_up", {
-    method: params.method || "phone_whatsapp",
+    method: params.method || "email",
   });
 
   // First-party internal telemetry
   sendAnalyticsEvent("signup_completed", {
     userId: params.userId,
     eventId,
-    method: params.method || "phone_whatsapp",
+    method: params.method || "email",
   });
   sendAnalyticsEvent("registration_completed", {
     userId: params.userId,
