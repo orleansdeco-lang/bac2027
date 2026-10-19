@@ -77,7 +77,7 @@ export function ResourceInAppPdfModal({
     setIframeLoaded(false);
     const timer = setTimeout(() => {
       setIframeLoaded(true);
-    }, 1200);
+    }, 600);
     return () => clearTimeout(timer);
   }, [activeTab, rawPdfUrl, isCombinedFile]);
 

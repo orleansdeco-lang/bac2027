@@ -72,14 +72,18 @@ export function BookPreviewModal({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  // Non-blocking loading state: dismisses smoothly after 1.2s to prevent getting stuck
+  // Instant loading for local documents with 0ms artificial delay
   useEffect(() => {
+    if (isLocalDoc) {
+      setIframeLoaded(true);
+      return;
+    }
     setIframeLoaded(false);
     const timer = setTimeout(() => {
       setIframeLoaded(true);
-    }, 1200);
+    }, 600);
     return () => clearTimeout(timer);
-  }, [rawPdfUrl]);
+  }, [rawPdfUrl, isLocalDoc]);
 
   const handleDownload = async () => {
     setDownloads((prev) => prev + 1);

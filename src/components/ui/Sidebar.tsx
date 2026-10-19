@@ -410,11 +410,18 @@ export function Sidebar({ className }: SidebarProps) {
                 {group.items.map((item) => {
                   const isActive = item.matches(pathname);
                   const Icon = item.icon;
+                  const isCoreRoute =
+                    item.href === "/dashboard" ||
+                    item.href === "/exams" ||
+                    item.href === "/library" ||
+                    item.href === "/curriculum" ||
+                    item.href === "/exams/terms";
 
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
+                      prefetch={isCoreRoute}
                       onClick={() => isMobile && setIsMobileOpen(false)}
                       className={cn(
                         "flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-150 group cursor-pointer",

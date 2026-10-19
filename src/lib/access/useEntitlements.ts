@@ -38,21 +38,50 @@ const DEFAULT_FREE_ENTITLEMENTS: UserEntitlements = {
   },
 };
 
+let cachedEntitlements: { data: UserEntitlements; userId: string; timestamp: number } | null = null;
+const CACHE_TTL_MS = 3 * 60 * 1000; // 3 minutes cache window
+
 export function useEntitlements() {
   const { user, isLoading: isAuthLoading } = useAuth();
-  const [entitlements, setEntitlements] = useState<UserEntitlements | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const currentUserId = user?.id || "guest";
 
-  const fetchEntitlements = useCallback(async () => {
+  // Check if valid cache exists for current user
+  const initialCached =
+    cachedEntitlements &&
+    cachedEntitlements.userId === currentUserId &&
+    Date.now() - cachedEntitlements.timestamp < CACHE_TTL_MS
+      ? cachedEntitlements.data
+      : null;
+
+  const [entitlements, setEntitlements] = useState<UserEntitlements | null>(initialCached);
+  const [isLoading, setIsLoading] = useState<boolean>(!initialCached);
+
+  const fetchEntitlements = useCallback(async (forceRefresh = false) => {
+    // If not forced and fresh cache exists, use it immediately
+    if (
+      !forceRefresh &&
+      cachedEntitlements &&
+      cachedEntitlements.userId === currentUserId &&
+      Date.now() - cachedEntitlements.timestamp < CACHE_TTL_MS
+    ) {
+      setEntitlements(cachedEntitlements.data);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/user/entitlements", {
-        cache: "no-store",
         headers: user?.id ? { "x-user-id": user.id } : {},
       });
 
       if (res.ok) {
         const data = await res.json();
         if (data?.entitlements) {
+          cachedEntitlements = {
+            data: data.entitlements,
+            userId: currentUserId,
+            timestamp: Date.now(),
+          };
           setEntitlements(data.entitlements);
           return;
         }
@@ -65,7 +94,7 @@ export function useEntitlements() {
 
     // Fallback if not loaded
     setEntitlements((prev) => prev || DEFAULT_FREE_ENTITLEMENTS);
-  }, [user?.id]);
+  }, [user?.id, currentUserId]);
 
   useEffect(() => {
     if (!isAuthLoading) {
@@ -96,7 +125,7 @@ export function useEntitlements() {
     trialHoursRemaining: activeEntitlements.trialHoursRemaining ?? (activeEntitlements.trialDaysRemaining * 24),
     dailyAiQuota: activeEntitlements.dailyAiQuota,
     canAccess,
-    refreshEntitlements: fetchEntitlements,
-    refresh: fetchEntitlements,
+    refreshEntitlements: () => fetchEntitlements(true),
+    refresh: () => fetchEntitlements(true),
   };
 }

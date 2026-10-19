@@ -69,9 +69,13 @@ export function TopBar() {
   }, []);
 
 
+  // Close mobile drawer on route transition without triggering profile network fetches
   useEffect(() => {
     setIsMobileMenuOpen(false);
+  }, [pathname]);
 
+  // Load user profile only when authenticated user changes
+  useEffect(() => {
     if (user?.id) {
       const p = getStrategicProfile(user.id);
       if (p) setProfile(p);
@@ -89,7 +93,7 @@ export function TopBar() {
       setRegData(null);
       setStudentProfile(null);
     }
-  }, [pathname, user]);
+  }, [user?.id]);
 
   const navLinks = [
     { href: "/dashboard", label: isAr ? "لوحة التحكم" : "Tableau de bord", icon: Compass },

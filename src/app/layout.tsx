@@ -1,6 +1,21 @@
 import type { Metadata, Viewport } from "next";
+import { Cairo, Plus_Jakarta_Sans } from "next/font/google";
 import "katex/dist/katex.min.css";
 import "./globals.css";
+
+const cairo = Cairo({
+  subsets: ["arabic", "latin"],
+  weight: ["400", "600", "700", "800", "900"],
+  variable: "--font-ibm-arabic",
+  display: "swap",
+});
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-jakarta",
+  display: "swap",
+});
 import { I18nProvider } from "@/lib/i18n/context";
 import { AuthProvider } from "@/lib/auth/context";
 import { ThemeProvider } from "@/lib/theme/context";
@@ -111,7 +126,12 @@ export default function RootLayout({
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://shater.dz";
 
   return (
-    <html lang="ar" dir="rtl" className="h-full bg-canvas text-theme-text" data-theme="bac-mastery">
+    <html
+      lang="ar"
+      dir="rtl"
+      className={`h-full bg-canvas text-theme-text ${cairo.variable} ${jakarta.variable}`}
+      data-theme="bac-mastery"
+    >
       <body className="min-h-screen antialiased bg-canvas text-theme-text selection:bg-[var(--color-primary)] selection:text-[var(--color-primary-text)]">
         <GoogleAnalytics />
         <MetaPixel />

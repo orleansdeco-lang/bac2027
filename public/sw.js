@@ -3,15 +3,8 @@
  * Offline asset caching, fast boot, and Web Push Notifications.
  */
 
-const CACHE_NAME = "bac-mastery-cache-v1";
+const CACHE_NAME = "bac-mastery-cache-v2";
 const PRECACHE_ASSETS = [
-  "/",
-  "/dashboard",
-  "/curriculum",
-  "/diagnostic",
-  "/memorize",
-  "/calculator",
-  "/scientific-calculator",
   "/manifest.json",
   "/favicon.svg",
   "/app-icon.svg",
@@ -48,12 +41,20 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip cross-origin requests, API calls, and Supabase auth calls
+  // Completely bypass service worker for:
+  // 1. Non-GET requests & cross-origin assets
+  // 2. Next.js internal static chunks, compilation data, and streaming RSC navigation payloads
+  // 3. Local educational PDFs and heavy documents
+  // 4. Server API endpoints
   if (
     request.method !== "GET" ||
     url.origin !== self.location.origin ||
     url.pathname.startsWith("/api/") ||
-    url.pathname.startsWith("/_next/data/")
+    url.pathname.startsWith("/_next/") ||
+    url.pathname.startsWith("/documents/") ||
+    url.searchParams.has("_rsc") ||
+    request.headers.get("RSC") === "1" ||
+    request.headers.get("Next-Router-State-Tree")
   ) {
     return;
   }
