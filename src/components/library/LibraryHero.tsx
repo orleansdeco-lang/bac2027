@@ -36,10 +36,10 @@ export function LibraryHero({ stats }: LibraryHeroProps) {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  const totalBooks = stats?.totalBooks || 18;
-  const totalDownloads = stats?.totalDownloads || 44250;
-  const professorSeriesCount = stats?.byCategory?.professor_series || 8;
-  const officialCount = stats?.byCategory?.official || 3;
+  const totalBooks = stats?.totalBooks ?? 3;
+  const totalDownloads = stats?.totalDownloads ?? 18990;
+  const professorSeriesCount = stats?.byCategory?.professor_series ?? 2;
+  const summaryCount = stats?.byCategory?.summary ?? 1;
 
   return (
     <div
@@ -161,10 +161,10 @@ export function LibraryHero({ stats }: LibraryHeroProps) {
               <BookOpen className="w-5 h-5" />
             </div>
             <div className="text-xl sm:text-2xl font-black font-mono text-theme-text">
-              {totalBooks}+
+              {totalBooks}
             </div>
             <div className="text-[11px] font-semibold text-theme-muted">
-              مرجع وسلسلة
+              مراجع أساسية معتمدة
             </div>
           </div>
 
@@ -193,14 +193,14 @@ export function LibraryHero({ stats }: LibraryHeroProps) {
           </div>
 
           <div className="p-4 rounded-2xl bg-surface/70 border border-theme/80 text-center min-w-[130px] shadow-xs">
-            <div className="flex items-center justify-center text-purple-500 mb-1">
+            <div className="flex items-center justify-center text-amber-500 mb-1">
               <Award className="w-5 h-5" />
             </div>
             <div className="text-xl sm:text-2xl font-black font-mono text-theme-text">
-              {officialCount}
+              {summaryCount}
             </div>
             <div className="text-[11px] font-semibold text-theme-muted">
-              كتب وزارية رسمية
+              ملخصات شاملة لجميع الشعب
             </div>
           </div>
         </div>

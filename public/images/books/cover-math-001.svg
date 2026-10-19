@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" width="600" height="800">
+  <defs>
+    <linearGradient id="mathGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b" />
+      <stop offset="40%" stop-color="#047857" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#fbbf24" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.4" />
+    </filter>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="600" height="800" fill="url(#mathGrad)" />
+
+  <!-- Subtle Mathematical Texture / Formulas -->
+  <g opacity="0.08" stroke="#ffffff" fill="none" stroke-width="2">
+    <circle cx="500" cy="200" r="160" />
+    <circle cx="500" cy="200" r="110" />
+    <path d="M 50 150 Q 200 50 350 220 T 550 180" />
+    <path d="M 80 700 Q 250 550 400 720 T 580 620" />
+  </g>
+
+  <g opacity="0.12" fill="#ffffff" font-family="system-ui, sans-serif" font-size="28" font-weight="bold">
+    <text x="60" y="240">f(x) = eˣ · ln(x)</text>
+    <text x="380" y="380">lim┬(x→+∞) f(x)</text>
+    <text x="80" y="580">∫ 1/(x²+1) dx</text>
+    <text x="360" y="680">Δ = b² - 4ac</text>
+  </g>
+
+  <!-- Book Spine Visual Edge -->
+  <rect x="0" y="0" width="28" height="800" fill="#000000" opacity="0.25" />
+  <line x1="28" y1="0" x2="28" y2="800" stroke="#ffffff" stroke-opacity="0.15" stroke-width="2" />
+
+  <!-- Outer Border Frame -->
+  <rect x="42" y="36" width="516" height="728" rx="16" fill="none" stroke="#10b981" stroke-opacity="0.35" stroke-width="2" />
+  <rect x="48" y="42" width="504" height="716" rx="12" fill="none" stroke="url(#goldGrad)" stroke-opacity="0.6" stroke-width="1.5" />
+
+  <!-- Top Badge -->
+  <g filter="url(#shadow)">
+    <rect x="150" y="70" width="300" height="42" rx="21" fill="#065f46" stroke="#34d399" stroke-width="1.5" />
+    <text x="300" y="97" font-family="Cairo, Tahoma, Arial, sans-serif" font-size="16" font-weight="bold" fill="#6ee7b7" text-anchor="middle">
+      سلسلة المراجع الرسمية المعتمدة
+    </text>
+  </g>
+
+  <!-- Subject Pill -->
+  <text x="300" y="165" font-family="Cairo, Tahoma, Arial, sans-serif" font-size="22" font-weight="900" fill="#fbbf24" text-anchor="middle" letter-spacing="1">
+    الـريـاضـيـات • 3 ثـانـوي
+  </text>
+
+  <!-- Main Title Container -->
+  <g filter="url(#shadow)">
+    <text x="300" y="260" font-family="Cairo, Tahoma, Arial, sans-serif" font-size="46" font-weight="900" fill="#ffffff" text-anchor="middle">
+      سلسلة الهبّاج
+    </text>
+    <text x="300" y="315" font-family="Cairo, Tahoma, Arial, sans-serif" font-size="28" font-weight="bold" fill="#a7f3d0" text-anchor="middle">
+      في العلوم الرياضية
+    </text>
+  </g>
+
+  <!-- Part & Module Subtitle Box -->
+  <rect x="90" y="360" width="420" height="110" rx="16" fill="#000000" fill-opacity="0.35" stroke="#34d399" stroke-opacity="0.4" stroke-width="1.5" />
+  <text x="300" y="405" font-family="Cairo, Tahoma, Arial, sans-serif" font-size="24" font-weight="bold" fill="#fef08a" text-anchor="middle">
+    الجزء الأول: دراسة الدوال
+  </text>
+  <text x="300" y="445" font-family="Cairo, Tahoma, Arial, sans-serif" font-size="16" font-weight="600" fill="#e2e8f0" text-anchor="middle">
+    الدوال العددية • الأسية واللوغاريتمية • التزايد المقارن
+  </text>
+
+  <!-- Feature Points -->
+  <g font-family="Cairo, Tahoma, Arial, sans-serif" font-size="15" fill="#cbd5e1" font-weight="600">
+    <circle cx="130" cy="520" r="5" fill="#10b981" />
+    <text x="150" y="525" text-anchor="start">ملخصات نظرية شاملة وطرق معالجة النهايات</text>
+
+    <circle cx="130" cy="560" r="5" fill="#10b981" />
+    <text x="150" y="565" text-anchor="start">طرق تفكيك حالات عدم التعيين بدقة رياضية</text>
+
+    <circle cx="130" cy="600" r="5" fill="#10b981" />
+    <text x="150" y="605" text-anchor="start">مسائل تدريبية متدرجة مع الحل المفصل خطوة بخطوة</text>
+  </g>
+
+  <!-- Bottom Target Streams Banner -->
+  <rect x="70" y="660" width="460" height="42" rx="10" fill="#064e3b" stroke="#10b981" stroke-width="1" />
+  <text x="300" y="687" font-family="Cairo, Tahoma, Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">
+    علوم تجريبية • تقني رياضي • رياضيات
+  </text>
+
+  <!-- Author Tag -->
+  <text x="300" y="735" font-family="Cairo, Tahoma, Arial, sans-serif" font-size="13" font-weight="bold" fill="#94a3b8" text-anchor="middle">
+    إعداد: الأستاذ حجاج بلقاسم • مراجعة نخبة من الأساتذة
+  </text>
+</svg>

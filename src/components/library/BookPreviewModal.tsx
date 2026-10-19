@@ -158,7 +158,7 @@ export function BookPreviewModal({
             {directDownloadUrl ? (
               <a
                 href={directDownloadUrl}
-                download
+                download={`${book.title}.pdf`}
                 onClick={handleDownload}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-card border border-stone-700 hover:bg-stone-800 text-stone-200 text-xs font-bold transition-all active:scale-98"
                 title="تحميل ملف الـ PDF مباشرة"
@@ -274,7 +274,7 @@ export function BookPreviewModal({
             {directDownloadUrl && (
               <a
                 href={directDownloadUrl}
-                download
+                download={`${book.title}.pdf`}
                 onClick={handleDownload}
                 className="text-[11px] font-bold text-emerald-400 hover:underline flex items-center gap-1"
               >

@@ -11,72 +11,8 @@ export const BooksService = {
    * Gracefully merges with verified Algerian seed references when Supabase is initializing or offline.
    */
   async getBooks(filters?: BookFilters): Promise<Book[]> {
-    let books: Book[] = [];
-
-    if (isSupabaseConfigured && supabase) {
-      try {
-        let query = supabase
-          .from("books")
-          .select("*");
-
-        if (filters?.search && filters.search.trim() !== "") {
-          const s = filters.search.trim();
-          query = query.or(`title.ilike.%${s}%,author.ilike.%${s}%`);
-        }
-
-        if (filters?.category && filters.category !== "all") {
-          query = query.eq("category", filters.category);
-        }
-
-        if (filters?.subject && filters.subject !== "all") {
-          query = query.eq("subject", filters.subject);
-        }
-
-        if (filters?.stream && filters.stream !== "all") {
-          query = query.contains("streams", [filters.stream]);
-        }
-
-        if (filters?.featuredOnly) {
-          query = query.eq("is_featured", true);
-        }
-
-        if (filters?.sortBy === "popular") {
-          query = query.order("downloads_count", { ascending: false });
-        } else if (filters?.sortBy === "oldest") {
-          query = query.order("created_at", { ascending: true });
-        } else {
-          query = query.order("created_at", { ascending: false });
-        }
-
-        const { data, error } = await query;
-        if (!error && data && data.length > 0) {
-          books = (data as Book[]).map((b) => {
-            const seedMatch = INITIAL_BOOKS_SEED.find(
-              (s) => s.id === b.id || s.title.trim() === b.title.trim()
-            );
-            if (seedMatch && seedMatch.file_url.startsWith("/documents/books/")) {
-              return { ...b, file_url: seedMatch.file_url };
-            }
-            if (b.file_url && b.file_url.startsWith("/documents/books/")) {
-              return b;
-            }
-            // Fallback by subject to ensure a valid existing PDF is always loaded
-            const subjFallback = INITIAL_BOOKS_SEED.find((s) => s.subject === b.subject);
-            if (subjFallback) {
-              return { ...b, file_url: subjFallback.file_url };
-            }
-            return b;
-          });
-        }
-      } catch (err) {
-        console.warn("Could not query books from Supabase, falling back to seed items:", err);
-      }
-    }
-
-    // If database returned no books, use high-fidelity seed dataset with client-side filtering
-    if (books.length === 0) {
-      books = BooksService.filterInMemory(INITIAL_BOOKS_SEED, filters);
-    }
+    // Strictly serve verified authentic Algerian educational references from INITIAL_BOOKS_SEED
+    let books: Book[] = BooksService.filterInMemory(INITIAL_BOOKS_SEED, filters);
 
     // Apply any local download count augmentations from current session
     books = BooksService.applyLocalDownloadCounts(books);
@@ -138,6 +74,9 @@ export const BooksService = {
    * Retrieve a single book by ID
    */
   async getBookById(id: string): Promise<Book | null> {
+    const found = INITIAL_BOOKS_SEED.find((b) => b.id === id);
+    if (found) return found;
+
     if (isSupabaseConfigured && supabase) {
       try {
         const { data, error } = await supabase
@@ -152,8 +91,7 @@ export const BooksService = {
       } catch {}
     }
 
-    const found = INITIAL_BOOKS_SEED.find((b) => b.id === id);
-    return found || null;
+    return null;
   },
 
   /**

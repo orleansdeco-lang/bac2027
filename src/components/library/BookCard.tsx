@@ -212,7 +212,7 @@ export function BookCard({ book, onPreview, onDownloadTrack }: BookCardProps) {
           {/* Download Button */}
           <a
             href={book.file_url}
-            download
+            download={`${book.title}.pdf`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => {
