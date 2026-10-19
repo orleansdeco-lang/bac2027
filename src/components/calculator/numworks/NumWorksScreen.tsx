@@ -33,6 +33,7 @@ interface NumWorksScreenProps {
   isAlphaActive: boolean;
   onExecuteCalculs: () => void;
   isPoweredOn: boolean;
+  isFullscreen?: boolean;
 }
 
 export function NumWorksScreen({
@@ -53,12 +54,17 @@ export function NumWorksScreen({
   isAlphaActive,
   onExecuteCalculs,
   isPoweredOn,
+  isFullscreen = false,
 }: NumWorksScreenProps) {
   return (
-    <div className="w-full bg-[#0F172A] p-2.5 sm:p-3 rounded-2xl shadow-inner border border-slate-700/80">
-      {/* Screen Display Frame */}
+    <div className="w-full bg-[#0B0F19] p-2 sm:p-2.5 rounded-[20px] shadow-[inset_0_3px_8px_rgba(0,0,0,0.8),0_1px_0_rgba(255,255,255,0.15)] border border-slate-800/80 relative">
+      {/* Glossy LCD Panel Housing */}
       <div
-        className="w-full h-[260px] sm:h-[280px] bg-white rounded-xl overflow-hidden shadow-md flex flex-col transition-all relative border border-slate-300"
+        className={`w-full rounded-[14px] overflow-hidden shadow-[inset_0_2px_5px_rgba(0,0,0,0.35)] flex flex-col transition-all relative border border-slate-400/40 bg-white dark:bg-slate-900 ${
+          isFullscreen
+            ? "h-[290px] sm:h-[320px]"
+            : "h-[260px] sm:h-[280px]"
+        }`}
         style={{
           filter: isPoweredOn
             ? `brightness(${settings.brightness}%)`
@@ -123,9 +129,12 @@ export function NumWorksScreen({
                 />
               )}
             </div>
+
+            {/* Subtle Glass Reflection Glare Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/[0.03] to-white/[0.08] pointer-events-none rounded-[14px] z-10" />
           </>
         ) : (
-          <div className="w-full h-full bg-black flex items-center justify-center text-slate-700 text-xs font-mono">
+          <div className="w-full h-full bg-[#05070B] flex items-center justify-center text-slate-700 text-xs font-mono">
             Appuyez sur le bouton Marche pour allumer
           </div>
         )}

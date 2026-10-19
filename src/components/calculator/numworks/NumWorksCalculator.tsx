@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   NumWorksAppId,
   NumWorksSettings,
@@ -11,11 +11,21 @@ import { NumWorksScreen } from "./NumWorksScreen";
 import { NumWorksKeypad } from "./NumWorksKeypad";
 import { evaluateExpression } from "./math-engine";
 import { APPS_LIST } from "./apps/HomeView";
+import {
+  Maximize2,
+  Minimize2,
+  X,
+  Sparkles,
+  Smartphone,
+  Home,
+  RotateCw,
+} from "lucide-react";
 
 export function NumWorksCalculator() {
   const [currentApp, setCurrentApp] = useState<NumWorksAppId>("home");
   const [homeSelectedIndex, setHomeSelectedIndex] = useState(0);
   const [isPoweredOn, setIsPoweredOn] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Modifiers
   const [isShiftActive, setIsShiftActive] = useState(false);
@@ -205,10 +215,47 @@ export function NumWorksCalculator() {
     ]
   );
 
-  // Physical Keyboard Listener
+  // Fullscreen Handler
+  const toggleFullscreen = () => {
+    setIsFullscreen((prev) => {
+      const nextState = !prev;
+      if (nextState) {
+        // Attempt native fullscreen if supported
+        try {
+          if (
+            typeof document !== "undefined" &&
+            document.documentElement &&
+            document.documentElement.requestFullscreen
+          ) {
+            document.documentElement.requestFullscreen().catch(() => {});
+          }
+        } catch {
+          // Ignore fullscreen permission rejections
+        }
+      } else {
+        try {
+          if (typeof document !== "undefined" && document.exitFullscreen) {
+            if (document.fullscreenElement) {
+              document.exitFullscreen().catch(() => {});
+            }
+          }
+        } catch {
+          // Ignore
+        }
+      }
+      return nextState;
+    });
+  };
+
+  // Keyboard Shortcuts Listener
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Avoid intercepting when focusing other inputs outside calculator
+      if (e.key === "Escape" && isFullscreen) {
+        setIsFullscreen(false);
+        return;
+      }
+
+      // Avoid intercepting inputs outside calculator
       const target = e.target as HTMLElement;
       if (
         target &&
@@ -266,59 +313,190 @@ export function NumWorksCalculator() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleKeyPress]);
+  }, [handleKeyPress, isFullscreen]);
+
+  // Lock body scroll when in fullscreen
+  useEffect(() => {
+    if (isFullscreen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isFullscreen]);
+
+  /* ======================================================== */
+  /* REALISTIC HARDWARE CHASSIS COMPONENT                     */
+  /* ======================================================== */
+  const renderHardwareDevice = (inFullscreen: boolean = false) => (
+    <div
+      className={`w-full bg-[#F5F5F7] dark:bg-[#1A1D24] border-2 border-[#D8DCE3] dark:border-[#2D333F] rounded-[36px] sm:rounded-[42px] p-3 sm:p-5 flex flex-col gap-3 transition-all relative select-none ${
+        inFullscreen
+          ? "max-w-[430px] my-auto shadow-[0_30px_90px_rgba(0,0,0,0.7),0_0_0_1px_rgba(255,255,255,0.1)]"
+          : "max-w-[390px] sm:max-w-[415px] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35),0_0_0_1px_rgba(0,0,0,0.06),inset_0_1.5px_0_rgba(255,255,255,0.9),inset_0_-2px_4px_rgba(0,0,0,0.06)]"
+      }`}
+    >
+      {/* Precision Perimeter Chamfer Highlight */}
+      <div className="absolute inset-0 rounded-[36px] sm:rounded-[42px] pointer-events-none ring-1 ring-white/70 dark:ring-white/10" />
+
+      {/* Brand Header with Realistic Debossed Logo and Controls */}
+      <div className="flex items-center justify-between pt-0.5 px-1 pb-0.5">
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.7)] animate-pulse" />
+          <span className="text-[9px] font-mono font-bold text-slate-400 dark:text-slate-500 tracking-wider">
+            N0120
+          </span>
+        </div>
+
+        {/* Debossed NUMWORKS brand logo */}
+        <span className="font-sans font-black tracking-[0.35em] text-[#475569] dark:text-[#94A3B8] text-xs sm:text-[13px] uppercase opacity-95 drop-shadow-[0_1px_0_rgba(255,255,255,0.8)] dark:drop-shadow-[0_1px_0_rgba(0,0,0,0.8)]">
+          NUMWORKS
+        </span>
+
+        {/* Fullscreen Trigger Pill (Quick launch) */}
+        <button
+          type="button"
+          onClick={toggleFullscreen}
+          title={inFullscreen ? "تصغير / Quitter plein écran" : "تكبير ملء الشاشة / Plein écran"}
+          className="p-1 rounded-lg bg-white/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 shadow-xs border border-slate-200 dark:border-slate-700 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1 text-[9px] font-bold"
+        >
+          {inFullscreen ? (
+            <>
+              <Minimize2 className="w-3 h-3" />
+              <span className="hidden sm:inline">تصغير</span>
+            </>
+          ) : (
+            <>
+              <Maximize2 className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+              <span className="text-[9px] font-mono font-black text-blue-600 dark:text-blue-400">
+                Plein écran
+              </span>
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Photorealistic LCD Screen Display */}
+      <NumWorksScreen
+        currentApp={currentApp}
+        setCurrentApp={setCurrentApp}
+        homeSelectedIndex={homeSelectedIndex}
+        settings={settings}
+        setSettings={setSettings}
+        expression={expression}
+        setExpression={setExpression}
+        history={history}
+        setHistory={setHistory}
+        ansValue={ansValue}
+        setAnsValue={setAnsValue}
+        functions={functions}
+        setFunctions={setFunctions}
+        isShiftActive={isShiftActive}
+        isAlphaActive={isAlphaActive}
+        onExecuteCalculs={handleExecuteCalculs}
+        isPoweredOn={isPoweredOn}
+        isFullscreen={inFullscreen}
+      />
+
+      {/* Authentic Tactile 3-Zone Keypad */}
+      <NumWorksKeypad
+        onKeyPress={handleKeyPress}
+        isShiftActive={isShiftActive}
+        isAlphaActive={isAlphaActive}
+        isCompact={inFullscreen}
+      />
+
+      {/* Bottom Authenticity Label */}
+      <div className="flex items-center justify-between text-[8px] font-mono font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 pt-0.5">
+        <span>EPSILON OS v22.2</span>
+        <span>DESIGNED IN PARIS</span>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="w-full flex justify-center py-4 select-none">
-      {/* ======================================================== */}
-      {/* AUTHENTIC NUMWORKS RECTANGULAR CASING                     */}
-      {/* ======================================================== */}
-      <div className="w-full max-w-[390px] sm:max-w-[410px] bg-[#F1F3F5] dark:bg-[#1E293B] border-2 border-slate-300 dark:border-slate-700 rounded-[32px] sm:rounded-[36px] shadow-[0_20px_50px_rgba(0,0,0,0.2)] p-3.5 sm:p-5 flex flex-col gap-3 transition-all relative">
-        {/* Subtle hardware highlights / beveled edge */}
-        <div className="absolute inset-0 rounded-[32px] sm:rounded-[36px] pointer-events-none ring-1 ring-white/60 dark:ring-white/10" />
-
-        {/* Brand Header */}
-        <div className="flex items-center justify-center pt-1 pb-0.5">
-          <span className="font-sans font-black tracking-[0.28em] text-slate-700 dark:text-slate-300 text-xs uppercase opacity-90 drop-shadow-xs">
-            NUMWORKS
-          </span>
+    <div className="w-full flex flex-col items-center justify-center py-2 select-none relative">
+      {/* Top Mobile Fullscreen Action Bar */}
+      <div className="w-full max-w-[415px] flex items-center justify-between px-2 mb-2">
+        <div className="flex items-center gap-1.5 text-xs text-theme-muted">
+          <Smartphone className="w-3.5 h-3.5 text-blue-500" />
+          <span className="font-semibold text-[11px]">تجربة هاتف حقيقية:</span>
         </div>
 
-        {/* LCD Screen Display */}
-        <NumWorksScreen
-          currentApp={currentApp}
-          setCurrentApp={setCurrentApp}
-          homeSelectedIndex={homeSelectedIndex}
-          settings={settings}
-          setSettings={setSettings}
-          expression={expression}
-          setExpression={setExpression}
-          history={history}
-          setHistory={setHistory}
-          ansValue={ansValue}
-          setAnsValue={setAnsValue}
-          functions={functions}
-          setFunctions={setFunctions}
-          isShiftActive={isShiftActive}
-          isAlphaActive={isAlphaActive}
-          onExecuteCalculs={handleExecuteCalculs}
-          isPoweredOn={isPoweredOn}
-        />
-
-        {/* 3-Zone Tactile Keypad */}
-        <NumWorksKeypad
-          onKeyPress={handleKeyPress}
-          isShiftActive={isShiftActive}
-          isAlphaActive={isAlphaActive}
-        />
-
-        {/* Bottom micro branding or model */}
-        <div className="text-center pt-1">
-          <span className="text-[9px] font-mono font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-            N0120 Graphing Engine
-          </span>
-        </div>
+        <button
+          type="button"
+          onClick={toggleFullscreen}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md shadow-blue-500/25 active:scale-95 transition-all cursor-pointer"
+        >
+          <Maximize2 className="w-3.5 h-3.5" />
+          <span>تكبير ملء الشاشة (Plein écran)</span>
+        </button>
       </div>
+
+      {/* Normal Inline Calculator */}
+      <div className="w-full flex justify-center">{renderHardwareDevice(false)}</div>
+
+      {/* ======================================================== */}
+      {/* FULLSCREEN OVERLAY MODAL FOR SMARTPHONES & TABLETS       */}
+      {/* ======================================================== */}
+      {isFullscreen && (
+        <div className="fixed inset-0 z-50 bg-[#07090E]/95 backdrop-blur-xl flex flex-col items-center justify-between p-2 sm:p-4 overflow-y-auto animate-fadeIn">
+          {/* Top Sticky Bar in Fullscreen */}
+          <div className="w-full max-w-[440px] flex items-center justify-between p-2 rounded-2xl bg-slate-900/90 border border-slate-700/80 shadow-lg text-white mb-2 shrink-0">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleKeyPress("Home")}
+                title="Accueil / Home"
+                className="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-bold shadow-xs active:scale-95"
+              >
+                <Home className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setSettings((prev) => ({
+                    ...prev,
+                    angleUnit: prev.angleUnit === "rad" ? "deg" : "rad",
+                  }))
+                }
+                title="Changer l'unité d'angle"
+                className="px-2 py-0.5 rounded-lg bg-slate-800 border border-slate-700 font-mono text-xs font-bold text-amber-400 flex items-center gap-1 active:scale-95 cursor-pointer"
+              >
+                <RotateCw className="w-3 h-3" />
+                <span>{settings.angleUnit.toUpperCase()}</span>
+              </button>
+            </div>
+
+            <span className="text-xs font-black tracking-widest uppercase font-mono text-slate-300">
+              NUMWORKS • PLEIN ÉCRAN
+            </span>
+
+            {/* Exit Fullscreen Button */}
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md active:scale-95 transition-all cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>خروج</span>
+            </button>
+          </div>
+
+          {/* Scaled Device Container */}
+          <div className="w-full flex justify-center items-center flex-1 my-auto">
+            {renderHardwareDevice(true)}
+          </div>
+
+          {/* Micro Helper Note */}
+          <div className="text-[10px] text-slate-400 font-sans text-center py-1 shrink-0">
+            اضغط زر [Home] الأصفر للعودة للتطبيقات • اضغط [خروج] أو Esc للعودة للموقع
+          </div>
+        </div>
+      )}
     </div>
   );
 }

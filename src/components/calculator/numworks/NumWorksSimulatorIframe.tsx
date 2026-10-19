@@ -1,11 +1,23 @@
 import React, { useState } from "react";
-import { ExternalLink, RotateCcw, ShieldCheck, Sparkles } from "lucide-react";
+import {
+  ExternalLink,
+  RotateCcw,
+  Sparkles,
+  Maximize2,
+  Minimize2,
+  X,
+} from "lucide-react";
 
 export function NumWorksSimulatorIframe() {
   const [iframeKey, setIframeKey] = useState(1);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const handleReload = () => {
     setIframeKey((prev) => prev + 1);
+  };
+
+  const toggleFullscreen = () => {
+    setIsFullscreen((prev) => !prev);
   };
 
   return (
@@ -28,15 +40,24 @@ export function NumWorksSimulatorIframe() {
         </div>
       </div>
 
-      {/* Control bar: reload and external link */}
-      <div className="flex items-center gap-3 text-xs">
+      {/* Control bar: reload, fullscreen and external link */}
+      <div className="flex flex-wrap items-center justify-center gap-2.5 text-xs">
+        <button
+          type="button"
+          onClick={toggleFullscreen}
+          className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+        >
+          <Maximize2 className="w-3.5 h-3.5" />
+          <span>تكبير ملء الشاشة (Plein écran)</span>
+        </button>
+
         <button
           type="button"
           onClick={handleReload}
           className="px-3 py-1.5 rounded-xl border border-theme bg-card hover:bg-card-hover text-theme-text flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
         >
           <RotateCcw className="w-3.5 h-3.5" />
-          <span>إعادة تحميل المحاكي</span>
+          <span>إعادة تحميل</span>
         </button>
 
         <a
@@ -67,6 +88,42 @@ export function NumWorksSimulatorIframe() {
           }}
         />
       </div>
+
+      {/* Fullscreen Overlay for Iframe */}
+      {isFullscreen && (
+        <div className="fixed inset-0 z-50 bg-[#07090E]/95 backdrop-blur-xl flex flex-col items-center justify-between p-2 sm:p-4 overflow-y-auto">
+          {/* Header */}
+          <div className="w-full max-w-[400px] flex items-center justify-between p-2 rounded-2xl bg-slate-900 border border-slate-700 shadow-lg text-white mb-2 shrink-0">
+            <span className="text-xs font-mono font-bold">
+              NUMWORKS OFFICIAL SIMULATOR
+            </span>
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className="flex items-center gap-1 px-3 py-1 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+              <span>خروج</span>
+            </button>
+          </div>
+
+          <div className="w-full flex justify-center items-center flex-1 my-auto">
+            <iframe
+              src="https://www.numworks.com/simulator/embed/"
+              width="360"
+              height="720"
+              loading="lazy"
+              title="NumWorks Official Simulator Fullscreen"
+              style={{
+                border: "none",
+                borderRadius: "16px",
+                boxShadow: "0 15px 35px rgba(0,0,0,0.5)",
+                maxWidth: "100%",
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="text-center text-xs text-theme-muted max-w-sm">
         💡 <span className="font-bold">نصيحة:</span> يمكنك استخدام لوحة مفاتيح حاسوبك للتنقل السريع داخل المحاكي، أو التبديل إلى "الوضع التفاعلي المدمج" لسرعة فائقة بدون اتصال بالإنترنت.
