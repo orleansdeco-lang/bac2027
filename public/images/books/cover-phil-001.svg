@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" width="600" height="800">
+  <defs>
+    <linearGradient id="philGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b0764" />
+      <stop offset="45%" stop-color="#581c87" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#c084fc" />
+      <stop offset="100%" stop-color="#e879f9" />
+    </linearGradient>
+    <filter id="shadow_philGrad" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.45" />
+    </filter>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="600" height="800" fill="url(#philGrad)" />
+
+  <!-- Background Vector Elements -->
+  <g opacity="0.08" stroke="#ffffff" fill="none" stroke-width="2">
+    <circle cx="500" cy="180" r="140" />
+    <circle cx="500" cy="180" r="90" />
+    <circle cx="100" cy="650" r="120" />
+    <path d="M 50 120 Q 250 20 450 150 T 580 140" />
+    <path d="M 60 720 Q 260 580 440 730 T 560 660" />
+  </g>
+
+  <!-- Book Spine Visual Edge -->
+  <rect x="0" y="0" width="28" height="800" fill="#000000" opacity="0.28" />
+  <line x1="28" y1="0" x2="28" y2="800" stroke="#ffffff" stroke-opacity="0.15" stroke-width="2" />
+
+  <!-- Outer Border Frame -->
+  <rect x="42" y="36" width="516" height="728" rx="16" fill="none" stroke="#c084fc" stroke-opacity="0.35" stroke-width="2" />
+  <rect x="48" y="42" width="504" height="716" rx="12" fill="none" stroke="url(#purpleGrad)" stroke-opacity="0.6" stroke-width="1.5" />
+
+  <!-- Top Badge -->
+  <g filter="url(#shadow_philGrad)">
+    <rect x="130" y="70" width="340" height="42" rx="21" fill="#581c87" stroke="#c084fc" stroke-width="1.5" />
+    <text x="300" y="97" font-family="Cairo, Tahoma, Arial, sans-serif" font-size="16" font-weight="bold" fill="#f3e8ff" text-anchor="middle">
+      الموسوعة المنهجية الشاملة للبكالوريا
+    </text>
+  </g>
+
+  <!-- Subject Pill -->
+  <text x="300" y="165" font-family="Cairo, Tahoma, Arial, sans-serif" font-size="22" font-weight="900" fill="#f0abfc" text-anchor="middle" letter-spacing="1">
+    الـفـلـسـفـة والـمـنـطـق • 3 ثـانـوي
+  </text>
+
+  <!-- Main Title Container -->
+  <g filter="url(#shadow_philGrad)">
+    <text x="300" y="250" font-family="Cairo, Tahoma, Arial, sans-serif" font-size="38" font-weight="900" fill="#ffffff" text-anchor="middle">
+      المقالات الفلسفية الشاملة
+    </text>
+    <text x="300" y="300" font-family="Cairo, Tahoma, Arial, sans-serif" font-size="20" font-weight="bold" fill="#e2e8f0" text-anchor="middle">
+      موسوعة المقالات النموذجية المحتملة وطرق التحرير
+    </text>
+  </g>
+
+  <!-- Module Subtitle Box -->
+  <rect x="80" y="340" width="440" height="110" rx="16" fill="#000000" fill-opacity="0.35" stroke="#c084fc" stroke-opacity="0.4" stroke-width="1.5" />
+  <text x="300" y="382" font-family="Cairo, Tahoma, Arial, sans-serif" font-size="21" font-weight="bold" fill="#e879f9" text-anchor="middle">
+    المنهجيات الثلاث: الجدلية • المقارنة • الاستقصاء بالوضع
+  </text>
+  <text x="300" y="420" font-family="Cairo, Tahoma, Arial, sans-serif" font-size="15" font-weight="600" fill="#f1f5f9" text-anchor="middle">
+    الإدراك والمشاهدة • الشعور واللاشعور • الحقيقة العلمية والفلسفية
+  </text>
+
+  <!-- Feature Points -->
+  <g font-family="Cairo, Tahoma, Arial, sans-serif" font-size="14.5" fill="#cbd5e1" font-weight="600">
+    <circle cx="120" cy="500" r="5" fill="#c084fc" />
+    <text x="140" y="505" text-anchor="start">مقالات محررة وموسعة بأقوال ومواقف أشهر الفلاسفة والمفكرين</text>
+
+    <circle cx="120" cy="540" r="5" fill="#c084fc" />
+    <text x="140" y="545" text-anchor="start">خطوات استقصاء بالوضع ودفاع منطقي عن الأطروحة خالية من الحشو</text>
+
+    <circle cx="120" cy="580" r="5" fill="#c084fc" />
+    <text x="140" y="585" text-anchor="start">شرح نماذج تحليل النصوص الفلسفية واستخراج الإشكالية والموقف</text>
+  </g>
+
+  <!-- Bottom Target Streams Banner -->
+  <rect x="70" y="640" width="460" height="40" rx="10" fill="#000000" fill-opacity="0.4" stroke="#c084fc" stroke-opacity="0.5" stroke-width="1" />
+  <text x="300" y="665" font-family="Cairo, Tahoma, Arial, sans-serif" font-size="14" font-weight="bold" fill="#ffffff" text-anchor="middle">
+    دليل موحد وشامل لجميع الشعب العلمية والأدبية
+  </text>
+
+  <!-- Footer Author -->
+  <text x="300" y="730" font-family="Cairo, Tahoma, Arial, sans-serif" font-size="14" font-weight="bold" fill="#94a3b8" text-anchor="middle">
+    إعداد: الأستاذ عبد الحق بوقرة / مراجعة نخبة من الأساتذة
+  </text>
+</svg>
