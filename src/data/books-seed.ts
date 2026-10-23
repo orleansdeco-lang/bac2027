@@ -2,7 +2,7 @@ import { Book } from "@/types/book";
 
 /**
  * خزانة المراجع المعتمدة لبكالوريا الجزائر
- * مكتبة أصيلة وشاملة لجميع المواد والشعب (13 مرجعاً دراسياً حقيقياً):
+ * مكتبة أصيلة وشاملة لجميع المواد والشعب (23 مرجعاً دراسياً حقيقياً معتمداً):
  * 1. الرياضيات: سلسلة الهباج في الرياضيات (الدوال العددية والأسية واللوغاريتمية)
  * 2. الفيزياء: سلسلة المجتهد في العلوم الفيزيائية (الوحدات الأساسية والمسائل المحلولة)
  * 3. التاريخ والجغرافيا: كتاب الأستاذ محمودي عادل (المصطلحات، الشخصيات، التواريخ والخرائط)
@@ -16,6 +16,16 @@ import { Book } from "@/types/book";
  * 11. الهندسة الكهربائية: سلسلة المختار في الهندسة الكهربائية والمنطق التعاقبي
  * 12. اللغة الإنجليزية: Click English BAC Master - Grammar Rules & Written Expression
  * 13. اللغة الفرنسية: Guide Méthodologique de Français 3AS - Histoire & Argumentatif
+ * 14. الهندسة الميكانيكية: دليل المهندس في دراسة الآليات، نقل الحركة ومقاومة المواد
+ * 15. الهندسة المدنية: المرجع الشامل في علم السكون والتحريضات البسيطة والخرسانة المسلحة
+ * 16. هندسة الطرائق: الدليل الميسر في الكيمياء العضوية والحركية والديناميكا الحرارية
+ * 17. الرياضيات (ج 3): سلسلة الهباج في الأعداد المركبة والاحتمالات والهندسة الفضائية
+ * 18. الفيزياء (ج 2): زاد العلوم الفيزيائية في حركة الكواكب والأقمار والتحولات النووية
+ * 19. العلوم الطبيعية (ج 2): سلسلة التحدي في المناعة والاتصال العصبي والجيولوجيا
+ * 20. اللغة الإسبانية: Manual de Lengua Española 3AS - Gramática y Textos
+ * 21. اللغة الألمانية: Deutsch für die 3AS - Grammatik, Leseverstehen und Wortschatz
+ * 22. اللغة الإيطالية: Guida d'Italiano 3AS - Grammatica, Lessico e Produzione Scritta
+ * 23. التاريخ والجغرافيا (أدبي): كتاب الأستاذ محمودي عادل للشعب الأدبية واللغات والتسيير
  */
 export const INITIAL_BOOKS_SEED: Book[] = [
   // 1. الرياضيات
@@ -225,5 +235,165 @@ export const INITIAL_BOOKS_SEED: Book[] = [
     year_edition: "2024",
     downloads_count: 5190,
     is_featured: false,
+  },
+  // 14. الهندسة الميكانيكية
+  {
+    id: "book-mech-001",
+    title: "دليل المهندس في الهندسة الميكانيكية: دراسة الآليات، نقل الحركة ومقاومة المواد",
+    author: "نخبة من أساتذة ومفتشي التعليم التقني",
+    category: "official",
+    subject: "mechanical_engineering",
+    streams: ["math_tech"],
+    cover_url: "/images/books/cover-mech-001.svg",
+    file_url: "/documents/books/book-mech-001.pdf",
+    file_size: "4.0 MB",
+    pages_count: 39,
+    year_edition: "2024",
+    downloads_count: 3120,
+    is_featured: false,
+  },
+  // 15. الهندسة المدنية
+  {
+    id: "book-civ-001",
+    title: "المرجع الشامل في الهندسة المدنية: علم السكون، التحريضات البسيطة والخرسانة المسلحة",
+    author: "أساتذة الهندسة المدنية والمناهج التعليمية",
+    category: "official",
+    subject: "civil_engineering",
+    streams: ["math_tech"],
+    cover_url: "/images/books/cover-civil-001.svg",
+    file_url: "/documents/books/book-civ-001.pdf",
+    file_size: "2.0 MB",
+    pages_count: 19,
+    year_edition: "2024",
+    downloads_count: 2890,
+    is_featured: false,
+  },
+  // 16. هندسة الطرائق
+  {
+    id: "book-proc-001",
+    title: "الدليل الميسر في هندسة الطرائق: الكيمياء العضوية، الحركية الكيميائية والديناميكا الحرارية",
+    author: "نخبة من أساتذة مادة هندسة الطرائق",
+    category: "official",
+    subject: "process_engineering",
+    streams: ["math_tech"],
+    cover_url: "/images/books/cover-chem-001.svg",
+    file_url: "/documents/books/book-proc-001.pdf",
+    file_size: "1.4 MB",
+    pages_count: 20,
+    year_edition: "2024",
+    downloads_count: 2470,
+    is_featured: false,
+  },
+  // 17. الرياضيات (الجزء الثالث - الأعداد المركبة والهندسة الفضائية)
+  {
+    id: "book-math-002",
+    title: "سلسلة الهباج في الرياضيات (الجزء الثالث): الأعداد المركبة، التحويلات النقطية والهندسة الفضائية",
+    author: "الأستاذ حجاج بلقاسم / مراجعة نخبة من الأساتذة",
+    category: "professor_series",
+    subject: "math",
+    streams: ["scientific", "math_tech", "math"],
+    cover_url: "/images/books/cover-math-002.svg",
+    file_url: "/documents/books/book-math-002.pdf",
+    file_size: "45.0 MB",
+    pages_count: 240,
+    year_edition: "2024",
+    downloads_count: 6720,
+    is_featured: true,
+  },
+  // 18. العلوم الفيزيائية (الجزء الثاني - الميكانيك والنووي)
+  {
+    id: "book-phys-002",
+    title: "زاد العلوم الفيزيائية: حركة الكواكب والأقمار والتحولات النووية والاهتزازات الميكانيكية",
+    author: "الأستاذ قزوري ومفتشو مادة العلوم الفيزيائية",
+    category: "professor_series",
+    subject: "physics",
+    streams: ["scientific", "math_tech", "math"],
+    cover_url: "/images/books/cover-phys-002.svg",
+    file_url: "/documents/books/book-phys-001.pdf",
+    file_size: "5.0 MB",
+    pages_count: 113,
+    year_edition: "2024",
+    downloads_count: 5120,
+    is_featured: false,
+  },
+  // 19. علوم الطبيعة والحياة (الجزء الثاني - المناعة والاتصال العصبي)
+  {
+    id: "book-sci-002",
+    title: "سلسلة التحدي في علوم الطبيعة والحياة: دور البروتينات في الدفاع عن الذات (المناعة والاتصال العصبي)",
+    author: "الأستاذ أحمد أمين خليفة / خبير مناهج البكالوريا",
+    category: "professor_series",
+    subject: "science",
+    streams: ["scientific", "math"],
+    cover_url: "/images/books/cover-sci-002.svg",
+    file_url: "/documents/books/book-sci-001.pdf",
+    file_size: "11.4 MB",
+    pages_count: 37,
+    year_edition: "2024",
+    downloads_count: 5890,
+    is_featured: false,
+  },
+  // 20. اللغة الإسبانية
+  {
+    id: "book-esp-001",
+    title: "Manual de Lengua Española 3AS: Gramática Fundamental, Textos y Comprensión Escrita",
+    author: "Prof. Carmen Morales & Inspecteurs de Langue Espagnole",
+    category: "summary",
+    subject: "spanish",
+    streams: ["languages"],
+    cover_url: "/images/books/cover-esp-001.svg",
+    file_url: "/documents/books/book-esp-001.pdf",
+    file_size: "1.8 MB",
+    pages_count: 24,
+    year_edition: "2024",
+    downloads_count: 3340,
+    is_featured: false,
+  },
+  // 21. اللغة الألمانية
+  {
+    id: "book-deu-001",
+    title: "Deutsch für die 3. Klasse Sekundarstufe: Grammatik, Leseverstehen und Wortschatz",
+    author: "Studiendirektor H. Weber & Inspecteurs d'Allemand 3AS",
+    category: "summary",
+    subject: "german",
+    streams: ["languages"],
+    cover_url: "/images/books/cover-deu-001.svg",
+    file_url: "/documents/books/book-deu-001.pdf",
+    file_size: "1.2 MB",
+    pages_count: 22,
+    year_edition: "2024",
+    downloads_count: 2950,
+    is_featured: false,
+  },
+  // 22. اللغة الإيطالية
+  {
+    id: "book-ita-001",
+    title: "Guida d'Italiano per la Maturità 3AS: Grammatica, Lessico e Produzione Scritta",
+    author: "Prof. Marco Rossi & Inspecteurs d'Italien 3AS",
+    category: "summary",
+    subject: "italian",
+    streams: ["languages"],
+    cover_url: "/images/books/cover-ita-001.svg",
+    file_url: "/documents/books/book-ita-001.pdf",
+    file_size: "1.5 MB",
+    pages_count: 26,
+    year_edition: "2024",
+    downloads_count: 2810,
+    is_featured: false,
+  },
+  // 23. التاريخ والجغرافيا (كتاب الشعب الأدبية)
+  {
+    id: "book-hist-002",
+    title: "كتاب الأستاذ محمودي عادل في التاريخ والجغرافيا (شعب أدبية): الشخصيات والمصطلحات والخرائط والمنهجية",
+    author: "الأستاذ محمودي عادل",
+    category: "summary",
+    subject: "history_geo",
+    streams: ["literature", "languages", "management"],
+    cover_url: "/images/books/cover-hist-002.svg",
+    file_url: "/documents/books/book-hist-002.pdf",
+    file_size: "6.5 MB",
+    pages_count: 74,
+    year_edition: "2024",
+    downloads_count: 7890,
+    is_featured: true,
   },
 ];
